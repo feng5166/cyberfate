@@ -1,26 +1,90 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* 主色 */
+  --cyber-dark: #0f0f1a;
+  --cyber-bg: #1a1a2e;
+  --cyber-card: #16213e;
+  
+  /* 强调色 */
+  --cyber-gold: #ffd700;
+  --cyber-gold-dark: #b8860b;
+  
+  /* 五行色 */
+  --wuxing-metal: #ffd700;
+  --wuxing-wood: #4ade80;
+  --wuxing-water: #38bdf8;
+  --wuxing-fire: #f97316;
+  --wuxing-earth: #a78b5a;
+  
+  /* 文字色 */
+  --text-primary: #f5f5f5;
+  --text-secondary: #a0a0a0;
+  --text-muted: #666666;
+  
+  /* 过渡 */
+  --transition-fast: 200ms ease;
+  --transition-normal: 300ms ease;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+* {
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--cyber-dark);
+  color: var(--text-primary);
+  font-family: 'PingFang SC', system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--cyber-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--cyber-card);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--cyber-gold-dark);
+}
+
+/* 金色发光效果 */
+.glow-gold {
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+}
+
+.glow-gold-lg {
+  box-shadow: 0 0 40px rgba(255, 215, 0, 0.4);
+}
+
+/* 金色渐变背景 */
+.bg-gradient-gold {
+  background: linear-gradient(135deg, #ffd700 0%, #f4a460 100%);
+}
+
+/* 背景渐变 */
+.bg-gradient-cyber {
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f0f1a 100%);
+}
+
+/* 卡片悬停效果 */
+.card-hover {
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
 }
