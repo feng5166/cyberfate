@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
+import { saveBirthInfo, loadBirthInfo, clearBirthInfo } from '@/lib/utils/storage';
 
 // 十二时辰选项
 const shichenOptions = [
@@ -58,8 +59,6 @@ function StarRating({ rating, max = 5 }: { rating: number; max?: number }) {
   );
 }
 
-const STORAGE_KEY = 'cyberfate_user_birth';
-
 export default function DailyPage() {
   const [formData, setFormData] = useState({
     birthDate: '',
@@ -70,48 +69,53 @@ export default function DailyPage() {
   const [result, setResult] = useState<DailyResult | null>(null);
   const [today, setToday] = useState('');
   const [hasSavedData, setHasSavedData] = useState(false);
+  const autoSubmittedRef = useRef(false);
+
+  const fetchFortune = async (birthDate: string, birthHour: string, targetDate: string) => {
+    setError('');
+    setLoading(true);
+    try {
+      const response = await fetch('/api/daily', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          birthDate,
+          birthHour: parseInt(birthHour),
+          targetDate,
+        }),
+      });
+      if (!response.ok) throw new Error('获取运势失败，请稍后重试');
+      const data = await response.json();
+      setResult(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '未知错误');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // 获取今天的日期
     const now = new Date();
     const dateStr = now.toISOString().split('T')[0];
     setToday(dateStr);
-    
-    // 从 localStorage 读取保存的出生信息
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const { birthDate, birthHour } = JSON.parse(saved);
-        if (birthDate && birthHour) {
-          setFormData({ birthDate, birthHour });
-          setHasSavedData(true);
-        }
+
+    const saved = loadBirthInfo();
+    if (saved?.birthDate && saved?.birthHour) {
+      setFormData({ birthDate: saved.birthDate, birthHour: saved.birthHour });
+      setHasSavedData(true);
+      // 有保存数据时自动获取运势
+      if (!autoSubmittedRef.current) {
+        autoSubmittedRef.current = true;
+        fetchFortune(saved.birthDate, saved.birthHour, dateStr);
       }
-    } catch (e) {
-      console.error('Failed to load saved data:', e);
     }
   }, []);
-  
-  // 保存到 localStorage
-  const saveToStorage = (data: { birthDate: string; birthHour: string }) => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      setHasSavedData(true);
-    } catch (e) {
-      console.error('Failed to save data:', e);
-    }
-  };
-  
-  // 清除保存的数据
+
   const clearSavedData = () => {
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-      setFormData({ birthDate: '', birthHour: '' });
-      setHasSavedData(false);
-      setResult(null);
-    } catch (e) {
-      console.error('Failed to clear data:', e);
-    }
+    clearBirthInfo();
+    setFormData({ birthDate: '', birthHour: '' });
+    setHasSavedData(false);
+    setResult(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -148,7 +152,7 @@ export default function DailyPage() {
       const data = await response.json();
       setResult(data);
       // 保存到 localStorage
-      saveToStorage(formData);
+      saveBirthInfo(formData);
     } catch (err) {
       setError(err instanceof Error ? err.message : '未知错误');
     } finally {

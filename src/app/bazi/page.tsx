@@ -1,12 +1,16 @@
 'use client';
 
 import { useState } from 'react';
+
+// export const metadata = { title: '八字算命' }; // 客户端组件不能导出 metadata
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
+import { BaguaSpinner } from '@/components/ui/BaguaSpinner';
 import { BaziChart } from '@/components/bazi/BaziChart';
 import { WuxingChart } from '@/components/bazi/WuxingChart';
+import Link from 'next/link';
 
 // 十二时辰选项
 const shichenOptions = [
@@ -162,8 +166,19 @@ export default function BaziPage() {
           </form>
         </Card>
 
+        {/* 加载中状态 */}
+        {loading && (
+          <Card className="mb-8">
+            <div className="flex flex-col items-center justify-center py-12">
+              <BaguaSpinner size={64} />
+              <p className="mt-4 text-cyber-gold">正在计算您的命盘...</p>
+              <p className="text-sm text-text-muted mt-2">AI 正在解读中，请稍候</p>
+            </div>
+          </Card>
+        )}
+
         {/* 结果展示 */}
-        {result && (
+        {result && !loading && (
           <div className="space-y-6 animate-fadeIn">
             {/* 四柱命盘 */}
             <BaziChart pillars={result.pillars} />
@@ -181,6 +196,16 @@ export default function BaziPage() {
                   {result.aiAnalysis}
                 </div>
               </div>
+            </Card>
+
+            {/* 引导到每日运势 */}
+            <Card className="text-center">
+              <p className="text-text-secondary mb-4">想了解今天的运势？</p>
+              <Link href="/daily">
+                <Button variant="secondary">
+                  📅 查看每日运势
+                </Button>
+              </Link>
             </Card>
 
             {/* 免责声明 */}

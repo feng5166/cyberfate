@@ -1,0 +1,16 @@
+{
+  "name": "赛博命理师 CyberFate",
+  "short_name": "CyberFate",
+  "description": "AI 驱动的东方智慧",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#ffd700",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

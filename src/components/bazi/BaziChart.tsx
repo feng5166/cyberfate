@@ -36,7 +36,7 @@ export function BaziChart({ pillars }: BaziChartProps) {
       <h3 className="font-heading text-lg font-semibold text-cyber-gold mb-4 text-center">
         命盘四柱
       </h3>
-      <div className="grid grid-cols-4 gap-2 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         {pillarKeys.map((key, index) => {
           const pillar = pillars[key];
           return (
