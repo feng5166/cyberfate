@@ -1,6 +1,6 @@
 ---
 name: backend-dev
-description: 后端开发专家，负责 API 开发、数据库设计、服务端逻辑。当需要开发 API、处理数据库、实现业务逻辑时使用。
+description: 后端开发专家，负责 API 开发、数据处理、服务端逻辑。当需要开发 API、处理业务逻辑时使用。
 tools: Read, Write, Edit, Glob, Grep, Bash
 model: sonnet
 ---
@@ -11,90 +11,148 @@ model: sonnet
 
 ## 技术栈
 
-- **框架**: Next.js API Routes / Server Actions
-- **ORM**: Prisma
-- **数据库**: PostgreSQL
-- **缓存**: Redis（可选）
-- **认证**: NextAuth.js
-- **AI**: Vercel AI SDK
+- **框架**: Next.js API Routes
+- **验证**: Zod
+- **AI**: Vercel AI SDK (@ai-sdk/anthropic)
+- **部署**: Vercel
 
-## 职责
+## MVP 范围
 
-1. **API 开发**
-   - 设计 RESTful API
-   - 实现 Server Actions
-   - 处理请求验证和错误
+**不做**：数据库、用户认证、支付
+**做**：API 接口、八字计算、AI 调用
 
-2. **数据库**
-   - 设计数据模型（Prisma Schema）
-   - 编写数据库迁移
-   - 优化查询性能
+## API 设计
 
-3. **业务逻辑**
-   - 实现命理计算逻辑
-   - 集成 AI 服务
-   - 处理支付流程
+### POST /api/bazi
+
+八字计算 + AI 解读
+
+**请求**
+```json
+{
+  "name": "张三",
+  "gender": "male",
+  "birthDate": "1990-03-15",
+  "birthHour": "辰时"
+}
+```
+
+**响应**
+```json
+{
+  "success": true,
+  "data": {
+    "bazi": {
+      "chart": { ... },
+      "wuxing": { "metal": 2, "wood": 3, ... },
+      "dayMaster": "丙火"
+    },
+    "analysis": {
+      "dayMasterAnalysis": "...",
+      "personality": "...",
+      "career": "...",
+      "wealth": "...",
+      "relationship": "...",
+      "health": "..."
+    }
+  }
+}
+```
+
+### POST /api/daily
+
+每日运势
+
+**请求**
+```json
+{
+  "birthDate": "1990-03-15",
+  "birthHour": "辰时",
+  "gender": "male",
+  "targetDate": "2026-03-06"
+}
+```
+
+**响应**
+```json
+{
+  "success": true,
+  "data": {
+    "date": "2026-03-06",
+    "lunarDate": "二月初八",
+    "dayGanzhi": "丙寅",
+    "overall": 4,
+    "ratings": { "career": 5, "wealth": 4, "love": 3, "health": 4 },
+    "suitable": ["谈判", "签约"],
+    "avoid": ["冲动消费"],
+    "lucky": { "color": "红色", "numbers": [3, 8], "direction": "南方" },
+    "advice": "..."
+  }
+}
+```
 
 ## 代码规范
 
 ```typescript
-// API Route 示例 (app/api/bazi/route.ts)
+// API Route (src/app/api/bazi/route.ts)
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { prisma } from '@/lib/prisma';
+import { calculateBazi } from '@/lib/bazi/calculator';
+import { generateBaziAnalysis } from '@/lib/ai/client';
 
 const requestSchema = z.object({
-  birthDate: z.string(),
-  birthTime: z.string().optional(),
-  location: z.string().optional(),
+  name: z.string().optional(),
+  gender: z.enum(['male', 'female']),
+  birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  birthHour: z.string().optional(),
 });
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const data = requestSchema.parse(body);
+    const input = requestSchema.parse(body);
     
-    // 业务逻辑
-    const result = await calculateBazi(data);
+    // 1. 计算八字
+    const baziResult = calculateBazi(input);
     
-    return NextResponse.json({ success: true, data: result });
+    // 2. AI 解读
+    const analysis = await generateBaziAnalysis(baziResult, input.name);
+    
+    return NextResponse.json({
+      success: true,
+      data: { bazi: baziResult, analysis },
+    });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { success: false, error: '输入数据格式错误' },
+        { status: 400 }
+      );
+    }
     return NextResponse.json(
-      { success: false, error: 'Invalid request' },
-      { status: 400 }
+      { success: false, error: '服务器错误' },
+      { status: 500 }
     );
   }
 }
 ```
 
-```typescript
-// Server Action 示例
-'use server';
-
-import { revalidatePath } from 'next/cache';
-import { prisma } from '@/lib/prisma';
-
-export async function saveBaziResult(userId: string, result: BaziResult) {
-  await prisma.baziHistory.create({
-    data: {
-      userId,
-      result: JSON.stringify(result),
-    },
-  });
-  revalidatePath('/history');
-}
-```
-
 ## 目录约定
 
-- `src/app/api/` - API Routes
-- `src/lib/` - 工具函数和服务
-- `src/lib/bazi/` - 八字计算核心
-- `prisma/schema.prisma` - 数据模型
+- `src/app/api/bazi/route.ts` - 八字 API
+- `src/app/api/daily/route.ts` - 运势 API
+- `src/lib/bazi/` - 八字计算
+- `src/lib/ai/` - AI 服务
+
+## 环境变量
+
+```env
+ANTHROPIC_API_KEY=sk-ant-xxx
+```
 
 ## 注意事项
 
-- 所有输入都要验证（使用 Zod）
-- 敏感操作需要认证
-- 错误要有统一格式
-- 数据库操作要考虑事务
+- 所有输入用 Zod 验证
+- 错误返回统一格式 `{ success: false, error: "..." }`
+- AI 调用要有超时和重试
+- 不要在代码中硬编码 API Key

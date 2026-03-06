@@ -15,25 +15,58 @@ model: sonnet
 - **语言**: TypeScript
 - **样式**: Tailwind CSS
 - **组件库**: shadcn/ui
-- **动画**: Framer Motion
-- **状态管理**: Zustand / Jotai
+- **字体**: Noto Serif SC (标题), 系统字体 (正文)
+
+## 设计规范
+
+### 配色方案
+
+```css
+/* 主色 */
+--cyber-dark: #0f0f1a;    /* 最深背景 */
+--cyber-bg: #1a1a2e;      /* 主背景 */
+--cyber-card: #16213e;    /* 卡片背景 */
+
+/* 强调色 */
+--cyber-gold: #ffd700;    /* 皇金 */
+--cyber-gold-dark: #b8860b; /* 暗金 */
+
+/* 五行色 */
+--wuxing-metal: #ffd700;  /* 金 */
+--wuxing-wood: #4ade80;   /* 木 */
+--wuxing-water: #38bdf8;  /* 水 */
+--wuxing-fire: #f97316;   /* 火 */
+--wuxing-earth: #a78b5a;  /* 土 */
+
+/* 文字色 */
+--text-primary: #f5f5f5;
+--text-secondary: #a0a0a0;
+--text-muted: #666666;
+```
+
+### 组件样式要点
+
+**主按钮**：金色渐变背景 (#ffd700 → #f4a460)，hover 上浮 + 发光
+**卡片**：半透明深色背景，金色微光边框，hover 发光
+**输入框**：深色背景，focus 金色边框
 
 ## 职责
 
-1. **组件开发**
-   - 创建可复用的 React 组件
-   - 遵循 shadcn/ui 的设计规范
-   - 保持组件的类型安全
+1. **页面开发**
+   - 首页（Hero + 功能卡片 + 产品特色）
+   - 八字计算页（表单 + 结果展示）
+   - 每日运势页
+   - 隐私政策/服务条款
 
-2. **页面实现**
-   - 使用 Next.js App Router
-   - 实现响应式设计
-   - 优化页面性能（SSR/SSG）
+2. **组件开发**
+   - 布局组件（Header/Footer/NavMenu）
+   - 八字组件（BaziForm/BaziChart/WuxingChart）
+   - 通用组件（Loading/Error/Disclaimer）
 
-3. **样式处理**
-   - 使用 Tailwind CSS
-   - 保持设计一致性
-   - 支持深色模式
+3. **响应式适配**
+   - 手机 (<640px)：单栏
+   - 平板 (768-1024px)：双栏
+   - 桌面 (>1024px)：多栏
 
 ## 代码规范
 
@@ -41,34 +74,42 @@ model: sonnet
 // 组件示例
 'use client';
 
-import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
-interface ComponentProps {
-  className?: string;
+interface ButtonProps {
+  variant?: 'primary' | 'secondary' | 'ghost';
   children: React.ReactNode;
+  className?: string;
 }
 
-export function Component({ className, children }: ComponentProps) {
+export function Button({ variant = 'primary', children, className }: ButtonProps) {
   return (
-    <div className={cn('base-styles', className)}>
+    <button
+      className={cn(
+        'px-6 py-3 rounded-lg font-semibold transition-all duration-200',
+        variant === 'primary' && 'bg-gradient-to-r from-cyber-gold to-orange-400 text-cyber-bg hover:-translate-y-0.5 hover:shadow-glow',
+        variant === 'secondary' && 'border border-cyber-gold text-cyber-gold hover:bg-cyber-gold/10',
+        variant === 'ghost' && 'border border-gray-600 text-gray-400 hover:border-gray-400',
+        className
+      )}
+    >
       {children}
-    </div>
+    </button>
   );
 }
 ```
 
 ## 目录约定
 
-- `src/components/ui/` - 基础 UI 组件
-- `src/components/[feature]/` - 功能组件
 - `src/app/` - 页面路由
-- `src/hooks/` - 自定义 Hooks
-- `src/stores/` - 状态管理
+- `src/components/ui/` - 基础 UI 组件
+- `src/components/layout/` - 布局组件
+- `src/components/bazi/` - 八字相关组件
+- `src/components/daily/` - 运势相关组件
 
 ## 注意事项
 
 - 优先使用 Server Components
-- 只在需要交互时使用 'use client'
-- 保持组件小而专注
-- 写好 TypeScript 类型
+- 客户端交互才用 'use client'
+- 深色主题，金色强调
+- 移动端优先设计
