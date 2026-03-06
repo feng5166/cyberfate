@@ -34,7 +34,7 @@
 | 服务 | 用途 | 备注 |
 |------|------|------|
 | **Vercel** | 部署 | Next.js 官方推荐，自动 CI/CD |
-| **OpenAI API** | AI 解读 | GPT-4-turbo，按需切换 Claude |
+| **Anthropic API** | AI 解读 | Claude 3.5 Sonnet |
 
 ### 1.4 MVP 不做的技术
 
@@ -346,7 +346,7 @@ export function buildDailyFortunePrompt(result: BaziResult, targetDate: string):
 #### AI 客户端 (`src/lib/ai/client.ts`)
 
 ```typescript
-import { openai } from '@ai-sdk/openai';
+import { anthropic } from '@ai-sdk/anthropic';
 import { generateText } from 'ai';
 import { buildBaziAnalysisPrompt } from './prompts';
 import { BaziResult } from '../bazi/types';
@@ -367,7 +367,7 @@ export async function generateBaziAnalysis(
   const prompt = buildBaziAnalysisPrompt(result, name);
   
   const response = await generateText({
-    model: openai('gpt-4-turbo'),
+    model: anthropic('claude-3-5-sonnet-20241022'),
     prompt,
     maxTokens: 1500,
   });
@@ -726,7 +726,7 @@ export default function RootLayout({ children }) {
 
 ## 七、开发规范
 
-### 6.1 代码规范
+### 7.1 代码规范
 
 - 使用 TypeScript 严格模式
 - 所有函数必须有类型标注
@@ -734,7 +734,7 @@ export default function RootLayout({ children }) {
 - 优先使用 Server Components
 - 客户端组件添加 'use client' 指令
 
-### 6.2 Git 规范
+### 7.2 Git 规范
 
 ```
 feat: 新功能
@@ -753,7 +753,7 @@ fix(api): 修复 AI 响应解析错误
 docs: 更新技术设计文档
 ```
 
-### 6.3 文件命名
+### 7.3 文件命名
 
 - 组件：PascalCase (`BaziForm.tsx`)
 - 工具函数：camelCase (`calculator.ts`)
@@ -766,9 +766,9 @@ docs: 更新技术设计文档
 
 请 Frank 确认以下事项：
 
-### 7.1 技术选型
+### 8.1 技术选型
 
-- [ ] **AI 模型**：默认使用 GPT-4-turbo，是否需要备选方案（Claude）？
+- [x] **AI 模型**：使用 Claude 3.5 Sonnet ✅
 - [ ] **部署平台**：确认使用 Vercel？
 - [ ] **域名**：是否已准备好域名？
 
@@ -780,7 +780,7 @@ docs: 更新技术设计文档
 
 ### 7.3 资源
 
-- [ ] **OpenAI API Key**：需要提供或使用已有的？
+- [ ] **Anthropic API Key**：需要提供或使用已有的？
 - [ ] **设计稿**：是否有 UI 设计稿，还是按 PRD 描述开发？
 
 ---
