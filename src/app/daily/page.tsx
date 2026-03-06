@@ -58,6 +58,8 @@ function StarRating({ rating, max = 5 }: { rating: number; max?: number }) {
   );
 }
 
+const STORAGE_KEY = 'cyberfate_user_birth';
+
 export default function DailyPage() {
   const [formData, setFormData] = useState({
     birthDate: '',
@@ -67,13 +69,50 @@ export default function DailyPage() {
   const [error, setError] = useState('');
   const [result, setResult] = useState<DailyResult | null>(null);
   const [today, setToday] = useState('');
+  const [hasSavedData, setHasSavedData] = useState(false);
 
   useEffect(() => {
     // 获取今天的日期
     const now = new Date();
     const dateStr = now.toISOString().split('T')[0];
     setToday(dateStr);
+    
+    // 从 localStorage 读取保存的出生信息
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const { birthDate, birthHour } = JSON.parse(saved);
+        if (birthDate && birthHour) {
+          setFormData({ birthDate, birthHour });
+          setHasSavedData(true);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load saved data:', e);
+    }
   }, []);
+  
+  // 保存到 localStorage
+  const saveToStorage = (data: { birthDate: string; birthHour: string }) => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      setHasSavedData(true);
+    } catch (e) {
+      console.error('Failed to save data:', e);
+    }
+  };
+  
+  // 清除保存的数据
+  const clearSavedData = () => {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      setFormData({ birthDate: '', birthHour: '' });
+      setHasSavedData(false);
+      setResult(null);
+    } catch (e) {
+      console.error('Failed to clear data:', e);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,6 +147,8 @@ export default function DailyPage() {
 
       const data = await response.json();
       setResult(data);
+      // 保存到 localStorage
+      saveToStorage(formData);
     } catch (err) {
       setError(err instanceof Error ? err.message : '未知错误');
     } finally {
@@ -136,9 +177,20 @@ export default function DailyPage() {
         {/* 输入表单 */}
         <Card className="mb-8">
           <form onSubmit={handleSubmit} className="space-y-6">
-            <p className="text-text-muted text-sm mb-4">
-              输入您的出生信息，获取专属今日运势
-            </p>
+            <div className="flex justify-between items-center">
+              <p className="text-text-muted text-sm">
+                {hasSavedData ? '已记住您的出生信息' : '输入您的出生信息，获取专属今日运势'}
+              </p>
+              {hasSavedData && (
+                <button
+                  type="button"
+                  onClick={clearSavedData}
+                  className="text-xs text-text-muted hover:text-cyber-gold transition-colors"
+                >
+                  重新输入
+                </button>
+              )}
+            </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <Input

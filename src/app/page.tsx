@@ -117,15 +117,21 @@ export default function HomePage() {
                 href={feature.available ? feature.href : '#'}
                 className={feature.available ? '' : 'cursor-not-allowed'}
               >
-                <Card hover={feature.available} className="h-full">
+                <Card 
+                  hover={feature.available} 
+                  className={`h-full relative ${!feature.available ? 'opacity-60' : ''}`}
+                >
+                  {/* 即将上线遮罩 */}
+                  {!feature.available && (
+                    <div className="absolute inset-0 bg-cyber-dark/40 rounded-xl flex items-center justify-center z-10">
+                      <span className="bg-cyber-gold/20 text-cyber-gold text-xs px-3 py-1 rounded-full border border-cyber-gold/30">
+                        即将上线
+                      </span>
+                    </div>
+                  )}
                   <div className="text-4xl mb-4">{feature.icon}</div>
                   <h3 className="font-heading text-lg font-semibold mb-2 text-text-primary">
                     {feature.title}
-                    {!feature.available && (
-                      <span className="ml-2 text-xs text-text-muted font-normal">
-                        (即将上线)
-                      </span>
-                    )}
                   </h3>
                   <p className="text-sm text-text-secondary">
                     {feature.description}
