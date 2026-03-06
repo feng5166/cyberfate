@@ -780,8 +780,22 @@ docs: 更新技术设计文档
 
 ### 8.3 资源 ✅
 
-- [x] **Anthropic API Key**：开发时需要再向 Frank 申请
+- [x] **Anthropic API Key**：已配置
 - [x] **设计稿**：按 PRD 第六章 UI 设计规范开发，参考 DESIGN_SPEC.md
+
+### 8.4 环境变量配置 ✅
+
+**项目 API 配置** (`.env.local`)：
+```bash
+ANTHROPIC_API_KEY=sk-iNy7FZIY...VnqO  # 代理 Key
+ANTHROPIC_BASE_URL=https://hk-api.gptbest.vip  # 香港中转站
+```
+
+**Claude Code 开发环境** (`~/.zshrc`)：
+```bash
+CLAUDE_API_KEY=sk-ant-api03-...  # Anthropic 官方 Key
+CLAUDE_CODE_BASE_URL=https://hk-api.gptbest.vip  # 香港中转站
+```
 
 ---
 
