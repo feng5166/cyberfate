@@ -1,75 +1,92 @@
-# CyberFate
+# CyberFate 赛博命理师
 
-> 赛博算命 - AI 驱动的命运探索工具
+> AI 驱动的东方命理分析网站
 
 ## 项目状态
 
-🚧 **初始化阶段** - 等待产品需求
+🚀 **开发中** - M1 技术搭建阶段
+
+## 技术栈
+
+| 层级 | 技术 |
+|------|------|
+| 框架 | Next.js 14 (App Router) |
+| 语言 | TypeScript |
+| 样式 | Tailwind CSS + shadcn/ui |
+| 八字计算 | lunar-javascript |
+| AI | Claude 3.5 Sonnet (Vercel AI SDK) |
+| 部署 | Vercel |
 
 ## 团队分工
 
-本项目使用 Claude Code 的多 agent 协作模式开发。
-
 ### 主程：代码虾 🦐
 
-负责：
-- 整体架构设计
-- 团队分工协调
-- 代码质量把控
-- 核心功能实现
+负责：整体架构、任务协调、核心功能
 
-### Agent 分工 ✅
-
-已配置 7 个专业子代理（`.claude/agents/`）：
+### 子代理 (`.claude/agents/`)
 
 | 代理 | 职责 | 模型 |
 |------|------|------|
-| `frontend-dev` | 前端开发 (React/Next.js/Tailwind) | Sonnet |
-| `backend-dev` | 后端开发 (API/Prisma/数据库) | Sonnet |
-| `bazi-engine` | 命理算法 (八字/五行/十神) | Sonnet |
-| `ai-integrator` | AI 集成 (LLM/Prompt 工程) | Sonnet |
-| `test-engineer` | 测试 (Vitest/Playwright) | Sonnet |
+| `frontend-dev` | 前端开发 (页面/组件/样式) | Sonnet |
+| `backend-dev` | 后端开发 (API/业务逻辑) | Sonnet |
+| `bazi-engine` | 命理算法 (八字计算) | Sonnet |
+| `ai-integrator` | AI 集成 (Claude/Prompt) | Sonnet |
+| `test-engineer` | 测试 | Sonnet |
 | `code-reviewer` | 代码审查（只读） | Sonnet |
-| `explorer` | 代码探索（只读，快速） | Haiku |
+| `explorer` | 代码探索（只读） | Haiku |
 
-**使用方式**：在 Claude Code 中，子代理会根据任务描述自动调用，也可以显式指定：
-```
-使用 frontend-dev 创建一个八字输入表单组件
-让 bazi-engine 实现天干地支的计算逻辑
-用 code-reviewer 审查最近的变更
-```
+## MVP 功能
 
-详见 `docs/claude-code-team-design.md`
+- ✅ 首页（功能导航）
+- ✅ 八字计算页
+- ✅ 每日运势页
+- ✅ 隐私政策/服务条款
 
 ## 开发规范
 
-### Git 工作流
+### Git 提交格式
+```
+feat: 新功能
+fix: 修复
+docs: 文档
+style: 样式
+refactor: 重构
+test: 测试
+```
 
-- 主分支：`main`
-- 功能分支：`feature/<功能名>`
-- 修复分支：`fix/<问题描述>`
-
-### 代码风格
-
-（待产品需求确定后补充技术栈相关规范）
+### 代码规范
+- TypeScript 严格模式
+- 优先 Server Components
+- 客户端组件加 'use client'
 
 ## 目录结构
 
 ```
 cyberfate/
-├── docs/              # 设计文档
-├── src/               # 源代码（待创建）
-├── tests/             # 测试代码（待创建）
-└── CLAUDE.md          # 本文件
+├── src/
+│   ├── app/           # 页面路由
+│   ├── components/    # 组件
+│   ├── lib/           # 核心库
+│   └── hooks/         # Hooks
+├── docs/              # 文档
+├── .claude/agents/    # 子代理配置
+└── CLAUDE.md
 ```
 
-## 待办事项
+## 文档
 
-- [ ] 等待产品虾的需求文档
-- [ ] 确定技术栈
-- [ ] 设计系统架构
-- [ ] 配置 Claude Code 子代理
-- [ ] 开始开发
+- PRD: `docs/PRD.md`
+- 设计规范: `docs/DESIGN_SPEC.md`
+- 技术设计: `docs/tech-design.md`
+
+## 排期
+
+| 阶段 | 时间 | 状态 |
+|------|------|------|
+| M1 技术搭建 | Day 1-3 | 🔄 进行中 |
+| M2 核心页面 | Day 4-8 | ⏳ |
+| M3 功能完善 | Day 9-11 | ⏳ |
+| M4 测试上线 | Day 12-14 | ⏳ |
 
 ---
 
