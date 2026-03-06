@@ -9,7 +9,7 @@
 
 ## 一、技术栈确认
 
-基于 PRD 要求和竞品分析，确认以下技术栈：
+基于 PRD 要求、竞品分析和美术虾的设计规范 (`DESIGN_SPEC.md`)，确认以下技术栈：
 
 ### 1.1 前端技术
 
@@ -587,7 +587,144 @@ export function clearUserData(): void {
 
 ---
 
-## 六、开发规范
+## 六、设计规范落地
+
+基于美术虾的 `DESIGN_SPEC.md`，以下是技术实现要点：
+
+### 6.1 Tailwind 配置扩展
+
+```typescript
+// tailwind.config.ts
+import type { Config } from 'tailwindcss';
+
+const config: Config = {
+  content: ['./src/**/*.{js,ts,jsx,tsx,mdx}'],
+  theme: {
+    extend: {
+      colors: {
+        cyber: {
+          dark: '#0f0f1a',
+          bg: '#1a1a2e',
+          card: '#16213e',
+          gold: '#ffd700',
+          'gold-dark': '#b8860b',
+        },
+        wuxing: {
+          metal: '#ffd700',
+          wood: '#4ade80',
+          water: '#38bdf8',
+          fire: '#f97316',
+          earth: '#a78b5a',
+        },
+      },
+      fontFamily: {
+        heading: ['Noto Serif SC', 'serif'],
+        body: ['PingFang SC', 'system-ui', 'sans-serif'],
+      },
+      borderRadius: {
+        card: '16px',
+      },
+      boxShadow: {
+        glow: '0 0 20px rgba(255, 215, 0, 0.2)',
+        'glow-lg': '0 0 40px rgba(255, 215, 0, 0.3)',
+      },
+      backgroundImage: {
+        'gradient-gold': 'linear-gradient(135deg, #ffd700 0%, #f4a460 100%)',
+        'gradient-bg': 'linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f0f1a 100%)',
+      },
+    },
+  },
+  plugins: [],
+};
+
+export default config;
+```
+
+### 6.2 CSS 变量定义
+
+```css
+/* src/app/globals.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Colors */
+  --color-bg-primary: #1a1a2e;
+  --color-bg-secondary: #16213e;
+  --color-bg-dark: #0f0f1a;
+  --color-gold: #ffd700;
+  --color-text-primary: #f5f5f5;
+  --color-text-secondary: #a0a0a0;
+  
+  /* Typography */
+  --font-heading: 'Noto Serif SC', serif;
+  --font-body: 'PingFang SC', system-ui, sans-serif;
+  
+  /* Transitions */
+  --transition-fast: 200ms ease;
+  --transition-normal: 300ms ease;
+}
+
+/* 深色背景基础 */
+body {
+  background: var(--color-bg-dark);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+}
+```
+
+### 6.3 核心组件样式
+
+参照设计规范实现以下组件：
+
+| 组件 | 样式要点 | 参考 DESIGN_SPEC 章节 |
+|------|----------|----------------------|
+| Button (主) | 金色渐变背景，hover 上浮 | 5.1 |
+| Button (次) | 透明背景，金色边框 | 5.1 |
+| Card | 半透明深色背景，金色边框，hover 发光 | 5.2 |
+| Input | 深色背景，focus 金色边框 | 5.3 |
+| 命盘卡片 | 4列网格，移动端2x2 | 5.2 |
+| 五行条 | 带颜色的进度条 | 5.7 |
+| Loading | 太极旋转动画 | 5.8 |
+
+### 6.4 响应式断点
+
+遵循设计规范的断点设置：
+
+```typescript
+// 使用 Tailwind 默认断点
+// sm: 640px, md: 768px, lg: 1024px, xl: 1280px
+
+// 首页卡片: 手机1列 → 平板2列 → 桌面3列
+// 命盘: 手机2x2 → 平板+4列
+// 表单: 手机垂直 → 桌面水平
+```
+
+### 6.5 字体加载
+
+```typescript
+// src/app/layout.tsx
+import { Noto_Serif_SC } from 'next/font/google';
+
+const notoSerifSC = Noto_Serif_SC({
+  subsets: ['latin'],
+  weight: ['400', '600', '700'],
+  variable: '--font-heading',
+});
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="zh-CN" className={notoSerifSC.variable}>
+      <body>{children}</body>
+    </html>
+  );
+}
+```
+
+---
+
+## 七、开发规范
 
 ### 6.1 代码规范
 
@@ -625,7 +762,7 @@ docs: 更新技术设计文档
 
 ---
 
-## 七、待确认事项
+## 八、待确认事项
 
 请 Frank 确认以下事项：
 
@@ -648,7 +785,7 @@ docs: 更新技术设计文档
 
 ---
 
-## 八、下一步行动
+## 九、下一步行动
 
 Frank 审核通过后，我将：
 
