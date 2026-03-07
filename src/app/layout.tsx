@@ -3,6 +3,7 @@ import { Noto_Serif_SC } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { SessionProvider } from "@/components/providers/SessionProvider";
 
 const notoSerifSC = Noto_Serif_SC({
   subsets: ["latin"],
@@ -59,9 +60,11 @@ export default function RootLayout({
   return (
     <html lang="zh-CN" className={notoSerifSC.variable}>
       <body className="min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
+        <SessionProvider>
+          <Header />
+          <main className="flex-1">{children}</main>
+          <Footer />
+        </SessionProvider>
       </body>
     </html>
   );

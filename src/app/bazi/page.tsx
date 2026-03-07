@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { saveBirthInfo, loadBirthInfo } from '@/lib/utils/storage';
 
 // export const metadata = { title: '八字算命' }; // 客户端组件不能导出 metadata
 import { Button } from '@/components/ui/Button';
@@ -10,6 +11,7 @@ import { Select } from '@/components/ui/Select';
 import { BaguaSpinner } from '@/components/ui/BaguaSpinner';
 import { BaziChart } from '@/components/bazi/BaziChart';
 import { WuxingChart } from '@/components/bazi/WuxingChart';
+import { QuotaLimitModal } from '@/components/QuotaLimitModal';
 import Link from 'next/link';
 
 // 十二时辰选项
@@ -61,6 +63,20 @@ export default function BaziPage() {
     birthHour: '',
   });
   const [loading, setLoading] = useState(false);
+  const [showQuotaModal, setShowQuotaModal] = useState(false);
+
+  // 从 localStorage 恢复已保存的信息
+  useEffect(() => {
+    const saved = loadBirthInfo();
+    if (saved) {
+      setFormData(prev => ({
+        ...prev,
+        birthDate: saved.birthDate || '',
+        birthHour: saved.birthHour || '',
+        gender: saved.gender || '',
+      }));
+    }
+  }, []);
   const [error, setError] = useState('');
   const [result, setResult] = useState<BaziResult | null>(null);
 
@@ -79,7 +95,25 @@ export default function BaziPage() {
       return;
     }
 
+    // 检查配额（已登录用户）
+    const quotaRes = await fetch('/api/user/use-quota', { method: 'POST' });
+    if (quotaRes.ok) {
+      const quotaData = await quotaRes.json();
+      if (!quotaData.success) {
+        setShowQuotaModal(true);
+        return;
+      }
+    }
+    // 401 = 未登录，放行（游客可使用）
+
     setLoading(true);
+
+    // 保存到 localStorage
+    saveBirthInfo({
+      birthDate: formData.birthDate,
+      birthHour: formData.birthHour,
+      gender: formData.gender,
+    });
 
     try {
       const response = await fetch('/api/bazi', {
@@ -108,6 +142,7 @@ export default function BaziPage() {
 
   return (
     <div className="min-h-screen bg-gradient-cyber py-8 px-4">
+      {showQuotaModal && <QuotaLimitModal onClose={() => setShowQuotaModal(false)} />}
       <div className="max-w-4xl mx-auto">
         {/* 页面标题 */}
         <div className="text-center mb-8">

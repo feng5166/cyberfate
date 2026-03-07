@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { useSession, signOut } from 'next-auth/react';
 
 const navItems = [
   {
@@ -32,6 +33,8 @@ const navItems = [
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const { data: session } = useSession();
 
   return (
     <header className="sticky top-0 z-50 bg-cyber-bg/95 backdrop-blur-sm border-b border-cyber-gold/10">
@@ -98,6 +101,46 @@ export function Header() {
             ))}
           </div>
 
+          {/* Auth Area */}
+          <div className="hidden md:flex items-center gap-3">
+            {session ? (
+              <div
+                className="relative"
+                onMouseEnter={() => setUserMenuOpen(true)}
+                onMouseLeave={() => setUserMenuOpen(false)}
+              >
+                <button className="flex items-center gap-2 text-text-secondary hover:text-cyber-gold transition-colors py-2">
+                  <div className="w-8 h-8 rounded-full bg-cyber-gold/20 border border-cyber-gold/40 flex items-center justify-center text-cyber-gold text-sm font-semibold">
+                    {session.user?.name?.[0] ?? session.user?.email?.[0] ?? '?'}
+                  </div>
+                </button>
+                {userMenuOpen && (
+                  <div className="absolute right-0 top-full mt-1 py-2 bg-cyber-card rounded-lg shadow-lg border border-cyber-gold/10 min-w-[140px]">
+                    <Link
+                      href="/profile"
+                      className="block px-4 py-2 text-sm text-text-primary hover:text-cyber-gold hover:bg-cyber-bg/50 transition-colors"
+                    >
+                      个人中心
+                    </Link>
+                    <button
+                      onClick={() => signOut({ callbackUrl: '/' })}
+                      className="w-full text-left px-4 py-2 text-sm text-text-primary hover:text-red-400 hover:bg-cyber-bg/50 transition-colors"
+                    >
+                      退出登录
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="px-4 py-1.5 text-sm border border-cyber-gold/40 text-cyber-gold rounded-lg hover:bg-cyber-gold/10 transition-colors"
+              >
+                登录
+              </Link>
+            )}
+          </div>
+
           {/* Mobile Menu Button */}
           <button
             className="md:hidden p-2 text-text-secondary hover:text-cyber-gold"
@@ -116,6 +159,29 @@ export function Header() {
         {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-cyber-gold/10">
+            {/* Mobile Auth */}
+            <div className="px-2 pb-3 border-b border-cyber-gold/10 mb-3">
+              {session ? (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-text-secondary">{session.user?.email}</span>
+                  <button
+                    onClick={() => signOut({ callbackUrl: '/' })}
+                    className="text-sm text-red-400 hover:text-red-300"
+                  >
+                    退出
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  href="/login"
+                  className="block text-center py-2 border border-cyber-gold/40 text-cyber-gold rounded-lg text-sm hover:bg-cyber-gold/10 transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  登录 / 注册
+                </Link>
+              )}
+            </div>
+
             {navItems.map((item) => (
               <div key={item.label} className="py-2">
                 {item.children ? (

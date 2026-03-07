@@ -185,6 +185,11 @@ export default function HomePage() {
           </Link>
         </div>
       </section>
+
+      {/* Version */}
+      <div className="text-center py-4">
+        <span className="text-xs text-text-muted/50">v0.2</span>
+      </div>
     </div>
   );
 }

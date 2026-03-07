@@ -63,6 +63,7 @@ export default function DailyPage() {
   const [formData, setFormData] = useState({
     birthDate: '',
     birthHour: '',
+    gender: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -101,7 +102,7 @@ export default function DailyPage() {
 
     const saved = loadBirthInfo();
     if (saved?.birthDate && saved?.birthHour) {
-      setFormData({ birthDate: saved.birthDate, birthHour: saved.birthHour });
+      setFormData({ birthDate: saved.birthDate, birthHour: saved.birthHour, gender: saved.gender || '' });
       setHasSavedData(true);
       // 有保存数据时自动获取运势
       if (!autoSubmittedRef.current) {
@@ -113,7 +114,7 @@ export default function DailyPage() {
 
   const clearSavedData = () => {
     clearBirthInfo();
-    setFormData({ birthDate: '', birthHour: '' });
+    setFormData({ birthDate: '', birthHour: '', gender: '' });
     setHasSavedData(false);
     setResult(null);
   };

@@ -3,10 +3,11 @@ const STORAGE_KEY = 'cyberfate_user_birth';
 export interface UserBirthInfo {
   birthDate: string;
   birthHour: string; // "-1" to "11"
+  gender: string;
   savedAt: string;
 }
 
-export function saveBirthInfo(info: Pick<UserBirthInfo, 'birthDate' | 'birthHour'>): void {
+export function saveBirthInfo(info: Pick<UserBirthInfo, 'birthDate' | 'birthHour' | 'gender'>): void {
   try {
     const data: UserBirthInfo = { ...info, savedAt: new Date().toISOString() };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));

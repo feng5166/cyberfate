@@ -4,9 +4,8 @@ import { calculateBazi } from '@/lib/bazi';
 import { generateBaziAnalysis } from '@/lib/ai';
 import type { BaziAnalysis } from '@/lib/bazi/types';
 
-// 时辰映射：数字 -> 时辰名称
+// 时辰映射：数字 -> 时辰名称（不含 -1，单独处理）
 const HOUR_TO_SHICHEN: Record<number, string> = {
-  [-1]: '不知道',
   0: '子时',
   1: '丑时',
   2: '寅时',
@@ -34,8 +33,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const input = requestSchema.parse(body);
     
-    // 转换时辰
-    const shichen = HOUR_TO_SHICHEN[input.birthHour] || '午时';
+    // 转换时辰（-1 表示不知道，默认午时）
+    const shichen = input.birthHour === -1 ? '午时' : (HOUR_TO_SHICHEN[input.birthHour] || '午时');
     
     // 1. 计算八字
     const baziResult = calculateBazi({
