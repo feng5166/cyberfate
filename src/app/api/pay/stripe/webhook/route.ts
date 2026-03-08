@@ -48,21 +48,30 @@ export async function POST(req: NextRequest) {
       }
       
       // 创建或更新订阅
-      await prisma.subscription.upsert({
-        where: { userId },
-        update: {
-          plan,
-          status: 'active',
-          expireAt,
-        },
-        create: {
-          userId,
-          plan,
-          status: 'active',
-          startAt: now,
-          expireAt,
-        }
+      const existingSub = await prisma.subscription.findFirst({
+        where: { userId }
       })
+      
+      if (existingSub) {
+        await prisma.subscription.update({
+          where: { id: existingSub.id },
+          data: {
+            plan: plan as 'monthly' | 'quarterly' | 'yearly',
+            status: 'active',
+            expireAt,
+          }
+        })
+      } else {
+        await prisma.subscription.create({
+          data: {
+            userId,
+            plan: plan as 'monthly' | 'quarterly' | 'yearly',
+            status: 'active',
+            startAt: now,
+            expireAt,
+          }
+        })
+      }
     }
     
     return NextResponse.json({ received: true })
