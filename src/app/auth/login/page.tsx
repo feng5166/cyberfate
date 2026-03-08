@@ -210,7 +210,7 @@ function LoginForm() {
           <Button
             type="submit"
             disabled={loading || checking}
-            className="w-full"
+            className="w-full mt-4"
           >
             {loading
               ? '处理中...'
