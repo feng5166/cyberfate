@@ -20,6 +20,7 @@ export function DatePicker({
 }: DatePickerProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [showYearPicker, setShowYearPicker] = useState(false)
+  const [showMonthPicker, setShowMonthPicker] = useState(false)
   const [viewYear, setViewYear] = useState(() => {
     if (value) return parseInt(value.split('-')[0])
     return 1990
@@ -30,6 +31,7 @@ export function DatePicker({
   })
   const containerRef = useRef<HTMLDivElement>(null)
   const yearListRef = useRef<HTMLDivElement>(null)
+  const monthListRef = useRef<HTMLDivElement>(null)
 
   const selectedDate = value ? {
     year: parseInt(value.split('-')[0]),
@@ -42,6 +44,7 @@ export function DatePicker({
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setIsOpen(false)
         setShowYearPicker(false)
+        setShowMonthPicker(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -57,6 +60,16 @@ export function DatePicker({
       }
     }
   }, [showYearPicker])
+
+  // 滚动到选中的月份
+  useEffect(() => {
+    if (showMonthPicker && monthListRef.current) {
+      const selectedItem = monthListRef.current.querySelector('[data-selected="true"]')
+      if (selectedItem) {
+        selectedItem.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      }
+    }
+  }, [showMonthPicker])
 
   const years = Array.from({ length: maxYear - minYear + 1 }, (_, i) => maxYear - i)
   const months = Array.from({ length: 12 }, (_, i) => i + 1)
@@ -135,7 +148,7 @@ export function DatePicker({
 
       {isOpen && (
         <div className="absolute z-50 mt-1 bg-white border border-border rounded-lg shadow-lg p-4 w-[320px]">
-          {!showYearPicker ? (
+          {!showYearPicker && !showMonthPicker ? (
             <>
               <div className="flex items-center justify-between mb-4">
                 <button 
@@ -156,15 +169,14 @@ export function DatePicker({
                     <ChevronDown className="w-4 h-4" />
                   </button>
                   
-                  <select
-                    value={viewMonth}
-                    onChange={(e) => setViewMonth(parseInt(e.target.value))}
-                    className="px-2 py-1 border border-border rounded text-sm bg-white"
+                  <button
+                    type="button"
+                    onClick={() => setShowMonthPicker(true)}
+                    className="px-3 py-1 border border-border rounded text-sm bg-white hover:bg-background-alt flex items-center gap-1"
                   >
-                    {months.map(m => (
-                      <option key={m} value={m}>{m}月</option>
-                    ))}
-                  </select>
+                    {viewMonth}月
+                    <ChevronDown className="w-4 h-4" />
+                  </button>
                 </div>
                 
                 <button 
@@ -207,7 +219,7 @@ export function DatePicker({
                 ))}
               </div>
             </>
-          ) : (
+          ) : showYearPicker ? (
             <div className="h-[300px] flex flex-col">
               <div className="flex items-center justify-between mb-2 pb-2 border-b">
                 <span className="text-sm font-medium">选择年份</span>
@@ -241,6 +253,44 @@ export function DatePicker({
                     `}
                   >
                     {year}年
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="h-[300px] flex flex-col">
+              <div className="flex items-center justify-between mb-2 pb-2 border-b">
+                <span className="text-sm font-medium">选择月份</span>
+                <button
+                  type="button"
+                  onClick={() => setShowMonthPicker(false)}
+                  className="text-sm text-primary hover:underline"
+                >
+                  完成
+                </button>
+              </div>
+              
+              <div 
+                ref={monthListRef}
+                className="flex-1 overflow-y-auto"
+              >
+                {months.map(month => (
+                  <button
+                    key={month}
+                    type="button"
+                    data-selected={month === viewMonth}
+                    onClick={() => {
+                      setViewMonth(month)
+                      setShowMonthPicker(false)
+                    }}
+                    className={`
+                      w-full py-2 text-center rounded
+                      ${month === viewMonth 
+                        ? 'bg-black text-white font-medium' 
+                        : 'hover:bg-background-alt'}
+                    `}
+                  >
+                    {month}月
                   </button>
                 ))}
               </div>
