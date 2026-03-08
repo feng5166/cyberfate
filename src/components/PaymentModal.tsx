@@ -10,44 +10,16 @@ interface PaymentModalProps {
   onClose: () => void
 }
 
-const PLAN_MAP: Record<string, string> = {
-  '月卡': 'monthly',
-  '季卡': 'quarterly',
-  '年卡': 'yearly',
-}
-
 export function PaymentModal({ planName, price, onClose }: PaymentModalProps) {
   const { data: session } = useSession()
   const router = useRouter()
-  const [loading, setLoading] = useState(false)
 
-  const handlePayment = async () => {
+  const handlePayment = () => {
     if (!session) {
       router.push('/login')
       return
     }
-
-    setLoading(true)
-    try {
-      const plan = PLAN_MAP[planName]
-      const res = await fetch('/api/pay/stripe/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan }),
-      })
-
-      const data = await res.json()
-      
-      if (data.url) {
-        window.location.href = data.url
-      } else {
-        alert('支付创建失败，请稍后重试')
-      }
-    } catch (error) {
-      alert('支付创建失败，请稍后重试')
-    } finally {
-      setLoading(false)
-    }
+    alert('支付功能开发中，敬请期待')
   }
 
   return (
@@ -71,14 +43,13 @@ export function PaymentModal({ planName, price, onClose }: PaymentModalProps) {
 
           <button
             onClick={handlePayment}
-            disabled={loading}
-            className="w-full bg-gradient-to-r from-cyber-gold-dark to-cyber-gold text-cyber-bg font-semibold py-3 rounded-lg hover:shadow-glow transition-all duration-200 disabled:opacity-50"
+            className="w-full bg-gradient-to-r from-cyber-gold-dark to-cyber-gold text-cyber-bg font-semibold py-3 rounded-lg hover:shadow-glow transition-all duration-200"
           >
-            {loading ? '处理中...' : '立即支付'}
+            立即支付
           </button>
 
           <p className="text-text-muted text-xs mt-4">
-            支持 Stripe 信用卡支付
+            支付功能开发中
           </p>
         </div>
       </div>
