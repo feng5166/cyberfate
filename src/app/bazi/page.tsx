@@ -13,6 +13,7 @@ import { BaguaSpinner } from '@/components/ui/BaguaSpinner';
 import { BaziChart } from '@/components/bazi/BaziChart';
 import { WuxingChart } from '@/components/bazi/WuxingChart';
 import { QuotaLimitModal } from '@/components/QuotaLimitModal';
+import { Sparkles } from 'lucide-react';
 import Link from 'next/link';
 
 // 十二时辰选项
@@ -141,9 +142,12 @@ export default function BaziPage() {
       <div className="max-w-4xl mx-auto">
         {/* 页面标题 */}
         <div className="text-center mb-8">
-          <h1 className="font-heading text-3xl sm:text-4xl font-bold text-primary mb-2">
-            🔮 八字算命
-          </h1>
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <Sparkles className="w-8 h-8" />
+            <h1 className="font-heading text-3xl sm:text-4xl font-bold text-primary">
+              八字算命
+            </h1>
+          </div>
           <p className="text-secondary">
             输入出生信息，AI 为你解读命理
           </p>
@@ -153,18 +157,33 @@ export default function BaziPage() {
         <Card className="mb-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <Input
-                label="姓名（选填）"
-                placeholder="输入您的姓名"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              />
-              <Select
-                label="性别（选填）"
-                options={genderOptions}
-                value={formData.gender}
-                onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-              />
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-secondary">
+                  姓名 <span className="text-muted text-xs">（选填）</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="输入您的姓名"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-4 py-3 rounded bg-white border border-border text-primary placeholder:text-muted focus:outline-none focus:border-primary transition-colors"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-secondary">
+                  性别 <span className="text-muted text-xs">（选填）</span>
+                </label>
+                <select
+                  value={formData.gender}
+                  onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                  className="w-full px-4 py-3 rounded bg-white border border-border text-primary focus:outline-none focus:border-primary transition-colors"
+                >
+                  {genderOptions.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
