@@ -22,7 +22,7 @@ function LoginForm() {
   const [checking, setChecking] = useState(false)
 
   const inputClass =
-    'w-full px-4 py-3 bg-cyber-bg border border-cyber-gold/20 rounded-lg text-text-primary placeholder-text-muted focus:outline-none focus:border-cyber-gold/60 transition-colors'
+    'w-full px-4 py-3 bg-white border border-primary/20 rounded-lg text-primary placeholder-text-muted focus:outline-none focus:border-primary/60 transition-colors'
 
   const handleGoogle = async () => {
     if (!agreed) {
@@ -102,13 +102,13 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-cyber flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background-alt flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="font-heading text-3xl font-bold text-cyber-gold mb-2">
+          <h1 className="font-heading text-3xl font-bold text-primary mb-2">
             {mode === 'unknown' ? '登录 / 注册' : mode === 'login' ? '登录' : '注册'}
           </h1>
-          <p className="text-text-muted text-sm">探索你的命运之旅</p>
+          <p className="text-muted text-sm">探索你的命运之旅</p>
         </div>
 
         <button
@@ -139,10 +139,10 @@ function LoginForm() {
 
         <div className="relative mb-6">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-cyber-gold/20"></div>
+            <div className="w-full border-t border-primary/20"></div>
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-cyber-card text-text-muted">或使用邮箱</span>
+            <span className="px-2 bg-white text-muted">或使用邮箱</span>
           </div>
         </div>
 
@@ -184,13 +184,13 @@ function LoginForm() {
               onChange={(e) => setAgreed(e.target.checked)}
               className="mt-1"
             />
-            <label htmlFor="agree" className="text-xs text-text-muted">
+            <label htmlFor="agree" className="text-xs text-muted">
               我已阅读并同意
-              <a href="/terms" className="text-cyber-gold hover:underline">
+              <a href="/terms" className="text-primary hover:underline">
                 用户协议
               </a>
               和
-              <a href="/privacy" className="text-cyber-gold hover:underline">
+              <a href="/privacy" className="text-primary hover:underline">
                 隐私政策
               </a>
             </label>
@@ -219,7 +219,7 @@ function LoginForm() {
 
 export default function AuthLoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-gradient-cyber flex items-center justify-center"><div className="text-cyber-gold">加载中...</div></div>}>
+    <Suspense fallback={<div className="min-h-screen bg-background-alt flex items-center justify-center"><div className="text-primary">加载中...</div></div>}>
       <LoginForm />
     </Suspense>
   )

@@ -21,18 +21,18 @@ const footerLinks = [
 
 export function Footer() {
   return (
-    <footer className="bg-cyber-bg border-t border-cyber-gold/10">
+    <footer className="bg-background-alt border-t border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2 mb-4">
               <span className="text-2xl">🔮</span>
-              <span className="font-heading text-xl font-semibold text-cyber-gold">
+              <span className="font-heading text-xl font-semibold text-primary">
                 赛博命理师
               </span>
             </div>
-            <p className="text-text-secondary text-sm leading-relaxed">
+            <p className="text-secondary text-sm leading-relaxed">
               融合传统命理与现代 AI 技术，<br />
               为你提供科学、理性的命理分析参考。
             </p>
@@ -41,7 +41,7 @@ export function Footer() {
           {/* Links */}
           {footerLinks.map((group) => (
             <div key={group.title}>
-              <h3 className="font-semibold text-text-primary mb-4">{group.title}</h3>
+              <h3 className="font-semibold text-primary mb-4">{group.title}</h3>
               <ul className="space-y-2">
                 {group.links.map((link) => (
                   <li key={link.href}>
@@ -49,8 +49,8 @@ export function Footer() {
                       href={link.soon ? '#' : link.href}
                       className={`text-sm ${
                         link.soon
-                          ? 'text-text-muted cursor-not-allowed'
-                          : 'text-text-secondary hover:text-cyber-gold'
+                          ? 'text-muted cursor-not-allowed'
+                          : 'text-secondary hover:text-primary'
                       } transition-colors`}
                     >
                       {link.label}
@@ -64,11 +64,11 @@ export function Footer() {
         </div>
 
         {/* Disclaimer & Copyright */}
-        <div className="mt-12 pt-8 border-t border-cyber-gold/10">
-          <p className="text-text-muted text-xs text-center mb-4">
+        <div className="mt-12 pt-8 border-t border-border">
+          <p className="text-muted text-xs text-center mb-4">
             免责声明：本站所有命理分析仅供娱乐参考，不构成任何决策建议。重要决策请结合个人实际情况综合考虑。
           </p>
-          <p className="text-text-muted text-xs text-center">
+          <p className="text-muted text-xs text-center">
             © {new Date().getFullYear()} CyberFate 赛博命理师. All rights reserved.
           </p>
         </div>

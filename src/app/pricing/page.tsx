@@ -42,14 +42,14 @@ export default function PricingPage() {
   const [modal, setModal] = useState<{ planName: string; price: string } | null>(null);
 
   return (
-    <div className="bg-gradient-cyber min-h-screen px-4 py-16 sm:py-24">
+    <div className="bg-background-alt min-h-screen px-4 py-16 sm:py-24">
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="text-center mb-16">
-          <h1 className="font-heading text-3xl sm:text-5xl font-bold text-cyber-gold mb-4">
+          <h1 className="font-heading text-3xl sm:text-5xl font-bold text-primary mb-4">
             会员套餐
           </h1>
-          <p className="text-text-secondary text-lg max-w-xl mx-auto">
+          <p className="text-secondary text-lg max-w-xl mx-auto">
             解锁完整命理体验，AI 深度分析伴你左右
           </p>
         </div>
@@ -70,19 +70,19 @@ export default function PricingPage() {
                 className={`h-full flex flex-col ${plan.recommended ? 'ring-1 ring-cyber-gold/40' : ''}`}
               >
                 <div className="text-center mb-6">
-                  <h2 className="font-heading text-xl font-bold text-text-primary mb-3">
+                  <h2 className="font-heading text-xl font-bold text-primary mb-3">
                     {plan.name}
                   </h2>
                   <div className="flex items-end justify-center gap-1">
-                    <span className="text-4xl font-bold text-cyber-gold">{plan.price}</span>
-                    <span className="text-text-muted text-sm mb-1">{plan.period}</span>
+                    <span className="text-4xl font-bold text-primary">{plan.price}</span>
+                    <span className="text-muted text-sm mb-1">{plan.period}</span>
                   </div>
                 </div>
 
                 <ul className="space-y-3 flex-1 mb-8">
                   {plan.perks.map((perk) => (
-                    <li key={perk} className="flex items-start gap-2 text-sm text-text-secondary">
-                      <span className="text-cyber-gold mt-0.5 shrink-0">✓</span>
+                    <li key={perk} className="flex items-start gap-2 text-sm text-secondary">
+                      <span className="text-primary mt-0.5 shrink-0">✓</span>
                       {perk}
                     </li>
                   ))}
@@ -102,31 +102,31 @@ export default function PricingPage() {
 
         {/* Comparison Table */}
         <div>
-          <h2 className="font-heading text-xl font-bold text-center text-cyber-gold mb-8">
+          <h2 className="font-heading text-xl font-bold text-center text-primary mb-8">
             权益对比
           </h2>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-cyber-gold/20">
-                  <th className="text-left py-3 px-4 text-text-muted font-normal w-1/3">功能</th>
-                  <th className="text-center py-3 px-4 text-text-muted font-normal">免费</th>
-                  <th className="text-center py-3 px-4 text-text-muted font-normal">月卡</th>
-                  <th className="text-center py-3 px-4 text-cyber-gold font-semibold">季卡</th>
-                  <th className="text-center py-3 px-4 text-text-muted font-normal">年卡</th>
+                <tr className="border-b border-primary/20">
+                  <th className="text-left py-3 px-4 text-muted font-normal w-1/3">功能</th>
+                  <th className="text-center py-3 px-4 text-muted font-normal">免费</th>
+                  <th className="text-center py-3 px-4 text-muted font-normal">月卡</th>
+                  <th className="text-center py-3 px-4 text-primary font-semibold">季卡</th>
+                  <th className="text-center py-3 px-4 text-muted font-normal">年卡</th>
                 </tr>
               </thead>
               <tbody>
                 {comparisonRows.map((row, i) => (
                   <tr
                     key={row.feature}
-                    className={`border-b border-cyber-gold/10 ${i % 2 === 0 ? 'bg-cyber-card/30' : ''}`}
+                    className={`border-b border-primary/10 ${i % 2 === 0 ? 'bg-white/30' : ''}`}
                   >
-                    <td className="py-3 px-4 text-text-secondary">{row.feature}</td>
-                    <td className="py-3 px-4 text-center text-text-muted">{row.free}</td>
-                    <td className="py-3 px-4 text-center text-text-secondary">{row.monthly}</td>
-                    <td className="py-3 px-4 text-center text-cyber-gold font-medium">{row.quarterly}</td>
-                    <td className="py-3 px-4 text-center text-text-secondary">{row.yearly}</td>
+                    <td className="py-3 px-4 text-secondary">{row.feature}</td>
+                    <td className="py-3 px-4 text-center text-muted">{row.free}</td>
+                    <td className="py-3 px-4 text-center text-secondary">{row.monthly}</td>
+                    <td className="py-3 px-4 text-center text-primary font-medium">{row.quarterly}</td>
+                    <td className="py-3 px-4 text-center text-secondary">{row.yearly}</td>
                   </tr>
                 ))}
               </tbody>

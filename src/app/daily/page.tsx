@@ -51,7 +51,7 @@ function StarRating({ rating, max = 5 }: { rating: number; max?: number }) {
   return (
     <div className="flex gap-1">
       {Array.from({ length: max }).map((_, i) => (
-        <span key={i} className={i < rating ? 'text-cyber-gold' : 'text-text-muted'}>
+        <span key={i} className={i < rating ? 'text-primary' : 'text-muted'}>
           ★
         </span>
       ))}
@@ -162,18 +162,18 @@ export default function DailyPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-cyber py-8 px-4">
+    <div className="min-h-screen bg-background-alt py-8 px-4">
       <div className="max-w-4xl mx-auto">
         {/* 页面标题 */}
         <div className="text-center mb-8">
-          <h1 className="font-heading text-3xl sm:text-4xl font-bold text-cyber-gold mb-2">
+          <h1 className="font-heading text-3xl sm:text-4xl font-bold text-primary mb-2">
             📅 每日运势
           </h1>
-          <p className="text-text-secondary">
+          <p className="text-secondary">
             基于八字的个性化每日运势分析
           </p>
           {today && (
-            <p className="text-cyber-gold mt-2">
+            <p className="text-primary mt-2">
               {today}
             </p>
           )}
@@ -183,14 +183,14 @@ export default function DailyPage() {
         <Card className="mb-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="flex justify-between items-center">
-              <p className="text-text-muted text-sm">
+              <p className="text-muted text-sm">
                 {hasSavedData ? '已记住您的出生信息' : '输入您的出生信息，获取专属今日运势'}
               </p>
               {hasSavedData && (
                 <button
                   type="button"
                   onClick={clearSavedData}
-                  className="text-xs text-text-muted hover:text-cyber-gold transition-colors"
+                  className="text-xs text-muted hover:text-primary transition-colors"
                 >
                   重新输入
                 </button>
@@ -232,10 +232,10 @@ export default function DailyPage() {
             {/* 日期信息 */}
             <Card variant="highlight">
               <div className="text-center">
-                <div className="text-2xl font-heading text-cyber-gold mb-2">
+                <div className="text-2xl font-heading text-primary mb-2">
                   {result.date}
                 </div>
-                <div className="text-text-secondary">
+                <div className="text-secondary">
                   农历 {result.lunarDate} · {result.dayGanzhi}日
                 </div>
               </div>
@@ -243,12 +243,12 @@ export default function DailyPage() {
 
             {/* 综合运势 */}
             <Card>
-              <h3 className="font-heading text-lg font-semibold text-cyber-gold mb-4">
+              <h3 className="font-heading text-lg font-semibold text-primary mb-4">
                 🌟 综合运势
               </h3>
               <div className="flex items-center justify-center gap-4">
                 <StarRating rating={result.overall} />
-                <span className="text-2xl font-bold text-cyber-gold">
+                <span className="text-2xl font-bold text-primary">
                   {result.overall}/5
                 </span>
               </div>
@@ -258,22 +258,22 @@ export default function DailyPage() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <Card className="text-center">
                 <div className="text-2xl mb-2">💼</div>
-                <div className="text-sm text-text-muted mb-1">事业</div>
+                <div className="text-sm text-muted mb-1">事业</div>
                 <StarRating rating={result.ratings.career} />
               </Card>
               <Card className="text-center">
                 <div className="text-2xl mb-2">💰</div>
-                <div className="text-sm text-text-muted mb-1">财运</div>
+                <div className="text-sm text-muted mb-1">财运</div>
                 <StarRating rating={result.ratings.wealth} />
               </Card>
               <Card className="text-center">
                 <div className="text-2xl mb-2">❤️</div>
-                <div className="text-sm text-text-muted mb-1">感情</div>
+                <div className="text-sm text-muted mb-1">感情</div>
                 <StarRating rating={result.ratings.love} />
               </Card>
               <Card className="text-center">
                 <div className="text-2xl mb-2">🏥</div>
-                <div className="text-sm text-text-muted mb-1">健康</div>
+                <div className="text-sm text-muted mb-1">健康</div>
                 <StarRating rating={result.ratings.health} />
               </Card>
             </div>
@@ -314,25 +314,25 @@ export default function DailyPage() {
 
             {/* 幸运信息 */}
             <Card>
-              <h3 className="font-heading text-lg font-semibold text-cyber-gold mb-4">
+              <h3 className="font-heading text-lg font-semibold text-primary mb-4">
                 🍀 今日幸运
               </h3>
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
-                  <div className="text-text-muted text-sm mb-1">幸运色</div>
-                  <div className="text-lg font-semibold text-text-primary">
+                  <div className="text-muted text-sm mb-1">幸运色</div>
+                  <div className="text-lg font-semibold text-primary">
                     {result.lucky.color}
                   </div>
                 </div>
                 <div>
-                  <div className="text-text-muted text-sm mb-1">幸运数字</div>
-                  <div className="text-lg font-semibold text-text-primary">
+                  <div className="text-muted text-sm mb-1">幸运数字</div>
+                  <div className="text-lg font-semibold text-primary">
                     {result.lucky.numbers.join(', ')}
                   </div>
                 </div>
                 <div>
-                  <div className="text-text-muted text-sm mb-1">幸运方位</div>
-                  <div className="text-lg font-semibold text-text-primary">
+                  <div className="text-muted text-sm mb-1">幸运方位</div>
+                  <div className="text-lg font-semibold text-primary">
                     {result.lucky.direction}
                   </div>
                 </div>
@@ -341,16 +341,16 @@ export default function DailyPage() {
 
             {/* 建议 */}
             <Card>
-              <h3 className="font-heading text-lg font-semibold text-cyber-gold mb-4">
+              <h3 className="font-heading text-lg font-semibold text-primary mb-4">
                 💡 今日建议
               </h3>
-              <p className="text-text-secondary leading-relaxed">
+              <p className="text-secondary leading-relaxed">
                 {result.advice}
               </p>
             </Card>
 
             {/* 免责声明 */}
-            <div className="text-center text-xs text-text-muted p-4 bg-cyber-card/50 rounded-lg">
+            <div className="text-center text-xs text-muted p-4 bg-cyber-card/50 rounded-lg">
               ⚠️ 免责声明：运势分析仅供娱乐参考，不构成任何决策建议。
               命运掌握在自己手中，请理性对待。
             </div>
@@ -359,11 +359,11 @@ export default function DailyPage() {
 
         {/* 使用说明 */}
         {!result && (
-          <Card variant="glass" className="mt-8">
-            <h3 className="font-heading text-lg font-semibold text-cyber-gold mb-4">
+          <Card variant="default" className="mt-8">
+            <h3 className="font-heading text-lg font-semibold text-primary mb-4">
               📖 使用说明
             </h3>
-            <ul className="space-y-2 text-sm text-text-secondary">
+            <ul className="space-y-2 text-sm text-secondary">
               <li>• 每日运势基于您的八字日主与当日干支的关系分析</li>
               <li>• 需要输入出生日期和时辰，以计算您的日主</li>
               <li>• 运势每日更新，建议每天早上查看</li>

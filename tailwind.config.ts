@@ -9,15 +9,14 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // 主题色
-        cyber: {
-          dark: '#0f0f1a',
-          bg: '#1a1a2e',
-          card: '#16213e',
-          gold: '#ffd700',
-          'gold-dark': '#b8860b',
-        },
-        // 五行色
+        // FateMaster 简洁风格
+        primary: '#000000',
+        secondary: '#666666',
+        muted: '#999999',
+        border: '#e0e0e0',
+        background: '#ffffff',
+        'background-alt': '#f8f8f8',
+        // 五行色（保留用于图表）
         wuxing: {
           metal: '#ffd700',
           wood: '#4ade80',
@@ -25,28 +24,21 @@ const config: Config = {
           fire: '#f97316',
           earth: '#a78b5a',
         },
-        // 文字色
-        text: {
-          primary: '#f5f5f5',
-          secondary: '#a0a0a0',
-          muted: '#666666',
-        },
       },
       fontFamily: {
         heading: ['var(--font-heading)', 'Noto Serif SC', 'serif'],
       },
-      boxShadow: {
-        glow: '0 0 20px rgba(255, 215, 0, 0.3)',
-        'glow-lg': '0 0 40px rgba(255, 215, 0, 0.4)',
+      fontSize: {
+        'display': ['64px', { lineHeight: '1.2', fontWeight: '700' }],
+        'display-mobile': ['36px', { lineHeight: '1.2', fontWeight: '700' }],
+        'h1': ['40px', { lineHeight: '1.3', fontWeight: '600' }],
+        'h1-mobile': ['32px', { lineHeight: '1.3', fontWeight: '600' }],
+        'h2': ['32px', { lineHeight: '1.4', fontWeight: '600' }],
+        'h2-mobile': ['24px', { lineHeight: '1.4', fontWeight: '600' }],
       },
-      animation: {
-        fadeIn: 'fadeIn 0.5s ease-out',
-      },
-      keyframes: {
-        fadeIn: {
-          '0%': { opacity: '0', transform: 'translateY(10px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
+      spacing: {
+        'section': '120px',
+        'section-mobile': '60px',
       },
     },
   },

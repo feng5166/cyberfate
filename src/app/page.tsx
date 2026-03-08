@@ -67,102 +67,80 @@ const highlights = [
 
 export default function HomePage() {
   return (
-    <div className="bg-gradient-cyber min-h-screen">
+    <div className="bg-background min-h-screen">
       {/* Hero Section */}
-      <section className="relative px-4 py-20 sm:py-32">
+      <section className="px-4 py-20 sm:py-32 bg-background-alt">
         <div className="max-w-4xl mx-auto text-center">
-          <h1 className="font-heading text-4xl sm:text-6xl font-bold mb-6">
-            <span className="text-cyber-gold">赛博命理师</span>
+          <h1 className="font-heading text-4xl sm:text-6xl font-bold mb-6 text-primary">
+            赛博命理师
           </h1>
-          <p className="text-xl sm:text-2xl text-text-secondary mb-4">
-            CyberFate - AI 驱动的东方智慧
+          <p className="text-xl sm:text-2xl text-secondary mb-4">
+            AI 驱动的东方智慧分析系统
           </p>
-          <p className="text-text-muted max-w-2xl mx-auto mb-8">
-            融合传统命理与现代人工智能，为你提供科学、理性的命理分析参考。
-            探索八字、紫微、周易、塔罗的奥秘。
+          <p className="text-muted max-w-2xl mx-auto mb-8">
+            融合传统命理与现代人工智能，为你提供科学、理性的命理分析参考
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/bazi">
-              <Button size="lg">
-                开始算命 →
-              </Button>
+              <Button size="lg">开始探索</Button>
             </Link>
             <Link href="#features">
-              <Button variant="secondary" size="lg">
-                了解更多
-              </Button>
+              <Button variant="secondary" size="lg">了解更多</Button>
             </Link>
           </div>
         </div>
-        
-        {/* 装饰元素 */}
-        <div className="absolute top-1/4 left-10 text-6xl opacity-10 animate-pulse">☯️</div>
-        <div className="absolute bottom-1/4 right-10 text-6xl opacity-10 animate-pulse">🔮</div>
       </section>
 
       {/* Features Section */}
       <section id="features" className="px-4 py-16 sm:py-24">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="font-heading text-2xl sm:text-3xl font-bold text-center mb-4 text-cyber-gold">
-            探索命理奥秘
+        <div className="max-w-7xl mx-auto">
+          <h2 className="font-heading text-3xl sm:text-4xl font-bold text-center mb-12 text-primary">
+            功能服务
           </h2>
-          <p className="text-text-muted text-center mb-12 max-w-2xl mx-auto">
-            多种传统命理工具，AI 智能解读，让古老智慧焕发新生
-          </p>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((feature) => (
-              <Link 
+              <Card
                 key={feature.title}
-                href={feature.available ? feature.href : '#'}
-                className={feature.available ? '' : 'cursor-not-allowed'}
+                hover={feature.available}
+                className="relative"
               >
-                <Card 
-                  hover={feature.available} 
-                  className={`h-full relative ${!feature.available ? 'opacity-60' : ''}`}
-                >
-                  {/* 即将上线遮罩 */}
-                  {!feature.available && (
-                    <div className="absolute inset-0 bg-cyber-dark/40 rounded-xl flex items-center justify-center z-10">
-                      <span className="bg-cyber-gold/20 text-cyber-gold text-xs px-3 py-1 rounded-full border border-cyber-gold/30">
-                        即将上线
-                      </span>
-                    </div>
-                  )}
-                  <div className="text-4xl mb-4">{feature.icon}</div>
-                  <h3 className="font-heading text-lg font-semibold mb-2 text-text-primary">
-                    {feature.title}
-                  </h3>
-                  <p className="text-sm text-text-secondary">
-                    {feature.description}
-                  </p>
-                </Card>
-              </Link>
+                {!feature.available && (
+                  <div className="absolute top-4 right-4 text-xs text-muted bg-background-alt px-2 py-1 rounded">
+                    即将上线
+                  </div>
+                )}
+                <div className="text-4xl mb-4">{feature.icon}</div>
+                <h3 className="text-xl font-semibold mb-2 text-primary">{feature.title}</h3>
+                <p className="text-secondary text-sm mb-4">{feature.description}</p>
+                {feature.available ? (
+                  <Link href={feature.href}>
+                    <Button variant="secondary" size="sm" className="w-full">
+                      立即体验
+                    </Button>
+                  </Link>
+                ) : (
+                  <Button variant="ghost" size="sm" className="w-full" disabled>
+                    敬请期待
+                  </Button>
+                )}
+              </Card>
             ))}
           </div>
         </div>
       </section>
 
       {/* Highlights Section */}
-      <section className="px-4 py-16 sm:py-24 bg-cyber-card/30">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="font-heading text-2xl sm:text-3xl font-bold text-center mb-4 text-cyber-gold">
-            为什么选择赛博命理师
+      <section className="px-4 py-16 sm:py-24 bg-background-alt">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="font-heading text-3xl sm:text-4xl font-bold text-center mb-12 text-primary">
+            产品特色
           </h2>
-          <p className="text-text-muted text-center mb-12 max-w-2xl mx-auto">
-            现代科技与传统文化的完美结合
-          </p>
-          
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {highlights.map((item) => (
               <div key={item.title} className="text-center">
                 <div className="text-5xl mb-4">{item.icon}</div>
-                <h3 className="font-heading text-xl font-semibold mb-2 text-text-primary">
-                  {item.title}
-                </h3>
-                <p className="text-text-secondary">
-                  {item.description}
-                </p>
+                <h3 className="text-xl font-semibold mb-2 text-primary">{item.title}</h3>
+                <p className="text-secondary">{item.description}</p>
               </div>
             ))}
           </div>
@@ -171,25 +149,18 @@ export default function HomePage() {
 
       {/* CTA Section */}
       <section className="px-4 py-16 sm:py-24">
-        <div className="max-w-2xl mx-auto text-center">
-          <h2 className="font-heading text-2xl sm:text-3xl font-bold mb-4 text-cyber-gold">
-            开始探索你的命运
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="font-heading text-3xl sm:text-4xl font-bold mb-6 text-primary">
+            开始你的命理探索之旅
           </h2>
-          <p className="text-text-muted mb-8">
-            输入你的出生时间，AI 将为你揭示命理的奥秘
+          <p className="text-secondary mb-8 max-w-2xl mx-auto">
+            无需注册，立即体验 AI 驱动的命理分析服务
           </p>
           <Link href="/bazi">
-            <Button size="lg" className="glow-gold">
-              🔮 免费测算八字
-            </Button>
+            <Button size="lg">免费开始</Button>
           </Link>
         </div>
       </section>
-
-      {/* Version */}
-      <div className="text-center py-4">
-        <span className="text-xs text-text-muted/50">v0.2</span>
-      </div>
     </div>
   );
 }

@@ -135,15 +135,15 @@ export default function BaziPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-cyber py-8 px-4">
+    <div className="min-h-screen bg-background-alt py-8 px-4">
       {showQuotaModal && <QuotaLimitModal onClose={() => setShowQuotaModal(false)} />}
       <div className="max-w-4xl mx-auto">
         {/* 页面标题 */}
         <div className="text-center mb-8">
-          <h1 className="font-heading text-3xl sm:text-4xl font-bold text-cyber-gold mb-2">
+          <h1 className="font-heading text-3xl sm:text-4xl font-bold text-primary mb-2">
             🔮 八字算命
           </h1>
-          <p className="text-text-secondary">
+          <p className="text-secondary">
             输入出生信息，AI 为你解读命理
           </p>
         </div>
@@ -200,8 +200,8 @@ export default function BaziPage() {
           <Card className="mb-8">
             <div className="flex flex-col items-center justify-center py-12">
               <BaguaSpinner size={64} />
-              <p className="mt-4 text-cyber-gold">正在计算您的命盘...</p>
-              <p className="text-sm text-text-muted mt-2">AI 正在解读中，请稍候</p>
+              <p className="mt-4 text-primary">正在计算您的命盘...</p>
+              <p className="text-sm text-muted mt-2">AI 正在解读中，请稍候</p>
             </div>
           </Card>
         )}
@@ -217,11 +217,11 @@ export default function BaziPage() {
 
             {/* AI 解读 */}
             <Card>
-              <h3 className="font-heading text-lg font-semibold text-cyber-gold mb-4">
+              <h3 className="font-heading text-lg font-semibold text-primary mb-4">
                 🤖 AI 命理解读
               </h3>
               <div className="prose prose-invert prose-sm max-w-none">
-                <div className="text-text-secondary whitespace-pre-wrap leading-relaxed">
+                <div className="text-secondary whitespace-pre-wrap leading-relaxed">
                   {result.aiAnalysis}
                 </div>
               </div>
@@ -229,7 +229,7 @@ export default function BaziPage() {
 
             {/* 引导到每日运势 */}
             <Card className="text-center">
-              <p className="text-text-secondary mb-4">想了解今天的运势？</p>
+              <p className="text-secondary mb-4">想了解今天的运势？</p>
               <Link href="/daily">
                 <Button variant="secondary">
                   📅 查看每日运势
@@ -238,7 +238,7 @@ export default function BaziPage() {
             </Card>
 
             {/* 免责声明 */}
-            <div className="text-center text-xs text-text-muted p-4 bg-cyber-card/50 rounded-lg">
+            <div className="text-center text-xs text-muted p-4 bg-cyber-card/50 rounded-lg">
               ⚠️ 免责声明：本站所有命理分析仅供娱乐参考，不构成任何决策建议。
               命运掌握在自己手中，请理性对待。
             </div>
@@ -247,11 +247,11 @@ export default function BaziPage() {
 
         {/* 使用说明 */}
         {!result && (
-          <Card variant="glass" className="mt-8">
-            <h3 className="font-heading text-lg font-semibold text-cyber-gold mb-4">
+          <Card variant="default" className="mt-8">
+            <h3 className="font-heading text-lg font-semibold text-primary mb-4">
               📖 使用说明
             </h3>
-            <ul className="space-y-2 text-sm text-text-secondary">
+            <ul className="space-y-2 text-sm text-secondary">
               <li>• 请输入公历（阳历）出生日期</li>
               <li>• 时辰越准确，分析结果越精确</li>
               <li>• 如不知道时辰，系统将使用午时（12:00）进行计算</li>
