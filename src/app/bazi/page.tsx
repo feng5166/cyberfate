@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { saveBirthInfo, loadBirthInfo } from '@/lib/utils/storage';
 
-// export const metadata = { title: '八字算命' }; // 客户端组件不能导出 metadata
+// export const metadata = { title: '八字分析' }; // 客户端组件不能导出 metadata
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
@@ -145,7 +145,7 @@ export default function BaziPage() {
           <div className="flex items-center justify-center gap-2 mb-2">
             <Sparkles className="w-8 h-8" />
             <h1 className="font-heading text-3xl sm:text-4xl font-bold text-primary">
-              八字算命
+              八字分析
             </h1>
           </div>
           <p className="text-secondary">

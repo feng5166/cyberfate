@@ -5,7 +5,7 @@ const footerLinks = [
   {
     title: '功能',
     links: [
-      { label: '八字计算', href: '/bazi' },
+      { label: '八字分析', href: '/bazi' },
       { label: '每日运势', href: '/daily' },
       { label: '紫微斗数', href: '/ziwei', soon: true },
       { label: '塔罗牌', href: '/tarot', soon: true },

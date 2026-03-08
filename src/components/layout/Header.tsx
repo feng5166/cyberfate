@@ -7,9 +7,9 @@ import { Sparkles } from 'lucide-react';
 
 const navItems = [
   {
-    label: '八字算命',
+    label: '八字分析',
     children: [
-      { label: '八字计算', href: '/bazi', available: true },
+      { label: '八字分析', href: '/bazi', available: true },
       { label: '八字合婚', href: '/bazi/marriage', available: false },
       { label: '每日运势', href: '/daily', available: true },
     ],

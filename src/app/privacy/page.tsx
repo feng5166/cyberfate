@@ -35,7 +35,7 @@ export default function PrivacyPage() {
               </h2>
               <p>我们收集的信息仅用于：</p>
               <ul className="list-disc list-inside space-y-1 ml-4">
-                <li>提供八字计算和运势分析服务</li>
+                <li>提供八字分析和运势分析服务</li>
                 <li>改善用户体验和服务质量</li>
                 <li>进行匿名统计分析</li>
               </ul>

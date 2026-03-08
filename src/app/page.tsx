@@ -6,7 +6,7 @@ import { BarChart3, Star, Sparkles, Layers, Calendar, BookOpen, Bot, Microscope,
 const features = [
   {
     icon: BarChart3,
-    title: '八字算命',
+    title: '八字分析',
     description: '根据出生时间计算四柱八字，AI 深度解读命理',
     href: '/bazi',
     available: true,
