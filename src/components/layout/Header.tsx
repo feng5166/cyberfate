@@ -113,6 +113,8 @@ export function Header() {
                   <div className="w-8 h-8 rounded-full bg-cyber-gold/20 border border-cyber-gold/40 flex items-center justify-center text-cyber-gold text-sm font-semibold">
                     {session.user?.name?.[0] ?? session.user?.email?.[0] ?? '?'}
                   </div>
+                  {/* TODO: 检查 VIP 状态并显示标识 */}
+                  {/* <span className="text-xs text-cyber-gold font-semibold">VIP</span> */}
                 </button>
                 {userMenuOpen && (
                   <div className="absolute right-0 top-full mt-1 py-2 bg-cyber-card rounded-lg shadow-lg border border-cyber-gold/10 min-w-[140px]">
@@ -121,6 +123,12 @@ export function Header() {
                       className="block px-4 py-2 text-sm text-text-primary hover:text-cyber-gold hover:bg-cyber-bg/50 transition-colors"
                     >
                       个人中心
+                    </Link>
+                    <Link
+                      href="/pricing"
+                      className="block px-4 py-2 text-sm text-text-primary hover:text-cyber-gold hover:bg-cyber-bg/50 transition-colors"
+                    >
+                      我的会员
                     </Link>
                     <button
                       onClick={() => signOut({ callbackUrl: '/' })}

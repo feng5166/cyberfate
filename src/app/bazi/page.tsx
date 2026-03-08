@@ -95,17 +95,6 @@ export default function BaziPage() {
       return;
     }
 
-    // 检查配额（已登录用户）
-    const quotaRes = await fetch('/api/user/use-quota', { method: 'POST' });
-    if (quotaRes.ok) {
-      const quotaData = await quotaRes.json();
-      if (!quotaData.success) {
-        setShowQuotaModal(true);
-        return;
-      }
-    }
-    // 401 = 未登录，放行（游客可使用）
-
     setLoading(true);
 
     // 保存到 localStorage
@@ -127,11 +116,16 @@ export default function BaziPage() {
         }),
       });
 
+      const data = await response.json();
+      
       if (!response.ok) {
-        throw new Error('计算失败，请稍后重试');
+        if (data.error === 'QUOTA_EXCEEDED') {
+          setShowQuotaModal(true);
+          return;
+        }
+        throw new Error(data.error || '计算失败，请稍后重试');
       }
 
-      const data = await response.json();
       setResult(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : '未知错误');

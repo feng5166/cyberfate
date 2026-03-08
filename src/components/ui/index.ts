@@ -3,3 +3,5 @@ export { Card } from './Card';
 export { Input } from './Input';
 export { Select } from './Select';
 export { BaguaSpinner } from './BaguaSpinner';
+export { UpgradeModal } from './UpgradeModal';
+export { VipContentMask } from './VipContentMask';

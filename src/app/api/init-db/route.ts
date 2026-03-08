@@ -2,7 +2,7 @@ import { prisma } from '@/lib/db'
 
 export async function GET() {
   try {
-    // Prisma will auto-create tables on first query
+    // Test database connection
     const result = await prisma.$queryRaw`SELECT 1 as test`
     
     return Response.json({ 

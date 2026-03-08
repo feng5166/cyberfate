@@ -1,13 +1,26 @@
 import NextAuth, { type NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
+import GoogleProvider from 'next-auth/providers/google'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/db'
+import WechatProvider from '@/lib/wechat-provider'
 
 export const authOptions: NextAuthOptions = {
   session: {
     strategy: 'jwt',
   },
   providers: [
+    // Google 登录
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID || '',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+    }),
+    // 微信登录
+    WechatProvider({
+      clientId: process.env.WECHAT_APP_ID || '',
+      clientSecret: process.env.WECHAT_APP_SECRET || '',
+    }),
+    // 邮箱密码登录
     CredentialsProvider({
       name: 'credentials',
       credentials: {
@@ -42,6 +55,29 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
+    async signIn({ user, account, profile }) {
+      if (account?.provider === 'wechat') {
+        // 微信登录：查找或创建用户
+        const wechatProfile = profile as any
+        const existingUser = await prisma.user.findUnique({
+          where: { wechatOpenId: wechatProfile.openid },
+        })
+
+        if (!existingUser) {
+          // 创建新用户
+          await prisma.user.create({
+            data: {
+              id: user.id,
+              wechatOpenId: wechatProfile.openid,
+              wechatUnionId: wechatProfile.unionid,
+              nickname: wechatProfile.nickname,
+              avatar: wechatProfile.headimgurl,
+            },
+          })
+        }
+      }
+      return true
+    },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id
@@ -56,7 +92,7 @@ export const authOptions: NextAuthOptions = {
     },
   },
   pages: {
-    signIn: '/login',
+    signIn: '/auth/login',
   },
 }
 

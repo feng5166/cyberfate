@@ -1,7 +1,10 @@
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { calculateBazi } from '@/lib/bazi';
 import { generateBaziAnalysis } from '@/lib/ai';
+import { useBaziQuota } from '@/lib/quota';
 import type { BaziAnalysis } from '@/lib/bazi/types';
 
 // 时辰映射：数字 -> 时辰名称（不含 -1，单独处理）
@@ -30,6 +33,23 @@ const requestSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    // 检查登录状态和配额
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.id) {
+      return Response.json({ error: '请先登录' }, { status: 401 });
+    }
+    
+    // 检查并使用配额
+    const hasQuota = await useBaziQuota(session.user.id);
+    
+    if (!hasQuota) {
+      return Response.json({ 
+        error: 'QUOTA_EXCEEDED',
+        message: '今日免费解读次数已用完，请升级 VIP'
+      }, { status: 403 });
+    }
+    
     const body = await req.json();
     const input = requestSchema.parse(body);
     
