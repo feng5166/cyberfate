@@ -54,6 +54,17 @@ function LoginForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // 如果还没检查邮箱，先检查
+    if (mode === 'unknown') {
+      if (!email) {
+        setError('请输入邮箱地址')
+        return
+      }
+      await checkEmail()
+      return
+    }
+    
     if (!agreed) {
       setError('请先阅读并同意用户协议和隐私政策')
       return
@@ -198,7 +209,7 @@ function LoginForm() {
 
           <Button
             type="submit"
-            disabled={loading || checking || mode === 'unknown'}
+            disabled={loading || checking}
             className="w-full"
           >
             {loading
