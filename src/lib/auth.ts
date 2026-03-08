@@ -56,6 +56,23 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async signIn({ user, account, profile }) {
+      if (account?.provider === 'google') {
+        // Google 登录：查找或创建用户
+        const existingUser = await prisma.user.findUnique({
+          where: { email: user.email! },
+        })
+
+        if (!existingUser) {
+          await prisma.user.create({
+            data: {
+              email: user.email!,
+              nickname: user.name || user.email!.split('@')[0],
+              avatar: user.image,
+            },
+          })
+        }
+      }
+      
       if (account?.provider === 'wechat') {
         // 微信登录：查找或创建用户
         const wechatProfile = profile as any
