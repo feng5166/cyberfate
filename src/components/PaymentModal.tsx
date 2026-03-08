@@ -16,7 +16,7 @@ export function PaymentModal({ planName, price, onClose }: PaymentModalProps) {
 
   const handlePayment = () => {
     if (!session) {
-      router.push('/login')
+      router.push('/auth/login')
       return
     }
     alert('支付功能开发中，敬请期待')

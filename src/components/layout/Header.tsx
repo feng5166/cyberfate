@@ -141,7 +141,7 @@ export function Header() {
               </div>
             ) : (
               <Link
-                href="/login"
+                href="/auth/login"
                 className="px-4 py-1.5 text-sm border border-cyber-gold/40 text-cyber-gold rounded-lg hover:bg-cyber-gold/10 transition-colors"
               >
                 登录
@@ -181,7 +181,7 @@ export function Header() {
                 </div>
               ) : (
                 <Link
-                  href="/login"
+                  href="/auth/login"
                   className="block text-center py-2 border border-cyber-gold/40 text-cyber-gold rounded-lg text-sm hover:bg-cyber-gold/10 transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >
