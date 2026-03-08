@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Sparkles } from 'lucide-react';
 
 const footerLinks = [
   {
@@ -27,7 +28,7 @@ export function Footer() {
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <span className="text-2xl">🔮</span>
+              <Sparkles className="w-6 h-6 text-primary" strokeWidth={2} />
               <span className="font-heading text-xl font-semibold text-primary">
                 赛博命理师
               </span>

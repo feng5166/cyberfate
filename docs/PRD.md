@@ -500,6 +500,19 @@
 - 模块间距: 60-80px
 - 元素间距: 20-40px
 
+**图标系统**
+- 使用 Lucide Icons 线性图标库
+- 尺寸: 24px (常规) / 48px (大图标)
+- 颜色: 纯黑 (#000000)
+- 线条粗细: 2px
+
+**功能图标映射**
+- 八字算命: `BarChart3`
+- 紫微斗数: `Star`
+- 周易占卜: `Sparkles`
+- 塔罗牌: `Layers`
+- 实用工具: `Calendar`
+
 完整规范请查看 [DESIGN_FATEMASTER.md](./DESIGN_FATEMASTER.md)
 
 ---
