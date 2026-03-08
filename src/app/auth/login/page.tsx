@@ -22,7 +22,7 @@ function LoginForm() {
   const [checking, setChecking] = useState(false)
 
   const inputClass =
-    'w-full px-4 py-3 bg-white border border-primary/20 rounded-lg text-primary placeholder-text-muted focus:outline-none focus:border-primary/60 transition-colors'
+    'w-full px-4 py-3 bg-background-alt border border-primary/20 rounded-lg text-primary placeholder-text-muted focus:outline-none focus:border-primary/60 transition-colors'
 
   const handleGoogle = async () => {
     if (!agreed) {
@@ -114,7 +114,7 @@ function LoginForm() {
         <button
           onClick={handleGoogle}
           disabled={googleLoading}
-          className="w-full mb-6 px-4 py-3 bg-white text-gray-800 rounded-lg font-semibold hover:bg-gray-100 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+          className="w-full mb-6 px-4 py-3 bg-background-alt text-gray-800 rounded-lg font-semibold hover:bg-gray-100 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path
@@ -142,7 +142,7 @@ function LoginForm() {
             <div className="w-full border-t border-primary/20"></div>
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-muted">或使用邮箱</span>
+            <span className="px-2 bg-background-alt text-muted">或使用邮箱</span>
           </div>
         </div>
 

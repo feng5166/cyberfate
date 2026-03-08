@@ -26,7 +26,9 @@ export default function ProfileClient({ email, vip, expireAt, baziAiCount, limit
     <div className="min-h-screen bg-background-alt py-12 px-4">
       <div className="max-w-lg mx-auto space-y-6">
         <div className="text-center">
-          <span className="text-4xl">👤</span>
+          <div className="w-20 h-20 mx-auto rounded-full bg-background border-2 border-border flex items-center justify-center text-3xl font-bold text-primary">
+            {email.charAt(0).toUpperCase()}
+          </div>
           <h1 className="font-heading text-2xl font-bold text-primary mt-3">个人中心</h1>
         </div>
 

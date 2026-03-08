@@ -161,7 +161,7 @@ export default function HomePage() {
             开始你的命理探索之旅
           </h2>
           <p className="text-secondary mb-8 max-w-2xl mx-auto">
-            无需注册，立即体验 AI 驱动的命理分析服务
+            立即体验 AI 驱动的命理分析服务
           </p>
           <Link href="/bazi">
             <Button size="lg">免费开始</Button>
