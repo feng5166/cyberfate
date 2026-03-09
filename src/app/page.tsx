@@ -89,7 +89,7 @@ export default function HomePage() {
     <div className="bg-background min-h-screen">
       {/* Hero Section */}
       <section className="px-4 py-20 sm:py-32 bg-background-alt">
-        <div className="max-w-4xl mx-auto text-center">
+        <div className="max-w-3xl mx-auto text-center">
           <h1 className="font-heading text-4xl sm:text-6xl font-bold mb-6 text-primary">
             赛博命理师
           </h1>
@@ -111,9 +111,9 @@ export default function HomePage() {
       </section>
 
       {/* Quote Section */}
-      <section className="px-4 py-20 bg-background">
-        <div className="max-w-4xl mx-auto text-center">
-          <blockquote className="text-2xl sm:text-3xl text-primary font-serif leading-relaxed mb-6">
+      <section className="px-4 py-32 bg-background">
+        <div className="max-w-3xl mx-auto text-center">
+          <blockquote className="text-2xl sm:text-3xl text-primary font-serif leading-[1.7] mb-6 max-w-2xl mx-auto">
             除非你意识到你的潜意识，否则潜意识将主导你的人生，而你将其称为命运。
           </blockquote>
           <cite className="text-muted text-lg">— 卡尔·荣格</cite>
@@ -121,12 +121,12 @@ export default function HomePage() {
       </section>
 
       {/* Core Values Section */}
-      <section className="px-4 py-20 bg-background-alt">
-        <div className="max-w-7xl mx-auto">
+      <section className="px-4 py-32 bg-background-alt">
+        <div className="max-w-5xl mx-auto">
           <h2 className="font-heading text-3xl sm:text-4xl font-bold text-center mb-16 text-primary">
             核心理念
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
             {coreValues.map((value) => {
               const Icon = value.icon;
               return (
@@ -135,7 +135,7 @@ export default function HomePage() {
                     <Icon className="w-8 h-8 text-primary" strokeWidth={2} />
                   </div>
                   <h3 className="text-xl font-bold mb-4 text-primary">{value.title}</h3>
-                  <p className="text-secondary leading-relaxed">{value.description}</p>
+                  <p className="text-secondary leading-[1.7]">{value.description}</p>
                 </div>
               );
             })}
@@ -144,12 +144,12 @@ export default function HomePage() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="px-4 py-16 sm:py-24">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="font-heading text-3xl sm:text-4xl font-bold text-center mb-12 text-primary">
+      <section id="features" className="px-4 py-32">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="font-heading text-3xl sm:text-4xl font-bold text-center mb-16 text-primary">
             功能服务
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature) => {
               const Icon = feature.icon;
               return (
@@ -185,12 +185,12 @@ export default function HomePage() {
       </section>
 
       {/* Highlights Section */}
-      <section className="px-4 py-16 sm:py-24 bg-background-alt">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="font-heading text-3xl sm:text-4xl font-bold text-center mb-12 text-primary">
+      <section className="px-4 py-32 bg-background-alt">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="font-heading text-3xl sm:text-4xl font-bold text-center mb-16 text-primary">
             产品特色
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
             {highlights.map((item) => {
               const Icon = item.icon;
               return (
@@ -206,8 +206,8 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="px-4 py-16 sm:py-24">
-        <div className="max-w-4xl mx-auto text-center">
+      <section className="px-4 py-32">
+        <div className="max-w-3xl mx-auto text-center">
           <h2 className="font-heading text-3xl sm:text-4xl font-bold mb-6 text-primary">
             开始你的命理探索之旅
           </h2>
