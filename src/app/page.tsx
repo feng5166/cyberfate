@@ -52,17 +52,17 @@ const coreValues = [
   {
     icon: Brain,
     title: 'AI 智能，科学解析',
-    description: '运用现代人工智能技术，对传统命理进行深度分析和科学解读',
+    description: '融合现代 AI 技术与传统命理智慧，通过大数据分析和机器学习，提供客观的命理解读，让玄学不再玄',
   },
   {
     icon: BookHeart,
     title: '文化传承，理性态度',
-    description: '尊重传统文化智慧，以理性科学的态度传承东方哲学',
+    description: '以开放理性的态度传承东方智慧，去芜存菁，不迷信、不神化，让千年命理文化以更健康的方式融入现代生活',
   },
   {
     icon: Compass,
     title: '自主探索，独立思考',
-    description: '提供参考而非答案，鼓励用户独立思考，自主决策',
+    description: '我们相信每个人都是自己命运的解读者。通过 AI 工具赋能，让每个人都能独立进行命理分析，自主思考人生方向，让每一个选择都源于内心的觉察与智慧',
   },
 ];
 
@@ -111,29 +111,31 @@ export default function HomePage() {
       </section>
 
       {/* Quote Section */}
-      <section className="px-4 py-16 bg-background">
-        <div className="max-w-3xl mx-auto text-center">
-          <blockquote className="text-xl sm:text-2xl text-secondary italic mb-4">
-            "你的愿景只有在你能够审视自己内心时才会变得清晰。向外看的人在做梦，向内看的人才会觉醒。"
+      <section className="px-4 py-20 bg-background">
+        <div className="max-w-4xl mx-auto text-center">
+          <blockquote className="text-2xl sm:text-3xl text-primary font-serif leading-relaxed mb-6">
+            除非你意识到你的潜意识，否则潜意识将主导你的人生，而你将其称为命运。
           </blockquote>
-          <cite className="text-muted">—— 卡尔·荣格</cite>
+          <cite className="text-muted text-lg">— 卡尔·荣格</cite>
         </div>
       </section>
 
       {/* Core Values Section */}
-      <section className="px-4 py-16 sm:py-20 bg-background-alt">
+      <section className="px-4 py-20 bg-background-alt">
         <div className="max-w-7xl mx-auto">
-          <h2 className="font-heading text-3xl sm:text-4xl font-bold text-center mb-12 text-primary">
+          <h2 className="font-heading text-3xl sm:text-4xl font-bold text-center mb-16 text-primary">
             核心理念
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
             {coreValues.map((value) => {
               const Icon = value.icon;
               return (
                 <div key={value.title} className="text-center">
-                  <Icon className="w-12 h-12 mx-auto mb-4 text-primary" strokeWidth={2} />
-                  <h3 className="text-xl font-semibold mb-3 text-primary">{value.title}</h3>
-                  <p className="text-secondary">{value.description}</p>
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-background border-2 border-primary/20 mb-6">
+                    <Icon className="w-8 h-8 text-primary" strokeWidth={2} />
+                  </div>
+                  <h3 className="text-xl font-bold mb-4 text-primary">{value.title}</h3>
+                  <p className="text-secondary leading-relaxed">{value.description}</p>
                 </div>
               );
             })}
