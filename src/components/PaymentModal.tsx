@@ -57,22 +57,28 @@ export function PaymentModal({ planName, price, onClose }: PaymentModalProps) {
         <div className="space-y-3 mb-6">
           <button
             onClick={() => setPayMethod('wechat')}
-            className={`w-full p-4 border rounded-lg flex items-center gap-3 transition-colors ${
-              payMethod === 'wechat' ? 'border-primary bg-background-alt' : 'border-border'
+            className={`w-full p-4 border-2 rounded-lg flex items-center gap-3 transition-all ${
+              payMethod === 'wechat' 
+                ? 'border-green-500 bg-green-50 ring-2 ring-green-200' 
+                : 'border-gray-200 hover:border-gray-300'
             }`}
           >
-            <div className="w-8 h-8 bg-green-500 rounded flex items-center justify-center text-white text-xs">微信</div>
-            <span className="text-secondary">微信支付</span>
+            <div className="w-8 h-8 bg-green-500 rounded flex items-center justify-center text-white text-xs font-bold">微信</div>
+            <span className={`font-medium ${payMethod === 'wechat' ? 'text-green-700' : 'text-gray-700'}`}>微信支付</span>
+            {payMethod === 'wechat' && <span className="ml-auto text-green-500">✓</span>}
           </button>
 
           <button
             onClick={() => setPayMethod('alipay')}
-            className={`w-full p-4 border rounded-lg flex items-center gap-3 transition-colors ${
-              payMethod === 'alipay' ? 'border-primary bg-background-alt' : 'border-border'
+            className={`w-full p-4 border-2 rounded-lg flex items-center gap-3 transition-all ${
+              payMethod === 'alipay' 
+                ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200' 
+                : 'border-gray-200 hover:border-gray-300'
             }`}
           >
-            <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center text-white text-xs">支付宝</div>
-            <span className="text-secondary">支付宝</span>
+            <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center text-white text-xs font-bold">支付宝</div>
+            <span className={`font-medium ${payMethod === 'alipay' ? 'text-blue-700' : 'text-gray-700'}`}>支付宝</span>
+            {payMethod === 'alipay' && <span className="ml-auto text-blue-500">✓</span>}
           </button>
         </div>
 
