@@ -85,14 +85,14 @@ export function PaymentModal({ planName, price, onClose }: PaymentModalProps) {
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2 border border-border rounded text-secondary hover:bg-background-alt transition-colors"
+            className="flex-1 px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50 transition-colors"
           >
             取消
           </button>
           <button
             onClick={handlePay}
             disabled={loading}
-            className="flex-1 px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 transition-colors disabled:opacity-50"
+            className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? '处理中...' : '确认支付'}
           </button>
