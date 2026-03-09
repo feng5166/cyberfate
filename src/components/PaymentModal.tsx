@@ -16,10 +16,12 @@ export function PaymentModal({ planName, price, onClose }: PaymentModalProps) {
   const [loading, setLoading] = useState(false);
   const [payMethod, setPayMethod] = useState<'wechat' | 'alipay'>('wechat');
   const [qrCode, setQrCode] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handlePay = async () => {
+    setError(null);
+    
     if (!session) {
-      alert('请先登录');
       router.push('/auth/login');
       return;
     }
@@ -29,21 +31,24 @@ export function PaymentModal({ planName, price, onClose }: PaymentModalProps) {
       const res = await fetch('/api/payment/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: planName.toLowerCase().replace('卡', ''), payMethod }),
+        body: JSON.stringify({ 
+          plan: planName === '月卡' ? 'monthly' : planName === '季卡' ? 'quarterly' : 'yearly', 
+          payMethod 
+        }),
       });
 
       const data = await res.json();
       
       if (!res.ok) {
-        alert(data.error || '创建订单失败');
+        setError(data.error || '创建订单失败');
         return;
       }
       
       if (data.qrCode) {
         setQrCode(data.qrCode);
       }
-    } catch (error) {
-      alert('网络错误，请重试');
+    } catch (err) {
+      setError('网络错误，请重试');
     } finally {
       setLoading(false);
     }
@@ -90,6 +95,12 @@ export function PaymentModal({ planName, price, onClose }: PaymentModalProps) {
                 {payMethod === 'alipay' && <span className="ml-auto text-blue-500">✓</span>}
               </button>
             </div>
+
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+                {error}
+              </div>
+            )}
 
             <div className="flex gap-3">
               <button
