@@ -113,7 +113,7 @@ export default function HomePage() {
       {/* Quote Section */}
       <section className="px-4 py-16 bg-background">
         <div className="max-w-3xl mx-auto text-center">
-          <blockquote className="text-xl sm:text-2xl text-primary font-serif leading-[1.7] mb-6 max-w-2xl mx-auto">
+          <blockquote className="text-lg sm:text-xl text-primary font-serif leading-[1.7] mb-6 max-w-xl mx-auto">
             除非你意识到你的潜意识，否则潜意识将主导你的人生，而你将其称为命运。
           </blockquote>
           <cite className="text-muted text-base">— 卡尔·荣格</cite>
@@ -122,7 +122,7 @@ export default function HomePage() {
 
       {/* Core Values Section */}
       <section className="px-4 py-16 bg-background-alt">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-3xl mx-auto">
           <h2 className="font-heading text-2xl sm:text-3xl font-bold text-center mb-12 text-primary">
             核心理念
           </h2>
@@ -145,7 +145,7 @@ export default function HomePage() {
 
       {/* Features Section */}
       <section id="features" className="px-4 py-16">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-3xl mx-auto">
           <h2 className="font-heading text-2xl sm:text-3xl font-bold text-center mb-12 text-primary">
             功能服务
           </h2>
@@ -186,7 +186,7 @@ export default function HomePage() {
 
       {/* Highlights Section */}
       <section className="px-4 py-16 bg-background-alt">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-3xl mx-auto">
           <h2 className="font-heading text-2xl sm:text-3xl font-bold text-center mb-12 text-primary">
             产品特色
           </h2>
