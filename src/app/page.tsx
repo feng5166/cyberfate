@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { BarChart3, Star, Sparkles, Layers, Calendar, BookOpen, Bot, Microscope, Gift } from 'lucide-react';
+import { BarChart3, Star, Sparkles, Layers, Calendar, BookOpen, Bot, Microscope, Gift, Brain, BookHeart, Compass } from 'lucide-react';
 
 const features = [
   {
@@ -48,6 +48,24 @@ const features = [
   },
 ];
 
+const coreValues = [
+  {
+    icon: Brain,
+    title: 'AI 智能，科学解析',
+    description: '运用现代人工智能技术，对传统命理进行深度分析和科学解读',
+  },
+  {
+    icon: BookHeart,
+    title: '文化传承，理性态度',
+    description: '尊重传统文化智慧，以理性科学的态度传承东方哲学',
+  },
+  {
+    icon: Compass,
+    title: '自主探索，独立思考',
+    description: '提供参考而非答案，鼓励用户独立思考，自主决策',
+  },
+];
+
 const highlights = [
   {
     icon: Bot,
@@ -88,6 +106,37 @@ export default function HomePage() {
             <Link href="#features">
               <Button variant="secondary" size="lg">了解更多</Button>
             </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Quote Section */}
+      <section className="px-4 py-16 bg-background">
+        <div className="max-w-3xl mx-auto text-center">
+          <blockquote className="text-xl sm:text-2xl text-secondary italic mb-4">
+            "你的愿景只有在你能够审视自己内心时才会变得清晰。向外看的人在做梦，向内看的人才会觉醒。"
+          </blockquote>
+          <cite className="text-muted">—— 卡尔·荣格</cite>
+        </div>
+      </section>
+
+      {/* Core Values Section */}
+      <section className="px-4 py-16 sm:py-20 bg-background-alt">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="font-heading text-3xl sm:text-4xl font-bold text-center mb-12 text-primary">
+            核心理念
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {coreValues.map((value) => {
+              const Icon = value.icon;
+              return (
+                <div key={value.title} className="text-center">
+                  <Icon className="w-12 h-12 mx-auto mb-4 text-primary" strokeWidth={2} />
+                  <h3 className="text-xl font-semibold mb-3 text-primary">{value.title}</h3>
+                  <p className="text-secondary">{value.description}</p>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
