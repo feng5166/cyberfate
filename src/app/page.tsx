@@ -88,9 +88,9 @@ export default function HomePage() {
   return (
     <div className="bg-background min-h-screen">
       {/* Hero Section */}
-      <section className="px-4 py-20 sm:py-32 bg-background-alt">
+      <section className="px-4 py-16 sm:py-20 bg-background-alt">
         <div className="max-w-3xl mx-auto text-center">
-          <h1 className="font-heading text-4xl sm:text-6xl font-bold mb-6 text-primary">
+          <h1 className="font-heading text-3xl sm:text-4xl font-bold mb-6 text-primary">
             赛博命理师
           </h1>
           <p className="text-xl sm:text-2xl text-secondary mb-4">
@@ -111,31 +111,31 @@ export default function HomePage() {
       </section>
 
       {/* Quote Section */}
-      <section className="px-4 py-32 bg-background">
+      <section className="px-4 py-16 bg-background">
         <div className="max-w-3xl mx-auto text-center">
-          <blockquote className="text-2xl sm:text-3xl text-primary font-serif leading-[1.7] mb-6 max-w-2xl mx-auto">
+          <blockquote className="text-xl sm:text-2xl text-primary font-serif leading-[1.7] mb-6 max-w-2xl mx-auto">
             除非你意识到你的潜意识，否则潜意识将主导你的人生，而你将其称为命运。
           </blockquote>
-          <cite className="text-muted text-lg">— 卡尔·荣格</cite>
+          <cite className="text-muted text-base">— 卡尔·荣格</cite>
         </div>
       </section>
 
       {/* Core Values Section */}
-      <section className="px-4 py-32 bg-background-alt">
+      <section className="px-4 py-16 bg-background-alt">
         <div className="max-w-5xl mx-auto">
-          <h2 className="font-heading text-3xl sm:text-4xl font-bold text-center mb-16 text-primary">
+          <h2 className="font-heading text-2xl sm:text-3xl font-bold text-center mb-12 text-primary">
             核心理念
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
             {coreValues.map((value) => {
               const Icon = value.icon;
               return (
                 <div key={value.title} className="text-center">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-background border-2 border-primary/20 mb-6">
-                    <Icon className="w-8 h-8 text-primary" strokeWidth={2} />
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-background border-2 border-primary/20 mb-4">
+                    <Icon className="w-5 h-5 text-primary" strokeWidth={2} />
                   </div>
-                  <h3 className="text-xl font-bold mb-4 text-primary">{value.title}</h3>
-                  <p className="text-secondary leading-[1.7]">{value.description}</p>
+                  <h3 className="text-lg font-bold mb-3 text-primary">{value.title}</h3>
+                  <p className="text-secondary text-sm leading-[1.7]">{value.description}</p>
                 </div>
               );
             })}
@@ -144,12 +144,12 @@ export default function HomePage() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="px-4 py-32">
+      <section id="features" className="px-4 py-16">
         <div className="max-w-5xl mx-auto">
-          <h2 className="font-heading text-3xl sm:text-4xl font-bold text-center mb-16 text-primary">
+          <h2 className="font-heading text-2xl sm:text-3xl font-bold text-center mb-12 text-primary">
             功能服务
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((feature) => {
               const Icon = feature.icon;
               return (
@@ -163,8 +163,8 @@ export default function HomePage() {
                       即将上线
                     </div>
                   )}
-                  <Icon className="w-12 h-12 mb-4 text-primary" strokeWidth={2} />
-                  <h3 className="text-xl font-semibold mb-2 text-primary">{feature.title}</h3>
+                  <Icon className="w-8 h-8 mb-4 text-primary" strokeWidth={2} />
+                  <h3 className="text-lg font-semibold mb-2 text-primary">{feature.title}</h3>
                   <p className="text-secondary text-sm mb-4">{feature.description}</p>
                   {feature.available ? (
                     <Link href={feature.href}>
@@ -185,19 +185,19 @@ export default function HomePage() {
       </section>
 
       {/* Highlights Section */}
-      <section className="px-4 py-32 bg-background-alt">
+      <section className="px-4 py-16 bg-background-alt">
         <div className="max-w-5xl mx-auto">
-          <h2 className="font-heading text-3xl sm:text-4xl font-bold text-center mb-16 text-primary">
+          <h2 className="font-heading text-2xl sm:text-3xl font-bold text-center mb-12 text-primary">
             产品特色
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
             {highlights.map((item) => {
               const Icon = item.icon;
               return (
                 <div key={item.title} className="text-center">
-                  <Icon className="w-12 h-12 mx-auto mb-4 text-primary" strokeWidth={2} />
-                  <h3 className="text-xl font-semibold mb-2 text-primary">{item.title}</h3>
-                  <p className="text-secondary">{item.description}</p>
+                  <Icon className="w-8 h-8 mx-auto mb-4 text-primary" strokeWidth={2} />
+                  <h3 className="text-lg font-semibold mb-2 text-primary">{item.title}</h3>
+                  <p className="text-secondary text-sm">{item.description}</p>
                 </div>
               );
             })}
@@ -206,9 +206,9 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="px-4 py-32">
+      <section className="px-4 py-16">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="font-heading text-3xl sm:text-4xl font-bold mb-6 text-primary">
+          <h2 className="font-heading text-2xl sm:text-3xl font-bold mb-4 text-primary">
             开始你的命理探索之旅
           </h2>
           <p className="text-secondary mb-8 max-w-2xl mx-auto">
