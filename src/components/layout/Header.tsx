@@ -29,6 +29,7 @@ const navItems = [
   },
   { label: '塔罗牌', href: '/tarot', available: false },
   { label: 'AI黄历', href: '/huangli', available: false },
+  { label: '订阅', href: '/pricing', available: true },
 ];
 
 export function Header() {
