@@ -19,6 +19,7 @@ export function PaymentModal({ planName, price, onClose }: PaymentModalProps) {
 
   const handlePay = async () => {
     if (!session) {
+      alert('请先登录');
       router.push('/auth/login');
       return;
     }
@@ -32,11 +33,17 @@ export function PaymentModal({ planName, price, onClose }: PaymentModalProps) {
       });
 
       const data = await res.json();
+      
+      if (!res.ok) {
+        alert(data.error || '创建订单失败');
+        return;
+      }
+      
       if (data.qrCode) {
         setQrCode(data.qrCode);
       }
     } catch (error) {
-      alert('创建订单失败');
+      alert('网络错误，请重试');
     } finally {
       setLoading(false);
     }
