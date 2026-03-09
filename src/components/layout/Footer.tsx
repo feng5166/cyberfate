@@ -16,6 +16,7 @@ const footerLinks = [
     links: [
       { label: '隐私政策', href: '/privacy' },
       { label: '服务条款', href: '/terms' },
+      { label: '退款政策', href: '/refund' },
     ],
   },
 ];
