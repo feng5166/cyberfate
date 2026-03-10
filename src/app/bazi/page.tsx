@@ -121,11 +121,15 @@ export default function BaziPage() {
       const data = await response.json();
       
       if (!response.ok) {
+        if (response.status === 401) {
+          window.location.href = '/auth/login?redirect=/bazi';
+          return;
+        }
         if (data.error === 'QUOTA_EXCEEDED') {
           setShowQuotaModal(true);
           return;
         }
-        throw new Error(data.error || '计算失败，请稍后重试');
+        throw new Error(data.error || '服务器错误，请稍后重试');
       }
 
       setResult(data);
