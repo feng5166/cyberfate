@@ -111,7 +111,7 @@ export function Header() {
         {mobileMenuOpen && (
           <div className="md:hidden py-4">
             {/* Mobile Auth */}
-            <div className="px-2 pb-3 border-b border-border mb-3">
+            <div className="px-4 pb-4 mb-4 border-b border-border">
               {session ? (
                 <div className="space-y-2">
                   <Link
@@ -138,10 +138,10 @@ export function Header() {
               ) : (
                 <Link
                   href="/auth/login"
-                  className="block text-center py-2 bg-primary text-white rounded text-sm hover:bg-primary/90 transition-colors"
+                  className="block text-center py-2.5 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  登录
+                  登录 / 注册
                 </Link>
               )}
             </div>
