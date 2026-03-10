@@ -56,7 +56,7 @@ export function Header() {
                 onMouseEnter={() => setUserMenuOpen(true)}
                 onMouseLeave={() => setUserMenuOpen(false)}
               >
-                <button className="px-4 py-1.5 text-sm bg-primary text-white rounded hover:bg-primary/90 transition-colors">
+                <button className="px-4 py-1.5 text-sm bg-black text-white rounded hover:bg-gray-800 transition-colors">
                   工作台
                 </button>
                 {userMenuOpen && (
