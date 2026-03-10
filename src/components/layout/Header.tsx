@@ -85,7 +85,7 @@ export function Header() {
             ) : (
               <Link
                 href="/auth/login"
-                className="px-4 py-1.5 text-sm bg-primary text-white rounded hover:bg-primary/90 transition-colors"
+                className="px-4 py-1.5 text-sm bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
               >
                 登录
               </Link>
