@@ -8,21 +8,21 @@ import { PaymentModal } from '@/components/PaymentModal';
 const plans = [
   {
     name: '月卡',
-    price: '$3.99',
+    price: 'HK$30',
     period: '/ 月',
     recommended: false,
     perks: ['无限次八字解读', '每日运势推送', 'AI 深度分析报告', '标准客服支持'],
   },
   {
     name: '季卡',
-    price: '$9.99',
+    price: 'HK$78',
     period: '/ 季',
     recommended: true,
     perks: ['无限次八字解读', '每日运势推送', 'AI 深度分析报告', '优先客服支持', '紫微斗数（即将开放）', '周易占卜（即将开放）'],
   },
   {
     name: '年卡',
-    price: '$29.99',
+    price: 'HK$238',
     period: '/ 年',
     recommended: false,
     perks: ['无限次八字解读', '每日运势推送', 'AI 深度分析报告', '专属客服支持', '紫微斗数（即将开放）', '周易占卜（即将开放）', '塔罗牌（即将开放）', '新功能优先体验'],

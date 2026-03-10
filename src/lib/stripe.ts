@@ -17,20 +17,20 @@ export function getStripe(): Stripe {
 export const STRIPE_PLANS = {
   monthly: {
     name: '月卡会员',
-    amount: 399, // $3.99 in cents
-    currency: 'usd',
+    amount: 3000, // HK$30 in cents
+    currency: 'hkd',
     duration: 30,
   },
   quarterly: {
     name: '季卡会员',
-    amount: 999, // $9.99 in cents
-    currency: 'usd',
+    amount: 7800, // HK$78 in cents
+    currency: 'hkd',
     duration: 90,
   },
   yearly: {
     name: '年卡会员',
-    amount: 2999, // $29.99 in cents
-    currency: 'usd',
+    amount: 23800, // HK$238 in cents
+    currency: 'hkd',
     duration: 365,
   },
 } as const;
