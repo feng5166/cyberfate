@@ -28,11 +28,14 @@ export function PaymentModal({ planName, price, onClose }: PaymentModalProps) {
 
     setLoading(true);
     try {
+      const planKey = planName === '月卡' ? 'monthly' : planName === '季卡' ? 'quarterly' : 'yearly';
+      
       const res = await fetch('/api/payment/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ 
-          plan: planName === '月卡' ? 'monthly' : planName === '季卡' ? 'quarterly' : 'yearly', 
+          plan: planKey, 
           payMethod 
         }),
       });
@@ -40,7 +43,7 @@ export function PaymentModal({ planName, price, onClose }: PaymentModalProps) {
       const data = await res.json();
       
       if (!res.ok) {
-        setError(data.error || '创建订单失败');
+        setError(data.error || `创建订单失败 (${res.status})`);
         return;
       }
       
@@ -52,8 +55,9 @@ export function PaymentModal({ planName, price, onClose }: PaymentModalProps) {
       if (data.qrCode) {
         setQrCode(data.qrCode);
       }
-    } catch (err) {
-      setError('网络错误，请重试');
+    } catch (err: any) {
+      console.error('Payment error:', err);
+      setError(err.message || '网络错误，请重试');
     } finally {
       setLoading(false);
     }
