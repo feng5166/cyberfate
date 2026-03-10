@@ -14,7 +14,7 @@ export function PaymentModal({ planName, price, onClose }: PaymentModalProps) {
   const { data: session } = useSession();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [payMethod, setPayMethod] = useState<'wechat' | 'alipay'>('wechat');
+  const [payMethod, setPayMethod] = useState<'wechat' | 'alipay' | 'stripe'>('stripe');
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,6 +44,11 @@ export function PaymentModal({ planName, price, onClose }: PaymentModalProps) {
         return;
       }
       
+      if (payMethod === 'stripe' && data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+        return;
+      }
+
       if (data.qrCode) {
         setQrCode(data.qrCode);
       }
@@ -69,6 +74,20 @@ export function PaymentModal({ planName, price, onClose }: PaymentModalProps) {
             </div>
 
             <div className="space-y-3 mb-6">
+              <button
+                onClick={() => setPayMethod('stripe')}
+                className={`w-full p-4 border-2 rounded-lg flex items-center gap-3 transition-all ${
+                  payMethod === 'stripe'
+                    ? 'border-purple-500 bg-purple-50 ring-2 ring-purple-200'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <div className="w-8 h-8 bg-purple-600 rounded flex items-center justify-center text-white text-xs font-bold">CARD</div>
+                <span className={`font-medium ${payMethod === 'stripe' ? 'text-purple-700' : 'text-gray-700'}`}>信用卡 / 借记卡</span>
+                <span className="text-xs text-gray-400">(Stripe)</span>
+                {payMethod === 'stripe' && <span className="ml-auto text-purple-500">✓</span>}
+              </button>
+
               <button
                 onClick={() => setPayMethod('wechat')}
                 className={`w-full p-4 border-2 rounded-lg flex items-center gap-3 transition-all ${
@@ -112,7 +131,11 @@ export function PaymentModal({ planName, price, onClose }: PaymentModalProps) {
               <button
                 onClick={handlePay}
                 disabled={loading}
-                className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`flex-1 px-4 py-3 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                  payMethod === 'stripe'
+                    ? 'bg-purple-600 hover:bg-purple-700'
+                    : 'bg-green-600 hover:bg-green-700'
+                }`}
               >
                 {loading ? '处理中...' : '确认支付'}
               </button>

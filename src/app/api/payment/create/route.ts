@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { stripe, STRIPE_PLANS } from '@/lib/stripe';
 
 const planPrices = {
   monthly: 2900,
@@ -16,7 +17,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { plan, payMethod } = await req.json();
-  
+
   if (!['monthly', 'quarterly', 'yearly'].includes(plan)) {
     return NextResponse.json({ error: '无效的套餐' }, { status: 400 });
   }
@@ -42,6 +43,34 @@ export async function POST(req: NextRequest) {
       status: 'pending',
     },
   });
+
+  if (payMethod === 'stripe') {
+    const stripePlan = STRIPE_PLANS[plan as keyof typeof STRIPE_PLANS];
+    const stripeSession = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      line_items: [
+        {
+          price_data: {
+            currency: stripePlan.currency,
+            product_data: {
+              name: stripePlan.name,
+            },
+            unit_amount: stripePlan.amount,
+          },
+          quantity: 1,
+        },
+      ],
+      success_url: `${process.env.NEXTAUTH_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}&order_id=${order.id}`,
+      cancel_url: `${process.env.NEXTAUTH_URL}/payment/cancel?order_id=${order.id}`,
+      metadata: { orderId: order.id, userId: user.id, plan },
+      customer_email: session.user.email,
+    });
+
+    return NextResponse.json({
+      orderId: order.id,
+      checkoutUrl: stripeSession.url,
+    });
+  }
 
   // MVP: 返回模拟二维码
   return NextResponse.json({
