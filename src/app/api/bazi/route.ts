@@ -33,21 +33,19 @@ const requestSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    // 检查登录状态和配额
+    // 检查登录状态和配额（游客可以试用）
     const session = await getServerSession(authOptions);
     
-    if (!session?.user?.id) {
-      return Response.json({ error: '请先登录' }, { status: 401 });
-    }
-    
-    // 检查并使用配额
-    const hasQuota = await useBaziQuota(session.user.id);
-    
-    if (!hasQuota) {
-      return Response.json({ 
-        error: 'QUOTA_EXCEEDED',
-        message: '今日免费解读次数已用完，请升级 VIP'
-      }, { status: 403 });
+    // 登录用户检查配额
+    if (session?.user?.id) {
+      const hasQuota = await useBaziQuota(session.user.id);
+      
+      if (!hasQuota) {
+        return Response.json({ 
+          error: 'QUOTA_EXCEEDED',
+          message: '今日免费解读次数已用完，请升级 VIP'
+        }, { status: 403 });
+      }
     }
     
     const body = await req.json();
