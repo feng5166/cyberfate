@@ -85,7 +85,7 @@ export function Header() {
             ) : (
               <Link
                 href="/auth/login"
-                className="px-4 py-1.5 text-sm bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
+                className="px-4 py-1.5 text-sm bg-black text-white rounded hover:bg-gray-800 transition-colors"
               >
                 登录
               </Link>
@@ -138,7 +138,7 @@ export function Header() {
               ) : (
                 <Link
                   href="/auth/login"
-                  className="block text-center py-2.5 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+                  className="block text-center py-2.5 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   登录 / 注册
