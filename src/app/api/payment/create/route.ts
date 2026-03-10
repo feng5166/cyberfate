@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { stripe, STRIPE_PLANS } from '@/lib/stripe';
+import { getStripe, STRIPE_PLANS } from '@/lib/stripe';
 
 const planPrices = {
   monthly: 2900,
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
 
   if (payMethod === 'stripe') {
     const stripePlan = STRIPE_PLANS[plan as keyof typeof STRIPE_PLANS];
-    const stripeSession = await stripe.checkout.sessions.create({
+    const stripeSession = await getStripe().checkout.sessions.create({
       mode: 'payment',
       line_items: [
         {

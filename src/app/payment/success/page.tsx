@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-export default function PaymentSuccessPage() {
+function SuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [countdown, setCountdown] = useState(5);
@@ -33,18 +33,26 @@ export default function PaymentSuccessPage() {
         <div className="space-y-3">
           <Link
             href="/bazi"
-            className="block w-full px-6 py-3 bg-cyber-gold text-cyber-bg font-semibold rounded-lg hover:bg-cyber-gold-dark transition-colors"
+            className="block w-full px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors"
           >
             开始八字分析
           </Link>
           <Link
             href="/"
-            className="block w-full px-6 py-3 border border-primary/30 text-secondary rounded-lg hover:bg-white/5 transition-colors"
+            className="block w-full px-6 py-3 border border-primary/30 text-secondary rounded-lg hover:bg-background-alt transition-colors"
           >
             返回首页（{countdown}s）
           </Link>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PaymentSuccessPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">加载中...</div>}>
+      <SuccessContent />
+    </Suspense>
   );
 }
