@@ -57,25 +57,27 @@ export function Header() {
                   工作台
                 </span>
                 {userMenuOpen && (
-                  <div className="absolute left-0 top-full mt-1 py-2 bg-white rounded-lg shadow-lg border border-border min-w-[140px]">
-                    <Link
-                      href="/profile"
-                      className="block px-4 py-2 text-sm text-primary hover:bg-background-alt transition-colors"
-                    >
-                      个人中心
-                    </Link>
-                    <Link
-                      href="/pricing"
-                      className="block px-4 py-2 text-sm text-primary hover:bg-background-alt transition-colors"
-                    >
-                      我的会员
-                    </Link>
-                    <button
-                      onClick={() => signOut({ callbackUrl: '/' })}
-                      className="w-full text-left px-4 py-2 text-sm text-primary hover:bg-background-alt transition-colors"
-                    >
-                      退出登录
-                    </button>
+                  <div className="absolute left-0 top-full pt-2">
+                    <div className="py-2 bg-white rounded-lg shadow-lg border border-border min-w-[140px]">
+                      <Link
+                        href="/profile"
+                        className="block px-4 py-2 text-sm text-primary hover:bg-background-alt transition-colors"
+                      >
+                        个人中心
+                      </Link>
+                      <Link
+                        href="/pricing"
+                        className="block px-4 py-2 text-sm text-primary hover:bg-background-alt transition-colors"
+                      >
+                        我的会员
+                      </Link>
+                      <button
+                        onClick={() => signOut({ callbackUrl: '/' })}
+                        className="w-full text-left px-4 py-2 text-sm text-primary hover:bg-background-alt transition-colors"
+                      >
+                        退出登录
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
