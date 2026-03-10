@@ -45,31 +45,39 @@ export async function POST(req: NextRequest) {
   });
 
   if (payMethod === 'stripe') {
-    const stripePlan = STRIPE_PLANS[plan as keyof typeof STRIPE_PLANS];
-    const stripeSession = await getStripe().checkout.sessions.create({
-      mode: 'payment',
-      line_items: [
-        {
-          price_data: {
-            currency: stripePlan.currency,
-            product_data: {
-              name: stripePlan.name,
+    try {
+      const stripePlan = STRIPE_PLANS[plan as keyof typeof STRIPE_PLANS];
+      const stripeSession = await getStripe().checkout.sessions.create({
+        mode: 'payment',
+        line_items: [
+          {
+            price_data: {
+              currency: stripePlan.currency,
+              product_data: {
+                name: stripePlan.name,
+              },
+              unit_amount: stripePlan.amount,
             },
-            unit_amount: stripePlan.amount,
+            quantity: 1,
           },
-          quantity: 1,
-        },
-      ],
-      success_url: `${process.env.NEXTAUTH_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}&order_id=${order.id}`,
-      cancel_url: `${process.env.NEXTAUTH_URL}/payment/cancel?order_id=${order.id}`,
-      metadata: { orderId: order.id, userId: user.id, plan },
-      customer_email: session.user.email,
-    });
+        ],
+        success_url: `${process.env.NEXTAUTH_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}&order_id=${order.id}`,
+        cancel_url: `${process.env.NEXTAUTH_URL}/payment/cancel?order_id=${order.id}`,
+        metadata: { orderId: order.id, userId: user.id, plan },
+        customer_email: session.user.email,
+      });
 
-    return NextResponse.json({
-      orderId: order.id,
-      checkoutUrl: stripeSession.url,
-    });
+      return NextResponse.json({
+        orderId: order.id,
+        checkoutUrl: stripeSession.url,
+      });
+    } catch (stripeError: any) {
+      console.error('Stripe error:', stripeError);
+      return NextResponse.json({ 
+        error: stripeError.message || 'Stripe 支付创建失败',
+        code: stripeError.code 
+      }, { status: 500 });
+    }
   }
 
   // MVP: 返回模拟二维码
