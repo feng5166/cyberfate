@@ -45,39 +45,16 @@ export async function POST(req: NextRequest) {
   });
 
   if (payMethod === 'stripe') {
-    try {
-      const stripePlan = STRIPE_PLANS[plan as keyof typeof STRIPE_PLANS];
-      const stripeSession = await getStripe().checkout.sessions.create({
-        mode: 'payment',
-        line_items: [
-          {
-            price_data: {
-              currency: stripePlan.currency,
-              product_data: {
-                name: stripePlan.name,
-              },
-              unit_amount: stripePlan.amount,
-            },
-            quantity: 1,
-          },
-        ],
-        success_url: `${process.env.NEXTAUTH_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}&order_id=${order.id}`,
-        cancel_url: `${process.env.NEXTAUTH_URL}/payment/cancel?order_id=${order.id}`,
-        metadata: { orderId: order.id, userId: user.id, plan },
-        customer_email: session.user.email,
-      });
-
-      return NextResponse.json({
-        orderId: order.id,
-        checkoutUrl: stripeSession.url,
-      });
-    } catch (stripeError: any) {
-      console.error('Stripe error:', stripeError);
-      return NextResponse.json({ 
-        error: stripeError.message || 'Stripe 支付创建失败',
-        code: stripeError.code 
-      }, { status: 500 });
-    }
+    // 使用预创建的 Stripe Payment Link
+    const stripePlan = STRIPE_PLANS[plan as keyof typeof STRIPE_PLANS];
+    
+    // 添加 client_reference_id 用于 webhook 回调识别订单
+    const checkoutUrl = `${stripePlan.paymentLink}?client_reference_id=${order.id}&prefilled_email=${encodeURIComponent(session.user.email)}`;
+    
+    return NextResponse.json({
+      orderId: order.id,
+      checkoutUrl,
+    });
   }
 
   // MVP: 返回模拟二维码
