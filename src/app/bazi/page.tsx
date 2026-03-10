@@ -62,7 +62,7 @@ export default function BaziPage() {
     name: '',
     gender: '',
     birthDate: '',
-    birthHour: '',
+    birthHour: '-1',
   });
   const [loading, setLoading] = useState(false);
   const [showQuotaModal, setShowQuotaModal] = useState(false);
