@@ -15,7 +15,7 @@ const navItems = [
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
 
   return (
     <header className="bg-white">
@@ -84,7 +84,7 @@ export function Header() {
 
           {/* Auth Area - 只显示登录按钮 */}
           <div className="hidden md:flex items-center gap-3">
-            {!session && (
+            {status === 'unauthenticated' && (
               <Link
                 href="/auth/login"
                 className="px-4 py-1.5 text-sm bg-black text-white rounded hover:bg-gray-800 transition-colors"
