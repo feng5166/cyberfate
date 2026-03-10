@@ -53,7 +53,7 @@ export function Header() {
                 onMouseEnter={() => setUserMenuOpen(true)}
                 onMouseLeave={() => setUserMenuOpen(false)}
               >
-                <span className="text-sm text-secondary hover:text-primary cursor-pointer transition-colors">
+                <span className="px-4 py-1.5 text-sm bg-black text-white rounded hover:bg-gray-800 cursor-pointer transition-colors inline-block">
                   工作台
                 </span>
                 {userMenuOpen && (
