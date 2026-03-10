@@ -3,7 +3,7 @@
   "env": {
     "NEXTAUTH_URL": "https://cyberfate.vercel.app"
   },
-  "regions": ["iad1"],
+  "regions": ["hkg1"],
   "functions": {
     "src/app/api/payment/**/*.ts": {
       "maxDuration": 30
