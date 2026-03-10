@@ -46,21 +46,18 @@ export function Header() {
                 {!item.available && <span className="ml-1 text-xs">(即将上线)</span>}
               </Link>
             ))}
-          </div>
-
-          {/* Auth Area */}
-          <div className="hidden md:flex items-center gap-3">
-            {session ? (
+            {/* 登录后显示工作台 */}
+            {session && (
               <div
                 className="relative"
                 onMouseEnter={() => setUserMenuOpen(true)}
                 onMouseLeave={() => setUserMenuOpen(false)}
               >
-                <button className="px-4 py-1.5 text-sm bg-black text-white rounded hover:bg-gray-800 transition-colors">
+                <span className="text-sm text-secondary hover:text-primary cursor-pointer transition-colors">
                   工作台
-                </button>
+                </span>
                 {userMenuOpen && (
-                  <div className="absolute right-0 top-full mt-1 py-2 bg-white rounded-lg shadow-lg border border-border min-w-[140px]">
+                  <div className="absolute left-0 top-full mt-1 py-2 bg-white rounded-lg shadow-lg border border-border min-w-[140px]">
                     <Link
                       href="/profile"
                       className="block px-4 py-2 text-sm text-primary hover:bg-background-alt transition-colors"
@@ -82,7 +79,12 @@ export function Header() {
                   </div>
                 )}
               </div>
-            ) : (
+            )}
+          </div>
+
+          {/* Auth Area - 只显示登录按钮 */}
+          <div className="hidden md:flex items-center gap-3">
+            {!session && (
               <Link
                 href="/auth/login"
                 className="px-4 py-1.5 text-sm bg-black text-white rounded hover:bg-gray-800 transition-colors"
