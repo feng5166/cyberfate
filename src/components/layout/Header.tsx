@@ -30,7 +30,7 @@ export function Header() {
           </Link>
 
           {/* Desktop Nav */}
-          <div className="hidden sm:flex items-center gap-8">
+          <div className="flex items-center gap-8">
             {navItems.map((item) => (
               <Link
                 key={item.href}
@@ -49,7 +49,7 @@ export function Header() {
           </div>
 
           {/* Auth Area */}
-          <div className="hidden sm:flex items-center gap-3">
+          <div className="flex items-center gap-3">
             {session ? (
               <div
                 className="relative"
@@ -94,7 +94,7 @@ export function Header() {
 
           {/* Mobile Menu Button */}
           <button
-            className="sm:hidden p-2 text-secondary hover:text-primary"
+            className="hidden p-2 text-secondary hover:text-primary"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
