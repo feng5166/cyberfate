@@ -282,6 +282,8 @@ export default function BaziPage() {
           </Card>
         )}
       </div>
+      {/* 版本标记 - 强制刷新缓存 */}
+      <div className="hidden" data-version="20260310-1242"></div>
     </div>
   );
 }
