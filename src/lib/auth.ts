@@ -58,12 +58,12 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user, account, profile }) {
       if (account?.provider === 'google') {
         // Google 登录：查找或创建用户
-        const existingUser = await prisma.user.findUnique({
+        let existingUser = await prisma.user.findUnique({
           where: { email: user.email! },
         })
 
         if (!existingUser) {
-          await prisma.user.create({
+          existingUser = await prisma.user.create({
             data: {
               email: user.email!,
               nickname: user.name || user.email!.split('@')[0],
@@ -71,6 +71,9 @@ export const authOptions: NextAuthOptions = {
             },
           })
         }
+        
+        // 将数据库 ID 存到 user 对象
+        user.id = existingUser.id
       }
       
       if (account?.provider === 'wechat') {
