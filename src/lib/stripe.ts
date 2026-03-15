@@ -1,13 +1,16 @@
 import Stripe from 'stripe';
+import { getEnvVar } from './utils/api-wrapper';
 
 let stripeInstance: Stripe | null = null;
 
-export function getStripe(): Stripe {
+export function getStripe(): Stripe | null {
   if (!stripeInstance) {
-    if (!process.env.STRIPE_SECRET_KEY) {
-      throw new Error('STRIPE_SECRET_KEY is not set');
+    const apiKey = getEnvVar('STRIPE_SECRET_KEY');
+    if (!apiKey) {
+      console.warn('[Stripe] STRIPE_SECRET_KEY 未配置，支付功能不可用');
+      return null;
     }
-    stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    stripeInstance = new Stripe(apiKey, {
       apiVersion: '2026-02-25.clover',
     });
   }
