@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
 import { drawRandomCards, getCardImageUrl } from '@/data/tarot';
 
 const spreadConfig: Record<string, { count: number; positions?: string[] }> = {
@@ -10,8 +13,86 @@ const spreadConfig: Record<string, { count: number; positions?: string[] }> = {
   },
 };
 
+const DAILY_LIMITS = {
+  single: 3,
+  three: 1,
+  celtic: 0, // VIP only
+};
+
+async function checkQuota(userId: string, spread: string): Promise<{ allowed: boolean; remaining: number }> {
+  const today = new Date().toISOString().split('T')[0];
+  
+  let quota = await prisma.usageQuota.findUnique({
+    where: { userId_date: { userId, date: today } }
+  });
+
+  if (!quota) {
+    quota = await prisma.usageQuota.create({
+      data: { userId, date: today }
+    });
+  }
+
+  const limit = DAILY_LIMITS[spread as keyof typeof DAILY_LIMITS] ?? 0;
+  const used = spread === 'single' ? quota.tarotSingleCount : 
+               spread === 'three' ? quota.tarotThreeCount : 0;
+  
+  return { allowed: used < limit, remaining: Math.max(0, limit - used) };
+}
+
+async function useQuota(userId: string, spread: string) {
+  const today = new Date().toISOString().split('T')[0];
+  
+  if (spread === 'single') {
+    await prisma.usageQuota.upsert({
+      where: { userId_date: { userId, date: today } },
+      update: { tarotSingleCount: { increment: 1 } },
+      create: { userId, date: today, tarotSingleCount: 1 }
+    });
+  } else if (spread === 'three') {
+    await prisma.usageQuota.upsert({
+      where: { userId_date: { userId, date: today } },
+      update: { tarotThreeCount: { increment: 1 } },
+      create: { userId, date: today, tarotThreeCount: 1 }
+    });
+  }
+}
+
+async function isVip(userId: string): Promise<boolean> {
+  const subscription = await prisma.subscription.findFirst({
+    where: { userId, status: 'active', expireAt: { gt: new Date() } }
+  });
+  return !!subscription;
+}
+
 export async function POST(req: NextRequest) {
+  const session = await getServerSession(authOptions);
   const { spread, question } = await req.json();
+
+  // 凯尔特十字需要 VIP
+  if (spread === 'celtic') {
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'LOGIN_REQUIRED' }, { status: 401 });
+    }
+    const vip = await isVip(session.user.id);
+    if (!vip) {
+      return NextResponse.json({ error: 'VIP_REQUIRED' }, { status: 403 });
+    }
+  }
+
+  // 检查配额（登录用户）
+  if (session?.user?.id && spread !== 'celtic') {
+    const vip = await isVip(session.user.id);
+    if (!vip) {
+      const { allowed, remaining } = await checkQuota(session.user.id, spread);
+      if (!allowed) {
+        return NextResponse.json({ 
+          error: 'QUOTA_EXCEEDED', 
+          message: `今日${spread === 'single' ? '单张牌' : '三张牌'}次数已用完`,
+          remaining: 0
+        }, { status: 429 });
+      }
+    }
+  }
 
   const config = spreadConfig[spread] || spreadConfig.single;
   const cards = drawRandomCards(config.count);
@@ -82,6 +163,25 @@ ${spread === 'three' ? '1. 过去的影响\n2. 现在的状况\n3. 未来的趋�
   } catch (err) {
     console.error('AI call failed:', err);
     ai_reading = cards.map(c => c.orientation === 'upright' ? c.upright : c.reversed).join('\n\n');
+  }
+
+  // 保存历史记录（登录用户）
+  if (session?.user?.id) {
+    await prisma.tarotReading.create({
+      data: {
+        userId: session.user.id,
+        question,
+        spread,
+        cards: cardsWithImages,
+        aiReading: ai_reading
+      }
+    });
+
+    // 扣除配额
+    const vip = await isVip(session.user.id);
+    if (!vip && spread !== 'celtic') {
+      await useQuota(session.user.id, spread);
+    }
   }
 
   return NextResponse.json({

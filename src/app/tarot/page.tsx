@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, History } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 

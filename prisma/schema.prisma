@@ -160,6 +160,8 @@ model UsageQuota {
   userId      String
   date        String   // YYYY-MM-DD
   baziAiCount Int      @default(0) // 八字 AI 解读使用次数
+  tarotSingleCount Int @default(0) // 塔罗单张牌使用次数
+  tarotThreeCount  Int @default(0) // 塔罗三张牌使用次数
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -168,4 +170,18 @@ model UsageQuota {
   
   @@unique([userId, date])
   @@map("usage_quotas")
+}
+
+// 塔罗占卜记录
+model TarotReading {
+  id        String   @id @default(cuid())
+  userId    String?
+  question  String?
+  spread    String   // single, three, celtic
+  cards     Json     // 抽到的牌
+  aiReading String   @db.Text
+  
+  createdAt DateTime @default(now())
+  
+  @@map("tarot_readings")
 }
