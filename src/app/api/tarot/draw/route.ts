@@ -30,22 +30,33 @@ ${question ? `用户的问题：${question}` : '用户没有提出具体问题'}
 语气温和、有启发性，避免过于绝对的判断。`;
 
   // 调用 AI
-  const aiResponse = await fetch(`${process.env.ANTHROPIC_BASE_URL}/v1/messages`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': process.env.ANTHROPIC_API_KEY!,
-      'anthropic-version': '2023-06-01'
-    },
-    body: JSON.stringify({
-      model: 'claude-3-5-sonnet-20241022',
-      max_tokens: 500,
-      messages: [{ role: 'user', content: prompt }]
-    })
-  });
+  let ai_reading = '';
+  try {
+    const aiResponse = await fetch(`${process.env.ANTHROPIC_BASE_URL}/v1/messages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': process.env.ANTHROPIC_API_KEY!,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-3-5-sonnet-20241022',
+        max_tokens: 500,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
 
-  const aiData = await aiResponse.json();
-  const ai_reading = aiData.content[0].text;
+    if (!aiResponse.ok) {
+      console.error('AI API error:', aiResponse.status, await aiResponse.text());
+      ai_reading = `${card.orientation === 'upright' ? card.upright : card.reversed}\n\n行动建议：保持开放的心态，相信自己的直觉。`;
+    } else {
+      const aiData = await aiResponse.json();
+      ai_reading = aiData.content?.[0]?.text || card.upright;
+    }
+  } catch (err) {
+    console.error('AI call failed:', err);
+    ai_reading = `${card.orientation === 'upright' ? card.upright : card.reversed}\n\n行动建议：保持开放的心态，相信自己的直觉。`;
+  }
 
   return NextResponse.json({
     spread,
