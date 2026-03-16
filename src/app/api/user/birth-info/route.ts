@@ -12,7 +12,7 @@ export async function GET() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { birthDate: true, birthHour: true, gender: true },
+    select: { nickname: true, birthDate: true, birthHour: true, gender: true },
   });
 
   return NextResponse.json({ data: user });
@@ -26,11 +26,11 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { birthDate, birthHour, gender } = body;
+  const { name, birthDate, birthHour, gender } = body;
 
   await prisma.user.update({
     where: { id: session.user.id },
-    data: { birthDate, birthHour, gender },
+    data: { nickname: name, birthDate, birthHour, gender },
   });
 
   return NextResponse.json({ success: true });

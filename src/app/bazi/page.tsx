@@ -81,6 +81,7 @@ export default function BaziPage() {
             if (data?.birthDate) {
               setFormData(prev => ({
                 ...prev,
+                name: data.nickname || '',
                 birthDate: data.birthDate || '',
                 birthHour: data.birthHour || '-1',
                 gender: data.gender || '',
@@ -141,6 +142,7 @@ export default function BaziPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            name: formData.name,
             birthDate: formData.birthDate,
             birthHour: formData.birthHour,
             gender: formData.gender,
