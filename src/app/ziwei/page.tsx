@@ -104,14 +104,12 @@ export default function ZiweiPage() {
                   options={genderOptions}
                   value={formData.gender}
                   onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                  required
                 />
                 
                 <DatePicker
                   label="出生日期"
                   value={formData.birthDate}
                   onChange={(value) => setFormData({ ...formData, birthDate: value })}
-                  required
                 />
                 
                 <Select
@@ -119,7 +117,6 @@ export default function ZiweiPage() {
                   options={shichenOptions}
                   value={formData.birthHour}
                   onChange={(e) => setFormData({ ...formData, birthHour: e.target.value })}
-                  required
                 />
               </div>
 

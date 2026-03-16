@@ -103,7 +103,6 @@ export default function MarriagePage() {
                     label="出生日期"
                     value={formData.maleBirthDate}
                     onChange={(value) => setFormData({ ...formData, maleBirthDate: value })}
-                    required
                   />
                   <Select
                     label="出生时辰"
@@ -135,7 +134,6 @@ export default function MarriagePage() {
                     label="出生日期"
                     value={formData.femaleBirthDate}
                     onChange={(value) => setFormData({ ...formData, femaleBirthDate: value })}
-                    required
                   />
                   <Select
                     label="出生时辰"
