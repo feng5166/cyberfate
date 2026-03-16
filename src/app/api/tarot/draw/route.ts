@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { drawRandomCards } from '@/data/tarot';
+import { drawRandomCards, getCardImageUrl } from '@/data/tarot';
 
 export async function POST(req: NextRequest) {
   const { spread, question } = await req.json();
 
   const cards = drawRandomCards(spread === 'single' ? 1 : 3);
   const card = cards[0];
+
+  // 添加图片 URL
+  const cardsWithImages = cards.map(c => ({
+    ...c,
+    image_url: getCardImageUrl(c)
+  }));
 
   // 构建 AI prompt
   const prompt = `你是一位专业的塔罗占卜师。
@@ -43,7 +49,7 @@ ${question ? `用户的问题：${question}` : '用户没有提出具体问题'}
 
   return NextResponse.json({
     spread,
-    cards,
+    cards: cardsWithImages,
     ai_reading
   });
 }

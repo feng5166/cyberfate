@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Sparkles } from 'lucide-react';
+import Image from 'next/image';
 
 export default function TarotPage() {
   const [question, setQuestion] = useState('');
@@ -66,7 +67,15 @@ export default function TarotPage() {
           <div className="space-y-6">
             <Card>
               <div className="text-center">
-                <div className="text-6xl mb-4">🃏</div>
+                <div className="mb-4 flex justify-center">
+                  <Image 
+                    src={result.cards[0].image_url} 
+                    alt={result.cards[0].name_zh}
+                    width={200}
+                    height={350}
+                    className="rounded-lg shadow-lg"
+                  />
+                </div>
                 <h2 className="text-2xl font-bold text-primary mb-2">{result.cards[0].name_zh}</h2>
                 <p className="text-sm text-secondary mb-4">{result.cards[0].name_en}</p>
                 <div className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-sm">
