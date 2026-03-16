@@ -12,31 +12,31 @@ const features = [
     available: true,
   },
   {
+    icon: BookHeart,
+    title: '八字合婚',
+    description: '测算双方八字匹配度，了解婚姻运势',
+    href: '/bazi/marriage',
+    available: true,
+  },
+  {
     icon: Star,
     title: '紫微斗数',
     description: '紫微排盘，解析命宫十二宫位',
     href: '/ziwei',
-    available: false,
+    available: true,
   },
   {
     icon: Sparkles,
-    title: '周易占卜',
-    description: '梅花易数、六爻预测，问事解惑',
+    title: '梅花易数',
+    description: '快速起卦，洞察吉凶',
     href: '/meihua',
-    available: false,
+    available: true,
   },
   {
     icon: Layers,
-    title: '塔罗牌',
+    title: '塔罗占卜',
     description: '经典韦特塔罗，AI 智能解读牌阵',
     href: '/tarot',
-    available: false,
-  },
-  {
-    icon: BookOpen,
-    title: '每日运势',
-    description: '基于八字的个性化每日运势分析',
-    href: '/daily',
     available: true,
   },
   {
@@ -44,7 +44,7 @@ const features = [
     title: 'AI 黄历',
     description: '宜忌查询，智能择日建议',
     href: '/huangli',
-    available: false,
+    available: true,
   },
 ];
 
