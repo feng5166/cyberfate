@@ -11,6 +11,7 @@ const navItems = [
   { label: '八字合婚', href: '/bazi/marriage', available: true },
   { label: '紫微斗数', href: '/ziwei', available: true },
   { label: '梅花易数', href: '/meihua', available: true },
+  { label: 'AI 黄历', href: '/huangli', available: true },
   { label: '塔罗占卜', href: '/tarot', available: true },
   { label: '博客', href: '/blog', available: false },
   { label: '定价', href: '/pricing', available: true },
