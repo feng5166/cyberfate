@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/Card';
 import { Sparkles, History, Share2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { CardDrawAnimation } from '@/components/tarot/CardDrawAnimation';
 
 const spreads = [
   {
@@ -49,7 +50,7 @@ interface TarotCard {
 
 export default function TarotPage() {
   const { data: session } = useSession();
-  const [step, setStep] = useState<'select' | 'question' | 'result'>('select');
+  const [step, setStep] = useState<'select' | 'question' | 'draw' | 'result'>('select');
   const [selectedSpread, setSelectedSpread] = useState<string>('');
   const [question, setQuestion] = useState('');
   const [loading, setLoading] = useState(false);
@@ -94,6 +95,10 @@ export default function TarotPage() {
   };
 
   const handleDraw = async () => {
+    setStep('draw');
+  };
+
+  const handleCardsSelected = async (selectedIndices: number[]) => {
     setLoading(true);
     setError('');
     try {
@@ -199,14 +204,24 @@ export default function TarotPage() {
                   返回
                 </Button>
                 <Button onClick={handleDraw} loading={loading} className="flex-1">
-                  {loading ? '抽牌中...' : '开始抽牌'}
+                  开始抽牌
                 </Button>
               </div>
             </div>
           </Card>
         )}
 
-        {/* 步骤 3: 结果展示 */}
+        {/* 步骤 3: 抽牌动画 */}
+        {step === 'draw' && (
+          <Card>
+            <CardDrawAnimation 
+              cardCount={spreads.find(s => s.id === selectedSpread)?.cards || 1}
+              onComplete={handleCardsSelected}
+            />
+          </Card>
+        )}
+
+        {/* 步骤 4: 结果展示 */}
         {step === 'result' && result && (
           <div className="space-y-6">
             {/* 牌面展示 */}
