@@ -1,0 +1,18 @@
+{
+  "cups": [
+    {"id": "cups01", "name_en": "Ace of Cups", "name_zh": "圣杯王牌", "keywords": ["新感情", "爱", "直觉", "创造力"], "upright": "新的感情、爱的开始、直觉觉醒", "reversed": "情感封闭、失望、创造力受阻"},
+    {"id": "cups02", "name_en": "Two of Cups", "name_zh": "圣杯二", "keywords": ["伙伴关系", "和谐", "连接", "平衡"], "upright": "伙伴关系、和谐关系、相互吸引", "reversed": "失衡、分离、沟通不良"},
+    {"id": "cups03", "name_en": "Three of Cups", "name_zh": "圣杯三", "keywords": ["庆祝", "友谊", "社交", "喜悦"], "upright": "庆祝、友谊、社交聚会、喜悦", "reversed": "过度放纵、孤立、三角关系"},
+    {"id": "cups04", "name_en": "Four of Cups", "name_zh": "圣杯四", "keywords": ["沉思", "冷漠", "重新评估", "内省"], "upright": "沉思、冷漠、重新评估、内省", "reversed": "觉醒、新机会、动力恢复"},
+    {"id": "cups05", "name_en": "Five of Cups", "name_zh": "圣杯五", "keywords": ["失落", "悲伤", "遗憾", "失望"], "upright": "失落、悲伤、遗憾、专注于损失", "reversed": "接受、前进、宽恕、疗愈"},
+    {"id": "cups06", "name_en": "Six of Cups", "name_zh": "圣杯六", "keywords": ["怀旧", "童年", "纯真", "回忆"], "upright": "怀旧、童年回忆、纯真、重逢", "reversed": "活在过去、理想化、无法前进"},
+    {"id": "cups07", "name_en": "Seven of Cups", "name_zh": "圣杯七", "keywords": ["选择", "幻想", "机会", "困惑"], "upright": "多种选择、幻想、机会、困惑", "reversed": "清晰、决定、现实、专注"},
+    {"id": "cups08", "name_en": "Eight of Cups", "name_zh": "圣杯八", "keywords": ["离开", "寻找", "放弃", "前进"], "upright": "离开、寻找更多、放弃、前进", "reversed": "恐惧离开、停滞、逃避"},
+    {"id": "cups09", "name_en": "Nine of Cups", "name_zh": "圣杯九", "keywords": ["满足", "愿望成真", "幸福", "成就"], "upright": "满足、愿望成真、幸福、情感成就", "reversed": "贪婪、不满、空虚、物质主义"},
+    {"id": "cups10", "name_en": "Ten of Cups", "name_zh": "圣杯十", "keywords": ["家庭", "和谐", "幸福", "圆满"], "upright": "家庭和谐、幸福、情感圆满", "reversed": "家庭冲突、破裂、价值观不合"},
+    {"id": "cups11", "name_en": "Page of Cups", "name_zh": "圣杯侍从", "keywords": ["创意", "直觉", "好奇", "敏感"], "upright": "创意信息、直觉、好奇心、敏感", "reversed": "情绪化、不成熟、创意受阻"},
+    {"id": "cups12", "name_en": "Knight of Cups", "name_zh": "圣杯骑士", "keywords": ["浪漫", "魅力", "理想主义", "追求"], "upright": "浪漫、魅力、理想主义、追求梦想", "reversed": "不切实际、情绪化、失望"},
+    {"id": "cups13", "name_en": "Queen of Cups", "name_zh": "圣杯王后", "keywords": ["同理心", "直觉", "关怀", "情感成熟"], "upright": "同理心、直觉、关怀、情感成熟", "reversed": "情绪不稳、依赖、过度敏感"},
+    {"id": "cups14", "name_en": "King of Cups", "name_zh": "圣杯国王", "keywords": ["情感平衡", "外交", "智慧", "冷静"], "upright": "情感平衡、外交手腕、智慧、冷静", "reversed": "情感操控、冷漠、压抑情感"}
+  ]
+}

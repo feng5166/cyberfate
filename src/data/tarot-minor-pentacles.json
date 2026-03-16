@@ -1,0 +1,18 @@
+{
+  "pentacles": [
+    {"id": "pents01", "name_en": "Ace of Pentacles", "name_zh": "星币王牌", "keywords": ["新机会", "繁荣", "物质", "开始"], "upright": "新的财务机会、繁荣、物质开始", "reversed": "错失机会、贪婪、财务不稳"},
+    {"id": "pents02", "name_en": "Two of Pentacles", "name_zh": "星币二", "keywords": ["平衡", "适应", "灵活", "优先级"], "upright": "平衡、适应变化、灵活性、时间管理", "reversed": "失衡、过度承诺、混乱"},
+    {"id": "pents03", "name_en": "Three of Pentacles", "name_zh": "星币三", "keywords": ["团队合作", "技能", "学习", "协作"], "upright": "团队合作、技能展示、学习、协作", "reversed": "缺乏团队精神、技能不足、冲突"},
+    {"id": "pents04", "name_en": "Four of Pentacles", "name_zh": "星币四", "keywords": ["控制", "安全", "保守", "占有"], "upright": "控制、安全感、保守、占有欲", "reversed": "贪婪、物质主义、放手、慷慨"},
+    {"id": "pents05", "name_en": "Five of Pentacles", "name_zh": "星币五", "keywords": ["困难", "贫困", "孤立", "担忧"], "upright": "财务困难、贫困、孤立、担忧", "reversed": "复苏、改善、寻求帮助"},
+    {"id": "pents06", "name_en": "Six of Pentacles", "name_zh": "星币六", "keywords": ["慷慨", "给予", "接受", "平衡"], "upright": "慷慨、给予、接受帮助、平衡", "reversed": "自私、债务、不平等"},
+    {"id": "pents07", "name_en": "Seven of Pentacles", "name_zh": "星币七", "keywords": ["耐心", "投资", "评估", "等待"], "upright": "耐心、长期投资、评估进展", "reversed": "不耐烦、缺乏远见、浪费"},
+    {"id": "pents08", "name_en": "Eight of Pentacles", "name_zh": "星币八", "keywords": ["勤奋", "技能", "专注", "精通"], "upright": "勤奋工作、技能提升、专注、精通", "reversed": "完美主义、缺乏专注、低质量"},
+    {"id": "pents09", "name_en": "Nine of Pentacles", "name_zh": "星币九", "keywords": ["独立", "成功", "享受", "自给自足"], "upright": "独立、财务成功、享受成果", "reversed": "过度工作、财务依赖、缺乏自律"},
+    {"id": "pents10", "name_en": "Ten of Pentacles", "name_zh": "星币十", "keywords": ["财富", "遗产", "家庭", "稳定"], "upright": "财富、遗产、家庭稳定、长期成功", "reversed": "财务损失、家庭冲突、不稳定"},
+    {"id": "pents11", "name_en": "Page of Pentacles", "name_zh": "星币侍从", "keywords": ["机会", "学习", "目标", "务实"], "upright": "新机会、学习、设定目标、务实", "reversed": "拖延、缺乏进展、不切实际"},
+    {"id": "pents12", "name_en": "Knight of Pentacles", "name_zh": "星币骑士", "keywords": ["责任", "勤奋", "可靠", "保守"], "upright": "责任感、勤奋、可靠、保守", "reversed": "懒惰、不负责任、停滞"},
+    {"id": "pents13", "name_en": "Queen of Pentacles", "name_zh": "星币王后", "keywords": ["务实", "关怀", "富足", "安全"], "upright": "务实、关怀、富足、提供安全", "reversed": "物质主义、嫉妒、不安全感"},
+    {"id": "pents14", "name_en": "King of Pentacles", "name_zh": "星币国王", "keywords": ["成功", "富裕", "领导", "稳定"], "upright": "财务成功、富裕、领导力、稳定", "reversed": "贪婪、物质主义、财务不稳"}
+  ]
+}

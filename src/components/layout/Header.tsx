@@ -8,6 +8,7 @@ import { Sparkles } from 'lucide-react';
 const navItems = [
   { label: '首页', href: '/', available: true },
   { label: '八字分析', href: '/bazi', available: true },
+  { label: '塔罗占卜', href: '/tarot', available: true },
   { label: '博客', href: '/blog', available: false },
   { label: '定价', href: '/pricing', available: true },
 ];

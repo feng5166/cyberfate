@@ -1,0 +1,202 @@
+{
+  "major_arcana": [
+    {
+      "id": 0,
+      "name_en": "The Fool",
+      "name_zh": "愚者",
+      "filename": "maj00.jpg",
+      "keywords": ["新开始", "冒险", "纯真", "自由"],
+      "upright": "新的开始、冒险精神、纯真无邪、自由自在",
+      "reversed": "鲁莽、缺乏计划、逃避责任"
+    },
+    {
+      "id": 1,
+      "name_en": "The Magician",
+      "name_zh": "魔术师",
+      "filename": "maj01.jpg",
+      "keywords": ["创造", "技能", "意志力", "行动"],
+      "upright": "创造力、技能、意志力、行动力",
+      "reversed": "操纵、欺骗、缺乏行动"
+    },
+    {
+      "id": 2,
+      "name_en": "The High Priestess",
+      "name_zh": "女祭司",
+      "filename": "maj02.jpg",
+      "keywords": ["直觉", "神秘", "潜意识", "智慧"],
+      "upright": "直觉、内在智慧、神秘知识、潜意识",
+      "reversed": "忽视直觉、秘密、表面化"
+    },
+    {
+      "id": 3,
+      "name_en": "The Empress",
+      "name_zh": "皇后",
+      "filename": "maj03.jpg",
+      "keywords": ["丰饶", "母性", "创造", "自然"],
+      "upright": "丰饶、母性、创造力、自然之美",
+      "reversed": "依赖、窒息、创造力受阻"
+    },
+    {
+      "id": 4,
+      "name_en": "The Emperor",
+      "name_zh": "皇帝",
+      "filename": "maj04.jpg",
+      "keywords": ["权威", "结构", "控制", "父性"],
+      "upright": "权威、结构、控制、稳定",
+      "reversed": "专制、僵化、失控"
+    },
+    {
+      "id": 5,
+      "name_en": "The Hierophant",
+      "name_zh": "教皇",
+      "filename": "maj05.jpg",
+      "keywords": ["传统", "教育", "信仰", "指导"],
+      "upright": "传统、教育、信仰、精神指导",
+      "reversed": "叛逆、打破传统、新思想"
+    },
+    {
+      "id": 6,
+      "name_en": "The Lovers",
+      "name_zh": "恋人",
+      "filename": "maj06.jpg",
+      "keywords": ["爱情", "选择", "和谐", "关系"],
+      "upright": "爱情、和谐、选择、关系",
+      "reversed": "失衡、错误选择、冲突"
+    },
+    {
+      "id": 7,
+      "name_en": "The Chariot",
+      "name_zh": "战车",
+      "filename": "maj07.jpg",
+      "keywords": ["胜利", "意志", "控制", "前进"],
+      "upright": "胜利、意志力、控制、前进",
+      "reversed": "失控、缺乏方向、侵略"
+    },
+    {
+      "id": 8,
+      "name_en": "Strength",
+      "name_zh": "力量",
+      "filename": "maj08.jpg",
+      "keywords": ["勇气", "耐心", "温柔", "内在力量"],
+      "upright": "勇气、耐心、温柔的力量、内在力量",
+      "reversed": "软弱、自我怀疑、缺乏自信"
+    },
+    {
+      "id": 9,
+      "name_en": "The Hermit",
+      "name_zh": "隐士",
+      "filename": "maj09.jpg",
+      "keywords": ["内省", "独处", "智慧", "指引"],
+      "upright": "内省、独处、寻找智慧、内在指引",
+      "reversed": "孤立、孤独、迷失"
+    },
+    {
+      "id": 10,
+      "name_en": "Wheel of Fortune",
+      "name_zh": "命运之轮",
+      "filename": "maj10.jpg",
+      "keywords": ["命运", "变化", "循环", "转折"],
+      "upright": "命运、好运、变化、生命循环",
+      "reversed": "厄运、抗拒变化、失控"
+    },
+    {
+      "id": 11,
+      "name_en": "Justice",
+      "name_zh": "正义",
+      "filename": "maj11.jpg",
+      "keywords": ["公正", "真相", "因果", "平衡"],
+      "upright": "公正、真相、因果、平衡",
+      "reversed": "不公、偏见、逃避责任"
+    },
+    {
+      "id": 12,
+      "name_en": "The Hanged Man",
+      "name_zh": "倒吊人",
+      "filename": "maj12.jpg",
+      "keywords": ["牺牲", "放手", "新视角", "等待"],
+      "upright": "牺牲、放手、新视角、暂停",
+      "reversed": "拖延、抗拒、无谓牺牲"
+    },
+    {
+      "id": 13,
+      "name_en": "Death",
+      "name_zh": "死神",
+      "filename": "maj13.jpg",
+      "keywords": ["结束", "转变", "重生", "释放"],
+      "upright": "结束、转变、重生、释放过去",
+      "reversed": "抗拒改变、停滞、无法放手"
+    },
+    {
+      "id": 14,
+      "name_en": "Temperance",
+      "name_zh": "节制",
+      "filename": "maj14.jpg",
+      "keywords": ["平衡", "耐心", "和谐", "中庸"],
+      "upright": "平衡、耐心、和谐、中庸之道",
+      "reversed": "失衡、过度、缺乏耐心"
+    },
+    {
+      "id": 15,
+      "name_en": "The Devil",
+      "name_zh": "恶魔",
+      "filename": "maj15.jpg",
+      "keywords": ["束缚", "诱惑", "物质", "阴影"],
+      "upright": "束缚、诱惑、物质主义、阴影面",
+      "reversed": "解脱、觉醒、打破束缚"
+    },
+    {
+      "id": 16,
+      "name_en": "The Tower",
+      "name_zh": "高塔",
+      "filename": "maj16.jpg",
+      "keywords": ["突变", "破坏", "启示", "解放"],
+      "upright": "突然变化、破坏、启示、解放",
+      "reversed": "逃避灾难、恐惧改变、延迟"
+    },
+    {
+      "id": 17,
+      "name_en": "The Star",
+      "name_zh": "星星",
+      "filename": "maj17.jpg",
+      "keywords": ["希望", "灵感", "宁静", "疗愈"],
+      "upright": "希望、灵感、宁静、疗愈",
+      "reversed": "失望、缺乏信心、绝望"
+    },
+    {
+      "id": 18,
+      "name_en": "The Moon",
+      "name_zh": "月亮",
+      "filename": "maj18.jpg",
+      "keywords": ["幻觉", "恐惧", "潜意识", "直觉"],
+      "upright": "幻觉、恐惧、潜意识、直觉",
+      "reversed": "释放恐惧、清晰、真相显现"
+    },
+    {
+      "id": 19,
+      "name_en": "The Sun",
+      "name_zh": "太阳",
+      "filename": "maj19.jpg",
+      "keywords": ["成功", "喜悦", "活力", "光明"],
+      "upright": "成功、喜悦、活力、光明",
+      "reversed": "暂时失落、过度乐观、延迟"
+    },
+    {
+      "id": 20,
+      "name_en": "Judgement",
+      "name_zh": "审判",
+      "filename": "maj20.jpg",
+      "keywords": ["觉醒", "重生", "反思", "宽恕"],
+      "upright": "觉醒、重生、反思、宽恕",
+      "reversed": "自我怀疑、拒绝反思、内疚"
+    },
+    {
+      "id": 21,
+      "name_en": "The World",
+      "name_zh": "世界",
+      "filename": "maj21.jpg",
+      "keywords": ["完成", "成就", "圆满", "旅程"],
+      "upright": "完成、成就、圆满、旅程结束",
+      "reversed": "未完成、缺乏闭环、延迟"
+    }
+  ]
+}

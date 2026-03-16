@@ -1,0 +1,18 @@
+{
+  "swords": [
+    {"id": "swords01", "name_en": "Ace of Swords", "name_zh": "宝剑王牌", "keywords": ["突破", "清晰", "真相", "力量"], "upright": "突破、清晰思维、真相、精神力量", "reversed": "混乱、误解、暴力、滥用权力"},
+    {"id": "swords02", "name_en": "Two of Swords", "name_zh": "宝剑二", "keywords": ["僵局", "选择", "平衡", "回避"], "upright": "僵局、艰难选择、平衡、回避决定", "reversed": "困惑、信息过载、做出决定"},
+    {"id": "swords03", "name_en": "Three of Swords", "name_zh": "宝剑三", "keywords": ["心碎", "悲伤", "痛苦", "背叛"], "upright": "心碎、悲伤、痛苦、背叛", "reversed": "疗愈、宽恕、释放痛苦"},
+    {"id": "swords04", "name_en": "Four of Swords", "name_zh": "宝剑四", "keywords": ["休息", "恢复", "沉思", "准备"], "upright": "休息、恢复、沉思、准备", "reversed": "疲惫、压力、无法休息"},
+    {"id": "swords05", "name_en": "Five of Swords", "name_zh": "宝剑五", "keywords": ["冲突", "失败", "自私", "代价"], "upright": "冲突、失败、自私、胜利的代价", "reversed": "和解、原谅、放下"},
+    {"id": "swords06", "name_en": "Six of Swords", "name_zh": "宝剑六", "keywords": ["过渡", "改变", "前进", "释放"], "upright": "过渡、改变、前进、释放过去", "reversed": "抗拒改变、情感包袱、停滞"},
+    {"id": "swords07", "name_en": "Seven of Swords", "name_zh": "宝剑七", "keywords": ["欺骗", "策略", "逃避", "狡猾"], "upright": "欺骗、策略、逃避、狡猾", "reversed": "坦白、良心、被发现"},
+    {"id": "swords08", "name_en": "Eight of Swords", "name_zh": "宝剑八", "keywords": ["束缚", "限制", "受害者", "困境"], "upright": "自我束缚、限制、受害者心态", "reversed": "释放、自由、新视角"},
+    {"id": "swords09", "name_en": "Nine of Swords", "name_zh": "宝剑九", "keywords": ["焦虑", "担忧", "噩梦", "恐惧"], "upright": "焦虑、担忧、噩梦、恐惧", "reversed": "希望、疗愈、面对恐惧"},
+    {"id": "swords10", "name_en": "Ten of Swords", "name_zh": "宝剑十", "keywords": ["结束", "背叛", "崩溃", "重生"], "upright": "痛苦结束、背叛、崩溃、触底", "reversed": "复苏、重生、避免灾难"},
+    {"id": "swords11", "name_en": "Page of Swords", "name_zh": "宝剑侍从", "keywords": ["好奇", "警觉", "沟通", "新想法"], "upright": "好奇心、警觉、沟通、新想法", "reversed": "八卦、谎言、缺乏计划"},
+    {"id": "swords12", "name_en": "Knight of Swords", "name_zh": "宝剑骑士", "keywords": ["行动", "冲动", "雄心", "直接"], "upright": "快速行动、冲动、雄心、直接", "reversed": "鲁莽、不耐烦、缺乏方向"},
+    {"id": "swords13", "name_en": "Queen of Swords", "name_zh": "宝剑王后", "keywords": ["独立", "清晰", "直接", "智慧"], "upright": "独立、清晰思维、直接、智慧", "reversed": "冷酷、苦涩、情感封闭"},
+    {"id": "swords14", "name_en": "King of Swords", "name_zh": "宝剑国王", "keywords": ["权威", "理性", "真相", "公正"], "upright": "智力权威、理性、真相、公正", "reversed": "操控、残酷、滥用权力"}
+  ]
+}

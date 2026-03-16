@@ -1,0 +1,18 @@
+{
+  "wands": [
+    {"id": "wands01", "name_en": "Ace of Wands", "name_zh": "权杖王牌", "keywords": ["灵感", "创造", "热情", "开始"], "upright": "灵感、创造力、热情、新开始", "reversed": "缺乏方向、拖延、创意受阻"},
+    {"id": "wands02", "name_en": "Two of Wands", "name_zh": "权杖二", "keywords": ["计划", "决定", "发现", "未来"], "upright": "计划、决定、发现、展望未来", "reversed": "恐惧未知、缺乏计划、犹豫"},
+    {"id": "wands03", "name_en": "Three of Wands", "name_zh": "权杖三", "keywords": ["扩展", "远见", "领导", "机会"], "upright": "扩展、远见、领导力、机会", "reversed": "缺乏远见、延迟、障碍"},
+    {"id": "wands04", "name_en": "Four of Wands", "name_zh": "权杖四", "keywords": ["庆祝", "和谐", "家庭", "稳定"], "upright": "庆祝、和谐、家庭、稳定", "reversed": "不稳定、缺乏支持、延迟"},
+    {"id": "wands05", "name_en": "Five of Wands", "name_zh": "权杖五", "keywords": ["冲突", "竞争", "紧张", "多样性"], "upright": "冲突、竞争、紧张、多样性", "reversed": "避免冲突、和解、内在冲突"},
+    {"id": "wands06", "name_en": "Six of Wands", "name_zh": "权杖六", "keywords": ["胜利", "成功", "认可", "自信"], "upright": "胜利、成功、公众认可、自信", "reversed": "失败、缺乏认可、自我怀疑"},
+    {"id": "wands07", "name_en": "Seven of Wands", "name_zh": "权杖七", "keywords": ["挑战", "坚持", "防御", "勇气"], "upright": "挑战、坚持立场、防御、勇气", "reversed": "屈服、疲惫、放弃"},
+    {"id": "wands08", "name_en": "Eight of Wands", "name_zh": "权杖八", "keywords": ["速度", "行动", "进展", "变化"], "upright": "快速行动、进展、变化、旅行", "reversed": "延迟、挫折、缺乏方向"},
+    {"id": "wands09", "name_en": "Nine of Wands", "name_zh": "权杖九", "keywords": ["坚韧", "毅力", "防御", "边界"], "upright": "坚韧、毅力、防御、设定边界", "reversed": "疲惫、偏执、放弃"},
+    {"id": "wands10", "name_en": "Ten of Wands", "name_zh": "权杖十", "keywords": ["负担", "责任", "压力", "完成"], "upright": "负担、过多责任、压力、接近完成", "reversed": "释放负担、委派、崩溃"},
+    {"id": "wands11", "name_en": "Page of Wands", "name_zh": "权杖侍从", "keywords": ["热情", "探索", "发现", "自由"], "upright": "热情、探索、发现、自由精神", "reversed": "缺乏方向、拖延、坏消息"},
+    {"id": "wands12", "name_en": "Knight of Wands", "name_zh": "权杖骑士", "keywords": ["冒险", "冲动", "热情", "能量"], "upright": "冒险、冲动、热情、能量", "reversed": "鲁莽、不耐烦、缺乏自控"},
+    {"id": "wands13", "name_en": "Queen of Wands", "name_zh": "权杖王后", "keywords": ["自信", "独立", "魅力", "决心"], "upright": "自信、独立、魅力、决心", "reversed": "自私、嫉妒、不安全感"},
+    {"id": "wands14", "name_en": "King of Wands", "name_zh": "权杖国王", "keywords": ["领导", "远见", "企业家", "荣誉"], "upright": "自然领导、远见、企业家精神", "reversed": "专制、冲动、缺乏自律"}
+  ]
+}
