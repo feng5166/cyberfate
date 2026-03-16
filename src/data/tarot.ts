@@ -5,10 +5,10 @@ import swordsData from './tarot-minor-swords.json';
 import wandsData from './tarot-minor-wands.json';
 
 export interface TarotCard {
-  id: number;
+  id: number | string;
   name_en: string;
   name_zh: string;
-  filename: string;
+  filename?: string;
   keywords: string[];
   upright: string;
   reversed: string;
@@ -34,5 +34,6 @@ export function drawRandomCards(count: number): Array<TarotCard & { orientation:
 
 export function getCardImageUrl(card: TarotCard): string {
   const suitFolder = card.suit === 'major' ? 'major' : card.suit;
-  return `/images/tarot/cards/${suitFolder}/${card.filename}`;
+  const filename = card.filename || `${card.id}.jpg`;
+  return `/images/tarot/cards/${suitFolder}/${filename}`;
 }
