@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Sparkles, History } from 'lucide-react';
+import { Sparkles, History, Share2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -55,6 +55,32 @@ export default function TarotPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ cards: TarotCard[]; ai_reading: string } | null>(null);
   const [error, setError] = useState('');
+
+  const handleShare = async () => {
+    if (!result) return;
+    
+    try {
+      const res = await fetch('/api/tarot/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          cards: result.cards, 
+          question, 
+          spread: selectedSpread 
+        })
+      });
+      const data = await res.json();
+      
+      if (navigator.share) {
+        await navigator.share({ text: data.shareText });
+      } else {
+        await navigator.clipboard.writeText(data.shareText);
+        alert('分享内容已复制到剪贴板');
+      }
+    } catch (err) {
+      console.error('分享失败:', err);
+    }
+  };
 
   const handleSelectSpread = (spreadId: string) => {
     const spread = spreads.find(s => s.id === spreadId);
@@ -221,9 +247,34 @@ export default function TarotPage() {
               <p className="text-secondary leading-relaxed whitespace-pre-wrap">{result.ai_reading}</p>
             </Card>
 
-            <Button onClick={reset} variant="secondary" className="w-full">
-              再来一次
-            </Button>
+            {/* 牌意详情 */}
+            {result.cards.length === 1 && (
+              <Card>
+                <h3 className="font-semibold text-primary mb-3">📖 牌意详解</h3>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm text-muted mb-1">关键词</p>
+                    <div className="flex flex-wrap gap-2">
+                      {result.cards[0].keywords.map((kw, i) => (
+                        <span key={i} className="px-2 py-1 bg-primary/10 text-primary text-xs rounded">
+                          {kw}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            <div className="flex gap-3">
+              <Button onClick={handleShare} variant="secondary" className="flex-1">
+                <Share2 className="w-4 h-4 mr-2" />
+                分享结果
+              </Button>
+              <Button onClick={reset} variant="secondary" className="flex-1">
+                再来一次
+              </Button>
+            </div>
           </div>
         )}
       </div>

@@ -141,6 +141,10 @@ ${spread === 'three' ? '1. 过去的影响\n2. 现在的状况\n3. 未来的趋�
   // 调用 AI
   let ai_reading = '';
   try {
+    // 检查是否 VIP
+    const vip = session?.user?.id ? await isVip(session.user.id) : false;
+    const maxTokens = vip ? (spread === 'celtic' ? 800 : 500) : 300; // 免费用户限制 token
+    
     const aiResponse = await fetch(`${process.env.ANTHROPIC_BASE_URL}/v1/messages`, {
       method: 'POST',
       headers: {
@@ -150,7 +154,7 @@ ${spread === 'three' ? '1. 过去的影响\n2. 现在的状况\n3. 未来的趋�
       },
       body: JSON.stringify({
         model: 'claude-3-5-sonnet-20241022',
-        max_tokens: spread === 'celtic' ? 800 : 500,
+        max_tokens: maxTokens,
         messages: [{ role: 'user', content: prompt }]
       })
     });
