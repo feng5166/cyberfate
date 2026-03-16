@@ -25,6 +25,11 @@ model User {
   nickname      String?
   avatar        String?
   
+  // 出生信息（用于命理计算）
+  birthDate     String?   // YYYY-MM-DD
+  birthHour     String?   // 时辰 "-1" to "11"
+  gender        String?   // male/female
+  
   // 时间戳
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt

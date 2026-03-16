@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { saveBirthInfo, loadBirthInfo } from '@/lib/utils/storage';
 
 // export const metadata = { title: '八字分析' }; // 客户端组件不能导出 metadata
@@ -58,6 +59,7 @@ interface BaziResult {
 }
 
 export default function BaziPage() {
+  const { data: session, status } = useSession();
   const [formData, setFormData] = useState({
     name: '',
     gender: '',
@@ -67,18 +69,44 @@ export default function BaziPage() {
   const [loading, setLoading] = useState(false);
   const [showQuotaModal, setShowQuotaModal] = useState(false);
 
-  // 从 localStorage 恢复已保存的信息
+  // 从数据库或 localStorage 恢复已保存的信息
   useEffect(() => {
-    const saved = loadBirthInfo();
-    if (saved) {
-      setFormData(prev => ({
-        ...prev,
-        birthDate: saved.birthDate || '',
-        birthHour: saved.birthHour || '',
-        gender: saved.gender || '',
-      }));
+    async function loadUserBirthInfo() {
+      // 登录用户：优先从数据库读取
+      if (status === 'authenticated') {
+        try {
+          const res = await fetch('/api/user/birth-info');
+          if (res.ok) {
+            const { data } = await res.json();
+            if (data?.birthDate) {
+              setFormData(prev => ({
+                ...prev,
+                birthDate: data.birthDate || '',
+                birthHour: data.birthHour || '-1',
+                gender: data.gender || '',
+              }));
+              return;
+            }
+          }
+        } catch (e) {
+          console.error('Failed to load birth info from server:', e);
+        }
+      }
+      // 未登录或数据库没有：从 localStorage 读取
+      const saved = loadBirthInfo();
+      if (saved) {
+        setFormData(prev => ({
+          ...prev,
+          birthDate: saved.birthDate || '',
+          birthHour: saved.birthHour || '-1',
+          gender: saved.gender || '',
+        }));
+      }
     }
-  }, []);
+    if (status !== 'loading') {
+      loadUserBirthInfo();
+    }
+  }, [status]);
   const [error, setError] = useState('');
   const [result, setResult] = useState<BaziResult | null>(null);
 
@@ -105,6 +133,23 @@ export default function BaziPage() {
       birthHour: formData.birthHour,
       gender: formData.gender,
     });
+
+    // 登录用户：同时保存到数据库
+    if (status === 'authenticated') {
+      try {
+        await fetch('/api/user/birth-info', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            birthDate: formData.birthDate,
+            birthHour: formData.birthHour,
+            gender: formData.gender,
+          }),
+        });
+      } catch (e) {
+        console.error('Failed to save birth info to server:', e);
+      }
+    }
 
     try {
       const response = await fetch('/api/bazi', {
