@@ -223,7 +223,7 @@ export default function BaziPage() {
               
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-secondary">
-                  性别 <span className="text-muted text-xs">（选填）</span>
+                  性别 <span className="text-red-400 text-xs">*</span>
                 </label>
                 <select
                   value={formData.gender}

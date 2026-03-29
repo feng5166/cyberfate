@@ -18,14 +18,14 @@ const plans = [
     price: 'HK$78',
     period: '/ 季',
     recommended: true,
-    perks: ['无限次八字解读', '每日运势推送', 'AI 深度分析报告', '优先客服支持', '紫微斗数（即将开放）', '周易占卜（即将开放）'],
+    perks: ['无限次八字解读', '每日运势推送', 'AI 深度分析报告', '优先客服支持', '紫微斗数', '周易占卜'],
   },
   {
     name: '年卡',
     price: 'HK$238',
     period: '/ 年',
     recommended: false,
-    perks: ['无限次八字解读', '每日运势推送', 'AI 深度分析报告', '专属客服支持', '紫微斗数（即将开放）', '周易占卜（即将开放）', '塔罗牌（即将开放）', '新功能优先体验'],
+    perks: ['无限次八字解读', '每日运势推送', 'AI 深度分析报告', '专属客服支持', '紫微斗数', '周易占卜', '塔罗占卜', '新功能优先体验'],
   },
 ];
 
@@ -33,8 +33,9 @@ const comparisonRows = [
   { feature: '八字解读次数', free: '3次/天', monthly: '无限', quarterly: '无限', yearly: '无限' },
   { feature: '每日运势', free: '✓', monthly: '✓', quarterly: '✓', yearly: '✓' },
   { feature: 'AI 深度报告', free: '✗', monthly: '✓', quarterly: '✓', yearly: '✓' },
-  { feature: '紫微斗数', free: '✗', monthly: '✗', quarterly: '即将开放', yearly: '即将开放' },
-  { feature: '周易占卜', free: '✗', monthly: '✗', quarterly: '即将开放', yearly: '即将开放' },
+  { feature: '紫微斗数', free: '基础', monthly: '✓', quarterly: '✓', yearly: '✓' },
+  { feature: '周易占卜', free: '基础', monthly: '✓', quarterly: '✓', yearly: '✓' },
+  { feature: '塔罗占卜', free: '3次/天', monthly: '无限', quarterly: '无限', yearly: '无限' },
   { feature: '客服支持', free: '✗', monthly: '标准', quarterly: '优先', yearly: '专属' },
 ];
 

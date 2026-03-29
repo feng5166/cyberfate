@@ -7,8 +7,8 @@ const footerLinks = [
     links: [
       { label: '八字分析', href: '/bazi' },
       { label: '每日运势', href: '/daily' },
-      { label: '紫微斗数', href: '/ziwei', soon: true },
-      { label: '塔罗牌', href: '/tarot', soon: true },
+      { label: '紫微斗数', href: '/ziwei' },
+      { label: '塔罗牌', href: '/tarot' },
     ],
   },
   {
@@ -48,15 +48,10 @@ export function Footer() {
                 {group.links.map((link) => (
                   <li key={link.href}>
                     <Link
-                      href={link.soon ? '#' : link.href}
-                      className={`text-sm ${
-                        link.soon
-                          ? 'text-muted cursor-not-allowed'
-                          : 'text-secondary hover:text-primary'
-                      } transition-colors`}
+                      href={link.href}
+                      className="text-sm text-secondary hover:text-primary transition-colors"
                     >
                       {link.label}
-                      {link.soon && <span className="ml-1 text-xs">(即将上线)</span>}
                     </Link>
                   </li>
                 ))}

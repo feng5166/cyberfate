@@ -49,10 +49,10 @@ interface DailyResult {
 // 星级显示组件
 function StarRating({ rating, max = 5 }: { rating: number; max?: number }) {
   return (
-    <div className="flex gap-1">
+    <div className="flex gap-1 text-lg">
       {Array.from({ length: max }).map((_, i) => (
-        <span key={i} className={i < rating ? 'text-primary' : 'text-muted'}>
-          ★
+        <span key={i} className={i < rating ? 'text-amber-500' : 'text-gray-300'}>
+          {i < rating ? '★' : '☆'}
         </span>
       ))}
     </div>

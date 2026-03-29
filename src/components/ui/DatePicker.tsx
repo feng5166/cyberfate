@@ -23,7 +23,7 @@ export function DatePicker({
   const [showMonthPicker, setShowMonthPicker] = useState(false)
   const [viewYear, setViewYear] = useState(() => {
     if (value) return parseInt(value.split('-')[0])
-    return 1990
+    return 2000
   })
   const [viewMonth, setViewMonth] = useState(() => {
     if (value) return parseInt(value.split('-')[1])

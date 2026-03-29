@@ -100,7 +100,7 @@ export default function PrivacyPage() {
                 八、联系我们
               </h2>
               <p>
-                如有任何隐私相关问题，请通过网站反馈渠道联���我们。
+                如有任何隐私相关问题，请通过邮箱 support@cyberfate.com 联系我们。
               </p>
             </section>
           </div>
