@@ -61,6 +61,7 @@ export async function POST(req: NextRequest) {
 语气温和、积极、有启发性。直接开始解读，不要有前言。`;
 
   let analysis = '';
+  let aiSource: string = 'fallback';
   try {
     const aiResponse = await fetch('https://api.modelverse.cn/v1/chat/completions', {
       method: 'POST',
@@ -78,11 +79,13 @@ export async function POST(req: NextRequest) {
     if (aiResponse.ok) {
       const aiData = await aiResponse.json();
       analysis = aiData.choices?.[0]?.message?.content || '解读生成失败';
+      aiSource = 'deepseek';
     }
   } catch (err) {
     console.error('AI call failed:', err);
     analysis = '命盘显示您性格坚毅，事业有成，感情顺遂。';
+    aiSource = 'fallback';
   }
 
-  return NextResponse.json({ chart, analysis });
+  return NextResponse.json({ chart, analysis, _source: aiSource });
 }

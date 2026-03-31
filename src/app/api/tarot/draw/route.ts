@@ -140,6 +140,7 @@ ${spread === 'three' ? '1. 过去的影响\n2. 现在的状况\n3. 未来的趋�
 
   // 调用 AI
   let ai_reading = '';
+  let aiSource: string = 'fallback';
   try {
     // 检查是否 VIP
     const vip = session?.user?.id ? await isVip(session.user.id) : false;
@@ -164,6 +165,7 @@ ${spread === 'three' ? '1. 过去的影响\n2. 现在的状况\n3. 未来的趋�
     } else {
       const aiData = await aiResponse.json();
       ai_reading = aiData.choices?.[0]?.message?.content || cards[0].upright;
+      aiSource = 'deepseek';
     }
   } catch (err) {
     console.error('AI call failed:', err);
@@ -192,6 +194,7 @@ ${spread === 'three' ? '1. 过去的影响\n2. 现在的状况\n3. 未来的趋�
   return NextResponse.json({
     spread,
     cards: cardsWithImages,
-    ai_reading
+    ai_reading,
+    _source: aiSource,
   });
 }

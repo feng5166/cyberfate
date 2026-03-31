@@ -36,15 +36,16 @@ async function callDeepSeek(systemPrompt: string, userPrompt: string, maxTokens 
 
 /**
  * 生成八字分析（带降级策略）
+ * 返回值包含 _source 字段：'deepseek' | 'fallback'
  */
 export async function generateBaziAnalysis(
   result: BaziResult,
   name?: string
-): Promise<BaziAnalysis> {
+): Promise<BaziAnalysis & { _source: 'deepseek' | 'fallback' }> {
   const apiKey = getEnvVar('DEEPSEEK_API_KEY');
   if (!apiKey) {
     console.warn('[AI] DEEPSEEK_API_KEY 未配置，使用降级分析');
-    return generateFallbackBaziAnalysis(result);
+    return { ...generateFallbackBaziAnalysis(result), _source: 'fallback' };
   }
 
   const prompt = buildBaziPrompt(result, name);
@@ -64,7 +65,10 @@ export async function generateBaziAnalysis(
     }
   );
 
-  return apiResult.success ? apiResult.data : generateFallbackBaziAnalysis(result);
+  if (apiResult.success) {
+    return { ...apiResult.data, _source: 'deepseek' };
+  }
+  return { ...generateFallbackBaziAnalysis(result), _source: 'fallback' };
 }
 
 function generateFallbackBaziAnalysis(result: BaziResult): BaziAnalysis {
@@ -88,6 +92,7 @@ function generateFallbackBaziAnalysis(result: BaziResult): BaziAnalysis {
 
 /**
  * 生成每日运势（带降级策略）
+ * 返回值包含 _source 字段：'deepseek' | 'fallback'
  */
 export async function generateDailyFortune(
   dayMaster: string,
@@ -100,11 +105,12 @@ export async function generateDailyFortune(
   avoid: string[];
   lucky: { color: string; numbers: number[]; direction: string };
   advice: string;
+  _source: 'deepseek' | 'fallback';
 }> {
   const apiKey = getEnvVar('DEEPSEEK_API_KEY');
   if (!apiKey) {
     console.warn('[AI] DEEPSEEK_API_KEY 未配置，使用降级运势');
-    return generateFallbackDailyFortune();
+    return { ...generateFallbackDailyFortune(), _source: 'fallback' };
   }
 
   const prompt = buildDailyPrompt(dayMaster, targetDate, dayGanzhi);
@@ -124,7 +130,10 @@ export async function generateDailyFortune(
     }
   );
 
-  return apiResult.success ? apiResult.data : generateFallbackDailyFortune();
+  if (apiResult.success) {
+    return { ...apiResult.data, _source: 'deepseek' };
+  }
+  return { ...generateFallbackDailyFortune(), _source: 'fallback' };
 }
 
 function generateFallbackDailyFortune() {

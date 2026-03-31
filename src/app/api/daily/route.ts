@@ -72,6 +72,7 @@ export async function POST(req: NextRequest) {
       avoid: fortune.avoid,
       lucky: fortune.lucky,
       advice: fortune.advice,
+      _source: (fortune as any)._source ?? 'unknown',
     });
   } catch (error) {
     console.error('Daily API error:', error);

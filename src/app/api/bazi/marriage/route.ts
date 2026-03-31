@@ -73,6 +73,7 @@ export async function POST(req: NextRequest) {
 语气温和、积极、有建设性。直接开始分析，不要有前言。`;
 
   let analysis = '';
+  let aiSource: string = 'fallback';
   try {
     const aiResponse = await fetch('https://api.modelverse.cn/v1/chat/completions', {
       method: 'POST',
@@ -89,11 +90,13 @@ export async function POST(req: NextRequest) {
 
     if (aiResponse.ok) {
       const aiData = await aiResponse.json();
-      analysis = aiData.content?.[0]?.text || '分析生成失败';
+      analysis = aiData.choices?.[0]?.message?.content || '分析生成失败';
+      aiSource = 'deepseek';
     }
   } catch (err) {
     console.error('AI call failed:', err);
     analysis = '根据双方八字，你们的匹配度较好，建议多沟通、互相理解。';
+    aiSource = 'fallback';
   }
 
   return NextResponse.json({
@@ -102,6 +105,7 @@ export async function POST(req: NextRequest) {
     level,
     maleBazi,
     femaleBazi,
-    analysis
+    analysis,
+    _source: aiSource,
   });
 }

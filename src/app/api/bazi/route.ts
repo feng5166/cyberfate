@@ -73,6 +73,7 @@ export async function POST(req: NextRequest) {
     
     // 将分析对象转换为可读文本
     const aiAnalysis = formatAnalysis(analysisObj);
+    const _aiSource = (analysisObj as any)._source ?? 'unknown';
     
     // 处理时柱（可能为 null）
     const hourPillar = baziResult.chart.hour || {
@@ -112,6 +113,7 @@ export async function POST(req: NextRequest) {
       },
       wuxing: baziResult.wuxing,
       aiAnalysis,
+      _source: _aiSource,
     });
   } catch (error) {
     console.error('Bazi API error:', error);
