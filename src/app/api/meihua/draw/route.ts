@@ -43,6 +43,17 @@ export async function POST(req: NextRequest) {
   
   const guaInfo = getGua(method, numbers);
   
+  // 缓存 key
+  const cacheKey = generateCacheKey('meihua', { 
+    upper: guaInfo.upper, 
+    lower: guaInfo.lower
+  });
+  
+  const cached = getCache(cacheKey);
+  if (cached) {
+    return NextResponse.json({ ...guaInfo, analysis: cached.analysis, _source: 'cache' });
+  }
+
   const prompt = `你是"赛博命理师"的梅花易数占卜功能。
 
 卦象：${guaInfo.guaName}（${guaInfo.upper}上${guaInfo.lower}下）

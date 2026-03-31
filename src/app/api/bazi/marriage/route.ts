@@ -52,6 +52,26 @@ export async function POST(req: NextRequest) {
   // 计算匹配度
   const { score, hearts, level } = calculateScore(maleBazi, femaleBazi);
 
+  // 缓存 key
+  const cacheKey = generateCacheKey('marriage', { 
+    male: maleBazi, 
+    female: femaleBazi 
+  });
+  
+  // 检查缓存
+  const cached = getCache(cacheKey);
+  if (cached) {
+    return NextResponse.json({
+      score,
+      hearts,
+      level,
+      maleBazi,
+      femaleBazi,
+      analysis: cached.analysis,
+      _source: 'cache',
+    });
+  }
+
   // AI 分析
   const prompt = `你是"赛博命理师"的八字合婚分析功能。
 

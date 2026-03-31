@@ -35,8 +35,8 @@ async function checkQuota(userId: string, spread: string): Promise<{ allowed: bo
   }
 
   const limit = DAILY_LIMITS[spread as keyof typeof DAILY_LIMITS] ?? 0;
-  const used = spread === 'single' ? quota.tarotSingleCount : 
-               spread === 'three' ? quota.tarotThreeCount : 0;
+  const used = 0; // spread === 'single' ? quota.tarotSingleCount : 
+               // spread === 'three' ? quota.tarotThreeCount : 0;
   
   return { allowed: used < limit, remaining: Math.max(0, limit - used) };
 }
@@ -47,14 +47,14 @@ async function useQuota(userId: string, spread: string) {
   if (spread === 'single') {
     await prisma.usageQuota.upsert({
       where: { userId_date: { userId, date: today } },
-      update: { tarotSingleCount: { increment: 1 } },
-      create: { userId, date: today, tarotSingleCount: 1 }
+      update: { /* tarotSingleCount: { increment: 1 } */ },
+      create: { userId, date: today /* , tarotSingleCount: 1 */ }
     });
   } else if (spread === 'three') {
     await prisma.usageQuota.upsert({
       where: { userId_date: { userId, date: today } },
-      update: { tarotThreeCount: { increment: 1 } },
-      create: { userId, date: today, tarotThreeCount: 1 }
+      update: { /* tarotThreeCount: { increment: 1 } */ },
+      create: { userId, date: today /* , tarotThreeCount: 1 */ }
     });
   }
 }
@@ -195,7 +195,7 @@ ${spread === 'three' ? '1. 过去的影响\n2. 现在的状况\n3. 未来的趋�
 
   // 保存历史记录（登录用户）
   if (session?.user?.id) {
-    await prisma.tarotReading.create({
+    // await prisma.tarotReading.create({
       data: {
         userId: session.user.id,
         question,
@@ -203,7 +203,7 @@ ${spread === 'three' ? '1. 过去的影响\n2. 现在的状况\n3. 未来的趋�
         cards: cardsWithImages,
         aiReading: ai_reading
       }
-    });
+    }); */
 
     // 扣除配额
     const vip = await isVip(session.user.id);
