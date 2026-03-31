@@ -50,7 +50,7 @@ interface TarotCard {
 
 export default function TarotPage() {
   const { data: session } = useSession();
-  const [step, setStep] = useState<'select' | 'question' | 'draw' | 'result'>('select');
+  const [step, setStep] = useState<'select' | 'question' | 'draw' | 'analyzing' | 'result'>('select');
   const [selectedSpread, setSelectedSpread] = useState<string>('');
   const [question, setQuestion] = useState('');
   const [loading, setLoading] = useState(false);
@@ -99,6 +99,7 @@ export default function TarotPage() {
   };
 
   const handleCardsSelected = async (selectedIndices: number[]) => {
+    setStep('analyzing'); // 先显示解读中状态
     setLoading(true);
     setError('');
     try {
@@ -111,6 +112,7 @@ export default function TarotPage() {
         const data = await res.json();
         if (data.error === 'VIP_REQUIRED') {
           setError('凯尔特十字牌阵为 VIP 专属功能');
+          setStep('question'); // 返回问题输入页
           return;
         }
         throw new Error(data.error || '请求失败');
@@ -120,6 +122,7 @@ export default function TarotPage() {
       setStep('result');
     } catch (err) {
       setError(err instanceof Error ? err.message : '未知错误');
+      setStep('question'); // 错误时返回问题输入页
     } finally {
       setLoading(false);
     }
@@ -218,6 +221,28 @@ export default function TarotPage() {
               cardCount={spreads.find(s => s.id === selectedSpread)?.cards || 1}
               onComplete={handleCardsSelected}
             />
+          </Card>
+        )}
+
+        {/* 步骤 3.5: AI 解读中 */}
+        {step === 'analyzing' && (
+          <Card>
+            <div className="text-center py-12">
+              <div className="flex justify-center mb-4">
+                <Sparkles className="w-12 h-12 text-primary animate-pulse" />
+              </div>
+              <h3 className="text-lg font-semibold text-primary mb-2">
+                正在解读中...
+              </h3>
+              <p className="text-secondary text-sm">
+                AI 正在为你分析牌面，稍等片刻
+              </p>
+              <div className="flex justify-center gap-1 mt-4">
+                <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '300ms' }}></div>
+              </div>
+            </div>
           </Card>
         )}
 
