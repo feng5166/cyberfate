@@ -65,7 +65,10 @@ export async function POST(req: NextRequest) {
     // 2. AI 解读（可能失败，优雅降级）
     let analysisObj: BaziAnalysis;
     try {
-      analysisObj = await generateBaziAnalysis(baziResult, input.name);
+      analysisObj = await generateBaziAnalysis(baziResult, input.name, {
+        birthDate: input.birthDate,
+        birthHour: input.birthHour,
+      });
     } catch (aiError) {
       console.error('AI analysis failed:', aiError);
       analysisObj = generateFallbackAnalysis(baziResult);

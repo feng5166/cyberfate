@@ -1,7 +1,7 @@
 import { buildBaziPrompt, buildDailyPrompt, BAZI_SYSTEM_PROMPT, DAILY_SYSTEM_PROMPT } from './prompts';
 import type { BaziResult, BaziAnalysis } from '../bazi/types';
 import { callExternalAPI, getEnvVar } from '../utils/api-wrapper';
-import { generateCacheKey, getCache, setCache } from './cache';
+import { redis } from '../cache/redis';
 
 const DEEPSEEK_BASE_URL = 'https://api.modelverse.cn/v1';
 const DEEPSEEK_MODEL = 'deepseek-ai/DeepSeek-V3.2';
@@ -37,27 +37,31 @@ async function callDeepSeek(systemPrompt: string, userPrompt: string, maxTokens 
 }
 
 /**
- * 生成八字分析（带降级策略 + 缓存）
+ * 生成八字分析（带 Redis 缓存）
  * 返回值包含 _source 字段：'deepseek' | 'fallback' | 'cache'
  */
 export async function generateBaziAnalysis(
   result: BaziResult,
-  name?: string
+  name?: string,
+  birthInfo?: { birthDate: string; birthHour: number }
 ): Promise<BaziAnalysis & { _source: 'deepseek' | 'fallback' | 'cache' }> {
-  // 生成缓存 key
-  const cacheKey = generateCacheKey('bazi', {
-    year: result.chart.year,
-    month: result.chart.month,
-    day: result.chart.day,
-    hour: result.chart.hour,
-    name: name || '',
-  });
-
-  // 检查缓存
-  const cached = getCache(cacheKey);
-  if (cached) {
-    console.log('[AI] 八字分析命中缓存');
-    return { ...cached, _source: 'cache' };
+  
+  // 1. 构建缓存 key（基于出生日期和时辰）
+  let cacheKey = 'bazi:default';
+  if (birthInfo) {
+    const { birthDate, birthHour } = birthInfo;
+    cacheKey = `bazi:${birthDate}:${birthHour}`;
+  }
+  
+  // 2. 尝试从 Redis 读取
+  try {
+    const cached = await redis.get(cacheKey);
+    if (cached) {
+      console.log(`[Cache Hit] ${cacheKey}`);
+      return { ...(cached as BaziAnalysis), _source: 'cache' };
+    }
+  } catch (err) {
+    console.warn('[Cache Read Error]', err);
   }
 
   const apiKey = getEnvVar('DEEPSEEK_API_KEY');
@@ -83,11 +87,17 @@ export async function generateBaziAnalysis(
     }
   );
 
+  // 3. 写入 Redis 缓存（永久保存）
   if (apiResult.success) {
-    // 写入缓存
-    setCache(cacheKey, apiResult.data);
+    try {
+      await redis.set(cacheKey, apiResult.data);
+      console.log(`[Cache Set] ${cacheKey}`);
+    } catch (err) {
+      console.warn('[Cache Write Error]', err);
+    }
     return { ...apiResult.data, _source: 'deepseek' };
   }
+  
   return { ...generateFallbackBaziAnalysis(result), _source: 'fallback' };
 }
 
@@ -111,7 +121,7 @@ function generateFallbackBaziAnalysis(result: BaziResult): BaziAnalysis {
 }
 
 /**
- * 生成每日运势（带降级策略 + 缓存）
+ * 生成每日运势（带 Redis 缓存，24小时过期）
  * 返回值包含 _source 字段：'deepseek' | 'fallback' | 'cache'
  */
 export async function generateDailyFortune(
@@ -127,18 +137,19 @@ export async function generateDailyFortune(
   advice: string;
   _source: 'deepseek' | 'fallback' | 'cache';
 }> {
-  // 生成缓存 key
-  const cacheKey = generateCacheKey('daily', {
-    dayMaster,
-    targetDate,
-    dayGanzhi,
-  });
-
-  // 检查缓存
-  const cached = getCache(cacheKey);
-  if (cached) {
-    console.log('[AI] 每日运势命中缓存');
-    return { ...cached, _source: 'cache' };
+  
+  // 1. 构建缓存 key（日主 + 日期）
+  const cacheKey = `daily:${dayMaster}:${targetDate}`;
+  
+  // 2. 尝试从 Redis 读取
+  try {
+    const cached = await redis.get(cacheKey);
+    if (cached) {
+      console.log(`[Cache Hit] ${cacheKey}`);
+      return { ...(cached as any), _source: 'cache' };
+    }
+  } catch (err) {
+    console.warn('[Cache Read Error]', err);
   }
 
   const apiKey = getEnvVar('DEEPSEEK_API_KEY');
@@ -164,11 +175,17 @@ export async function generateDailyFortune(
     }
   );
 
+  // 3. 写入 Redis 缓存（24小时过期）
   if (apiResult.success) {
-    // 写入缓存
-    setCache(cacheKey, apiResult.data);
+    try {
+      await redis.setex(cacheKey, 86400, apiResult.data); // 24小时后自动删除
+      console.log(`[Cache Set] ${cacheKey} (TTL: 24h)`);
+    } catch (err) {
+      console.warn('[Cache Write Error]', err);
+    }
     return { ...apiResult.data, _source: 'deepseek' };
   }
+  
   return { ...generateFallbackDailyFortune(), _source: 'fallback' };
 }
 

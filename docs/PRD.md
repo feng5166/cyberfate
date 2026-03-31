@@ -781,3 +781,167 @@
 4. P2: 体验细节优化
 
 **预估修复工时**: P0 + P1 约 2-3 天
+
+---
+
+## 十一、产品迭代记录
+
+### 11.1 2026-03-31 优化任务
+
+#### 任务 A: AI 解读模型切换（已完成）
+
+背景：
+经过产品评估和成本分析，决定将 AI 解读模型从 Claude 3.5 Sonnet 切换到 DeepSeek V3。
+
+决策依据：
+- DeepSeek V3 输出成本：0.42 美元/百万 token
+- Claude 3.5 Sonnet 输出成本：15 美元/百万 token
+- 成本差异：35 倍
+- 一次命理解读约 800 token 输出 → DeepSeek 成本约 0.003 元/次，Claude 约 0.11 元/次
+- 1 万次调用：DeepSeek 30 元 vs Claude 1100 元
+
+执行内容：
+1. 接入 DeepSeek API（Base URL: https://api.deepseek.com）
+2. 模型名：deepseek-chat（对应 DeepSeek-V3.2）
+3. 替换所有命理解读功能的 API 调用
+4. 验证输出质量没有明显退步
+
+状态：已通知代码虾实现
+
+#### 任务 B: AI 解读稳定性优化（进行中）
+
+背景：
+当前 AI 解读存在"抽卡"问题，同样的八字多次查询结果差异很大，影响用户体验。
+
+根因分析：
+1. callDeepSeek 函数未设置 temperature，使用模型默认值（1.0），随机性太高
+2. Prompt 约束不足，给模型太多发挥空间
+
+解决方案：
+
+子任务 B1: 降低 Temperature（P0）
+- 修改 src/lib/ai/client.ts 的 callDeepSeek 函数
+- 添加 temperature: 0.3 参数
+- 预期效果：立即减少 70% 的随机性
+
+子任务 B2: 优化 Prompt 结构（P0）
+- 替换 src/lib/ai/prompts.ts 为优化版 prompts-v2.ts
+- 优化点：
+  - 加入 Few-shot 示例，锚定语言风格
+  - 明确字数限制（每个字段强制限定字数）
+  - 固定输出条数（suitable 3条、avoid 2条）
+  - 锚定评分标准（1-5分明确参照）
+- 预期效果：解决 80% 的内容不稳定问题
+
+子任务 B3: 加缓存机制（P1，可选）
+- 对每日运势加当日缓存，避免同一天重复调用 API
+- 预期效果：同一天重复查询返回完全一致结果，成本降低约 60%
+
+验收标准：
+用同一个八字连续测试 5 次，要求：
+- 输出格式完全一致（字段名、条数、顺序不变）
+- 核心内容高度相似（关键词重合度 > 80%）
+- 评分波动 <= 1 分
+
+状态：已通知代码虾实现
+
+相关文档：
+- 详细方案：docs/AI-OPTIMIZATION.md
+- 优化后的 Prompt：src/lib/ai/prompts-v2.ts
+
+#### 任务 C: 八字解读缓存系统（进行中）
+
+背景：
+同一个生日的八字解读结果应该是一致的，没必要每次都调用 DeepSeek API。通过加缓存可以：
+1. 保证同一生日结果一致（彻底解决"抽卡"问题）
+2. 大幅降低 API 调用成本（热门生日只算一次）
+3. 提升响应速度（缓存命中直接返回）
+
+技术方案：
+使用 Upstash Redis（Vercel Marketplace 集成）
+
+免费额度：
+- 存储：256 MB（约 13 万条解读）
+- 每日请求：10,000 次
+- 数据永久保存
+
+执行内容：
+
+子任务 C1: 集成 Upstash Redis
+- 在 Vercel Dashboard 添加 Upstash Redis 集成
+- 安装客户端：npm install @upstash/redis
+- 创建 Redis 客户端封装文件：src/lib/cache/redis.ts
+
+子任务 C2: 八字分析缓存
+- 修改 generateBaziAnalysis 函数
+- 缓存 key 格式：bazi:YYYY-MM-DD-HH:mm
+- 缓存策略：永久保存
+- 降级策略：Redis 操作失败不影响主流程，降级到直接调用 API
+
+子任务 C3: 每日运势缓存
+- 修改 generateDailyFortune 函数
+- 缓存 key 格式：daily:日主:YYYY-MM-DD
+- 缓存策略：24 小时过期
+- 降级策略：同上
+
+验收标准：
+1. 同一生日连续查询 3 次八字分析
+   - 第 1 次：调用 DeepSeek API，console 显示 [Cache Set]
+   - 第 2、3 次：直接返回缓存，console 显示 [Cache Hit]，_source 为 'cache'
+2. 同一日主同一天连续查询 3 次每日运势
+   - 第 1 次：调用 API
+   - 第 2、3 次：返回缓存
+3. Redis 操作失败不影响功能
+
+状态：已通知代码虾实现
+
+相关文档：
+- 任务单：/tmp/task-cache-for-codeshrimp.md
+- Upstash Redis 文档：https://upstash.com/docs/redis
+
+#### 任务 D: 回归测试（已完成）
+
+验收日期：2026-03-31
+验收工具：agent-browser 真实 Chromium 渲染
+验收结果：
+
+核心路由确认：
+- 首页: /
+- 八字分析: /bazi
+- 八字合婚: /bazi/marriage
+- 每日运势: /daily
+- AI 黄历: /huangli
+- 紫微斗数: /ziwei
+- 梅花易数: /meihua
+- 塔罗占卜: /tarot
+- 定价: /pricing
+- 隐私政策: /privacy
+- 服务条款: /terms
+- 退款政策: /refund
+
+发现问题：
+- P0（已修复）：八字合婚视觉风格不一致 ✅
+- P0（已修复）：隐私页乱码 ✅
+- P0（待修复）：定价页货币仍显示 HK$，未改成 ¥
+
+结论：
+除定价货币问题外，所有核心功能页面可正常访问和渲染。
+
+### 11.2 后续规划
+
+#### Phase 2: 功能增强
+- 付费会员体系完善
+- 深度解读功能（年度运势、流年分析）
+- 用户个人历史记录
+- 分享功能优化
+
+#### Phase 3: 国际化
+- 英文版本上线
+- 命理术语翻译
+- 海外支付接入
+- SEO 优化
+
+#### Phase 4: 新功能模块
+- 宠物人格卡
+- 更多命理工具
+- 社区互动功能
