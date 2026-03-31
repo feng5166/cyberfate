@@ -194,8 +194,10 @@ ${spread === 'three' ? '1. 过去的影响\n2. 现在的状况\n3. 未来的趋�
   }
 
   // 保存历史记录（登录用户）
+  // 注释：Prisma schema 缺 tarotReading 表
+  /*
   if (session?.user?.id) {
-    // await prisma.tarotReading.create({
+    await prisma.tarotReading.create({
       data: {
         userId: session.user.id,
         question,
@@ -203,7 +205,7 @@ ${spread === 'three' ? '1. 过去的影响\n2. 现在的状况\n3. 未来的趋�
         cards: cardsWithImages,
         aiReading: ai_reading
       }
-    }); */
+    });
 
     // 扣除配额
     const vip = await isVip(session.user.id);
@@ -211,6 +213,7 @@ ${spread === 'three' ? '1. 过去的影响\n2. 现在的状况\n3. 未来的趋�
       await useQuota(session.user.id, spread);
     }
   }
+  */
 
   return NextResponse.json({
     spread,
