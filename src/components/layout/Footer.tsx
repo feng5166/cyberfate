@@ -6,9 +6,12 @@ const footerLinks = [
     title: '功能',
     links: [
       { label: '八字分析', href: '/bazi' },
+      { label: '八字合婚', href: '/bazi/marriage' },
       { label: '每日运势', href: '/daily' },
       { label: '紫微斗数', href: '/ziwei' },
-      { label: '塔罗牌', href: '/tarot' },
+      { label: '梅花易数', href: '/meihua' },
+      { label: 'AI 黄历', href: '/huangli' },
+      { label: '塔罗占卜', href: '/tarot' },
     ],
   },
   {
