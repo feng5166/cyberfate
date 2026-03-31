@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { generateCacheKey, getCache, setCache } from '@/lib/ai/cache';
+
 
 // 八卦
 const bagua = [
@@ -73,6 +75,7 @@ export async function POST(req: NextRequest) {
       const aiData = await aiResponse.json();
       analysis = aiData.choices?.[0]?.message?.content || '解读生成失败';
       aiSource = 'deepseek';
+      setCache(cacheKey, { analysis });
     }
   } catch (err) {
     analysis = '此卦吉凶参半，需谨慎行事。';

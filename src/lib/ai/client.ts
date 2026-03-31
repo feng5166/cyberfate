@@ -1,6 +1,7 @@
 import { buildBaziPrompt, buildDailyPrompt, BAZI_SYSTEM_PROMPT, DAILY_SYSTEM_PROMPT } from './prompts';
 import type { BaziResult, BaziAnalysis } from '../bazi/types';
 import { callExternalAPI, getEnvVar } from '../utils/api-wrapper';
+import { generateCacheKey, getCache, setCache } from './cache';
 
 const DEEPSEEK_BASE_URL = 'https://api.modelverse.cn/v1';
 const DEEPSEEK_MODEL = 'deepseek-ai/DeepSeek-V3.2';
@@ -36,13 +37,29 @@ async function callDeepSeek(systemPrompt: string, userPrompt: string, maxTokens 
 }
 
 /**
- * 生成八字分析（带降级策略）
- * 返回值包含 _source 字段：'deepseek' | 'fallback'
+ * 生成八字分析（带降级策略 + 缓存）
+ * 返回值包含 _source 字段：'deepseek' | 'fallback' | 'cache'
  */
 export async function generateBaziAnalysis(
   result: BaziResult,
   name?: string
-): Promise<BaziAnalysis & { _source: 'deepseek' | 'fallback' }> {
+): Promise<BaziAnalysis & { _source: 'deepseek' | 'fallback' | 'cache' }> {
+  // 生成缓存 key
+  const cacheKey = generateCacheKey('bazi', {
+    year: result.chart.year,
+    month: result.chart.month,
+    day: result.chart.day,
+    hour: result.chart.hour,
+    name: name || '',
+  });
+
+  // 检查缓存
+  const cached = getCache(cacheKey);
+  if (cached) {
+    console.log('[AI] 八字分析命中缓存');
+    return { ...cached, _source: 'cache' };
+  }
+
   const apiKey = getEnvVar('DEEPSEEK_API_KEY');
   if (!apiKey) {
     console.warn('[AI] DEEPSEEK_API_KEY 未配置，使用降级分析');
@@ -67,6 +84,8 @@ export async function generateBaziAnalysis(
   );
 
   if (apiResult.success) {
+    // 写入缓存
+    setCache(cacheKey, apiResult.data);
     return { ...apiResult.data, _source: 'deepseek' };
   }
   return { ...generateFallbackBaziAnalysis(result), _source: 'fallback' };
@@ -92,8 +111,8 @@ function generateFallbackBaziAnalysis(result: BaziResult): BaziAnalysis {
 }
 
 /**
- * 生成每日运势（带降级策略）
- * 返回值包含 _source 字段：'deepseek' | 'fallback'
+ * 生成每日运势（带降级策略 + 缓存）
+ * 返回值包含 _source 字段：'deepseek' | 'fallback' | 'cache'
  */
 export async function generateDailyFortune(
   dayMaster: string,
@@ -106,8 +125,22 @@ export async function generateDailyFortune(
   avoid: string[];
   lucky: { color: string; numbers: number[]; direction: string };
   advice: string;
-  _source: 'deepseek' | 'fallback';
+  _source: 'deepseek' | 'fallback' | 'cache';
 }> {
+  // 生成缓存 key
+  const cacheKey = generateCacheKey('daily', {
+    dayMaster,
+    targetDate,
+    dayGanzhi,
+  });
+
+  // 检查缓存
+  const cached = getCache(cacheKey);
+  if (cached) {
+    console.log('[AI] 每日运势命中缓存');
+    return { ...cached, _source: 'cache' };
+  }
+
   const apiKey = getEnvVar('DEEPSEEK_API_KEY');
   if (!apiKey) {
     console.warn('[AI] DEEPSEEK_API_KEY 未配置，使用降级运势');
@@ -132,6 +165,8 @@ export async function generateDailyFortune(
   );
 
   if (apiResult.success) {
+    // 写入缓存
+    setCache(cacheKey, apiResult.data);
     return { ...apiResult.data, _source: 'deepseek' };
   }
   return { ...generateFallbackDailyFortune(), _source: 'fallback' };

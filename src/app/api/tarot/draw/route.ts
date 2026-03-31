@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { generateCacheKey, getCache, setCache } from '@/lib/ai/cache';
+
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
@@ -138,6 +140,23 @@ ${spread === 'three' ? '1. 过去的影响\n2. 现在的状况\n3. 未来的趋�
 
 语气温和、有启发性，避免过于绝对的判断。直接开始解读，不要有任何前言或声明。`;
 
+  // 缓存 key（基于抽到的牌）
+  const cacheKey = generateCacheKey('tarot', { 
+    spread, 
+    cardIds: cardsWithImages.map(c => c.id).join(','),
+    question: question || '' 
+  });
+  
+  const cached = getCache(cacheKey);
+  if (cached) {
+    return NextResponse.json({
+      spread,
+      cards: cardsWithImages,
+      ai_reading: cached.ai_reading,
+      _source: 'cache',
+    });
+  }
+
   // 调用 AI
   let ai_reading = '';
   let aiSource: string = 'fallback';
@@ -167,6 +186,7 @@ ${spread === 'three' ? '1. 过去的影响\n2. 现在的状况\n3. 未来的趋�
       const aiData = await aiResponse.json();
       ai_reading = aiData.choices?.[0]?.message?.content || cards[0].upright;
       aiSource = 'deepseek';
+      setCache(cacheKey, { ai_reading });
     }
   } catch (err) {
     console.error('AI call failed:', err);

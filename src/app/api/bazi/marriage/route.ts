@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { generateCacheKey, getCache, setCache } from '@/lib/ai/cache';
+
 import { authOptions } from '@/lib/auth';
 
 // 计算八字
@@ -93,6 +95,7 @@ export async function POST(req: NextRequest) {
       const aiData = await aiResponse.json();
       analysis = aiData.choices?.[0]?.message?.content || '分析生成失败';
       aiSource = 'deepseek';
+      setCache(cacheKey, { analysis });
     }
   } catch (err) {
     console.error('AI call failed:', err);
