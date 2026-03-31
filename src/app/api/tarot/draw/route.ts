@@ -155,6 +155,7 @@ ${spread === 'three' ? '1. 过去的影响\n2. 现在的状况\n3. 未来的趋�
       body: JSON.stringify({
         model: 'deepseek-ai/DeepSeek-V3.2',
         max_tokens: maxTokens,
+        temperature: 0.3,
         messages: [{ role: 'user', content: prompt }]
       })
     });

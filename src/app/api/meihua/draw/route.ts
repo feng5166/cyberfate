@@ -64,6 +64,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model: 'deepseek-ai/DeepSeek-V3.2',
         max_tokens: 400,
+        temperature: 0.3,
         messages: [{ role: 'user', content: prompt }]
       })
     });

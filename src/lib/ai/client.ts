@@ -18,6 +18,7 @@ async function callDeepSeek(systemPrompt: string, userPrompt: string, maxTokens 
     body: JSON.stringify({
       model: DEEPSEEK_MODEL,
       max_tokens: maxTokens,
+      temperature: 0.3,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
