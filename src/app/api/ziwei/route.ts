@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { generateCacheKey, getCache, setCache } from '@/lib/ai/cache';
 
 // 十二宫位
 const palaces = [
@@ -36,6 +37,15 @@ export async function POST(req: NextRequest) {
 
   const { name, gender, birthDate, birthHour } = await req.json();
 
+  // 缓存 key
+  const cacheKey = generateCacheKey('ziwei', { birthDate, birthHour, gender });
+  
+  // 检查缓存
+  const cached = await getCache(cacheKey);
+  if (cached) {
+    return NextResponse.json({ ...cached, _source: 'cache' });
+  }
+
   // 生成命盘
   const chart = generateChart(birthDate, birthHour, gender);
   
@@ -52,13 +62,23 @@ export async function POST(req: NextRequest) {
 - 出生日期：${birthDate}
 - 命宫主星：${mainStar}
 
-请给出200-300字的命盘解读，包括：
-1. 性格特质分析
-2. 事业运势
-3. 感情运势
-4. 人生建议
+【输出规则】
+- 严格按照以下结构输出，每段控制在指定字数内
+- 语气温和、积极、有启发性
+- 直接开始解读，不要有前言或套话
 
-语气温和、积极、有启发性。直接开始解读，不要有前言。`;
+【输出结构】（总计 220 字）
+**性格特质**（60字）
+根据命宫主星分析性格特点，3 条要点，简练客观。
+
+**事业运势**（60字）
+分析事业发展方向、运势起伏、适合领域。
+
+**感情运势**（60字）
+分析感情运势、婚姻特点、与伴侣相处建议。
+
+**人生建议**（40字）
+综合建议，2-3 条，切实可行。`;
 
   let analysis = '';
   let aiSource: string = 'fallback';
@@ -88,5 +108,9 @@ export async function POST(req: NextRequest) {
     aiSource = 'fallback';
   }
 
-  return NextResponse.json({ chart, analysis, _source: aiSource });
+  // 写入缓存
+  const result = { chart, analysis };
+  await setCache(cacheKey, result);
+
+  return NextResponse.json({ ...result, _source: aiSource });
 }

@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
   });
   
   // 检查缓存
-  const cached = getCache(cacheKey);
+  const cached = await getCache(cacheKey);
   if (cached) {
     return NextResponse.json({
       score,
@@ -132,7 +132,7 @@ export async function POST(req: NextRequest) {
       const aiData = await aiResponse.json();
       analysis = aiData.choices?.[0]?.message?.content || '分析生成失败';
       aiSource = 'deepseek';
-      setCache(cacheKey, { analysis });
+      await setCache(cacheKey, { analysis });
     }
   } catch (err) {
     console.error('AI call failed:', err);

@@ -133,12 +133,48 @@ ${cardDesc}
 
 ${question ? `用户的问题：${question}` : '用户没有提出具体问题，请给出通用指引'}
 
-请直接给出${spread === 'celtic' ? '300-400' : '150-200'}字的解读，包括：
-${spread === 'three' ? '1. 过去的影响\n2. 现在的状况\n3. 未来的趋势\n4. 综合建议' : 
-  spread === 'celtic' ? '1. 整体格局分析\n2. 核心挑战与机遇\n3. 内在与外在因素\n4. 最终结果预测\n5. 行动建议' :
-  '1. 针对问题的分析（如果有问题）\n2. 当前状况的洞察\n3. 简短的行动建议'}
+【输出规则】
+- 严格按照以下结构输出，每段控制在指定字数内
+- 语气温和、有启发性
+- 避免过于绝对的判断
+- 直接开始解读，不要有前言或声明
 
-语气温和、有启发性，避免过于绝对的判断。直接开始解读，不要有任何前言或声明。`;
+${spread === 'single' ? `【输出结构】（总计 130 字）
+**现状洞察**（60字）
+针对用户问题或当前状况的分析。
+
+**行动建议**（40字）
+给出 2-3 条具体可行的建议。
+
+**总结**（30字）
+一句话总结，给予鼓励。` : 
+  spread === 'three' ? `【输出结构】（总计 180 字）
+**过去的影响**（40字）
+分析过去的经历如何影响当前。
+
+**现在的状况**（50字）
+解读当前局势、核心问题。
+
+**未来的趋势**（50字）
+预测未来发展方向、可能性。
+
+**综合建议**（40字）
+整体行动指导，2-3 条要点。` :
+  `【输出结构】（总计 330 字）
+**整体格局分析**（80字）
+综合十个位置，分析整体局面。
+
+**核心挑战与机遇**（70字）
+识别主要障碍和潜在机会。
+
+**内在与外在因素**（70字）
+分析内心状态和外部环境的影响。
+
+**最终结果预测**（60字）
+基于当前走向的结果推演。
+
+**行动建议**（50字）
+具体可行的行动方案，3-4 条。`}`;
 
   // 缓存 key（基于抽到的牌）
   const cacheKey = generateCacheKey('tarot', { 
@@ -147,7 +183,7 @@ ${spread === 'three' ? '1. 过去的影响\n2. 现在的状况\n3. 未来的趋�
     question: question || '' 
   });
   
-  const cached = getCache(cacheKey);
+  const cached = await getCache(cacheKey);
   if (cached) {
     return NextResponse.json({
       spread,
@@ -186,7 +222,7 @@ ${spread === 'three' ? '1. 过去的影响\n2. 现在的状况\n3. 未来的趋�
       const aiData = await aiResponse.json();
       ai_reading = aiData.choices?.[0]?.message?.content || cards[0].upright;
       aiSource = 'deepseek';
-      setCache(cacheKey, { ai_reading });
+      await setCache(cacheKey, { ai_reading });
     }
   } catch (err) {
     console.error('AI call failed:', err);

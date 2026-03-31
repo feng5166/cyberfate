@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     lower: guaInfo.lower
   });
   
-  const cached = getCache(cacheKey);
+  const cached = await getCache(cacheKey);
   if (cached) {
     return NextResponse.json({ ...guaInfo, analysis: cached.analysis, _source: 'cache' });
   }
@@ -58,12 +58,20 @@ export async function POST(req: NextRequest) {
 
 卦象：${guaInfo.guaName}（${guaInfo.upper}上${guaInfo.lower}下）
 
-请给出150-200字的卦象解读，包括：
-1. 卦象含义
-2. 吉凶判断
-3. 行动建议
+【输出规则】
+- 严格按照以下结构输出，每段控制在指定字数内
+- 语气温和、有启发性
+- 直接开始解读，不要有前言
 
-语气温和、有启发性。直接开始解读，不要有前言。`;
+【输出结构】（总计 150 字）
+**卦象含义**（50字）
+解释此卦的象征意义、五行属性、阴阳关系。
+
+**吉凶判断**（40字）
+判断吉凶、趋势走向，2-3 条要点。
+
+**行动建议**（60字）
+给出具体可行的行动指导，3-4 条建议。`;
 
   let analysis = '';
   let aiSource: string = 'fallback';
@@ -86,7 +94,7 @@ export async function POST(req: NextRequest) {
       const aiData = await aiResponse.json();
       analysis = aiData.choices?.[0]?.message?.content || '解读生成失败';
       aiSource = 'deepseek';
-      setCache(cacheKey, { analysis });
+      await setCache(cacheKey, { analysis });
     }
   } catch (err) {
     analysis = '此卦吉凶参半，需谨慎行事。';

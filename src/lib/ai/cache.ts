@@ -1,65 +1,9 @@
 /**
- * AI 响应缓存（内存 LRU）
+ * AI 响应缓存（Redis 持久化）
  * 用于提高相同参数请求的稳定性和响应速度
  */
 
-interface CacheEntry {
-  data: any;
-  timestamp: number;
-}
-
-class LRUCache {
-  private cache = new Map<string, CacheEntry>();
-  private maxSize: number;
-  private ttl: number; // 毫秒
-
-  constructor(maxSize = 1000, ttlMinutes = 60) {
-    this.maxSize = maxSize;
-    this.ttl = ttlMinutes * 60 * 1000;
-  }
-
-  get(key: string): any | null {
-    const entry = this.cache.get(key);
-    if (!entry) return null;
-
-    // 检查过期
-    if (Date.now() - entry.timestamp > this.ttl) {
-      this.cache.delete(key);
-      return null;
-    }
-
-    // LRU：移到最后
-    this.cache.delete(key);
-    this.cache.set(key, entry);
-    return entry.data;
-  }
-
-  set(key: string, data: any): void {
-    // 淘汰最老的
-    if (this.cache.size >= this.maxSize) {
-      const firstKey = this.cache.keys().next().value;
-      if (firstKey) {
-        this.cache.delete(firstKey);
-      }
-    }
-
-    this.cache.set(key, {
-      data,
-      timestamp: Date.now(),
-    });
-  }
-
-  clear(): void {
-    this.cache.clear();
-  }
-
-  size(): number {
-    return this.cache.size;
-  }
-}
-
-// 全局单例
-const aiCache = new LRUCache(1000, 60); // 最多 1000 条，TTL 60 分钟
+import { redis } from '../cache/redis';
 
 /**
  * 生成缓存 key（基于输入参数）
@@ -73,33 +17,56 @@ export function generateCacheKey(prefix: string, params: Record<string, any>): s
 }
 
 /**
- * 获取缓存
+ * 获取缓存（异步）
  */
-export function getCache(key: string): any | null {
-  return aiCache.get(key);
+export async function getCache(key: string): Promise<any | null> {
+  try {
+    const cached = await redis.get(key);
+    if (cached) {
+      console.log(`[Cache Hit] ${key}`);
+      return cached;
+    }
+    return null;
+  } catch (err) {
+    console.warn('[Cache Read Error]', err);
+    return null;
+  }
 }
 
 /**
- * 设置缓存
+ * 设置缓存（异步）
+ * @param key 缓存键
+ * @param data 缓存数据
+ * @param ttl 过期时间（秒），不传则永久保存
  */
-export function setCache(key: string, data: any): void {
-  aiCache.set(key, data);
+export async function setCache(key: string, data: any, ttl?: number): Promise<void> {
+  try {
+    if (ttl) {
+      await redis.setex(key, ttl, data);
+      console.log(`[Cache Set] ${key} (TTL: ${ttl}s)`);
+    } else {
+      await redis.set(key, data);
+      console.log(`[Cache Set] ${key} (永久)`);
+    }
+  } catch (err) {
+    console.warn('[Cache Write Error]', err);
+  }
 }
 
 /**
  * 清空缓存（调试用）
  */
-export function clearCache(): void {
-  aiCache.clear();
+export async function clearCache(pattern = '*'): Promise<void> {
+  console.warn('[Clear Cache] Redis 不支持全局 clear，请用 pattern 删除');
+  // Redis 没有全局 clear，需要扫描 key 逐个删除
 }
 
 /**
- * 缓存统计
+ * 缓存统计（占位）
  */
-export function getCacheStats() {
+export async function getCacheStats() {
   return {
-    size: aiCache.size(),
-    maxSize: 1000,
-    ttl: '60 minutes',
+    provider: 'Upstash Redis',
+    note: '统计功能需要 Redis INFO 命令',
   };
 }
