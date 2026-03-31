@@ -74,15 +74,14 @@ export async function POST(req: NextRequest) {
 
   let analysis = '';
   try {
-    const aiResponse = await fetch(`${process.env.ANTHROPIC_BASE_URL}/v1/messages`, {
+    const aiResponse = await fetch('https://api.modelverse.cn/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY!,
-        'anthropic-version': '2023-06-01'
+        'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'deepseek-ai/DeepSeek-V3.2',
         max_tokens: 600,
         messages: [{ role: 'user', content: prompt }]
       })

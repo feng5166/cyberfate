@@ -1,8 +1,38 @@
-import { anthropic } from '@ai-sdk/anthropic';
-import { generateText } from 'ai';
 import { buildBaziPrompt, buildDailyPrompt, BAZI_SYSTEM_PROMPT, DAILY_SYSTEM_PROMPT } from './prompts';
 import type { BaziResult, BaziAnalysis } from '../bazi/types';
 import { callExternalAPI, getEnvVar } from '../utils/api-wrapper';
+
+const DEEPSEEK_BASE_URL = 'https://api.modelverse.cn/v1';
+const DEEPSEEK_MODEL = 'deepseek-ai/DeepSeek-V3.2';
+
+async function callDeepSeek(systemPrompt: string, userPrompt: string, maxTokens = 800): Promise<string> {
+  const apiKey = getEnvVar('DEEPSEEK_API_KEY');
+  if (!apiKey) throw new Error('DEEPSEEK_API_KEY 未配置');
+
+  const response = await fetch(`${DEEPSEEK_BASE_URL}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: DEEPSEEK_MODEL,
+      max_tokens: maxTokens,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`DeepSeek API error ${response.status}: ${err}`);
+  }
+
+  const data = await response.json();
+  return data.choices?.[0]?.message?.content ?? '';
+}
 
 /**
  * 生成八字分析（带降级策略）
@@ -11,23 +41,17 @@ export async function generateBaziAnalysis(
   result: BaziResult,
   name?: string
 ): Promise<BaziAnalysis> {
-  const apiKey = getEnvVar('ANTHROPIC_API_KEY');
+  const apiKey = getEnvVar('DEEPSEEK_API_KEY');
   if (!apiKey) {
-    console.warn('[AI] ANTHROPIC_API_KEY 未配置，使用降级分析');
+    console.warn('[AI] DEEPSEEK_API_KEY 未配置，使用降级分析');
     return generateFallbackBaziAnalysis(result);
   }
 
   const prompt = buildBaziPrompt(result, name);
-  
+
   const apiResult = await callExternalAPI(
     async () => {
-      const response = await generateText({
-        model: anthropic('claude-3-5-sonnet-20241022'),
-        system: BAZI_SYSTEM_PROMPT,
-        prompt,
-      });
-      
-      const text = response.text;
+      const text = await callDeepSeek(BAZI_SYSTEM_PROMPT, prompt, 800);
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error('No JSON found in response');
@@ -39,7 +63,7 @@ export async function generateBaziAnalysis(
       fallback: generateFallbackBaziAnalysis(result),
     }
   );
-  
+
   return apiResult.success ? apiResult.data : generateFallbackBaziAnalysis(result);
 }
 
@@ -51,7 +75,7 @@ function generateFallbackBaziAnalysis(result: BaziResult): BaziAnalysis {
   const entries = Object.entries(wuxing) as [keyof typeof wuxing, number][];
   const sorted = entries.sort((a, b) => b[1] - a[1]);
   const strongest = wuxingNames[sorted[0][0]];
-  
+
   return {
     dayMasterAnalysis: `日主为「${dayMaster}」，五行中${strongest}最旺。`,
     personality: '您性格中有多元的特质，善于适应不同环境。',
@@ -77,23 +101,17 @@ export async function generateDailyFortune(
   lucky: { color: string; numbers: number[]; direction: string };
   advice: string;
 }> {
-  const apiKey = getEnvVar('ANTHROPIC_API_KEY');
+  const apiKey = getEnvVar('DEEPSEEK_API_KEY');
   if (!apiKey) {
-    console.warn('[AI] ANTHROPIC_API_KEY 未配置，使用降级运势');
+    console.warn('[AI] DEEPSEEK_API_KEY 未配置，使用降级运势');
     return generateFallbackDailyFortune();
   }
 
   const prompt = buildDailyPrompt(dayMaster, targetDate, dayGanzhi);
-  
+
   const apiResult = await callExternalAPI(
     async () => {
-      const response = await generateText({
-        model: anthropic('claude-3-5-sonnet-20241022'),
-        system: DAILY_SYSTEM_PROMPT,
-        prompt,
-      });
-      
-      const text = response.text;
+      const text = await callDeepSeek(DAILY_SYSTEM_PROMPT, prompt, 600);
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error('No JSON found in response');
@@ -105,7 +123,7 @@ export async function generateDailyFortune(
       fallback: generateFallbackDailyFortune(),
     }
   );
-  
+
   return apiResult.success ? apiResult.data : generateFallbackDailyFortune();
 }
 

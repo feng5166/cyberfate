@@ -54,15 +54,14 @@ export async function POST(req: NextRequest) {
 
   let analysis = '';
   try {
-    const aiResponse = await fetch(`${process.env.ANTHROPIC_BASE_URL}/v1/messages`, {
+    const aiResponse = await fetch('https://api.modelverse.cn/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY!,
-        'anthropic-version': '2023-06-01'
+        'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'deepseek-ai/DeepSeek-V3.2',
         max_tokens: 400,
         messages: [{ role: 'user', content: prompt }]
       })
@@ -70,7 +69,7 @@ export async function POST(req: NextRequest) {
 
     if (aiResponse.ok) {
       const aiData = await aiResponse.json();
-      analysis = aiData.content?.[0]?.text || '解读生成失败';
+      analysis = aiData.choices?.[0]?.message?.content || '解读生成失败';
     }
   } catch (err) {
     analysis = '此卦吉凶参半，需谨慎行事。';

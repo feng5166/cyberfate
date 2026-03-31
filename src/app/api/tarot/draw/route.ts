@@ -145,15 +145,14 @@ ${spread === 'three' ? '1. 过去的影响\n2. 现在的状况\n3. 未来的趋�
     const vip = session?.user?.id ? await isVip(session.user.id) : false;
     const maxTokens = vip ? (spread === 'celtic' ? 800 : 500) : 300; // 免费用户限制 token
     
-    const aiResponse = await fetch(`${process.env.ANTHROPIC_BASE_URL}/v1/messages`, {
+    const aiResponse = await fetch('https://api.modelverse.cn/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY!,
-        'anthropic-version': '2023-06-01'
+        'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'deepseek-ai/DeepSeek-V3.2',
         max_tokens: maxTokens,
         messages: [{ role: 'user', content: prompt }]
       })
@@ -164,7 +163,7 @@ ${spread === 'three' ? '1. 过去的影响\n2. 现在的状况\n3. 未来的趋�
       ai_reading = cards.map(c => c.orientation === 'upright' ? c.upright : c.reversed).join('\n\n');
     } else {
       const aiData = await aiResponse.json();
-      ai_reading = aiData.content?.[0]?.text || cards[0].upright;
+      ai_reading = aiData.choices?.[0]?.message?.content || cards[0].upright;
     }
   } catch (err) {
     console.error('AI call failed:', err);
