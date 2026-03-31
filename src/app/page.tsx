@@ -156,7 +156,7 @@ export default function HomePage() {
                 <Card
                   key={feature.title}
                   hover={feature.available}
-                  className="relative"
+                  className="relative flex flex-col"
                 >
                   {!feature.available && (
                     <div className="absolute top-4 right-4 text-xs text-muted bg-background-alt px-2 py-1 rounded">
@@ -165,7 +165,7 @@ export default function HomePage() {
                   )}
                   <Icon className="w-8 h-8 mb-4 text-primary" strokeWidth={2} />
                   <h3 className="text-lg font-semibold mb-2 text-primary">{feature.title}</h3>
-                  <p className="text-secondary text-sm mb-4">{feature.description}</p>
+                  <p className="text-secondary text-sm mb-4 flex-1">{feature.description}</p>
                   {feature.available ? (
                     <Link href={feature.href}>
                       <Button variant="secondary" size="sm" className="w-full">
