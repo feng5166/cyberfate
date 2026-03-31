@@ -3,13 +3,30 @@ import { getServerSession } from 'next-auth';
 import { generateCacheKey, getCache, setCache } from '@/lib/ai/cache';
 
 import { authOptions } from '@/lib/auth';
+import { calculateBazi as realCalculateBazi } from '@/lib/bazi';
 
-// 计算八字
+// 计算八字并格式化为简洁字符串
 function calculateBazi(birthDate: string, birthHour: string) {
-  // 简化版：这里应该用专业的八字计算库
-  // 暂时返回模拟数据
-  const year = birthDate.split('-')[0];
-  return `${year}年 某月 某日 某时`; // 实际应该计算天干地支
+  // 映射时辰
+  const hourMap: Record<string, any> = {
+    '子时': '子时', '丑时': '丑时', '寅时': '寅时', '卯时': '卯时',
+    '辰时': '辰时', '巳时': '巳时', '午时': '午时', '未时': '未时',
+    '申时': '申时', '酉时': '酉时', '戌时': '戌时', '亥时': '亥时',
+    '不知道': '午时', // 默认午时
+  };
+
+  const shichen = hourMap[birthHour] || '午时';
+
+  const result = realCalculateBazi({
+    name: '',
+    gender: 'male',
+    birthDate,
+    birthHour: shichen,
+  });
+
+  const { year, month, day, hour } = result.chart;
+  const hourStr = hour ? `${hour.gan}${hour.zhi}` : '未知';
+  return `${year.gan}${year.zhi}年 ${month.gan}${month.zhi}月 ${day.gan}${day.zhi}日 ${hourStr}时`;
 }
 
 // 计算匹配度
