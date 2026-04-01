@@ -169,10 +169,11 @@ export function Sidebar() {
               {!collapsed && isExpanded && group.items && (
                 <div className="ml-7 mt-1 space-y-1">
                   {group.items.map((item) => {
-                    // 更健壮的路径匹配：移除尾部斜杠后比较
+                    // 路径匹配：支持精确匹配和前缀匹配
                     const normalizedPathname = pathname?.replace(/\/$/, '') || '';
                     const normalizedHref = item.href.replace(/\/$/, '');
-                    const isActive = normalizedPathname === normalizedHref;
+                    const isActive = normalizedPathname === normalizedHref || 
+                                   normalizedPathname.startsWith(normalizedHref + '/');
                     
                     return (
                       <Link
@@ -184,7 +185,7 @@ export function Sidebar() {
                           ${
                             isActive
                               ? 'bg-primary text-white font-semibold'
-                              : 'text-secondary hover:bg-gray-100'
+                              : 'text-gray-600 hover:bg-gray-100 hover:text-primary'
                           }
                         `}
                       >
