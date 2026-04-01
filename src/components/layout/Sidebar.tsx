@@ -169,7 +169,11 @@ export function Sidebar() {
               {!collapsed && isExpanded && group.items && (
                 <div className="ml-7 mt-1 space-y-1">
                   {group.items.map((item) => {
-                    const isActive = pathname === item.href;
+                    // 更健壮的路径匹配：移除尾部斜杠后比较
+                    const normalizedPathname = pathname?.replace(/\/$/, '') || '';
+                    const normalizedHref = item.href.replace(/\/$/, '');
+                    const isActive = normalizedPathname === normalizedHref;
+                    
                     return (
                       <Link
                         key={item.href}
