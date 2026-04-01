@@ -68,9 +68,22 @@ export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
-    new Set(NAV_ITEMS.map(item => item.label)) // 默认全部展开
-  );
+  
+  // 找到当前页面所在的分组，确保它初始化时是展开的
+  const getCurrentGroup = () => {
+    for (const group of NAV_ITEMS) {
+      if (group.items?.some(item => pathname === item.href)) {
+        return group.label;
+      }
+    }
+    return null;
+  };
+
+  // 初始化：当前页面所在分组展开，其他分组也展开（全部展开）
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => {
+    const allGroups = new Set(NAV_ITEMS.map(item => item.label));
+    return allGroups;
+  });
 
   const toggleGroup = (label: string) => {
     const newExpanded = new Set(expandedGroups);
