@@ -15,6 +15,8 @@ import { BaziChart } from '@/components/bazi/BaziChart';
 import { WuxingChart } from '@/components/bazi/WuxingChart';
 import { QuotaLimitModal } from '@/components/QuotaLimitModal';
 import { CitySearch } from '@/components/ui/CitySearch';
+import { Sparkles } from 'lucide-react';
+import Link from 'next/link';
 
 // 十二时辰选项
 const shichenOptions = [
