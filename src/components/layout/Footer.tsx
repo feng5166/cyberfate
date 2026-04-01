@@ -22,13 +22,27 @@ const footerLinks = [
       { label: '退款政策', href: '/refund' },
     ],
   },
+  {
+    title: '理论知识',
+    links: [
+      { label: '五行理论', href: '/knowledge/wuxing' },
+      { label: '十天干理论', href: '/knowledge/tiangan' },
+      { label: '十二地支理论', href: '/knowledge/dizhi' },
+      { label: '神煞大全', href: '/knowledge/shensha' },
+      { label: '八字格局', href: '/knowledge/geju' },
+      { label: '刑冲会合', href: '/knowledge/xingchong' },
+      { label: '大运理论', href: '/knowledge/dayun' },
+      { label: '真太阳时', href: '/knowledge/solar-time' },
+      { label: '早晚子时', href: '/knowledge/zishi' },
+    ],
+  },
 ];
 
 export function Footer() {
   return (
     <footer className="bg-background-alt border-t border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2 mb-4">

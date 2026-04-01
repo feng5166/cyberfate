@@ -59,6 +59,7 @@ const NAV_ITEMS: NavItem[] = [
     icon: <Calendar className="w-5 h-5" />,
     items: [
       { label: 'AI 老黄历', href: '/huangli' },
+      { label: '历史记录', href: '/history' },
     ],
   },
 ];
