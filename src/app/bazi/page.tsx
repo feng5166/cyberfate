@@ -14,8 +14,7 @@ import { BaguaSpinner } from '@/components/ui/BaguaSpinner';
 import { BaziChart } from '@/components/bazi/BaziChart';
 import { WuxingChart } from '@/components/bazi/WuxingChart';
 import { QuotaLimitModal } from '@/components/QuotaLimitModal';
-import { Sparkles } from 'lucide-react';
-import Link from 'next/link';
+import { CitySearch } from '@/components/ui/CitySearch';
 
 // 十二时辰选项
 const shichenOptions = [
@@ -65,9 +64,12 @@ export default function BaziPage() {
     gender: '',
     birthDate: '',
     birthHour: '-1',
+    birthCity: '', // 新增：出生城市
   });
   const [loading, setLoading] = useState(false);
   const [showQuotaModal, setShowQuotaModal] = useState(false);
+  const [calendarType, setCalendarType] = useState<'solar' | 'lunar'>('solar'); // 阳历/农历切换
+  const [knowBirthTime, setKnowBirthTime] = useState(true); // 是否知道出生时间
 
   // 从数据库或 localStorage 恢复已保存的信息
   useEffect(() => {
@@ -237,19 +239,97 @@ export default function BaziPage() {
               </div>
             </div>
 
+            {/* 出生地点搜索 */}
+            <CitySearch
+              label="出生地点"
+              value={formData.birthCity}
+              onChange={(city) => setFormData({ ...formData, birthCity: city.name })}
+              placeholder="输入城市名，如：北京、上海"
+            />
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-secondary">
+                  日期类型
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCalendarType('solar')}
+                    className={`flex-1 px-4 py-2 rounded font-medium transition-colors ${
+                      calendarType === 'solar'
+                        ? 'bg-primary text-white'
+                        : 'bg-white border border-border text-secondary hover:border-primary'
+                    }`}
+                  >
+                    阳历
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCalendarType('lunar')}
+                    className={`flex-1 px-4 py-2 rounded font-medium transition-colors ${
+                      calendarType === 'lunar'
+                        ? 'bg-primary text-white'
+                        : 'bg-white border border-border text-secondary hover:border-primary'
+                    }`}
+                  >
+                    农历
+                  </button>
+                </div>
+              </div>
+
               <DatePicker
                 label="出生日期"
                 value={formData.birthDate}
                 onChange={(value) => setFormData({ ...formData, birthDate: value })}
               />
-              <Select
-                label="出生时辰"
-                options={shichenOptions}
-                value={formData.birthHour}
-                onChange={(e) => setFormData({ ...formData, birthHour: e.target.value })}
-                required
-              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm font-medium text-secondary">
+                  <input
+                    type="checkbox"
+                    checked={knowBirthTime}
+                    onChange={(e) => {
+                      setKnowBirthTime(e.target.checked);
+                      if (!e.target.checked) {
+                        setFormData({ ...formData, birthHour: '-1' });
+                      }
+                    }}
+                    className="w-4 h-4 rounded border-border bg-white checked:bg-primary focus:ring-2 focus:ring-primary/50 transition-colors"
+                  />
+                  我知道出生时间
+                </label>
+                {knowBirthTime ? (
+                  <Select
+                    label=""
+                    options={shichenOptions}
+                    value={formData.birthHour}
+                    onChange={(e) => setFormData({ ...formData, birthHour: e.target.value })}
+                    required
+                  />
+                ) : (
+                  <div className="p-3 bg-primary/10 border border-primary/30 rounded text-sm text-secondary">
+                    💡 将为您提供全天时辰综合分析
+                  </div>
+                )}
+              </div>
+
+              {knowBirthTime && (
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-secondary">
+                    出生时辰 <span className="text-red-400 text-xs">*</span>
+                  </label>
+                  <Select
+                    label=""
+                    options={shichenOptions}
+                    value={formData.birthHour}
+                    onChange={(e) => setFormData({ ...formData, birthHour: e.target.value })}
+                    required
+                  />
+                </div>
+              )}
             </div>
 
             {error && (

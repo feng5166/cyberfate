@@ -3,6 +3,7 @@ import { Noto_Serif_SC } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { Sidebar } from "@/components/layout/Sidebar";
 import { SessionProvider } from "@/components/providers/SessionProvider";
 
 const notoSerifSC = Noto_Serif_SC({
@@ -66,9 +67,13 @@ export default function RootLayout({
     <html lang="zh-CN" className={notoSerifSC.variable}>
       <body className="min-h-screen flex flex-col">
         <SessionProvider>
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
+          <Sidebar />
+          {/* 桌面端：为侧边栏留出空间 */}
+          <div className="lg:ml-60 flex flex-col min-h-screen">
+            <Header />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </div>
         </SessionProvider>
       </body>
     </html>
