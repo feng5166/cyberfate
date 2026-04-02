@@ -258,19 +258,6 @@ export default function BaziPage() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-secondary">
-                出生时辰 <span className="text-red-400 text-xs">*</span>
-              </label>
-              <Select
-                label=""
-                options={shichenOptions}
-                value={formData.birthHour}
-                onChange={(e) => setFormData({ ...formData, birthHour: e.target.value })}
-                required
-              />
-            </div>
-
             {error && (
               <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
                 {error}
