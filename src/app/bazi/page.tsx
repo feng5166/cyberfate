@@ -237,23 +237,25 @@ export default function BaziPage() {
               </div>
             </div>
 
-            <DatePicker
-              label="出生日期"
-              value={formData.birthDate}
-              onChange={(value) => setFormData({ ...formData, birthDate: value })}
-            />
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-secondary">
-                出生时辰 <span className="text-red-400 text-xs">*</span>
-              </label>
-              <Select
-                label=""
-                options={shichenOptions}
-                value={formData.birthHour}
-                onChange={(e) => setFormData({ ...formData, birthHour: e.target.value })}
-                required
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <DatePicker
+                label="出生日期"
+                value={formData.birthDate}
+                onChange={(value) => setFormData({ ...formData, birthDate: value })}
               />
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-secondary">
+                  出生时辰 <span className="text-red-400 text-xs">*</span>
+                </label>
+                <Select
+                  label=""
+                  options={shichenOptions}
+                  value={formData.birthHour}
+                  onChange={(e) => setFormData({ ...formData, birthHour: e.target.value })}
+                  required
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
