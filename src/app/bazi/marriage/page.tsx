@@ -79,6 +79,110 @@ export default function MarriagePage() {
           <p className="text-secondary">测算双方八字匹配度，了解婚姻运势</p>
         </div>
 
+        {/* AI 智能合婚系统说明 */}
+        {!result && (
+          <div className="space-y-6 mb-8">
+            <Card>
+              <h3 className="font-heading text-xl font-semibold text-primary mb-4 text-center">
+                🔮 AI 智能合婚系统
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div className="flex items-start gap-2">
+                  <span className="text-primary text-lg">✓</span>
+                  <div>
+                    <p className="font-semibold text-primary">传统命理智慧</p>
+                    <p className="text-secondary">基于八字五行、十神、神煞等传统理论</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-primary text-lg">✓</span>
+                  <div>
+                    <p className="font-semibold text-primary">AI 深度分析</p>
+                    <p className="text-secondary">结合现代 AI 技术，多维度智能解读</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-primary text-lg">✓</span>
+                  <div>
+                    <p className="font-semibold text-primary">全面匹配度评估</p>
+                    <p className="text-secondary">性格、感情、事业、子女运势综合分析</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-primary text-lg">✓</span>
+                  <div>
+                    <p className="font-semibold text-primary">针对性建议</p>
+                    <p className="text-secondary">提供改善关系、化解矛盾的实用指导</p>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            <Card>
+              <h3 className="font-heading text-xl font-semibold text-primary mb-4 text-center">
+                📊 合婚分析维度
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div className="p-3 bg-background-alt rounded">
+                  <p className="font-semibold text-primary mb-1">💑 性格契合度</p>
+                  <p className="text-secondary">分析双方性格特质、相处模式、互补性</p>
+                </div>
+                <div className="p-3 bg-background-alt rounded">
+                  <p className="font-semibold text-primary mb-1">❤️ 感情发展</p>
+                  <p className="text-secondary">预测感情走向、关键时间节点、感情稳定性</p>
+                </div>
+                <div className="p-3 bg-background-alt rounded">
+                  <p className="font-semibold text-primary mb-1">💼 事业财运</p>
+                  <p className="text-secondary">双方事业配合、财运互助、共同发展潜力</p>
+                </div>
+                <div className="p-3 bg-background-alt rounded">
+                  <p className="font-semibold text-primary mb-1">👶 子女运势</p>
+                  <p className="text-secondary">子女缘分、教育观念、家庭和谐度</p>
+                </div>
+              </div>
+            </Card>
+
+            <Card>
+              <h3 className="font-heading text-xl font-semibold text-primary mb-4 text-center">
+                📝 分析流程
+              </h3>
+              <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm">
+                <div className="flex-1 text-center">
+                  <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center mx-auto mb-2 font-bold">
+                    1
+                  </div>
+                  <p className="font-semibold text-primary">填写双方信息</p>
+                  <p className="text-secondary text-xs mt-1">姓名、出生日期、时辰</p>
+                </div>
+                <div className="hidden md:block text-muted">→</div>
+                <div className="flex-1 text-center">
+                  <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center mx-auto mb-2 font-bold">
+                    2
+                  </div>
+                  <p className="font-semibold text-primary">排盘计算</p>
+                  <p className="text-secondary text-xs mt-1">生成双方八字命盘</p>
+                </div>
+                <div className="hidden md:block text-muted">→</div>
+                <div className="flex-1 text-center">
+                  <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center mx-auto mb-2 font-bold">
+                    3
+                  </div>
+                  <p className="font-semibold text-primary">AI 智能分析</p>
+                  <p className="text-secondary text-xs mt-1">多维度深度解读</p>
+                </div>
+                <div className="hidden md:block text-muted">→</div>
+                <div className="flex-1 text-center">
+                  <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center mx-auto mb-2 font-bold">
+                    4
+                  </div>
+                  <p className="font-semibold text-primary">获取报告</p>
+                  <p className="text-secondary text-xs mt-1">查看详细合婚分析</p>
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
+
         {!result && (
           <Card>
             <form onSubmit={handleSubmit} className="space-y-8">
