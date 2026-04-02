@@ -540,67 +540,414 @@
 
 ---
 
-## 六、UI 设计规范
+## 六、UI 设计规范 (v2 — 2026-04-02 更新)
 
-> 📄 **FateMaster 风格设计规范**: [DESIGN_FATEMASTER.md](./DESIGN_FATEMASTER.md)
+> 📄 **完整设计规范文档**: `~/.openclaw/workspace-productshrimp/docs/cyberfate-ui-redesign-v2.md`
+> 📄 **代码虾开发任务书**: `~/.openclaw/workspace-productshrimp/docs/cyberfate-dev-task.md`
+> 🎨 **美术虾效果图**: 首页 + 八字分析页 + 定价页 + 每日运势页（已通过审核）
 > 🎨 **参考网站**: https://www.fatemaster.ai/
-> 📄 **原设计规范**: [DESIGN_SPEC.md](./DESIGN_SPEC.md) (已废弃)
 
 ### 6.1 设计理念
 
-**「简洁现代」— FateMaster 风格**
+**「极简东方」— CyberFate v2 设计语言**
 
-参考 FateMaster.ai 的设计语言，采用简洁、现代、专业的视觉风格。
+基于竞品分析（FateMaster.AI）和美术虾设计稿，定义 CyberFate 独有的视觉风格。
 
 **核心原则**:
-1. 黑白为主 — 简洁专业，突出内容
-2. 留白充足 — 让信息有呼吸感
-3. 层次清晰 — 通过字重、大小、颜色区分层级
-4. 交互克制 — 悬停、点击反馈明确但不夸张
+1. 白底极简 — 黑白灰主色调，干净专业
+2. 太极图阵列水印 — 品牌视觉记忆点（Hero 区域背景装饰）
+3. 衬线体 Display 标题 — 与 Sans-serif 正文形成优雅对比
+4. 宽松间距 — 宁可多留白不要挤，宽松是高级感的第一来源
+5. 卡片容器化 — 功能模块用卡片承载，带圆角和轻微阴影
+6. 双按钮系统 — 黑色实心 Primary + 描边 Secondary，主次分明
+7. 交互克制 — 所有过渡 150-300ms ease，不花哨
 
-详细设计规范请查看 [DESIGN_FATEMASTER.md](./DESIGN_FATEMASTER.md)
+### 6.2 配色方案
 
-### 6.2 快速参考
+| 用途 | 色值 | 说明 |
+|------|------|------|
+| 主背景 | #FFFFFF | 页面底色 |
+| 次级背景/卡片 | #FAFAFA | 卡片容器底色 |
+| 主文字 | #1A1A1A | 标题/正文 |
+| 次级文字 | #6B7280 | 描述/辅助信息 |
+| 弱化文字 | #9CA3AF | placeholder/tip |
+| 主按钮背景 | #0F0F0F | 近黑 |
+| 主按钮文字 | #FFFFFF | 白 |
+| 描边按钮边框 | #D1D5DB | 灰色描边 |
+| 分割线 | #F3F4F6 | 极浅灰 |
 
-**配色方案**
-- 主色: 黑色 (#000000) / 白色 (#ffffff)
-- 文字: 深灰 (#1a1a1a) / 中灰 (#666666) / 浅灰 (#999999)
-- 边框: #e0e0e0
-- 背景: #f8f8f8
+**五行配色（Tag 用）**:
 
-**字体**
-- 字体栈: 'SF Pro Rounded', -apple-system, 'PingFang SC'（圆润风格）
-- H1: 48px (桌面) / 32px (移动)
-- H2: 32px (桌面) / 24px (移动)
-- Body: 16px (桌面) / 14px (移动)
+| 五行 | 背景色 | 文字色 |
+|------|--------|--------|
+| 金 | #F3E8FF | #7C3AED |
+| 木 | #D1FAE5 | #059669 |
+| 水 | #DBEAFE | #2563EB |
+| 火 | #FEE2E2 | #DC2626 |
+| 土 | #FEF3C7 | #D97706 |
 
-**间距**
-- Section 间距: 60px
-- 模块间距: 40px
-- 元素组间距: 32px
-- 卡片间距: 32px
-- 相关元素: 16-24px
+### 6.3 字体规范
 
-**布局**
-- 内容最大宽度: 800px（居中）
-- 左右边距: 40px
-- 卡片布局: 3 列网格，间距 32px
-- 卡片内边距: 32px
-- 卡片圆角: 12px
+| 层级 | 字号 | 字重 | 行高 | 字体 | 使用场景 |
+|------|------|------|------|------|---------|
+| Display (大标题) | 48-56px | 400 (Regular) | 1.2 | **衬线体** | 首页 CYBERFATE 标题 |
+| H1 | 36-40px | 600 (Semibold) | 1.25 | Sans-serif | 页面主标题 |
+| H2 | 28-32px | 600 (Semibold) | 1.3 | Sans-serif | 区块标题 |
+| H3 | 20-22px | 500 (Medium) | 1.4 | Sans-serif | 卡片标题 / 小节标题 |
+| Body | 16px | 400 (Regular) | 1.6 | Sans-serif | 正文内容 |
+| Body Small | 14px | 400 (Regular) | 1.5 | Sans-serif | 辅助描述 |
+| Caption | 12px | 400 (Regular) | 1.4 | Sans-serif | 标签/脚注 |
 
-**图标**
-- 模块图标: 20px
-- 卡片图标: 18px
-- 使用 Lucide Icons 线性图标库
+**衬线体（仅用于 Display 层级）**:
+- 中文：Source Han Serif SC / Noto Serif SC / Songti SC
+- 英文：Playfair Display / DM Serif Display
+- 引入方式：Google Fonts CDN 或自托管
+- **关键原则：衬线体用 Regular（细笔画），不要 Bold。衬线体的优雅在于细线条。**
 
-**功能图标映射**
-- 八字分析: `BarChart3`
-- 紫微斗数: `Star`
-- 周易占卜: `Sparkles`
-- 塔罗牌: `Layers`
-- 实用工具: `Calendar`
+**正文字体栈**: `system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif`
 
-完整规范请查看 [DESIGN_FATEMASTER.md](./DESIGN_FATEMASTER.md)
+### 6.4 按钮系统
+
+| 类型 | 样式 | 规格 | 场景 |
+|------|------|------|------|
+| Primary | 背景 #0F0F0F，白字，圆角 8px | padding: 14px 32px, font-size: 16px | 主要 CTA：「开始分析」、购买、提交 |
+| Secondary | 白底，#D1D5DB 描边 1.5px，深色文字，圆角 8px | padding: 14px 32px, font-size: 16px | 次要操作：「了解更多」、取消 |
+| Text | 无背景无边框，#1A1A1A 文字，underline on hover | padding: 0, font-size: 16px | 「进入分析」链接型操作 |
+| Small | 同 Primary 但尺寸缩小 | padding: 10px 20px, font-size: 14px | 表格内/卡片内操作 |
+
+Hover 状态：
+- Primary: background → #262626
+- Secondary: border → #9CA3AF, background → #FAFAFA
+- Text: underline + color → #4B5563
+
+### 6.5 间距体系（基于 4px grid）
+
+| 名称 | 值 | 使用场景 |
+|------|-----|---------|
+| XXL | 64-80px | 页面区段之间 |
+| XL | 48px | 大区块之间 |
+| L | 32px | 模块之间 |
+| M | 24px | 元素组之间 |
+| S | 16px | 相关元素之间 |
+| XS | 8px | 紧密关联元素 |
+
+页面左右边距（桌面）：80-100px
+卡片内 padding：28-32px
+
+### 6.6 圆角与阴影
+
+| 元素 | 圆角 | 阴影 |
+|------|------|------|
+| 按钮 | 8px | 无 |
+| 卡片 | 12-16px | `0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03)` |
+| 输入框 | 8px | focus 时 `0 0 0 2px rgba(0,0,0,0.08)` |
+| Tag/Chip | 999px (pill) | 无 |
+| 定价推荐卡 | 16px | `0 8px 32px rgba(0,0,0,0.1)` |
+
+### 6.7 图标
+
+使用美术虾提供的 SVG 图标（7 个功能各一个），不使用 Lucide Icons。
+
+图标尺寸：
+- 功能卡片内图标：40x40px
+- 导航/表单 icon：20x20px
+- Tag 内 icon：16x16px
+
+### 6.8 响应式断点
+
+| 断点 | 宽度 | 布局变化 |
+|------|------|---------|
+| Desktop | ≥ 1024px | 完整布局 |
+| Tablet | 640-1023px | 卡片 2 列，定价 3 列但缩小 |
+| Mobile | < 640px | 单列，Hero 标题 32-36px，按钮竖排全宽 |
+
+Mobile 特别注意：
+- Hero 双按钮改为竖向排列全宽
+- 导航栏改为汉堡菜单
+- 定价卡片单列堆叠或横向滑动
+- 页面左右 padding 降至 16-20px
+
+---
+
+## 七、页面详细设计 (v2 — 2026-04-02 更新)
+
+> 以下页面设计均以美术虾效果图为准。完整开发参数见开发任务书。
+> 效果图清单：首页 / 八字分析页 / 定价页 / 每日运势页
+
+### 7.1 首页 `/` （v2）
+
+#### 7.1.1 导航栏 Navbar
+
+```
+[CYBERFATE(衬线体)]  [功能 ▾] [定价] [关于]          [登录]
+```
+
+- sticky top-0, z-50, 高度 64-72px
+- 底部 1px 分割线 #F3F4F6
+- 背景 white + backdrop-blur-md bg-white/90（滚动时）
+- Logo：font-display, text-lg/xl, tracking-widest
+- 「功能」hover 下拉菜单（八字分析/每日运势/合婚/紫微/梅花/塔罗/黄历）
+- 右侧登录用文字按钮样式
+
+#### 7.1.2 Hero 区域
+
+从上到下结构：
+
+1. **顶部留白**: 80-100px
+2. **主标题**: `CYBERFATE` — font-display, 52-56px, font-weight 400, letter-spacing 0.15em, color #0F0F0F, 居中
+3. **副标题**: `解码命运 · 智见未来` — text-gray (#6B7280), 18-20px, 居中, 距标题 24px
+4. **双按钮组**（距副标题 40px）:
+   - Primary 黑色实心「开始分析」→ 跳转 /bazi
+   - Secondary 描边「了解更多」→ 锚点跳转功能区
+   - 两按钮水平 gap 16px, 居中
+5. **英文金句**（距按钮 60-80px）:
+   - "When the inner situation is not made conscious, it happens outside, as fate." — C.G. Jung
+   - text-light (#9CA3AF), 14px, max-width 480px 居中
+6. **底部留白**: 60-80px
+
+**背景**: 白色 + 太极图阵列水印（透明度 5-8%），仅覆盖 Hero 区域
+
+#### 7.1.3 功能展示区
+
+- Grid: 3 列（桌面）/ 2 列（平板）/ 1 列（手机）
+- 每个 Card: bg #FAFAFA, rounded-card (16px), p-7, hover 上浮 4px + shadow 加深
+- 卡片内: 图标 40px + 标题 H3 + 描述文字 + 「进入分析 →」链接
+- 7 个功能卡片
+- grid gap: 24px
+
+**功能卡片列表**:
+
+| # | 功能名 | 描述文案 | 页面路径 |
+|---|--------|---------|---------|
+| 1 | 八字分析 | AI 解读命盘特质与发展规律 | /bazi |
+| 2 | 每日运势 | 基于八字的每日吉凶指南 | /daily |
+| 3 | 八字合婚 | 双人命盘契合度深度分析 | /bazi/marriage |
+| 4 | 紫微斗数 | 十二宫位与主星格局排盘 | /ziwei |
+| 5 | 梅花易数 | 易经卦象解读与决策指引 | /meihua |
+| 6 | 塔罗占卜 | 塔罗牌阵解读当前处境 | /tarot |
+| 7 | AI 黄历 | 传统黄历与现代生活结合 | /huangli |
+
+#### 7.1.4 Footer
+
+- 背景 #FAFAFA 或 white
+- 上边框 1px #F3F4F6
+- 内边距 py-12 px-20（桌面端）
+- Logo 用 font-display
+- 链接行：隐私政策 · 服务条款 · 退款政策
+- 版权：© 2026 CyberFate. All rights reserved.
+
+---
+
+### 7.2 八字分析页 `/bazi` （v2）
+
+#### 7.2.1 页面标题区
+
+- 顶部留白 60-80px
+- 标题「八字分析」（H1, 36px, 600, 居中）
+- 副标题「输入您的出生信息，AI 将为您解读命盘」（Body Small, 14px, #6B7280, 居中）
+
+#### 7.2.2 主体布局
+
+**桌面端左右分栏，移动端上下堆叠**:
+- 容器: `flex flex-col lg:flex-row gap-8 lg:gap-12`
+- 左侧输入表单: max-w-[440px]
+- 右侧结果展示: flex-1
+
+#### 7.2.3 左侧输入表单
+
+容器样式：
+- 白色背景 + border 1px #E5E7EB + rounded-card (16px) + shadow-form
+- padding: 40px
+
+表单项（每项间距 mb-6）：
+
+| 字段 | 类型 | 必填 | UI 组件 |
+|------|------|------|---------|
+| 姓名 | 文本 | 否 | Input h-12 rounded-lg |
+| 性别 | 选择 | 是 | SegmentControl（男/女，黑色选中态）|
+| 出生日期 | 日期 | 是 | Input type=date, h-12 rounded-lg |
+| 出生时间 | 时间 | 否 | Input type=time, h-12 rounded-lg |
+
+提交按钮：Primary w-full h-[50px] text-base font-medium mt-8，「开始分析」
+
+Input 统一样式：
+- border 1px solid #D1D5DB
+- focus: border #0F0F0F + ring 2px black/5
+- placeholder: #9CA3AF
+
+SegmentControl 样式：
+- 两个等宽选项并排, gap 12px
+- 选中: bg #0F0F0F text-white
+- 未选中: bg #F3F4F6 text #6B7280
+- 圆角 8px, 高度 44px
+
+#### 7.2.4 右侧结果展示区
+
+初始状态：空状态引导文案（未分析时隐藏或显示提示）
+
+分析完成后，卡片容器包裹，内部分区块（每区块间距 mb-8）：
+
+**区块 1 — 基本信息**
+- 定义列表格式
+- label: text-sm text-brand-gray, value: text-sm text-brand-black font-medium
+- 包含：姓名、性别、农历、日主、生肖等
+
+**区块 2 — 五行属性**
+- 5 个横向 Tag（pill 圆角, px-3.5 py-1.5, text-sm）
+- 使用五行配色（见 6.2）
+- 可选：标注旺/弱
+
+**区块 3 — 性格特质**
+- AI 生成段落, text-base leading-relaxed
+
+**区块 4 — 五维运势评分**
+- 5 个横向进度条（事业/财富/感情/健康/学业）
+- 进度条高度 8px, rounded-full
+- 底色 gray-100, 填充色对应五行色
+- 每项显示名称 + 百分比数字
+
+**区块 5 — AI 解读建议**
+- 带「AI 分析·解读」小标签（bg-yellow-50 text-yellow-700 text-xs px-2 py-0.5 rounded）
+- AI 生成正文
+
+---
+
+### 7.3 每日运势页 `/daily` （v2）
+
+#### 7.3.1 日期切换器
+
+- SegmentControl 样式：昨天 / 今天 / 明天 / 后天
+- 「今天」默认黑色选中态
+- 居中显示
+
+#### 7.3.2 运势概览（大卡片）
+
+- 综合运势分数：大字号 text-4xl font-semibold + 环形进度指示器（SVG conic-gradient）
+- 今日总评：text-base text-brand-gray
+- 一段简短描述文字
+
+#### 7.3.3 五行小卡片
+
+- 5 个横向排列小卡片, flex gap-3, 每个 flex-1
+- 样式: bg-brand-bg rounded-xl p-4
+- 含五行颜色 icon + 文字描述
+- 移动端可横向滑动
+
+#### 7.3.4 宜忌 Tag 行
+
+- 宜：绿色系 Tag（木色系）
+- 忌：红色系 Tag（火色系）
+- flex flex-wrap gap-2
+
+#### 7.3.5 幸运指南
+
+- 幸运颜色 / 数字 / 方位 / 贵人星座
+- 2 列或 4 列网格
+
+#### 7.3.6 五维运势进度条
+
+- 同八字结果区的五维运势格式
+- 事业运 / 感情运 / 财富运 / 健康运 / 学业运
+
+#### 7.3.7 AI 今日建议
+
+- 黄色提示框: bg-yellow-50 border-yellow-200 rounded-xl p-5
+- 标题：「💡 AI 今日建议」text-sm font-medium
+- AI 生成建议正文
+
+---
+
+### 7.4 定价页 `/pricing` （v2）
+
+#### 7.4.1 页面标题区
+
+- 标题「选择您的计划」（可用 font-display 衬线体, text-4xl, 居中）
+- 副标题「灵活订阅，随时取消」（text-brand-gray, 居中）
+- padding-top 80-100px
+
+#### 7.4.2 三列定价卡片
+
+布局: `flex flex-col lg:flex-row gap-6 max-w-[1000px] mx-auto`
+
+**左侧基础版 + 右侧尊享版**:
+- bg-white, border border-brand-border, rounded-card, p-9
+- CTA: btn-secondary w-full
+
+**中间专业版（推荐）**:
+- bg-white, **border-2 border-brand-black**, rounded-card, p-9
+- **transform lg:scale-[1.03] lg:-translate-y-2**（放大+上浮）
+- **shadow-pricing**
+- 顶部标签: `inline-block bg-brand-black text-white text-xs px-3 py-1 rounded-full -mt-8`（"★ 最受欢迎"）
+- 权益前绿色 check ✅（#10B981）
+- CTA: **btn-primary w-full**
+
+价格展示：
+- 数字: text-[40px] font-semibold
+- 货币: **¥ (CNY)** — ⚠️ 不是 HK$！
+- 周期: text-sm text-brand-gray
+
+#### 7.4.3 FAQ 区块
+
+- 标题「常见问题」text-2xl font-semibold text-center mt-20 mb-8
+- 手风琴折叠（accordion）样式
+- 4-6 个 FAQ 项
+- 边框分割线隔开
+
+#### 7.4.4 Footer
+
+同首页 Footer 规范。
+
+---
+
+### 7.5 其余页面统一要求
+
+以下页面不需要独立设计稿，但需套用新组件和全局规范：
+
+| 页面 | 路径 | 改动范围 |
+|------|------|---------|
+| 八字合婚 | /bazi/marriage | PageHeader + Card + Button 组件替换 |
+| 紫微斗数 | /ziwei | PageHeader + 表格细线样式 |
+| 梅花易数 | /meihua | PageHeader + Card 容器 |
+| 塔罗占卜 | /tarot | PageHeader + Card 容器 |
+| AI 黄历 | /huangli | PageHeader + 宜忌 Tag |
+| 登录/注册 | /auth/login | PageHeader + 表单组件 |
+| 个人中心 | /profile | PageHeader + Card 容器 |
+| 隐私政策 | /privacy | 排版 max-w-[720px] mx-auto, 段落间距加大 |
+| 服务条款 | /terms | 同上 |
+| 退款政策 | /refund | 同上 |
+
+每个页面统一改动：
+1. 替换导航栏为新 Navbar
+2. 替换 Footer 为新 Footer
+3. 内容外套 Container 组件
+4. 所有按钮换为 Button 组件
+5. 间距检查确保不挤
+
+---
+
+## 八、共用组件清单
+
+代码虾需创建/更新以下组件：
+
+| 组件 | 路径 | 说明 |
+|------|------|------|
+| Button | components/ui/Button.tsx | variant: primary / secondary / text / small |
+| Card | components/ui/Card.tsx | 通用卡片容器（含 hover 动效）|
+| Tag | components/ui/Tag.tsx | 彩色 pill tag（五行/宜忌）|
+| SegmentControl | components/ui/SegmentControl.tsx | 分段控制器（性别/日期选择）|
+| PageHeader | components/ui/PageHeader.tsx | 子页面通用标题区 |
+| Container | components/ui/Container.tsx | 页面宽度限制 + 居中 |
+| Navbar | components/layout/Navbar.tsx | 全站导航栏（sticky + 下拉 + backdrop-blur）|
+| Footer | components/layout/Footer.tsx | 全站页脚 |
+
+---
+
+## 九、Bug 修复（UI 改版必修）
+
+| # | 问题 | 位置 | 修复方式 | 优先级 |
+|---|------|------|---------|--------|
+| B1 | 货币单位错误 | /pricing | HK$ → ¥ (CNY) | P0 |
+| B2 | 定价权益表过时 | /pricing | 对照最新功能更新权益清单 | P0 |
 
 ---
 
@@ -674,8 +1021,8 @@
 
 ---
 
-**文档版本**: 1.2
-**最后更新**: 2026-03-29
+**文档版本**: 2.0
+**最后更新**: 2026-04-02 (UI 改版 v2 — 对齐美术虾效果图)
 
 ---
 

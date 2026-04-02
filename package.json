@@ -16,6 +16,7 @@
     "@upstash/redis": "^1.37.0",
     "ai": "^6.0.116",
     "bcryptjs": "^3.0.3",
+    "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.577.0",
     "lunar-javascript": "^1.7.7",
@@ -25,6 +26,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "stripe": "^20.4.1",
+    "tailwind-merge": "^3.5.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
