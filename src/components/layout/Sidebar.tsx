@@ -148,12 +148,12 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps = {}
           const isExpanded = expandedGroups.has(group.label);
           
           return (
-            <div key={group.label} className="mb-2">
+            <div key={group.label} className="mb-1">
               {/* 分组标题 */}
               <button
                 onClick={() => !collapsed && toggleGroup(group.label)}
                 className={`
-                  w-full flex items-center gap-2 px-3 py-2 rounded
+                  w-full flex items-center gap-2 px-3 py-1.5 rounded
                   hover:bg-gray-100 transition-colors
                   ${collapsed ? 'justify-center' : 'justify-between'}
                 `}
@@ -177,7 +177,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps = {}
 
               {/* 子菜单 */}
               {!collapsed && isExpanded && group.items && (
-                <div className="ml-7 mt-1 space-y-1">
+                <div className="ml-6 mt-0.5 space-y-0.5">
                   {group.items.map((item) => {
                     // 路径匹配：支持精确匹配和前缀匹配
                     const normalizedPathname = pathname?.replace(/\/$/, '') || '';
@@ -191,7 +191,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps = {}
                         href={item.href}
                         onClick={handleLinkClick}
                         className={`
-                          block px-3 py-2 rounded text-sm transition-colors font-medium
+                          block px-3 py-1.5 rounded text-sm transition-colors font-medium
                           ${
                             isActive
                               ? 'bg-primary text-white shadow-sm'
