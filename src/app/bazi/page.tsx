@@ -68,8 +68,6 @@ export default function BaziPage() {
   });
   const [loading, setLoading] = useState(false);
   const [showQuotaModal, setShowQuotaModal] = useState(false);
-  const [knowBirthTime, setKnowBirthTime] = useState(true); // 是否知道出生时间
-  const [useEarlyLateZi, setUseEarlyLateZi] = useState(false); // 早晚子时开关
 
   // 从数据库或 localStorage 恢复已保存的信息
   useEffect(() => {
@@ -245,67 +243,30 @@ export default function BaziPage() {
               onChange={(value) => setFormData({ ...formData, birthDate: value })}
             />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-secondary">
-                  <input
-                    type="checkbox"
-                    checked={knowBirthTime}
-                    onChange={(e) => {
-                      setKnowBirthTime(e.target.checked);
-                      if (!e.target.checked) {
-                        setFormData({ ...formData, birthHour: '-1' });
-                      }
-                    }}
-                    className="w-4 h-4 rounded border-border bg-white checked:bg-primary focus:ring-2 focus:ring-primary/50 transition-colors"
-                  />
-                  我知道出生时间
-                </label>
-                {knowBirthTime ? (
-                  <Select
-                    label=""
-                    options={shichenOptions}
-                    value={formData.birthHour}
-                    onChange={(e) => setFormData({ ...formData, birthHour: e.target.value })}
-                    required
-                  />
-                ) : (
-                  <div className="p-3 bg-primary/10 border border-primary/30 rounded text-sm text-secondary">
-                    💡 将为您提供全天时辰综合分析
-                  </div>
-                )}
-              </div>
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-secondary">
+                出生时辰 <span className="text-red-400 text-xs">*</span>
+              </label>
+              <Select
+                label=""
+                options={shichenOptions}
+                value={formData.birthHour}
+                onChange={(e) => setFormData({ ...formData, birthHour: e.target.value })}
+                required
+              />
+            </div>
 
-              {knowBirthTime && (
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-secondary">
-                    出生时辰 <span className="text-red-400 text-xs">*</span>
-                  </label>
-                  <Select
-                    label=""
-                    options={shichenOptions}
-                    value={formData.birthHour}
-                    onChange={(e) => setFormData({ ...formData, birthHour: e.target.value })}
-                    required
-                  />
-                  
-                  {/* 早晚子时开关 */}
-                  <label className="flex items-center gap-2 text-xs text-secondary">
-                    <input
-                      type="checkbox"
-                      checked={useEarlyLateZi}
-                      onChange={(e) => setUseEarlyLateZi(e.target.checked)}
-                      className="w-3 h-3 rounded border-border bg-white checked:bg-primary focus:ring-2 focus:ring-primary/50 transition-colors"
-                    />
-                    使用早晚子时
-                  </label>
-                  {useEarlyLateZi && (
-                    <p className="text-xs text-muted">
-                      💡 早子时（23:00-24:00）归前一日，晚子时（00:00-01:00）归当日
-                    </p>
-                  )}
-                </div>
-              )}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-secondary">
+                出生时辰 <span className="text-red-400 text-xs">*</span>
+              </label>
+              <Select
+                label=""
+                options={shichenOptions}
+                value={formData.birthHour}
+                onChange={(e) => setFormData({ ...formData, birthHour: e.target.value })}
+                required
+              />
             </div>
 
             {error && (
@@ -499,7 +460,7 @@ export default function BaziPage() {
                       <span className="text-muted">▼</span>
                     </summary>
                     <p className="text-sm text-secondary mt-2 px-3 pb-3">
-                      可以关闭"我知道出生时间"开关，系统将提供全天时辰的综合分析。或者咨询父母、查看出生证明。时辰准确度会影响分析精度。
+                      可以选择"不知道（默认午时）"选项，系统将使用中午时辰进行分析。或者咨询父母、查看出生证明。时辰准确度会影响分析精度。
                     </p>
                   </details>
                   <details className="group" open>
