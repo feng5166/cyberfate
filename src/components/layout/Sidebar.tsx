@@ -191,11 +191,11 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps = {}
                         href={item.href}
                         onClick={handleLinkClick}
                         className={`
-                          block px-3 py-1.5 rounded text-sm transition-colors
+                          block px-3 py-1.5 rounded text-sm transition-all
                           ${
                             isActive
-                              ? 'bg-black text-white font-bold shadow-md'
-                              : 'text-gray-700 font-medium hover:bg-gray-100 hover:text-black'
+                              ? 'bg-gray-900 text-white font-semibold border-l-4 border-blue-500 pl-2.5'
+                              : 'text-gray-700 font-normal hover:bg-gray-50 hover:text-gray-900'
                           }
                         `}
                       >
