@@ -179,11 +179,10 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps = {}
               {!collapsed && isExpanded && group.items && (
                 <div className="ml-6 mt-0.5 space-y-0.5">
                   {group.items.map((item) => {
-                    // 路径匹配：支持精确匹配和前缀匹配
+                    // 路径匹配：只精确匹配，避免 /bazi 误匹配 /bazi/marriage
                     const normalizedPathname = pathname?.replace(/\/$/, '') || '';
                     const normalizedHref = item.href.replace(/\/$/, '');
-                    const isActive = normalizedPathname === normalizedHref || 
-                                   normalizedPathname.startsWith(normalizedHref + '/');
+                    const isActive = normalizedPathname === normalizedHref;
                     
                     return (
                       <Link
