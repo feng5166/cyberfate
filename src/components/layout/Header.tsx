@@ -7,13 +7,8 @@ import { Sparkles, Menu } from 'lucide-react';
 
 const navItems = [
   { label: '首页', href: '/', available: true },
-  { label: '八字分析', href: '/bazi', available: true },
-  { label: '每日运势', href: '/daily', available: true },
-  { label: '八字合婚', href: '/bazi/marriage', available: true },
-  { label: '紫微斗数', href: '/ziwei', available: true },
-  { label: '梅花易数', href: '/meihua', available: true },
-  { label: 'AI 黄历', href: '/huangli', available: true },
-  { label: '塔罗占卜', href: '/tarot', available: true },
+  { label: '八字计算', href: '/bazi', available: true },
+  { label: '博客', href: '/blog', available: false },
   { label: '定价', href: '/pricing', available: true },
 ];
 
@@ -29,14 +24,16 @@ export function Header({ onMobileMenuToggle }: HeaderProps = {}) {
     <header className="bg-white border-b border-border">
       <nav className="max-w-7xl mx-auto px-4 lg:px-10">
         <div className="flex items-center justify-between h-16">
-          {/* 移动端汉堡菜单 */}
-          <button
-            onClick={onMobileMenuToggle}
-            className="lg:hidden p-2 -ml-2 text-secondary hover:text-primary"
-            aria-label="打开菜单"
-          >
-            <Menu className="w-6 h-6" />
-          </button>
+          {/* 移动端汉堡菜单 - 只在登录后显示 */}
+          {session && (
+            <button
+              onClick={onMobileMenuToggle}
+              className="lg:hidden p-2 -ml-2 text-secondary hover:text-primary"
+              aria-label="打开菜单"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+          )}
 
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
@@ -63,15 +60,15 @@ export function Header({ onMobileMenuToggle }: HeaderProps = {}) {
                 {!item.available && <span className="ml-1 text-xs">(即将上线)</span>}
               </Link>
             ))}
-            {/* 登录后显示工作台 */}
+            {/* 登录后显示账户菜单 */}
             {session && (
               <div
                 className="relative"
                 onMouseEnter={() => setUserMenuOpen(true)}
                 onMouseLeave={() => setUserMenuOpen(false)}
               >
-                <span className="px-4 py-1.5 text-sm bg-black text-white rounded hover:bg-gray-800 cursor-pointer transition-colors inline-block">
-                  工作台
+                <span className="text-sm text-secondary hover:text-primary cursor-pointer transition-colors">
+                  账户
                 </span>
                 {userMenuOpen && (
                   <div className="absolute left-0 top-full pt-2">

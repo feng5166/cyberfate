@@ -250,43 +250,44 @@ export default function BaziPage() {
               placeholder="输入城市名，如：北京、上海"
             />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-secondary">
-                  日期类型
-                </label>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setCalendarType('solar')}
-                    className={`flex-1 px-4 py-2 rounded font-medium transition-colors ${
-                      calendarType === 'solar'
-                        ? 'bg-primary text-white'
-                        : 'bg-white border border-border text-secondary hover:border-primary'
-                    }`}
-                  >
-                    阳历
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCalendarType('lunar')}
-                    className={`flex-1 px-4 py-2 rounded font-medium transition-colors ${
-                      calendarType === 'lunar'
-                        ? 'bg-primary text-white'
-                        : 'bg-white border border-border text-secondary hover:border-primary'
-                    }`}
-                  >
-                    农历
-                  </button>
-                </div>
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-secondary">
+                日期类型
+              </label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCalendarType('solar')}
+                  className={`flex-1 px-4 py-2 rounded font-medium transition-colors ${
+                    calendarType === 'solar'
+                      ? 'bg-primary text-white'
+                      : 'bg-white border border-border text-secondary hover:border-primary'
+                  }`}
+                >
+                  阳历
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCalendarType('lunar')}
+                  className={`flex-1 px-4 py-2 rounded font-medium transition-colors ${
+                    calendarType === 'lunar'
+                      ? 'bg-primary text-white'
+                      : 'bg-white border border-border text-secondary hover:border-primary'
+                  }`}
+                >
+                  农历
+                </button>
               </div>
+            </div>
 
+            {/* 只在选中阳历或农历后显示日期选择器 */}
+            {calendarType && (
               <DatePicker
                 label="出生日期"
                 value={formData.birthDate}
                 onChange={(value) => setFormData({ ...formData, birthDate: value })}
               />
-            </div>
+            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div className="space-y-2">
@@ -527,7 +528,7 @@ export default function BaziPage() {
                   ❓ 常见问题
                 </h3>
                 <div className="space-y-4">
-                  <details className="group">
+                  <details className="group" open>
                     <summary className="cursor-pointer font-semibold text-primary flex items-center justify-between p-3 hover:bg-gray-50 rounded transition-colors">
                       八字分析准确吗？
                       <span className="text-muted">▼</span>
@@ -536,7 +537,7 @@ export default function BaziPage() {
                       八字分析基于传统命理学体系，结合 AI 技术提供参考。准确度取决于出生信息的精确程度。建议将其作为了解自己的一种方式，而非绝对预测。
                     </p>
                   </details>
-                  <details className="group">
+                  <details className="group" open>
                     <summary className="cursor-pointer font-semibold text-primary flex items-center justify-between p-3 hover:bg-gray-50 rounded transition-colors">
                       不知道准确出生时间怎么办？
                       <span className="text-muted">▼</span>
@@ -545,7 +546,7 @@ export default function BaziPage() {
                       可以关闭"我知道出生时间"开关，系统将提供全天时辰的综合分析。或者咨询父母、查看出生证明。时辰准确度会影响分析精度。
                     </p>
                   </details>
-                  <details className="group">
+                  <details className="group" open>
                     <summary className="cursor-pointer font-semibold text-primary flex items-center justify-between p-3 hover:bg-gray-50 rounded transition-colors">
                       八字和西方星座有什么区别？
                       <span className="text-muted">▼</span>
@@ -554,7 +555,7 @@ export default function BaziPage() {
                       八字基于出生年月日时的天干地支，考虑五行生克关系；星座基于太阳所在黄道位置，只看出生月份。八字信息更详细，理论体系更复杂。
                     </p>
                   </details>
-                  <details className="group">
+                  <details className="group" open>
                     <summary className="cursor-pointer font-semibold text-primary flex items-center justify-between p-3 hover:bg-gray-50 rounded transition-colors">
                       多久查看一次八字分析？
                       <span className="text-muted">▼</span>
@@ -563,7 +564,7 @@ export default function BaziPage() {
                       八字命盘是固定的，无需频繁查看。建议在人生重要节点（求职、婚恋、创业等）参考，配合每日运势了解短期运程。
                     </p>
                   </details>
-                  <details className="group">
+                  <details className="group" open>
                     <summary className="cursor-pointer font-semibold text-primary flex items-center justify-between p-3 hover:bg-gray-50 rounded transition-colors">
                       八字能帮助做重要决定吗？
                       <span className="text-muted">▼</span>
