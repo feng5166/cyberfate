@@ -33,7 +33,7 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
       <div className={showSidebar ? "lg:ml-60 flex flex-col min-h-screen" : "flex flex-col min-h-screen"}>
         <Header 
           onMobileMenuToggle={() => setMobileMenuOpen(true)}
-          showMobileMenu={showSidebar} 
+          showMobileMenu={showSidebar || false} 
         />
         <main className="flex-1">{children}</main>
         <Footer />
