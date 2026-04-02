@@ -13,12 +13,30 @@ interface LayoutWrapperProps {
 
 export function LayoutWrapper({ children }: LayoutWrapperProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { data: session } = useSession();
   const pathname = usePathname();
 
   // 首页不显示侧边栏
   const isHomePage = pathname === '/';
-  const showSidebar = session && !isHomePage;
+  const showSidebar = Boolean(session) && !isHomePage;
+  const layoutClasses = [
+    'flex flex-col min-h-screen',
+    showSidebar ? (isSidebarCollapsed ? 'lg:ml-16' : 'lg:ml-[260px]') : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  const handleWorkbenchClick = () => {
+    if (!showSidebar) return;
+    setSidebarCollapsed(false);
+    if (typeof window !== 'undefined') {
+      const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
+      if (!isDesktop) {
+        setMobileMenuOpen(true);
+      }
+    }
+  };
 
   return (
     <>
@@ -27,13 +45,17 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
         <Sidebar 
           mobileOpen={mobileMenuOpen} 
           onMobileClose={() => setMobileMenuOpen(false)} 
+          collapsed={isSidebarCollapsed}
+          onCollapseToggle={(next) => setSidebarCollapsed(next)}
         />
       )}
       {/* 桌面端：有侧边栏时留出空间 */}
-      <div className={showSidebar ? "lg:ml-60 flex flex-col min-h-screen" : "flex flex-col min-h-screen"}>
+      <div className={layoutClasses}>
         <Header 
           onMobileMenuToggle={() => setMobileMenuOpen(true)}
-          showMobileMenu={showSidebar || false} 
+          showMobileMenu={showSidebar || false}
+          onWorkbenchClick={handleWorkbenchClick}
+          showWorkbench={!!showSidebar}
         />
         <main className="flex-1">{children}</main>
         <Footer />

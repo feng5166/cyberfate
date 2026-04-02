@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { ChevronDown, Menu, X } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 
 // 导航项配置
 const navItems = [
@@ -26,15 +27,29 @@ const featureMenu = [
 interface NavbarProps {
   onMobileMenuToggle?: () => void;
   showMobileMenu?: boolean;
+  onWorkbenchClick?: () => void;
+  showWorkbench?: boolean;
 }
 
-export function Header({ onMobileMenuToggle, showMobileMenu = false }: NavbarProps = {}) {
+export function Header({
+  onMobileMenuToggle,
+  showMobileMenu = false,
+  onWorkbenchClick,
+  showWorkbench = false,
+}: NavbarProps = {}) {
   const [featureOpen, setFeatureOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const pathname = usePathname();
   const isHomePage = pathname === '/';
+  const handleWorkbenchAction = () => {
+    if (onWorkbenchClick) {
+      onWorkbenchClick();
+    } else if (onMobileMenuToggle) {
+      onMobileMenuToggle();
+    }
+  };
 
   return (
     <header className={`sticky top-0 z-50 ${isHomePage ? 'bg-transparent border-transparent' : 'bg-white/90 backdrop-blur-md border-b border-brand-border-light'}`}>
@@ -104,12 +119,15 @@ export function Header({ onMobileMenuToggle, showMobileMenu = false }: NavbarPro
 
             {/* 工作台（登录后显示）或 登录按钮 */}
             {session ? (
-              <button
-                onClick={onMobileMenuToggle}
-                className="text-sm text-brand-gray hover:text-brand-black transition-colors duration-200"
-              >
-                工作台
-              </button>
+              showWorkbench ? (
+                <Button
+                  variant="text"
+                  className="text-sm text-brand-gray hover:text-brand-black"
+                  onClick={handleWorkbenchAction}
+                >
+                  工作台
+                </Button>
+              ) : null
             ) : (
               <Link
                 href="/auth/login"
@@ -176,6 +194,18 @@ export function Header({ onMobileMenuToggle, showMobileMenu = false }: NavbarPro
                 {item.label}
               </Link>
             ))}
+
+            {session && showWorkbench && (
+              <button
+                className="w-full text-left py-2.5 text-sm text-brand-gray hover:text-brand-black"
+                onClick={() => {
+                  handleWorkbenchAction();
+                  setMobileOpen(false);
+                }}
+              >
+                工作台
+              </button>
+            )}
             
             <div className="pt-2 border-t border-brand-border-light mt-2">
               <p className="px-2 py-1 text-xs text-brand-light font-medium">功能</p>

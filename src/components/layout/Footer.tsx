@@ -1,39 +1,68 @@
 import Link from 'next/link';
 
-const footerLinks = [
-  { label: '隐私政策', href: '/privacy' },
-  { label: '服务条款', href: '/terms' },
-  { label: '退款政策', href: '/refund' },
+const FOOTER_GROUPS = [
+  {
+    title: '八字功能',
+    links: [
+      { label: '八字分析', href: '/bazi' },
+      { label: '合婚分析', href: '/bazi/marriage' },
+      { label: '每日运势', href: '/daily' },
+      { label: '紫微斗数', href: '/ziwei' },
+      { label: '梅花易数', href: '/meihua' },
+      { label: '塔罗占卜', href: '/tarot' },
+      { label: 'AI 黄历', href: '/huangli' },
+    ],
+  },
+  {
+    title: '实用工具',
+    links: [
+      { label: '知识库', href: '/knowledge' },
+      { label: '历史记录', href: '/history' },
+      { label: '定价', href: '/pricing' },
+    ],
+  },
+  {
+    title: '公司',
+    links: [
+      { label: '关于我们', href: '/about' },
+      { label: '隐私政策', href: '/privacy' },
+      { label: '服务条款', href: '/terms' },
+      { label: '退款政策', href: '/refund' },
+    ],
+  },
 ];
 
 export function Footer() {
   return (
     <footer className="bg-brand-bg border-t border-brand-border-light">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-20 py-12">
-        {/* Logo + 版权 */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-          {/* Logo */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {FOOTER_GROUPS.map((group) => (
+            <div key={group.title}>
+              <h3 className="text-sm font-semibold text-brand-black tracking-wide uppercase">
+                {group.title}
+              </h3>
+              <ul className="mt-4 space-y-2">
+                {group.links.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="text-sm text-brand-gray hover:text-brand-black transition-colors"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-10 pt-6 border-t border-brand-border-light flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-brand-light">
           <Link href="/" className="font-display text-base text-brand-black tracking-widest hover:opacity-70 transition-opacity">
             CYBERFATE
           </Link>
-
-          {/* 链接 */}
-          <div className="flex items-center gap-6">
-            {footerLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-sm text-brand-gray hover:text-brand-black hover:underline transition-all duration-150"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
-
-          {/* 版权 */}
-          <p className="text-xs text-brand-light">
-            © {new Date().getFullYear()} CyberFate. All rights reserved.
-          </p>
+          <p>© 2026 CyberFate. All rights reserved.</p>
         </div>
       </div>
     </footer>

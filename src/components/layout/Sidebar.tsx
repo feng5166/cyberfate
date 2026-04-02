@@ -66,11 +66,29 @@ const NAV_ITEMS: NavItem[] = [
 interface SidebarProps {
   mobileOpen?: boolean;
   onMobileClose?: () => void;
+  collapsed?: boolean;
+  onCollapseToggle?: (nextCollapsed: boolean) => void;
 }
 
-export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps = {}) {
+export function Sidebar({
+  mobileOpen = false,
+  onMobileClose,
+  collapsed: collapsedProp,
+  onCollapseToggle,
+}: SidebarProps = {}) {
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
+  const [internalCollapsed, setInternalCollapsed] = useState(false);
+  const controlledCollapsed = collapsedProp ?? internalCollapsed;
+  const collapsed = mobileOpen ? false : controlledCollapsed;
+  const sidebarWidthClass = controlledCollapsed ? 'w-16' : 'w-[260px]';
+
+  const handleCollapseToggle = () => {
+    if (collapsedProp === undefined) {
+      setInternalCollapsed(!controlledCollapsed);
+    } else {
+      onCollapseToggle?.(!controlledCollapsed);
+    }
+  };
   
   // 找到当前页面所在的分组，确保它初始化时是展开的
   const getCurrentGroup = () => {
@@ -123,7 +141,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps = {}
         
         {/* 桌面端折叠按钮 */}
         <button
-          onClick={() => setCollapsed(!collapsed)}
+          onClick={handleCollapseToggle}
           className="hidden lg:block p-1 hover:bg-gray-100 rounded transition-colors"
         >
           {collapsed ? (
@@ -242,7 +260,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps = {}
           hidden lg:block
           fixed left-0 top-0 h-screen
           transition-all duration-300 ease-in-out
-          ${collapsed ? 'w-16' : 'w-60'}
+          ${sidebarWidthClass}
           z-40
         `}
       >

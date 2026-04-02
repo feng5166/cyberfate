@@ -3,52 +3,106 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Container } from '@/components/ui/Container';
 import {
-  BarChart3, Star, Sparkles, Layers, Calendar,
-  BookHeart, Sun, ArrowRight
+  ArrowRight,
+  BarChart3,
+  BookHeart,
+  BookOpen,
+  Brain,
+  Calendar,
+  Compass,
+  Layers,
+  Sparkles,
+  Star,
+  Sun,
 } from 'lucide-react';
 
-const features = [
+const corePrinciples = [
   {
-    icon: BarChart3,
-    title: '八字分析',
-    description: '根据出生时间计算四柱八字，AI 深度解读命盘',
-    href: '/bazi',
+    icon: Brain,
+    title: 'AI 智能科学解析',
+    description: '融合知识图谱与多模态推理，让命理指标具备可验证的数据依据，帮助你读懂趋势背后的逻辑。',
   },
   {
-    icon: BookHeart,
-    title: '八字合婚',
-    description: '测算双方八字匹配度，了解婚姻运势',
-    href: '/bazi/marriage',
+    icon: BookOpen,
+    title: '文化传承理性态度',
+    description: '尊重东方传统语境，在现代语境下复原术语、拆解象征，建立科学、节制的参考框架。',
   },
   {
-    icon: Star,
-    title: '紫微斗数',
-    description: '紫微排盘，解析命宫十二宫位',
-    href: '/ziwei',
+    icon: Compass,
+    title: '自主探索独立思考',
+    description: '提供透明假设与多路径建议，辅助你结合经验与判断，自主设计可执行的行动方案。',
+  },
+];
+
+const featureGroups = [
+  {
+    title: '八字算命',
+    features: [
+      {
+        icon: BarChart3,
+        title: '命盘解析',
+        description: '生成四柱命盘，AI 解释十神、用神与大运，明确优势与短板。',
+        href: '/bazi',
+      },
+      {
+        icon: Sun,
+        title: '每日运势',
+        description: '结合日柱五行与节气，推送当日宜忌与行动建议。',
+        href: '/daily',
+      },
+      {
+        icon: BookHeart,
+        title: '合婚分析',
+        description: '对比双方命盘能量，评估关系协同性与潜在风险点。',
+        href: '/bazi/marriage',
+      },
+    ],
   },
   {
-    icon: Sparkles,
-    title: '梅花易数',
-    description: '快速起卦，洞察吉凶',
-    href: '/meihua',
+    title: '周易占卜',
+    features: [
+      {
+        icon: Sparkles,
+        title: '梅花易数',
+        description: '起卦到断卦全流程 AI 协助，快速洞察局势吉凶。',
+        href: '/meihua',
+      },
+      {
+        icon: Layers,
+        title: '塔罗解读',
+        description: '精选牌阵 + 语义分析，提供多视角心灵洞察。',
+        href: '/tarot',
+      },
+      {
+        icon: Compass,
+        title: '六爻占卜',
+        description: '以象数推演进展节点，临时入口复用梅花易数。',
+        href: '/meihua',
+      },
+    ],
   },
   {
-    icon: Layers,
-    title: '塔罗占卜',
-    description: '经典韦特塔罗，AI 智能解读牌阵',
-    href: '/tarot',
-  },
-  {
-    icon: Calendar,
-    title: 'AI 黄历',
-    description: '宜忌查询，智能择日建议',
-    href: '/huangli',
-  },
-  {
-    icon: Sun,
-    title: '每日运势',
-    description: '查看今日五行运势、宜忌指南',
-    href: '/daily',
+    title: '更多工具',
+    features: [
+      {
+        icon: Star,
+        title: '紫微排盘',
+        description: '自动排盘十二宫位，标注重点星曜与宫干。',
+        href: '/ziwei',
+      },
+      {
+        icon: Calendar,
+        title: '黄历查询',
+        description: '传统黄历宜忌配合智能择日，实时同步节气。',
+        href: '/huangli',
+      },
+      {
+        icon: BarChart3,
+        title: 'AI 黄历',
+        description: '结合个体命盘偏好，输出个性化的每日节奏建议。',
+        href: '/huangli',
+      },
+    ],
   },
 ];
 
@@ -103,32 +157,96 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ===== 功能展示区 ===== */}
-      <section className="px-4 mt-24 md:mt-30 pb-20 md:pb-26">
+      {/* ===== Core Principles ===== */}
+      <section className="px-4 py-16 md:py-20 bg-brand-bg/60">
         <Container>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((feature) => {
-              const Icon = feature.icon;
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {corePrinciples.map((principle) => {
+              const Icon = principle.icon;
               return (
-                <Card key={feature.title} className="group flex flex-col">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-brand-bg flex-shrink-0">
-                      <Icon className="w-5 h-5 text-brand-black" strokeWidth={1.8} />
+                <Card key={principle.title} className="text-center" hover={false}>
+                  <div className="flex flex-col items-center text-center">
+                    <div className="w-12 h-12 rounded-full bg-brand-bg flex items-center justify-center">
+                      <Icon className="w-6 h-6 text-brand-black" strokeWidth={1.5} />
                     </div>
-                    <h3 className="text-lg font-medium text-brand-black">{feature.title}</h3>
+                    <h3 className="text-xl font-semibold text-brand-black mt-4">{principle.title}</h3>
+                    <p className="text-sm text-brand-gray mt-3 leading-relaxed">
+                      {principle.description}
+                    </p>
                   </div>
-                  <p className="text-sm text-brand-gray mt-2 flex-1">{feature.description}</p>
-                  <Link
-                    href={feature.href}
-                    className="inline-flex items-center gap-1 text-sm mt-4 text-brand-black group-hover:gap-2 transition-all duration-200"
-                  >
-                    进入分析
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
                 </Card>
               );
             })}
           </div>
+        </Container>
+      </section>
+
+      {/* ===== 功能展示区 ===== */}
+      <section className="px-4 mt-24 md:mt-30 pb-20 md:pb-26">
+        <Container className="space-y-14">
+          {featureGroups.map((group) => (
+            <div key={group.title}>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-semibold text-brand-black">{group.title}</h2>
+                <div className="h-px flex-1 ml-6 bg-brand-border-light" />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {group.features.map((feature) => {
+                  const Icon = feature.icon;
+                  return (
+                    <Card key={feature.title} className="group flex flex-col">
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-brand-bg flex-shrink-0">
+                          <Icon className="w-5 h-5 text-brand-black" strokeWidth={1.8} />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-medium text-brand-black">{feature.title}</h3>
+                          <p className="text-xs text-brand-light mt-0.5">{group.title}</p>
+                        </div>
+                      </div>
+                      <p className="text-sm text-brand-gray mt-2 flex-1">{feature.description}</p>
+                      <Link
+                        href={feature.href}
+                        className="inline-flex items-center gap-1 text-sm mt-4 text-brand-black group-hover:gap-2 transition-all duration-200"
+                      >
+                        进入分析
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </Container>
+      </section>
+
+      {/* ===== CTA Section ===== */}
+      <section className="px-4 pb-24">
+        <Container>
+          <Card className="bg-brand-black text-white text-center py-16 px-10" hover={false}>
+            <h2 className="font-display text-3xl md:text-4xl tracking-wide">
+              AI 分析个人特质，洞察发展潜力
+            </h2>
+            <p className="text-base md:text-lg text-white/80 mt-4 max-w-2xl mx-auto">
+              融合传统命理与现代 AI 技术，为你提供科学、理性的命理分析参考
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mt-10">
+              <Link href="/bazi">
+                <Button variant="primary" className="bg-white text-brand-black hover:bg-white/90">
+                  免费开始
+                </Button>
+              </Link>
+              <Link href="/pricing">
+                <Button variant="secondary" className="border-white text-white hover:bg-white/10">
+                  查看定价
+                </Button>
+              </Link>
+            </div>
+            <p className="text-sm text-white/60 mt-6">
+              免费使用 · 无需注册 · 即刻体验
+            </p>
+          </Card>
         </Container>
       </section>
     </div>
