@@ -5,6 +5,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { SessionProvider } from "@/components/providers/SessionProvider";
+import { LayoutWrapper } from "@/components/layout/LayoutWrapper";
 
 const notoSerifSC = Noto_Serif_SC({
   subsets: ["latin"],
@@ -67,13 +68,9 @@ export default function RootLayout({
     <html lang="zh-CN" className={notoSerifSC.variable}>
       <body className="min-h-screen flex flex-col">
         <SessionProvider>
-          <Sidebar />
-          {/* 桌面端：为侧边栏留出空间 */}
-          <div className="lg:ml-60 flex flex-col min-h-screen">
-            <Header />
-            <main className="flex-1">{children}</main>
-            <Footer />
-          </div>
+          <LayoutWrapper>
+            {children}
+          </LayoutWrapper>
         </SessionProvider>
       </body>
     </html>

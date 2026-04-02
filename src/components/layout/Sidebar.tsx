@@ -10,7 +10,6 @@ import {
   Compass, 
   BookOpen, 
   Puzzle,
-  Menu,
   X,
   ChevronDown,
   ChevronRight
@@ -64,10 +63,14 @@ const NAV_ITEMS: NavItem[] = [
   },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
+}
+
+export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps = {}) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
   
   // 找到当前页面所在的分组，确保它初始化时是展开的
   const getCurrentGroup = () => {
@@ -95,11 +98,18 @@ export function Sidebar() {
     setExpandedGroups(newExpanded);
   };
 
+  const handleLinkClick = () => {
+    // 移动端点击链接后关闭侧边栏
+    if (onMobileClose) {
+      onMobileClose();
+    }
+  };
+
   const SidebarContent = () => (
     <div className="h-full flex flex-col bg-white border-r border-border">
       {/* Logo */}
       <div className="p-4 border-b border-border flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2" onClick={handleLinkClick}>
           {!collapsed && (
             <>
               <Sparkles className="w-6 h-6 text-primary" />
@@ -125,7 +135,7 @@ export function Sidebar() {
 
         {/* 移动端关闭按钮 */}
         <button
-          onClick={() => setMobileOpen(false)}
+          onClick={onMobileClose}
           className="lg:hidden p-1 hover:bg-gray-100 rounded transition-colors"
         >
           <X className="w-5 h-5" />
@@ -179,7 +189,7 @@ export function Sidebar() {
                       <Link
                         key={item.href}
                         href={item.href}
-                        onClick={() => setMobileOpen(false)}
+                        onClick={handleLinkClick}
                         className={`
                           block px-3 py-2 rounded text-sm transition-colors
                           ${
@@ -205,6 +215,7 @@ export function Sidebar() {
         {!collapsed && (
           <Link
             href="/profile"
+            onClick={handleLinkClick}
             className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 rounded transition-colors"
           >
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
@@ -239,21 +250,13 @@ export function Sidebar() {
         <SidebarContent />
       </aside>
 
-      {/* 移动端汉堡菜单按钮 */}
-      <button
-        onClick={() => setMobileOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white border border-border rounded-lg shadow-lg"
-      >
-        <Menu className="w-6 h-6" />
-      </button>
-
       {/* 移动端抽屉 */}
       {mobileOpen && (
         <>
           {/* 遮罩 */}
           <div
             className="lg:hidden fixed inset-0 bg-black/50 z-40"
-            onClick={() => setMobileOpen(false)}
+            onClick={onMobileClose}
           />
           
           {/* 抽屉 */}
