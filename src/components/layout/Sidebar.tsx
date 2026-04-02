@@ -194,7 +194,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps = {}
                           block px-3 py-1.5 rounded text-sm transition-all
                           ${
                             isActive
-                              ? 'bg-gray-900 text-white font-semibold border-l-4 border-blue-500 pl-2.5'
+                              ? 'bg-gray-100 text-black font-semibold'
                               : 'text-gray-700 font-normal hover:bg-gray-50 hover:text-gray-900'
                           }
                         `}
