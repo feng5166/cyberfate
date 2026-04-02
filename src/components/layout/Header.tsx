@@ -14,9 +14,10 @@ const navItems = [
 
 interface HeaderProps {
   onMobileMenuToggle?: () => void;
+  showMobileMenu?: boolean;
 }
 
-export function Header({ onMobileMenuToggle }: HeaderProps = {}) {
+export function Header({ onMobileMenuToggle, showMobileMenu = false }: HeaderProps = {}) {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { data: session, status } = useSession();
 
@@ -24,8 +25,8 @@ export function Header({ onMobileMenuToggle }: HeaderProps = {}) {
     <header className="bg-white border-b border-border">
       <nav className="max-w-7xl mx-auto px-4 lg:px-10">
         <div className="flex items-center justify-between h-16">
-          {/* 移动端汉堡菜单 - 只在登录后显示 */}
-          {session && (
+          {/* 移动端汉堡菜单 - 只在有侧边栏时显示 */}
+          {showMobileMenu && (
             <button
               onClick={onMobileMenuToggle}
               className="lg:hidden p-2 -ml-2 text-secondary hover:text-primary"
@@ -60,6 +61,24 @@ export function Header({ onMobileMenuToggle }: HeaderProps = {}) {
                 {!item.available && <span className="ml-1 text-xs">(即将上线)</span>}
               </Link>
             ))}
+            
+            {/* 工作台按钮 */}
+            {session ? (
+              <button
+                onClick={onMobileMenuToggle}
+                className="text-sm text-secondary hover:text-primary cursor-pointer transition-colors"
+              >
+                工作台
+              </button>
+            ) : (
+              <Link
+                href="/auth/login"
+                className="text-sm text-secondary hover:text-primary transition-colors"
+              >
+                工作台
+              </Link>
+            )}
+            
             {/* 登录后显示账户菜单 */}
             {session && (
               <div

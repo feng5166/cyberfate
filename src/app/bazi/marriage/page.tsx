@@ -79,9 +79,87 @@ export default function MarriagePage() {
           <p className="text-secondary">测算双方八字匹配度，了解婚姻运势</p>
         </div>
 
-        {/* AI 智能合婚系统说明 */}
         {!result && (
-          <div className="space-y-6 mb-8">
+          <Card>
+            <form onSubmit={handleSubmit} className="space-y-8">
+              {/* 男方信息 */}
+              <div>
+                <h3 className="text-lg font-semibold text-primary mb-4">👨 男方信息</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-secondary mb-2">
+                      姓名 <span className="text-muted text-xs">（选填）</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.maleName}
+                      onChange={(e) => setFormData({ ...formData, maleName: e.target.value })}
+                      placeholder="男方姓名"
+                      className="w-full px-4 py-3 rounded bg-white border border-border text-primary placeholder:text-muted focus:outline-none focus:border-primary"
+                    />
+                  </div>
+                  <div />
+                  <DatePicker
+                    label="出生日期"
+                    value={formData.maleBirthDate}
+                    onChange={(value) => setFormData({ ...formData, maleBirthDate: value })}
+                  />
+                  <Select
+                    label="出生时辰"
+                    options={shichenOptions}
+                    value={formData.maleBirthHour}
+                    onChange={(e) => setFormData({ ...formData, maleBirthHour: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              {/* 女方信息 */}
+              <div>
+                <h3 className="text-lg font-semibold text-primary mb-4">👩 女方信息</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-secondary mb-2">
+                      姓名 <span className="text-muted text-xs">（选填）</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.femaleName}
+                      onChange={(e) => setFormData({ ...formData, femaleName: e.target.value })}
+                      placeholder="女方姓名"
+                      className="w-full px-4 py-3 rounded bg-white border border-border text-primary placeholder:text-muted focus:outline-none focus:border-primary"
+                    />
+                  </div>
+                  <div />
+                  <DatePicker
+                    label="出生日期"
+                    value={formData.femaleBirthDate}
+                    onChange={(value) => setFormData({ ...formData, femaleBirthDate: value })}
+                  />
+                  <Select
+                    label="出生时辰"
+                    options={shichenOptions}
+                    value={formData.femaleBirthHour}
+                    onChange={(e) => setFormData({ ...formData, femaleBirthHour: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              {error && (
+                <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
+                  {error}
+                </div>
+              )}
+
+              <Button type="submit" className="w-full" size="lg" loading={loading}>
+                {loading ? '正在分析...' : '开始合婚测算'}
+              </Button>
+            </form>
+          </Card>
+        )}
+
+        {/* AI 智能合婚系统说明 - 表单后显示 */}
+        {!result && (
+          <div className="space-y-6 mt-8">
             <Card>
               <h3 className="font-heading text-xl font-semibold text-primary mb-4 text-center">
                 🔮 AI 智能合婚系统
@@ -181,84 +259,6 @@ export default function MarriagePage() {
               </div>
             </Card>
           </div>
-        )}
-
-        {!result && (
-          <Card>
-            <form onSubmit={handleSubmit} className="space-y-8">
-              {/* 男方信息 */}
-              <div>
-                <h3 className="text-lg font-semibold text-primary mb-4">👨 男方信息</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-secondary mb-2">
-                      姓名 <span className="text-muted text-xs">（选填）</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.maleName}
-                      onChange={(e) => setFormData({ ...formData, maleName: e.target.value })}
-                      placeholder="男方姓名"
-                      className="w-full px-4 py-3 rounded bg-white border border-border text-primary placeholder:text-muted focus:outline-none focus:border-primary"
-                    />
-                  </div>
-                  <div />
-                  <DatePicker
-                    label="出生日期"
-                    value={formData.maleBirthDate}
-                    onChange={(value) => setFormData({ ...formData, maleBirthDate: value })}
-                  />
-                  <Select
-                    label="出生时辰"
-                    options={shichenOptions}
-                    value={formData.maleBirthHour}
-                    onChange={(e) => setFormData({ ...formData, maleBirthHour: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              {/* 女方信息 */}
-              <div>
-                <h3 className="text-lg font-semibold text-primary mb-4">👩 女方信息</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-secondary mb-2">
-                      姓名 <span className="text-muted text-xs">（选填）</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.femaleName}
-                      onChange={(e) => setFormData({ ...formData, femaleName: e.target.value })}
-                      placeholder="女方姓名"
-                      className="w-full px-4 py-3 rounded bg-white border border-border text-primary placeholder:text-muted focus:outline-none focus:border-primary"
-                    />
-                  </div>
-                  <div />
-                  <DatePicker
-                    label="出生日期"
-                    value={formData.femaleBirthDate}
-                    onChange={(value) => setFormData({ ...formData, femaleBirthDate: value })}
-                  />
-                  <Select
-                    label="出生时辰"
-                    options={shichenOptions}
-                    value={formData.femaleBirthHour}
-                    onChange={(e) => setFormData({ ...formData, femaleBirthHour: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              {error && (
-                <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
-                  {error}
-                </div>
-              )}
-
-              <Button type="submit" className="w-full" size="lg" loading={loading}>
-                {loading ? '正在分析...' : '开始合婚测算'}
-              </Button>
-            </form>
-          </Card>
         )}
 
         {result && (

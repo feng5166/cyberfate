@@ -2,6 +2,7 @@
 
 import { useState, ReactNode } from 'react';
 import { useSession } from 'next-auth/react';
+import { usePathname } from 'next/navigation';
 import { Header } from './Header';
 import { Footer } from './Footer';
 import { Sidebar } from './Sidebar';
@@ -13,19 +14,27 @@ interface LayoutWrapperProps {
 export function LayoutWrapper({ children }: LayoutWrapperProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { data: session } = useSession();
+  const pathname = usePathname();
+
+  // 首页不显示侧边栏
+  const isHomePage = pathname === '/';
+  const showSidebar = session && !isHomePage;
 
   return (
     <>
-      {/* 只在登录态显示侧边栏 */}
-      {session && (
+      {/* 首页不显示侧边栏，其他页面登录后显示 */}
+      {showSidebar && (
         <Sidebar 
           mobileOpen={mobileMenuOpen} 
           onMobileClose={() => setMobileMenuOpen(false)} 
         />
       )}
-      {/* 桌面端：登录时为侧边栏留出空间 */}
-      <div className={session ? "lg:ml-60 flex flex-col min-h-screen" : "flex flex-col min-h-screen"}>
-        <Header onMobileMenuToggle={() => setMobileMenuOpen(true)} />
+      {/* 桌面端：有侧边栏时留出空间 */}
+      <div className={showSidebar ? "lg:ml-60 flex flex-col min-h-screen" : "flex flex-col min-h-screen"}>
+        <Header 
+          onMobileMenuToggle={() => setMobileMenuOpen(true)}
+          showMobileMenu={showSidebar} 
+        />
         <main className="flex-1">{children}</main>
         <Footer />
       </div>
