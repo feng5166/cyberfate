@@ -209,6 +209,50 @@ export default function BaziPage() {
           </p>
         </div>
 
+        {/* 历史记录选择器 - 只在登录后显示 */}
+        {session && (
+          <Card className="mb-6">
+            <div className="flex items-center gap-4">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-secondary mb-2">
+                  选择已保存的八字
+                </label>
+                <select
+                  className="w-full px-4 py-2.5 rounded bg-white border border-border text-primary focus:outline-none focus:border-primary transition-colors"
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      // TODO: 加载历史记录数据
+                      console.log('加载历史记录:', e.target.value);
+                    }
+                  }}
+                >
+                  <option value="">周峰 (1983/08/21 11:45)</option>
+                  {/* 更多历史记录会在这里动态加载 */}
+                </select>
+              </div>
+              <div className="pt-7">
+                <button
+                  type="button"
+                  onClick={() => {
+                    // 清空表单，开始新的八字计算
+                    setFormData({
+                      name: '',
+                      gender: '',
+                      birthDate: '',
+                      birthHour: '-1',
+                      birthCity: '',
+                    });
+                    setResult(null);
+                  }}
+                  className="px-6 py-2.5 bg-black text-white rounded hover:bg-gray-800 transition-colors whitespace-nowrap font-medium"
+                >
+                  新增八字
+                </button>
+              </div>
+            </div>
+          </Card>
+        )}
+
         {/* 输入表单 */}
         <Card className="mb-8">
           <form onSubmit={handleSubmit} className="space-y-6">
