@@ -1,4 +1,7 @@
 'use client';
+import { Footer } from '@/components/layout/Footer';
+import { Container } from '@/components/ui/Container';
+;
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
@@ -160,6 +163,7 @@ export default function ZiweiPage() {
           </div>
         )}
       </div>
-    </div>
+          <Footer />
+</div>
   );
 }

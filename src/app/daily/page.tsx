@@ -3,9 +3,15 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
+import { SegmentControl } from '@/components/ui/SegmentControl';
+import { Tag } from '@/components/ui/Tag';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Container } from '@/components/ui/Container';
+import { Footer } from '@/components/layout/Footer';
 import { saveBirthInfo, loadBirthInfo, clearBirthInfo } from '@/lib/utils/storage';
+import { Sun, Cloud, Droplets, Heart, Briefcase, Activity, Sparkles, ArrowRight, ChevronRight } from 'lucide-react';
+import Link from 'next/link';
 
 // 十二时辰选项
 const shichenOptions = [
@@ -46,25 +52,65 @@ interface DailyResult {
   advice: string;
 }
 
-// 星级显示组件
-function StarRating({ rating, max = 5 }: { rating: number; max?: number }) {
+// 环形进度组件
+function RingProgress({ score, size = 120 }: { score: number; size?: number }) {
+  const strokeDasharray = 2 * Math.PI * 45; // r=90, circumference for 90%
+  const offset = strokeDasharray - (score / 100) * strokeDasharray;
+  const getColor = (s: number) => {
+    if (s >= 80) return '#059669'; // green/wood
+    if (s >= 60) return '#D97706'; // orange/earth
+    if (s >= 40) return '#DC2626'; // red/fire
+    return '#6B7280'; // gray
+  };
+
   return (
-    <div className="flex gap-1 text-lg">
-      {Array.from({ length: max }).map((_, i) => (
-        <span key={i} className={i < rating ? 'text-amber-500' : 'text-gray-300'}>
-          {i < rating ? '★' : '☆'}
-        </span>
-      ))}
+    <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
+      <svg width={size} height={size} viewBox="0 0 100 100" className="-rotate-90">
+        <circle cx="50" cy="50" r="45" fill="none" stroke="#F3F4F6" strokeWidth="8" />
+        <circle
+          cx="50" cy="50" r="45" fill="none"
+          stroke={getColor(score)}
+          strokeWidth="8"
+          strokeLinecap="round"
+          strokeDasharray={strokeDasharray}
+          strokeDashoffset={offset}
+          style={{ transition: 'stroke-dashoffset 0.6s ease-out' }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className="text-[28px] font-semibold text-brand-black">{score}</span>
+      </div>
     </div>
   );
 }
 
+// 五维进度条
+function ProgressBar({ label, value, max = 100, color = 'bg-brand-black' }: { label: string; value: number; max?: number; color?: string }) {
+  const pct = Math.min(Math.round((value / max) * 100), 100);
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-sm text-brand-gray">{label}</span>
+        <span className="text-sm font-medium text-brand-black">{pct}%</span>
+      </div>
+      <div className="w-full h-2 rounded-full bg-gray-100 overflow-hidden">
+        <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  );
+}
+
+// 五行小卡片
+const wuxingItems = [
+  { key: 'wood', label: '木', icon: '🌿', variant: 'wood' as const, desc: '生长' },
+  { key: 'fire', label: '火', icon: '🔥', variant: 'fire' as const, desc: '热情' },
+  { key: 'earth', label: '土', icon: '⛰', variant: 'earth' as const, desc: '稳定' },
+  { key: 'metal', label: '金', icon: '⚙️', variant: 'metal' as const, desc: '坚毅' },
+  { key: 'water', label: '水', icon: '💧', variant: 'water' as const, desc: '智慧' },
+];
+
 export default function DailyPage() {
-  const [formData, setFormData] = useState({
-    birthDate: '',
-    birthHour: '',
-    gender: '',
-  });
+  const [formData, setFormData] = useState({ birthDate: '', birthHour: '', gender: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<DailyResult | null>(null);
@@ -79,15 +125,10 @@ export default function DailyPage() {
       const response = await fetch('/api/daily', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          birthDate,
-          birthHour: parseInt(birthHour),
-          targetDate,
-        }),
+        body: JSON.stringify({ birthDate, birthHour: parseInt(birthHour), targetDate }),
       });
-      if (!response.ok) throw new Error('获取运势失败，请稍后重试');
-      const data = await response.json();
-      setResult(data);
+      if (!response.ok) throw new Error('获取运势失败');
+      setResult(await response.json());
     } catch (err) {
       setError(err instanceof Error ? err.message : '未知错误');
     } finally {
@@ -96,15 +137,12 @@ export default function DailyPage() {
   };
 
   useEffect(() => {
-    const now = new Date();
-    const dateStr = now.toISOString().split('T')[0];
+    const dateStr = new Date().toISOString().split('T')[0];
     setToday(dateStr);
-
     const saved = loadBirthInfo();
     if (saved?.birthDate && saved?.birthHour) {
       setFormData({ birthDate: saved.birthDate, birthHour: saved.birthHour, gender: saved.gender || '' });
       setHasSavedData(true);
-      // 有保存数据时自动获取运势
       if (!autoSubmittedRef.current) {
         autoSubmittedRef.current = true;
         fetchFortune(saved.birthDate, saved.birthHour, dateStr);
@@ -123,36 +161,17 @@ export default function DailyPage() {
     e.preventDefault();
     setError('');
     setResult(null);
-
-    if (!formData.birthDate) {
-      setError('请选择出生日期');
-      return;
-    }
-    if (!formData.birthHour) {
-      setError('请选择出生时辰');
-      return;
-    }
-
+    if (!formData.birthDate) { setError('请选择出生日期'); return; }
+    if (!formData.birthHour) { setError('请选择出生时辰'); return; }
     setLoading(true);
-
     try {
       const response = await fetch('/api/daily', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          birthDate: formData.birthDate,
-          birthHour: parseInt(formData.birthHour),
-          targetDate: today,
-        }),
+        body: JSON.stringify({ birthDate: formData.birthDate, birthHour: parseInt(formData.birthHour), targetDate: today }),
       });
-
-      if (!response.ok) {
-        throw new Error('获取运势失败，请稍后重试');
-      }
-
-      const data = await response.json();
-      setResult(data);
-      // 保存到 localStorage
+      if (!response.ok) throw new Error('获取运势失败');
+      setResult(await response.json());
       saveBirthInfo(formData);
     } catch (err) {
       setError(err instanceof Error ? err.message : '未知错误');
@@ -161,217 +180,191 @@ export default function DailyPage() {
     }
   };
 
+  // 日期切换
+  const dateOptions = [
+    { value: '0', label: '昨天' },
+    { value: '1', label: '今天' },
+    { value: '2', label: '明天' },
+    { value: '3', label: '后天' },
+  ];
+  const [dayOffset, setDayOffset] = useState('1');
+
+  const handleDateChange = (offset: string) => {
+    setDayOffset(offset);
+    const d = new Date();
+    d.setDate(d.getDate() + parseInt(offset));
+    const dateStr = d.toISOString().split('T')[0];
+    if (formData.birthDate && formData.birthHour) {
+      fetchFortune(formData.birthDate, formData.birthHour, dateStr);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-background-alt py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        {/* 页面标题 */}
-        <div className="text-center mb-8">
-          <h1 className="font-heading text-3xl sm:text-4xl font-bold text-primary mb-2">
-            📅 每日运势
-          </h1>
-          <p className="text-secondary">
-            基于八字的个性化每日运势分析
-          </p>
-          {today && (
-            <p className="text-primary mt-2">
-              {today}
-            </p>
-          )}
+    <div className="min-h-screen bg-white">
+      {/* 页面标题 */}
+      <PageHeader title="每日运势" subtitle="基于八字的个性化每日运势分析" />
+
+      <Container>
+        {/* 日期切换器 */}
+        <div className="flex justify-center mb-8">
+          <SegmentControl options={dateOptions} value={dayOffset} onChange={handleDateChange} className="w-auto" />
         </div>
 
-        {/* 输入表单 */}
-        <Card className="mb-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="flex justify-between items-center">
-              <p className="text-muted text-sm">
-                {hasSavedData ? '已记住您的出生信息' : '输入您的出生信息，获取专属今日运势'}
-              </p>
-              {hasSavedData && (
-                <button
-                  type="button"
-                  onClick={clearSavedData}
-                  className="text-xs text-muted hover:text-primary transition-colors"
-                >
-                  重新输入
-                </button>
-              )}
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <Input
-                label="出生日期"
-                type="date"
-                value={formData.birthDate}
-                onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
-                required
-              />
-              <Select
-                label="出生时辰"
-                options={shichenOptions}
-                value={formData.birthHour}
-                onChange={(e) => setFormData({ ...formData, birthHour: e.target.value })}
-                required
-              />
-            </div>
+        {/* 输入表单（紧凑版） */}
+        {!hasSavedData && !result && (
+          <Card hover={false} className="max-w-[500px mx-auto mb-8">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <p className="text-sm text-brand-gray text-center mb-4">输入出生信息获取专属运势</p>
+              <Select label="出生日期" options={[
+                { value: '', label: '请选择' },
+                ...Array.from({ length: 31 }, (_, i) => ({ value: `${i + 1}`, label: `${i + 1}日` })),
+              ]} value={formData.birthDate} onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })} required />
+              <Select label="出生时辰" options={shichenOptions} value={formData.birthHour} onChange={(e) => setFormData({ ...formData, birthHour: e.target.value })} required />
+              {error && <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">{error}</div>}
+              <Button type="submit" variant="primary" loading={loading} className="w-full">查看今日运势</Button>
+            </form>
+          </Card>
+        )}
 
-            {error && (
-              <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
-                {error}
-              </div>
-            )}
-
-            <Button type="submit" className="w-full" size="lg" loading={loading}>
-              {loading ? '正在分析...' : '查看今日运势'}
-            </Button>
-          </form>
-        </Card>
-
-        {/* 结果展示 */}
-        {result && (
-          <div className="space-y-6 animate-fadeIn">
-            {/* 日期信息 */}
-            <Card variant="highlight">
-              <div className="text-center">
-                <div className="text-2xl font-heading text-primary mb-2">
-                  {result.date}
-                </div>
-                <div className="text-secondary">
-                  农历 {result.lunarDate} · {result.dayGanzhi}日
-                </div>
-              </div>
-            </Card>
-
-            {/* 综合运势 */}
-            <Card>
-              <h3 className="font-heading text-lg font-semibold text-primary mb-4">
-                🌟 综合运势
-              </h3>
-              <div className="flex items-center justify-center gap-4">
-                <StarRating rating={result.overall} />
-                <span className="text-2xl font-bold text-primary">
-                  {result.overall}/5
-                </span>
-              </div>
-            </Card>
-
-            {/* 各方面运势 */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <Card className="text-center">
-                <div className="text-2xl mb-2">💼</div>
-                <div className="text-sm text-muted mb-1">事业</div>
-                <StarRating rating={result.ratings.career} />
-              </Card>
-              <Card className="text-center">
-                <div className="text-2xl mb-2">💰</div>
-                <div className="text-sm text-muted mb-1">财运</div>
-                <StarRating rating={result.ratings.wealth} />
-              </Card>
-              <Card className="text-center">
-                <div className="text-2xl mb-2">❤️</div>
-                <div className="text-sm text-muted mb-1">感情</div>
-                <StarRating rating={result.ratings.love} />
-              </Card>
-              <Card className="text-center">
-                <div className="text-2xl mb-2">🏥</div>
-                <div className="text-sm text-muted mb-1">健康</div>
-                <StarRating rating={result.ratings.health} />
-              </Card>
-            </div>
-
-            {/* 宜忌 */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Card>
-                <h3 className="font-heading text-lg font-semibold text-green-400 mb-3">
-                  ✅ 宜
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {result.suitable.map((item, i) => (
-                    <span
-                      key={i}
-                      className="px-3 py-1 bg-green-500/10 border border-green-500/30 rounded-full text-sm text-green-400"
-                    >
-                      {item}
-                    </span>
-                  ))}
-                </div>
-              </Card>
-              <Card>
-                <h3 className="font-heading text-lg font-semibold text-red-400 mb-3">
-                  ❌ 忌
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {result.avoid.map((item, i) => (
-                    <span
-                      key={i}
-                      className="px-3 py-1 bg-red-500/10 border border-red-500/30 rounded-full text-sm text-red-400"
-                    >
-                      {item}
-                    </span>
-                  ))}
-                </div>
-              </Card>
-            </div>
-
-            {/* 幸运信息 */}
-            <Card>
-              <h3 className="font-heading text-lg font-semibold text-primary mb-4">
-                🍀 今日幸运
-              </h3>
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <div className="text-muted text-sm mb-1">幸运色</div>
-                  <div className="text-lg font-semibold text-primary">
-                    {result.lucky.color}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-muted text-sm mb-1">幸运数字</div>
-                  <div className="text-lg font-semibold text-primary">
-                    {result.lucky.numbers.join(', ')}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-muted text-sm mb-1">幸运方位</div>
-                  <div className="text-lg font-semibold text-primary">
-                    {result.lucky.direction}
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            {/* 建议 */}
-            <Card>
-              <h3 className="font-heading text-lg font-semibold text-primary mb-4">
-                💡 今日建议
-              </h3>
-              <p className="text-secondary leading-relaxed">
-                {result.advice}
-              </p>
-            </Card>
-
-            {/* 免责声明 */}
-            <div className="text-center text-xs text-muted p-4 bg-cyber-card/50 rounded-lg">
-              ⚠️ 免责声明：运势分析仅供娱乐参考，不构成任何决策建议。
-              命运掌握在自己手中，请理性对待。
-            </div>
+        {/* 已保存数据提示 */}
+        {hasSavedData && !result && !loading && (
+          <div className="text-center mb-8 py-4">
+            <p className="text-sm text-brand-gray">已记住您的出生信息，正在加载运势...</p>
+            <button onClick={clearSavedData} className="text-xs text-brand-light hover:text-brand-black mt-2 underline">重新输入</button>
           </div>
         )}
 
-        {/* 使用说明 */}
-        {!result && (
-          <Card variant="default" className="mt-8">
-            <h3 className="font-heading text-lg font-semibold text-primary mb-4">
-              📖 使用说明
-            </h3>
-            <ul className="space-y-2 text-sm text-secondary">
-              <li>• 每日运势基于您的八字日主与当日干支的关系分析</li>
-              <li>• 需要输入出生日期和时辰，以计算您的日主</li>
-              <li>• 运势每日更新，建议每天早上查看</li>
-              <li>• 仅供参考，请以实际情况为准</li>
-            </ul>
+        {/* 加载中 */}
+        {loading && (
+          <Card hover={false} className="max-w-[500px mx-auto flex flex-col items-center py-12">
+            <Sparkles className="w-8 h-8 animate-spin text-brand-light" />
+            <p className="mt-4 text-brand-black font-medium">正在推算今日运势...</p>
           </Card>
         )}
-      </div>
+
+        {/* ===== 结果展示 ===== */}
+        {result && !loading && (
+          <div className="space-y-6 pb-20 md:pb-26 animate-fadeIn">
+            {/* 运势概览大卡片 */}
+            <Card hover={false}>
+              <div className="flex flex-col sm:flex-row items-center gap-8">
+                {/* 左：环形图 + 分数 */}
+                <div className="flex-shrink-0">
+                  <RingProgress score={Math.round((result.overall / 5) * 100)} size={130} />
+                </div>
+                {/* 右：信息 */}
+                <div className="flex-1 text-center sm:text-left">
+                  <h3 className="text-h3 font-semibold text-brand-black mb-1">综合运势</h3>
+                  <p className="text-2xl font-bold text-brand-black mt-1">{result.overall}/5 分</p>
+                  <div className="mt-3 space-y-1 text-sm text-brand-gray">
+                    <p>公历：{result.date}</p>
+                    <p>农历：{result.lunarDate} · {result.dayGanzhi}日</p>
+                  </div>
+                  <div className="mt-3 inline-block px-3 py-1.5 rounded-full text-sm font-medium bg-brand-bg">
+                    今日总评：<span className="text-brand-black font-medium">{result.overall >= 4 ? '吉' : result.overall >= 3 ? '平' : '待调整'}</span>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {/* 五行小卡片 */}
+            <div className="flex gap-3 overflow-x-auto pb-2">
+              {wuxingItems.map((item) => (
+                <div key={item.key} className="flex-shrink-0 bg-brand-bg rounded-xl p-4 min-w-[100px] text-center">
+                  <span className="text-xl">{item.icon}</span>
+                  <span className="block text-xs font-medium text-brand-black mt-1">{item.label}</span>
+                  <span className="block text-[10px] text-brand-light">{item.desc}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* 宜忌 Tag 行 */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Card hover={false}>
+                <h4 className="text-sm font-medium text-brand-black mb-3 flex items-center gap-1.5">
+                  <span className="text-green-500">宜</span> 做
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {result.suitable.map((item, i) => (
+                    <Tag key={i} variant="wood">{item}</Tag>
+                  ))}
+                </div>
+              </Card>
+              <Card hover={false}>
+                <h4 className="text-sm font-medium text-brand-black mb-3 flex items-center gap-1.5">
+                  <span className="text-red-500">忌</span> 做
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {result.avoid.map((item, i) => (
+                    <Tag key={i} variant="fire">{item}</Tag>
+                  ))}
+                </div>
+              </Card>
+            </div>
+
+            {/* 幸运指南 */}
+            <Card hover={false}>
+              <h4 className="text-sm font-medium text-brand-black mb-4">🍀 幸运指南</h4>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div>
+                  <p className="text-xs text-brand-light mb-1">幸运颜色</p>
+                  <p className="text-sm font-medium text-brand-black">{result.lucky.color}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-brand-light mb-1">幸运数字</p>
+                  <p className="text-sm font-medium text-brand-black">{result.lucky.numbers.join(', ')}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-brand-light mb-1">幸运方位</p>
+                  <p className="text-sm font-medium text-brand-black">{result.lucky.direction}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-brand-light mb-1">贵人星座</p>
+                  <p className="text-sm font-medium text-brand-black">-</p>
+                </div>
+              </div>
+            </Card>
+
+            {/* 五维运势进度条 */}
+            <Card hover={false}>
+              <h4 className="text-sm font-medium text-brand-black mb-4">📊 五维运势</h4>
+              <div className="space-y-4">
+                <ProgressBar label="事业运" value={result.ratings.career * 20} color="bg-element-fire-text" />
+                <ProgressBar label="财富运" value={result.ratings.wealth * 20} color="bg-element-metal-text" />
+                <ProgressBar label="感情运" value={result.ratings.love * 20} color="bg-element-earth-text" />
+                <ProgressBar label="健康运" value={result.ratings.health * 20} color="bg-element-water-text" />
+              </div>
+            </Card>
+
+            {/* AI 今日建议 */}
+            <Card hover={false} className="bg-yellow-50 border-yellow-200">
+              <h4 className="text-sm font-medium text-yellow-700 mb-2 flex items-center gap-1.5">
+                💡 AI 今日建议
+              </h4>
+              <p className="text-sm leading-relaxed text-gray-700">{result.advice}</p>
+            </Card>
+
+            {/* 引导到八字分析 */}
+            <Card hover={false} className="text-center py-5">
+              <p className="text-sm text-brand-gray mb-2">想深入了解自己的命盘？</p>
+              <Link href="/bazi">
+                <Button variant="secondary" size="sm">
+                  八字全面分析 <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                </Button>
+              </Link>
+            </Card>
+
+            {/* 免责声明 */}
+            <div className="text-center text-xs text-brand-light py-3 bg-brand-bg rounded-lg">
+              ⚠️ 免责声明：运势分析仅供娱乐参考，不构成任何决策建议。请理性对待。
+            </div>
+          </div>
+        )}
+      </Container>
+
+      <Footer />
+
+      <div className="hidden" data-version="20260402-v2"></div>
     </div>
   );
 }

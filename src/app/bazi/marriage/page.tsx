@@ -1,4 +1,7 @@
 'use client';
+import { Footer } from '@/components/layout/Footer';
+import { Container } from '@/components/ui/Container';
+;
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
@@ -69,7 +72,7 @@ export default function MarriagePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background-alt py-8 px-4">
+    <div className="min-h-screen bg-white py-8 px-4">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-2">
@@ -300,6 +303,7 @@ export default function MarriagePage() {
           </div>
         )}
       </div>
-    </div>
+          <Footer />
+</div>
   );
 }

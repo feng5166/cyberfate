@@ -1,4 +1,7 @@
 'use client';
+import { Footer } from '@/components/layout/Footer';
+import { Container } from '@/components/ui/Container';
+;
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
@@ -38,7 +41,7 @@ export default function HuangliPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background-alt py-8 px-4">
+    <div className="min-h-screen bg-white">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-2">
@@ -111,6 +114,7 @@ export default function HuangliPage() {
           </div>
         )}
       </div>
-    </div>
+          <Footer />
+</div>
   );
 }

@@ -1,6 +1,8 @@
+import { Footer } from '@/components/layout/Footer';
+import { Container } from '@/components/ui/Container';
 export default function RefundPage() {
   return (
-    <div className="bg-background min-h-screen px-4 py-16">
+    <div className="bg-white min-h-screen px-4 py-16">
       <div className="max-w-4xl mx-auto">
         <h1 className="font-heading text-3xl sm:text-4xl font-bold text-primary mb-4">
           退款政策
@@ -136,7 +138,8 @@ export default function RefundPage() {
           </div>
         </div>
       </div>
-    </div>
+          <Footer />
+</div>
   );
 }
 

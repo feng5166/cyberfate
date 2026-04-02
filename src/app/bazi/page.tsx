@@ -3,18 +3,19 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { saveBirthInfo, loadBirthInfo } from '@/lib/utils/storage';
-
-// export const metadata = { title: '八字分析' }; // 客户端组件不能导出 metadata
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Input } from '@/components/ui/Input';
+import { SegmentControl } from '@/components/ui/SegmentControl';
 import { Select } from '@/components/ui/Select';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { BaguaSpinner } from '@/components/ui/BaguaSpinner';
 import { BaziChart } from '@/components/bazi/BaziChart';
 import { WuxingChart } from '@/components/bazi/WuxingChart';
 import { QuotaLimitModal } from '@/components/QuotaLimitModal';
-import { Sparkles } from 'lucide-react';
+import { Tag } from '@/components/ui/Tag';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Container } from '@/components/ui/Container';
+import { Sparkles, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
 // 十二时辰选项
@@ -33,12 +34,6 @@ const shichenOptions = [
   { value: '10', label: '戌时 (19:00-20:59)' },
   { value: '11', label: '亥时 (21:00-22:59)' },
   { value: '-1', label: '不知道（默认午时）' },
-];
-
-const genderOptions = [
-  { value: '', label: '请选择性别' },
-  { value: 'male', label: '男' },
-  { value: 'female', label: '女' },
 ];
 
 interface BaziResult {
@@ -69,10 +64,8 @@ export default function BaziPage() {
   const [loading, setLoading] = useState(false);
   const [showQuotaModal, setShowQuotaModal] = useState(false);
 
-  // 从数据库或 localStorage 恢复已保存的信息
   useEffect(() => {
     async function loadUserBirthInfo() {
-      // 登录用户：优先从数据库读取
       if (status === 'authenticated') {
         try {
           const res = await fetch('/api/user/birth-info');
@@ -90,10 +83,9 @@ export default function BaziPage() {
             }
           }
         } catch (e) {
-          console.error('Failed to load birth info from server:', e);
+          console.error('Failed to load birth info:', e);
         }
       }
-      // 未登录或数据库没有：从 localStorage 读取
       const saved = loadBirthInfo();
       if (saved) {
         setFormData(prev => ({
@@ -104,10 +96,9 @@ export default function BaziPage() {
         }));
       }
     }
-    if (status !== 'loading') {
-      loadUserBirthInfo();
-    }
+    if (status !== 'loading') loadUserBirthInfo();
   }, [status]);
+
   const [error, setError] = useState('');
   const [result, setResult] = useState<BaziResult | null>(null);
 
@@ -116,41 +107,20 @@ export default function BaziPage() {
     setError('');
     setResult(null);
 
-    // 验证
-    if (!formData.birthDate) {
-      setError('请选择出生日期');
-      return;
-    }
-    if (!formData.birthHour) {
-      setError('请选择出生时辰');
-      return;
-    }
+    if (!formData.birthDate) { setError('请选择出生日期'); return; }
+    if (!formData.birthHour) { setError('请选择出生时辰'); return; }
 
     setLoading(true);
+    saveBirthInfo({ birthDate: formData.birthDate, birthHour: formData.birthHour, gender: formData.gender });
 
-    // 保存到 localStorage
-    saveBirthInfo({
-      birthDate: formData.birthDate,
-      birthHour: formData.birthHour,
-      gender: formData.gender,
-    });
-
-    // 登录用户：同时保存到数据库
     if (status === 'authenticated') {
       try {
         await fetch('/api/user/birth-info', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: formData.name,
-            birthDate: formData.birthDate,
-            birthHour: formData.birthHour,
-            gender: formData.gender,
-          }),
+          body: JSON.stringify({ name: formData.name, birthDate: formData.birthDate, birthHour: formData.birthHour, gender: formData.gender }),
         });
-      } catch (e) {
-        console.error('Failed to save birth info to server:', e);
-      }
+      } catch (e) { console.error('Failed to save:', e); }
     }
 
     try {
@@ -158,27 +128,16 @@ export default function BaziPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: formData.name || '缘主',
-          gender: formData.gender || 'unknown',
-          birthDate: formData.birthDate,
-          birthHour: parseInt(formData.birthHour),
+          name: formData.name || '缘主', gender: formData.gender || 'unknown',
+          birthDate: formData.birthDate, birthHour: parseInt(formData.birthHour),
         }),
       });
-
       const data = await response.json();
-      
       if (!response.ok) {
-        if (response.status === 401) {
-          window.location.href = '/auth/login?redirect=/bazi';
-          return;
-        }
-        if (data.error === 'QUOTA_EXCEEDED') {
-          setShowQuotaModal(true);
-          return;
-        }
+        if (response.status === 401) { window.location.href = '/auth/login?redirect=/bazi'; return; }
+        if (data.error === 'QUOTA_EXCEEDED') { setShowQuotaModal(true); return; }
         throw new Error(data.error || '服务器错误，请稍后重试');
       }
-
       setResult(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : '未知错误');
@@ -187,358 +146,143 @@ export default function BaziPage() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-background-alt py-8 px-4">
-      {showQuotaModal && <QuotaLimitModal onClose={() => setShowQuotaModal(false)} />}
-      <div className="max-w-4xl mx-auto">
-        {/* 页面标题 */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <Sparkles className="w-8 h-8" />
-            <h1 className="font-heading text-3xl sm:text-4xl font-bold text-primary">
-              八字分析
-            </h1>
-          </div>
-          <p className="text-secondary">
-            输入出生信息，AI 为你解读命理
-          </p>
-        </div>
+  // 统一 input 样式
+  const inputClass = "w-full h-12 rounded-lg border border-gray-300 px-4 text-sm text-brand-black placeholder:text-brand-light focus:border-brand-black focus:ring-2 focus:ring-brand-black/5 outline-none transition-all";
 
-        {/* 输入表单 */}
-        <Card className="mb-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-secondary">
-                  姓名 <span className="text-muted text-xs">（选填）</span>
-                </label>
+  return (
+    <div className="min-h-screen bg-white">
+      {/* 页面标题 */}
+      <PageHeader
+        title="八字分析"
+        subtitle="输入您的出生信息，AI 将为您解读命盘"
+      />
+
+      {/* 主体：左右分栏 */}
+      <Container>
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 pb-20 md:pb-26">
+          {/* ===== 左侧：输入表单 ===== */}
+          <Card variant="form" hover={false} className="flex-shrink-0 w-full lg:w-auto lg:max-w-[440px]">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* 区块标题 */}
+              <h2 className="text-base font-medium text-brand-black mb-2">📋 出生信息</h2>
+
+              {/* 姓名 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">姓名</label>
                 <input
-                  type="text"
-                  placeholder="输入您的姓名"
-                  value={formData.name}
+                  type="text" placeholder="输入您的姓名" value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-3 rounded bg-white border border-border text-primary placeholder:text-muted focus:outline-none focus:border-primary transition-colors"
+                  className={inputClass}
                 />
               </div>
-              
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-secondary">
-                  性别 <span className="text-red-400 text-xs">*</span>
-                </label>
-                <select
-                  value={formData.gender}
-                  onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                  className="w-full px-4 py-3 rounded bg-white border border-border text-primary focus:outline-none focus:border-primary transition-colors"
-                >
-                  {genderOptions.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {/* 性别 - 用 SegmentControl */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">性别</label>
+                <SegmentControl
+                  options={[{ value: 'male', label: '男' }, { value: 'female', label: '女' }]}
+                  value={formData.gender}
+                  onChange={(v) => setFormData({ ...formData, gender: v })}
+                />
+              </div>
+
+              {/* 出生日期 */}
               <DatePicker
                 label="出生日期"
                 value={formData.birthDate}
                 onChange={(value) => setFormData({ ...formData, birthDate: value })}
               />
 
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-secondary">
-                  出生时辰 <span className="text-red-400 text-xs">*</span>
-                </label>
+              {/* 出生时辰 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">出生时辰</label>
                 <Select
-                  label=""
                   options={shichenOptions}
                   value={formData.birthHour}
                   onChange={(e) => setFormData({ ...formData, birthHour: e.target.value })}
-                  required
                 />
               </div>
-            </div>
 
-            {error && (
-              <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
-                {error}
-              </div>
+              {/* 错误提示 */}
+              {error && (
+                <div className="p-3.5 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+                  {error}
+                </div>
+              )}
+
+              {/* 提交按钮 */}
+              <Button type="submit" variant="primary" loading={loading} className="w-full h-[50px] text-base font-medium mt-2">
+                {loading ? '正在计算...' : '开始分析'}
+              </Button>
+            </form>
+          </Card>
+
+          {/* ===== 右侧：结果展示区 ===== */}
+          <div className="flex-1 min-w-0">
+            {/* 加载中 */}
+            {loading && (
+              <Card hover={false} className="flex flex-col items-center justify-center py-16">
+                <BaguaSpinner size={64} />
+                <p className="mt-4 text-brand-black font-medium">正在计算您的命盘...</p>
+                <p className="text-sm text-brand-light mt-2">AI 正在解读中，请稍候</p>
+              </Card>
             )}
 
-            <Button type="submit" className="w-full" size="lg" loading={loading}>
-              {loading ? '正在计算...' : '开始测算'}
-            </Button>
-          </form>
-        </Card>
+            {/* 空状态（未分析时）*/}
+            {!result && !loading && (
+              <Card hover={false} className="flex flex-col items-center justify-center py-20 text-center">
+                <div className="w-16 h-16 rounded-full bg-brand-bg flex items-center justify-center mb-4">
+                  <Sparkles className="w-8 h-8 text-brand-light" />
+                </div>
+                <p className="text-brand-black font-medium text-lg">填写信息后点击开始分析</p>
+                <p className="text-sm text-brand-light mt-2">AI 将为您生成专属命盘解读</p>
+              </Card>
+            )}
 
-        {/* 加载中状态 */}
-        {loading && (
-          <Card className="mb-8">
-            <div className="flex flex-col items-center justify-center py-12">
-              <BaguaSpinner size={64} />
-              <p className="mt-4 text-primary">正在计算您的命盘...</p>
-              <p className="text-sm text-muted mt-2">AI 正在解读中，请稍候</p>
-            </div>
-          </Card>
-        )}
+            {/* 分析结果 */}
+            {result && !loading && (
+              <div className="space-y-8 animate-fadeIn">
+                {/* 四柱命盘 */}
+                <BaziChart pillars={result.pillars} />
 
-        {/* 结果展示 */}
-        {result && !loading && (
-          <div className="space-y-6 animate-fadeIn">
-            {/* 四柱命盘 */}
-            <BaziChart pillars={result.pillars} />
+                {/* 五行分布 */}
+                <WuxingChart wuxing={result.wuxing} />
 
-            {/* 五行分布 */}
-            <WuxingChart wuxing={result.wuxing} />
+                {/* AI 解读 */}
+                <Card hover={false}>
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="inline-block bg-yellow-50 text-yellow-700 text-xs px-2 py-0.5 rounded font-medium">
+                      🤖 AI 分析·解读
+                    </span>
+                  </div>
+                  <div className="text-base leading-relaxed text-gray-800 whitespace-pre-wrap">
+                    {result.aiAnalysis}
+                  </div>
+                </Card>
 
-            {/* AI 解读 */}
-            <Card>
-              <h3 className="font-heading text-lg font-semibold text-primary mb-4">
-                🤖 AI 命理解读
-              </h3>
-              <div className="prose prose-invert prose-sm max-w-none">
-                <div className="text-secondary whitespace-pre-wrap leading-relaxed">
-                  {result.aiAnalysis}
+                {/* 引导到每日运势 */}
+                <Card hover={false} className="text-center py-6">
+                  <p className="text-brand-gray mb-3 text-sm">想了解今天的运势？</p>
+                  <Link href="/daily">
+                    <Button variant="secondary" size="sm">
+                      📅 查看每日运势
+                      <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+                    </Button>
+                  </Link>
+                </Card>
+
+                {/* 免责声明 */}
+                <div className="text-center text-xs text-brand-light p-3 bg-brand-bg rounded-lg">
+                  ⚠️ 免责声明：本站所有命理分析仅供娱乐参考，不构成任何决策建议。命运掌握在自己手中，请理性对待。
                 </div>
               </div>
-            </Card>
-
-            {/* 引导到每日运势 */}
-            <Card className="text-center">
-              <p className="text-secondary mb-4">想了解今天的运势？</p>
-              <Link href="/daily">
-                <Button variant="secondary">
-                  📅 查看每日运势
-                </Button>
-              </Link>
-            </Card>
-
-            {/* 免责声明 */}
-            <div className="text-center text-xs text-muted p-4 bg-cyber-card/50 rounded-lg">
-              ⚠️ 免责声明：本站所有命理分析仅供娱乐参考，不构成任何决策建议。
-              命运掌握在自己手中，请理性对待。
-            </div>
+            )}
           </div>
-        )}
+        </div>
+      </Container>
 
-        {/* 使用说明 */}
-        {!result && (
-          <>
-            {/* 产品介绍板块 */}
-            <div className="space-y-8 mt-12">
-              {/* 板块 1：AI 智能八字解析系统 */}
-              <Card>
-                <h3 className="font-heading text-xl font-semibold text-primary mb-6 text-center">
-                  🤖 AI 智能八字解析系统
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                  <div className="text-center">
-                    <div className="text-3xl mb-2">🎯</div>
-                    <h4 className="font-semibold text-primary mb-2">精准命盘</h4>
-                    <p className="text-sm text-secondary">真太阳时修正，精确计算四柱八字</p>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-3xl mb-2">🧠</div>
-                    <h4 className="font-semibold text-primary mb-2">AI 解读</h4>
-                    <p className="text-sm text-secondary">结合传统命理与现代 AI 技术</p>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-3xl mb-2">⚖️</div>
-                    <h4 className="font-semibold text-primary mb-2">科学客观</h4>
-                    <p className="text-sm text-secondary">理性分析，不夸大不迷信</p>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-3xl mb-2">📊</div>
-                    <h4 className="font-semibold text-primary mb-2">全方位分析</h4>
-                    <p className="text-sm text-secondary">性格、事业、财运、健康多维度</p>
-                  </div>
-                </div>
-              </Card>
-
-              {/* 板块 2：全方位命理解析 */}
-              <Card>
-                <h3 className="font-heading text-xl font-semibold text-primary mb-6 text-center">
-                  🌟 全方位命理解析
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="flex gap-4">
-                    <div className="text-2xl">💎</div>
-                    <div>
-                      <h4 className="font-semibold text-primary mb-1">性格洞察</h4>
-                      <p className="text-sm text-secondary">深度解读性格特质、优势与盲区</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-4">
-                    <div className="text-2xl">💼</div>
-                    <div>
-                      <h4 className="font-semibold text-primary mb-1">事业方向</h4>
-                      <p className="text-sm text-secondary">适合的职业领域与发展建议</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-4">
-                    <div className="text-2xl">💰</div>
-                    <div>
-                      <h4 className="font-semibold text-primary mb-1">财运特征</h4>
-                      <p className="text-sm text-secondary">财富倾向与理财策略分析</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-4">
-                    <div className="text-2xl">🏥</div>
-                    <div>
-                      <h4 className="font-semibold text-primary mb-1">健康运势</h4>
-                      <p className="text-sm text-secondary">体质特点与养生保健建议</p>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-
-              {/* 板块 3：使用指南 */}
-              <Card>
-                <h3 className="font-heading text-xl font-semibold text-primary mb-6 text-center">
-                  📖 使用指南
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold">1</div>
-                    <div>
-                      <h4 className="font-semibold text-primary mb-1">填写出生信息</h4>
-                      <p className="text-sm text-secondary">输入出生日期、时辰和地点</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold">2</div>
-                    <div>
-                      <h4 className="font-semibold text-primary mb-1">选择性别</h4>
-                      <p className="text-sm text-secondary">性别影响命理解读角度</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold">3</div>
-                    <div>
-                      <h4 className="font-semibold text-primary mb-1">确认历法</h4>
-                      <p className="text-sm text-secondary">阳历或农历，系统自动转换</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold">4</div>
-                    <div>
-                      <h4 className="font-semibold text-primary mb-1">获取分析报告</h4>
-                      <p className="text-sm text-secondary">AI 为您生成详细解读</p>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-
-              {/* 板块 4：常见问题 FAQ */}
-              <Card>
-                <h3 className="font-heading text-xl font-semibold text-primary mb-6 text-center">
-                  ❓ 常见问题
-                </h3>
-                <div className="space-y-4">
-                  <details className="group" open>
-                    <summary className="cursor-pointer font-semibold text-primary flex items-center justify-between p-3 hover:bg-gray-50 rounded transition-colors">
-                      八字分析准确吗？
-                      <span className="text-muted">▼</span>
-                    </summary>
-                    <p className="text-sm text-secondary mt-2 px-3 pb-3">
-                      八字分析基于传统命理学体系，结合 AI 技术提供参考。准确度取决于出生信息的精确程度。建议将其作为了解自己的一种方式，而非绝对预测。
-                    </p>
-                  </details>
-                  <details className="group" open>
-                    <summary className="cursor-pointer font-semibold text-primary flex items-center justify-between p-3 hover:bg-gray-50 rounded transition-colors">
-                      不知道准确出生时间怎么办？
-                      <span className="text-muted">▼</span>
-                    </summary>
-                    <p className="text-sm text-secondary mt-2 px-3 pb-3">
-                      可以选择"不知道（默认午时）"选项，系统将使用中午时辰进行分析。或者咨询父母、查看出生证明。时辰准确度会影响分析精度。
-                    </p>
-                  </details>
-                  <details className="group" open>
-                    <summary className="cursor-pointer font-semibold text-primary flex items-center justify-between p-3 hover:bg-gray-50 rounded transition-colors">
-                      八字和西方星座有什么区别？
-                      <span className="text-muted">▼</span>
-                    </summary>
-                    <p className="text-sm text-secondary mt-2 px-3 pb-3">
-                      八字基于出生年月日时的天干地支，考虑五行生克关系；星座基于太阳所在黄道位置，只看出生月份。八字信息更详细，理论体系更复杂。
-                    </p>
-                  </details>
-                  <details className="group" open>
-                    <summary className="cursor-pointer font-semibold text-primary flex items-center justify-between p-3 hover:bg-gray-50 rounded transition-colors">
-                      多久查看一次八字分析？
-                      <span className="text-muted">▼</span>
-                    </summary>
-                    <p className="text-sm text-secondary mt-2 px-3 pb-3">
-                      八字命盘是固定的，无需频繁查看。建议在人生重要节点（求职、婚恋、创业等）参考，配合每日运势了解短期运程。
-                    </p>
-                  </details>
-                  <details className="group" open>
-                    <summary className="cursor-pointer font-semibold text-primary flex items-center justify-between p-3 hover:bg-gray-50 rounded transition-colors">
-                      八字能帮助做重要决定吗？
-                      <span className="text-muted">▼</span>
-                    </summary>
-                    <p className="text-sm text-secondary mt-2 px-3 pb-3">
-                      八字分析可以作为参考维度之一，但不应作为唯一决策依据。重要决策需要结合实际情况、专业建议和个人判断综合考虑。
-                    </p>
-                  </details>
-                </div>
-              </Card>
-
-              {/* 功能矩阵 */}
-              <Card>
-                <h3 className="font-heading text-xl font-semibold text-primary mb-6 text-center">
-                  🎯 更多命理功能
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <Link href="/bazi/marriage" className="flex flex-col items-center p-4 rounded hover:bg-gray-50 transition-colors group">
-                    <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">💑</div>
-                    <h4 className="font-semibold text-primary mb-1">八字合婚</h4>
-                    <p className="text-xs text-secondary text-center">分析婚配契合度</p>
-                  </Link>
-                  <Link href="/daily" className="flex flex-col items-center p-4 rounded hover:bg-gray-50 transition-colors group">
-                    <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">📅</div>
-                    <h4 className="font-semibold text-primary mb-1">每日运势</h4>
-                    <p className="text-xs text-secondary text-center">查看今天的运程</p>
-                  </Link>
-                  <Link href="/ziwei" className="flex flex-col items-center p-4 rounded hover:bg-gray-50 transition-colors group">
-                    <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">🌟</div>
-                    <h4 className="font-semibold text-primary mb-1">紫微排盘</h4>
-                    <p className="text-xs text-secondary text-center">紫微斗数命盘</p>
-                  </Link>
-                  <Link href="/meihua" className="flex flex-col items-center p-4 rounded hover:bg-gray-50 transition-colors group">
-                    <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">🌸</div>
-                    <h4 className="font-semibold text-primary mb-1">梅花易数</h4>
-                    <p className="text-xs text-secondary text-center">周易占卜吉凶</p>
-                  </Link>
-                  <Link href="/tarot" className="flex flex-col items-center p-4 rounded hover:bg-gray-50 transition-colors group">
-                    <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">🃏</div>
-                    <h4 className="font-semibold text-primary mb-1">塔罗占卜</h4>
-                    <p className="text-xs text-secondary text-center">塔罗牌抽牌解读</p>
-                  </Link>
-                  <Link href="/huangli" className="flex flex-col items-center p-4 rounded hover:bg-gray-50 transition-colors group">
-                    <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">📜</div>
-                    <h4 className="font-semibold text-primary mb-1">AI 黄历</h4>
-                    <p className="text-xs text-secondary text-center">每日宜忌查询</p>
-                  </Link>
-                </div>
-              </Card>
-            </div>
-
-            {/* 原有的使用说明（保留） */}
-            <Card variant="default" className="mt-8">
-              <h3 className="font-heading text-lg font-semibold text-primary mb-4">
-                📖 使用说明
-              </h3>
-              <ul className="space-y-2 text-sm text-secondary">
-                <li>• 请输入公历（阳历）出生日期</li>
-                <li>• 时辰越准确，分析结果越精确</li>
-                <li>• 如不知道时辰，系统将使用午时（12:00）进行计算</li>
-                <li>• 姓名和性别为选填项，用于个性化解读</li>
-              </ul>
-            </Card>
-          </>
-        )}
-      </div>
-      {/* 版本标记 - 强制刷新缓存 */}
-      <div className="hidden" data-version="20260310-1242"></div>
+      {/* 版本标记 */}
+      <div className="hidden" data-version="20260402-v2"></div>
     </div>
   );
 }
