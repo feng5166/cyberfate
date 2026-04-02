@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { ChevronDown, Menu, X } from 'lucide-react';
 
@@ -32,9 +33,11 @@ export function Header({ onMobileMenuToggle, showMobileMenu = false }: NavbarPro
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { data: session, status } = useSession();
+  const pathname = usePathname();
+  const isHomePage = pathname === '/';
 
   return (
-    <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-brand-border-light">
+    <header className={`sticky top-0 z-50 ${isHomePage ? 'bg-transparent border-transparent' : 'bg-white/90 backdrop-blur-md border-b border-brand-border-light'}`}>
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-20">
         <div className="flex items-center justify-between h-16 md:h-18">
           {/* 左侧：移动端汉堡 + Logo */}

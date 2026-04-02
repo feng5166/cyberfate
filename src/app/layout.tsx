@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Noto_Serif_SC } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { SessionProvider } from "@/components/providers/SessionProvider";
 import { LayoutWrapper } from "@/components/layout/LayoutWrapper";

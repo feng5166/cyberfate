@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Container } from '@/components/ui/Container';
-import { Footer } from '@/components/layout/Footer';
 import {
   BarChart3, Star, Sparkles, Layers, Calendar,
   BookHeart, Sun, ArrowRight
@@ -132,9 +131,6 @@ export default function HomePage() {
           </div>
         </Container>
       </section>
-
-      {/* ===== Footer ===== */}
-      <Footer />
     </div>
   );
 }
