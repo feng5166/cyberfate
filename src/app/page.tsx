@@ -240,7 +240,7 @@ export default function HomePage() {
       {/* ===== CTA Section ===== */}
       <section className="px-4 pb-24">
         <Container>
-          <Card className="bg-brand-black text-white text-center py-16 px-10" hover={false}>
+          <div className="bg-[#1C1A16] text-white text-center py-16 px-10 rounded-2xl">
             <h2 className="font-display text-3xl md:text-4xl tracking-wide">
               AI 分析个人特质，洞察发展潜力
             </h2>
@@ -249,12 +249,12 @@ export default function HomePage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mt-10">
               <Link href="/bazi">
-                <Button variant="primary" className="bg-white text-brand-black hover:bg-white/90">
+                <Button variant="primary" className="bg-white text-[#1C1A16] hover:bg-white/90 !important">
                   免费开始
                 </Button>
               </Link>
               <Link href="/pricing">
-                <Button variant="secondary" className="border-white text-white hover:bg-white/10">
+                <Button variant="secondary" className="border-white text-white hover:bg-white/10 !important">
                   查看定价
                 </Button>
               </Link>
@@ -262,7 +262,7 @@ export default function HomePage() {
             <p className="text-sm text-white/60 mt-6">
               免费使用 · 无需注册 · 即刻体验
             </p>
-          </Card>
+          </div>
         </Container>
       </section>
     </div>
