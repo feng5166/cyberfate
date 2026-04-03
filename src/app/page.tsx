@@ -240,27 +240,27 @@ export default function HomePage() {
       {/* ===== CTA Section ===== */}
       <section className="px-4 pb-24">
         <Container>
-          <div className="bg-[#1C1A16] text-white text-center py-16 px-10 rounded-2xl">
-            <h2 className="font-display text-3xl md:text-4xl tracking-wide">
+          <div className="text-center py-16 px-10">
+            <h2 className="font-display text-3xl md:text-4xl tracking-wide text-[#1C1A16]">
               AI 分析个人特质，洞察发展潜力
             </h2>
-            <p className="text-base md:text-lg text-white/80 mt-4 max-w-2xl mx-auto">
-              融合传统命理与现代 AI 技术，为你提供科学、理性的命理分析参考
+            <p className="text-base md:text-lg text-[rgba(28,26,22,0.6)] mt-4 max-w-2xl mx-auto leading-relaxed">
+              运用AI技术分析性格优势，为您的生涯规划提供科学参考
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mt-10">
               <Link href="/bazi">
-                <button className="px-12 py-[14px] text-base tracking-[0.08em] bg-white text-[#1C1A16] rounded-lg hover:bg-white/90 transition-colors font-medium">
-                  免费开始
+                <button className="px-12 py-[14px] text-[13px] tracking-[0.08em] bg-[#1C1A16] text-white rounded-lg hover:bg-[#333] transition-colors font-medium">
+                  开始探索 ▸
                 </button>
               </Link>
               <Link href="/pricing">
-                <button className="px-12 py-[14px] text-base tracking-[0.08em] border border-white/50 text-white rounded-lg hover:bg-white/10 transition-colors">
-                  查看定价
+                <button className="px-12 py-[14px] text-[13px] tracking-[0.08em] border border-[rgba(28,26,22,0.2)] text-[#1C1A16] rounded-lg hover:border-[#1C1A16] transition-colors">
+                  了解更多 ▸
                 </button>
               </Link>
             </div>
-            <p className="text-sm text-white/60 mt-6">
-              免费使用 · 无需注册 · 即刻体验
+            <p className="text-[12px] text-[rgba(28,26,22,0.35)] tracking-[0.05em] mt-6">
+              <span>⚡</span> 免费使用 <span>·</span> 无需注册 <span>·</span> 即刻体验
             </p>
           </div>
         </Container>
