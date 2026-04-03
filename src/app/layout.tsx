@@ -7,10 +7,10 @@ import { SessionProvider } from "@/components/providers/SessionProvider";
 import { LayoutWrapper } from "@/components/layout/LayoutWrapper";
 
 const notoSerifSC = Noto_Serif_SC({
-  subsets: ["latin"],
   weight: ["400", "600", "700"],
   variable: "--font-heading",
   display: "swap",
+  // 不指定 subsets，让 next/font 自动加载所需字符（包括中文）
 });
 
 export const metadata: Metadata = {

@@ -185,7 +185,7 @@ export default function HomePage() {
                     <div className="w-[52px] h-[52px] rounded-full bg-gray-100 flex items-center justify-center">
                       <Icon className="w-7 h-7 text-brand-black opacity-75" strokeWidth={1.5} />
                     </div>
-                    <h3 className="text-xl font-semibold text-brand-black mt-4">{principle.title}</h3>
+                    <h3 className="text-[19px] font-semibold text-brand-black mt-4">{principle.title}</h3>
                     <p className="text-sm text-brand-gray mt-3 leading-relaxed">
                       {principle.description}
                     </p>
@@ -223,7 +223,7 @@ export default function HomePage() {
                       <p className="text-sm text-brand-gray mt-3 flex-1 leading-relaxed">{feature.description}</p>
                       <Link
                         href={feature.href}
-                        className="inline-flex items-center gap-1 text-sm mt-4 text-brand-black group-hover:gap-2 transition-all duration-200"
+                        className="inline-flex items-center gap-1 text-[13px] mt-4 text-brand-black group-hover:gap-2 transition-all duration-200"
                       >
                         进入分析
                         <ArrowRight className="w-3.5 h-3.5" />
