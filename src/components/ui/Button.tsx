@@ -12,26 +12,24 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed';
     
     const variants = {
-      primary: 'bg-[#0F0F0F] text-white hover:bg-[#2A2A2A] rounded-lg px-8 py-3.5 text-base shadow-sm',
-      secondary: 'bg-white text-brand-black rounded-lg px-8 py-3.5 text-base border border-gray-300 hover:border-gray-400 hover:bg-gray-50',
+      primary: 'bg-[#1C1A16] text-white hover:bg-[#2C2924] rounded-lg',
+      secondary: 'bg-white text-[#1C1A16] rounded-lg border border-[#1C1A16]/30 hover:bg-[#FAF9F6]',
       text: 'text-brand-black hover:underline bg-transparent border-none px-0 py-0',
       small: 'bg-[#0F0F0F] text-white hover:bg-[#2A2A2A] rounded-lg px-5 py-2.5 text-sm shadow-sm',
       ghost: 'bg-transparent text-brand-gray hover:text-brand-black hover:bg-gray-100 rounded-lg px-6 py-2.5 text-sm border border-gray-200',
     };
     
     const sizes = {
-      sm: 'px-4 py-2 text-sm',
-      md: 'px-6 py-3 text-base',
-      lg: 'px-8 py-4 text-lg',
+      sm: 'text-[13px] px-6 py-3',
+      md: 'text-[13px] px-[38px] py-[14px]',
+      lg: 'text-[13px] px-10 py-4',
     };
-
-    // text & ghost variants don't use size
-    const styleKey = (variant === 'text' || variant === 'small' || variant === 'ghost') ? variant : `${variant}-${size}`;
+    const sizeClass = (variant === 'primary' || variant === 'secondary') ? sizes[size] : '';
 
     return (
       <button
         ref={ref}
-        className={cn(baseStyles, variants[variant] || variants.primary, className)}
+        className={cn(baseStyles, variants[variant] || variants.primary, sizeClass, className)}
         disabled={disabled || loading}
         {...props}
       >

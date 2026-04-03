@@ -12,8 +12,6 @@ import { BaguaSpinner } from '@/components/ui/BaguaSpinner';
 import { BaziChart } from '@/components/bazi/BaziChart';
 import { WuxingChart } from '@/components/bazi/WuxingChart';
 import { QuotaLimitModal } from '@/components/QuotaLimitModal';
-import { Tag } from '@/components/ui/Tag';
-import { PageHeader } from '@/components/ui/PageHeader';
 import { Container } from '@/components/ui/Container';
 import { Sparkles, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
@@ -54,7 +52,7 @@ interface BaziResult {
 }
 
 export default function BaziPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const [formData, setFormData] = useState({
     name: '',
     gender: '',
@@ -147,28 +145,35 @@ export default function BaziPage() {
   };
 
   // 统一 input 样式
-  const inputClass = "w-full h-12 rounded-lg border border-gray-300 px-4 text-sm text-brand-black placeholder:text-brand-light focus:border-brand-black focus:ring-2 focus:ring-brand-black/5 outline-none transition-all";
+  const inputClass =
+    'w-full h-12 rounded-xl border border-[#1C1A16]/15 bg-white px-4 text-sm text-[#1C1A16] placeholder:text-[#1C1A16]/40 focus:border-[#1C1A16]/30 focus:ring-2 focus:ring-[#1C1A16]/10 outline-none transition-all';
+  const cardClass = 'rounded-2xl border-none shadow-none bg-white hover:shadow-card-hover transition-shadow duration-300';
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#FAF9F9F6]">
       {/* 页面标题 */}
-      <PageHeader
-        title="八字分析"
-        subtitle="输入您的出生信息，AI 将为您解读命盘"
-      />
+      <div className="text-center pt-16 md:pt-20 pb-8">
+        <h1
+          className="font-display text-h1 md:text-[44px] text-[#1C1A16]"
+          style={{ letterSpacing: '10px' }}
+        >
+          八字分析
+        </h1>
+        <p className="text-body-sm text-[#1C1A16]/70 mt-3">输入您的出生信息，AI 将为您解读命盘</p>
+      </div>
 
       {/* 主体：左右分栏 */}
       <Container>
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 pb-20 md:pb-26">
           {/* ===== 左侧：输入表单 ===== */}
-          <Card variant="form" hover={false} className="flex-shrink-0 w-full lg:w-auto lg:max-w-[440px]">
+          <Card variant="form" className={`flex-shrink-0 w-full lg:w-auto lg:max-w-[440px] ${cardClass}`}>
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* 区块标题 */}
-              <h2 className="text-base font-medium text-brand-black mb-2">📋 出生信息</h2>
+              <h2 className="font-display text-lg text-[#1C1A16] mb-2">📋 出生信息</h2>
 
               {/* 姓名 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">姓名</label>
+                <label className="block text-sm font-medium text-[#1C1A16] mb-2">姓名</label>
                 <input
                   type="text" placeholder="输入您的姓名" value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -178,11 +183,12 @@ export default function BaziPage() {
 
               {/* 性别 - 用 SegmentControl */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">性别</label>
+                <label className="block text-sm font-medium text-[#1C1A16] mb-2">性别</label>
                 <SegmentControl
                   options={[{ value: 'male', label: '男' }, { value: 'female', label: '女' }]}
                   value={formData.gender}
                   onChange={(v) => setFormData({ ...formData, gender: v })}
+                  className="rounded-xl border border-[#1C1A16]/15 bg-white text-[#1C1A16]"
                 />
               </div>
 
@@ -195,11 +201,12 @@ export default function BaziPage() {
 
               {/* 出生时辰 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">出生时辰</label>
+                <label className="block text-sm font-medium text-[#1C1A16] mb-2">出生时辰</label>
                 <Select
                   options={shichenOptions}
                   value={formData.birthHour}
                   onChange={(e) => setFormData({ ...formData, birthHour: e.target.value })}
+                  className="h-12 rounded-xl border border-[#1C1A16]/15 bg-white px-4 text-sm text-[#1C1A16]"
                 />
               </div>
 
@@ -211,7 +218,12 @@ export default function BaziPage() {
               )}
 
               {/* 提交按钮 */}
-              <Button type="submit" variant="primary" loading={loading} className="w-full h-[50px] text-base font-medium mt-2">
+              <Button
+                type="submit"
+                variant="primary"
+                loading={loading}
+                className="w-full mt-2 text-[13px] px-[38px] py-[14px] bg-[#1C1A16] text-white rounded-2xl"
+              >
                 {loading ? '正在计算...' : '开始分析'}
               </Button>
             </form>
@@ -221,21 +233,21 @@ export default function BaziPage() {
           <div className="flex-1 min-w-0">
             {/* 加载中 */}
             {loading && (
-              <Card hover={false} className="flex flex-col items-center justify-center py-16">
+              <Card className={`flex flex-col items-center justify-center py-16 ${cardClass}`}>
                 <BaguaSpinner size={64} />
-                <p className="mt-4 text-brand-black font-medium">正在计算您的命盘...</p>
-                <p className="text-sm text-brand-light mt-2">AI 正在解读中，请稍候</p>
+                <p className="mt-4 text-[#1C1A16] font-medium">正在计算您的命盘...</p>
+                <p className="text-sm text-[#6B7280] mt-2">AI 正在解读中，请稍候</p>
               </Card>
             )}
 
             {/* 空状态（未分析时）*/}
             {!result && !loading && (
-              <Card hover={false} className="flex flex-col items-center justify-center py-20 text-center">
-                <div className="w-16 h-16 rounded-full bg-brand-bg flex items-center justify-center mb-4">
-                  <Sparkles className="w-8 h-8 text-brand-light" />
+              <Card className={`flex flex-col items-center justify-center py-20 text-center ${cardClass}`}>
+                <div className="w-16 h-16 rounded-full bg-[#FAF9F9F6] flex items-center justify-center mb-4">
+                  <Sparkles className="w-8 h-8 text-[#6B7280]" />
                 </div>
-                <p className="text-brand-black font-medium text-lg">填写信息后点击开始分析</p>
-                <p className="text-sm text-brand-light mt-2">AI 将为您生成专属命盘解读</p>
+                <p className="text-[#1C1A16] font-medium text-lg">填写信息后点击开始分析</p>
+                <p className="text-sm text-[#6B7280] mt-2">AI 将为您生成专属命盘解读</p>
               </Card>
             )}
 
@@ -249,22 +261,26 @@ export default function BaziPage() {
                 <WuxingChart wuxing={result.wuxing} />
 
                 {/* AI 解读 */}
-                <Card hover={false}>
+                <Card className={cardClass}>
                   <div className="flex items-center gap-2 mb-4">
-                    <span className="inline-block bg-yellow-50 text-yellow-700 text-xs px-2 py-0.5 rounded font-medium">
+                    <span className="inline-block bg-[#FAF9F9F6] text-[#1C1A16]/70 text-xs px-2 py-0.5 rounded font-medium">
                       🤖 AI 分析·解读
                     </span>
                   </div>
-                  <div className="text-base leading-relaxed text-gray-800 whitespace-pre-wrap">
+                  <div className="text-base leading-relaxed text-[#1C1A16]/70 whitespace-pre-wrap">
                     {result.aiAnalysis}
                   </div>
                 </Card>
 
                 {/* 引导到每日运势 */}
-                <Card hover={false} className="text-center py-6">
-                  <p className="text-brand-gray mb-3 text-sm">想了解今天的运势？</p>
+                <Card className={`text-center py-6 ${cardClass}`}>
+                  <p className="text-[#6B7280] mb-3 text-sm">想了解今天的运势？</p>
                   <Link href="/daily">
-                    <Button variant="secondary" size="sm">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="text-[13px] px-[38px] py-[14px] rounded-2xl border border-[#1C1A16]/15 text-[#1C1A16] bg-white hover:bg-[#1C1A16]/5"
+                    >
                       📅 查看每日运势
                       <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
                     </Button>
@@ -272,7 +288,7 @@ export default function BaziPage() {
                 </Card>
 
                 {/* 免责声明 */}
-                <div className="text-center text-xs text-brand-light p-3 bg-brand-bg rounded-lg">
+                <div className="text-center text-xs text-[#6B7280] p-3 bg-white rounded-lg border border-[#1C1A16]/10">
                   ⚠️ 免责声明：本站所有命理分析仅供娱乐参考，不构成任何决策建议。命运掌握在自己手中，请理性对待。
                 </div>
               </div>
@@ -280,6 +296,8 @@ export default function BaziPage() {
           </div>
         </div>
       </Container>
+
+      {showQuotaModal && <QuotaLimitModal onClose={() => setShowQuotaModal(false)} />}
 
       {/* 版本标记 */}
       <div className="hidden" data-version="20260402-v2"></div>

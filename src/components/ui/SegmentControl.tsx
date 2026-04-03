@@ -14,9 +14,17 @@ interface SegmentControlProps {
   onChange?: (value: string) => void;
   defaultValue?: string;
   className?: string;
+  optionClassName?: string;
 }
 
-export function SegmentControl({ options, value, onChange, defaultValue, className = "" }: SegmentControlProps) {
+export function SegmentControl({
+  options,
+  value,
+  onChange,
+  defaultValue,
+  className = "",
+  optionClassName = "",
+}: SegmentControlProps) {
   const [internalValue, setInternalValue] = useState(defaultValue || options[0]?.value || "");
   const selectedValue = value ?? internalValue;
 
@@ -26,7 +34,7 @@ export function SegmentControl({ options, value, onChange, defaultValue, classNa
   };
 
   return (
-    <div className={cn("inline-flex rounded-lg overflow-hidden border border-brand-border w-full", className)}>
+    <div className={cn("inline-flex rounded-2xl overflow-hidden border border-[#1C1A16]/12 w-full", className)}>
       {options.map((opt) => (
         <button
           key={opt.value}
@@ -35,8 +43,9 @@ export function SegmentControl({ options, value, onChange, defaultValue, classNa
           className={cn(
             "flex-1 px-6 py-2.5 text-sm transition-all duration-200 cursor-pointer text-center",
             selectedValue === opt.value
-              ? "bg-brand-black text-white"
-              : "bg-gray-100 text-brand-gray hover:bg-gray-200"
+              ? "bg-[#1C1A16] text-white"
+              : "bg-white text-[#1C1A16]/70 hover:bg-[#FAF9F6]",
+            optionClassName
           )}
         >
           {opt.label}

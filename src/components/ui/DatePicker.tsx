@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, Calendar, ChevronUp, ChevronDown } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Calendar, ChevronDown } from 'lucide-react'
 
 interface DatePickerProps {
   value: string // YYYY-MM-DD
@@ -133,21 +133,21 @@ export function DatePicker({
   return (
     <div className="space-y-2" ref={containerRef}>
       {label && (
-        <label className="block text-sm font-medium text-secondary">{label}</label>
+        <label className="block text-sm font-medium text-[#1C1A16]">{label}</label>
       )}
       
       <div 
-        className="relative w-full px-4 py-3 rounded bg-white border border-border text-primary cursor-pointer flex items-center justify-between"
+        className="relative w-full h-12 px-4 rounded-xl bg-white border border-[#1C1A16]/15 text-[#1C1A16] cursor-pointer flex items-center justify-between"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <span className={displayValue ? 'text-primary' : 'text-muted'}>
+        <span className={displayValue ? 'text-[#1C1A16]' : 'text-[#1C1A16]/40'}>
           {displayValue || '请选择出生日期'}
         </span>
-        <Calendar className="w-5 h-5 text-muted" />
+        <Calendar className="w-5 h-5 text-[#1C1A16]/40" />
       </div>
 
       {isOpen && (
-        <div className="absolute z-50 mt-1 bg-white border border-border rounded-lg shadow-lg p-4 w-[320px]">
+        <div className="absolute z-50 mt-1 bg-white border border-[#1C1A16]/15 rounded-xl shadow-card-hover p-4 w-[320px]">
           {!showYearPicker && !showMonthPicker ? (
             <>
               <div className="flex items-center justify-between mb-4">
@@ -163,7 +163,7 @@ export function DatePicker({
                   <button
                     type="button"
                     onClick={() => setShowYearPicker(true)}
-                    className="px-3 py-1 border border-border rounded text-sm bg-white hover:bg-background-alt flex items-center gap-1"
+                    className="px-3 py-1 border border-[#1C1A16]/15 rounded-lg text-sm bg-white hover:bg-[#FAF9F6] flex items-center gap-1"
                   >
                     {viewYear}年
                     <ChevronDown className="w-4 h-4" />
@@ -172,7 +172,7 @@ export function DatePicker({
                   <button
                     type="button"
                     onClick={() => setShowMonthPicker(true)}
-                    className="px-3 py-1 border border-border rounded text-sm bg-white hover:bg-background-alt flex items-center gap-1"
+                    className="px-3 py-1 border border-[#1C1A16]/15 rounded-lg text-sm bg-white hover:bg-[#FAF9F6] flex items-center gap-1"
                   >
                     {viewMonth}月
                     <ChevronDown className="w-4 h-4" />
@@ -190,7 +190,7 @@ export function DatePicker({
 
               <div className="grid grid-cols-7 gap-1 mb-2">
                 {weekDays.map(day => (
-                  <div key={day} className="text-center text-xs text-muted py-1">
+                  <div key={day} className="text-center text-xs text-[#6B7280] py-1">
                     {day}
                   </div>
                 ))}
@@ -205,12 +205,12 @@ export function DatePicker({
                     onClick={() => day && handleSelectDay(day)}
                     className={`
                       p-2 text-sm rounded
-                      ${day === null ? 'invisible' : 'hover:bg-background-alt'}
+                      ${day === null ? 'invisible' : 'hover:bg-[#FAF9F6]'}
                       ${selectedDate && 
                         selectedDate.year === viewYear && 
                         selectedDate.month === viewMonth && 
                         selectedDate.day === day 
-                          ? 'bg-black text-white' 
+                          ? 'bg-[#1C1A16] text-white' 
                           : ''}
                     `}
                   >
@@ -221,12 +221,12 @@ export function DatePicker({
             </>
           ) : showYearPicker ? (
             <div className="h-[300px] flex flex-col">
-              <div className="flex items-center justify-between mb-2 pb-2 border-b">
-                <span className="text-sm font-medium">选择年份</span>
+              <div className="flex items-center justify-between mb-2 pb-2 border-b border-[#1C1A16]/10">
+                <span className="text-sm font-medium text-[#1C1A16]">选择年份</span>
                 <button
                   type="button"
                   onClick={() => setShowYearPicker(false)}
-                  className="text-sm text-primary hover:underline"
+                  className="text-sm text-[#1C1A16]/70 hover:text-[#1C1A16] hover:underline"
                 >
                   完成
                 </button>
@@ -248,8 +248,8 @@ export function DatePicker({
                     className={`
                       w-full py-2 text-center rounded
                       ${year === viewYear 
-                        ? 'bg-black text-white font-medium' 
-                        : 'hover:bg-background-alt'}
+                        ? 'bg-[#1C1A16] text-white font-medium' 
+                        : 'hover:bg-[#FAF9F6] text-[#1C1A16]/70'}
                     `}
                   >
                     {year}年
@@ -259,12 +259,12 @@ export function DatePicker({
             </div>
           ) : (
             <div className="h-[300px] flex flex-col">
-              <div className="flex items-center justify-between mb-2 pb-2 border-b">
-                <span className="text-sm font-medium">选择月份</span>
+              <div className="flex items-center justify-between mb-2 pb-2 border-b border-[#1C1A16]/10">
+                <span className="text-sm font-medium text-[#1C1A16]">选择月份</span>
                 <button
                   type="button"
                   onClick={() => setShowMonthPicker(false)}
-                  className="text-sm text-primary hover:underline"
+                  className="text-sm text-[#1C1A16]/70 hover:text-[#1C1A16] hover:underline"
                 >
                   完成
                 </button>
@@ -286,8 +286,8 @@ export function DatePicker({
                     className={`
                       w-full py-2 text-center rounded
                       ${month === viewMonth 
-                        ? 'bg-black text-white font-medium' 
-                        : 'hover:bg-background-alt'}
+                        ? 'bg-[#1C1A16] text-white font-medium' 
+                        : 'hover:bg-[#FAF9F6] text-[#1C1A16]/70'}
                     `}
                   >
                     {month}月
