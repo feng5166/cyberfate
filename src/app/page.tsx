@@ -108,22 +108,20 @@ const featureGroups = [
 
 export default function HomePage() {
   return (
-    <div className="bg-white min-h-screen">
+    <div className="relative bg-white min-h-screen">
+      <div
+        className="pointer-events-none fixed inset-0 -z-10 opacity-[0.05]"
+        aria-hidden="true"
+        style={{
+          backgroundImage:
+            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='none' stroke='%23E5E7EB' stroke-width='1'/%3E%3Cpath d='M50 5 A45 45 0 0 1 50 95 A22.5 22.5 0 0 0 50 50 A22.5 22.5 0 0 1 50 5' fill='%23E5E7EB'/%3E%3Cpath d='M50 95 A45 45 0 0 1 50 5 A22.5 22.5 0 0 0 50 50 A22.5 22.5 0 0 1 50 95' fill='%23FFFFFF'/%3E%3Ccircle cx='50' cy='27' r='5' fill='%23FFFFFF' stroke='%23E5E7EB' stroke-width='1'/%3E%3Ccircle cx='50' cy='73' r='5' fill='%23E5E7EB'/%3E%3C/svg%3E\")",
+          backgroundSize: '140px 140px',
+          backgroundRepeat: 'repeat',
+        }}
+      />
+
       {/* ===== Hero Section ===== */}
       <section className="relative overflow-hidden px-4 pt-24 md:pt-32 pb-24 md:pb-28">
-        {/* 太极图背景装饰 */}
-        <div className="absolute inset-0 z-0 pointer-events-none">
-          <div
-            className="absolute inset-0 opacity-[0.06]"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='40' fill='none' stroke='%23888' stroke-width='0.5'/%3E%3Cpath d='M50 10 A40 40 0 0 1 50 90 A20 20 0 0 0 50 50 A20 20 0 0 1 50 10' fill='%23888'/%3E%3Cpath d='M50 90 A40 40 0 0 1 50 10 A20 20 0 0 0 50 50 A20 20 0 0 1 50 90' fill='white'/%3E%3Ccircle cx='50' cy='30' r='5' fill='%23888'/%3E%3Ccircle cx='50' cy='70' r='5' fill='white'/%3E%3C/svg%3E")`,
-              backgroundSize: '120px 120px',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'repeat',
-            }}
-          />
-        </div>
-
         <div className="relative z-10 max-w-3xl mx-auto text-center">
           {/* 主标题 */}
           <h1 className="font-display text-[44px] sm:text-[52px] md:text-[56px] font-normal text-brand-black tracking-[0.12em] sm:tracking-[0.15em] text-center leading-tight">
