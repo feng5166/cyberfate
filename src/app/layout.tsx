@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Noto_Serif_SC } from "next/font/google";
+import { Cormorant_Garamond, Noto_Serif_SC } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
@@ -11,6 +11,13 @@ const notoSerifSC = Noto_Serif_SC({
   variable: "--font-heading",
   display: "swap",
   // 不指定 subsets，让 next/font 自动加载所需字符（包括中文）
+});
+
+const cormorantGaramond = Cormorant_Garamond({
+  weight: ["400", "600", "700"],
+  subsets: ["latin"],
+  variable: "--font-display-secondary",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -64,7 +71,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN" className={notoSerifSC.variable}>
+    <html lang="zh-CN" className={`${notoSerifSC.variable} ${cormorantGaramond.variable}`}>
       <body className="min-h-screen flex flex-col">
         <SessionProvider>
           <LayoutWrapper>

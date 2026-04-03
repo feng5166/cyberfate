@@ -540,146 +540,410 @@
 
 ---
 
-## 六、UI 设计规范 (v2 — 2026-04-02 更新, 04-03 美术虾审核修正)
+## 六、UI 设计规范（Design Tokens v6 — 2026-04-03 美术虾签字确认）
 
-> 📄 **完整设计规范文档**: `~/.openclaw/workspace-productshrimp/docs/cyberfate-ui-redesign-v2.md`
-> 📄 **代码虾开发任务书**: `~/.openclaw/workspace-productshrimp/docs/cyberfate-dev-task.md`
-> 🎨 **美术虾效果图（v6）**: 首页 + 八字分析页 + 定价页 + 每日运势页（已通过审核）
-> 🎨 **参考网站**: https://www.fatemaster.ai/
-> ✅ **美术侧签字确认**: 2026-04-03 验收结论已由美术虾审核同意
-
-### 6.1 设计理念
-
-**「极简东方」— CyberFate v2 设计语言**
-
-基于竞品分析（FateMaster.AI）和美术虾 v6 设计稿，定义 CyberFate 独有的视觉风格。
-
-**核心原则**:
-1. 白底极简 — 黑白灰主色调，干净专业
-2. 太极图阵列水印 — 品牌视觉记忆点（全页平铺背景装饰，"感觉到的不是看到的"）
-3. 衬线体 Display 标题 — 与 Sans-serif 正文形成优雅对比
-4. 宽松间距 — 宁可多留白不要挤，宽松是高级感的第一来源
-5. **卡片无边框化** — 功能卡片纯白底无 border 无 shadow，融入页面（v6 修正）
-6. 双按钮系统 — 黑色实心 Primary + 描边 Secondary，主次分明
-7. 交互克制 — 所有过渡 150-300ms ease，不花哨
-8. **暖黑色系** — 全站使用 rgb(28,26,22) 暖黑而非纯黑 #000000，营造"纸张/书卷"气质（v6 修正）
-
-### 6.2 配色方案
-
-| 用途 | 色值 | 说明 |
-|------|------|------|
-| 主背景 | #FFFFFF | 页面底色 |
-| 次级背景/卡片 | #FFFFFF / #FAFAFA | 卡片底色，**无边框** (v6) |
-| **主文字/标题** | **rgb(28,26,22) / #1C1A16** | **暖黑色系，非纯黑 (v6 修正)** |
-| 次级文字 | #6B7280 | 描述/辅助信息 |
-| 弱化文字 | #9CA3AF | placeholder/tip |
-| 主按钮背景 | rgb(28,26,22) / #1C1A16 | 暖黑底 (v6 修正) |
-| 主按钮文字 | #FFFFFF | 白 |
-| 描边按钮边框 | #D1D5DB | 灰色描边 |
-| 分割线 | #F3F4F6 | 极浅灰 |
-
-> ⚠️ **重要（v6 修正）**: 全站标题、正文主色统一用 **rgb(28,26,22)** 暖黑色。禁止使用纯黑 #000000。
-> 暖黑的视觉效果：像墨水在宣纸上，有温度、有文化感。纯黑 #000000 是屏幕色，冷硬科技感，不适合命理产品。
-
-**五行配色（Tag 用）**:
-
-| 五行 | 背景色 | 文字色 |
-|------|--------|--------|
-| 金 | #F3E8FF | #7C3AED |
-| 木 | #D1FAE5 | #059669 |
-| 水 | #DBEAFE | #2563EB |
-| 火 | #FEE2E2 | #DC2626 |
-| 土 | #FEF3C7 | #D97706 |
-
-### 6.3 字体规范
-
-| 层级 | 字号 | 字重 | 行高 | 字间距 | 字体 | 使用场景 |
-|------|------|------|------|--------|------|---------|
-| Display (大标题) | 48-56px | 400 (Regular) | 1.2 | **0.05em-0.08em** | **衬线体** | 首页 CYBERFATE 标题 |
-| H1 | 36-40px | 600 (Semibold) | 1.25 | 0.01em | Sans-serif | 页面主标题 |
-| H2 | 28-32px | 600 (Semibold) | 1.3 | 0.01em | Sans-serif | 区块标题 |
-| H3 | 20-22px | 500 (Medium) | 1.4 | 0.01em | Sans-serif | 卡片标题 / 小节标题 |
-| **Hero 副标题** | **17px** | **400** | **1.5** | **0.05em (约5px @ 17px)** | **Sans-serif** | **Hero 区域副标题 (v6 新增)** |
-| Body | 16px | 400 (Regular) | 1.6 | 0 | Sans-serif | 正文内容 |
-| Body Small | 14px | 400 (Regular) | 1.5 | 0 | Sans-serif | 辅助描述 |
-| Caption | 12px | 400 (Regular) | 1.4 | 0 | Sans-serif | 标签/脚注 |
-
-**衬线体（仅用于 Display 层级）**:
-- 中文：Source Han Serif SC / Noto Serif SC / Songti SC
-- 英文：Cormorant Garamond（设计稿首选）/ Playfair Display / DM Serif Display
-- 引入方式：Google Fonts CDN 或自托管
-- **关键原则：衬线体用 Regular（细笔画），不要 Bold。衬线体的优雅在于细线条。**
-- **v6 美术虾审核：Display 标题 letter-spacing 必须设置 0.05em-0.08em。当前线上约 0.02em，差 3-3.5 倍，导致"东方典雅感"出不来。**
-
-**正文字体栈**: `system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif`
-
-> ⚠️ **v6 美术虾审核 — 副标题层级规则**:
-> Hero 副标题（如"解码命运 · 智见未来"）：17px + letter-spacing 0.05em + color rgb(28,26,22) opacity 0.7（暖灰色）
-> 效果是"若隐若现但可读"，不能太抢戏（当前版问题：18px 纯黑无间距 → 对比度太高反而和其他元素抢层级）
-
-### 6.4 按钮系统
-
-| 类型 | 样式 | 规格 | 场景 |
-|------|------|------|------|
-| Primary | 背景 #0F0F0F，白字，圆角 8px | padding: 14px 32px, font-size: 16px | 主要 CTA：「开始分析」、购买、提交 |
-| Secondary | 白底，#D1D5DB 描边 1.5px，深色文字，圆角 8px | padding: 14px 32px, font-size: 16px | 次要操作：「了解更多」、取消 |
-| Text | 无背景无边框，#1A1A1A 文字，underline on hover | padding: 0, font-size: 16px | 「进入分析」链接型操作 |
-| Small | 同 Primary 但尺寸缩小 | padding: 10px 20px, font-size: 14px | 表格内/卡片内操作 |
-
-Hover 状态：
-- Primary: background → #262626
-- Secondary: border → #9CA3AF, background → #FAFAFA
-- Text: underline + color → #4B5563
-
-### 6.5 间距体系（基于 4px grid）
-
-| 名称 | 值 | 使用场景 |
-|------|-----|---------|
-| XXL | 64-80px | 页面区段之间 |
-| XL | 48px | 大区块之间 |
-| L | 32px | 模块之间 |
-| M | 24px | 元素组之间 |
-| S | 16px | 相关元素之间 |
-| XS | 8px | 紧密关联元素 |
-
-页面左右边距（桌面）：80-100px
-卡片内 padding：28-32px
-
-### 6.6 圆角与阴影
-
-| 元素 | 圆角 | 阴影 |
-|------|------|------|
-| 按钮 | 8px | 无 |
-| 卡片 | 12-16px | `0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03)` |
-| 输入框 | 8px | focus 时 `0 0 0 2px rgba(0,0,0,0.08)` |
-| Tag/Chip | 999px (pill) | 无 |
-| 定价推荐卡 | 16px | `0 8px 32px rgba(0,0,0,0.1)` |
-
-### 6.7 图标
-
-使用美术虾提供的 SVG 图标（7 个功能各一个），不使用 Lucide Icons。
-
-图标尺寸：
-- 功能卡片内图标：40x40px
-- 导航/表单 icon：20x20px
-- Tag 内 icon：16x16px
-
-### 6.8 响应式断点
-
-| 断点 | 宽度 | 布局变化 |
-|------|------|---------|
-| Desktop | ≥ 1024px | 完整布局 |
-| Tablet | 640-1023px | 卡片 2 列，定价 3 列但缩小 |
-| Mobile | < 640px | 单列，Hero 标题 32-36px，按钮竖排全宽 |
-
-Mobile 特别注意：
-- Hero 双按钮改为竖向排列全宽
-- 导航栏改为汉堡菜单
-- 定价卡片单列堆叠或横向滑动
-- 页面左右 padding 降至 16-20px
+> **来源**: 美术虾 `CYBERFATE-DESIGN-TOKENS.md` (v6)
+> **适用范围**: **全站所有页面**（首页、八字、紫微、塔罗、定价、登录等）
+> **状态**: ✅ 美术虾签字确认 · Frank 审批通过
+> **代码虾开发基准**: 所有页面以此为准，不再参考旧版规范
 
 ---
 
+### 6.1 色彩系统（Color）
+
+#### 基础色板（CSS Variables）
+
+```css
+:root {
+  /* === 背景色 === */
+  --color-bg-page:       #FAF9F6;   /* 页面主背景 - 暖米白 */
+  --color-bg-white:      #FFFFFF;   /* 纯白 - 卡片/导航底色 */
+  --color-bg-card:       #FAFAFA;   /* 卡片背景 - 极浅灰 */
+  --color-bg-subtle:     rgba(28, 26, 22, 0.015);  /* 悬停背景 */
+
+  /* === 文字色 === */
+  --color-text:          #1C1A16;   /* 主文字 - 暖黑（不是纯黑！） */
+  --color-text-secondary: rgba(28, 26, 22, 0.42);   /* 次要文字 - 如副标题 */
+  --color-text-muted:    rgba(28, 26, 22, 0.25);    /* 弱化文字 - 如名言、标签 */
+  --color-text-on-dark:  #FFFFFF;   /* 深色背景上的文字 */
+
+  /* === 边框色 === */
+  --color-border-light:  rgba(28, 26, 22, 0.06);  /* 分割线、极淡边框 */
+  --color-border:        rgba(28, 26, 22, 0.08);  /* 默认边框 */
+  --color-border-strong: rgba(28, 26, 22, 0.14);  /* 强调边框（按钮描边） */
+  --color-border-input:  #D1D5DB;                  /* 表单输入框边框 */
+
+  /* === 强调色 === */
+  --color-accent:        #1C1A16;   /* 主强调色 - 暖黑（用于按钮填充等） */
+}
+```
+
+#### 关键原则
+
+- **永远不用纯黑 `#000000`** 作为文字色，用 `#1C1A16` 暖黑
+- **永远不用纯黑 `#000`** 作为边框，用 `rgba(28,26,22, 0.06~0.14)` 系列
+- 所有颜色都带一点暖调（偏棕/偏黄），营造"纸张/书卷"气质
+
+#### Tailwind 配置映射
+
+| Design Token | Tailwind 用法 | 说明 |
+|-------------|--------------|------|
+| `--color-bg-page` (#FAF9F6) | `bg-[#FAF9F6]` 或 `bg-brand-bg` | 全站页面背景 |
+| `--color-text` (#1C1A16) | `text-[#1C1A16]` | 全站主文字 |
+| `--color-text-secondary` | `text-[#1C1A16]/70` (≈0.42) | 副标题、描述 |
+| `--color-text-muted` | `text-[#1C1A16]/45` (≈0.25) | 名言、装饰 |
+| `--color-border-light` | `border-[rgba(28,26,22,0.06)]` | 极淡分割线 |
+| `--color-border-strong` | `border-[rgba(28,26,22,0.14)]` | 按钮描边 |
+| `--color-accent` (#1C1A16) | `bg-[#1C1A16]` | 主按钮背景 |
+
+---
+
+### 6.2 字体系统（Typography）
+
+#### 字体族
+
+| 用途 | 字体 | 回退 | CSS |
+|------|------|------|-----|
+| **展示字体（标题/logo）** | Cormorant Garamond | Noto Serif SC, serif | `'Cormorant Garamond', 'Noto Serif SC', serif` |
+| **中文标题** | Noto Serif SC | 衬线体 | `'Noto Serif SC', serif` |
+| **正文/UI** | Inter | -apple-system, sans-serif | `'Inter', -apple-system, sans-serif` |
+| **代码/数据** | JetBrains Mono | monospace | （如需要） |
+
+#### Google Fonts 加载
+
+```html
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;600;700&family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+```
+
+#### 字号阶梯
+
+| 级别 | 字号 | 字重 | 行高 | 字间距 | 用途 |
+|------|------|------|------|--------|------|
+| **Display - Hero 标题** | 60px (clamp 44-60) | 400 | 1.15 | **10px** | 首页 "CYBERFATE" |
+| **H2 - 区块标题** | 30-32px | 600 | 1.3 | 1px | "分析系统"、CTA 标题 |
+| **H3 - 卡片标题** | 17-19px | 600 | 1.4 | 1px | 功能卡片名称 |
+| **H4 - 小卡片标题** | 18px | 500 | 1.4 | 0 | 八字页功能项标题 |
+| **Body - 正文** | 14-15px | 400 | 1.7-1.8 | 0 | 描述文字 |
+| **Body-sm** | 13px | 400-500 | 1.65 | 0-1px | 链接、"进入分析" |
+| **Caption** | 11-12px | 400-600 | 1.5 | 2-3px | Section label、Footer 链接 |
+| **Quote** | 11-13px | 300 | 1.85-2.2 | 0.6-2.5px | Jung 名言 / 装饰文字 |
+
+#### 字间距核心规则（v6 重点）
+
+| 元素 | 字间距要求 | 当前实现 | 状态 |
+|------|-----------|---------|------|
+| Hero 标题 "CYBERFATE" | **10px (绝对值)** | tracking-[0.08em] ≈ 1.3px | ❌ 需修复 |
+| Hero 副标题 | **5px** | tracking-[0.05em] | ✅ |
+| 按钮 | **1px (tracking-wide)** | tracking-[0.08em] | ✅ |
+| Caption/Section label | **2-3px** | tracking-[0.05em] | ✅ |
+| 名言 Quote | **0.6-2.5px** | italic 默认 | ✅ |
+
+> ⚠️ **Hero 标题字间距 10px 是核心辨识度参数**，当前实现差距最大，必须修复。
+
+---
+
+### 6.3 间距系统（Spacing）
+
+基于 **8px** 倍数体系：
+
+| Token | 值 | Tailwind | 用途 |
+|-------|-----|----------|------|
+| `--space-xs` | 4px | `gap-1` / `p-1` | 紧凑元素间距 |
+| `--space-sm` | 8px | `gap-2` / `p-2` | 图标与文字间距 |
+| `--space-md` | 16px | `gap-4` / `p-4` | 按钮组 gap、卡片内小间距 |
+| `--space-lg` | 24px | `gap-6` / `p-6` | 段落间距、移动端 padding |
+| `--space-xl` | 40px | `gap-10` / `p-10` | 特色卡片之间 gap |
+| `--space-2xl` | 56px | `gap-14` / `p-14` | 功能分组间距 |
+| `--space-3xl` | 80px | `p-20` | Section 垂直 padding |
+| `--space-4xl` | 96px | `p-24` | CTA 区 padding |
+
+#### 区域 Padding 规范
+
+| 区域 | 左右 Padding | 上下 Padding |
+|------|-------------|-------------|
+| 导航栏 | 80px (`lg:px-20`) / 24px (`px-4`) | 20px |
+| Hero | 80px | pt-30~40 / pb-16~20 |
+| 特色区（核心理念） | 80px | py-12~16 |
+| 功能区（分析系统） | 80px | mt-32 / pb-28 |
+| CTA 区 | 80px | py-16 |
+| Footer | 80px | py-12 |
+
+#### 移动端断点
+
+| 断点 | 宽度 | Padding |
+|------|------|---------|
+| Desktop | >= 1024px | 80px (`lg:px-20`) |
+| Tablet | 768px - 1023px | 40px (`px-10`) |
+| Mobile | < 768px | 24px (`px-4`) / 16px (`px-4`) |
+
+---
+
+### 6.4 圆角系统（Border Radius）
+
+| Token | 值 | Tailwind | 用途 |
+|-------|-----|----------|------|
+| `--radius-sm` | 6-8px | `rounded-md` / `rounded-lg` | 按钮、标签、输入框 |
+| `--radius-md` | 8px | `rounded-lg` | 主按钮、导航元素 |
+| `--radius-lg` | 12-16px | `rounded-card` / `rounded-2xl` | 卡片 |
+| `--radius-full` | 9999px | `rounded-full` | 头像、图标容器（52px 圆形） |
+
+> ⚠️ 注意：需确认 tailwind.config.js 中 `rounded-card` 的值不为 0px。
+
+---
+
+### 6.5 按钮规范（Buttons）
+
+#### 主按钮（Primary）
+
+| 属性 | 值 | Tailwind |
+|------|-----|----------|
+| 背景 | `#1C1A16` | `bg-[#1C1A16]` |
+| 文字色 | `#FFFFFF` | `text-white` |
+| 字号 | **13px** | `text-[13px]` |
+| 字重 | 500 | `font-medium` |
+| 内边距 | **14px × 38px** | `py-[14px] px-[38px]` |
+| 圆角 | 8px | `rounded-lg` |
+| 字间距 | 1px | `tracking-wide` |
+| 阴影 | `0 2px 10px rgba(28,26,22,0.1)` | `shadow-sm` |
+| Hover | translateY(-2px) + shadow 加深 | `hover:-translate-y-0.5 hover:shadow-md` |
+| 过渡 | 0.25s cubic-bezier(0.16, 1, 0.3, 1) | `transition-all duration-200` |
+
+#### 次按钮（Secondary / Ghost）
+
+| 属性 | 值 | Tailwind |
+|------|-----|----------|
+| 背景 | transparent | `bg-transparent` |
+| 文字色 | `#1C1A16` | `text-[#1C1A16]` |
+| 边框 | 1px solid `rgba(28,26,22,0.14)` | `border border-[rgba(28,26,22,0.14)]` |
+| 字号 | **13px** | `text-[13px]` |
+| 内边距 | **14px × 38px** | `py-[14px] px-[38px]` |
+| Hover | 边框变 `#1C1A16` + 极淡暖底 | `hover:border-[#1C1A16] hover:bg-[rgba(28,26,22,0.015)]` |
+
+#### Text 按钮（链接型）
+
+| 属性 | 值 | Tailwind |
+|------|-----|----------|
+| 样式 | 无背景无边框 | `border-none shadow-none` |
+| 字号 | 14px | `text-sm` |
+| 颜色 | `#1C1A16` | `text-[#1C1A16]` |
+| Hover | underline + 颜色加深 | `hover:underline` |
+
+---
+
+### 6.6 卡片规范（Cards）
+
+#### 核心原则：**无边框语言**
+
+| 属性 | 值 | 说明 |
+|------|-----|------|
+| 背景 | `#FFFFFF` 或 `#FAFAFA` | 纯白或极浅灰 |
+| 边框 | **无** 或 `1px solid rgba(28,26,22,0.06)` | 极淡到几乎看不见 |
+| 圆角 | 12-16px | `rounded-card` / `rounded-2xl` |
+| 内边距 | 28-36px | `p-7` ~ `p-9` |
+| 阴影 | 无（默认） | 无默认阴影 |
+| Hover 阴影 | `0 8px 28px rgba(0,0,0,0.07)` | `hover:shadow-lg` 或 `hover:shadow-card-hover` |
+| Hover 位移 | `translateY(-4px)` | `hover:-translate-y-1` |
+| 过渡 | 0.3s ease | `transition-all duration-300` |
+
+**禁止：**
+```html
+<!-- 有边框 = 后台管理感 -->
+<div class="border border-gray-300 bg-white rounded p-6">
+```
+
+**正确做法：**
+```html
+<!-- 无边框 = 消费产品感 -->
+<div class="bg-white rounded-2xl p-8 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+```
+
+#### 图标规范
+
+| 位置 | 风格 | 尺寸 | 圆形底 |
+|------|------|------|--------|
+| 特色卡片（3张） | 彩色 lucide 图标 | 30-32px 图标 / 52px 容器 | ✅ bg-gray-100 圆形 |
+| 功能卡片（9张） | 彩色 lucide 图标 | 28-32px 图标 / 52px 容器 | ✅ bg-gray-100 圆形 |
+| 侧边栏菜单 | 彩色/线条图标 | 18-20px | 无 |
+
+**禁止使用灰色单色冷硬图标。每个图标必须有颜色。**
+
+---
+
+### 6.7 太极水印（Bagua Watermark）
+
+| 属性 | 值 |
+|------|-----|
+| 符号 | ☯ 太极图（SVG data-uri） |
+| 尺寸 | 140×140px（图案单元），background-size 平铺 |
+| 颜色 | `#1C1A16` 暖黑（不是 #E5E7EB 浅灰） |
+| **Opacity** | **0.02 - 0.04**（推荐 0.03） |
+| 层级 | z-index: 0 / -z-10 |
+| 定位 | fixed, inset-0, 全屏覆盖 |
+| pointer-events | none |
+| 核心原则 | **"感觉到的，不是看到的"** |
+
+---
+
+### 6.8 导航栏（Navigation）
+
+| 属性 | 值 | Tailwind |
+|------|-----|----------|
+| 高度 | 64px 桌面 / 72px 平板 | `h-16 md:h-18` |
+| 定位 | fixed top-0 + z-50 | `fixed top-0 z-50` |
+| 背景 | `rgba(255,255,255,0.95)` + backdrop-blur | `bg-white/95 backdrop-blur-sm` |
+| 底部分割线 | 1px solid `rgba(28,26,22,0.06)` | `border-b border-[rgba(28,26,22,0.06)]` |
+| Logo 字体 | Cormorant Garamond, 18px, 700, letter-spacing 4px | `font-display text-xl tracking-widest` |
+| 导航链接字号 | 14px | `text-sm` |
+| 导航链接颜色 | `rgba(28,26,22,0.42)` | `text-brand-gray` (= text-[#1C1A16]/70) |
+| 链接间距 | 32-40px | `gap-8` ~ `gap-10` |
+| 登录按钮 | 细边框 + 8px 圆角 + 13px | `border rounded-lg text-[13px]` |
+
+---
+
+### 6.9 Footer
+
+| 属性 | 值 |
+|------|-----|
+| 背景 | `#FFFFFF` 或 `bg-brand-bg` |
+| 顶部分割线 | 1px solid `rgba(28,26,22,0.06)` |
+| 列数 | 桌面 4 列 / 手机 1 列 |
+| 品牌 slogan | Logo 下方："AI 驱动的东方命理分析平台" |
+| 链接字号 | 13-14px, color `rgba(28,26,22,0.42)` |
+| Section 标题 | 11-12px, 600, uppercase, letter-spacing 2px |
+| 版权区 | 12px, muted 色, 顶部细分割线 |
+
+---
+
+### 6.10 动效规范（Animation / Motion）
+
+#### 入场动画（可选增强，非必须）
+
+| 元素 | 动画 | 时长 | 延迟 |
+|------|------|------|------|
+| Hero 标题 | fadeUp (opacity 0→1, Y 16→0) | 0.7s | 120ms |
+| 副标题 | fadeUp | 0.7s | 260ms |
+| 按钮组 | fadeUp | 0.7s | 400ms |
+| 名言 | fadeUp | 0.7s | 540ms |
+| 特色卡片 | fadeUp staggered | 0.6s | 750ms + i×150ms |
+| 功能卡片 | fadeUp (滚动触发) | 0.45s | i×100ms |
+
+#### 缓动函数
+
+- **标准**: `cubic-bezier(0.16, 1, 0.3, 1)` — ease-out-quart
+- **Hover**: `transition-all duration-200` ~ `duration-300`
+
+#### 减弱动效
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+```
+
+---
+
+### 6.11 表单规范（Forms）— 八字页等
+
+#### 输入框
+
+| 属性 | 值 | Tailwind |
+|------|-----|----------|
+| 高度 | 48px | `h-12` |
+| 圆角 | 8px | `rounded-lg` |
+| 边框 | 1px solid #D1D5DB | `border border-gray-300` |
+| 内边距 | 0 16px | `px-4` |
+| 字号 | 14px | `text-sm` |
+| 文字色 | #1C1A16 | `text-[#1C1A16]` |
+| Focus 边框 | #1C1A16 | `focus:border-[#1C1A16]` |
+| Focus 光晕 | `0 0 0 3px rgba(28,26,22,0.06)` | `focus:ring...` |
+| Placeholder | `rgba(28,26,22,0.25)` | `placeholder:text-[#1C1A16]/25` |
+
+#### 表单容器
+
+| 属性 | 值 |
+|------|-----|
+| 背景 | white 纯白底 |
+| 圆角 | 16px |
+| 边框 | **无**（和首页统一） |
+| 内边距 | 40px (`p-10`) |
+| 阴影 | 可选 `0 2px 20px rgba(0,0,0,0.03)` |
+
+#### 提交按钮（表单内）
+
+- 全宽 `w-full`
+- 高度 50px (`h-[50px]`)
+- 其他同主按钮规范
+
+---
+
+### 6.12 Tailwind 配置建议
+
+```js
+// tailwind.config.js
+module.exports = {
+  theme: {
+    extend: {
+      colors: {
+        brand: {
+          black: '#1C1A16',
+          gray: 'rgba(28, 26, 22, 0.42)',
+          light: 'rgba(28, 26, 22, 0.25)',   // muted text
+          muted: 'rgba(28, 26, 22, 0.08)',   // border default
+          border: {
+            light: 'rgba(28, 26, 22, 0.06)',
+            DEFAULT: 'rgba(28, 26, 22, 0.08)',
+            strong: 'rgba(28, 26, 22, 0.14)',
+          },
+          bg: '#FAF9F6',
+        },
+      },
+      fontFamily: {
+        display: ['Cormorant Garamond', 'Noto Serif SC', 'serif'],
+        body: ['Inter', '-apple-system', 'sans-serif'],
+      },
+      borderRadius: {
+        card: '12px',
+      },
+      fontSize: {
+        display: ['60px', { lineHeight: '69px', letterSpacing: '10px' }],
+      },
+      boxShadow: {
+        card: '0 2px 20px rgba(0,0,0,0.03)',
+        'card-hover': '0 8px 28px rgba(0,0,0,0.07)',
+      },
+      spacing: {
+        section: '80px',
+      },
+    },
+  },
+};
+```
+
+---
+
+### 6.13 快速检查清单（QA Checklist）
+
+每个页面上线前逐项检查：
+
+- [ ] 背景是 `#FAF9F6` 暖米白（不是 `#FFFFFF` 纯白）
+- [ ] 文字用 `#1C1A16` 暖黑（不是 `#000000` 纯黑）
+- [ ] 标题用了衬线字体（Cormorant Garamond / Noto Serif SC）
+- [ ] **Hero 标题字间距 ≥ 10px**（核心辨识度）
+- [ ] 副标题是淡灰色（opacity ~0.42），不是纯黑
+- [ ] 按钮字号 **13px**，padding **14×38px**
+- [ ] **卡片没有明显边框**（border opacity ≤ 0.06）
+- [ ] 图标是彩色/有温度的（不是灰色线条）
+- [ ] 太极水印 opacity **2-4%**，颜色用 `#1C1A16` 暖黑
+- [ ] 名言/装饰文字足够淡（不影响阅读）
+- [ ] Section 间有充足留白（≥ 56px）
+- [ ] 圆角正常渲染（`rounded-card` 不是 0px）
+- [ ] Hover 效果流畅（translateY + shadow）
+- [ ] 导航栏底部有极淡分割线
+- [ ] Footer 有品牌 slogan
+
+---
+
+_美术虾 🎨签字确认 · Frank 审批通过 · 2026-04-03_
 ## 七、页面详细设计 (v2 — 2026-04-02 更新)
 
 > 以下页面设计均以美术虾效果图为准。完整开发参数见开发任务书。

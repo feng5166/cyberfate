@@ -120,13 +120,13 @@ const featureGroups = [
 
 export default function HomePage() {
   return (
-    <div className="relative bg-white min-h-screen">
+    <div className="relative bg-[#FAF9F6] min-h-screen">
       <div
-        className="pointer-events-none fixed inset-0 -z-10 opacity-[0.03]"
+        className="pointer-events-none fixed inset-0 -z-10 opacity-[0.025]"
         aria-hidden="true"
         style={{
           backgroundImage:
-            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='none' stroke='%23E5E7EB' stroke-width='1'/%3E%3Cpath d='M50 5 A45 45 0 0 1 50 95 A22.5 22.5 0 0 0 50 50 A22.5 22.5 0 0 1 50 5' fill='%23E5E7EB'/%3E%3Cpath d='M50 95 A45 45 0 0 1 50 5 A22.5 22.5 0 0 0 50 50 A22.5 22.5 0 0 1 50 95' fill='%23FFFFFF'/%3E%3Ccircle cx='50' cy='27' r='5' fill='%23FFFFFF' stroke='%23E5E7EB' stroke-width='1'/%3E%3Ccircle cx='50' cy='73' r='5' fill='%23E5E7EB'/%3E%3C/svg%3E\")",
+            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='none' stroke='%231C1A16' stroke-width='1'/%3E%3Cpath d='M50 5 A45 45 0 0 1 50 95 A22.5 22.5 0 0 0 50 50 A22.5 22.5 0 0 1 50 5' fill='%231C1A16'/%3E%3Cpath d='M50 95 A45 45 0 0 1 50 5 A22.5 22.5 0 0 0 50 50 A22.5 22.5 0 0 1 50 95' fill='%23FFFFFF'/%3E%3Ccircle cx='50' cy='27' r='5' fill='%23FFFFFF' stroke='%231C1A16' stroke-width='1'/%3E%3Ccircle cx='50' cy='73' r='5' fill='%231C1A16'/%3E%3C/svg%3E\")",
           backgroundSize: '140px 140px',
           backgroundRepeat: 'repeat',
         }}
@@ -136,7 +136,10 @@ export default function HomePage() {
       <section className="relative overflow-hidden px-4 pt-30 md:pt-40 pb-16 md:pb-20">
         <div className="relative z-10 max-w-3xl mx-auto text-center">
           {/* 主标题 */}
-          <h1 className="font-display text-[44px] sm:text-[52px] md:text-[56px] font-normal text-[#1C1A16] text-center leading-tight">
+          <h1
+            className="font-display text-[44px] sm:text-[52px] md:text-[56px] font-normal text-[#1C1A16] text-center leading-tight"
+            style={{ letterSpacing: '10px' }}
+          >
             CYBERFATE
           </h1>
 
@@ -151,7 +154,7 @@ export default function HomePage() {
               <Button
                 variant="primary"
                 size="lg"
-                className="px-12 py-[14px] text-base tracking-[0.08em] !bg-[#1C1A16] !text-white hover:!bg-[#2A2621]"
+                className="px-[38px] py-[14px] text-[13px] tracking-[0.08em] !bg-[#1C1A16] !text-white hover:!bg-[#2A2621]"
               >
                 开始分析
               </Button>
@@ -160,7 +163,7 @@ export default function HomePage() {
               <Button
                 variant="secondary"
                 size="lg"
-                className="px-12 py-[14px] text-base tracking-[0.08em] !text-[#1C1A16] !border-[#1C1A16]/30 hover:!border-[#1C1A16] hover:!bg-[#FDFBF7]"
+                className="px-[38px] py-[14px] text-[13px] tracking-[0.08em] !text-[#1C1A16] !border-[#1C1A16]/30 hover:!border-[#1C1A16] hover:!bg-[#FDFBF7]"
               >
                 了解更多
               </Button>
@@ -192,7 +195,7 @@ export default function HomePage() {
               return (
                 <Card
                   key={principle.title}
-                  className="text-center border-none shadow-none p-8 hover:shadow-sm hover:-translate-y-1 transition-all duration-300"
+                  className="text-center border-none shadow-none p-8 hover:shadow-card-hover hover:-translate-y-1 transition-all duration-300"
                   hover={false}
                 >
                   <div className="flex flex-col items-center text-center">
@@ -230,7 +233,7 @@ export default function HomePage() {
                       <Card
                         key={feature.title}
                         hover={false}
-                        className="group flex flex-col items-start p-8 border-none shadow-none transition-all duration-300 hover:-translate-y-1 hover:shadow-sm"
+                        className="group flex flex-col items-start p-8 border-none shadow-none transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover"
                       >
                         <div className="w-[52px] h-[52px] rounded-full bg-gray-100 flex items-center justify-center">
                           <Icon className={`w-6 h-6 ${feature.iconColor}`} strokeWidth={1.5} />
@@ -266,12 +269,12 @@ export default function HomePage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mt-10">
               <Link href="/bazi">
-                <button className="px-12 py-[14px] text-[15px] tracking-[0.08em] bg-[#1C1A16] text-white rounded-lg hover:bg-[#2C2924] transition-colors font-medium">
+                <button className="px-[38px] py-[14px] text-[13px] tracking-[0.08em] bg-[#1C1A16] text-white rounded-lg hover:bg-[#2C2924] transition-colors font-medium">
                   开始探索 ▸
                 </button>
               </Link>
               <Link href="/pricing">
-                <button className="px-12 py-[14px] text-[15px] tracking-[0.08em] border border-[#1C1A16]/30 text-[#1C1A16] rounded-lg hover:border-[#1C1A16] transition-colors">
+                <button className="px-[38px] py-[14px] text-[13px] tracking-[0.08em] border border-[#1C1A16]/30 text-[#1C1A16] rounded-lg hover:border-[#1C1A16] transition-colors">
                   了解更多 ▸
                 </button>
               </Link>

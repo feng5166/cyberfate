@@ -37,7 +37,7 @@ const config: Config = {
       fontFamily: {
         serif: ['"Source Han Serif SC"', '"Noto Serif SC"', '"Songti SC"', 'serif'],
         sans: ['system-ui', '-apple-system', 'sans-serif'],
-        heading: ['var(--font-heading)', 'Noto Serif SC', 'serif'],
+        heading: ['var(--font-heading)', 'var(--font-display-secondary)', '"Cormorant Garamond"', '"Noto Serif SC"', 'serif'],
       },
       fontSize: {
         display: ['56px', { lineHeight: '1.2', fontWeight: '400' }],
@@ -62,7 +62,7 @@ const config: Config = {
       },
       boxShadow: {
         card: '0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03)',
-        'card-hover': '0 8px 24px rgba(0,0,0,0.08)',
+        'card-hover': '0 4px 20px rgba(28,26,22,0.08)',
         form: '0 4px 16px rgba(0,0,0,0.06)',
         pricing: '0 8px 32px rgba(0,0,0,0.1)',
       },
