@@ -133,7 +133,7 @@ export default function HomePage() {
       />
 
       {/* ===== Hero Section ===== */}
-      <section className="relative overflow-hidden px-4 pt-30 md:pt-40 pb-24 md:pb-28">
+      <section className="relative overflow-hidden px-4 pt-30 md:pt-40 pb-16 md:pb-20">
         <div className="relative z-10 max-w-3xl mx-auto text-center">
           {/* 主标题 */}
           <h1 className="font-display text-[44px] sm:text-[52px] md:text-[56px] font-normal text-[#1C1A16] text-center leading-tight">
@@ -172,7 +172,7 @@ export default function HomePage() {
           </p>
 
           {/* 金句引用 */}
-          <blockquote className="mt-16 md:mt-20 max-w-[480px] mx-auto">
+          <blockquote className="mt-8 md:mt-10 max-w-[480px] mx-auto">
             <p className="text-[14px] text-[#1C1A16]/50 leading-relaxed text-center italic">
               &ldquo;When the inner situation is not made conscious, it happens outside, as fate.&rdquo;
             </p>
@@ -184,7 +184,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== Core Principles ===== */}
-      <section className="px-4 py-20 md:py-24 bg-brand-bg/60">
+      <section className="px-4 py-12 md:py-16 bg-brand-bg/60">
         <Container>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {corePrinciples.map((principle) => {
