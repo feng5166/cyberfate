@@ -228,7 +228,7 @@ export default function BaziPage() {
                 type="submit"
                 variant="ghost"
                 loading={loading}
-                className="w-full mt-1 text-[13px] px-[38px] py-[11px] rounded-xl border border-[#1C1A16]/30 text-[#1C1A16] bg-transparent hover:bg-[#1C1A16]/5"
+                className="w-full mt-1 text-[13px] px-[38px] py-[12px] rounded-xl border border-[#1C1A16]/30 text-[#1C1A16] bg-transparent hover:bg-[#1C1A16]/5"
               >
                 {loading ? '正在计算...' : '开始分析'}
               </Button>
