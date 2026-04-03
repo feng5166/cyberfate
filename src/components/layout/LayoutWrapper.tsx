@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
 import { Header } from './Header';
 import { Footer } from './Footer';
-import { Sidebar } from './Sidebar';
+import { DashboardLayout } from './DashboardLayout';
 
 interface LayoutWrapperProps {
   children: ReactNode;
@@ -20,12 +20,7 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
   // 首页不显示侧边栏
   const isHomePage = pathname === '/';
   const showSidebar = Boolean(session) && !isHomePage;
-  const layoutClasses = [
-    'flex flex-col min-h-screen',
-    showSidebar ? (isSidebarCollapsed ? 'lg:ml-16' : 'lg:ml-[260px]') : '',
-  ]
-    .filter(Boolean)
-    .join(' ');
+  const layoutClasses = 'flex flex-col min-h-screen';
 
   const handleWorkbenchClick = () => {
     if (!showSidebar) return;
@@ -39,27 +34,29 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
   };
 
   return (
-    <>
-      {/* 首页不显示侧边栏，其他页面登录后显示 */}
-      {showSidebar && (
-        <Sidebar 
-          mobileOpen={mobileMenuOpen} 
-          onMobileClose={() => setMobileMenuOpen(false)} 
-          collapsed={isSidebarCollapsed}
-          onCollapseToggle={(next) => setSidebarCollapsed(next)}
-        />
-      )}
-      {/* 桌面端：有侧边栏时留出空间 */}
-      <div className={layoutClasses}>
-        <Header 
-          onMobileMenuToggle={() => setMobileMenuOpen(true)}
-          showMobileMenu={showSidebar || false}
-          onWorkbenchClick={handleWorkbenchClick}
-          showWorkbench={!!showSidebar}
-        />
-        <main className="flex-1 pt-16 md:pt-18">{children}</main>
-        <Footer />
-      </div>
-    </>
+    <div className={layoutClasses}>
+      <Header 
+        onMobileMenuToggle={() => setMobileMenuOpen(true)}
+        showMobileMenu={showSidebar || false}
+        onWorkbenchClick={handleWorkbenchClick}
+        showWorkbench={!!showSidebar}
+      />
+      <main className="flex-1 pt-16 md:pt-18">
+        {showSidebar ? (
+          <DashboardLayout
+            collapsed={isSidebarCollapsed}
+            onCollapseToggle={(next) => setSidebarCollapsed(next)}
+            mobileOpen={mobileMenuOpen}
+            onMobileClose={() => setMobileMenuOpen(false)}
+            showSidebar={showSidebar}
+          >
+            {children}
+          </DashboardLayout>
+        ) : (
+          children
+        )}
+      </main>
+      <Footer />
+    </div>
   );
 }

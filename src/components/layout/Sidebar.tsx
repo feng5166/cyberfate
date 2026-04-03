@@ -1,284 +1,239 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { 
-  Sparkles, 
-  Heart, 
-  Calendar, 
-  Compass, 
-  BookOpen, 
-  Puzzle,
-  X,
-  ChevronDown,
-  ChevronRight
+import { useSession, signOut } from 'next-auth/react';
+import clsx from 'clsx';
+import {
+  Home,
+  BarChart3,
+  Sun,
+  BookHeart,
+  Sparkles,
+  Layers,
+  Compass,
+  Star,
+  Calendar,
+  BookOpen,
+  Clock,
+  Settings,
+  LogOut,
+  ChevronLeft,
+  ChevronRight,
+  type LucideIcon,
 } from 'lucide-react';
+import { SidebarMenuItem } from './SidebarMenuItem';
+import { SidebarGroup } from './SidebarGroup';
 
-interface NavItem {
-  label: string;
-  icon: React.ReactNode;
-  items?: { label: string; href: string }[];
+interface SidebarProps {
+  collapsed?: boolean;
+  onCollapseToggle?: (nextCollapsed: boolean) => void;
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
 }
 
-const NAV_ITEMS: NavItem[] = [
+interface MenuItemConfig {
+  label: string;
+  href: string;
+  icon: LucideIcon;
+}
+
+interface MenuGroupConfig {
+  title: string;
+  showDivider?: boolean;
+  items: MenuItemConfig[];
+}
+
+const MENU_GROUPS: MenuGroupConfig[] = [
   {
-    label: '八字解命',
-    icon: <Sparkles className="w-5 h-5" />,
+    title: '首页',
     items: [
-      { label: '八字计算', href: '/bazi' },
-      { label: '八字合婚', href: '/bazi/marriage' },
-      { label: '每日运势', href: '/daily' },
+      { label: '首页', href: '/', icon: Home },
     ],
   },
   {
-    label: '紫微斗数',
-    icon: <Compass className="w-5 h-5" />,
+    title: '八字命理',
     items: [
-      { label: '紫微排盘', href: '/ziwei' },
+      { label: '八字分析', href: '/bazi', icon: BarChart3 },
+      { label: '每日运势', href: '/daily', icon: Sun },
+      { label: '合婚分析', href: '/bazi/marriage', icon: BookHeart },
     ],
   },
   {
-    label: '周易占卜',
-    icon: <BookOpen className="w-5 h-5" />,
+    title: '周易占卜',
     items: [
-      { label: '梅花易数', href: '/meihua' },
-      { label: '六爻', href: '/liuyao' },
+      { label: '梅花易数', href: '/meihua', icon: Sparkles },
+      { label: '塔罗占卜', href: '/tarot', icon: Layers },
+      { label: '六爻占卜', href: '/liuyao', icon: Compass },
     ],
   },
   {
-    label: '塔罗牌',
-    icon: <Puzzle className="w-5 h-5" />,
+    title: '更多工具',
     items: [
-      { label: '塔罗占卜', href: '/tarot' },
+      { label: '紫微斗数', href: '/ziwei', icon: Star },
+      { label: 'AI 黄历', href: '/huangli', icon: Calendar },
     ],
   },
   {
-    label: '其他功能',
-    icon: <Calendar className="w-5 h-5" />,
+    title: '个人中心',
+    showDivider: true,
     items: [
-      { label: 'AI 老黄历', href: '/huangli' },
-      { label: '历史记录', href: '/history' },
+      { label: '知识库', href: '/knowledge', icon: BookOpen },
+      { label: '历史记录', href: '/history', icon: Clock },
     ],
   },
 ];
 
-interface SidebarProps {
-  mobileOpen?: boolean;
-  onMobileClose?: () => void;
-  collapsed?: boolean;
-  onCollapseToggle?: (nextCollapsed: boolean) => void;
-}
+const normalizePath = (path?: string) => {
+  if (!path) return '/';
+  if (path === '/') return '/';
+  return path.replace(/\/$/, '') || '/';
+};
 
 export function Sidebar({
-  mobileOpen = false,
-  onMobileClose,
   collapsed: collapsedProp,
   onCollapseToggle,
+  mobileOpen = false,
+  onMobileClose,
 }: SidebarProps = {}) {
   const pathname = usePathname();
+  const normalizedPath = useMemo(() => normalizePath(pathname), [pathname]);
+  const { data: session } = useSession();
   const [internalCollapsed, setInternalCollapsed] = useState(false);
-  const controlledCollapsed = collapsedProp ?? internalCollapsed;
-  const collapsed = mobileOpen ? false : controlledCollapsed;
-  const sidebarWidthClass = controlledCollapsed ? 'w-16' : 'w-[260px]';
+  const collapsed = collapsedProp ?? internalCollapsed;
 
   const handleCollapseToggle = () => {
+    const next = !collapsed;
     if (collapsedProp === undefined) {
-      setInternalCollapsed(!controlledCollapsed);
-    } else {
-      onCollapseToggle?.(!controlledCollapsed);
+      setInternalCollapsed(next);
     }
-  };
-  
-  // 找到当前页面所在的分组，确保它初始化时是展开的
-  const getCurrentGroup = () => {
-    for (const group of NAV_ITEMS) {
-      if (group.items?.some(item => pathname === item.href)) {
-        return group.label;
-      }
-    }
-    return null;
+    onCollapseToggle?.(next);
   };
 
-  // 初始化：当前页面所在分组展开，其他分组也展开（全部展开）
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => {
-    const allGroups = new Set(NAV_ITEMS.map(item => item.label));
-    return allGroups;
-  });
-
-  const toggleGroup = (label: string) => {
-    const newExpanded = new Set(expandedGroups);
-    if (newExpanded.has(label)) {
-      newExpanded.delete(label);
-    } else {
-      newExpanded.add(label);
-    }
-    setExpandedGroups(newExpanded);
-  };
-
-  const handleLinkClick = () => {
-    // 移动端点击链接后关闭侧边栏
-    if (onMobileClose) {
-      onMobileClose();
-    }
-  };
-
-  const SidebarContent = () => (
-    <div className="h-full flex flex-col bg-white border-r border-border">
-      {/* Logo */}
-      <div className="p-4 border-b border-border flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2" onClick={handleLinkClick}>
-          {!collapsed && (
-            <>
-              <Sparkles className="w-6 h-6 text-primary" />
-              <span className="font-heading text-lg font-bold text-primary">
-                CyberFate
-              </span>
-            </>
-          )}
-          {collapsed && <Sparkles className="w-6 h-6 text-primary" />}
-        </Link>
-        
-        {/* 桌面端折叠按钮 */}
-        <button
-          onClick={handleCollapseToggle}
-          className="hidden lg:block p-1 hover:bg-gray-100 rounded transition-colors"
-        >
-          {collapsed ? (
-            <ChevronRight className="w-4 h-4" />
-          ) : (
-            <ChevronDown className="w-4 h-4 rotate-90" />
-          )}
-        </button>
-
-        {/* 移动端关闭按钮 */}
-        <button
-          onClick={onMobileClose}
-          className="lg:hidden p-1 hover:bg-gray-100 rounded transition-colors"
-        >
-          <X className="w-5 h-5" />
-        </button>
+  const renderAvatar = () => {
+    const name = session?.user?.name?.trim() || '访客';
+    const initial = name.charAt(0).toUpperCase();
+    return (
+      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-bg text-sm font-semibold text-brand-gray">
+        {initial}
       </div>
+    );
+  };
 
-      {/* 导航菜单 */}
-      <nav className="flex-1 overflow-y-auto p-2">
-        {NAV_ITEMS.map((group) => {
-          const isExpanded = expandedGroups.has(group.label);
-          
-          return (
-            <div key={group.label} className="mb-1">
-              {/* 分组标题 */}
-              <button
-                onClick={() => !collapsed && toggleGroup(group.label)}
-                className={`
-                  w-full flex items-center gap-2 px-3 py-1.5 rounded
-                  hover:bg-gray-100 transition-colors
-                  ${collapsed ? 'justify-center' : 'justify-between'}
-                `}
-              >
-                <div className="flex items-center gap-2">
-                  {group.icon}
-                  {!collapsed && (
-                    <span className="font-medium text-sm text-secondary">
-                      {group.label}
-                    </span>
-                  )}
-                </div>
-                {!collapsed && (
-                  <ChevronDown
-                    className={`w-4 h-4 transition-transform ${
-                      isExpanded ? '' : '-rotate-90'
-                    }`}
-                  />
-                )}
-              </button>
-
-              {/* 子菜单 */}
-              {!collapsed && isExpanded && group.items && (
-                <div className="ml-6 mt-0.5 space-y-0.5">
-                  {group.items.map((item) => {
-                    // 路径匹配：只精确匹配，避免 /bazi 误匹配 /bazi/marriage
-                    const normalizedPathname = pathname?.replace(/\/$/, '') || '';
-                    const normalizedHref = item.href.replace(/\/$/, '');
-                    const isActive = normalizedPathname === normalizedHref;
-                    
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={handleLinkClick}
-                        className={`
-                          block px-3 py-1.5 rounded text-sm transition-all
-                          ${
-                            isActive
-                              ? 'bg-gray-100 text-black font-semibold'
-                              : 'text-gray-700 font-normal hover:bg-gray-50 hover:text-gray-900'
-                          }
-                        `}
-                      >
-                        {item.label}
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </nav>
-
-      {/* 底部用户信息（占位） */}
-      <div className="p-4 border-t border-border">
-        {!collapsed && (
-          <Link
-            href="/profile"
-            onClick={handleLinkClick}
-            className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 rounded transition-colors"
-          >
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-              <span className="text-primary text-sm font-bold">👤</span>
-            </div>
-            <span className="text-sm text-secondary">个人中心</span>
-          </Link>
-        )}
-        {collapsed && (
-          <div className="flex justify-center">
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-              <span className="text-primary text-sm">👤</span>
+  const renderUserArea = (isCollapsed: boolean) => (
+    <div className="border-t border-brand-border-light px-5 py-4">
+      {isCollapsed ? (
+        <div className="flex justify-center">{renderAvatar()}</div>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            {renderAvatar()}
+            <div>
+              <p className="text-sm font-semibold text-brand-black">{session?.user?.name || '未登录用户'}</p>
+              <p className="text-xs text-brand-gray">{session?.user?.email || '未绑定邮箱'}</p>
             </div>
           </div>
-        )}
-      </div>
+          <div className="flex gap-2">
+            <Link
+              href="/settings"
+              className="flex flex-1 items-center justify-center gap-2 rounded-md border border-brand-border-light px-3 py-2 text-sm text-brand-gray hover:text-brand-black"
+              onClick={onMobileClose}
+            >
+              <Settings className="h-4 w-4" />
+              <span>设置</span>
+            </Link>
+            <button
+              type="button"
+              onClick={() => signOut({ callbackUrl: '/' })}
+              className="flex flex-1 items-center justify-center gap-2 rounded-md border border-brand-border-light px-3 py-2 text-sm text-brand-gray hover:text-brand-black"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>退出</span>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
+  );
+
+  const SidebarContent = (isCollapsed: boolean) => (
+    <div className="flex h-full flex-col bg-white">
+      <div className="px-5 py-5">
+        <Link
+          href="/"
+          className="flex items-center justify-start"
+          onClick={onMobileClose}
+        >
+          {isCollapsed ? (
+            <span className="font-display text-base tracking-[0.4em] text-brand-black">CF</span>
+          ) : (
+            <span className="font-display text-lg tracking-widest text-brand-black">CYBERFATE</span>
+          )}
+        </Link>
+      </div>
+
+      <div className="hidden px-3 pb-4 lg:block">
+        <button
+          type="button"
+          onClick={handleCollapseToggle}
+          className="flex w-full items-center justify-center gap-2 rounded-md border border-brand-border-light py-2 text-sm text-brand-gray hover:text-brand-black"
+          aria-label={isCollapsed ? '展开导航' : '收起导航'}
+        >
+          {isCollapsed ? (
+            <ChevronRight className="h-4 w-4" />
+          ) : (
+            <ChevronLeft className="h-4 w-4" />
+          )}
+          {!isCollapsed && <span>收起导航</span>}
+        </button>
+      </div>
+
+      <nav className="flex-1 overflow-y-auto pb-6">
+        {MENU_GROUPS.map((group) => (
+          <SidebarGroup
+            key={group.title}
+            title={group.title}
+            collapsed={isCollapsed}
+            showDivider={group.showDivider}
+            className="mb-1"
+          >
+            {group.items.map((item) => (
+              <SidebarMenuItem
+                key={item.href}
+                icon={item.icon}
+                label={item.label}
+                href={item.href}
+                collapsed={isCollapsed}
+                active={normalizedPath === normalizePath(item.href)}
+                onSelect={onMobileClose}
+              />
+            ))}
+          </SidebarGroup>
+        ))}
+      </nav>
+
+      {renderUserArea(isCollapsed)}
+    </div>
+  );
+
+  const desktopAsideClasses = clsx(
+    'hidden lg:block fixed left-0 top-16 h-[calc(100vh-64px)] z-30 border-r border-brand-border-light bg-white shadow-sm transition-all duration-300 ease',
+    collapsed ? 'w-16' : 'w-[260px]'
   );
 
   return (
     <>
-      {/* 桌面端侧边栏 */}
-      <aside
-        className={`
-          hidden lg:block
-          fixed left-0 top-0 h-screen
-          transition-all duration-300 ease-in-out
-          ${sidebarWidthClass}
-          z-40
-        `}
-      >
-        <SidebarContent />
-      </aside>
+      <aside className={desktopAsideClasses}>{SidebarContent(collapsed)}</aside>
 
-      {/* 移动端抽屉 */}
       {mobileOpen && (
         <>
-          {/* 遮罩 */}
           <div
-            className="lg:hidden fixed inset-0 bg-black/50 z-40"
+            className="fixed inset-0 z-40 bg-black/40 lg:hidden"
             onClick={onMobileClose}
           />
-          
-          {/* 抽屉 */}
-          <aside className="lg:hidden fixed left-0 top-0 h-screen w-64 z-50 animate-slide-in-left">
-            <SidebarContent />
+          <aside className="fixed left-0 top-16 bottom-0 z-50 w-[260px] border-r border-brand-border-light bg-white shadow-xl lg:hidden">
+            {SidebarContent(false)}
           </aside>
         </>
       )}
