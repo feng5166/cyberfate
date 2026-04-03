@@ -149,13 +149,13 @@ export default function BaziPage() {
 
   // 统一 input 样式
   const inputClass =
-    'w-full h-12 rounded-xl border border-[#1C1A16]/15 bg-white px-4 text-sm text-[#1C1A16] placeholder:text-[#1C1A16]/40 focus:border-[#1C1A16]/30 focus:ring-2 focus:ring-[#1C1A16]/10 outline-none transition-all';
+    'w-full h-10 rounded-lg border border-[#1C1A16]/15 bg-white px-4 text-sm text-[#1C1A16] placeholder:text-[#1C1A16]/40 focus:border-[#1C1A16]/30 focus:ring-2 focus:ring-[#1C1A16]/10 outline-none transition-all';
   const cardClass = 'rounded-2xl border-none shadow-none bg-white hover:shadow-card-hover transition-shadow duration-300';
 
   return (
     <div className="min-h-screen bg-[#FAF9F9F6]">
       {/* 页面标题 */}
-      <div className="text-center pt-16 md:pt-20 pb-8">
+      <div className="text-center pt-10 md:pt-12 pb-8">
         <h1
           className="font-display text-h1 md:text-[44px] text-[#1C1A16]"
           style={{ letterSpacing: '10px' }}
@@ -167,16 +167,16 @@ export default function BaziPage() {
 
       {/* 主体：左右分栏 */}
       <Container>
-        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 pb-20 md:pb-26">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 pb-20 md:pb-26">
           {/* ===== 左侧：输入表单 ===== */}
-          <Card variant="form" className={`flex-shrink-0 w-full lg:w-auto lg:max-w-[440px] ${cardClass}`}>
-            <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="bazi-input-card flex-shrink-0 w-full lg:w-auto lg:max-w-[440px] rounded-2xl bg-white shadow-none px-6 py-8 sm:px-8">
+            <form onSubmit={handleSubmit} className="space-y-4">
               {/* 区块标题 */}
-              <h2 className="font-display text-lg text-[#1C1A16] mb-2">📋 出生信息</h2>
+              <h2 className="font-display text-lg text-[#1C1A16]">📋 出生信息</h2>
 
               {/* 姓名 */}
-              <div>
-                <label className="block text-sm font-medium text-[#1C1A16] mb-2">姓名</label>
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium text-[#1C1A16]">姓名</label>
                 <input
                   type="text" placeholder="输入您的姓名" value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -185,13 +185,14 @@ export default function BaziPage() {
               </div>
 
               {/* 性别 - 用 SegmentControl */}
-              <div>
-                <label className="block text-sm font-medium text-[#1C1A16] mb-2">性别</label>
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium text-[#1C1A16]">性别</label>
                 <SegmentControl
                   options={[{ value: 'male', label: '男' }, { value: 'female', label: '女' }]}
                   value={formData.gender}
                   onChange={(v) => setFormData({ ...formData, gender: v })}
-                  className="rounded-xl border border-[#1C1A16]/15 bg-white text-[#1C1A16]"
+                  className="h-10 rounded-lg border border-[#1C1A16]/15 bg-white text-[#1C1A16] overflow-hidden"
+                  optionClassName="px-3 py-0 h-full flex items-center justify-center text-sm"
                 />
               </div>
 
@@ -200,16 +201,18 @@ export default function BaziPage() {
                 label="出生日期"
                 value={formData.birthDate}
                 onChange={(value) => setFormData({ ...formData, birthDate: value })}
+                className="space-y-1.5"
+                triggerClassName="h-10 rounded-lg"
               />
 
               {/* 出生时辰 */}
-              <div>
-                <label className="block text-sm font-medium text-[#1C1A16] mb-2">出生时辰</label>
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium text-[#1C1A16]">出生时辰</label>
                 <Select
                   options={shichenOptions}
                   value={formData.birthHour}
                   onChange={(e) => setFormData({ ...formData, birthHour: e.target.value })}
-                  className="h-12 rounded-xl border border-[#1C1A16]/15 bg-white px-4 text-sm text-[#1C1A16]"
+                  className="h-10 rounded-lg border border-[#1C1A16]/15 bg-white px-4 text-sm text-[#1C1A16]"
                 />
               </div>
 
@@ -223,14 +226,14 @@ export default function BaziPage() {
               {/* 提交按钮 */}
               <Button
                 type="submit"
-                variant="primary"
+                variant="ghost"
                 loading={loading}
-                className="w-full mt-2 text-[13px] px-[38px] py-[14px] bg-[#1C1A16] text-white rounded-2xl"
+                className="w-full mt-1 text-[13px] px-[38px] py-[11px] rounded-xl border border-[#1C1A16]/30 text-[#1C1A16] bg-transparent hover:bg-[#1C1A16]/5"
               >
                 {loading ? '正在计算...' : '开始分析'}
               </Button>
             </form>
-          </Card>
+          </div>
 
           {/* ===== 右侧：结果展示区 ===== */}
           <div className="flex-1 min-w-0">

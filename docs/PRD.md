@@ -1708,17 +1708,21 @@ _美术虾 🎨签字确认 · Frank 审批通过 · 2026-04-03_
 
 #### 7.2.4 左侧输入表单
 
-**容器样式（遵循 Design Tokens v6 无边框语言）**:
+> **2026-04-04 更新**: Frank 审核效果图后要求表单轻量化，从"后台管理风格"改为"C端消费产品感"
+> **核心原则**: 输入区是辅助区，右侧结果区才是主角。左侧要轻、薄、不抢戏。
+
+**容器样式（遵循 Design Tokens v6 无边框语言 + 轻量化修正）**:
 
 | 属性 | 值 | Tailwind |
 |------|-----|----------|
 | 背景 | #FFFFFF 纯白 | `bg-white` |
-| 边框 | **无** 或极淡 `rgba(28,26,22,0.06)` | `border border-[rgba(28,26,22,0.06)]` 或 `border-none` |
-| 圆角 | 12-16px | `rounded-xl` or `rounded-2xl` |
-| 阴影 | 无或极淡 `0 2px 20px rgba(0,0,0,0.03)` | `shadow-none` 或自定义 `shadow-card` |
+| 边框 | **无** | `border-none` （⚠️ 不是 border-brand-border） |
+| 阴影 | **无** | `shadow-none` （⚠️ 不是 shadow-form） |
+| 圆角 | 16px | `rounded-2xl` |
 | 内边距 | p-8 ~ p-10 | `p-8 md:p-10` |
 
-**表单项（每项间距 mb-5 ~ mb-6）**:
+**表单项（每项间距 mb-4）**:
+- ⚠️ 注意：间距从旧版 mb-6 缩小到 **mb-4**，更紧凑
 
 ##### 字段 1：性别选择
 
@@ -1727,10 +1731,10 @@ _美术虾 🎨签字确认 · Frank 审批通过 · 2026-04-03_
 | 类型 | SegmentControl（分段控制器） |
 | 选项 | 男 / 女 |
 | 必填 | 是 |
-| 样式 | 两等宽并排, gap-3, 高度 44px |
+| 样式 | 两等宽并排, gap-3, 高度 40px |
 | 选中态 | bg-[#1C1A16] text-white |
 | 未选中态 | bg-[#FAFAFA] text-[#1C1A16]/70 |
-| 圆角 | rounded-lg |
+| 圆角 | rounded-lg (8px) |
 | 字号 | text-sm (14px), font-medium |
 
 ##### 字段 2：出生日期
@@ -1739,7 +1743,8 @@ _美术虾 🎨签字确认 · Frank 审批通过 · 2026-04-03_
 |------|-----|
 | 类型 | Date Input (type="date") |
 | 必填 | 是 |
-| 样式 | h-12 (48px), rounded-lg, border 1px solid #D1D5DB |
+| 样式 | **h-10 (40px)**, **rounded-lg (8px)**, border 1px solid #D1D5DB |
+| ⚠️ 高度从旧版 h-12(48px) 降到 h-10(40px)，圆角从 rounded-xl(16px) 降到 rounded-lg(8px) |
 | Focus | border-[#1C1A16], ring 2px rgba(28,26,22,0.06) |
 | Placeholder | "请选择日期" (text-[#1C1A16]/25) |
 | 字号 | text-sm (14px) |
@@ -1750,7 +1755,7 @@ _美术虾 🎨签字确认 · Frank 审批通过 · 2026-04-03_
 |------|-----|
 | 类型 | Time Input (type="time") |
 | 必填 | 否（可选，不选则默认午时） |
-| 样式 | 同上 |
+| 样式 | 同上（h-10, rounded-lg） |
 | 说明文字 | "可选，不填默认正午 12:00" (text-xs text-[#1C1A16]/45) |
 
 ##### 字段 4：出生地
@@ -1759,7 +1764,7 @@ _美术虾 🎨签字确认 · Frank 审批通过 · 2026-04-03_
 |------|-----|
 | 类型 | 搜索输入框（带地点图标） |
 | 必填 | 是 |
-| 样式 | 同上 |
+| 样式 | 同上（h-10, rounded-lg） |
 | Placeholder | "搜索并选择出生地" |
 | 图标 | 左侧地图 pin 图标 |
 
@@ -1771,25 +1776,42 @@ _美术虾 🎨签字确认 · Frank 审批通过 · 2026-04-03_
 | 默认 | 关（false） |
 | 说明 | 开启后时柱计算自动调整 |
 
-##### 提交按钮
+##### 提交按钮（Ghost 轻量样式）
+
+> **2026-04-04 更新**: 从 Primary 黑底白字改为 Ghost 次按钮。原因：表单内不需要重按钮抢视觉焦点。
 
 | 属性 | 值 | Tailwind |
 |------|-----|----------|
 | 文字 | "开始分析" | `开始分析` |
-| 样式 | Primary 按钮（见 6.5 按钮规范） |
-| 尺寸 | w-full, h-[50px] (`h-[50px]`) |
-| 位置 | 表单最底部, mt-8 |
-| 字号 | text-[13px], tracking-wide (按 Design Tokens) |
-| Padding | py-[14px] px-[38px] (按 Design Tokens) |
+| 样式 | **Ghost 次按钮**（不是 Primary） |
+| 背景 | transparent | `bg-transparent` |
+| 边框 | 1px solid rgba(28,26,22,0.14) | `border border-[rgba(28,26,22,0.14)]` |
+| 文字色 | #1C1A16 | `text-[#1C1A16]` |
+| 尺寸 | w-full, **h-[44px]** | `w-full h-[44px]` |
+| ⚠️ 高度从旧版 h-[50px] 降到 **h-[44px]** |
+| 位置 | 表单最底部, mt-6（从 mt-8 缩小） |
+| 字号 | text-[13px], tracking-wide | `text-[13px] tracking-wide` |
+| Padding | py-[12px] px-[38px] | `py-[12px] px-[38px]` |
+| ⚠️ padding 从旧版 py-[14px] 缩到 **py-[12px]** |
+| Hover | 极淡暖底 + 边框加深 | `hover:bg-[rgba(28,26,22,0.015)] hover:border-[#1C1A16]` |
+| 圆角 | rounded-2xl | `rounded-2xl` |
 
-**Input 统一样式（遵循 6.11 表单规范）**:
-- 高度: h-12 (48px)
-- 圆角: rounded-lg (8px)
+**Input 统一样式（遵循 6.11 表单规范 + 轻量化修正）**:
+- 高度: **h-10 (40px)** — ⚠️ 从旧版 h-12(48px) 改
+- 圆角: **rounded-lg (8px)** — ⚠️ 从旧版 rounded-xl(16px) 改
 - 边框: 1px solid #D1D5DB
 - Focus: border-[#1C1A16] + ring 2px rgba(28,26,22,0.06)
 - Placeholder: text-[#1C1A16]/25 (muted)
 - 字号: text-sm (14px)
 - 文字色: text-[#1C1A16]
+
+**左右分栏布局参数（轻量化修正）**:
+
+| 属性 | 旧值 | 新值 | Tailwind |
+|------|------|------|----------|
+| 左右间距 | gap-8 lg:gap-12 | **gap-6 lg:gap-8** | `gap-6 lg:gap-8` |
+| 左侧上边距 | pt-16 | **pt-10** | `pt-10` |
+| 表单项间距 | mb-6 | **mb-4** | `mb-4` |
 
 #### 7.2.5 右侧结果展示区
 

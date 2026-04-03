@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, Calendar, ChevronDown } from 'lucide-react'
+import { cn } from '@/lib/utils/cn'
 
 interface DatePickerProps {
   value: string // YYYY-MM-DD
@@ -9,6 +10,8 @@ interface DatePickerProps {
   label?: string
   minYear?: number
   maxYear?: number
+  className?: string
+  triggerClassName?: string
 }
 
 export function DatePicker({ 
@@ -16,7 +19,9 @@ export function DatePicker({
   onChange, 
   label,
   minYear = 1940,
-  maxYear = new Date().getFullYear()
+  maxYear = new Date().getFullYear(),
+  className = '',
+  triggerClassName = '',
 }: DatePickerProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [showYearPicker, setShowYearPicker] = useState(false)
@@ -131,13 +136,16 @@ export function DatePicker({
   const weekDays = ['日', '一', '二', '三', '四', '五', '六']
 
   return (
-    <div className="space-y-2" ref={containerRef}>
+    <div className={cn("space-y-2", className)} ref={containerRef}>
       {label && (
         <label className="block text-sm font-medium text-[#1C1A16]">{label}</label>
       )}
       
       <div 
-        className="relative w-full h-12 px-4 rounded-xl bg-white border border-[#1C1A16]/15 text-[#1C1A16] cursor-pointer flex items-center justify-between"
+        className={cn(
+          "relative w-full h-12 px-4 rounded-xl bg-white border border-[#1C1A16]/15 text-[#1C1A16] cursor-pointer flex items-center justify-between",
+          triggerClassName
+        )}
         onClick={() => setIsOpen(!isOpen)}
       >
         <span className={displayValue ? 'text-[#1C1A16]' : 'text-[#1C1A16]/40'}>
