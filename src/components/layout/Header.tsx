@@ -64,7 +64,7 @@ export function Header({
                   if (onMobileMenuToggle) onMobileMenuToggle();
                   else setMobileOpen(!mobileOpen);
                 }}
-                className="lg:hidden p-2 -ml-2 text-brand-gray hover:text-brand-black"
+                className="lg:hidden p-2 -ml-2 text-brand-gray hover:text-[#1C1A16]"
                 aria-label="菜单"
               >
                 {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -72,18 +72,18 @@ export function Header({
             )}
 
             {/* Logo - 衬线体 */}
-            <Link href="/" className="font-display text-lg md:text-xl text-brand-black tracking-widest hover:opacity-70 transition-opacity">
+            <Link href="/" className="font-display text-lg md:text-xl text-[#1C1A16] tracking-widest hover:opacity-70 transition-opacity">
               CYBERFATE
             </Link>
           </div>
 
           {/* Desktop Nav - 中间 */}
-          <div className="hidden lg:flex items-center gap-8">
+          <div className="hidden lg:flex items-center gap-10">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="text-sm text-brand-gray hover:text-brand-black transition-colors duration-200"
+                className="text-sm text-brand-gray hover:text-[#1C1A16] transition-colors duration-200"
               >
                 {item.label}
               </Link>
@@ -95,7 +95,7 @@ export function Header({
               onMouseEnter={() => setFeatureOpen(true)}
               onMouseLeave={() => setFeatureOpen(false)}
             >
-              <button className="flex items-center gap-1 text-sm text-brand-gray hover:text-brand-black transition-colors duration-200">
+              <button className="flex items-center gap-1 text-sm text-brand-gray hover:text-[#1C1A16] transition-colors duration-200">
                 功能
                 <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${featureOpen ? 'rotate-180' : ''}`} />
               </button>
@@ -107,7 +107,7 @@ export function Header({
                       <Link
                         key={item.href}
                         href={item.href}
-                        className="block px-4 py-2.5 text-sm text-brand-gray hover:text-brand-black hover:bg-brand-bg transition-colors"
+                        className="block px-4 py-2.5 text-sm text-brand-gray hover:text-[#1C1A16] hover:bg-brand-bg transition-colors"
                       >
                         {item.label}
                       </Link>
@@ -122,7 +122,7 @@ export function Header({
               showWorkbench ? (
                 <Button
                   variant="text"
-                  className="text-sm text-brand-gray hover:text-brand-black"
+                  className="text-sm text-brand-gray hover:text-[#1C1A16]"
                   onClick={handleWorkbenchAction}
                 >
                   工作台
@@ -131,7 +131,7 @@ export function Header({
             ) : (
               <Link
                 href="/auth/login"
-                className="text-sm text-brand-gray hover:text-brand-black transition-colors duration-200"
+                className="text-sm text-brand-gray hover:text-[#1C1A16] transition-colors duration-200"
               >
                 登录
               </Link>
@@ -146,7 +146,7 @@ export function Header({
                 onMouseEnter={() => setUserMenuOpen(true)}
                 onMouseLeave={() => setUserMenuOpen(false)}
               >
-                <span className="text-sm text-brand-gray hover:text-brand-black cursor-pointer transition-colors duration-200">
+                <span className="text-sm text-brand-gray hover:text-[#1C1A16] cursor-pointer transition-colors duration-200">
                   账户
                 </span>
                 {userMenuOpen && (
@@ -154,20 +154,20 @@ export function Header({
                     <div className="py-2 bg-white rounded-lg shadow-lg border border-brand-border-light min-w-[140px]">
                       <Link
                         href="/profile"
-                        className="block px-4 py-2 text-sm text-brand-gray hover:text-brand-black hover:bg-brand-bg transition-colors"
+                        className="block px-4 py-2 text-sm text-brand-gray hover:text-[#1C1A16] hover:bg-brand-bg transition-colors"
                       >
                         个人中心
                       </Link>
                       <Link
                         href="/pricing"
-                        className="block px-4 py-2 text-sm text-brand-gray hover:text-brand-black hover:bg-brand-bg transition-colors"
+                        className="block px-4 py-2 text-sm text-brand-gray hover:text-[#1C1A16] hover:bg-brand-bg transition-colors"
                       >
                         我的会员
                       </Link>
                       <hr className="my-1 border-brand-border-light" />
                       <button
                         onClick={() => signOut({ callbackUrl: '/' })}
-                        className="w-full text-left px-4 py-2 text-sm text-brand-gray hover:text-brand-black hover:bg-brand-bg transition-colors"
+                        className="w-full text-left px-4 py-2 text-sm text-brand-gray hover:text-[#1C1A16] hover:bg-brand-bg transition-colors"
                       >
                         退出登录
                       </button>
@@ -188,7 +188,7 @@ export function Header({
               <Link
                 key={item.href}
                 href={item.href}
-                className="block py-2.5 text-sm text-brand-gray hover:text-brand-black"
+                className="block py-2.5 text-sm text-brand-gray hover:text-[#1C1A16]"
                 onClick={() => setMobileOpen(false)}
               >
                 {item.label}
@@ -197,7 +197,7 @@ export function Header({
 
             {session && showWorkbench && (
               <button
-                className="w-full text-left py-2.5 text-sm text-brand-gray hover:text-brand-black"
+                className="w-full text-left py-2.5 text-sm text-brand-gray hover:text-[#1C1A16]"
                 onClick={() => {
                   handleWorkbenchAction();
                   setMobileOpen(false);
@@ -213,7 +213,7 @@ export function Header({
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="block pl-4 py-2 text-sm text-brand-gray hover:text-brand-black"
+                  className="block pl-4 py-2 text-sm text-brand-gray hover:text-[#1C1A16]"
                   onClick={() => setMobileOpen(false)}
                 >
                   {item.label}
@@ -226,14 +226,14 @@ export function Header({
                 <>
                   <Link
                     href="/profile"
-                    className="block py-2.5 text-sm text-brand-gray hover:text-brand-black"
+                    className="block py-2.5 text-sm text-brand-gray hover:text-[#1C1A16]"
                     onClick={() => setMobileOpen(false)}
                   >
                     个人中心
                   </Link>
                   <button
                     onClick={() => signOut({ callbackUrl: '/' })}
-                    className="block w-full text-left py-2.5 text-sm text-brand-gray hover:text-brand-black"
+                    className="block w-full text-left py-2.5 text-sm text-brand-gray hover:text-[#1C1A16]"
                   >
                     退出登录
                   </button>
@@ -241,7 +241,7 @@ export function Header({
               ) : (
                 <Link
                   href="/auth/login"
-                  className="block py-2.5 text-sm text-brand-black font-medium"
+                  className="block py-2.5 text-sm text-[#1C1A16] font-medium"
                   onClick={() => setMobileOpen(false)}
                 >
                   登录 / 注册

@@ -2,7 +2,7 @@
 
 :root {
   /* 品牌色系 */
-  --brand-black: #0F0F0F;
+  --brand-black: #1C1A16;
   --brand-gray: #6B7280;
   --brand-light: #9CA3AF;
   --brand-border: #E5E7EB;
@@ -10,7 +10,7 @@
   --brand-bg: #FAFAFA;
 
   /* 兼容旧色 */
-  --primary: #000000;
+  --primary: #1C1A16;
   --secondary: #666666;
   --muted: #999999;
   --border: #e0e0e0;
@@ -46,13 +46,13 @@ body {
 /* ===== 衬线体 - 用于 Display 标题 ===== */
 .font-display {
   font-family: var(--font-heading), "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   font-weight: 400;
 }
 
 /* ===== 按钮系统 ===== */
 .btn-primary {
-  background-color: #0F0F0F;
+  background-color: #1C1A16;
   color: white;
   padding: 14px 32px;
   border-radius: 8px;
@@ -60,12 +60,12 @@ body {
   transition: all 200ms ease;
 }
 .btn-primary:hover {
-  background-color: #262626;
+  background-color: #2C2924;
 }
 
 .btn-secondary {
   background-color: white;
-  color: #1A1A1A;
+  color: #1C1A16;
   padding: 14px 32px;
   border-radius: 8px;
   font-size: 16px;
@@ -74,7 +74,7 @@ body {
 }
 .btn-secondary:hover {
   border-color: #9CA3AF;
-  background-color: #FAFAFA;
+  background-color: #FDFBF7;
 }
 
 /* ===== 卡片 ===== */
@@ -105,7 +105,7 @@ body {
   cursor: pointer;
 }
 .segment-active {
-  background-color: #0F0F0F;
+  background-color: #1C1A16;
   color: white;
 }
 .segment-inactive {

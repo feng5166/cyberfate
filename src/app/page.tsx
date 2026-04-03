@@ -19,16 +19,19 @@ import {
 const corePrinciples = [
   {
     icon: Brain,
+    iconColor: 'text-pink-500',
     title: 'AI 智能科学解析',
     description: '融合知识图谱与多模态推理，让命理指标具备可验证的数据依据，帮助你读懂趋势背后的逻辑。',
   },
   {
     icon: BookOpen,
+    iconColor: 'text-amber-600',
     title: '文化传承理性态度',
     description: '尊重东方传统语境，在现代语境下复原术语、拆解象征，建立科学、节制的参考框架。',
   },
   {
     icon: Compass,
+    iconColor: 'text-indigo-500',
     title: '自主探索独立思考',
     description: '提供透明假设与多路径建议，辅助你结合经验与判断，自主设计可执行的行动方案。',
   },
@@ -40,18 +43,21 @@ const featureGroups = [
     features: [
       {
         icon: BarChart3,
+        iconColor: 'text-blue-500',
         title: '命盘解析',
         description: 'AI智能八字分析系统，揭示个人命盘特质与发展规律',
         href: '/bazi',
       },
       {
         icon: Sun,
+        iconColor: 'text-orange-400',
         title: '每日运势',
         description: '基于八字的每日运势分析，助你把握每日吉凶',
         href: '/daily',
       },
       {
         icon: BookHeart,
+        iconColor: 'text-pink-500',
         title: '合婚分析',
         description: '基于八字的深度匹配分析，揭示双方关系契合度',
         href: '/bazi/marriage',
@@ -63,21 +69,24 @@ const featureGroups = [
     features: [
       {
         icon: Sparkles,
+        iconColor: 'text-purple-500',
         title: '梅花易数',
         description: '基于梅花易数的每日决策指导，助你做出重要选择',
         href: '/meihua',
       },
       {
         icon: Layers,
+        iconColor: 'text-indigo-400',
         title: '塔罗占卜',
         description: '塔罗牌参考配合AI观察，从不同角度思考当前处境',
         href: '/tarot',
       },
       {
         icon: Compass,
+        iconColor: 'text-emerald-500',
         title: '六爻占卜',
         description: '传统六爻预测，结合AI深度解析卦象变化',
-        href: '/meihua',
+        href: '/liuyao',
       },
     ],
   },
@@ -86,18 +95,21 @@ const featureGroups = [
     features: [
       {
         icon: Star,
+        iconColor: 'text-yellow-500',
         title: '紫微斗数',
         description: '根据出生时间排出紫微命盘，分析十二宫位与主星格局',
         href: '/ziwei',
       },
       {
         icon: Calendar,
+        iconColor: 'text-red-400',
         title: '黄历查询',
         description: '传统中国黄历，查询各类活动的吉日良辰',
         href: '/huangli',
       },
       {
         icon: BarChart3,
+        iconColor: 'text-cyan-500',
         title: 'AI 黄历',
         description: 'AI驱动的智能黄历，结合现代生活场景给出建议',
         href: '/huangli',
@@ -110,7 +122,7 @@ export default function HomePage() {
   return (
     <div className="relative bg-white min-h-screen">
       <div
-        className="pointer-events-none fixed inset-0 -z-10 opacity-[0.05]"
+        className="pointer-events-none fixed inset-0 -z-10 opacity-[0.03]"
         aria-hidden="true"
         style={{
           backgroundImage:
@@ -121,15 +133,15 @@ export default function HomePage() {
       />
 
       {/* ===== Hero Section ===== */}
-      <section className="relative overflow-hidden px-4 pt-24 md:pt-32 pb-24 md:pb-28">
+      <section className="relative overflow-hidden px-4 pt-30 md:pt-40 pb-24 md:pb-28">
         <div className="relative z-10 max-w-3xl mx-auto text-center">
           {/* 主标题 */}
-          <h1 className="font-display text-[44px] sm:text-[52px] md:text-[56px] font-normal text-brand-black tracking-[0.12em] sm:tracking-[0.15em] text-center leading-tight">
+          <h1 className="font-display text-[44px] sm:text-[52px] md:text-[56px] font-normal text-[#1C1A16] text-center leading-tight">
             CYBERFATE
           </h1>
 
           {/* 副标题 */}
-          <p className="text-[18px] text-brand-gray text-center mt-6">
+          <p className="text-[17px] tracking-[0.05em] text-[#1C1A16]/70 text-center mt-6">
             解码命运 · 智见未来
           </p>
 
@@ -139,7 +151,7 @@ export default function HomePage() {
               <Button
                 variant="primary"
                 size="lg"
-                className="px-12 py-[14px] text-base tracking-[0.08em]"
+                className="px-12 py-[14px] text-base tracking-[0.08em] !bg-[#1C1A16] !text-white hover:!bg-[#2A2621]"
               >
                 开始分析
               </Button>
@@ -148,23 +160,23 @@ export default function HomePage() {
               <Button
                 variant="secondary"
                 size="lg"
-                className="px-12 py-[14px] text-base tracking-[0.08em]"
+                className="px-12 py-[14px] text-base tracking-[0.08em] !text-[#1C1A16] !border-[#1C1A16]/30 hover:!border-[#1C1A16] hover:!bg-[#FDFBF7]"
               >
                 了解更多
               </Button>
             </Link>
           </div>
 
-          <p className="mt-6 text-base text-brand-light text-center max-w-2xl mx-auto leading-relaxed">
+          <p className="mt-6 text-[15px] text-[#1C1A16]/70 text-center max-w-2xl mx-auto leading-relaxed">
             赛博命理师结合 AI 智能科学解析传统命理，为你提供八字、紫微、塔罗等全方位命理分析服务
           </p>
 
           {/* 金句引用 */}
           <blockquote className="mt-16 md:mt-20 max-w-[480px] mx-auto">
-            <p className="text-[14px] text-brand-light leading-relaxed text-center italic">
+            <p className="text-[14px] text-[#1C1A16]/50 leading-relaxed text-center italic">
               &ldquo;When the inner situation is not made conscious, it happens outside, as fate.&rdquo;
             </p>
-            <cite className="text-[12px] text-brand-light/70 mt-2 block text-center not-italic">
+            <cite className="text-[12px] text-[#1C1A16]/45 mt-2 block text-center not-italic">
               — C.G. Jung
             </cite>
           </blockquote>
@@ -178,13 +190,17 @@ export default function HomePage() {
             {corePrinciples.map((principle) => {
               const Icon = principle.icon;
               return (
-                <Card key={principle.title} className="text-center" hover={false}>
+                <Card
+                  key={principle.title}
+                  className="text-center border-none shadow-none p-8 hover:shadow-sm hover:-translate-y-1 transition-all duration-300"
+                  hover={false}
+                >
                   <div className="flex flex-col items-center text-center">
                     <div className="w-[52px] h-[52px] rounded-full bg-gray-100 flex items-center justify-center">
-                      <Icon className="w-7 h-7 text-brand-black opacity-75" strokeWidth={1.5} />
+                      <Icon className={`w-6 h-6 ${principle.iconColor}`} strokeWidth={1.5} />
                     </div>
-                    <h3 className="text-[19px] font-semibold text-brand-black mt-4">{principle.title}</h3>
-                    <p className="text-sm text-brand-gray mt-3 leading-relaxed">
+                    <h3 className="text-[19px] font-semibold text-[#1C1A16] mt-4">{principle.title}</h3>
+                    <p className="text-sm text-[#1C1A16]/70 mt-3 leading-relaxed">
                       {principle.description}
                     </p>
                   </div>
@@ -199,31 +215,31 @@ export default function HomePage() {
       <section className="px-4 mt-32 md:mt-36 pb-28 md:pb-32">
         <Container>
           <div className="max-w-3xl mx-auto text-center">
-            <h2 className="font-display text-[32px] text-[#0F0F0F] mb-3">分析系统</h2>
-            <p className="text-sm text-[#6B7280] mb-12">探索我们全面的智能分析服务</p>
+            <h2 className="font-display text-[32px] text-[#1C1A16] mb-3">分析系统</h2>
+            <p className="text-sm text-[#1C1A16]/70 mb-12">探索我们全面的智能分析服务</p>
           </div>
 
           <div className="space-y-16">
             {featureGroups.map((group) => (
               <div key={group.title}>
-                <h3 className="text-[18px] font-semibold text-[#0F0F0F] mb-5">{group.title}</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <h3 className="text-[18px] font-semibold text-[#1C1A16] mb-5">{group.title}</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {group.features.map((feature) => {
                     const Icon = feature.icon;
                     return (
                       <Card
                         key={feature.title}
                         hover={false}
-                        className="group flex flex-col items-start p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+                        className="group flex flex-col items-start p-8 border-none shadow-none transition-all duration-300 hover:-translate-y-1 hover:shadow-sm"
                       >
                         <div className="w-[52px] h-[52px] rounded-full bg-gray-100 flex items-center justify-center">
-                          <Icon className="w-6 h-6 text-gray-700" strokeWidth={1.5} />
+                          <Icon className={`w-6 h-6 ${feature.iconColor}`} strokeWidth={1.5} />
                         </div>
-                        <h4 className="text-lg font-semibold text-[#0F0F0F] mt-4 mb-3">{feature.title}</h4>
-                        <p className="text-[13px] text-[#6B7280] leading-relaxed flex-1">{feature.description}</p>
+                        <h4 className="text-lg font-semibold text-[#1C1A16] mt-4 mb-3">{feature.title}</h4>
+                        <p className="text-[14px] text-[#1C1A16]/70 leading-relaxed flex-1">{feature.description}</p>
                         <Link
                           href={feature.href}
-                          className="inline-flex items-center gap-1 text-[13px] text-[#0F0F0F] mt-4 transition-all duration-300 group-hover:gap-2"
+                          className="inline-flex items-center gap-1 text-[14px] text-[#1C1A16] mt-4 transition-all duration-300 group-hover:gap-2"
                         >
                           进入分析
                           <ArrowRight className="w-4 h-4" />
@@ -245,22 +261,22 @@ export default function HomePage() {
             <h2 className="font-display text-3xl md:text-4xl tracking-wide text-[#1C1A16]">
               AI 分析个人特质，洞察发展潜力
             </h2>
-            <p className="text-base md:text-lg text-[rgba(28,26,22,0.6)] mt-4 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-base md:text-lg text-[#1C1A16]/70 mt-4 max-w-2xl mx-auto leading-relaxed">
               运用AI技术分析性格优势，为您的生涯规划提供科学参考
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mt-10">
               <Link href="/bazi">
-                <button className="px-12 py-[14px] text-[13px] tracking-[0.08em] bg-[#1C1A16] text-white rounded-lg hover:bg-[#333] transition-colors font-medium">
+                <button className="px-12 py-[14px] text-[13px] tracking-[0.08em] bg-[#1C1A16] text-white rounded-lg hover:bg-[#2C2924] transition-colors font-medium">
                   开始探索 ▸
                 </button>
               </Link>
               <Link href="/pricing">
-                <button className="px-12 py-[14px] text-[13px] tracking-[0.08em] border border-[rgba(28,26,22,0.2)] text-[#1C1A16] rounded-lg hover:border-[#1C1A16] transition-colors">
+                <button className="px-12 py-[14px] text-[13px] tracking-[0.08em] border border-[#1C1A16]/30 text-[#1C1A16] rounded-lg hover:border-[#1C1A16] transition-colors">
                   了解更多 ▸
                 </button>
               </Link>
             </div>
-            <p className="text-[12px] text-[rgba(28,26,22,0.35)] tracking-[0.05em] mt-6">
+            <p className="text-[12px] text-[#1C1A16]/55 tracking-[0.05em] mt-6">
               <span>⚡</span> 免费使用 <span>·</span> 无需注册 <span>·</span> 即刻体验
             </p>
           </div>
