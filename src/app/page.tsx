@@ -249,14 +249,14 @@ export default function HomePage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mt-10">
               <Link href="/bazi">
-                <Button variant="primary" className="bg-white text-[#1C1A16] hover:bg-white/90 !important">
+                <button className="px-12 py-[14px] text-base tracking-[0.08em] bg-white text-[#1C1A16] rounded-lg hover:bg-white/90 transition-colors font-medium">
                   免费开始
-                </Button>
+                </button>
               </Link>
               <Link href="/pricing">
-                <Button variant="secondary" className="border-white text-white hover:bg-white/10 !important">
+                <button className="px-12 py-[14px] text-base tracking-[0.08em] border border-white/50 text-white rounded-lg hover:bg-white/10 transition-colors">
                   查看定价
-                </Button>
+                </button>
               </Link>
             </div>
             <p className="text-sm text-white/60 mt-6">
