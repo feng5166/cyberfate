@@ -266,12 +266,12 @@ export default function HomePage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mt-10">
               <Link href="/bazi">
-                <button className="px-12 py-[14px] text-[13px] tracking-[0.08em] bg-[#1C1A16] text-white rounded-lg hover:bg-[#2C2924] transition-colors font-medium">
+                <button className="px-12 py-[14px] text-[15px] tracking-[0.08em] bg-[#1C1A16] text-white rounded-lg hover:bg-[#2C2924] transition-colors font-medium">
                   开始探索 ▸
                 </button>
               </Link>
               <Link href="/pricing">
-                <button className="px-12 py-[14px] text-[13px] tracking-[0.08em] border border-[#1C1A16]/30 text-[#1C1A16] rounded-lg hover:border-[#1C1A16] transition-colors">
+                <button className="px-12 py-[14px] text-[15px] tracking-[0.08em] border border-[#1C1A16]/30 text-[#1C1A16] rounded-lg hover:border-[#1C1A16] transition-colors">
                   了解更多 ▸
                 </button>
               </Link>
