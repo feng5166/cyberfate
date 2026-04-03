@@ -47,7 +47,7 @@ export function Footer() {
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-sm text-brand-gray hover:text-brand-black transition-colors"
+                      className="text-[14px] text-brand-gray hover:text-brand-black transition-colors"
                     >
                       {link.label}
                     </Link>
@@ -58,7 +58,7 @@ export function Footer() {
           ))}
         </div>
 
-        <div className="mt-10 pt-6 border-t border-brand-border-light flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-brand-light">
+        <div className="mt-10 pt-6 border-t border-brand-border-light flex flex-col md:flex-row items-center justify-between gap-4 text-[14px] text-brand-light">
           <Link href="/" className="font-display text-base text-brand-black tracking-widest hover:opacity-70 transition-opacity">
             CYBERFATE
           </Link>

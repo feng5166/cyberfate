@@ -110,7 +110,7 @@ export default function HomePage() {
   return (
     <div className="bg-white min-h-screen">
       {/* ===== Hero Section ===== */}
-      <section className="relative overflow-hidden px-4 pt-20 md:pt-26 pb-16 md:pb-22">
+      <section className="relative overflow-hidden px-4 pt-24 md:pt-32 pb-24 md:pb-28">
         {/* 太极图背景装饰 */}
         <div className="absolute inset-0 z-0 pointer-events-none">
           <div
@@ -138,12 +138,28 @@ export default function HomePage() {
           {/* 按钮组 */}
           <div className="flex flex-col sm:flex-row justify-center gap-4 mt-10">
             <Link href="/bazi">
-              <Button variant="primary" size="lg">开始分析</Button>
+              <Button
+                variant="primary"
+                size="lg"
+                className="px-12 py-[14px] text-base tracking-[0.08em]"
+              >
+                开始分析
+              </Button>
             </Link>
             <Link href="/pricing">
-              <Button variant="secondary" size="lg">了解更多</Button>
+              <Button
+                variant="secondary"
+                size="lg"
+                className="px-12 py-[14px] text-base tracking-[0.08em]"
+              >
+                了解更多
+              </Button>
             </Link>
           </div>
+
+          <p className="mt-6 text-base text-brand-light text-center max-w-2xl mx-auto leading-relaxed">
+            赛博命理师结合 AI 智能科学解析传统命理，为你提供八字、紫微、塔罗等全方位命理分析服务
+          </p>
 
           {/* 金句引用 */}
           <blockquote className="mt-16 md:mt-20 max-w-[480px] mx-auto">
@@ -158,7 +174,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== Core Principles ===== */}
-      <section className="px-4 py-16 md:py-20 bg-brand-bg/60">
+      <section className="px-4 py-20 md:py-24 bg-brand-bg/60">
         <Container>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {corePrinciples.map((principle) => {
@@ -166,8 +182,8 @@ export default function HomePage() {
               return (
                 <Card key={principle.title} className="text-center" hover={false}>
                   <div className="flex flex-col items-center text-center">
-                    <div className="w-12 h-12 rounded-full bg-brand-bg flex items-center justify-center">
-                      <Icon className="w-6 h-6 text-brand-black" strokeWidth={1.5} />
+                    <div className="w-[52px] h-[52px] rounded-full bg-gray-100 flex items-center justify-center">
+                      <Icon className="w-7 h-7 text-brand-black opacity-75" strokeWidth={1.5} />
                     </div>
                     <h3 className="text-xl font-semibold text-brand-black mt-4">{principle.title}</h3>
                     <p className="text-sm text-brand-gray mt-3 leading-relaxed">
@@ -182,7 +198,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== 功能展示区 ===== */}
-      <section className="px-4 mt-24 md:mt-30 pb-20 md:pb-26">
+      <section className="px-4 mt-32 md:mt-36 pb-28 md:pb-32">
         <Container className="space-y-14">
           {featureGroups.map((group) => (
             <div key={group.title}>
@@ -195,16 +211,16 @@ export default function HomePage() {
                   const Icon = feature.icon;
                   return (
                     <Card key={feature.title} className="group flex flex-col">
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-brand-bg flex-shrink-0">
-                          <Icon className="w-5 h-5 text-brand-black" strokeWidth={1.8} />
+                      <div className="flex flex-col gap-3">
+                        <div className="flex items-center justify-center w-14 h-14 rounded-full bg-gray-100">
+                          <Icon className="w-8 h-8 text-brand-black opacity-75" strokeWidth={1.4} />
                         </div>
                         <div>
-                          <h3 className="text-lg font-medium text-brand-black">{feature.title}</h3>
-                          <p className="text-xs text-brand-light mt-0.5">{group.title}</p>
+                          <p className="text-xs text-brand-light">{group.title}</p>
+                          <h3 className="text-lg font-medium text-brand-black mt-1">{feature.title}</h3>
                         </div>
                       </div>
-                      <p className="text-sm text-brand-gray mt-2 flex-1">{feature.description}</p>
+                      <p className="text-sm text-brand-gray mt-3 flex-1 leading-relaxed">{feature.description}</p>
                       <Link
                         href={feature.href}
                         className="inline-flex items-center gap-1 text-sm mt-4 text-brand-black group-hover:gap-2 transition-all duration-200"
