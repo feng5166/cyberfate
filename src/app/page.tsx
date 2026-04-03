@@ -36,24 +36,24 @@ const corePrinciples = [
 
 const featureGroups = [
   {
-    title: '八字算命',
+    title: '八字分析',
     features: [
       {
         icon: BarChart3,
         title: '命盘解析',
-        description: '生成四柱命盘，AI 解释十神、用神与大运，明确优势与短板。',
+        description: 'AI智能八字分析系统，揭示个人命盘特质与发展规律',
         href: '/bazi',
       },
       {
         icon: Sun,
         title: '每日运势',
-        description: '结合日柱五行与节气，推送当日宜忌与行动建议。',
+        description: '基于八字的每日运势分析，助你把握每日吉凶',
         href: '/daily',
       },
       {
         icon: BookHeart,
         title: '合婚分析',
-        description: '对比双方命盘能量，评估关系协同性与潜在风险点。',
+        description: '基于八字的深度匹配分析，揭示双方关系契合度',
         href: '/bazi/marriage',
       },
     ],
@@ -64,19 +64,19 @@ const featureGroups = [
       {
         icon: Sparkles,
         title: '梅花易数',
-        description: '起卦到断卦全流程 AI 协助，快速洞察局势吉凶。',
+        description: '基于梅花易数的每日决策指导，助你做出重要选择',
         href: '/meihua',
       },
       {
         icon: Layers,
-        title: '塔罗解读',
-        description: '精选牌阵 + 语义分析，提供多视角心灵洞察。',
+        title: '塔罗占卜',
+        description: '塔罗牌参考配合AI观察，从不同角度思考当前处境',
         href: '/tarot',
       },
       {
         icon: Compass,
         title: '六爻占卜',
-        description: '以象数推演进展节点，临时入口复用梅花易数。',
+        description: '传统六爻预测，结合AI深度解析卦象变化',
         href: '/meihua',
       },
     ],
@@ -86,20 +86,20 @@ const featureGroups = [
     features: [
       {
         icon: Star,
-        title: '紫微排盘',
-        description: '自动排盘十二宫位，标注重点星曜与宫干。',
+        title: '紫微斗数',
+        description: '根据出生时间排出紫微命盘，分析十二宫位与主星格局',
         href: '/ziwei',
       },
       {
         icon: Calendar,
         title: '黄历查询',
-        description: '传统黄历宜忌配合智能择日，实时同步节气。',
+        description: '传统中国黄历，查询各类活动的吉日良辰',
         href: '/huangli',
       },
       {
         icon: BarChart3,
         title: 'AI 黄历',
-        description: '结合个体命盘偏好，输出个性化的每日节奏建议。',
+        description: 'AI驱动的智能黄历，结合现代生活场景给出建议',
         href: '/huangli',
       },
     ],
@@ -199,41 +199,44 @@ export default function HomePage() {
 
       {/* ===== 功能展示区 ===== */}
       <section className="px-4 mt-32 md:mt-36 pb-28 md:pb-32">
-        <Container className="space-y-14">
-          {featureGroups.map((group) => (
-            <div key={group.title}>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-semibold text-brand-black">{group.title}</h2>
-                <div className="h-px flex-1 ml-6 bg-brand-border-light" />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {group.features.map((feature) => {
-                  const Icon = feature.icon;
-                  return (
-                    <Card key={feature.title} className="group flex flex-col">
-                      <div className="flex flex-col gap-3">
-                        <div className="flex items-center justify-center w-14 h-14 rounded-full bg-gray-100">
-                          <Icon className="w-8 h-8 text-brand-black opacity-75" strokeWidth={1.4} />
-                        </div>
-                        <div>
-                          <p className="text-xs text-brand-light">{group.title}</p>
-                          <h3 className="text-lg font-medium text-brand-black mt-1">{feature.title}</h3>
-                        </div>
-                      </div>
-                      <p className="text-sm text-brand-gray mt-3 flex-1 leading-relaxed">{feature.description}</p>
-                      <Link
-                        href={feature.href}
-                        className="inline-flex items-center gap-1 text-[13px] mt-4 text-brand-black group-hover:gap-2 transition-all duration-200"
+        <Container>
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="font-display text-[32px] text-[#0F0F0F] mb-3">分析系统</h2>
+            <p className="text-sm text-[#6B7280] mb-12">探索我们全面的智能分析服务</p>
+          </div>
+
+          <div className="space-y-16">
+            {featureGroups.map((group) => (
+              <div key={group.title}>
+                <h3 className="text-[18px] font-semibold text-[#0F0F0F] mb-5">{group.title}</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {group.features.map((feature) => {
+                    const Icon = feature.icon;
+                    return (
+                      <Card
+                        key={feature.title}
+                        hover={false}
+                        className="group flex flex-col items-start p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
                       >
-                        进入分析
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </Link>
-                    </Card>
-                  );
-                })}
+                        <div className="w-[52px] h-[52px] rounded-full bg-gray-100 flex items-center justify-center">
+                          <Icon className="w-6 h-6 text-gray-700" strokeWidth={1.5} />
+                        </div>
+                        <h4 className="text-lg font-semibold text-[#0F0F0F] mt-4 mb-3">{feature.title}</h4>
+                        <p className="text-[13px] text-[#6B7280] leading-relaxed flex-1">{feature.description}</p>
+                        <Link
+                          href={feature.href}
+                          className="inline-flex items-center gap-1 text-[13px] text-[#0F0F0F] mt-4 transition-all duration-300 group-hover:gap-2"
+                        >
+                          进入分析
+                          <ArrowRight className="w-4 h-4" />
+                        </Link>
+                      </Card>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </Container>
       </section>
 
