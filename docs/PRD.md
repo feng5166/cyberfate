@@ -907,42 +907,50 @@ Mobile 特别注意：
 
 **位置**: 所有功能卡片下方，Footer 上方
 
+**重要：浅色背景风格（以美术虾效果图为准）**
+
 ```
-┌──────────────────────────────────────────────────┐
-│                                                  │
-│     AI 分析个人特质，洞察发展潜力                  │
-│     (H2, 28-32px, font-semibold, 居中)           │
-│                                                  │
-│     运用 AI 技术分析性格优势，为您的生涯规划       │
-│     提供科学参考                                  │
-│     (Body Small, 14px, text-gray, 居中)          │
-│                                                  │
-│   [ 开始探索  ▸ ]    [ 了解更多  ▸ ]             │
-│                                                  │
-│     ⚠️ 免费使用 · 无需注册 · 即刻体验             │
-│     (Caption, 12px, text-light, 居中)             │
-│                                                  │
-└──────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────┐
+│                                                            │
+│                                                            │
+│          AI 分析个人特质，洞察发展潜力                       │
+│          (H2, 28-32px, font-semibold, 居中, 黑色字)       │
+│                                                            │
+│          运用 AI 技术分析性格优势，为您的生涯规划            │
+│          提供科学参考                                      │
+│          (Body Small, 14px, text-gray, 居中)              │
+│                                                            │
+│        [ 开始查看 ]         [ 了解更多 , ]                 │
+│        (黑底白字圆角)       (白底黑字描边圆角)             │
+│                                                            │
+│          免费使用 · 无需注册 · 即刻体验                     │
+│          (Caption, 12px, text-light gray, 居中)           │
+│                                                            │
+│                                                    (页面底)│
+└────────────────────────────────────────────────────────────┘
 ```
 
 **详细规格**:
 
+0. **背景色**: **#FAFAFA（浅灰米白），与页面整体背景一致。不是深黑色背景。不需要外层卡片容器包裹。**
 1. **顶部留白**: padding-top 80-100px (pt-20~24)
 2. **主标题**: `AI 分析个人特质，洞察发展潜力`
    - H2, 28-32px, font-semibold (可用 font-display 衬线体)
-   - color #0F0F0F, text-center
+   - **color #0F0F0F（黑色）**, text-center
 3. **副标题**: `运用 AI 技术分析性格优势，为您的生涯规划提供科学参考`
    - Body Small, 14-16px, color #6B7280
    - text-center, margin-top 16px (mt-4)
    - max-width 560px, mx-auto, leading-relaxed
 4. **双按钮组**（距副标题 32-40px / mt-8~10）:
-   - Primary 黑色实心「开始探索 ▸」（→ /bazi）
-   - Secondary 描边「了解更多 ▸」（→ /pricing 或锚点回到功能区）
+   - Primary: **黑底白字**「开始查看 ▸」(→ /bazi)，background #0F0F0F, color white, 圆角 8px, padding 14px 32px
+   - Secondary: **白底黑字+细边框**「了解更多 ▸」(→ /pricing)，background white, border 1px solid #D1D5DB, color #0F0F0F, 圆角 8px, padding 14px 32px
    - 居中, gap-4
 5. **信任提示**: `免费使用 · 无需注册 · 即刻体验`
    - Caption, 12px, color #9CA3AF
    - text-center, margin-top 24px (mt-6)
 6. **底部留白**: padding-bottom 60-80px
+
+> ⚠️ 注意：此区域是**浅色轻量风格**，不要做成深色/暗色背景区块。参考美术虾效果图。
 
 **背景**: 可选加极淡的太极水印（比 Hero 区更淡，opacity 3-5%），或者纯白
 
