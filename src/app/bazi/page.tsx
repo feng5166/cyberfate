@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import { saveBirthInfo, loadBirthInfo } from '@/lib/utils/storage';
 import { Button } from '@/components/ui/Button';
@@ -13,8 +13,11 @@ import { BaziChart } from '@/components/bazi/BaziChart';
 import { WuxingChart } from '@/components/bazi/WuxingChart';
 import { QuotaLimitModal } from '@/components/QuotaLimitModal';
 import { Container } from '@/components/ui/Container';
-import { Sparkles, ArrowRight } from 'lucide-react';
+import { Sparkles, ArrowRight, ChevronDown, Download, RefreshCw, Share2 } from 'lucide-react';
 import Link from 'next/link';
+import { Solar } from 'lunar-javascript';
+import { DAYMASTER_TRAITS, getNaYin, getTenGod } from '@/lib/bazi';
+import type { TianGan, DiZhi } from '@/lib/bazi';
 
 // 十二时辰选项
 const shichenOptions = [
