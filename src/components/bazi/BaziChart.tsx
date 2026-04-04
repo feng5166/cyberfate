@@ -1,15 +1,15 @@
 'use client';
 
-import type { TenGod, TianGan } from '@/lib/bazi';
-import type { Pillar } from '@/lib/bazi/types';
+import type { TenGod } from '@/lib/bazi';
+import type { PillarKey, PillarRecord } from '@/lib/bazi/types';
 import { getTenGod } from '@/lib/bazi';
 import { cn } from '@/lib/utils/cn';
 
 interface BaziChartProps {
-  pillars: Record<'year' | 'month' | 'day' | 'hour', Pillar>;
+  pillars: PillarRecord;
 }
 
-const pillarConfig: { key: 'year' | 'month' | 'day' | 'hour'; label: string }[] = [
+const pillarConfig: { key: PillarKey; label: string }[] = [
   { key: 'year', label: '年柱' },
   { key: 'month', label: '月柱' },
   { key: 'day', label: '日柱' },
@@ -17,7 +17,7 @@ const pillarConfig: { key: 'year' | 'month' | 'day' | 'hour'; label: string }[] 
 ];
 
 export function BaziChart({ pillars }: BaziChartProps) {
-  const dayGan = pillars.day.gan as TianGan;
+  const dayGan = pillars.day.gan;
 
   return (
     <section>
@@ -26,7 +26,7 @@ export function BaziChart({ pillars }: BaziChartProps) {
         {pillarConfig.map(({ key, label }) => {
           const pillar = pillars[key];
           const isDay = key === 'day';
-          const tenGod: TenGod = isDay ? '日主' : getTenGod(dayGan, pillar.gan as TianGan);
+          const tenGod: TenGod = isDay ? '日主' : getTenGod(dayGan, pillar.gan);
 
           return (
             <div

@@ -30,7 +30,7 @@ import {
 import Link from 'next/link';
 import { Solar } from 'lunar-javascript';
 import { DAYMASTER_TRAITS, getNaYin, getTenGod } from '@/lib/bazi';
-import type { TianGan, DiZhi } from '@/lib/bazi';
+import type { PillarRecord, WuxingCount } from '@/lib/bazi/types';
 
 // 十二时辰选项
 const shichenOptions = [
@@ -50,21 +50,11 @@ const shichenOptions = [
   { value: '-1', label: '不知道（默认午时）' },
 ];
 
-interface BaziResult {
-  pillars: {
-    year: { gan: string; zhi: string; ganWuxing: string; zhiWuxing: string };
-    month: { gan: string; zhi: string; ganWuxing: string; zhiWuxing: string };
-    day: { gan: string; zhi: string; ganWuxing: string; zhiWuxing: string };
-    hour: { gan: string; zhi: string; ganWuxing: string; zhiWuxing: string };
-  };
-  wuxing: {
-    metal: number;
-    wood: number;
-    water: number;
-    fire: number;
-    earth: number;
-  };
+interface BaziApiResult {
+  pillars: PillarRecord;
+  wuxing: WuxingCount;
   aiAnalysis: string;
+  _source?: string;
 }
 
 export default function BaziPage() {
@@ -114,7 +104,7 @@ export default function BaziPage() {
   }, [status]);
 
   const [error, setError] = useState('');
-  const [result, setResult] = useState<BaziResult | null>(null);
+  const [result, setResult] = useState<BaziApiResult | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -146,7 +136,7 @@ export default function BaziPage() {
           birthDate: formData.birthDate, birthHour: parseInt(formData.birthHour),
         }),
       });
-      const data = await response.json();
+      const data = (await response.json()) as BaziApiResult;
       if (!response.ok) {
         if (response.status === 401) { window.location.href = '/auth/login?redirect=/bazi'; return; }
         if (data.error === 'QUOTA_EXCEEDED') { setShowQuotaModal(true); return; }

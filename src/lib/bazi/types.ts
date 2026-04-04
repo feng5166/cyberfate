@@ -24,6 +24,12 @@ export interface Pillar {
   zhiWuxing: WuXing;
 }
 
+// 四柱键值
+export type PillarKey = 'year' | 'month' | 'day' | 'hour';
+
+// 结构化四柱（用于前端展示等必须包含时柱的场景）
+export type PillarRecord = Record<PillarKey, Pillar>;
+
 // 八字命盘
 export interface BaziChart {
   year: Pillar;
