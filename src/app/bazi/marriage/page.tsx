@@ -1,14 +1,14 @@
 'use client';
-import { Footer } from '@/components/layout/Footer';
-import { Container } from '@/components/ui/Container';
-;
 
 import { useState } from 'react';
+import { Heart, HeartPulse } from 'lucide-react';
+
+import { Footer } from '@/components/layout/Footer';
+import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Select } from '@/components/ui/Select';
-import { Heart } from 'lucide-react';
 
 const shichenOptions = [
   { value: '', label: '请选择时辰' },
@@ -43,7 +43,7 @@ export default function MarriagePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    
+
     if (!formData.maleBirthDate || !formData.femaleBirthDate) {
       setError('请填写双方出生日期');
       return;
@@ -54,14 +54,14 @@ export default function MarriagePage() {
       const res = await fetch('/api/bazi/marriage', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
       });
-      
+
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || '请求失败');
       }
-      
+
       const data = await res.json();
       setResult(data);
     } catch (err) {
@@ -71,239 +71,254 @@ export default function MarriagePage() {
     }
   };
 
+  const inputClass =
+    'w-full rounded-xl border border-[#1C1A16]/15 bg-white px-4 py-3 text-sm text-[#1C1A16] placeholder:text-[#1C1A16]/40 focus:border-[#1C1A16]/30 focus:ring-2 focus:ring-[#1C1A16]/10 outline-none transition-all';
+
   return (
-    <div className="min-h-screen bg-white py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <Heart className="w-8 h-8 text-red-500" />
-            <h1 className="font-heading text-3xl font-bold text-primary">八字合婚</h1>
+    <div className="min-h-screen bg-[#FAF9F6] flex flex-col">
+      <div className="flex-1 pb-20">
+        <div className="pt-12 pb-10 text-center px-4">
+          <div className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full border border-[#1C1A16]/10 bg-white/80 text-sm text-[#1C1A16]/70">
+            <HeartPulse className="w-4 h-4 text-[#B7152A]" />
+            <span>AI 八字合婚</span>
           </div>
-          <p className="text-secondary">测算双方八字匹配度，了解婚姻运势</p>
+          <h1 className="mt-4 text-3xl md:text-[40px] font-semibold text-[#1C1A16] tracking-wide">八字合婚分析</h1>
+          <p className="mt-3 text-base text-[#1C1A16]/70">
+            输入双方出生信息，了解缘分契合度与婚姻走势
+          </p>
         </div>
 
-        {!result && (
-          <Card>
-            <form onSubmit={handleSubmit} className="space-y-8">
-              {/* 男方信息 */}
-              <div>
-                <h3 className="text-lg font-semibold text-primary mb-4">👨 男方信息</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-secondary mb-2">
-                      姓名 <span className="text-muted text-xs">（选填）</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.maleName}
-                      onChange={(e) => setFormData({ ...formData, maleName: e.target.value })}
-                      placeholder="男方姓名"
-                      className="w-full px-4 py-3 rounded bg-white border border-border text-primary placeholder:text-muted focus:outline-none focus:border-primary"
-                    />
+        <Container>
+          <div className="max-w-4xl mx-auto space-y-8 px-4 md:px-0">
+            {!result && (
+              <>
+                <Card
+                  hover={false}
+                  className="rounded-2xl border border-[#1C1A16]/10 bg-white shadow-none px-6 py-8 sm:px-8"
+                >
+                  <form onSubmit={handleSubmit} className="space-y-8">
+                    <section className="space-y-5">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-2xl bg-[#FAF9F6] flex items-center justify-center text-2xl">
+                          👨
+                        </div>
+                        <div>
+                          <p className="text-sm text-[#1C1A16]/70">男方信息</p>
+                          <h3 className="text-lg font-semibold text-[#1C1A16]">男方出生资料</h3>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2 sm:col-span-2">
+                          <label className="text-sm font-medium text-[#1C1A16]">
+                            姓名 <span className="text-xs text-[#1C1A16]/40">（选填）</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={formData.maleName}
+                            onChange={(e) => setFormData({ ...formData, maleName: e.target.value })}
+                            placeholder="请输入男方姓名"
+                            className={inputClass}
+                          />
+                        </div>
+                        <DatePicker
+                          label="出生日期"
+                          value={formData.maleBirthDate}
+                          onChange={(value) => setFormData({ ...formData, maleBirthDate: value })}
+                          className="space-y-2 sm:col-span-1"
+                          triggerClassName="h-12"
+                        />
+                        <div className="sm:col-span-1">
+                          <Select
+                            label="出生时辰"
+                            options={shichenOptions}
+                            value={formData.maleBirthHour}
+                            onChange={(e) => setFormData({ ...formData, maleBirthHour: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                    </section>
+
+                    <section className="space-y-5">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-2xl bg-[#FAF9F6] flex items-center justify-center text-2xl">
+                          👩
+                        </div>
+                        <div>
+                          <p className="text-sm text-[#1C1A16]/70">女方信息</p>
+                          <h3 className="text-lg font-semibold text-[#1C1A16]">女方出生资料</h3>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2 sm:col-span-2">
+                          <label className="text-sm font-medium text-[#1C1A16]">
+                            姓名 <span className="text-xs text-[#1C1A16]/40">（选填）</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={formData.femaleName}
+                            onChange={(e) => setFormData({ ...formData, femaleName: e.target.value })}
+                            placeholder="请输入女方姓名"
+                            className={inputClass}
+                          />
+                        </div>
+                        <DatePicker
+                          label="出生日期"
+                          value={formData.femaleBirthDate}
+                          onChange={(value) => setFormData({ ...formData, femaleBirthDate: value })}
+                          className="space-y-2 sm:col-span-1"
+                          triggerClassName="h-12"
+                        />
+                        <div className="sm:col-span-1">
+                          <Select
+                            label="出生时辰"
+                            options={shichenOptions}
+                            value={formData.femaleBirthHour}
+                            onChange={(e) => setFormData({ ...formData, femaleBirthHour: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                    </section>
+
+                    {error && (
+                      <div className="rounded-xl border border-[#E5484D]/30 bg-[#FDECEC] px-4 py-3 text-sm text-[#B42318]">
+                        {error}
+                      </div>
+                    )}
+
+                    <Button type="submit" className="w-full" size="lg" loading={loading}>
+                      {loading ? '正在分析…' : '开始合婚测算'}
+                    </Button>
+                  </form>
+                </Card>
+
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6">
+                    <h3 className="text-lg font-semibold text-[#1C1A16] text-center mb-4">🔮 AI 智能合婚系统</h3>
+                    <div className="space-y-4 text-sm">
+                      <div>
+                        <p className="font-semibold text-[#1C1A16]">传统命理智慧</p>
+                        <p className="text-[#1C1A16]/70">结合八字、五行、十神、神煞等多重信息</p>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-[#1C1A16]">AI 深度分析</p>
+                        <p className="text-[#1C1A16]/70">以语言模型多角度评估双方互动与成长空间</p>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-[#1C1A16]">匹配度评级</p>
+                        <p className="text-[#1C1A16]/70">输出感情、事业、家庭等维度等级</p>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-[#1C1A16]">改善建议</p>
+                        <p className="text-[#1C1A16]/70">提供沟通、造势与化解策略</p>
+                      </div>
+                    </div>
                   </div>
-                  <div />
-                  <DatePicker
-                    label="出生日期"
-                    value={formData.maleBirthDate}
-                    onChange={(value) => setFormData({ ...formData, maleBirthDate: value })}
-                  />
-                  <Select
-                    label="出生时辰"
-                    options={shichenOptions}
-                    value={formData.maleBirthHour}
-                    onChange={(e) => setFormData({ ...formData, maleBirthHour: e.target.value })}
-                  />
+
+                  <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6">
+                    <h3 className="text-lg font-semibold text-[#1C1A16] text-center mb-4">📊 合婚分析维度</h3>
+                    <div className="space-y-3 text-sm">
+                      <div className="rounded-2xl border border-[#1C1A16]/10 bg-[#FAF9F6] p-3">
+                        <p className="font-semibold text-[#1C1A16]">性格契合</p>
+                        <p className="text-[#1C1A16]/70">洞察性格、节奏、沟通模式是否互补</p>
+                      </div>
+                      <div className="rounded-2xl border border-[#1C1A16]/10 bg-[#FAF9F6] p-3">
+                        <p className="font-semibold text-[#1C1A16]">感情发展</p>
+                        <p className="text-[#1C1A16]/70">推演阶段性节点与稳定度</p>
+                      </div>
+                      <div className="rounded-2xl border border-[#1C1A16]/10 bg-[#FAF9F6] p-3">
+                        <p className="font-semibold text-[#1C1A16]">事业财运</p>
+                        <p className="text-[#1C1A16]/70">评估事业协同与财富共振</p>
+                      </div>
+                      <div className="rounded-2xl border border-[#1C1A16]/10 bg-[#FAF9F6] p-3">
+                        <p className="font-semibold text-[#1C1A16]">子女与家庭</p>
+                        <p className="text-[#1C1A16]/70">观照子女缘分与家庭气场</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
+
+                <Card
+                  hover={false}
+                  className="rounded-2xl border border-[#1C1A16]/10 bg-white shadow-none p-6"
+                >
+                  <h3 className="text-lg font-semibold text-[#1C1A16] text-center mb-6">📝 分析流程</h3>
+                  <div className="flex flex-col md:flex-row items-stretch gap-4 text-sm text-[#1C1A16]/70">
+                    {[{
+                      title: '填写出生信息',
+                      desc: '录入双方姓名、出生日期、时辰',
+                    }, {
+                      title: '排盘生成',
+                      desc: '系统自动计算双方八字命盘',
+                    }, {
+                      title: 'AI 深入解读',
+                      desc: '多维度智能匹配与风险提示',
+                    }, {
+                      title: '获取完整报告',
+                      desc: '查看匹配度、八字与建议',
+                    }].map((step, index) => (
+                      <div key={step.title} className="flex flex-1 flex-col items-center text-center">
+                        <div className="w-10 h-10 rounded-full bg-[#1C1A16] text-white flex items-center justify-center mb-3 text-sm font-semibold">
+                          {index + 1}
+                        </div>
+                        <p className="text-base text-[#1C1A16] font-medium">{step.title}</p>
+                        <p className="mt-1 text-xs text-[#1C1A16]/70">{step.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              </>
+            )}
+
+            {result && (
+              <div className="space-y-6">
+                <Card hover={false} className="rounded-2xl border border-[#1C1A16]/10 bg-white shadow-none p-6">
+                  <div className="flex flex-col items-center text-center gap-4">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#1C1A16]/10 bg-[#FAF9F6] text-sm text-[#1C1A16]/70">
+                      <HeartPulse className="w-4 h-4 text-[#B7152A]" />
+                      <span>综合匹配度</span>
+                    </div>
+                    <div className="text-5xl font-semibold text-[#1C1A16]">{result.score}</div>
+                    <div className="flex items-center gap-2 text-[#B7152A]">
+                      <Heart className="w-6 h-6" fill="#B7152A" stroke="#B7152A" />
+                      <span className="text-2xl font-semibold">{result.hearts}</span>
+                    </div>
+                    <p className="text-sm text-[#1C1A16]/70">{result.level}</p>
+                  </div>
+                </Card>
+
+                <Card hover={false} className="rounded-2xl border border-[#1C1A16]/10 bg-white shadow-none p-6">
+                  <h3 className="text-lg font-semibold text-[#1C1A16] mb-4">双方八字命盘</h3>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="rounded-2xl border border-[#1C1A16]/10 bg-[#FAF9F6] p-4">
+                      <p className="text-sm text-[#1C1A16]/70 mb-2">男方八字</p>
+                      <p className="font-mono text-lg text-[#1C1A16] whitespace-pre-wrap">{result.maleBazi}</p>
+                    </div>
+                    <div className="rounded-2xl border border-[#1C1A16]/10 bg-[#FAF9F6] p-4">
+                      <p className="text-sm text-[#1C1A16]/70 mb-2">女方八字</p>
+                      <p className="font-mono text-lg text-[#1C1A16] whitespace-pre-wrap">{result.femaleBazi}</p>
+                    </div>
+                  </div>
+                </Card>
+
+                <Card hover={false} className="rounded-2xl border border-[#1C1A16]/10 bg-white shadow-none p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <HeartPulse className="w-5 h-5 text-[#B7152A]" />
+                    <h3 className="text-lg font-semibold text-[#1C1A16]">AI 合婚分析</h3>
+                  </div>
+                  <p className="text-sm leading-7 text-[#1C1A16]/80 whitespace-pre-wrap">
+                    {result.analysis}
+                  </p>
+                </Card>
+
+                <Button onClick={() => setResult(null)} variant="secondary" className="w-full">
+                  重新测算
+                </Button>
               </div>
-
-              {/* 女方信息 */}
-              <div>
-                <h3 className="text-lg font-semibold text-primary mb-4">👩 女方信息</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-secondary mb-2">
-                      姓名 <span className="text-muted text-xs">（选填）</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.femaleName}
-                      onChange={(e) => setFormData({ ...formData, femaleName: e.target.value })}
-                      placeholder="女方姓名"
-                      className="w-full px-4 py-3 rounded bg-white border border-border text-primary placeholder:text-muted focus:outline-none focus:border-primary"
-                    />
-                  </div>
-                  <div />
-                  <DatePicker
-                    label="出生日期"
-                    value={formData.femaleBirthDate}
-                    onChange={(value) => setFormData({ ...formData, femaleBirthDate: value })}
-                  />
-                  <Select
-                    label="出生时辰"
-                    options={shichenOptions}
-                    value={formData.femaleBirthHour}
-                    onChange={(e) => setFormData({ ...formData, femaleBirthHour: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              {error && (
-                <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
-                  {error}
-                </div>
-              )}
-
-              <Button type="submit" className="w-full" size="lg" loading={loading}>
-                {loading ? '正在分析...' : '开始合婚测算'}
-              </Button>
-            </form>
-          </Card>
-        )}
-
-        {/* AI 智能合婚系统说明 - 表单后显示 */}
-        {!result && (
-          <div className="space-y-6 mt-8">
-            <Card>
-              <h3 className="font-heading text-xl font-semibold text-primary mb-4 text-center">
-                🔮 AI 智能合婚系统
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div className="flex items-start gap-2">
-                  <span className="text-primary text-lg">✓</span>
-                  <div>
-                    <p className="font-semibold text-primary">传统命理智慧</p>
-                    <p className="text-secondary">基于八字五行、十神、神煞等传统理论</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-primary text-lg">✓</span>
-                  <div>
-                    <p className="font-semibold text-primary">AI 深度分析</p>
-                    <p className="text-secondary">结合现代 AI 技术，多维度智能解读</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-primary text-lg">✓</span>
-                  <div>
-                    <p className="font-semibold text-primary">全面匹配度评估</p>
-                    <p className="text-secondary">性格、感情、事业、子女运势综合分析</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-primary text-lg">✓</span>
-                  <div>
-                    <p className="font-semibold text-primary">针对性建议</p>
-                    <p className="text-secondary">提供改善关系、化解矛盾的实用指导</p>
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            <Card>
-              <h3 className="font-heading text-xl font-semibold text-primary mb-4 text-center">
-                📊 合婚分析维度
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div className="p-3 bg-background-alt rounded">
-                  <p className="font-semibold text-primary mb-1">💑 性格契合度</p>
-                  <p className="text-secondary">分析双方性格特质、相处模式、互补性</p>
-                </div>
-                <div className="p-3 bg-background-alt rounded">
-                  <p className="font-semibold text-primary mb-1">❤️ 感情发展</p>
-                  <p className="text-secondary">预测感情走向、关键时间节点、感情稳定性</p>
-                </div>
-                <div className="p-3 bg-background-alt rounded">
-                  <p className="font-semibold text-primary mb-1">💼 事业财运</p>
-                  <p className="text-secondary">双方事业配合、财运互助、共同发展潜力</p>
-                </div>
-                <div className="p-3 bg-background-alt rounded">
-                  <p className="font-semibold text-primary mb-1">👶 子女运势</p>
-                  <p className="text-secondary">子女缘分、教育观念、家庭和谐度</p>
-                </div>
-              </div>
-            </Card>
-
-            <Card>
-              <h3 className="font-heading text-xl font-semibold text-primary mb-4 text-center">
-                📝 分析流程
-              </h3>
-              <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm">
-                <div className="flex-1 text-center">
-                  <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center mx-auto mb-2 font-bold">
-                    1
-                  </div>
-                  <p className="font-semibold text-primary">填写双方信息</p>
-                  <p className="text-secondary text-xs mt-1">姓名、出生日期、时辰</p>
-                </div>
-                <div className="hidden md:block text-muted">→</div>
-                <div className="flex-1 text-center">
-                  <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center mx-auto mb-2 font-bold">
-                    2
-                  </div>
-                  <p className="font-semibold text-primary">排盘计算</p>
-                  <p className="text-secondary text-xs mt-1">生成双方八字命盘</p>
-                </div>
-                <div className="hidden md:block text-muted">→</div>
-                <div className="flex-1 text-center">
-                  <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center mx-auto mb-2 font-bold">
-                    3
-                  </div>
-                  <p className="font-semibold text-primary">AI 智能分析</p>
-                  <p className="text-secondary text-xs mt-1">多维度深度解读</p>
-                </div>
-                <div className="hidden md:block text-muted">→</div>
-                <div className="flex-1 text-center">
-                  <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center mx-auto mb-2 font-bold">
-                    4
-                  </div>
-                  <p className="font-semibold text-primary">获取报告</p>
-                  <p className="text-secondary text-xs mt-1">查看详细合婚分析</p>
-                </div>
-              </div>
-            </Card>
+            )}
           </div>
-        )}
-
-        {result && (
-          <div className="space-y-6">
-            {/* 匹配度总评 */}
-            <Card>
-              <div className="text-center">
-                <h3 className="text-lg font-semibold text-primary mb-4">综合匹配度</h3>
-                <div className="text-5xl mb-2">{result.score}</div>
-                <div className="text-2xl mb-4">{result.hearts}</div>
-                <p className="text-secondary">{result.level}</p>
-              </div>
-            </Card>
-
-            {/* 双方八字 */}
-            <Card>
-              <h3 className="font-semibold text-primary mb-4">双方八字</h3>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-sm text-muted mb-1">男方八字</p>
-                  <p className="text-primary font-mono">{result.maleBazi}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted mb-1">女方八字</p>
-                  <p className="text-primary font-mono">{result.femaleBazi}</p>
-                </div>
-              </div>
-            </Card>
-
-            {/* AI 分析 */}
-            <Card>
-              <h3 className="font-semibold text-primary mb-3">💕 AI 合婚分析</h3>
-              <p className="text-secondary leading-relaxed whitespace-pre-wrap">{result.analysis}</p>
-            </Card>
-
-            <Button onClick={() => setResult(null)} variant="secondary" className="w-full">
-              重新测算
-            </Button>
-          </div>
-        )}
+        </Container>
       </div>
-          <Footer />
-</div>
+      <Footer />
+    </div>
   );
 }
