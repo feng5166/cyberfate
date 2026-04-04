@@ -2,8 +2,6 @@
 
 import { useState } from 'react';
 import { Heart, HeartPulse } from 'lucide-react';
-
-import { Footer } from '@/components/layout/Footer';
 import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -318,7 +316,6 @@ export default function MarriagePage() {
           </div>
         </Container>
       </div>
-      <Footer />
     </div>
   );
 }
