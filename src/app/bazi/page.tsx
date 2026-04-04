@@ -136,7 +136,7 @@ export default function BaziPage() {
           birthDate: formData.birthDate, birthHour: parseInt(formData.birthHour),
         }),
       });
-      const data = (await response.json()) as BaziApiResult;
+      const data = (await response.json()) as BaziApiResult & { error?: string };
       if (!response.ok) {
         if (response.status === 401) { window.location.href = '/auth/login?redirect=/bazi'; return; }
         if (data.error === 'QUOTA_EXCEEDED') { setShowQuotaModal(true); return; }
