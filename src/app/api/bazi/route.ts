@@ -80,11 +80,12 @@ export async function POST(req: NextRequest) {
     const _aiSource = (analysisObj as any)._source ?? 'unknown';
     
     // 处理时柱（可能为 null）
-    const hourPillar = baziResult.chart.hour || {
-      gan: '午',
-      zhi: '时',
-      ganWuxing: '火',
-      zhiWuxing: '火',
+    // Provide a valid placeholder pillar when hour data is unavailable.
+    const hourPillar = baziResult.chart.hour ?? {
+      gan: '甲',
+      zhi: '子',
+      ganWuxing: '木',
+      zhiWuxing: '水',
     };
     
     const pillars: PillarRecord = {
