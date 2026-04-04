@@ -2,19 +2,28 @@
 
 import type { FC } from 'react';
 import type { WuxingCount } from '@/lib/bazi/types';
+import type { LucideIcon } from 'lucide-react';
 import { Flame, Gem, Leaf, MountainSnow, Droplets } from 'lucide-react';
 
 interface WuxingChartProps {
   wuxing: WuxingCount;
 }
 
-const wuxingConfig = [
+interface WuxingConfigItem {
+  key: keyof WuxingCount;
+  label: string;
+  color: string;
+  bg: string;
+  icon: LucideIcon;
+}
+
+const wuxingConfig: ReadonlyArray<WuxingConfigItem> = [
   { key: 'metal', label: '金', color: '#7C3AED', bg: '#F3E8FF', icon: Gem },
   { key: 'wood', label: '木', color: '#047857', bg: '#D1FAE5', icon: Leaf },
   { key: 'water', label: '水', color: '#2563EB', bg: '#DBEAFE', icon: Droplets },
   { key: 'fire', label: '火', color: '#DC2626', bg: '#FEE2E2', icon: Flame },
   { key: 'earth', label: '土', color: '#D97706', bg: '#FEF3C7', icon: MountainSnow },
-] as const;
+];
 
 export const WuxingChart: FC<WuxingChartProps> = ({ wuxing }) => {
   const values = Object.values(wuxing);

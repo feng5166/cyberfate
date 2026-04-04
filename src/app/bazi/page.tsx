@@ -13,7 +13,20 @@ import { BaziChart } from '@/components/bazi/BaziChart';
 import { WuxingChart } from '@/components/bazi/WuxingChart';
 import { QuotaLimitModal } from '@/components/QuotaLimitModal';
 import { Container } from '@/components/ui/Container';
-import { Sparkles, ArrowRight, ChevronDown, Download, RefreshCw, Share2 } from 'lucide-react';
+import {
+  Sparkles,
+  ArrowRight,
+  ChevronDown,
+  Download,
+  RefreshCw,
+  Share2,
+  Brain,
+  Briefcase,
+  Coins,
+  Heart,
+  HeartPulse,
+  Users,
+} from 'lucide-react';
 import Link from 'next/link';
 import { Solar } from 'lunar-javascript';
 import { DAYMASTER_TRAITS, getNaYin, getTenGod } from '@/lib/bazi';
