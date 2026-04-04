@@ -47,6 +47,14 @@ export interface WuxingCount {
   earth: number;   // 土
 }
 
+export interface FiveDimensions {
+  career: number;
+  wealth: number;
+  relationship: number;
+  health: number;
+  studies: number;
+}
+
 // 八字计算输入
 export interface BaziInput {
   name?: string;
@@ -70,6 +78,15 @@ export interface BaziAnalysis {
   wealth: string;
   relationship: string;
   health: string;
+}
+
+export interface BaziApiResult {
+  pillars: PillarRecord;
+  wuxing: WuxingCount;
+  aiAnalysis: string;
+  fiveDimensions?: FiveDimensions;
+  birthPlace?: string;
+  _source?: string;
 }
 
 // 完整的八字响应

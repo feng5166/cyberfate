@@ -11,8 +11,10 @@ import { DatePicker } from '@/components/ui/DatePicker';
 import { BaguaSpinner } from '@/components/ui/BaguaSpinner';
 import { BaziChart } from '@/components/bazi/BaziChart';
 import { WuxingChart } from '@/components/bazi/WuxingChart';
+import { FiveDimensionChart } from '@/components/bazi/FiveDimensionChart';
 import { QuotaLimitModal } from '@/components/QuotaLimitModal';
 import { Container } from '@/components/ui/Container';
+import { CitySearch } from '@/components/ui/CitySearch';
 import {
   Sparkles,
   ArrowRight,
@@ -28,9 +30,8 @@ import {
   Users,
 } from 'lucide-react';
 import Link from 'next/link';
-import { Solar } from 'lunar-javascript';
-import { DAYMASTER_TRAITS, getNaYin, getTenGod } from '@/lib/bazi';
-import type { PillarRecord, WuxingCount } from '@/lib/bazi/types';
+import { DAYMASTER_TRAITS, WUXING_KEYS, getNaYin, getTenGod } from '@/lib/bazi';
+import type { BaziApiResult, PillarRecord, WuxingCount } from '@/lib/bazi/types';
 
 // 十二时辰选项
 const shichenOptions = [
@@ -50,12 +51,26 @@ const shichenOptions = [
   { value: '-1', label: '不知道（默认午时）' },
 ];
 
-interface BaziApiResult {
-  pillars: PillarRecord;
-  wuxing: WuxingCount;
-  aiAnalysis: string;
-  _source?: string;
-}
+type ResultTab = '命理解读' | '性格分析' | '科学客观';
+
+const resultTabs: ResultTab[] = ['命理解读', '性格分析', '科学客观'];
+
+const pillarConfigs: Array<{ key: keyof PillarRecord; label: string }> = [
+  { key: 'year', label: '年柱' },
+  { key: 'month', label: '月柱' },
+  { key: 'day', label: '日柱' },
+  { key: 'hour', label: '时柱' },
+];
+
+const wuxingDisplay: Array<{ key: keyof WuxingCount; label: string }> = [
+  { key: 'metal', label: '金' },
+  { key: 'wood', label: '木' },
+  { key: 'water', label: '水' },
+  { key: 'fire', label: '火' },
+  { key: 'earth', label: '土' },
+];
+
+const infoBlockClass = 'rounded-2xl border border-[#1C1A16]/10 bg-[#FAF9F9F6] p-5';
 
 export default function BaziPage() {
   const { status } = useSession();
@@ -64,9 +79,11 @@ export default function BaziPage() {
     gender: '',
     birthDate: '',
     birthHour: '-1',
+    birthPlace: '',
   });
   const [loading, setLoading] = useState(false);
   const [showQuotaModal, setShowQuotaModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<ResultTab>('命理解读');
 
   useEffect(() => {
     async function loadUserBirthInfo() {
@@ -76,12 +93,14 @@ export default function BaziPage() {
           if (res.ok) {
             const { data } = await res.json();
             if (data?.birthDate) {
+              const localSaved = loadBirthInfo();
               setFormData(prev => ({
                 ...prev,
                 name: data.nickname || '',
                 birthDate: data.birthDate || '',
                 birthHour: data.birthHour || '-1',
                 gender: data.gender || '',
+                birthPlace: localSaved?.birthPlace || prev.birthPlace || '',
               }));
               return;
             }
@@ -97,6 +116,7 @@ export default function BaziPage() {
           birthDate: saved.birthDate || '',
           birthHour: saved.birthHour || '-1',
           gender: saved.gender || '',
+          birthPlace: saved.birthPlace || '',
         }));
       }
     }
@@ -105,6 +125,63 @@ export default function BaziPage() {
 
   const [error, setError] = useState('');
   const [result, setResult] = useState<BaziApiResult | null>(null);
+
+  const personalityText = useMemo(() => {
+    if (!result?.aiAnalysis) return '';
+    const match = /【性格特点】([\s\S]*?)(?:\n\n【|$)/.exec(result.aiAnalysis);
+    return match ? match[1].trim() : result.aiAnalysis;
+  }, [result?.aiAnalysis]);
+
+  const tenGodRows = useMemo(() => {
+    if (!result) return [];
+    const dayGan = result.pillars.day.gan;
+    return pillarConfigs.map(({ key, label }) => {
+      const pillar = result.pillars[key];
+      return {
+        label,
+        ganZhi: `${pillar.gan}${pillar.zhi}`,
+        tenGod: key === 'day' ? '日主' : getTenGod(dayGan, pillar.gan),
+        nayin: getNaYin(pillar.gan, pillar.zhi),
+      };
+    });
+  }, [result]);
+
+  const dayMasterInsight = useMemo(() => {
+    if (!result) return null;
+    const dayPillar = result.pillars.day;
+    const dayElement = dayPillar.ganWuxing;
+    const dayKey = WUXING_KEYS[dayElement];
+    const dayValue = result.wuxing[dayKey];
+    const total = Object.values(result.wuxing).reduce((sum, value) => sum + value, 0);
+    const average = total / 5 || 1;
+    const delta = dayValue - average;
+    let level: '偏旺' | '偏弱' | '平衡' = '平衡';
+    let advice = '五行较为均衡，保持当下节奏即可。';
+    if (delta >= 1) {
+      level = '偏旺';
+      advice = '日主力量偏旺，可多做泄耗或用克制五行平衡格局。';
+    } else if (delta <= -1) {
+      level = '偏弱';
+      advice = '日主力量偏弱，适合接触能生扶日主的环境或伙伴。';
+    }
+    return {
+      summary: `${dayPillar.gan}${dayPillar.zhi} · ${dayElement}`,
+      trait: DAYMASTER_TRAITS[dayPillar.gan] || '',
+      level,
+      detail: `日主${level}（${dayValue.toFixed(1)} vs 均值 ${average.toFixed(1)}）`,
+      advice,
+    };
+  }, [result]);
+
+  const wuxingStats = useMemo(() => {
+    if (!result) return [];
+    const total = Object.values(result.wuxing).reduce((sum, value) => sum + value, 0);
+    return wuxingDisplay.map(({ key, label }) => ({
+      label,
+      value: result.wuxing[key],
+      percent: total ? Math.round((result.wuxing[key] / total) * 100) : 0,
+    }));
+  }, [result]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,7 +192,12 @@ export default function BaziPage() {
     if (!formData.birthHour) { setError('请选择出生时辰'); return; }
 
     setLoading(true);
-    saveBirthInfo({ birthDate: formData.birthDate, birthHour: formData.birthHour, gender: formData.gender });
+    saveBirthInfo({
+      birthDate: formData.birthDate,
+      birthHour: formData.birthHour,
+      gender: formData.gender,
+      birthPlace: formData.birthPlace,
+    });
 
     if (status === 'authenticated') {
       try {
@@ -133,7 +215,9 @@ export default function BaziPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: formData.name || '缘主', gender: formData.gender || 'unknown',
-          birthDate: formData.birthDate, birthHour: parseInt(formData.birthHour),
+          birthDate: formData.birthDate,
+          birthHour: parseInt(formData.birthHour),
+          birthPlace: formData.birthPlace,
         }),
       });
       const data = (await response.json()) as BaziApiResult & { error?: string };
@@ -143,6 +227,7 @@ export default function BaziPage() {
         throw new Error(data.error || '服务器错误，请稍后重试');
       }
       setResult(data);
+      setActiveTab('命理解读');
     } catch (err) {
       setError(err instanceof Error ? err.message : '未知错误');
     } finally {
@@ -219,6 +304,14 @@ export default function BaziPage() {
                 />
               </div>
 
+              <CitySearch
+                label="出生地"
+                placeholder="搜索并选择出生地"
+                value={formData.birthPlace}
+                onInputChange={(value) => setFormData(prev => ({ ...prev, birthPlace: value }))}
+                onSelect={(city) => setFormData(prev => ({ ...prev, birthPlace: city.name }))}
+              />
+
               {/* 错误提示 */}
               {error && (
                 <div className="p-3.5 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
@@ -262,26 +355,121 @@ export default function BaziPage() {
 
             {/* 分析结果 */}
             {result && !loading && (
-              <div className="space-y-8 animate-fadeIn">
-                {/* 四柱命盘 */}
-                <BaziChart pillars={result.pillars} />
-
-                {/* 五行分布 */}
-                <WuxingChart wuxing={result.wuxing} />
-
-                {/* AI 解读 */}
+              <div className="space-y-6 animate-fadeIn">
                 <Card className={cardClass}>
-                  <div className="flex items-center gap-2 mb-4">
-                    <span className="inline-block bg-[#FAF9F9F6] text-[#1C1A16]/70 text-xs px-2 py-0.5 rounded font-medium">
-                      🤖 AI 分析·解读
-                    </span>
+                  <div className="flex flex-wrap gap-4 border-b border-[#1C1A16]/10 pb-3">
+                    {resultTabs.map(tab => (
+                      <button
+                        key={tab}
+                        type="button"
+                        onClick={() => setActiveTab(tab)}
+                        className={`relative pb-2 text-sm font-medium transition-colors ${
+                          activeTab === tab ? 'text-[#1C1A16]' : 'text-[#6B7280]'
+                        }`}
+                      >
+                        {tab}
+                        {activeTab === tab && (
+                          <span className="absolute left-0 right-0 -bottom-[1px] h-0.5 bg-[#1C1A16]" />
+                        )}
+                      </button>
+                    ))}
                   </div>
-                  <div className="text-base leading-relaxed text-[#1C1A16]/70 whitespace-pre-wrap">
-                    {result.aiAnalysis}
+
+                  <div className="pt-6">
+                    {activeTab === '命理解读' && (
+                      <div className="space-y-6">
+                        <div className={infoBlockClass}>
+                          <BaziChart pillars={result.pillars} />
+                        </div>
+                        {result.fiveDimensions ? (
+                          <div className={infoBlockClass}>
+                            <FiveDimensionChart dimensions={result.fiveDimensions} />
+                          </div>
+                        ) : (
+                          <div className={infoBlockClass}>
+                            <p className="text-sm text-[#6B7280]">五维运势评分准备中，请稍后重试。</p>
+                          </div>
+                        )}
+                        <div className={infoBlockClass}>
+                          <WuxingChart wuxing={result.wuxing} />
+                        </div>
+                        <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-5">
+                          <div className="flex items-center gap-2 mb-4">
+                            <span className="inline-block bg-[#FAF9F9F6] text-[#1C1A16]/70 text-xs px-2 py-0.5 rounded font-medium">
+                              🤖 AI 分析·解读
+                            </span>
+                          </div>
+                          <div className="text-base leading-relaxed text-[#1C1A16]/70 whitespace-pre-wrap">
+                            {result.aiAnalysis}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {activeTab === '性格分析' && (
+                      <div className="space-y-6">
+                        <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-5">
+                          <h3 className="text-lg font-semibold text-[#1C1A16] mb-3">性格关键词</h3>
+                          <p className="text-sm leading-relaxed text-[#1C1A16]/70 whitespace-pre-wrap">
+                            {personalityText || 'AI 正在准备性格解读，请稍候再试。'}
+                          </p>
+                        </div>
+                        {dayMasterInsight && (
+                          <div className={infoBlockClass}>
+                            <h4 className="text-base font-semibold text-[#1C1A16] mb-2">日主特质</h4>
+                            <p className="text-lg font-medium text-[#1C1A16]">{dayMasterInsight.summary}</p>
+                            <p className="text-sm text-[#1C1A16]/70 mt-2">{dayMasterInsight.trait}</p>
+                            <div className="mt-3 text-xs text-[#6B7280]">{dayMasterInsight.detail}</div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {activeTab === '科学客观' && (
+                      <div className="space-y-6">
+                        {dayMasterInsight && (
+                          <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-5">
+                            <h4 className="text-base font-semibold text-[#1C1A16]">日主五行 & 强弱</h4>
+                            <p className="text-lg font-semibold text-[#1C1A16] mt-2">{dayMasterInsight.summary}</p>
+                            <p className="text-sm text-[#1C1A16]/70 mt-1">{dayMasterInsight.trait}</p>
+                            <p className="text-sm text-[#1C1A16]/80 mt-2">{dayMasterInsight.detail}</p>
+                            <p className="text-xs text-[#6B7280] mt-2">{dayMasterInsight.advice}</p>
+                          </div>
+                        )}
+                        <div className={infoBlockClass}>
+                          <h4 className="text-base font-semibold text-[#1C1A16]">十神格局 & 纳音</h4>
+                          <div className="mt-4 space-y-3">
+                            {tenGodRows.map(row => (
+                              <div
+                                key={row.label}
+                                className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[#1C1A16]"
+                              >
+                                <span className="w-12 text-[#6B7280]">{row.label}</span>
+                                <span className="font-semibold">{row.ganZhi}</span>
+                                <span className="text-[#1C1A16]/70">十神 {row.tenGod}</span>
+                                <span className="text-[#1C1A16]/70">纳音 {row.nayin}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div className={infoBlockClass}>
+                          <h4 className="text-base font-semibold text-[#1C1A16]">五行计数</h4>
+                          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mt-4">
+                            {wuxingStats.map(stat => (
+                              <div key={stat.label} className="text-center">
+                                <div className="text-2xl font-semibold text-[#1C1A16]">{stat.value}</div>
+                                <div className="text-xs text-[#6B7280] mt-1">
+                                  {stat.label} · {stat.percent}%
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </Card>
 
-                {/* 引导到每日运势 */}
                 <Card className={`text-center py-6 ${cardClass}`}>
                   <p className="text-[#6B7280] mb-3 text-sm">想了解今天的运势？</p>
                   <Link href="/daily">
@@ -296,7 +484,6 @@ export default function BaziPage() {
                   </Link>
                 </Card>
 
-                {/* 免责声明 */}
                 <div className="text-center text-xs text-[#6B7280] p-3 bg-white rounded-lg border border-[#1C1A16]/10">
                   ⚠️ 免责声明：本站所有命理分析仅供娱乐参考，不构成任何决策建议。命运掌握在自己手中，请理性对待。
                 </div>

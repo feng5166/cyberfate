@@ -1,141 +1,116 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-
-interface City {
-  name: string;
-  province: string;
-  timezone: string;
-}
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { MapPin } from 'lucide-react';
+import { CHINA_CITIES, type CityRecord } from '@/data/chinaCities';
 
 interface CitySearchProps {
-  value: string;
-  onChange: (city: City) => void;
-  label?: string;
+  value?: string;
   placeholder?: string;
+  label?: string;
+  onSelect: (city: CityRecord) => void;
+  onInputChange?: (value: string) => void;
 }
 
-// 简化的城市数据（实际应该从API或数据库读取）
-const CITIES: City[] = [
-  { name: '北京市', province: '北京', timezone: 'UTC+8' },
-  { name: '上海市', province: '上海', timezone: 'UTC+8' },
-  { name: '广州市', province: '广东', timezone: 'UTC+8' },
-  { name: '深圳市', province: '广东', timezone: 'UTC+8' },
-  { name: '杭州市', province: '浙江', timezone: 'UTC+8' },
-  { name: '成都市', province: '四川', timezone: 'UTC+8' },
-  { name: '重庆市', province: '重庆', timezone: 'UTC+8' },
-  { name: '天津市', province: '天津', timezone: 'UTC+8' },
-  { name: '南京市', province: '江苏', timezone: 'UTC+8' },
-  { name: '武汉市', province: '湖北', timezone: 'UTC+8' },
-  { name: '西安市', province: '陕西', timezone: 'UTC+8' },
-  { name: '郑州市', province: '河南', timezone: 'UTC+8' },
-  { name: '长沙市', province: '湖南', timezone: 'UTC+8' },
-  { name: '济南市', province: '山东', timezone: 'UTC+8' },
-  { name: '青岛市', province: '山东', timezone: 'UTC+8' },
-  { name: '大连市', province: '辽宁', timezone: 'UTC+8' },
-  { name: '沈阳市', province: '辽宁', timezone: 'UTC+8' },
-  { name: '厦门市', province: '福建', timezone: 'UTC+8' },
-  { name: '福州市', province: '福建', timezone: 'UTC+8' },
-  { name: '昆明市', province: '云南', timezone: 'UTC+8' },
-];
+function matchCities(query: string): CityRecord[] {
+  const rawQuery = query.trim();
+  if (!rawQuery) return [];
 
-// 拼音首字母映射（简化版）
-const PINYIN_MAP: Record<string, string[]> = {
-  b: ['北京', '保定'],
-  s: ['上海', '深圳', '沈阳', '石家庄'],
-  g: ['广州', '贵阳'],
-  h: ['杭州', '合肥', '哈尔滨'],
-  c: ['成都', '长沙', '长春'],
-  w: ['武汉'],
-  x: ['西安', '厦门'],
-  // ... 更多城市拼音映射
-};
+  const normalized = rawQuery.toLowerCase();
+  const collapsed = normalized.replace(/\s+/g, '');
 
-export function CitySearch({ value, onChange, label, placeholder = '输入城市名' }: CitySearchProps) {
-  const [input, setInput] = useState(value);
-  const [suggestions, setSuggestions] = useState<City[]>([]);
-  const [showDropdown, setShowDropdown] = useState(false);
+  return CHINA_CITIES.filter((city) => {
+    const pinyin = city.pinyin.toLowerCase();
+    const collapsedPinyin = pinyin.replace(/\s+/g, '');
+    const province = city.province.toLowerCase();
+
+    return (
+      city.name.includes(rawQuery) ||
+      city.province.includes(rawQuery) ||
+      pinyin.includes(normalized) ||
+      province.includes(normalized) ||
+      collapsedPinyin.includes(collapsed)
+    );
+  }).slice(0, 8);
+}
+
+export function CitySearch({
+  value = '',
+  placeholder = '输入城市或拼音',
+  label,
+  onSelect,
+  onInputChange,
+}: CitySearchProps) {
+  const [query, setQuery] = useState(value);
+  const [isOpen, setIsOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  // 点击外部关闭下拉框
+  const suggestions = useMemo(() => matchCities(query), [query]);
+
+  useEffect(() => setQuery(value), [value]);
+
+  useEffect(() => {
+    if (query.trim() && suggestions.length) {
+      setIsOpen(true);
+    } else {
+      setIsOpen(false);
+    }
+  }, [query, suggestions.length]);
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
-        setShowDropdown(false);
+        setIsOpen(false);
       }
     }
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // 搜索逻辑（防抖）
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!input.trim()) {
-        setSuggestions([]);
-        return;
-      }
+  const handleInput = (value: string) => {
+    setQuery(value);
+    onInputChange?.(value);
+  };
 
-      const query = input.toLowerCase();
-      const matches = CITIES.filter(city => {
-        // 城市名匹配
-        if (city.name.includes(input) || city.province.includes(input)) {
-          return true;
-        }
-        // 简单拼音匹配
-        for (const [letter, names] of Object.entries(PINYIN_MAP)) {
-          if (query.startsWith(letter) && names.some(name => city.name.includes(name))) {
-            return true;
-          }
-        }
-        return false;
-      }).slice(0, 10); // 限制 10 条
-
-      setSuggestions(matches);
-      setShowDropdown(matches.length > 0);
-    }, 300); // 300ms 防抖
-
-    return () => clearTimeout(timer);
-  }, [input]);
-
-  const handleSelect = (city: City) => {
-    setInput(city.name);
-    setShowDropdown(false);
-    onChange(city);
+  const handleSelect = (city: CityRecord) => {
+    setQuery(city.name);
+    setIsOpen(false);
+    onSelect(city);
+    onInputChange?.(city.name);
   };
 
   return (
-    <div ref={wrapperRef} className="relative space-y-2">
+    <div ref={wrapperRef} className="flex flex-col gap-1">
       {label && (
-        <label className="block text-sm font-medium text-secondary">
-          {label}
-        </label>
+        <label className="text-sm font-medium text-[#1C1A16]">{label}</label>
       )}
-      <input
-        type="text"
-        placeholder={placeholder}
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        onFocus={() => suggestions.length > 0 && setShowDropdown(true)}
-        className="w-full px-4 py-3 rounded bg-white border border-border text-primary placeholder:text-muted focus:outline-none focus:border-primary transition-colors"
-      />
-      
-      {/* 下拉候选列表 */}
-      {showDropdown && suggestions.length > 0 && (
-        <div className="absolute z-10 w-full mt-1 bg-white border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto">
-          {suggestions.map((city, index) => (
-            <button
-              key={index}
-              type="button"
-              onClick={() => handleSelect(city)}
-              className="w-full px-4 py-2 text-left hover:bg-primary/10 transition-colors flex justify-between items-center"
-            >
-              <span className="text-primary">{city.name}</span>
-              <span className="text-xs text-muted">{city.province}</span>
-            </button>
-          ))}
-        </div>
-      )}
+      <div className="relative">
+        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1C1A16]/50" size={16} />
+        <input
+          type="text"
+          value={query}
+          placeholder={placeholder}
+          onFocus={() => suggestions.length > 0 && setIsOpen(true)}
+          onChange={(event) => handleInput(event.target.value)}
+          className="w-full h-11 rounded-xl border border-[#1C1A16]/15 bg-white pl-10 pr-3 text-sm text-[#1C1A16] placeholder:text-[#1C1A16]/40 focus:border-[#1C1A16]/40 focus:ring-2 focus:ring-[#1C1A16]/10 outline-none transition-all"
+        />
+        {isOpen && suggestions.length > 0 && (
+          <div className="absolute left-0 right-0 z-20 mt-2 max-h-64 overflow-y-auto rounded-2xl border border-black/5 bg-white p-1 shadow-xl">
+            {suggestions.map((city) => (
+              <button
+                key={`${city.name}-${city.province}`}
+                type="button"
+                onClick={() => handleSelect(city)}
+                className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm text-[#1C1A16] hover:bg-[#F5F3EF]"
+              >
+                <span className="font-medium">{city.name}</span>
+                <span className="text-xs text-[#6B7280]">{city.province}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

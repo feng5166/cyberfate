@@ -4,10 +4,14 @@ export interface UserBirthInfo {
   birthDate: string;
   birthHour: string; // "-1" to "11"
   gender: string;
+  birthPlace?: string;
   savedAt: string;
 }
 
-export function saveBirthInfo(info: Pick<UserBirthInfo, 'birthDate' | 'birthHour' | 'gender'>): void {
+type SaveBirthInfoParams = Pick<UserBirthInfo, 'birthDate' | 'birthHour' | 'gender'> &
+  Partial<Pick<UserBirthInfo, 'birthPlace'>>;
+
+export function saveBirthInfo(info: SaveBirthInfoParams): void {
   try {
     const data: UserBirthInfo = { ...info, savedAt: new Date().toISOString() };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));

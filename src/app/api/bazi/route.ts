@@ -2,10 +2,10 @@ import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { calculateBazi } from '@/lib/bazi';
+import { calculateBazi, WUXING_KEYS } from '@/lib/bazi';
 import { generateBaziAnalysis } from '@/lib/ai';
 import { useBaziQuota } from '@/lib/quota';
-import type { BaziAnalysis } from '@/lib/bazi/types';
+import type { BaziAnalysis, FiveDimensions, PillarRecord, WuxingCount } from '@/lib/bazi/types';
 
 // 时辰映射：数字 -> 时辰名称（不含 -1，单独处理）
 const HOUR_TO_SHICHEN: Record<number, string> = {
@@ -29,6 +29,7 @@ const requestSchema = z.object({
   gender: z.enum(['male', 'female', 'unknown']).optional(),
   birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '日期格式应为 YYYY-MM-DD'),
   birthHour: z.number().int().min(-1).max(11),
+  birthPlace: z.string().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -86,36 +87,42 @@ export async function POST(req: NextRequest) {
       zhiWuxing: '火',
     };
     
+    const pillars: PillarRecord = {
+      year: {
+        gan: baziResult.chart.year.gan,
+        zhi: baziResult.chart.year.zhi,
+        ganWuxing: baziResult.chart.year.ganWuxing,
+        zhiWuxing: baziResult.chart.year.zhiWuxing,
+      },
+      month: {
+        gan: baziResult.chart.month.gan,
+        zhi: baziResult.chart.month.zhi,
+        ganWuxing: baziResult.chart.month.ganWuxing,
+        zhiWuxing: baziResult.chart.month.zhiWuxing,
+      },
+      day: {
+        gan: baziResult.chart.day.gan,
+        zhi: baziResult.chart.day.zhi,
+        ganWuxing: baziResult.chart.day.ganWuxing,
+        zhiWuxing: baziResult.chart.day.zhiWuxing,
+      },
+      hour: {
+        gan: hourPillar.gan,
+        zhi: hourPillar.zhi,
+        ganWuxing: hourPillar.ganWuxing,
+        zhiWuxing: hourPillar.zhiWuxing,
+      },
+    };
+
+    const fiveDimensions = calculateFiveDimensions(pillars, baziResult.wuxing);
+
     // 转换为前端期望的格式
     return Response.json({
-      pillars: {
-        year: {
-          gan: baziResult.chart.year.gan,
-          zhi: baziResult.chart.year.zhi,
-          ganWuxing: baziResult.chart.year.ganWuxing,
-          zhiWuxing: baziResult.chart.year.zhiWuxing,
-        },
-        month: {
-          gan: baziResult.chart.month.gan,
-          zhi: baziResult.chart.month.zhi,
-          ganWuxing: baziResult.chart.month.ganWuxing,
-          zhiWuxing: baziResult.chart.month.zhiWuxing,
-        },
-        day: {
-          gan: baziResult.chart.day.gan,
-          zhi: baziResult.chart.day.zhi,
-          ganWuxing: baziResult.chart.day.ganWuxing,
-          zhiWuxing: baziResult.chart.day.zhiWuxing,
-        },
-        hour: {
-          gan: hourPillar.gan,
-          zhi: hourPillar.zhi,
-          ganWuxing: hourPillar.ganWuxing,
-          zhiWuxing: hourPillar.zhiWuxing,
-        },
-      },
+      pillars,
       wuxing: baziResult.wuxing,
       aiAnalysis,
+      fiveDimensions,
+      birthPlace: input.birthPlace,
       _source: _aiSource,
     });
   } catch (error) {
@@ -183,5 +190,26 @@ function generateFallbackAnalysis(bazi: ReturnType<typeof calculateBazi>): BaziA
     wealth: '财运方面需要稳健理财，避免冲动消费，适当投资可带来回报。',
     relationship: '感情方面宜真诚相待，注重沟通和理解，感情运势稳定。',
     health: '注意劳逸结合，保持良好作息，适当运动有助于身心健康。',
+  };
+}
+
+function calculateFiveDimensions(pillars: PillarRecord, wuxing: WuxingCount): FiveDimensions {
+  const total = Object.values(wuxing).reduce((sum, value) => sum + value, 0) || 1;
+  const average = total / 5 || 1;
+  const clampScore = (value: number) => Math.max(15, Math.min(95, Math.round(value)));
+  const ratio = (key: keyof WuxingCount) => (wuxing[key] - average) / average;
+  const deviation = Math.sqrt(
+    Object.values(wuxing).reduce((sum, value) => sum + Math.pow(value - average, 2), 0) / 5
+  );
+  const dayElement = pillars.day.ganWuxing;
+  const dayKey = WUXING_KEYS[dayElement];
+  const dayBoost = ratio(dayKey) * 8;
+
+  return {
+    career: clampScore(65 + ratio('wood') * 12 + ratio('metal') * 8 + dayBoost),
+    wealth: clampScore(60 + ratio('earth') * 12 + ratio('metal') * 6 - ratio('fire') * 4),
+    relationship: clampScore(62 + ratio('water') * 10 + ratio('fire') * 8 + ratio('wood') * 4),
+    health: clampScore(85 - deviation * 12),
+    studies: clampScore(64 + ratio('water') * 10 + ratio('wood') * 6 + dayBoost * 0.5),
   };
 }
