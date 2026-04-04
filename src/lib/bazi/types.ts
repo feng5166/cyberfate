@@ -105,6 +105,7 @@ export interface DailyRatings {
   wealth: number;     // 1-5
   love: number;       // 1-5
   health: number;     // 1-5
+  studies: number;    // 1-5
 }
 
 // 幸运信息

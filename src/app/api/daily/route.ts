@@ -62,12 +62,14 @@ export async function POST(req: NextRequest) {
       fortune = generateFallbackFortune(baziResult.dayMaster, dayGanzhi, targetDate);
     }
     
+    const normalizedRatings = normalizeRatings(fortune.ratings, fortune.overall);
+
     return Response.json({
       date: targetDate,
       lunarDate,
       dayGanzhi,
       overall: fortune.overall,
-      ratings: fortune.ratings,
+      ratings: normalizedRatings,
       suitable: fortune.suitable,
       avoid: fortune.avoid,
       lucky: fortune.lucky,
@@ -170,16 +172,17 @@ function generateFallbackFortune(dayMaster: string, dayGanzhi: string, targetDat
       wealth: Math.min(5, Math.max(1, overall + Math.floor(seededRandom(seed, 2) * 2) - 1)),
       love: Math.min(5, Math.max(1, overall + Math.floor(seededRandom(seed, 3) * 2) - 1)),
       health: Math.min(5, Math.max(1, overall + Math.floor(seededRandom(seed, 4) * 2))),
+      studies: Math.min(5, Math.max(1, overall + Math.floor(seededRandom(seed, 6) * 2) - 1)),
     },
     suitable,
     avoid,
     lucky: {
       color: colors[Math.floor(seededRandom(seed, 5) * colors.length)],
       numbers: [
-        Math.floor(seededRandom(seed, 6) * 9) + 1,
-        Math.floor(seededRandom(seed, 7) * 9) + 1
+        Math.floor(seededRandom(seed, 7) * 9) + 1,
+        Math.floor(seededRandom(seed, 8) * 9) + 1
       ],
-      direction: directions[Math.floor(seededRandom(seed, 8) * directions.length)],
+      direction: directions[Math.floor(seededRandom(seed, 9) * directions.length)],
     },
     advice,
   };

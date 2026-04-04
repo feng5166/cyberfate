@@ -98,12 +98,13 @@ export const DAILY_SYSTEM_PROMPT = `你是赛博命理师的每日运势引擎�
 - suitable 固定输出3条，每条5-8字
 - avoid 固定输出2条，每条5-8字
 - advice 限40字，不重复 suitable/avoid 内容
+- ratings 必须包含 career、wealth、love、health、studies 五项（studies 表示学业运）
 - lucky.color 只写颜色名，不加解释
 
 ## 输出示例
 {
   "overall": 4,
-  "ratings": { "career": 4, "wealth": 3, "love": 4, "health": 5 },
+  "ratings": { "career": 4, "wealth": 3, "love": 4, "health": 5, "studies": 3 },
   "suitable": ["签署合同", "拜访客户", "学习充电"],
   "avoid": ["冒险投资", "与人争执"],
   "lucky": { "color": "青绿", "numbers": [3, 8], "direction": "东方" },

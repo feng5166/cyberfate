@@ -130,7 +130,7 @@ export async function generateDailyFortune(
   dayGanzhi: string
 ): Promise<{
   overall: number;
-  ratings: { career: number; wealth: number; love: number; health: number };
+  ratings: { career: number; wealth: number; love: number; health: number; studies: number };
   suitable: string[];
   avoid: string[];
   lucky: { color: string; numbers: number[]; direction: string };
@@ -192,7 +192,7 @@ export async function generateDailyFortune(
 function generateFallbackDailyFortune() {
   return {
     overall: 3,
-    ratings: { career: 3, wealth: 3, love: 3, health: 4 },
+    ratings: { career: 3, wealth: 3, love: 3, health: 4, studies: 3 },
     suitable: ['日常工作', '学习提升', '与朋友交流'],
     avoid: ['重大决策', '冒险投资'],
     lucky: { color: '蓝色', numbers: [3, 6], direction: '东方' },

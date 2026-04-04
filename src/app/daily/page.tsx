@@ -41,6 +41,7 @@ interface DailyResult {
     wealth: number;
     love: number;
     health: number;
+    studies: number;
   };
   suitable: string[];
   avoid: string[];
@@ -333,6 +334,7 @@ export default function DailyPage() {
                 <ProgressBar label="财富运" value={result.ratings.wealth * 20} color="bg-element-metal-text" />
                 <ProgressBar label="感情运" value={result.ratings.love * 20} color="bg-element-earth-text" />
                 <ProgressBar label="健康运" value={result.ratings.health * 20} color="bg-element-water-text" />
+                <ProgressBar label="学业运" value={result.ratings.studies * 20} color="bg-element-wood-text" />
               </div>
             </Card>
 
