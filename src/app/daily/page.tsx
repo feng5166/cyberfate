@@ -330,11 +330,11 @@ export default function DailyPage() {
             <Card hover={false}>
               <h4 className="text-sm font-medium text-brand-black mb-4">📊 五维运势</h4>
               <div className="space-y-4">
-                <ProgressBar label="事业运" value={result.ratings.career * 20} color="bg-element-fire-text" />
-                <ProgressBar label="财富运" value={result.ratings.wealth * 20} color="bg-element-metal-text" />
-                <ProgressBar label="感情运" value={result.ratings.love * 20} color="bg-element-earth-text" />
-                <ProgressBar label="健康运" value={result.ratings.health * 20} color="bg-element-water-text" />
-                <ProgressBar label="学业运" value={result.ratings.studies * 20} color="bg-element-wood-text" />
+                <ProgressBar label="事业运" value={result.ratings.career * 20} color="bg-[#DC2626]" />
+                <ProgressBar label="财富运" value={result.ratings.wealth * 20} color="bg-[#7C3AED]" />
+                <ProgressBar label="感情运" value={result.ratings.love * 20} color="bg-[#D97706]" />
+                <ProgressBar label="健康运" value={result.ratings.health * 20} color="bg-[#2563EB]" />
+                <ProgressBar label="学业运" value={result.ratings.studies * 20} color="bg-[#059669]" />
               </div>
             </Card>
 
