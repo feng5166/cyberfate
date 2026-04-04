@@ -27,6 +27,16 @@ const requestSchema = z.object({
   targetDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '目标日期格式应为 YYYY-MM-DD').optional(),
 });
 
+function normalizeRatings(ratings: any, overall: number) {
+  return {
+    career: ratings?.career ?? 3,
+    wealth: ratings?.wealth ?? 3,
+    love: ratings?.love ?? 3,
+    health: ratings?.health ?? 3,
+    studies: ratings?.studies ?? 3,
+  };
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
