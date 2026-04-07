@@ -76,8 +76,8 @@ export function Header({
             )}
 
             {/* Logo - 衬线体 */}
-            <Link href="/" className="font-display text-lg md:text-xl text-[#1C1A16] tracking-widest hover:opacity-70 transition-opacity">
-              CYBERFATE
+            <Link href="/" className="font-display text-lg md:text-xl text-red-600 tracking-widest hover:opacity-70 transition-opacity">
+              🔒 CYBERFATE (FIXED)
             </Link>
           </div>
 
