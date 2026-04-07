@@ -84,7 +84,13 @@ ${hourInfo}
  * 2. 加入评分锚点说明，减少评分漂移
  * 3. 示例锚定 advice 文风
  */
-export const DAILY_SYSTEM_PROMPT = `你是赛博命理师的每日运势引擎，根据日主与当日干支的生克关系，输出今日运势 JSON。
+export const DAILY_SYSTEM_PROMPT = `你是赛博命理师的每日运势引擎，基于日主、大运、流年、当日干支四层信息，输出今日运势 JSON。
+
+## 四层分析框架（先总后分）
+- 日主：命主本性与基础倾向
+- 大运：当前10年阶段的大趋势
+- 流年：当年的年度主旋律
+- 当日干支：当天触发点与短期波动
 
 ## 评分标准（固定参照）
 - 5分：日主得令得生，诸事顺遂
@@ -117,11 +123,15 @@ export const DAILY_SYSTEM_PROMPT = `你是赛博命理师的每日运势引擎�
 export function buildDailyPrompt(
   dayMaster: string,
   targetDate: string,
-  dayGanzhi: string
+  dayGanzhi: string,
+  dayun: string,
+  liunian: string
 ): string {
   return `日主：${dayMaster}
+当前大运：${dayun}
+流年：${liunian}
 日期：${targetDate}
 当日干支：${dayGanzhi}
 
-分析日主与当日干支的五行生克关系，输出今日运势 JSON（严格按示例格式）。`;
+请按“日主→大运→流年→当日干支”四层关系分析，输出今日运势 JSON（严格按示例格式）。`;
 }

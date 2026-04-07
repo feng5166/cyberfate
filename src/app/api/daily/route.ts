@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
-import { calculateBazi, getDayGanzhi, getLunarDate } from '@/lib/bazi';
+import { calculateBazi, getCurrentDayun, getDayGanzhi, getLunarDate, getYearGanzhi } from '@/lib/bazi';
 import { generateDailyFortune } from '@/lib/ai';
 
 // 时辰映射：数字 -> 时辰名称
@@ -22,6 +22,7 @@ const HOUR_TO_SHICHEN: Record<number, string> = {
 
 // 请求体验证
 const requestSchema = z.object({
+  gender: z.enum(['male', 'female']).optional(),
   birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '日期格式应为 YYYY-MM-DD'),
   birthHour: z.number().int().min(-1).max(11),
   targetDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '目标日期格式应为 YYYY-MM-DD').optional(),
@@ -50,7 +51,7 @@ export async function POST(req: NextRequest) {
     
     // 1. 计算用户八字，获取日主
     const baziResult = calculateBazi({
-      gender: 'male', // 每日运势不需要性别
+      gender: input.gender || 'male', // 兼容旧请求，默认 male
       birthDate: input.birthDate,
       birthHour: shichen as '子时' | '丑时' | '寅时' | '卯时' | '辰时' | '巳时' | '午时' | '未时' | '申时' | '酉时' | '戌时' | '亥时' | '不知道',
     });
@@ -58,6 +59,9 @@ export async function POST(req: NextRequest) {
     // 2. 获取目标日期的干支
     const dayGanzhi = getDayGanzhi(targetDate);
     const lunarDate = getLunarDate(targetDate);
+    const dayunResult = getCurrentDayun(input.birthDate, input.gender || 'male');
+    const dayun = `${dayunResult.gan}${dayunResult.zhi}`;
+    const liunian = getYearGanzhi(targetDate);
     
     // 3. 生成运势（可能失败，优雅降级）
     let fortune;
@@ -65,7 +69,9 @@ export async function POST(req: NextRequest) {
       fortune = await generateDailyFortune(
         baziResult.dayMaster,
         targetDate,
-        dayGanzhi
+        dayGanzhi,
+        dayun,
+        liunian
       );
     } catch (aiError) {
       console.error('AI fortune failed:', aiError);

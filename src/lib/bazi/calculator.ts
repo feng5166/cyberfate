@@ -1,6 +1,8 @@
 import { Solar } from 'lunar-javascript';
-import type { BaziInput, BaziResult, BaziChart, Pillar, WuxingCount, TianGan, DiZhi, ShiChen } from './types';
+import type { BaziInput, BaziResult, BaziChart, Pillar, WuxingCount, TianGan, DiZhi, ShiChen, Gender, DayunResult } from './types';
 import { TIANGAN_WUXING, DIZHI_WUXING, SHICHEN_DIZHI, WUXING_KEYS, TIANGAN_LIST, DIZHI_LIST } from './constants';
+
+const YANG_GAN_SET = new Set<TianGan>(['甲', '丙', '戊', '庚', '壬']);
 
 /**
  * 构建一个柱（年/月/日/时柱）
@@ -132,6 +134,105 @@ export function getDayGanzhi(date: string): string {
   const eightChar = lunar.getEightChar();
   
   return `${eightChar.getDayGan()}${eightChar.getDayZhi()}`;
+}
+
+/**
+ * 获取指定日期的流年干支（年柱）
+ */
+export function getYearGanzhi(date: string): string {
+  const [year, month, day] = date.split('-').map(Number);
+  const solar = Solar.fromYmd(year, month, day);
+  const lunar = solar.getLunar();
+  const eightChar = lunar.getEightChar();
+
+  return `${eightChar.getYearGan()}${eightChar.getYearZhi()}`;
+}
+
+function getAgeByBirthDate(birthDate: Date, now: Date): number {
+  let age = now.getFullYear() - birthDate.getFullYear();
+  const monthDiff = now.getMonth() - birthDate.getMonth();
+  const dayDiff = now.getDate() - birthDate.getDate();
+
+  if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+    age--;
+  }
+
+  return Math.max(0, age);
+}
+
+function getFallbackDayun(): DayunResult {
+  try {
+    const today = new Date();
+    const solar = Solar.fromYmd(today.getFullYear(), today.getMonth() + 1, today.getDate());
+    const lunar = solar.getLunar();
+    const eightChar = lunar.getEightChar();
+    const gan = eightChar.getYearGan() as TianGan;
+    const zhi = eightChar.getYearZhi() as DiZhi;
+
+    return {
+      gan,
+      zhi,
+      wuxing: TIANGAN_WUXING[gan],
+    };
+  } catch {
+    return {
+      gan: '甲',
+      zhi: '子',
+      wuxing: '木',
+    };
+  }
+}
+
+/**
+ * 获取当前大运（简化版）
+ * - 以月柱干支为起点
+ * - 阳男阴女顺行，阴男阳女逆行
+ * - 起运年龄采用 3-5 岁简化估算，每步 10 年
+ */
+export function getCurrentDayun(birthDate: string, gender: Gender): DayunResult {
+  try {
+    const [year, month, day] = birthDate.split('-').map(Number);
+    if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
+      return getFallbackDayun();
+    }
+
+    const solar = Solar.fromYmd(year, month, day);
+    const lunar = solar.getLunar();
+    const eightChar = lunar.getEightChar();
+
+    const yearGan = eightChar.getYearGan() as TianGan;
+    const monthGan = eightChar.getMonthGan() as TianGan;
+    const monthZhi = eightChar.getMonthZhi() as DiZhi;
+
+    const isYearYang = YANG_GAN_SET.has(yearGan);
+    const forward = (isYearYang && gender === 'male') || (!isYearYang && gender === 'female');
+
+    const birth = new Date(year, month - 1, day);
+    const now = new Date();
+    const age = getAgeByBirthDate(birth, now);
+
+    // 起运年龄简化到 3-5 岁，避免固定值导致偏差过大
+    const startAge = 3 + ((month + day) % 3);
+    const offset = age < startAge ? 0 : Math.floor((age - startAge) / 10) + 1;
+
+    const monthGanIndex = TIANGAN_LIST.indexOf(monthGan);
+    const monthZhiIndex = DIZHI_LIST.indexOf(monthZhi);
+    if (monthGanIndex < 0 || monthZhiIndex < 0) {
+      return getFallbackDayun();
+    }
+
+    const step = forward ? offset : -offset;
+    const gan = TIANGAN_LIST[(monthGanIndex + step + 10 * 100) % 10];
+    const zhi = DIZHI_LIST[(monthZhiIndex + step + 12 * 100) % 12];
+
+    return {
+      gan,
+      zhi,
+      wuxing: TIANGAN_WUXING[gan],
+    };
+  } catch {
+    return getFallbackDayun();
+  }
 }
 
 /**

@@ -127,7 +127,9 @@ function generateFallbackBaziAnalysis(result: BaziResult): BaziAnalysis {
 export async function generateDailyFortune(
   dayMaster: string,
   targetDate: string,
-  dayGanzhi: string
+  dayGanzhi: string,
+  dayun = '未知',
+  liunian = '未知'
 ): Promise<{
   overall: number;
   ratings: { career: number; wealth: number; love: number; health: number; studies: number };
@@ -139,7 +141,7 @@ export async function generateDailyFortune(
 }> {
   
   // 1. 构建缓存 key（日主 + 日期）
-  const cacheKey = `daily:${dayMaster}:${targetDate}`;
+  const cacheKey = `daily:${dayMaster}:${dayun}:${liunian}:${targetDate}`;
   
   // 2. 尝试从 Redis 读取
   try {
@@ -158,7 +160,7 @@ export async function generateDailyFortune(
     return { ...generateFallbackDailyFortune(), _source: 'fallback' };
   }
 
-  const prompt = buildDailyPrompt(dayMaster, targetDate, dayGanzhi);
+  const prompt = buildDailyPrompt(dayMaster, targetDate, dayGanzhi, dayun, liunian);
 
   const apiResult = await callExternalAPI(
     async () => {

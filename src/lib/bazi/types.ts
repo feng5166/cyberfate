@@ -70,6 +70,13 @@ export interface BaziResult {
   dayMaster: string;  // 日主，如 "丙火"
 }
 
+// 大运结果
+export interface DayunResult {
+  gan: TianGan;
+  zhi: DiZhi;
+  wuxing: WuXing;
+}
+
 // AI 解读结果
 export interface BaziAnalysis {
   dayMasterAnalysis: string;
