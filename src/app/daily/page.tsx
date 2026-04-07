@@ -110,6 +110,21 @@ const wuxingItems = [
   { key: 'water', label: '水', icon: '💧', variant: 'water' as const, desc: '智慧' },
 ];
 
+// 日期切换
+const dateOptions = [
+  { value: '0', label: '昨天' },
+  { value: '1', label: '今天' },
+  { value: '2', label: '明天' },
+  { value: '3', label: '后天' },
+];
+const dayOffsetTexts: Record<string, { short: string; loading: string }> = {
+  '0': { short: '昨日', loading: '正在推算昨日运势...' },
+  '1': { short: '今日', loading: '正在推算今日运势...' },
+  '2': { short: '明日', loading: '正在推算明日运势...' },
+  '3': { short: '后日', loading: '正在推算后日运势...' },
+};
+const getDayOffsetText = (offset: string) => dayOffsetTexts[offset] ?? dayOffsetTexts['1'];
+
 export default function DailyPage() {
   const [formData, setFormData] = useState({ birthDate: '', birthHour: '', gender: '' });
   const [loading, setLoading] = useState(false);
@@ -181,14 +196,8 @@ export default function DailyPage() {
     }
   };
 
-  // 日期切换
-  const dateOptions = [
-    { value: '0', label: '昨天' },
-    { value: '1', label: '今天' },
-    { value: '2', label: '明天' },
-    { value: '3', label: '后天' },
-  ];
   const [dayOffset, setDayOffset] = useState('1');
+  const currentDayText = getDayOffsetText(dayOffset);
 
   const handleDateChange = (offset: string) => {
     setDayOffset(offset);
@@ -196,6 +205,7 @@ export default function DailyPage() {
     d.setDate(d.getDate() + parseInt(offset));
     const dateStr = d.toISOString().split('T')[0];
     if (formData.birthDate && formData.birthHour) {
+      setResult(null);
       fetchFortune(formData.birthDate, formData.birthHour, dateStr);
     }
   };
@@ -222,7 +232,7 @@ export default function DailyPage() {
               ]} value={formData.birthDate} onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })} required />
               <Select label="出生时辰" options={shichenOptions} value={formData.birthHour} onChange={(e) => setFormData({ ...formData, birthHour: e.target.value })} required />
               {error && <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">{error}</div>}
-              <Button type="submit" variant="primary" loading={loading} className="w-full">查看今日运势</Button>
+              <Button type="submit" variant="primary" loading={loading} className="w-full">查看{currentDayText.short}运势</Button>
             </form>
           </Card>
         )}
@@ -239,13 +249,16 @@ export default function DailyPage() {
         {loading && (
           <Card hover={false} className="max-w-[500px mx-auto flex flex-col items-center py-12">
             <Sparkles className="w-8 h-8 animate-spin text-brand-light" />
-            <p className="mt-4 text-brand-black font-medium">正在推算今日运势...</p>
+            <p className="mt-4 text-brand-black font-medium">{currentDayText.loading}</p>
           </Card>
         )}
 
         {/* ===== 结果展示 ===== */}
         {result && !loading && (
           <div className="space-y-6 pb-20 md:pb-26 animate-fadeIn">
+            <div className="text-center text-sm text-brand-gray">
+              当前查询日期：<span className="text-brand-black font-medium">{result.date}</span>
+            </div>
             {/* 运势概览大卡片 */}
             <Card hover={false}>
               <div className="flex flex-col sm:flex-row items-center gap-8">
