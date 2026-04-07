@@ -156,3 +156,12 @@ body {
 .animate-fadeIn {
   animation: fadeIn 0.4s ease both;
 }
+
+/* 强制 Header 固定定位 */
+header {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 9999 !important;
+}
