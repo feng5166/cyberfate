@@ -275,7 +275,7 @@ export default function DailyPage() {
                     <p>农历：{result.lunarDate} · {result.dayGanzhi}日</p>
                   </div>
                   <div className="mt-3 inline-block px-3 py-1.5 rounded-full text-sm font-medium bg-brand-bg">
-                    {currentDayText.short}总评：<span className="text-brand-black font-medium">{result.overall >= 4 ? '吉' : result.overall >= 3 ? '平' : '待调整'}</span>
+                    {currentDayText.short}总评：<span className="text-brand-black font-medium">{result.overall >= 4 ? '吉' : result.overall >= 3 ? '平' : '需谨慎'}</span>
                   </div>
                 </div>
               </div>
