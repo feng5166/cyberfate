@@ -54,7 +54,7 @@ export function Header({
   return (
     <header
       className={`border-b border-[#1C1A16]/10 ${
-        isHomePage ? 'bg-white/95 backdrop-blur-sm' : 'bg-white/90 backdrop-blur-md'
+        isHomePage ? 'bg-[rgba(255,255,255,0.95)]' : 'bg-[rgba(255,255,255,0.9)]'
       }`}
     >
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-20">

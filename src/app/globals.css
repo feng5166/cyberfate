@@ -123,11 +123,7 @@ body {
 }
 
 /* ===== 全局过渡 ===== */
-* {
-  transition-property: color, background-color, border-color, opacity, transform, box-shadow;
-  transition-duration: 200ms;
-  transition-timing-function: ease;
-}
+/* 注意：不要给 * 加 transition，会导致 fixed 定位元素渲染异常 */
 
 /* 自定义滚动条 */
 ::-webkit-scrollbar {
