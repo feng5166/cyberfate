@@ -1,23 +1,26 @@
 'use client';
-import { Footer } from '@/components/layout/Footer';
-import { Container } from '@/components/ui/Container';
-;
 
+import { Footer } from '@/components/layout/Footer';
+import { Clock3, Hash } from 'lucide-react';
 import { useState } from 'react';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { Sparkles } from 'lucide-react';
 
 const methods = [
-  { id: 'time', name: '时间起卦', desc: '根据当前时间自动起卦' },
-  { id: 'number', name: '数字起卦', desc: '输入两个数字起卦' },
-];
+  { id: 'time', name: '时间起卦', desc: '根据当前时间自动起卦', icon: Clock3 },
+  { id: 'number', name: '数字起卦', desc: '输入两个数字起卦', icon: Hash },
+] as const;
+
+type MeihuaResult = {
+  gua: string;
+  guaName: string;
+  analysis: string;
+  _source?: string;
+};
 
 export default function MeihuaPage() {
   const [method, setMethod] = useState('');
   const [numbers, setNumbers] = useState({ num1: '', num2: '' });
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<MeihuaResult | null>(null);
 
   const handleDraw = async () => {
     setLoading(true);
@@ -25,7 +28,7 @@ export default function MeihuaPage() {
       const res = await fetch('/api/meihua/draw', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ method, numbers })
+        body: JSON.stringify({ method, numbers }),
       });
       const data = await res.json();
       setResult(data);
@@ -37,94 +40,138 @@ export default function MeihuaPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <Sparkles className="w-8 h-8" />
-            <h1 className="font-heading text-3xl font-bold text-primary">梅花易数</h1>
-          </div>
-          <p className="text-secondary">快速起卦，洞察吉凶</p>
-        </div>
+    <div className="relative min-h-screen bg-[#FAF9F6] text-[#1C1A16]">
+      <div
+        className="pointer-events-none fixed inset-0 -z-10 opacity-[0.025]"
+        aria-hidden="true"
+        style={{
+          backgroundImage:
+            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='none' stroke='%231C1A16' stroke-width='1'/%3E%3Cpath d='M50 5 A45 45 0 0 1 50 95 A22.5 22.5 0 0 0 50 50 A22.5 22.5 0 0 1 50 5' fill='%231C1A16'/%3E%3Cpath d='M50 95 A45 45 0 0 1 50 5 A22.5 22.5 0 0 0 50 50 A22.5 22.5 0 0 1 50 95' fill='%23FFFFFF'/%3E%3Ccircle cx='50' cy='27' r='5' fill='%23FFFFFF' stroke='%231C1A16' stroke-width='1'/%3E%3Ccircle cx='50' cy='73' r='5' fill='%231C1A16'/%3E%3C/svg%3E\")",
+          backgroundSize: '140px 140px',
+          backgroundRepeat: 'repeat',
+        }}
+      />
+
+      <main className="px-4 pb-20 md:pb-24">
+        <section className="mx-auto max-w-4xl pt-30 pb-20 text-center animate-fadeIn">
+          <div className="mx-auto mb-6 h-px w-9 bg-gradient-to-r from-transparent via-[#1C1A16] to-transparent opacity-15" />
+          <h1 className="font-display text-[clamp(44px,6vw,60px)] leading-none tracking-[0.625rem] text-[#1C1A16]">
+            梅花易数
+          </h1>
+          <p className="mt-6 text-[17px] tracking-[0.3125rem] text-[rgba(28,26,22,0.42)]">
+            以象观变 见微知著
+          </p>
+          <blockquote className="mx-auto mt-8 max-w-[560px] text-[13px] leading-relaxed text-[rgba(28,26,22,0.42)]">
+            <p className="font-['Noto_Serif_SC',serif]">
+              「寂然不动，感而遂通天下之故。」
+            </p>
+          </blockquote>
+        </section>
 
         {!method && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {methods.map((m) => (
-              <Card 
-                key={m.id}
-                className="cursor-pointer hover:border-primary transition-colors"
-                onClick={() => setMethod(m.id)}
-              >
-                <div className="text-center p-6">
-                  <h3 className="text-lg font-semibold text-primary mb-2">{m.name}</h3>
-                  <p className="text-sm text-secondary">{m.desc}</p>
-                </div>
-              </Card>
-            ))}
-          </div>
+          <section className="mx-auto grid max-w-4xl grid-cols-1 gap-5 md:grid-cols-2 animate-fadeIn">
+            {methods.map((m, index) => {
+              const Icon = m.icon;
+              return (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => setMethod(m.id)}
+                  className="group rounded-2xl border border-[#1C1A16]/8 bg-white p-8 text-left shadow-none transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover"
+                  style={{ animationDelay: `${index * 90}ms` }}
+                >
+                  <Icon className="h-8 w-8 text-[#1C1A16]/75" strokeWidth={1.6} />
+                  <h3 className="mt-5 text-[17px] font-semibold text-[#1C1A16]">{m.name}</h3>
+                  <p className="mt-2 text-[13px] leading-relaxed text-[rgba(28,26,22,0.42)]">{m.desc}</p>
+                </button>
+              );
+            })}
+          </section>
         )}
 
         {method && !result && (
-          <Card>
-            <div className="space-y-6">
-              {method === 'number' && (
-                <div className="grid grid-cols-2 gap-4">
+          <section className="mx-auto max-w-3xl animate-fadeIn">
+            <div className="rounded-2xl border border-[#1C1A16]/8 bg-white p-8 md:p-10">
+              {method === 'number' ? (
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-secondary mb-2">第一个数字</label>
+                    <label className="mb-1.5 block text-sm font-medium text-[#1C1A16]/70">第一个数字</label>
                     <input
                       type="number"
                       value={numbers.num1}
                       onChange={(e) => setNumbers({ ...numbers, num1: e.target.value })}
-                      className="w-full px-4 py-3 rounded bg-white border border-border text-primary focus:outline-none focus:border-primary"
+                      className="h-12 w-full rounded-lg border border-[#1C1A16]/15 bg-white px-4 text-sm text-[#1C1A16] outline-none transition-all focus:border-[#1C1A16]/30 focus:ring-2 focus:ring-[#1C1A16]/10"
                       placeholder="1-100"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-secondary mb-2">第二个数字</label>
+                    <label className="mb-1.5 block text-sm font-medium text-[#1C1A16]/70">第二个数字</label>
                     <input
                       type="number"
                       value={numbers.num2}
                       onChange={(e) => setNumbers({ ...numbers, num2: e.target.value })}
-                      className="w-full px-4 py-3 rounded bg-white border border-border text-primary focus:outline-none focus:border-primary"
+                      className="h-12 w-full rounded-lg border border-[#1C1A16]/15 bg-white px-4 text-sm text-[#1C1A16] outline-none transition-all focus:border-[#1C1A16]/30 focus:ring-2 focus:ring-[#1C1A16]/10"
                       placeholder="1-100"
                     />
                   </div>
                 </div>
+              ) : (
+                <div className="rounded-xl border border-[#1C1A16]/8 bg-[#FAF9F6] px-4 py-3 text-sm text-[rgba(28,26,22,0.42)]">
+                  将以当前时间自动起卦。
+                </div>
               )}
-              <div className="flex gap-3">
-                <Button variant="secondary" onClick={() => setMethod('')} className="flex-1">
+
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={() => setMethod('')}
+                  className="inline-flex h-[50px] flex-1 items-center justify-center rounded-lg border border-[#1C1A16]/15 bg-transparent px-[38px] text-[13px] tracking-[0.08em] text-[#1C1A16] transition-all duration-200 hover:border-[#1C1A16]/30 hover:bg-[#FAF9F6]"
+                >
                   返回
-                </Button>
-                <Button onClick={handleDraw} loading={loading} className="flex-1">
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDraw}
+                  disabled={loading}
+                  className="inline-flex h-[50px] flex-1 items-center justify-center rounded-lg bg-[#1C1A16] px-[38px] text-[13px] tracking-[0.08em] text-white shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#2A2621] disabled:cursor-not-allowed disabled:opacity-60"
+                >
                   {loading ? '起卦中...' : '开始起卦'}
-                </Button>
+                </button>
               </div>
             </div>
-          </Card>
+          </section>
         )}
 
         {result && (
-          <div className="space-y-6">
-            <Card>
-              <h3 className="font-semibold text-primary mb-4">卦象</h3>
-              <div className="text-center space-y-2">
-                <div className="text-2xl font-mono">{result.gua}</div>
-                <div className="text-lg text-primary">{result.guaName}</div>
+          <section className="mx-auto max-w-3xl space-y-5 animate-fadeIn">
+            <div className="rounded-2xl border border-[#1C1A16]/8 bg-white p-8 text-center md:p-10">
+              <h3 className="mb-6 text-sm tracking-[0.2em] text-[rgba(28,26,22,0.42)]">卦象</h3>
+              <div className="space-y-3">
+                <div className="text-3xl font-mono tracking-wide text-[#1C1A16]">{result.gua}</div>
+                <div className="text-xl text-[#1C1A16]">{result.guaName}</div>
               </div>
-            </Card>
+            </div>
 
-            <Card>
-              <h3 className="font-semibold text-primary mb-3">🔮 卦象解读</h3>
-              <p className="text-secondary leading-relaxed whitespace-pre-wrap">{result.analysis}</p>
-            </Card>
+            <div className="rounded-2xl border border-[#1C1A16]/8 bg-white p-8 md:p-10">
+              <h3 className="mb-4 font-display text-2xl tracking-[0.08em] text-[#1C1A16]">卦象解读</h3>
+              <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-[rgba(28,26,22,0.7)]">{result.analysis}</p>
+            </div>
 
-            <Button onClick={() => { setResult(null); setMethod(''); }} variant="secondary" className="w-full">
+            <button
+              type="button"
+              onClick={() => {
+                setResult(null);
+                setMethod('');
+              }}
+              className="inline-flex h-[50px] w-full items-center justify-center rounded-lg border border-[#1C1A16]/15 bg-transparent px-[38px] text-[13px] tracking-[0.08em] text-[#1C1A16] transition-all duration-200 hover:border-[#1C1A16]/30 hover:bg-[#FAF9F6]"
+            >
               重新起卦
-            </Button>
-          </div>
+            </button>
+          </section>
         )}
-      </div>
-          <Footer />
-</div>
+      </main>
+
+      <Footer />
+    </div>
   );
 }
