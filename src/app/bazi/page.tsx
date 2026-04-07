@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
@@ -234,7 +234,7 @@ function scoreValue(score?: number): number {
   return Math.max(0, Math.min(100, Math.round(score)));
 }
 
-export default function BaziPage() {
+function BaziPageContent() {
   const { status } = useSession();
   const searchParams = useSearchParams();
   const recordId = searchParams.get('record');
@@ -875,5 +875,13 @@ export default function BaziPage() {
 
       <div className="hidden" data-version="20260407-v3"></div>
     </div>
+  );
+}
+
+export default function BaziPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#FAF9F6] flex items-center justify-center"><BaguaSpinner size={48} /></div>}>
+      <BaziPageContent />
+    </Suspense>
   );
 }
