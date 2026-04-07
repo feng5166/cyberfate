@@ -275,7 +275,7 @@ export default function DailyPage() {
                     <p>农历：{result.lunarDate} · {result.dayGanzhi}日</p>
                   </div>
                   <div className="mt-3 inline-block px-3 py-1.5 rounded-full text-sm font-medium bg-brand-bg">
-                    今日总评：<span className="text-brand-black font-medium">{result.overall >= 4 ? '吉' : result.overall >= 3 ? '平' : '待调整'}</span>
+                    {currentDayText.short}总评：<span className="text-brand-black font-medium">{result.overall >= 4 ? '吉' : result.overall >= 3 ? '平' : '待调整'}</span>
                   </div>
                 </div>
               </div>
@@ -351,10 +351,10 @@ export default function DailyPage() {
               </div>
             </Card>
 
-            {/* AI 今日建议 */}
+            {/* AI 运势建议 */}
             <Card hover={false} className="bg-yellow-50 border-yellow-200">
               <h4 className="text-sm font-medium text-yellow-700 mb-2 flex items-center gap-1.5">
-                💡 AI 今日建议
+                💡 AI {currentDayText.short}建议
               </h4>
               <p className="text-sm leading-relaxed text-gray-700">{result.advice}</p>
             </Card>
