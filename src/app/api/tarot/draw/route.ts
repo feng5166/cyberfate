@@ -8,19 +8,42 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { drawRandomCards, getCardImageUrl } from '@/data/tarot';
 
-const spreadConfig: Record<'single' | 'three' | 'celtic', { count: number; positions?: string[] }> = {
+type TarotSpread = 'single' | 'three' | 'celtic' | 'moonlight' | 'mirror';
+
+const spreadConfig: Record<TarotSpread, { count: number; positions?: string[] }> = {
   single: { count: 1 },
   three: { count: 3, positions: ['过去', '现在', '未来'] },
   celtic: {
     count: 10,
-    positions: ['现状', '挑战', '根源', '过去', '目标', '未来', '自我', '环境', '希望/恐惧', '结果'],
+    positions: [
+      '①现状',
+      '②挑战',
+      '③意识',
+      '④根源',
+      '⑤希望/恐惧',
+      '⑥近期发展',
+      '⑦可能结果',
+      '⑧外部环境',
+      '⑨心态信念',
+      '⑩最终结局',
+    ],
+  },
+  moonlight: {
+    count: 3,
+    positions: ['身心灵', '潜意识', '指引'],
+  },
+  mirror: {
+    count: 5,
+    positions: ['现状', '阻碍', '建议', '风险', 'Outcome'],
   },
 };
 
-const DAILY_LIMITS = {
+const DAILY_LIMITS: Record<TarotSpread, number> = {
   single: 3,
   three: 1,
   celtic: 0, // VIP only
+  moonlight: 1,
+  mirror: 1,
 };
 
 interface CachedTarotReading {
@@ -31,7 +54,7 @@ interface CachedTarotReading {
   caution: string;
 }
 
-async function checkQuota(userId: string, spread: string): Promise<{ allowed: boolean; remaining: number }> {
+async function checkQuota(userId: string, spread: TarotSpread): Promise<{ allowed: boolean; remaining: number }> {
   const today = new Date().toISOString().split('T')[0];
 
   let quota = await prisma.usageQuota.findUnique({
@@ -44,13 +67,13 @@ async function checkQuota(userId: string, spread: string): Promise<{ allowed: bo
     });
   }
 
-  const limit = DAILY_LIMITS[spread as keyof typeof DAILY_LIMITS] ?? 0;
+  const limit = DAILY_LIMITS[spread];
   const used = 0; // spread === 'single' ? quota.tarotSingleCount : spread === 'three' ? quota.tarotThreeCount : 0;
 
   return { allowed: used < limit, remaining: Math.max(0, limit - used) };
 }
 
-async function useQuota(userId: string, spread: string) {
+async function useQuota(userId: string, spread: TarotSpread) {
   const today = new Date().toISOString().split('T')[0];
 
   if (spread === 'single') {
@@ -61,7 +84,7 @@ async function useQuota(userId: string, spread: string) {
       },
       create: { userId, date: today /* , tarotSingleCount: 1 */ },
     });
-  } else if (spread === 'three') {
+  } else if (spread === 'three' || spread === 'moonlight' || spread === 'mirror') {
     await prisma.usageQuota.upsert({
       where: { userId_date: { userId, date: today } },
       update: {
@@ -79,8 +102,10 @@ async function isVip(userId: string): Promise<boolean> {
   return !!subscription;
 }
 
-function resolveSpread(value: unknown): 'single' | 'three' | 'celtic' {
-  if (value === 'single' || value === 'three' || value === 'celtic') return value;
+function resolveSpread(value: unknown): TarotSpread {
+  if (value === 'single' || value === 'three' || value === 'celtic' || value === 'moonlight' || value === 'mirror') {
+    return value;
+  }
   return 'three';
 }
 
@@ -88,10 +113,20 @@ function safeQuestion(value: unknown): string {
   return typeof value === 'string' ? value.trim().slice(0, 200) : '';
 }
 
-function spreadLabel(spread: 'single' | 'three' | 'celtic'): string {
+function spreadLabel(spread: TarotSpread): string {
   if (spread === 'single') return '单张牌';
   if (spread === 'celtic') return '凯尔特十字';
+  if (spread === 'moonlight') return '月光模式·柔和内省';
+  if (spread === 'mirror') return '镜像模式·多角度透视';
   return '经典三张牌（过去/现在/未来）';
+}
+
+function quotaLabel(spread: TarotSpread): string {
+  if (spread === 'single') return '单张牌';
+  if (spread === 'moonlight') return '月光模式';
+  if (spread === 'mirror') return '镜像模式';
+  if (spread === 'celtic') return '凯尔特十字';
+  return '三张牌';
 }
 
 function isCachedTarotReading(value: unknown): value is CachedTarotReading {
@@ -132,7 +167,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(
           {
             error: 'QUOTA_EXCEEDED',
-            message: `今日${spread === 'single' ? '单张牌' : '三张牌'}次数已用完`,
+            message: `今日${quotaLabel(spread)}次数已用完`,
             remaining: 0,
           },
           { status: 429 }
@@ -173,6 +208,7 @@ export async function POST(req: NextRequest) {
   }
 
   const promptInput: TarotReadingPromptInput = {
+    spread,
     spreadName: spreadLabel(spread),
     question,
     cards: cardsWithImages.map((card, index) => ({

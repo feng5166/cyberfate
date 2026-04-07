@@ -145,23 +145,71 @@ export interface TarotReadingPromptCard {
 }
 
 export interface TarotReadingPromptInput {
+  spread: TarotSpread;
   spreadName: string;
   question?: string;
   cards: TarotReadingPromptCard[];
 }
 
-export const TAROT_READING_SYSTEM_PROMPT = `你是赛博命理师的塔罗解读引擎，负责输出结构化占卜结果。
+export type TarotSpread = 'single' | 'three' | 'celtic' | 'moonlight' | 'mirror';
+
+interface TarotPromptProfile {
+  cardMeaningsRange: string;
+  overallNarrativeRange: string;
+  detailedReadingRange: string;
+  toneInstruction: string;
+}
+
+function getTarotPromptProfile(spread: TarotSpread): TarotPromptProfile {
+  if (spread === 'celtic') {
+    return {
+      cardMeaningsRange: '50-80 字',
+      overallNarrativeRange: '900-1000 字',
+      detailedReadingRange: '260-380 字',
+      toneInstruction: '语气稳重深入、结构清晰，强调因果脉络与阶段变化，不做绝对化预言。',
+    };
+  }
+  if (spread === 'mirror') {
+    return {
+      cardMeaningsRange: '60-100 字',
+      overallNarrativeRange: '620-720 字',
+      detailedReadingRange: '180-260 字',
+      toneInstruction: '语气深度犀利、一针见血、不回避困难真相、给出具体行动方向。',
+    };
+  }
+  if (spread === 'moonlight') {
+    return {
+      cardMeaningsRange: '50-80 字',
+      overallNarrativeRange: '420-500 字',
+      detailedReadingRange: '140-220 字',
+      toneInstruction:
+        '语气温柔治愈、关注内在感受与情感、避免直接判断、多用“或许”“可能”“邀请你觉察”。',
+    };
+  }
+  return {
+    cardMeaningsRange: '50-80 字',
+    overallNarrativeRange: '420-500 字',
+    detailedReadingRange: '140-220 字',
+    toneInstruction: '语气温和、克制、启发性强，强调现实可执行性，避免绝对化承诺。',
+  };
+}
+
+export function buildTarotReadingSystemPrompt(input: Pick<TarotReadingPromptInput, 'spread' | 'spreadName'>): string {
+  const profile = getTarotPromptProfile(input.spread);
+
+  return `你是赛博命理师的塔罗解读引擎，负责输出结构化占卜结果。
+
+当前牌阵：${input.spreadName}
 
 ## 输出规则（严格）
 - 只输出 JSON，不要 markdown，不要解释，不要前言
 - cardMeanings 数组长度必须与输入牌张数一致
-- 每条 cardMeanings 控制在 50-80 字，需结合位置与正逆位
-- overallNarrative 控制在 100-150 字，串联所有牌形成完整叙事
-- detailedReading 控制在 200-300 字，必须结合用户问题
+- 每条 cardMeanings 控制在 ${profile.cardMeaningsRange}，必须结合“位置 + 正逆位 + 关键词”
+- overallNarrative 控制在 ${profile.overallNarrativeRange}，串联所有牌形成完整叙事
+- detailedReading 控制在 ${profile.detailedReadingRange}，必须结合用户问题
 - advice 控制在 40-80 字，给出可执行建议
 - caution 控制在 20-40 字，提示风险或注意事项
-- 全部字段总字数控制在 500 字以内
-- 语气温和、克制、启发性强，避免绝对化承诺
+- ${profile.toneInstruction}
 
 ## 输出格式
 {
@@ -171,6 +219,12 @@ export const TAROT_READING_SYSTEM_PROMPT = `你是赛博命理师的塔罗解读
   "advice": "...",
   "caution": "..."
 }`;
+}
+
+export const TAROT_READING_SYSTEM_PROMPT = buildTarotReadingSystemPrompt({
+  spread: 'three',
+  spreadName: '经典三张牌（过去/现在/未来）',
+});
 
 export function buildTarotReadingPrompt(input: TarotReadingPromptInput): string {
   const cardsText = input.cards

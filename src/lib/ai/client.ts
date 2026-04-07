@@ -3,12 +3,13 @@ import {
   buildDailyPrompt,
   buildMeihuaDecisionPrompt,
   buildTarotReadingPrompt,
+  buildTarotReadingSystemPrompt,
   BAZI_SYSTEM_PROMPT,
   DAILY_SYSTEM_PROMPT,
   MEIHUA_DECISION_SYSTEM_PROMPT,
-  TAROT_READING_SYSTEM_PROMPT,
   type MeihuaDecisionPromptInput,
   type TarotReadingPromptInput,
+  type TarotSpread,
 } from './prompts';
 import type { BaziResult, BaziAnalysis } from '../bazi/types';
 import { callExternalAPI, getEnvVar } from '../utils/api-wrapper';
@@ -246,13 +247,16 @@ function buildFallbackTarotReading(input: TarotReadingPromptInput): TarotReading
 function normalizeTarotReading(
   raw: unknown,
   fallback: TarotReadingResult,
-  cardCount: number
+  cardCount: number,
+  spread: TarotSpread
 ): TarotReadingResult {
   const data = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
   const cardMeaningsRaw = Array.isArray(data.cardMeanings) ? data.cardMeanings : [];
+  const cardMeaningLimit = spread === 'mirror' ? 150 : 120;
+  const limits = getTarotTextLimits(spread);
 
   const cardMeanings = cardMeaningsRaw
-    .map((item) => (typeof item === 'string' ? item.replace(/\s+/g, ' ').trim().slice(0, 120) : ''))
+    .map((item) => (typeof item === 'string' ? item.replace(/\s+/g, ' ').trim().slice(0, cardMeaningLimit) : ''))
     .filter(Boolean)
     .slice(0, cardCount);
 
@@ -261,11 +265,47 @@ function normalizeTarotReading(
 
   return {
     cardMeanings: normalizedCardMeanings,
-    overallNarrative: safeText(data.overallNarrative, fallback.overallNarrative, 180),
-    detailedReading: safeText(data.detailedReading, fallback.detailedReading, 340),
-    advice: safeText(data.advice, fallback.advice, 120),
-    caution: safeText(data.caution, fallback.caution, 80),
+    overallNarrative: safeText(data.overallNarrative, fallback.overallNarrative, limits.overallNarrative),
+    detailedReading: safeText(data.detailedReading, fallback.detailedReading, limits.detailedReading),
+    advice: safeText(data.advice, fallback.advice, limits.advice),
+    caution: safeText(data.caution, fallback.caution, limits.caution),
   };
+}
+
+function getTarotTextLimits(spread: TarotSpread): {
+  overallNarrative: number;
+  detailedReading: number;
+  advice: number;
+  caution: number;
+} {
+  if (spread === 'celtic') {
+    return {
+      overallNarrative: 1300,
+      detailedReading: 520,
+      advice: 160,
+      caution: 100,
+    };
+  }
+  if (spread === 'mirror') {
+    return {
+      overallNarrative: 860,
+      detailedReading: 420,
+      advice: 140,
+      caution: 100,
+    };
+  }
+  return {
+    overallNarrative: 620,
+    detailedReading: 340,
+    advice: 120,
+    caution: 80,
+  };
+}
+
+function getTarotMaxTokens(spread: TarotSpread): number {
+  if (spread === 'celtic') return 2600;
+  if (spread === 'mirror') return 1800;
+  return 1200;
 }
 
 export async function generateTarotReading(
@@ -280,14 +320,18 @@ export async function generateTarotReading(
 
   try {
     const prompt = buildTarotReadingPrompt(input);
-    const text = await callDeepSeek(TAROT_READING_SYSTEM_PROMPT, prompt, 900);
+    const systemPrompt = buildTarotReadingSystemPrompt({
+      spread: input.spread,
+      spreadName: input.spreadName,
+    });
+    const text = await callDeepSeek(systemPrompt, prompt, getTarotMaxTokens(input.spread));
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       return { ...fallback, _source: 'fallback' };
     }
 
     const parsed = JSON.parse(jsonMatch[0]) as unknown;
-    const normalized = normalizeTarotReading(parsed, fallback, input.cards.length);
+    const normalized = normalizeTarotReading(parsed, fallback, input.cards.length, input.spread);
     return { ...normalized, _source: 'deepseek' };
   } catch (error) {
     console.warn('[AI 塔罗解读] 生成失败，使用降级结果', error);
