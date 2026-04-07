@@ -298,7 +298,7 @@ export default function TarotPage() {
         className="text-center"
       >
         <p className="mb-2 text-xs tracking-[0.14em] text-[#1C1A16]/55">{card.position || activePositions[idx]}</p>
-        <div className={`card-container mx-auto ${cardSizeClass}`}>
+        <div className="card-container mx-auto w-full max-w-[150px]">
           <div className={`card-inner ${isFlipped ? 'flipped' : ''}`}>
             <div
               className="card-front border border-[#1C1A16]/15"
@@ -693,21 +693,14 @@ export default function TarotPage() {
       <style jsx>{`
         .card-container {
           perspective: 1000px;
-          width: fit-content;
-          overflow: hidden;
-          border-radius: 0.85rem;
         }
 
         .card-inner {
           position: relative;
-          width: inherit;
+          width: 100%;
           aspect-ratio: 2 / 3;
-          max-width: 150px;
-          max-height: 225px;
           transition: transform 0.6s;
           transform-style: preserve-3d;
-          border-radius: inherit;
-          overflow: hidden;
         }
 
         .card-inner.flipped {
