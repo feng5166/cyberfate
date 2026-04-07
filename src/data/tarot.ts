@@ -28,7 +28,8 @@ export function drawRandomCards(count: number): Array<TarotCard & { orientation:
   const shuffled = [...allCards].sort(() => Math.random() - 0.5);
   return shuffled.slice(0, count).map(card => ({
     ...card,
-    orientation: Math.random() > 0.5 ? 'upright' : 'reversed'
+    // 正位 70%，逆位 30%
+    orientation: Math.random() < 0.7 ? 'upright' : 'reversed'
   }));
 }
 

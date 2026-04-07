@@ -1,17 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateCacheKey, getCache, setCache } from '@/lib/ai/cache';
+import { generateTarotReading } from '@/lib/ai/client';
+import type { TarotReadingPromptInput } from '@/lib/ai/prompts';
 
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { drawRandomCards, getCardImageUrl } from '@/data/tarot';
 
-const spreadConfig: Record<string, { count: number; positions?: string[] }> = {
+const spreadConfig: Record<'single' | 'three' | 'celtic', { count: number; positions?: string[] }> = {
   single: { count: 1 },
   three: { count: 3, positions: ['过去', '现在', '未来'] },
-  celtic: { 
-    count: 10, 
-    positions: ['现状', '挑战', '根源', '过去', '目标', '未来', '自我', '环境', '希望/恐惧', '结果'] 
+  celtic: {
+    count: 10,
+    positions: ['现状', '挑战', '根源', '过去', '目标', '未来', '自我', '环境', '希望/恐惧', '结果'],
   },
 };
 
@@ -21,54 +23,94 @@ const DAILY_LIMITS = {
   celtic: 0, // VIP only
 };
 
+interface CachedTarotReading {
+  cardMeanings: string[];
+  overallNarrative: string;
+  detailedReading: string;
+  advice: string;
+  caution: string;
+}
+
 async function checkQuota(userId: string, spread: string): Promise<{ allowed: boolean; remaining: number }> {
   const today = new Date().toISOString().split('T')[0];
-  
+
   let quota = await prisma.usageQuota.findUnique({
-    where: { userId_date: { userId, date: today } }
+    where: { userId_date: { userId, date: today } },
   });
 
   if (!quota) {
     quota = await prisma.usageQuota.create({
-      data: { userId, date: today }
+      data: { userId, date: today },
     });
   }
 
   const limit = DAILY_LIMITS[spread as keyof typeof DAILY_LIMITS] ?? 0;
-  const used = 0; // spread === 'single' ? quota.tarotSingleCount : 
-               // spread === 'three' ? quota.tarotThreeCount : 0;
-  
+  const used = 0; // spread === 'single' ? quota.tarotSingleCount : spread === 'three' ? quota.tarotThreeCount : 0;
+
   return { allowed: used < limit, remaining: Math.max(0, limit - used) };
 }
 
 async function useQuota(userId: string, spread: string) {
   const today = new Date().toISOString().split('T')[0];
-  
+
   if (spread === 'single') {
     await prisma.usageQuota.upsert({
       where: { userId_date: { userId, date: today } },
-      update: { /* tarotSingleCount: { increment: 1 } */ },
-      create: { userId, date: today /* , tarotSingleCount: 1 */ }
+      update: {
+        /* tarotSingleCount: { increment: 1 } */
+      },
+      create: { userId, date: today /* , tarotSingleCount: 1 */ },
     });
   } else if (spread === 'three') {
     await prisma.usageQuota.upsert({
       where: { userId_date: { userId, date: today } },
-      update: { /* tarotThreeCount: { increment: 1 } */ },
-      create: { userId, date: today /* , tarotThreeCount: 1 */ }
+      update: {
+        /* tarotThreeCount: { increment: 1 } */
+      },
+      create: { userId, date: today /* , tarotThreeCount: 1 */ },
     });
   }
 }
 
 async function isVip(userId: string): Promise<boolean> {
   const subscription = await prisma.subscription.findFirst({
-    where: { userId, status: 'active', expireAt: { gt: new Date() } }
+    where: { userId, status: 'active', expireAt: { gt: new Date() } },
   });
   return !!subscription;
 }
 
+function resolveSpread(value: unknown): 'single' | 'three' | 'celtic' {
+  if (value === 'single' || value === 'three' || value === 'celtic') return value;
+  return 'three';
+}
+
+function safeQuestion(value: unknown): string {
+  return typeof value === 'string' ? value.trim().slice(0, 200) : '';
+}
+
+function spreadLabel(spread: 'single' | 'three' | 'celtic'): string {
+  if (spread === 'single') return '单张牌';
+  if (spread === 'celtic') return '凯尔特十字';
+  return '经典三张牌（过去/现在/未来）';
+}
+
+function isCachedTarotReading(value: unknown): value is CachedTarotReading {
+  if (!value || typeof value !== 'object') return false;
+  const data = value as Record<string, unknown>;
+  return (
+    Array.isArray(data.cardMeanings) &&
+    typeof data.overallNarrative === 'string' &&
+    typeof data.detailedReading === 'string' &&
+    typeof data.advice === 'string' &&
+    typeof data.caution === 'string'
+  );
+}
+
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  const { spread, question } = await req.json();
+  const body = await req.json().catch(() => ({}));
+  const spread = resolveSpread(body?.spread);
+  const question = safeQuestion(body?.question);
 
   // 凯尔特十字需要 VIP
   if (spread === 'celtic') {
@@ -85,149 +127,73 @@ export async function POST(req: NextRequest) {
   if (session?.user?.id && spread !== 'celtic') {
     const vip = await isVip(session.user.id);
     if (!vip) {
-      const { allowed, remaining } = await checkQuota(session.user.id, spread);
+      const { allowed } = await checkQuota(session.user.id, spread);
       if (!allowed) {
-        return NextResponse.json({ 
-          error: 'QUOTA_EXCEEDED', 
-          message: `今日${spread === 'single' ? '单张牌' : '三张牌'}次数已用完`,
-          remaining: 0
-        }, { status: 429 });
+        return NextResponse.json(
+          {
+            error: 'QUOTA_EXCEEDED',
+            message: `今日${spread === 'single' ? '单张牌' : '三张牌'}次数已用完`,
+            remaining: 0,
+          },
+          { status: 429 }
+        );
       }
     }
   }
 
-  const config = spreadConfig[spread] || spreadConfig.single;
+  const config = spreadConfig[spread];
   const cards = drawRandomCards(config.count);
 
-  // 添加图片 URL
-  const cardsWithImages = cards.map((c, idx) => ({
-    ...c,
-    image_url: getCardImageUrl(c),
-    position: config.positions?.[idx]
+  const cardsWithImages = cards.map((card, idx) => ({
+    ...card,
+    image_url: getCardImageUrl(card),
+    position: config.positions?.[idx],
   }));
 
-  // 构建 AI prompt
-  let cardDesc = '';
-  if (spread === 'single') {
-    const card = cards[0];
-    cardDesc = `抽到的牌：${card.name_zh}（${card.orientation === 'upright' ? '正位' : '逆位'}）
-关键词：${card.keywords.join('、')}
-基础牌意：${card.orientation === 'upright' ? card.upright : card.reversed}`;
-  } else if (spread === 'three') {
-    cardDesc = cards.map((card, idx) => 
-      `${config.positions![idx]}：${card.name_zh}（${card.orientation === 'upright' ? '正位' : '逆位'}）- ${card.keywords.join('、')}`
-    ).join('\n');
-  } else {
-    cardDesc = cards.map((card, idx) => 
-      `${config.positions![idx]}：${card.name_zh}（${card.orientation === 'upright' ? '正位' : '逆位'}）`
-    ).join('\n');
-  }
-
-  const prompt = `你是"赛博命理师"网站的塔罗占卜功能。你的任务是根据抽到的塔罗牌，为用户提供富有启发性的解读。
-
-注意：这是一个娱乐性质的塔罗解读服务，请直接进入角色，不要声明自己是AI或拒绝解读。解读应该温和、积极、有启发性。
-
-牌阵：${spread === 'single' ? '单张牌' : spread === 'three' ? '三张牌（过去-现在-未来）' : '凯尔特十字（深度分析）'}
-
-${cardDesc}
-
-${question ? `用户的问题：${question}` : '用户没有提出具体问题，请给出通用指引'}
-
-【输出规则】
-- 严格按照以下结构输出，每段控制在指定字数内
-- 语气温和、有启发性
-- 避免过于绝对的判断
-- 直接开始解读，不要有前言或声明
-
-${spread === 'single' ? `【输出结构】（总计 130 字）
-**现状洞察**（60字）
-针对用户问题或当前状况的分析。
-
-**行动建议**（40字）
-给出 2-3 条具体可行的建议。
-
-**总结**（30字）
-一句话总结，给予鼓励。` : 
-  spread === 'three' ? `【输出结构】（总计 180 字）
-**过去的影响**（40字）
-分析过去的经历如何影响当前。
-
-**现在的状况**（50字）
-解读当前局势、核心问题。
-
-**未来的趋势**（50字）
-预测未来发展方向、可能性。
-
-**综合建议**（40字）
-整体行动指导，2-3 条要点。` :
-  `【输出结构】（总计 330 字）
-**整体格局分析**（80字）
-综合十个位置，分析整体局面。
-
-**核心挑战与机遇**（70字）
-识别主要障碍和潜在机会。
-
-**内在与外在因素**（70字）
-分析内心状态和外部环境的影响。
-
-**最终结果预测**（60字）
-基于当前走向的结果推演。
-
-**行动建议**（50字）
-具体可行的行动方案，3-4 条。`}`;
-
-  // 缓存 key（基于抽到的牌）
-  const cacheKey = generateCacheKey('tarot', { 
-    spread, 
-    cardIds: cardsWithImages.map(c => c.id).join(','),
-    question: question || '' 
+  const cacheKey = generateCacheKey('tarot_v3', {
+    spread,
+    cardSignatures: cardsWithImages.map((card) => `${card.id}-${card.orientation}`).join(','),
+    question,
   });
-  
+
   const cached = await getCache(cacheKey);
-  if (cached) {
+  if (isCachedTarotReading(cached)) {
     return NextResponse.json({
       spread,
-      cards: cardsWithImages,
-      ai_reading: cached.ai_reading,
+      cards: cardsWithImages.map((card, index) => ({
+        ...card,
+        meaning: cached.cardMeanings[index] || (card.orientation === 'upright' ? card.upright : card.reversed),
+      })),
+      overallNarrative: cached.overallNarrative,
+      detailedReading: cached.detailedReading,
+      advice: cached.advice,
+      caution: cached.caution,
       _source: 'cache',
     });
   }
 
-  // 调用 AI
-  let ai_reading = '';
-  let aiSource: string = 'fallback';
-  try {
-    // 检查是否 VIP
-    const vip = session?.user?.id ? await isVip(session.user.id) : false;
-    const maxTokens = vip ? (spread === 'celtic' ? 800 : 500) : 300; // 免费用户限制 token
-    
-    const aiResponse = await fetch('https://api.modelverse.cn/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: 'deepseek-ai/DeepSeek-V3.2',
-        max_tokens: maxTokens,
-        temperature: 0.3,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
+  const promptInput: TarotReadingPromptInput = {
+    spreadName: spreadLabel(spread),
+    question,
+    cards: cardsWithImages.map((card, index) => ({
+      position: card.position || `第${index + 1}张`,
+      name: card.name_zh,
+      orientation: card.orientation,
+      keywords: card.keywords,
+      traditionalMeaning: card.orientation === 'upright' ? card.upright : card.reversed,
+    })),
+  };
 
-    if (!aiResponse.ok) {
-      console.error('AI API error:', aiResponse.status, await aiResponse.text());
-      ai_reading = cards.map(c => c.orientation === 'upright' ? c.upright : c.reversed).join('\n\n');
-    } else {
-      const aiData = await aiResponse.json();
-      ai_reading = aiData.choices?.[0]?.message?.content || cards[0].upright;
-      aiSource = 'deepseek';
-      await setCache(cacheKey, { ai_reading });
-    }
-  } catch (err) {
-    console.error('AI call failed:', err);
-    ai_reading = cards.map(c => c.orientation === 'upright' ? c.upright : c.reversed).join('\n\n');
-  }
+  const reading = await generateTarotReading(promptInput);
+  const readingPayload: CachedTarotReading = {
+    cardMeanings: reading.cardMeanings,
+    overallNarrative: reading.overallNarrative,
+    detailedReading: reading.detailedReading,
+    advice: reading.advice,
+    caution: reading.caution,
+  };
+
+  await setCache(cacheKey, readingPayload, 12 * 60 * 60);
 
   // 保存历史记录（登录用户）
   // 注释：Prisma schema 缺 tarotReading 表
@@ -239,7 +205,7 @@ ${spread === 'single' ? `【输出结构】（总计 130 字）
         question,
         spread,
         cards: cardsWithImages,
-        aiReading: ai_reading
+        aiReading: readingPayload.detailedReading
       }
     });
 
@@ -250,11 +216,18 @@ ${spread === 'single' ? `【输出结构】（总计 130 字）
     }
   }
   */
+  void useQuota;
 
   return NextResponse.json({
     spread,
-    cards: cardsWithImages,
-    ai_reading,
-    _source: aiSource,
+    cards: cardsWithImages.map((card, index) => ({
+      ...card,
+      meaning: readingPayload.cardMeanings[index] || (card.orientation === 'upright' ? card.upright : card.reversed),
+    })),
+    overallNarrative: readingPayload.overallNarrative,
+    detailedReading: readingPayload.detailedReading,
+    advice: readingPayload.advice,
+    caution: readingPayload.caution,
+    _source: reading._source,
   });
 }

@@ -136,6 +136,63 @@ export function buildDailyPrompt(
 请按“日主→大运→流年→当日干支”四层关系分析，输出今日运势 JSON（严格按示例格式）。`;
 }
 
+export interface TarotReadingPromptCard {
+  position: string;
+  name: string;
+  orientation: 'upright' | 'reversed';
+  keywords: string[];
+  traditionalMeaning: string;
+}
+
+export interface TarotReadingPromptInput {
+  spreadName: string;
+  question?: string;
+  cards: TarotReadingPromptCard[];
+}
+
+export const TAROT_READING_SYSTEM_PROMPT = `你是赛博命理师的塔罗解读引擎，负责输出结构化占卜结果。
+
+## 输出规则（严格）
+- 只输出 JSON，不要 markdown，不要解释，不要前言
+- cardMeanings 数组长度必须与输入牌张数一致
+- 每条 cardMeanings 控制在 50-80 字，需结合位置与正逆位
+- overallNarrative 控制在 100-150 字，串联所有牌形成完整叙事
+- detailedReading 控制在 200-300 字，必须结合用户问题
+- advice 控制在 40-80 字，给出可执行建议
+- caution 控制在 20-40 字，提示风险或注意事项
+- 全部字段总字数控制在 500 字以内
+- 语气温和、克制、启发性强，避免绝对化承诺
+
+## 输出格式
+{
+  "cardMeanings": ["...", "...", "..."],
+  "overallNarrative": "...",
+  "detailedReading": "...",
+  "advice": "...",
+  "caution": "..."
+}`;
+
+export function buildTarotReadingPrompt(input: TarotReadingPromptInput): string {
+  const cardsText = input.cards
+    .map(
+      (card) => `- ${card.position}：${card.name}（${card.orientation === 'upright' ? '正位' : '逆位'}）
+  关键词：${card.keywords.join('、')}
+  传统含义：${card.traditionalMeaning}`
+    )
+    .join('\n');
+
+  return `【牌阵】
+${input.spreadName}
+
+【用户问题】
+${input.question?.trim() ? input.question.trim() : '用户未输入具体问题，请给出通用但可执行的指引。'}
+
+【抽到的牌】
+${cardsText}
+
+请输出指定 JSON。`;
+}
+
 export interface MeihuaDecisionPromptInput {
   question: string;
   guaName: string;

@@ -2,10 +2,13 @@ import {
   buildBaziPrompt,
   buildDailyPrompt,
   buildMeihuaDecisionPrompt,
+  buildTarotReadingPrompt,
   BAZI_SYSTEM_PROMPT,
   DAILY_SYSTEM_PROMPT,
   MEIHUA_DECISION_SYSTEM_PROMPT,
+  TAROT_READING_SYSTEM_PROMPT,
   type MeihuaDecisionPromptInput,
+  type TarotReadingPromptInput,
 } from './prompts';
 import type { BaziResult, BaziAnalysis } from '../bazi/types';
 import { callExternalAPI, getEnvVar } from '../utils/api-wrapper';
@@ -156,7 +159,7 @@ export async function generateDailyFortune(
     const cached = await redis.get(cacheKey);
     if (cached) {
       console.log(`[Cache Hit] ${cacheKey}`);
-      return { ...(cached as any), _source: 'cache' };
+      return { ...(cached as ReturnType<typeof generateFallbackDailyFortune>), _source: 'cache' };
     }
   } catch (err) {
     console.warn('[Cache Read Error]', err);
@@ -208,6 +211,88 @@ function generateFallbackDailyFortune() {
     lucky: { color: '蓝色', numbers: [3, 6], direction: '东方' },
     advice: '今日运势平稳，宜保持平常心，稳步前进。',
   };
+}
+
+export interface TarotReadingResult {
+  cardMeanings: string[];
+  overallNarrative: string;
+  detailedReading: string;
+  advice: string;
+  caution: string;
+}
+
+function buildFallbackTarotReading(input: TarotReadingPromptInput): TarotReadingResult {
+  const cardMeanings = input.cards.map((card) => {
+    const orientation = card.orientation === 'upright' ? '正位' : '逆位';
+    const keyword = card.keywords.slice(0, 2).join('、') || '觉察';
+    return `${card.position}的${card.name}${orientation}提示你关注“${keyword}”，先稳住当下节奏，再做下一步调整。`;
+  });
+
+  const focus = input.question?.trim()
+    ? `围绕“${input.question.trim().slice(0, 24)}”这个主题，`
+    : '';
+
+  return {
+    cardMeanings,
+    overallNarrative:
+      `${focus}这组牌先回顾过往影响，再指向当前课题，最后落到未来趋势。整体不是僵局，而是“先看清、再行动”的过程。`,
+    detailedReading:
+      `${focus}过去阶段的经验仍在影响判断，因此需要先辨别哪些执念在拖慢节奏。当前牌面更强调现实执行力与边界感，适合把目标拆解为可验证的小步骤，先解决最关键的一件事。未来走势显示只要保持稳定投入，局势会逐步明朗，并在一到两个阶段后看到更清晰的方向。行动上建议先收集关键信息，再做节奏控制，避免情绪化决定。`,
+    advice: '把目标拆成 3 个可执行动作：先确认事实，再设时间节点，最后按轻重缓急推进。',
+    caution: '避免因为一时焦虑而仓促定论，先验证信息再表态。',
+  };
+}
+
+function normalizeTarotReading(
+  raw: unknown,
+  fallback: TarotReadingResult,
+  cardCount: number
+): TarotReadingResult {
+  const data = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
+  const cardMeaningsRaw = Array.isArray(data.cardMeanings) ? data.cardMeanings : [];
+
+  const cardMeanings = cardMeaningsRaw
+    .map((item) => (typeof item === 'string' ? item.replace(/\s+/g, ' ').trim().slice(0, 120) : ''))
+    .filter(Boolean)
+    .slice(0, cardCount);
+
+  const normalizedCardMeanings =
+    cardMeanings.length === cardCount ? cardMeanings : fallback.cardMeanings.slice(0, cardCount);
+
+  return {
+    cardMeanings: normalizedCardMeanings,
+    overallNarrative: safeText(data.overallNarrative, fallback.overallNarrative, 180),
+    detailedReading: safeText(data.detailedReading, fallback.detailedReading, 340),
+    advice: safeText(data.advice, fallback.advice, 120),
+    caution: safeText(data.caution, fallback.caution, 80),
+  };
+}
+
+export async function generateTarotReading(
+  input: TarotReadingPromptInput
+): Promise<TarotReadingResult & { _source: 'deepseek' | 'fallback' }> {
+  const fallback = buildFallbackTarotReading(input);
+  const apiKey = getEnvVar('DEEPSEEK_API_KEY');
+
+  if (!apiKey) {
+    return { ...fallback, _source: 'fallback' };
+  }
+
+  try {
+    const prompt = buildTarotReadingPrompt(input);
+    const text = await callDeepSeek(TAROT_READING_SYSTEM_PROMPT, prompt, 900);
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      return { ...fallback, _source: 'fallback' };
+    }
+
+    const parsed = JSON.parse(jsonMatch[0]) as unknown;
+    const normalized = normalizeTarotReading(parsed, fallback, input.cards.length);
+    return { ...normalized, _source: 'deepseek' };
+  } catch (error) {
+    console.warn('[AI 塔罗解读] 生成失败，使用降级结果', error);
+    return { ...fallback, _source: 'fallback' };
+  }
 }
 
 export interface MeihuaDecisionResult {
