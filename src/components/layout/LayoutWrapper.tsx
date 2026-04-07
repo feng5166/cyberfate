@@ -44,7 +44,7 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
           showWorkbench={!!showSidebar}
         />
       </div>
-      <main className="flex-1" style={{ paddingTop: '76px' }}>
+      <main className="flex-1" style={{ paddingTop: '80px' }}>
         {showSidebar ? (
           <DashboardLayout
             collapsed={isSidebarCollapsed}
