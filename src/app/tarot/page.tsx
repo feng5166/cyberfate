@@ -693,6 +693,8 @@ export default function TarotPage() {
       <style jsx>{`
         .card-container {
           perspective: 1000px;
+          max-width: 150px;
+          overflow: hidden;
         }
 
         .card-inner {
