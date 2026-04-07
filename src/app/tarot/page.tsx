@@ -91,9 +91,9 @@ function getSpreadPositions(spread: TarotSpread): string[] {
 }
 
 function getCardSizeClass(spread: TarotSpread): string {
-  if (spread === 'celtic') return 'w-[80px] h-[140px] md:w-[70px] md:h-[120px]';
-  if (spread === 'mirror') return 'w-[100px] h-[170px]';
-  return 'w-[100px] h-[160px] sm:w-[120px] sm:h-[190px] md:w-[135px] md:h-[215px]';
+  if (spread === 'celtic') return 'w-[70px] sm:w-[80px]';
+  if (spread === 'mirror') return 'w-[100px]';
+  return 'w-[110px] sm:w-[130px] md:w-[150px]';
 }
 
 interface TarotCard {
@@ -693,16 +693,21 @@ export default function TarotPage() {
       <style jsx>{`
         .card-container {
           perspective: 1000px;
-          max-width: 150px;
+          width: fit-content;
           overflow: hidden;
+          border-radius: 0.85rem;
         }
 
         .card-inner {
           position: relative;
-          width: 100%;
+          width: inherit;
           aspect-ratio: 2 / 3;
+          max-width: 150px;
+          max-height: 225px;
           transition: transform 0.6s;
           transform-style: preserve-3d;
+          border-radius: inherit;
+          overflow: hidden;
         }
 
         .card-inner.flipped {
