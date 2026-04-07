@@ -698,7 +698,7 @@ export default function TarotPage() {
         .card-inner {
           position: relative;
           width: 100%;
-          height: 100%;
+          aspect-ratio: 2 / 3;
           transition: transform 0.6s;
           transform-style: preserve-3d;
         }
