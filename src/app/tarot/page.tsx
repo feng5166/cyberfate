@@ -2,7 +2,7 @@
 
 import { Footer } from '@/components/layout/Footer';
 import { CardDrawAnimation } from '@/components/tarot/CardDrawAnimation';
-import { Share2, Sparkles } from 'lucide-react';
+import { ChevronDown, ChevronUp, Share2, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { useEffect, useRef, useState } from 'react';
@@ -17,10 +17,25 @@ const SAMPLE_PROMPTS = [
 const THREE_POSITIONS = ['过去', '现在', '未来'];
 
 const MODES = [
-  { id: 'classic', name: '经典模式', desc: '3 张牌：过去 / 现在 / 未来', comingSoon: false },
-  { id: 'celtic', name: '凯尔特十字', desc: 'VIP 深度牌阵', comingSoon: true },
-  { id: 'moonlight', name: '月光模式', desc: '即将上线', comingSoon: true },
-  { id: 'mirror', name: '镜像模式', desc: '即将上线', comingSoon: true },
+  { id: 'classic', icon: '⚫', name: '经典', desc: '传统三张牌阵', comingSoon: false },
+  { id: 'celtic', icon: '✝︎', name: '凯尔特十字', desc: '10张深度牌阵', comingSoon: true },
+  { id: 'moonlight', icon: '🌙', name: '月光', desc: '柔和内省', comingSoon: true },
+  { id: 'mirror', icon: '✧', name: '镜像', desc: '多角度透视', comingSoon: true },
+] as const;
+
+const FAQ_ITEMS = [
+  {
+    q: 'AI 塔罗占卜和小程序抽牌有什么区别？',
+    a: '我们的系统结合了传统塔罗牌意数据库与大语言模型，不是随机抽取固定文案，而是根据你的问题和抽到的牌实时生成个性化解读。每次解读都是独一无二的。',
+  },
+  {
+    q: '如果抽到"不好"的牌怎么办？',
+    a: '塔罗牌没有绝对的好坏。所谓"负面"牌往往是在提醒你注意某些方面，是一种保护和指引。我们的 AI 会以建设性的方式帮你理解牌面的参考价值。',
+  },
+  {
+    q: 'AI 塔罗占卜适合频繁使用吗？',
+    a: '建议对同一个问题不要频繁重复占卜。塔罗更适合作为定期自我反思的工具（如每周一次），而非反复确认同一件事。频繁占卜容易导致依赖和焦虑。',
+  },
 ] as const;
 
 type ModeId = (typeof MODES)[number]['id'];
@@ -60,6 +75,7 @@ export default function TarotPage() {
   const [flippedCards, setFlippedCards] = useState<boolean[]>([]);
   const [showReading, setShowReading] = useState(false);
   const [useLegacyDrawAnimation] = useState(false);
+  const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const flipTimersRef = useRef<Array<ReturnType<typeof setTimeout>>>([]);
 
   const clearFlipTimers = () => {
@@ -233,13 +249,19 @@ export default function TarotPage() {
                     key={item.id}
                     type="button"
                     onClick={() => handleModeSelect(item.id)}
+                    disabled={item.comingSoon}
                     className={`rounded-xl border p-3 text-left transition-all duration-300 ${
-                      active
+                      item.comingSoon
+                        ? 'cursor-not-allowed border-[#1C1A16]/8 bg-[#FAF9F6] opacity-60'
+                        : active
                         ? 'border-[#1C1A16]/20 bg-[#FAF9F6] shadow-card-hover'
                         : 'border-[#1C1A16]/10 bg-white hover:border-[#1C1A16]/20 hover:shadow-card-hover'
                     }`}
                   >
-                    <p className="text-sm font-semibold text-[#1C1A16]">{item.name}</p>
+                    <p className="text-sm font-semibold text-[#1C1A16]">
+                      <span className="mr-1">{item.icon}</span>
+                      {item.name}
+                    </p>
                     <p className="mt-1 text-xs text-[#1C1A16]/60">{item.desc}</p>
                     {item.comingSoon && (
                       <span className="mt-2 inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-[11px] text-gray-600">
@@ -459,6 +481,89 @@ export default function TarotPage() {
               </div>
             </div>
           )}
+        </section>
+
+        <section className="mx-auto mt-10 max-w-5xl animate-fadeIn">
+          <h2 className="font-display text-2xl tracking-[0.08em] text-[#1C1A16]">AI 塔罗占卜应用场景</h2>
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+            {[
+              { icon: '💕', title: '爱情关系探索', desc: '探索感情走向、了解伴侣想法、处理情感困惑' },
+              { icon: '💼', title: '事业发展与决策', desc: '职业选择、项目前景、职场人际关系判断' },
+              { icon: '🔀', title: '重要抉择参考', desc: '面临人生十字路口时获取额外视角' },
+              { icon: '🌟', title: '日常灵感指引', desc: '每日一牌、寻找生活灵感、自我对话与觉察' },
+            ].map((item) => (
+              <div
+                key={item.title}
+                className="flex items-start gap-3 rounded-xl border border-[#1C1A16]/8 bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover"
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#FAF9F6] text-base">{item.icon}</div>
+                <div>
+                  <h3 className="text-sm font-semibold text-[#1C1A16]">{item.title}</h3>
+                  <p className="mt-1 text-xs leading-relaxed text-[#1C1A16]/68">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="mx-auto mt-8 max-w-5xl animate-fadeIn">
+          <h2 className="font-display text-2xl tracking-[0.08em] text-[#1C1A16]">常见问题</h2>
+          <div className="mt-4 space-y-3">
+            {FAQ_ITEMS.map((item, index) => {
+              const expanded = expandedFaq === index;
+              return (
+                <div key={item.q} className="rounded-xl border border-[#1C1A16]/10 bg-white p-4">
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-between gap-3 text-left"
+                    onClick={() => setExpandedFaq((prev) => (prev === index ? null : index))}
+                  >
+                    <span className="text-sm font-semibold text-[#1C1A16]">{item.q}</span>
+                    {expanded ? (
+                      <ChevronUp className="h-4 w-4 shrink-0 text-[#1C1A16]/70" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4 shrink-0 text-[#1C1A16]/70" />
+                    )}
+                  </button>
+                  <div
+                    className={`overflow-hidden transition-all duration-300 ${
+                      expanded ? 'mt-3 max-h-40 opacity-100' : 'max-h-0 opacity-0'
+                    }`}
+                  >
+                    <p className="text-sm leading-relaxed text-[#1C1A16]/72">{item.a}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="mt-4 rounded-2xl border border-[#1C1A16]/10 bg-white p-3 text-center text-xs text-[#1C1A16]/45">
+            ⚠️ 免责声明：本站塔罗占卜内容仅供娱乐与自我探索参考，不构成医疗、法律或投资建议。请结合现实信息理性判断。
+          </div>
+        </section>
+
+        <section className="mx-auto mt-8 max-w-5xl animate-fadeIn rounded-2xl bg-gradient-to-b from-[#FAF9F6] to-white p-8 text-center md:p-12">
+          <h2 className="font-display text-xl tracking-[0.08em] text-[#1C1A16]">体验 AI 塔罗占卜的智慧</h2>
+          <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-[#1C1A16]/60">
+            赛博命理师的 AI 塔罗系统融合了传统塔罗智慧与现代 AI 技术，为你提供更准确、更有深度的解读。无论你是塔罗新手还是资深爱好者，都能从中获得启发。
+          </p>
+          <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <button
+              type="button"
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              className="rounded-xl bg-[#1C1A16] px-8 py-3 text-sm font-medium text-white transition-all hover:-translate-y-1 hover:shadow-card-hover"
+            >
+              开始我的塔罗解读 →
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                window.location.href = '/';
+              }}
+              className="rounded-xl border border-[#1C1A16]/15 bg-transparent px-8 py-3 text-sm font-medium text-[#1C1A16] transition-all hover:-translate-y-1 hover:shadow-card-hover"
+            >
+              了解更多 ↑
+            </button>
+          </div>
         </section>
       </main>
 
