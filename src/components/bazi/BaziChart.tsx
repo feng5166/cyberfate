@@ -26,7 +26,7 @@ export function BaziChart({ pillars }: BaziChartProps) {
   return (
     <section>
       <h3 className="text-lg font-semibold text-[#1C1A16] mb-5 font-display tracking-[0.08em]">四柱命盘</h3>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
         {pillarConfig.map(({ key, label }) => {
           const pillar = pillars[key];
           const isDay = key === 'day';
@@ -58,7 +58,7 @@ export function BaziChart({ pillars }: BaziChartProps) {
               </div>
               <div className="mt-2 text-xs text-[#1C1A16]/60">{pillar.ganWuxing} / {pillar.zhiWuxing}</div>
               {isDay && (
-                <span className="inline-flex items-center mt-3 bg-[#1C1A16] text-white text-[11px] font-medium px-2 py-0.5 rounded-full">
+                <span className="mt-3 inline-flex animate-pulse items-center rounded-full bg-[#1C1A16] px-2 py-0.5 text-[11px] font-medium text-white">
                   日主
                 </span>
               )}

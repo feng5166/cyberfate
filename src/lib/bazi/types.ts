@@ -104,11 +104,18 @@ export interface BaziHistoryRecord {
   birthHour: string;
   birthPlace?: string;
   dayMaster: string;
+  dayMasterElement?: WuXing;
   aiSummary: string;
   aiAnalysis: string;
   pillars: PillarRecord;
   wuxing: WuxingCount;
   fiveDimensions?: FiveDimensions;
+  lunarDate?: string;
+  zodiac?: string;
+  trueSolarOffsetMinutes?: number | null;
+  dayunStartDescription?: string;
+  dayunStartAt?: string;
+  source?: 'bazi';
   createdAt: string;
 }
 

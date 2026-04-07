@@ -15,15 +15,20 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { saveBirthInfo, loadBirthInfo } from '@/lib/utils/storage';
-import { saveRecord, getRecordById } from '@/lib/utils/history';
+import { deleteRecord, getRecordById, saveRecord } from '@/lib/utils/history';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { SegmentControl } from '@/components/ui/SegmentControl';
 import { Select } from '@/components/ui/Select';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { BaguaSpinner } from '@/components/ui/BaguaSpinner';
-import { BaziChart } from '@/components/bazi/BaziChart';
-import { WuxingChart } from '@/components/bazi/WuxingChart';
+import {
+  BasicInfoCard,
+  BaziChart,
+  DayMasterSummaryCard,
+  WuxingChart,
+  WuxingDonutChart,
+} from '@/components/bazi';
 import { QuotaLimitModal } from '@/components/QuotaLimitModal';
 import { Container } from '@/components/ui/Container';
 import { CitySearch } from '@/components/ui/CitySearch';
@@ -32,6 +37,7 @@ import {
   DAYMASTER_TRAITS,
   DIZHI_LIST,
   TIANGAN_LIST,
+  TIANGAN_WUXING,
   WUXING_KEYS,
   getCurrentDayun,
   getYearGanzhi,
@@ -45,7 +51,7 @@ import type {
 } from '@/lib/bazi/types';
 
 type ResultTab = '性格特质' | '事业财运' | '婚姻健康' | '大运流年';
-type AiSectionKey = 'dayMaster' | 'personality' | 'career' | 'wealth' | 'relationship' | 'health';
+type AiSectionKey = 'dayMaster' | 'personality' | 'career' | 'wealth' | 'relationship' | 'health' | 'dayun';
 
 type TagVariant = 'metal' | 'wood' | 'water' | 'fire' | 'earth';
 
@@ -64,6 +70,22 @@ interface TabContent {
   points: string[];
   detail: string;
 }
+
+interface FaqItem {
+  question: string;
+  answer: string;
+}
+
+type BaziPageResult = BaziApiResult & {
+  dayMasterElement?: WuXing;
+  lunarDate?: string;
+  zodiac?: string;
+  trueSolarOffsetMinutes?: number | null;
+  trueSolarCorrection?: string;
+  trueSolarTime?: string;
+  dayunStartDescription?: string;
+  dayunStartAt?: string;
+};
 
 const shichenOptions = [
   { value: '', label: '请选择时辰' },
@@ -84,13 +106,14 @@ const shichenOptions = [
 
 const resultTabs: ResultTab[] = ['性格特质', '事业财运', '婚姻健康', '大运流年'];
 
-const aiSectionTitleMap: Record<AiSectionKey, string> = {
-  dayMaster: '日主分析',
-  personality: '性格特点',
-  career: '事业运势',
-  wealth: '财运分析',
-  relationship: '感情运势',
-  health: '健康提示',
+const aiSectionTitleMap: Record<AiSectionKey, string[]> = {
+  dayMaster: ['日主分析'],
+  personality: ['性格特点', '性格特质'],
+  career: ['事业运势', '事业分析'],
+  wealth: ['财运分析', '财富分析'],
+  relationship: ['感情运势', '婚姻分析'],
+  health: ['健康提示', '健康分析'],
+  dayun: ['大运流年', '流年趋势'],
 };
 
 const wuxingDisplay: Array<{ key: keyof WuxingCount; label: WuXing; variant: TagVariant }> = [
@@ -101,13 +124,35 @@ const wuxingDisplay: Array<{ key: keyof WuxingCount; label: WuXing; variant: Tag
   { key: 'earth', label: '土', variant: 'earth' },
 ];
 
-const scoreColors = ['#1C1A16', '#3B82F6', '#10B981', '#F59E0B'];
+const faqItems: FaqItem[] = [
+  {
+    question: '八字分析结果会一直保存吗？',
+    answer: '本地历史默认最多保留 3 条新记录，超过后会自动覆盖最旧记录。建议及时查看并补充自己的行动计划。',
+  },
+  {
+    question: '同一天出生的人，结果一定一样吗？',
+    answer: '不会。出生时辰、出生地、性别与解读模型的综合分析都会影响结果展示，细节差异会较大。',
+  },
+  {
+    question: '“喜用神”和“忌神”可以怎么用？',
+    answer: '可以把喜用神理解为更适合补强的能量方向，忌神理解为需要控制投入的方向，用于日常决策优先级排序。',
+  },
+  {
+    question: '大运流年怎么看更实用？',
+    answer: '建议用十年看战略、按年度看节奏。先关注当前阶段重点，再拆分到季度和月度动作，避免一次性做太多重大决策。',
+  },
+  {
+    question: '结果和现实冲突时该怎么处理？',
+    answer: '优先以现实数据和专业建议为准。命理内容适合作为自我观察与复盘参考，不建议直接替代医疗、法律或投资判断。',
+  },
+];
 
-const infoBlockClass = 'rounded-2xl border border-[#1C1A16]/10 bg-white p-5 sm:p-6';
-
-function parseSection(text: string, title: string): string {
-  const match = new RegExp(`【${title}】([\\s\\S]*?)(?:\\n\\n【|$)`).exec(text);
-  return match ? match[1].trim() : '';
+function parseSection(text: string, titles: string[]): string {
+  for (const title of titles) {
+    const match = new RegExp(`【${title}】([\\s\\S]*?)(?:\\n\\n【|$)`).exec(text);
+    if (match?.[1]?.trim()) return match[1].trim();
+  }
+  return '';
 }
 
 function extractAiSections(aiAnalysis: string): Record<AiSectionKey, string> {
@@ -118,6 +163,7 @@ function extractAiSections(aiAnalysis: string): Record<AiSectionKey, string> {
     wealth: parseSection(aiAnalysis, aiSectionTitleMap.wealth),
     relationship: parseSection(aiAnalysis, aiSectionTitleMap.relationship),
     health: parseSection(aiAnalysis, aiSectionTitleMap.health),
+    dayun: parseSection(aiAnalysis, aiSectionTitleMap.dayun),
   };
 }
 
@@ -169,6 +215,50 @@ function getDateString(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+function toGenderLabel(gender: string): string {
+  if (gender === 'male') return '男';
+  if (gender === 'female') return '女';
+  return '未填写';
+}
+
+function toHourLabel(hourValue: string): string {
+  return shichenOptions.find(option => option.value === hourValue)?.label || '未知时辰';
+}
+
+function buildBaziText(result: BaziPageResult): string {
+  return [
+    `${result.pillars.year.gan}${result.pillars.year.zhi}`,
+    `${result.pillars.month.gan}${result.pillars.month.zhi}`,
+    `${result.pillars.day.gan}${result.pillars.day.zhi}`,
+    `${result.pillars.hour.gan}${result.pillars.hour.zhi}`,
+  ].join(' ');
+}
+
+function getZodiacByBirthDate(birthDate: string): string {
+  const year = Number(birthDate.split('-')[0]);
+  if (!year) return '未提供';
+  const zodiac = ['鼠', '牛', '虎', '兔', '龙', '蛇', '马', '羊', '猴', '鸡', '狗', '猪'];
+  return zodiac[(year - 4 + 1200) % 12] || '未提供';
+}
+
+function getDayunStartFallback(birthDate: string): { description: string; at: string } {
+  const [birthYear, birthMonth, birthDay] = birthDate.split('-').map(Number);
+  if (!birthYear || !birthMonth || !birthDay) {
+    return { description: '待计算', at: '—' };
+  }
+  const startAge = 3 + ((birthMonth + birthDay) % 3);
+  return {
+    description: `约 ${startAge} 岁起运`,
+    at: `约 ${birthYear + startAge} 年`,
+  };
+}
+
+function getScoreStyle(score: number): { barClass: string; textClass: string } {
+  if (score >= 80) return { barClass: 'bg-emerald-500', textClass: 'text-emerald-600' };
+  if (score >= 60) return { barClass: 'bg-amber-500', textClass: 'text-amber-600' };
+  return { barClass: 'bg-rose-500', textClass: 'text-rose-600' };
+}
+
 function buildDayunTimeline(birthDate: string, genderValue: string): DayunTimelineItem[] {
   if (!birthDate) return [];
 
@@ -195,7 +285,7 @@ function buildDayunTimeline(birthDate: string, genderValue: string): DayunTimeli
       key: `${gan}${zhi}_${ageStart}`,
       gan,
       zhi,
-      wuxing: WUXING_KEYS[TIANGAN_LIST[(currentGanIndex + offset + 100) % 10] as WuXing] ? current.wuxing : current.wuxing,
+      wuxing: TIANGAN_WUXING[gan],
       ageStart,
       ageEnd: ageStart + 9,
       isCurrent: offset === 0,
@@ -220,10 +310,12 @@ function buildDayunDetail(
   const yearGanzhi = getYearGanzhi(getDateString(new Date()));
   const careerBrief = firstSentence(`${aiSections.career} ${aiSections.wealth}`) || '关注节奏与资金管理。';
   const relationBrief = firstSentence(`${aiSections.relationship} ${aiSections.health}`) || '保持稳定作息与关系沟通。';
+  const dayunBrief = firstSentence(aiSections.dayun) || '结合十年节奏与年度变化，滚动复盘。';
 
   return [
     `${item.gan}${item.zhi}大运（${item.ageStart}-${item.ageEnd}岁）。${phaseText}`,
     `当前流年：${yearGanzhi}。`,
+    `阶段提示：${dayunBrief}`,
     `事业财运：${careerBrief}`,
     `婚姻健康：${relationBrief}`,
   ].join('\n');
@@ -255,9 +347,10 @@ function BaziPageContent() {
     婚姻健康: false,
     大运流年: false,
   });
+  const [expandedFaqIndex, setExpandedFaqIndex] = useState<number | null>(0);
   const [selectedDayunIndex, setSelectedDayunIndex] = useState(2);
   const [error, setError] = useState('');
-  const [result, setResult] = useState<BaziApiResult | null>(null);
+  const [result, setResult] = useState<BaziPageResult | null>(null);
   const [actionMessage, setActionMessage] = useState('');
 
   useEffect(() => {
@@ -326,6 +419,12 @@ function BaziPageContent() {
       aiAnalysis: record.aiAnalysis,
       fiveDimensions: record.fiveDimensions,
       birthPlace: record.birthPlace,
+      dayMasterElement: record.dayMasterElement,
+      lunarDate: record.lunarDate,
+      zodiac: record.zodiac,
+      trueSolarOffsetMinutes: record.trueSolarOffsetMinutes,
+      dayunStartDescription: record.dayunStartDescription,
+      dayunStartAt: record.dayunStartAt,
       _source: 'history',
     });
 
@@ -359,15 +458,18 @@ function BaziPageContent() {
       .map(({ key, label }) => ({ label, value: result.wuxing[key] }))
       .sort((a, b) => a.value - b.value);
 
+    const favorableGods = sortedElements.slice(0, 2).map(item => item.label);
+    const avoidGods = sortedElements.slice(-2).map(item => item.label);
+    const trait = DAYMASTER_TRAITS[dayPillar.gan] || '';
+    const personalityBrief = firstSentence(personalityText);
+    const corePersonality = trait ? `${personalityBrief} ${trait}` : personalityBrief;
+
     return {
       title: `${dayPillar.gan}${dayPillar.ganWuxing}`,
       ganZhi: `${dayPillar.gan}${dayPillar.zhi}`,
-      level,
-      trait: DAYMASTER_TRAITS[dayPillar.gan] || '',
-      personalityBrief: firstSentence(personalityText),
-      favorable: sortedElements.slice(0, 2).map(item => item.label).join('、'),
-      avoid: sortedElements.slice(-2).map(item => item.label).join('、'),
-      detail: `日主${level}（${dayValue.toFixed(1)} vs 均值 ${average.toFixed(1)}）`,
+      personality: `${corePersonality} 日主${level}（${dayValue.toFixed(1)} vs 均值 ${average.toFixed(1)}）。`,
+      favorableGods,
+      avoidGods,
     };
   }, [result, personalityText]);
 
@@ -390,6 +492,30 @@ function BaziPageContent() {
   const dayunDetail = useMemo(() => {
     return buildDayunDetail(selectedDayun, aiSections, formData.birthDate);
   }, [selectedDayun, aiSections, formData.birthDate]);
+
+  const basicInfoData = useMemo(() => {
+    if (!result) return null;
+
+    const dayunFallback = getDayunStartFallback(formData.birthDate);
+    const correction =
+      result.trueSolarTime ||
+      result.trueSolarCorrection ||
+      (typeof result.trueSolarOffsetMinutes === 'number'
+        ? `${result.trueSolarOffsetMinutes >= 0 ? '+' : ''}${result.trueSolarOffsetMinutes} 分钟`
+        : '未提供');
+
+    return {
+      baziText: buildBaziText(result),
+      name: formData.name || '缘主',
+      gender: toGenderLabel(formData.gender),
+      birthTime: `${formData.birthDate || '未填写'} ${toHourLabel(formData.birthHour)}`,
+      trueSolarCorrection: correction,
+      lunarDate: result.lunarDate || '未提供',
+      zodiac: result.zodiac || getZodiacByBirthDate(formData.birthDate),
+      dayunStartDescription: result.dayunStartDescription || dayunFallback.description,
+      dayunStartAt: result.dayunStartAt || dayunFallback.at,
+    };
+  }, [formData.birthDate, formData.birthHour, formData.gender, formData.name, result]);
 
   const tabContent = useMemo<Record<ResultTab, TabContent>>(() => {
     const dimensions = result?.fiveDimensions;
@@ -436,8 +562,8 @@ function BaziPageContent() {
               { label: '阶段节奏', value: scoreValue((dimensions.career + dimensions.relationship) / 2) },
             ]
           : [],
-        points: buildPoints(dayunDetail, '以十年为周期制定目标，按年度滚动调整'),
-        detail: dayunDetail,
+        points: buildPoints(`${aiSections.dayun}\n${dayunDetail}`, '以十年为周期制定目标，按年度滚动调整'),
+        detail: `${aiSections.dayun || '暂无大运流年专项解读。'}\n\n${dayunDetail}`,
       },
     };
   }, [aiSections, dayunDetail, result]);
@@ -526,7 +652,7 @@ function BaziPageContent() {
   };
 
   const handleSaveCurrentRecord = () => {
-    if (!result || !dayMasterInsight) return;
+    if (!result || !dayMasterInsight || !basicInfoData) return;
 
     const toSave: Omit<BaziHistoryRecord, 'id' | 'createdAt'> = {
       name: formData.name || '缘主',
@@ -540,6 +666,12 @@ function BaziPageContent() {
       pillars: result.pillars,
       wuxing: result.wuxing,
       fiveDimensions: result.fiveDimensions,
+      dayMasterElement: result.pillars.day.ganWuxing,
+      lunarDate: basicInfoData.lunarDate,
+      zodiac: basicInfoData.zodiac,
+      trueSolarOffsetMinutes: result.trueSolarOffsetMinutes ?? null,
+      dayunStartDescription: basicInfoData.dayunStartDescription,
+      dayunStartAt: basicInfoData.dayunStartAt,
     };
 
     const saved = saveRecord(toSave);
@@ -550,16 +682,43 @@ function BaziPageContent() {
     setActionMessage('分享功能开发中，敬请期待。');
   };
 
-  const handleReset = () => {
+  const clearResultState = (message: string) => {
     setResult(null);
     setError('');
-    setActionMessage('已重置结果，请重新测算');
+    setActionMessage(message);
     setActiveTab('性格特质');
+    setTabExpanded({
+      性格特质: false,
+      事业财运: false,
+      婚姻健康: false,
+      大运流年: false,
+    });
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
       url.searchParams.delete('record');
       window.history.replaceState({}, '', url.toString());
     }
+  };
+
+  const handleReset = () => {
+    clearResultState('已重置结果，请重新测算');
+  };
+
+  const handleEditBasicInfo = () => {
+    setActionMessage('请在左侧表单修改信息后重新测算。');
+    if (typeof window !== 'undefined') {
+      const formCard = document.querySelector('.bazi-input-card');
+      formCard?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const handleDeleteBasicInfo = () => {
+    let message = '已清空当前结果。';
+    if (recordId) {
+      const deleted = deleteRecord(recordId);
+      message = deleted ? '已删除该历史记录并清空结果。' : '已清空结果（历史记录不存在或删除失败）。';
+    }
+    clearResultState(message);
   };
 
   const inputClass =
@@ -665,17 +824,38 @@ function BaziPageContent() {
               </Card>
             )}
 
-            {result && !loading && (
+            {result && !loading && basicInfoData && dayMasterInsight && (
               <div className="space-y-6 animate-fadeIn">
-                <Card className={cardClass}>
-                  <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em] mb-5">A 区 · 命盘核心</h2>
+                <Card className={`${cardClass} p-0`}>
+                  <BasicInfoCard
+                    baziText={basicInfoData.baziText}
+                    name={basicInfoData.name}
+                    gender={basicInfoData.gender}
+                    birthTime={basicInfoData.birthTime}
+                    trueSolarCorrection={basicInfoData.trueSolarCorrection}
+                    lunarDate={basicInfoData.lunarDate}
+                    zodiac={basicInfoData.zodiac}
+                    dayunStartDescription={basicInfoData.dayunStartDescription}
+                    dayunStartAt={basicInfoData.dayunStartAt}
+                    isAuthenticated={status === 'authenticated'}
+                    onEdit={handleEditBasicInfo}
+                    onDelete={handleDeleteBasicInfo}
+                  />
+                </Card>
 
-                  <div className="space-y-4">
-                    <div className={infoBlockClass}>
-                      <BaziChart pillars={result.pillars} />
+                <Card className={cardClass}>
+                  <BaziChart pillars={result.pillars} />
+                </Card>
+
+                <Card className={cardClass}>
+                  <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em] mb-5">五行分布</h2>
+                  <div className="grid grid-cols-1 xl:grid-cols-[220px_minmax(0,1fr)] gap-4">
+                    <div className="rounded-2xl border border-[#1C1A16]/10 bg-[#FAF9F6] p-5 flex flex-col items-center justify-center">
+                      <WuxingDonutChart wuxing={result.wuxing} dayMasterElement={result.pillars.day.ganWuxing} />
+                      <p className="mt-3 text-xs text-[#1C1A16]/62">中心为日主五行</p>
                     </div>
 
-                    <div className={infoBlockClass}>
+                    <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-5">
                       <WuxingChart wuxing={result.wuxing} />
                       <div className="mt-5 flex flex-wrap gap-2.5">
                         {wuxingDisplay.map(({ key, label, variant }) => (
@@ -685,28 +865,20 @@ function BaziPageContent() {
                         ))}
                       </div>
                     </div>
-
-                    {dayMasterInsight && (
-                      <div className="rounded-2xl border border-[#1C1A16]/15 bg-gradient-to-r from-[#FFF6E8] via-[#FFFDF7] to-[#F6F0E4] p-5 sm:p-6">
-                        <p className="text-xs font-medium text-[#1C1A16]/60 mb-2">日主摘要卡</p>
-                        <p className="text-2xl font-bold text-[#1C1A16]">你是{dayMasterInsight.title}命人</p>
-                        <p className="text-sm text-[#1C1A16]/80 mt-2">日主干支：{dayMasterInsight.ganZhi}</p>
-                        <p className="text-sm text-[#1C1A16]/80 mt-1">AI 人格概括：{dayMasterInsight.personalityBrief}</p>
-                        <p className="text-sm text-[#1C1A16]/80 mt-1">
-                          喜用神建议：宜补 {dayMasterInsight.favorable}，少耗 {dayMasterInsight.avoid}
-                        </p>
-                        <p className="text-xs text-[#6B7280] mt-2">{dayMasterInsight.detail}</p>
-                        {dayMasterInsight.trait && (
-                          <p className="text-xs text-[#6B7280] mt-1">{dayMasterInsight.trait}</p>
-                        )}
-                      </div>
-                    )}
                   </div>
                 </Card>
 
-                <Card className={cardClass}>
-                  <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em] mb-5">B 区 · AI 解读</h2>
+                <Card className={`${cardClass} p-0`}>
+                  <DayMasterSummaryCard
+                    dayMaster={dayMasterInsight.title}
+                    personality={dayMasterInsight.personality}
+                    favorableGods={dayMasterInsight.favorableGods}
+                    avoidGods={dayMasterInsight.avoidGods}
+                  />
+                </Card>
 
+                <Card className={cardClass}>
+                  <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em] mb-5">AI 解读</h2>
                   <SegmentControl
                     options={resultTabs.map(tab => ({ value: tab, label: tab }))}
                     value={activeTab}
@@ -719,45 +891,53 @@ function BaziPageContent() {
                     {activeTab === '大运流年' && (
                       <div className="rounded-2xl border border-[#1C1A16]/10 bg-[#FAF9F6] p-4 sm:p-5">
                         <p className="text-sm font-medium text-[#1C1A16] mb-3">大运时间轴</p>
-                        <div className="overflow-x-auto">
-                          <div className="flex gap-3 snap-x snap-mandatory pb-1">
-                            {dayunTimeline.map((item, index) => (
-                              <button
-                                key={item.key}
-                                type="button"
-                                onClick={() => setSelectedDayunIndex(index)}
-                                className={`min-w-[160px] snap-start rounded-xl border p-3 text-left transition-colors ${
-                                  index === selectedDayunIndex
-                                    ? 'border-[#1C1A16] bg-[#1C1A16] text-white'
-                                    : item.isCurrent
-                                      ? 'border-[#1C1A16]/40 bg-[#FFF6E8] text-[#1C1A16]'
-                                      : 'border-[#1C1A16]/12 bg-white text-[#1C1A16]'
-                                }`}
-                              >
-                                <p className="text-lg font-semibold tracking-[0.08em]">{item.gan}{item.zhi}</p>
-                                <p className="text-xs mt-1 opacity-80">{item.ageStart}-{item.ageEnd} 岁</p>
-                                {item.isCurrent && <p className="text-[11px] mt-1">当前大运</p>}
-                              </button>
-                            ))}
+                        {dayunTimeline.length ? (
+                          <div className="overflow-x-auto">
+                            <div className="flex gap-3 snap-x snap-mandatory pb-1">
+                              {dayunTimeline.map((item, index) => (
+                                <button
+                                  key={item.key}
+                                  type="button"
+                                  onClick={() => setSelectedDayunIndex(index)}
+                                  className={`min-w-[160px] snap-start rounded-xl border p-3 text-left transition-colors ${
+                                    index === selectedDayunIndex
+                                      ? 'border-[#1C1A16] bg-[#1C1A16] text-white'
+                                      : item.isCurrent
+                                        ? 'border-[#1C1A16]/40 bg-[#FFF6E8] text-[#1C1A16]'
+                                        : 'border-[#1C1A16]/12 bg-white text-[#1C1A16]'
+                                  }`}
+                                >
+                                  <p className="text-lg font-semibold tracking-[0.08em]">{item.gan}{item.zhi}</p>
+                                  <p className="text-xs mt-1 opacity-80">{item.ageStart}-{item.ageEnd} 岁</p>
+                                  {item.isCurrent && <p className="text-[11px] mt-1">当前大运</p>}
+                                </button>
+                              ))}
+                            </div>
                           </div>
-                        </div>
+                        ) : (
+                          <p className="text-sm text-[#6B7280]">缺少出生信息，暂时无法生成大运时间轴。</p>
+                        )}
                       </div>
                     )}
 
                     <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-5">
                       <p className="text-sm font-medium text-[#1C1A16] mb-3">评分概览</p>
                       {activeTabContent.scores.length > 0 ? (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                          {activeTabContent.scores.map((score, index) => (
-                            <div
-                              key={score.label}
-                              className="rounded-xl border border-[#1C1A16]/10 p-3"
-                              style={{ backgroundColor: `${scoreColors[index % scoreColors.length]}08` }}
-                            >
-                              <p className="text-xs text-[#1C1A16]/70">{score.label}</p>
-                              <p className="text-xl font-bold text-[#1C1A16] mt-1">{score.value}</p>
-                            </div>
-                          ))}
+                        <div className="space-y-3">
+                          {activeTabContent.scores.map((score) => {
+                            const style = getScoreStyle(score.value);
+                            return (
+                              <div key={score.label} className="rounded-xl border border-[#1C1A16]/10 p-3">
+                                <div className="flex items-center justify-between">
+                                  <p className="text-xs text-[#1C1A16]/72">{score.label}</p>
+                                  <p className={`text-sm font-semibold ${style.textClass}`}>{score.value}</p>
+                                </div>
+                                <div className="mt-2 h-2 rounded-full bg-[#1C1A16]/10 overflow-hidden">
+                                  <div className={`h-full rounded-full transition-all duration-500 ${style.barClass}`} style={{ width: `${score.value}%` }} />
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       ) : (
                         <p className="text-sm text-[#6B7280]">当前数据暂无可量化分数。</p>
@@ -804,7 +984,37 @@ function BaziPageContent() {
                 </Card>
 
                 <Card className={cardClass}>
-                  <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em] mb-5">C 区 · 操作引导</h2>
+                  <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em] mb-5">常见问题</h2>
+                  <div className="space-y-3">
+                    {faqItems.map((item, index) => {
+                      const expanded = expandedFaqIndex === index;
+                      return (
+                        <div key={item.question} className="rounded-2xl border border-[#1C1A16]/10 bg-white px-4 py-3">
+                          <button
+                            type="button"
+                            className="w-full flex items-center justify-between text-left"
+                            onClick={() => setExpandedFaqIndex(prev => (prev === index ? null : index))}
+                          >
+                            <span className="text-sm font-medium text-[#1C1A16]">{item.question}</span>
+                            {expanded ? (
+                              <ChevronUp className="w-4 h-4 text-[#6B7280]" />
+                            ) : (
+                              <ChevronDown className="w-4 h-4 text-[#6B7280]" />
+                            )}
+                          </button>
+                          {expanded && (
+                            <p className="mt-2 text-sm leading-relaxed text-[#1C1A16]/78">
+                              {item.answer}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </Card>
+
+                <Card className={cardClass}>
+                  <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em] mb-5">操作栏</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <Button
                       type="button"
@@ -822,7 +1032,7 @@ function BaziPageContent() {
                       className="justify-center border border-[#1C1A16]/20 bg-transparent text-[#1C1A16] hover:bg-[#1C1A16]/5"
                     >
                       <Share2 className="w-4 h-4 mr-2" />
-                      分享结果
+                      分享
                     </Button>
                     <Button
                       type="button"
@@ -848,21 +1058,7 @@ function BaziPageContent() {
                   {actionMessage && <p className="mt-3 text-sm text-[#6B7280]">{actionMessage}</p>}
                 </Card>
 
-                <Card className={`text-center py-6 ${cardClass}`}>
-                  <p className="text-[#6B7280] mb-3 text-sm">想了解今天的运势？</p>
-                  <Link href="/daily">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="text-[13px] px-[38px] py-[14px] rounded-2xl border border-[#1C1A16]/15 text-[#1C1A16] bg-white hover:bg-[#1C1A16]/5"
-                    >
-                      📅 查看每日运势
-                      <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
-                    </Button>
-                  </Link>
-                </Card>
-
-                <div className="text-center text-xs text-[#6B7280] p-3 bg-white rounded-lg border border-[#1C1A16]/10">
+                <div className="text-center text-xs text-[#6B7280] p-3 bg-white rounded-2xl border border-[#1C1A16]/10">
                   ⚠️ 免责声明：本站所有命理分析仅供娱乐参考，不构成任何决策建议。命运掌握在自己手中，请理性对待。
                 </div>
               </div>
