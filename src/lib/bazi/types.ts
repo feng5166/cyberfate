@@ -96,6 +96,22 @@ export interface BaziApiResult {
   _source?: string;
 }
 
+export interface BaziHistoryRecord {
+  id: string;
+  name: string;
+  gender: string;
+  birthDate: string;
+  birthHour: string;
+  birthPlace?: string;
+  dayMaster: string;
+  aiSummary: string;
+  aiAnalysis: string;
+  pillars: PillarRecord;
+  wuxing: WuxingCount;
+  fiveDimensions?: FiveDimensions;
+  createdAt: string;
+}
+
 // 完整的八字响应
 export interface BaziResponse {
   success: boolean;
