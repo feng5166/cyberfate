@@ -135,3 +135,72 @@ export function buildDailyPrompt(
 
 请按“日主→大运→流年→当日干支”四层关系分析，输出今日运势 JSON（严格按示例格式）。`;
 }
+
+export interface MeihuaDecisionPromptInput {
+  question: string;
+  guaName: string;
+  gua: string;
+  changedGuaName: string;
+  changedGua: string;
+  movingLine: number;
+  upper: string;
+  lower: string;
+  changedUpper: string;
+  changedLower: string;
+  analysis: string;
+}
+
+export const MEIHUA_DECISION_SYSTEM_PROMPT = `你是赛博命理师的“梅花易数·每日决策”分析引擎。
+
+## 任务
+基于用户问题 + 本卦/变卦信息，输出结构化决策建议。
+
+## 输出规则（严格）
+- 只输出 JSON，不要 markdown，不要解释
+- 关键词 stance 只能是 go / stop / wait 三选一
+- overallAdvice 限 50 字以内
+- favorable 2-3 条，每条 40 字以内
+- cautions 1-2 条，每条 40 字以内
+- nextSteps 1-2 条，每条 60 字以内
+- insights 下三个字段均不超过 70 字
+- 总体不超过 400 字
+- 语气客观、克制、可执行，不做绝对化承诺
+
+## 输出格式
+{
+  "overallAdvice": "一句话综合建议",
+  "stance": "go",
+  "favorable": ["...", "..."],
+  "cautions": ["..."],
+  "nextSteps": ["..."],
+  "insights": {
+    "thinkingReference": "...",
+    "guaAnalysis": "...",
+    "timingReference": "..."
+  }
+}`;
+
+export function buildMeihuaDecisionPrompt(input: MeihuaDecisionPromptInput): string {
+  return `【用户问题】
+${input.question}
+
+【本卦】
+卦名：${input.guaName}
+卦符：${input.gua}
+上卦：${input.upper}
+下卦：${input.lower}
+
+【变卦】
+卦名：${input.changedGuaName}
+卦符：${input.changedGua}
+上卦：${input.changedUpper}
+下卦：${input.changedLower}
+
+【动爻】
+第${input.movingLine}爻
+
+【基础解读参考】
+${input.analysis}
+
+请结合“问题场景 + 卦象趋势 + 时机节奏”，输出指定 JSON。`;
+}

@@ -1,4 +1,12 @@
-import { buildBaziPrompt, buildDailyPrompt, BAZI_SYSTEM_PROMPT, DAILY_SYSTEM_PROMPT } from './prompts';
+import {
+  buildBaziPrompt,
+  buildDailyPrompt,
+  buildMeihuaDecisionPrompt,
+  BAZI_SYSTEM_PROMPT,
+  DAILY_SYSTEM_PROMPT,
+  MEIHUA_DECISION_SYSTEM_PROMPT,
+  type MeihuaDecisionPromptInput,
+} from './prompts';
 import type { BaziResult, BaziAnalysis } from '../bazi/types';
 import { callExternalAPI, getEnvVar } from '../utils/api-wrapper';
 import { redis } from '../cache/redis';
@@ -200,4 +208,138 @@ function generateFallbackDailyFortune() {
     lucky: { color: '蓝色', numbers: [3, 6], direction: '东方' },
     advice: '今日运势平稳，宜保持平常心，稳步前进。',
   };
+}
+
+export interface MeihuaDecisionResult {
+  overallAdvice: string;
+  stance: 'go' | 'stop' | 'wait';
+  favorable: string[];
+  cautions: string[];
+  nextSteps: string[];
+  insights: {
+    thinkingReference: string;
+    guaAnalysis: string;
+    timingReference: string;
+  };
+}
+
+function safeText(value: unknown, fallback: string, maxLength: number): string {
+  if (typeof value !== 'string') return fallback;
+  const cleaned = value.replace(/\s+/g, ' ').trim();
+  if (!cleaned) return fallback;
+  return cleaned.slice(0, maxLength);
+}
+
+function safeList(
+  value: unknown,
+  fallback: string[],
+  min: number,
+  max: number,
+  itemMaxLength: number
+): string[] {
+  if (!Array.isArray(value)) return fallback;
+  const list = value
+    .map((item) => (typeof item === 'string' ? item.replace(/\s+/g, ' ').trim() : ''))
+    .filter(Boolean)
+    .slice(0, max)
+    .map((item) => item.slice(0, itemMaxLength));
+
+  if (list.length < min) return fallback;
+  return list;
+}
+
+function resolveStance(value: unknown, overallAdvice: string): 'go' | 'stop' | 'wait' {
+  if (value === 'go' || value === 'stop' || value === 'wait') return value;
+
+  if (/不做|暂缓|停止|不宜|放弃/.test(overallAdvice)) return 'stop';
+  if (/观望|再看|等待|缓一缓|先稳/.test(overallAdvice)) return 'wait';
+  return 'go';
+}
+
+function buildFallbackMeihuaDecision(input: MeihuaDecisionPromptInput): MeihuaDecisionResult {
+  return {
+    overallAdvice: `建议先稳后进，围绕“${input.question.slice(0, 20)}”分阶段判断。`,
+    stance: 'wait',
+    favorable: [
+      '当前卦象显示局面并非僵局，仍有可操作空间。',
+      '你已形成明确问题意识，适合做结构化比较。',
+    ],
+    cautions: ['动爻提示节奏变化较快，避免一次性押注。'],
+    nextSteps: [
+      '先列出两个可执行方案，分别写明收益、成本与最坏结果。',
+      '在 3-7 天内补齐关键信息后，再做最终决定。',
+    ],
+    insights: {
+      thinkingReference: '先拆解“目标-约束-备选方案”，避免情绪主导判断。',
+      guaAnalysis: `本卦${input.guaName}转${input.changedGuaName}，提示先稳住基础再推进变化。`,
+      timingReference: '短期适合小步试探，确认反馈后再加大投入。',
+    },
+  };
+}
+
+function normalizeMeihuaDecision(raw: unknown, fallback: MeihuaDecisionResult): MeihuaDecisionResult {
+  const data = (raw && typeof raw === 'object') ? (raw as Record<string, unknown>) : {};
+  const insightsData = (data.insights && typeof data.insights === 'object')
+    ? (data.insights as Record<string, unknown>)
+    : {};
+
+  const overallAdvice = safeText(data.overallAdvice, fallback.overallAdvice, 60);
+  const favorable = safeList(data.favorable, fallback.favorable, 2, 3, 40);
+  const cautions = safeList(data.cautions, fallback.cautions, 1, 2, 40);
+  const nextSteps = safeList(data.nextSteps, fallback.nextSteps, 1, 2, 60);
+
+  return {
+    overallAdvice,
+    stance: resolveStance(data.stance, overallAdvice),
+    favorable,
+    cautions,
+    nextSteps,
+    insights: {
+      thinkingReference: safeText(
+        insightsData.thinkingReference,
+        fallback.insights.thinkingReference,
+        70
+      ),
+      guaAnalysis: safeText(
+        insightsData.guaAnalysis,
+        fallback.insights.guaAnalysis,
+        70
+      ),
+      timingReference: safeText(
+        insightsData.timingReference,
+        fallback.insights.timingReference,
+        70
+      ),
+    },
+  };
+}
+
+/**
+ * 梅花易数决策建议（结构化 JSON）
+ */
+export async function generateMeihuaDecision(
+  input: MeihuaDecisionPromptInput
+): Promise<MeihuaDecisionResult & { _source: 'deepseek' | 'fallback' }> {
+  const fallback = buildFallbackMeihuaDecision(input);
+  const apiKey = getEnvVar('DEEPSEEK_API_KEY');
+
+  if (!apiKey) {
+    return { ...fallback, _source: 'fallback' };
+  }
+
+  try {
+    const prompt = buildMeihuaDecisionPrompt(input);
+    const text = await callDeepSeek(MEIHUA_DECISION_SYSTEM_PROMPT, prompt, 700);
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      return { ...fallback, _source: 'fallback' };
+    }
+
+    const parsed = JSON.parse(jsonMatch[0]) as unknown;
+    const normalized = normalizeMeihuaDecision(parsed, fallback);
+    return { ...normalized, _source: 'deepseek' };
+  } catch (error) {
+    console.warn('[AI 梅花决策] 生成失败，使用降级结果', error);
+    return { ...fallback, _source: 'fallback' };
+  }
 }
