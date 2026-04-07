@@ -35,12 +35,15 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
 
   return (
     <div className={layoutClasses}>
-      <Header 
-        onMobileMenuToggle={() => setMobileMenuOpen(true)}
-        showMobileMenu={showSidebar || false}
-        onWorkbenchClick={handleWorkbenchClick}
-        showWorkbench={!!showSidebar}
-      />
+      {/* 固定定位包裹层 - 确保Header始终在顶部 */}
+      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999 }}>
+        <Header 
+          onMobileMenuToggle={() => setMobileMenuOpen(true)}
+          showMobileMenu={showSidebar || false}
+          onWorkbenchClick={handleWorkbenchClick}
+          showWorkbench={!!showSidebar}
+        />
+      </div>
       <main className="flex-1" style={{ paddingTop: '76px' }}>
         {showSidebar ? (
           <DashboardLayout

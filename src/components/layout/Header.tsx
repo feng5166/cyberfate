@@ -53,7 +53,7 @@ export function Header({
 
   return (
     <header
-      className={`!fixed !top-0 !left-0 !right-0 z-[9999] border-b border-[#1C1A16]/10 ${
+      className={`border-b border-[#1C1A16]/10 ${
         isHomePage ? 'bg-white/95 backdrop-blur-sm' : 'bg-white/90 backdrop-blur-md'
       }`}
     >
