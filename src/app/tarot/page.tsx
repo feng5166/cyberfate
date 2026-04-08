@@ -90,13 +90,6 @@ function getSpreadPositions(spread: TarotSpread): string[] {
   return THREE_POSITIONS;
 }
 
-function getCardWidth(spread: TarotSpread): number {
-  if (spread === 'celtic') return 84;
-  if (spread === 'mirror') return 112;
-  if (spread === 'moonlight') return 126;
-  return 138;
-}
-
 interface TarotCard {
   id: string | number;
   name_en: string;
@@ -285,9 +278,8 @@ export default function TarotPage() {
   const loadingCardCount = activeSpread === 'celtic' ? 10 : activeSpread === 'mirror' ? 5 : 3;
   const selectedCard = result && selectedCardIndex !== null ? result.cards[selectedCardIndex] : null;
 
-  const renderResultCard = (card: TarotCard, idx: number, spread: TarotSpread) => {
+  const renderResultCard = (card: TarotCard, idx: number) => {
     const isFlipped = Boolean(flippedCards[idx]);
-    const cardWidth = getCardWidth(spread);
 
     return (
       <button
@@ -296,10 +288,10 @@ export default function TarotPage() {
         onClick={() => {
           if (isFlipped) setSelectedCardIndex(idx);
         }}
-        className="inline-flex flex-col items-center text-center"
+        className="text-center"
       >
         <p className="mb-2 text-xs tracking-[0.14em] text-[#1C1A16]/55">{card.position || activePositions[idx]}</p>
-        <div className="card-container mx-auto" style={{ width: cardWidth, maxWidth: 'min(100%, 150px)' }}>
+        <div className="card-container mx-auto w-full max-w-[150px]">
           <div className={`card-inner ${isFlipped ? 'flipped' : ''}`}>
             <div
               className="card-front border border-[#1C1A16]/15"
@@ -312,7 +304,7 @@ export default function TarotPage() {
               </div>
             </div>
             <div className="card-back border border-[#1C1A16]/12 bg-[#FAF9F6]">
-              <Image src={card.image_url} alt={card.name_zh} fill sizes={`${cardWidth}px`} className="object-cover" />
+              <Image src={card.image_url} alt={card.name_zh} fill sizes="(max-width: 640px) 33vw, 160px" className="object-cover" />
             </div>
           </div>
         </div>
@@ -473,7 +465,7 @@ export default function TarotPage() {
                 {result.spread === 'celtic' ? (
                   <>
                     <div className="mt-4 grid grid-cols-2 gap-3 justify-items-center md:hidden">
-                      {result.cards.map((card, idx) => renderResultCard(card, idx, result.spread))}
+                      {result.cards.map((card, idx) => renderResultCard(card, idx))}
                     </div>
 
                     <div className="mx-auto mt-4 hidden max-w-4xl grid-cols-5 grid-rows-4 gap-x-4 gap-y-3 md:grid md:justify-items-center">
@@ -481,7 +473,7 @@ export default function TarotPage() {
                         const layout = CELTIC_DESKTOP_LAYOUT[idx];
                         return (
                           <div key={`${card.id}-${idx}`} style={{ gridColumn: layout.col, gridRow: layout.row }}>
-                            {renderResultCard(card, idx, result.spread)}
+                            {renderResultCard(card, idx)}
                           </div>
                         );
                       })}
@@ -489,11 +481,11 @@ export default function TarotPage() {
                   </>
                 ) : result.spread === 'mirror' ? (
                   <div className="mt-4 grid grid-cols-2 gap-3 justify-items-center sm:grid-cols-3 md:flex md:items-start md:justify-center md:gap-4">
-                    {result.cards.map((card, idx) => renderResultCard(card, idx, result.spread))}
+                    {result.cards.map((card, idx) => renderResultCard(card, idx))}
                   </div>
                 ) : (
                   <div className="mt-4 grid grid-cols-3 gap-2 justify-items-center sm:gap-4">
-                    {result.cards.map((card, idx) => renderResultCard(card, idx, result.spread))}
+                    {result.cards.map((card, idx) => renderResultCard(card, idx))}
                   </div>
                 )}
 
@@ -694,16 +686,11 @@ export default function TarotPage() {
       <style jsx>{`
         .card-container {
           perspective: 1000px;
-          width: min(100%, 150px);
-          max-width: 150px;
-          min-width: 0;
-          flex-shrink: 0;
         }
 
         .card-inner {
           position: relative;
           width: 100%;
-          max-width: 100%;
           aspect-ratio: 2 / 3;
           overflow: hidden;
           transition: transform 0.6s;
