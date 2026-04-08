@@ -140,7 +140,7 @@ export default function HomePage() {
             className="font-display text-[36px] sm:text-[48px] md:text-[56px] font-bold text-[#1C1A16] text-center leading-tight"
             style={{ letterSpacing: '0.06em' }}
           >
-            CyberFate.Me
+            CyberFate.ME
           </h1>
 
           {/* 副标题 */}
