@@ -245,7 +245,7 @@ export function Sidebar({
   );
 
   const desktopAsideClasses = clsx(
-    'hidden lg:block fixed left-0 top-16 h-[calc(100vh-64px)] z-30 border-r border-brand-border-light bg-white shadow-sm transition-all duration-300 ease',
+    'hidden lg:block flex-shrink-0 h-[calc(100vh-64px)] sticky top-16 z-30 border-r border-brand-border-light bg-white shadow-sm transition-all duration-300 ease',
     collapsed ? 'w-16' : 'w-[260px]'
   );
 

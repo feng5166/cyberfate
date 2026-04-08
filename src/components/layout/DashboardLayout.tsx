@@ -42,17 +42,8 @@ export function DashboardLayout({
     onCollapseToggle?.(nextState);
   };
 
-  const contentClasses = clsx(
-    'min-h-[calc(100vh-64px)] bg-brand-bg transition-all duration-300 ease',
-    resolvedShowSidebar
-      ? collapsed
-        ? 'lg:ml-16'
-        : 'lg:ml-[260px]'
-      : 'ml-0'
-  );
-
   return (
-    <div className="relative">
+    <div className="flex min-h-[calc(100vh-64px)]">
       {resolvedShowSidebar && (
         <Sidebar
           collapsed={collapsed}
@@ -61,7 +52,14 @@ export function DashboardLayout({
           onMobileClose={onMobileClose}
         />
       )}
-      <div className={contentClasses}>{children}</div>
+      <main
+        className={clsx(
+          'flex-1 min-h-full bg-brand-bg transition-all duration-300 ease',
+          !resolvedShowSidebar && 'w-full'
+        )}
+      >
+        {children}
+      </main>
     </div>
   );
 }
