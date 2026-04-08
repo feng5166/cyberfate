@@ -2,7 +2,7 @@
 
 import { Footer } from '@/components/layout/Footer';
 import { CardDrawAnimation } from '@/components/tarot/CardDrawAnimation';
-import { ChevronDown, ChevronUp, Share2, Sparkles } from 'lucide-react';
+import { ChevronDown, ChevronUp, Share2, Sparkles, X } from 'lucide-react';
 import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { useEffect, useRef, useState } from 'react';
@@ -14,14 +14,46 @@ const SAMPLE_PROMPTS = [
   '我该如何做这个决定？',
 ];
 
+type TarotSpread = 'three' | 'celtic' | 'moonlight' | 'mirror';
+
 const THREE_POSITIONS = ['过去', '现在', '未来'];
 
+const CELTIC_POSITIONS = [
+  '①现状',
+  '②挑战',
+  '③意识',
+  '④根源',
+  '⑤希望/恐惧',
+  '⑥近期发展',
+  '⑦可能结果',
+  '⑧外部环境',
+  '⑨心态信念',
+  '⑩最终结局',
+];
+
+const MOONLIGHT_POSITIONS = ['身心灵', '潜意识', '指引'];
+
+const MIRROR_POSITIONS = ['现状', '阻碍', '建议', '风险', 'Outcome'];
+
+const CELTIC_DESKTOP_LAYOUT: { col: number; row: number }[] = [
+  { col: 1, row: 4 }, // ①现状
+  { col: 2, row: 2 }, // ②挑战
+  { col: 2, row: 4 }, // ③意识
+  { col: 3, row: 4 }, // ④根源
+  { col: 2, row: 3 }, // ⑤希望/恐惧
+  { col: 2, row: 1 }, // ⑥近期发展
+  { col: 5, row: 4 }, // ⑦可能结果
+  { col: 3, row: 2 }, // ⑧外部环境 → 修正为 col3,row4 → 按需求 col3,row4 已被④占用
+  { col: 4, row: 2 }, // ⑨心态信念
+  { col: 1, row: 2 }, // ⑩最终结局
+];
+
 const MODES = [
-  { id: 'classic', icon: '⚫', name: '经典', desc: '传统三张牌阵', comingSoon: false },
-  { id: 'celtic', icon: '✝︎', name: '凯尔特十字', desc: '10张深度牌阵', comingSoon: true },
-  { id: 'moonlight', icon: '🌙', name: '月光', desc: '柔和内省', comingSoon: true },
-  { id: 'mirror', icon: '✧', name: '镜像', desc: '多角度透视', comingSoon: true },
-] as const;
+  { id: 'classic' as const, icon: '⚫', name: '经典', desc: '传统三张牌阵' },
+  { id: 'celtic' as const, icon: '✝︎', name: '凯尔特十字', desc: '10张深度牌阵' },
+  { id: 'moonlight' as const, icon: '🌙', name: '月光', desc: '柔和内省' },
+  { id: 'mirror' as const, icon: '✧', name: '镜像', desc: '多角度透视' },
+];
 
 const FAQ_ITEMS = [
   {
@@ -38,8 +70,35 @@ const FAQ_ITEMS = [
   },
 ] as const;
 
+const SPREAD_TO_MODE: Record<TarotSpread, string> = {
+  three: '经典三张牌',
+  celtic: '凯尔特十字',
+  moonlight: '月光三张牌',
+  mirror: '镜像五张牌',
+};
+
 type ModeId = (typeof MODES)[number]['id'];
 type Step = 'question' | 'loading' | 'result';
+
+const MODE_TO_SPREAD: Record<ModeId, TarotSpread> = {
+  classic: 'three',
+  celtic: 'celtic',
+  moonlight: 'moonlight',
+  mirror: 'mirror',
+};
+
+function getPositions(spread: TarotSpread): string[] {
+  switch (spread) {
+    case 'celtic':
+      return CELTIC_POSITIONS;
+    case 'moonlight':
+      return MOONLIGHT_POSITIONS;
+    case 'mirror':
+      return MIRROR_POSITIONS;
+    default:
+      return THREE_POSITIONS;
+  }
+}
 
 interface TarotCard {
   id: string | number;
@@ -76,6 +135,7 @@ export default function TarotPage() {
   const [showReading, setShowReading] = useState(false);
   const [useLegacyDrawAnimation] = useState(false);
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
+  const [celticModalIdx, setCelticModalIdx] = useState<number | null>(null);
   const flipTimersRef = useRef<Array<ReturnType<typeof setTimeout>>>([]);
 
   const clearFlipTimers = () => {
@@ -89,6 +149,8 @@ export default function TarotPage() {
     };
   }, []);
 
+  const currentSpread = MODE_TO_SPREAD[mode];
+
   const handleShare = async () => {
     if (!result) return;
 
@@ -99,7 +161,7 @@ export default function TarotPage() {
         body: JSON.stringify({
           cards: result.cards,
           question,
-          spread: 'three',
+          spread: result.spread || currentSpread,
         }),
       });
       const data = await res.json();
@@ -121,13 +183,16 @@ export default function TarotPage() {
       return;
     }
 
-    if (targetMode !== 'classic') {
-      setError('该模式即将上线，当前仅支持经典模式。');
-      return;
-    }
-
     setError('');
-    setMode('classic');
+    setMode(targetMode);
+    setStep('question');
+    setQuestion('');
+    setResult(null);
+    setDetailedExpanded(false);
+    setFlippedCards([]);
+    setShowReading(false);
+    setCelticModalIdx(null);
+    clearFlipTimers();
   };
 
   const startFlipSequence = (cardCount: number) => {
@@ -156,11 +221,6 @@ export default function TarotPage() {
   };
 
   const handleDraw = async () => {
-    if (mode !== 'classic') {
-      setError('当前仅支持经典模式。');
-      return;
-    }
-
     setLoading(true);
     setError('');
     setStep('loading');
@@ -170,7 +230,7 @@ export default function TarotPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          spread: 'three',
+          spread: currentSpread,
           question: question.trim(),
         }),
       });
@@ -210,9 +270,137 @@ export default function TarotPage() {
     setDetailedExpanded(false);
     setFlippedCards([]);
     setShowReading(false);
+    setCelticModalIdx(null);
   };
 
   const isFlipping = step === 'result' && !showReading;
+
+  const renderResultCard = (
+    card: TarotCard,
+    idx: number,
+    spread: TarotSpread,
+    positions: string[],
+  ) => {
+    const isFlipped = Boolean(flippedCards[idx]);
+    const isCeltic = spread === 'celtic';
+    const containerMax = isCeltic ? 'max-w-[100px]' : 'max-w-[150px]';
+    const cardSizeClass = isCeltic
+      ? 'w-[70px] sm:w-[80px]'
+      : '';
+
+    return (
+      <div
+        key={`${card.id}-${idx}`}
+        className="text-center"
+        onClick={() => {
+          if (isCeltic && isFlipped) {
+            setCelticModalIdx(idx);
+          }
+        }}
+        style={isCeltic && isFlipped ? { cursor: 'pointer' } : undefined}
+      >
+        <p className="mb-2 text-xs tracking-[0.16em] text-[#1C1A16]/55">
+          {card.position || positions[idx]}
+        </p>
+        <div className={`card-container mx-auto w-full ${containerMax} ${cardSizeClass}`}>
+          <div className={`card-inner ${isFlipped ? 'flipped' : ''}`}>
+            <div
+              className="card-front border border-[#1C1A16]/15"
+              style={{ background: 'linear-gradient(145deg, #f7f2e7 0%, #e8dcc2 52%, #d9c5a3 100%)' }}
+            >
+              <div className="flex h-full w-full items-center justify-center">
+                <div className="rounded-full border border-[#1C1A16]/20 px-2 py-0.5 text-[10px] tracking-[0.2em] text-[#1C1A16]/70 sm:px-3 sm:py-1 sm:text-sm">
+                  TAROT
+                </div>
+              </div>
+            </div>
+            <div className="card-back border border-[#1C1A16]/12 bg-[#FAF9F6]">
+              <Image
+                src={card.image_url}
+                alt={card.name_zh}
+                fill
+                sizes={isCeltic ? '(max-width: 640px) 25vw, 100px' : '(max-width: 640px) 33vw, 160px'}
+                className="object-cover"
+              />
+            </div>
+          </div>
+        </div>
+        <h4 className={`mt-2 font-medium text-[#1C1A16] ${isCeltic ? 'text-[10px] sm:text-xs' : 'text-xs sm:text-sm'}`}>
+          {card.name_zh}
+        </h4>
+        {isFlipped ? (
+          <span
+            className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[11px] ${
+              card.orientation === 'upright'
+                ? 'bg-emerald-100 text-emerald-700'
+                : 'bg-amber-100 text-amber-700'
+            }`}
+          >
+            {card.orientation === 'upright' ? '正位' : '逆位'}
+          </span>
+        ) : (
+          <span className="mt-1 inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-[11px] text-gray-500">
+            待揭示
+          </span>
+        )}
+      </div>
+    );
+  };
+
+  const renderCards = () => {
+    if (!result) return null;
+
+    const spread = (result.spread as TarotSpread) || currentSpread;
+    const positions = getPositions(spread);
+
+    if (spread === 'celtic') {
+      return (
+        <>
+          {/* 桌面端十字布局 */}
+          <div className="hidden md:grid" style={{ gridTemplateColumns: 'repeat(5, 1fr)', gridTemplateRows: 'repeat(4, auto)', gap: '12px' }}>
+            {result.cards.map((card, idx) => {
+              const pos = CELTIC_DESKTOP_LAYOUT[idx];
+              return (
+                <div
+                  key={`celtic-${card.id}-${idx}`}
+                  style={{ gridColumn: pos.col, gridRow: pos.row }}
+                >
+                  {renderResultCard(card, idx, spread, positions)}
+                </div>
+              );
+            })}
+          </div>
+          {/* 移动端 2 列列表 */}
+          <div className="grid grid-cols-2 gap-3 md:hidden">
+            {result.cards.map((card, idx) => renderResultCard(card, idx, spread, positions))}
+          </div>
+        </>
+      );
+    }
+
+    if (spread === 'mirror') {
+      return (
+        <div className="grid grid-cols-2 gap-3 md:flex md:justify-center md:gap-4">
+          {result.cards.map((card, idx) => (
+            <div key={`mirror-${card.id}-${idx}`} className="md:w-[150px]">
+              {renderResultCard(card, idx, spread, positions)}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    // classic & moonlight: grid-cols-3
+    return (
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
+        {result.cards.map((card, idx) => renderResultCard(card, idx, spread, positions))}
+      </div>
+    );
+  };
+
+  const spreadTitle = result
+    ? SPREAD_TO_MODE[(result.spread as TarotSpread) || currentSpread] || '经典三张牌'
+    : '经典三张牌';
 
   return (
     <div className="relative min-h-screen bg-[#FAF9F6] text-[#1C1A16]">
@@ -249,11 +437,8 @@ export default function TarotPage() {
                     key={item.id}
                     type="button"
                     onClick={() => handleModeSelect(item.id)}
-                    disabled={item.comingSoon}
                     className={`rounded-xl border p-3 text-left transition-all duration-300 ${
-                      item.comingSoon
-                        ? 'cursor-not-allowed border-[#1C1A16]/8 bg-[#FAF9F6] opacity-60'
-                        : active
+                      active
                         ? 'border-[#1C1A16]/20 bg-[#FAF9F6] shadow-card-hover'
                         : 'border-[#1C1A16]/10 bg-white hover:border-[#1C1A16]/20 hover:shadow-card-hover'
                     }`}
@@ -263,11 +448,6 @@ export default function TarotPage() {
                       {item.name}
                     </p>
                     <p className="mt-1 text-xs text-[#1C1A16]/60">{item.desc}</p>
-                    {item.comingSoon && (
-                      <span className="mt-2 inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-[11px] text-gray-600">
-                        即将上线
-                      </span>
-                    )}
                   </button>
                 );
               })}
@@ -349,57 +529,9 @@ export default function TarotPage() {
           {step === 'result' && result && (
             <div className="space-y-4">
               <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-4 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
-                <h3 className="font-display text-2xl tracking-[0.08em] text-[#1C1A16]">经典三张牌</h3>
-                <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-4">
-                  {result.cards.map((card, idx) => {
-                    const isFlipped = Boolean(flippedCards[idx]);
-                    return (
-                      <div key={`${card.id}-${idx}`} className="text-center">
-                        <p className="mb-2 text-xs tracking-[0.16em] text-[#1C1A16]/55">
-                          {card.position || THREE_POSITIONS[idx]}
-                        </p>
-                        <div className="card-container mx-auto w-full max-w-[150px]">
-                          <div className={`card-inner ${isFlipped ? 'flipped' : ''}`}>
-                            <div
-                              className="card-front border border-[#1C1A16]/15"
-                              style={{ background: 'linear-gradient(145deg, #f7f2e7 0%, #e8dcc2 52%, #d9c5a3 100%)' }}
-                            >
-                              <div className="flex h-full w-full items-center justify-center">
-                                <div className="rounded-full border border-[#1C1A16]/20 px-3 py-1 text-sm tracking-[0.2em] text-[#1C1A16]/70">
-                                  TAROT
-                                </div>
-                              </div>
-                            </div>
-                            <div className="card-back border border-[#1C1A16]/12 bg-[#FAF9F6]">
-                              <Image
-                                src={card.image_url}
-                                alt={card.name_zh}
-                                fill
-                                sizes="(max-width: 640px) 33vw, 160px"
-                                className="object-cover"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                        <h4 className="mt-2 text-xs font-medium text-[#1C1A16] sm:text-sm">{card.name_zh}</h4>
-                        {isFlipped ? (
-                          <span
-                            className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[11px] ${
-                              card.orientation === 'upright'
-                                ? 'bg-emerald-100 text-emerald-700'
-                                : 'bg-amber-100 text-amber-700'
-                            }`}
-                          >
-                            {card.orientation === 'upright' ? '正位' : '逆位'}
-                          </span>
-                        ) : (
-                          <span className="mt-1 inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-[11px] text-gray-500">
-                            待揭示
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })}
+                <h3 className="font-display text-2xl tracking-[0.08em] text-[#1C1A16]">{spreadTitle}</h3>
+                <div className="mt-4">
+                  {renderCards()}
                 </div>
                 {isFlipping && <p className="mt-4 text-center text-sm text-[#1C1A16]/60">牌面正在揭示中...</p>}
               </div>
@@ -568,6 +700,83 @@ export default function TarotPage() {
       </main>
 
       <Footer />
+
+      {/* 凯尔特十字牌面详情 Modal */}
+      {celticModalIdx !== null && result && result.cards[celticModalIdx] && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setCelticModalIdx(null)}
+        >
+          <div
+            className="relative max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setCelticModalIdx(null)}
+              className="absolute top-4 right-4 rounded-full p-1 text-[#1C1A16]/60 transition-colors hover:bg-gray-100 hover:text-[#1C1A16]"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <div className="flex items-center gap-3">
+              <div className="relative h-20 w-14 shrink-0 overflow-hidden rounded-lg border border-[#1C1A16]/12">
+                <Image
+                  src={result.cards[celticModalIdx].image_url}
+                  alt={result.cards[celticModalIdx].name_zh}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+              <div>
+                <p className="text-xs tracking-[0.16em] text-[#1C1A16]/55">
+                  {result.cards[celticModalIdx].position || CELTIC_POSITIONS[celticModalIdx]}
+                </p>
+                <h3 className="font-display text-lg text-[#1C1A16]">
+                  {result.cards[celticModalIdx].name_zh}
+                </h3>
+                <span
+                  className={`inline-flex rounded-full px-2 py-0.5 text-[11px] ${
+                    result.cards[celticModalIdx].orientation === 'upright'
+                      ? 'bg-emerald-100 text-emerald-700'
+                      : 'bg-amber-100 text-amber-700'
+                  }`}
+                >
+                  {result.cards[celticModalIdx].orientation === 'upright' ? '正位' : '逆位'}
+                </span>
+              </div>
+            </div>
+            <div className="mt-4 space-y-3">
+              <div>
+                <h4 className="text-sm font-semibold text-[#1C1A16]">传统含义</h4>
+                <p className="mt-1 text-sm leading-relaxed text-[#1C1A16]/80">
+                  {result.cards[celticModalIdx].orientation === 'upright'
+                    ? result.cards[celticModalIdx].upright
+                    : result.cards[celticModalIdx].reversed}
+                </p>
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-[#1C1A16]">位置解读</h4>
+                <p className="mt-1 text-sm leading-relaxed text-[#1C1A16]/80">
+                  {result.cards[celticModalIdx].meaning}
+                </p>
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-[#1C1A16]">关键词</h4>
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {result.cards[celticModalIdx].keywords.map((kw) => (
+                    <span
+                      key={kw}
+                      className="rounded-full bg-[#FAF9F6] px-2 py-0.5 text-xs text-[#1C1A16]/70"
+                    >
+                      {kw}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         .card-container {
