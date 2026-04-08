@@ -32,7 +32,7 @@ export function SidebarMenuItem({
     >
       <span
         className={clsx(
-          'relative flex items-center gap-3 rounded-md text-sm font-medium transition-colors duration-200 ease-out',
+          'relative flex items-center gap-2.5 rounded-md text-sm font-medium transition-colors duration-200 ease-out',
           collapsed ? 'justify-center px-0 py-2.5' : 'px-5 py-2.5',
           active
             ? 'text-black bg-[#F9FAFB]'
@@ -41,7 +41,7 @@ export function SidebarMenuItem({
       >
         {active && (
           <span
-            className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-black"
+            className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-[#7C3AED]"
             aria-hidden
           />
         )}

@@ -1087,8 +1087,7 @@ _美术虾 🎨签字确认 · Frank 审批通过 · 2026-04-03_
 | 元素 | 说明 |
 |------|------|
 | 头像 + 昵称 + 邮箱 | 显示当前登录用户 |
-| ⚙️ 设置 | /settings（计划中） |
-| 🚪 退出登录 | 清除 token，跳转首页 |
+| ⚙️ 设置 / 🚪 退出登录 | **文字链接样式 + 图标**（非按钮），hover 下划线 |
 
 #### 用户头像规范
 
@@ -1115,19 +1114,46 @@ _美术虾 🎨签字确认 · Frank 审批通过 · 2026-04-03_
 | 属性 | 值 |
 |------|-----|
 | 形状 | 圆形 rounded-full |
-| 尺寸 | 侧边栏展开态 w-10 h-10 (40px)；收起态 w-9 h-9 (36px)；导航栏 w-8 h-8 (32px) |
+| 尺寸 | 侧边栏展开态 **w-11 h-11 (44px)**（原 40px）；收起态 w-9 h-9 (36px)；导航栏 w-8 h-8 (32px) |
 | object-fit | cover |
 | 加载失败 | fallback 到首字占位图 |
 
-#### 菜单项交互规则
+**用户区域布局（底部固定区）：**
 
-1. **当前页面高亮**：菜单项文字颜色 #000000 + 左侧 3px 黑色竖条指示器，背景 #F9FAFB
+```
+┌─────────────────────────────────────┐
+│                                     │
+│        [头像 44px]                  │
+│                                     │
+│        周峰                         │
+│     zf@example.com    ← text-xs(12px) muted  │
+│                                     │
+│   ⚙️ 设置    🚪 退出    ← 文字链接+图标  │
+│                                     │
+└─────────────────────────────────────┘
+```
+
+| 属性 | 值 | Tailwind |
+|------|-----|----------|
+| 头像 | w-11 h-11 rounded-full | `w-11 h-11 rounded-full` |
+| 昵称 | text-sm font-medium, mt-1 | `text-sm font-medium mt-1` |
+| 邮箱 | **text-xs (12px)**, text-muted, mt-0.5（减小降噪） | `text-xs text-[#9CA3AF] mt-0.5` |
+| 设置/退出 | text-xs text-[#6B7280], hover:text-black, hover:underline, flex gap-3 mt-2 | `text-xs hover:underline flex gap-3` |
+
+#### 菜单项交互规则（v2 — 2026-04-09 视觉优化）
+
+1. **当前页面高亮**：文字颜色 #000000 + 左侧 3px 品牌色竖条指示器 `#7C3AED`（紫色），背景 #F9FAFB
 2. **非当前页**：文字 color #6B7280，hover 时背景 #F9FAFB + 文字变 #000000
 3. **字体**：text-sm (14px), font-medium
-4. **内边距**：left 20px, vertical 10-12px
-5. **图标尺寸**：18-20px，位于文字左侧，间距 10px
-6. **分组标题**：text-xs (12px), font-semibold, text-gray-400, uppercase tracking-wider, padding left 20px, margin-top 16px, margin-bottom 8px
+4. **内边距**：left 20px, vertical **12px**（紧凑化，原 10-16px）
+5. **图标尺寸**：18-20px，位于文字左侧，间距 **12px**（紧凑化，原 ~16px）
+6. **分组标题**：text-[13px]（增强可见性，原 12px）, font-semibold, text-[#9CA3AF]（中灰，原极浅灰）, uppercase tracking-wider, padding-left 20px, margin-top **20px**（增加呼吸感，原 16px）, margin-bottom 8px
 7. **分割线**：1px solid #F3F4F6，上下 margin 12px
+
+> **变更说明（2026-04-09 美术虾建议 + 产品虾审核）：**
+> - 菜单项紧凑化：icon 间距 16→12px，padding 16→12px
+> - 分组标签增强：字号 12→13px，颜色 gray-400→#9CA3AF，上边距 16→20px
+> - 选中态指示器：纯黑 → 品牌紫色 #7C3AED（品牌点缀，图标保持黑色不变）
 
 #### 收起态（Collapsed）
 
@@ -1135,7 +1161,7 @@ _美术虾 🎨签字确认 · Frank 审批通过 · 2026-04-03_
 - 只显示图标，隐藏文字和分组标题
 - 图标居中显示
 - hover 时 tooltip 显示完整名称（右侧弹出）
-- 底部用户区只显示头像（圆形 36px）
+- 底部用户区只显示头像（圆形 **w-9 h-9 36px**）+ hover tooltip 显示昵称
 
 #### 折叠/展开切换按钮
 

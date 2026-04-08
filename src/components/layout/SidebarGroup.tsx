@@ -24,7 +24,7 @@ export function SidebarGroup({
         <div className="mx-5 mt-6 mb-3 border-t border-brand-border-light" aria-hidden />
       )}
       {title && !collapsed && (
-        <div className="px-5 mt-4 mb-2 text-xs font-semibold tracking-wider text-gray-400 uppercase">
+        <div className="px-5 mt-5 mb-2 text-[13px] font-semibold tracking-wider text-[#9CA3AF] uppercase">
           {title}
         </div>
       )}

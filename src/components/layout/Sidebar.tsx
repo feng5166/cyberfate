@@ -117,7 +117,7 @@ export function Sidebar({
     const name = session?.user?.name?.trim() || '访客';
     const initial = name.charAt(0).toUpperCase();
     const imageUrl = session?.user?.image;
-    const sizeClass = isCollapsed ? 'h-9 w-9' : 'h-10 w-10';
+    const sizeClass = isCollapsed ? 'h-10 w-10' : 'h-11 w-11';
 
     if (imageUrl && !avatarError) {
       return (
@@ -148,24 +148,24 @@ export function Sidebar({
             {renderAvatar(false)}
             <div>
               <p className="text-sm font-semibold text-brand-black">{session?.user?.name || '未登录用户'}</p>
-              <p className="text-xs text-brand-gray">{session?.user?.email || '未绑定邮箱'}</p>
+              <p className="text-xs text-[#9CA3AF]">{session?.user?.email || '未绑定邮箱'}</p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-4">
             <Link
               href="/settings"
-              className="flex flex-1 items-center justify-center gap-2 rounded-md border border-brand-border-light px-3 py-2 text-sm text-brand-gray hover:text-brand-black"
+              className="inline-flex items-center gap-1.5 text-xs text-[#9CA3AF] transition-colors hover:text-brand-black"
               onClick={onMobileClose}
             >
-              <Settings className="h-4 w-4" />
+              <Settings className="h-3.5 w-3.5" />
               <span>设置</span>
             </Link>
             <button
               type="button"
               onClick={() => signOut({ callbackUrl: '/' })}
-              className="flex flex-1 items-center justify-center gap-2 rounded-md border border-brand-border-light px-3 py-2 text-sm text-brand-gray hover:text-brand-black"
+              className="inline-flex items-center gap-1.5 text-xs text-[#9CA3AF] transition-colors hover:text-brand-black"
             >
-              <LogOut className="h-4 w-4" />
+              <LogOut className="h-3.5 w-3.5" />
               <span>退出</span>
             </button>
           </div>
