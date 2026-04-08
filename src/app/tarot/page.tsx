@@ -91,9 +91,10 @@ function getSpreadPositions(spread: TarotSpread): string[] {
 }
 
 function getCardSizeClass(spread: TarotSpread): string {
-  if (spread === 'celtic') return 'w-[70px] sm:w-[80px]';
-  if (spread === 'mirror') return 'w-[100px]';
-  return 'w-[110px] sm:w-[130px] md:w-[150px]';
+  if (spread === 'celtic') return 'w-[64px] sm:w-[76px] md:w-[84px]';
+  if (spread === 'mirror') return 'w-[88px] sm:w-[100px] md:w-[112px]';
+  if (spread === 'moonlight') return 'w-[96px] sm:w-[112px] md:w-[126px]';
+  return 'w-[104px] sm:w-[124px] md:w-[138px]';
 }
 
 interface TarotCard {
@@ -298,7 +299,7 @@ export default function TarotPage() {
         className="text-center"
       >
         <p className="mb-2 text-xs tracking-[0.14em] text-[#1C1A16]/55">{card.position || activePositions[idx]}</p>
-        <div className="card-container mx-auto w-full max-w-[150px]">
+        <div className={`card-container mx-auto ${cardSizeClass}`}>
           <div className={`card-inner ${isFlipped ? 'flipped' : ''}`}>
             <div
               className="card-front border border-[#1C1A16]/15"
@@ -699,6 +700,7 @@ export default function TarotPage() {
           position: relative;
           width: 100%;
           aspect-ratio: 2 / 3;
+          overflow: hidden;
           transition: transform 0.6s;
           transform-style: preserve-3d;
         }
