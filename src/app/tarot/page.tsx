@@ -90,11 +90,11 @@ function getSpreadPositions(spread: TarotSpread): string[] {
   return THREE_POSITIONS;
 }
 
-function getCardSizeClass(spread: TarotSpread): string {
-  if (spread === 'celtic') return 'w-[64px] sm:w-[76px] md:w-[84px]';
-  if (spread === 'mirror') return 'w-[88px] sm:w-[100px] md:w-[112px]';
-  if (spread === 'moonlight') return 'w-[96px] sm:w-[112px] md:w-[126px]';
-  return 'w-[104px] sm:w-[124px] md:w-[138px]';
+function getCardWidth(spread: TarotSpread): number {
+  if (spread === 'celtic') return 84;
+  if (spread === 'mirror') return 112;
+  if (spread === 'moonlight') return 126;
+  return 138;
 }
 
 interface TarotCard {
@@ -287,7 +287,7 @@ export default function TarotPage() {
 
   const renderResultCard = (card: TarotCard, idx: number, spread: TarotSpread) => {
     const isFlipped = Boolean(flippedCards[idx]);
-    const cardSizeClass = getCardSizeClass(spread);
+    const cardWidth = getCardWidth(spread);
 
     return (
       <button
@@ -296,10 +296,10 @@ export default function TarotPage() {
         onClick={() => {
           if (isFlipped) setSelectedCardIndex(idx);
         }}
-        className="text-center"
+        className="inline-flex flex-col items-center text-center"
       >
         <p className="mb-2 text-xs tracking-[0.14em] text-[#1C1A16]/55">{card.position || activePositions[idx]}</p>
-        <div className={`card-container mx-auto ${cardSizeClass}`}>
+        <div className="card-container mx-auto" style={{ width: cardWidth, maxWidth: 'min(100%, 150px)' }}>
           <div className={`card-inner ${isFlipped ? 'flipped' : ''}`}>
             <div
               className="card-front border border-[#1C1A16]/15"
@@ -312,7 +312,7 @@ export default function TarotPage() {
               </div>
             </div>
             <div className="card-back border border-[#1C1A16]/12 bg-[#FAF9F6]">
-              <Image src={card.image_url} alt={card.name_zh} fill sizes="160px" className="object-cover" />
+              <Image src={card.image_url} alt={card.name_zh} fill sizes={`${cardWidth}px`} className="object-cover" />
             </div>
           </div>
         </div>
@@ -694,11 +694,16 @@ export default function TarotPage() {
       <style jsx>{`
         .card-container {
           perspective: 1000px;
+          width: min(100%, 150px);
+          max-width: 150px;
+          min-width: 0;
+          flex-shrink: 0;
         }
 
         .card-inner {
           position: relative;
           width: 100%;
+          max-width: 100%;
           aspect-ratio: 2 / 3;
           overflow: hidden;
           transition: transform 0.6s;
