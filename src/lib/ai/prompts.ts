@@ -315,3 +315,70 @@ ${input.analysis}
 
 请结合“问题场景 + 卦象趋势 + 时机节奏”，输出指定 JSON。`;
 }
+
+// ─── 六爻占卜 ─────────────────────────────────────
+
+export interface LiuYaoPromptInput {
+  question: string;
+  hexagramName: string;
+  upperTrigram: string;
+  lowerTrigram: string;
+  lines: Array<{
+    index: number;
+    type: 'yin' | 'yang';
+    title: string;
+    originalText: string;
+  }>;
+  judgment: string;
+  divinationTime: string;
+}
+
+export const LIUYAO_SYSTEM_PROMPT = `你是赛博命理师的六爻占卜分析引擎，精通《周易》六爻预测体系。
+
+## 任务
+基于用户问题 + 卦象信息 + 爻辞，输出结构化的六爻解读。
+
+## 输出规则（严格）
+- 只输出 JSON，不要 markdown，不要解释，不要前言
+- lineInterpretations 数组长度必须为 6，与六爻一一对应
+- 每条 lineInterpretation 控制在 60-100 字，结合爻位含义和用户问题
+- overallNarrative 控制在 200-300 字，从整体卦象分析趋势
+- summary 综合建议 1 句话，限 50 字
+- positives 2-3 条有利因素，每条 25 字以内
+- cautions 1-2 条注意事项，每条 25 字以内
+- actions 1-2 条下一步行动建议，每条 40 字以内
+- 语气客观、温和、有深度，融合传统易理与现代视角
+- 不做绝对断言，用"倾向""建议""参考"等表述
+
+## 输出格式
+{
+  "lineInterpretations": ["初爻解读", "二爻解读", "三爻解读", "四爻解读", "五爻解读", "上爻解读"],
+  "overallNarrative": "综合分析...",
+  "summary": "一句话综合建议",
+  "positives": ["有利因素1", "有利因素2"],
+  "cautions": ["注意事项1"],
+  "actions": ["行动建议1", "行动建议2"]
+}`;
+
+export function buildLiuYaoPrompt(input: LiuYaoPromptInput): string {
+  const linesText = input.lines
+    .map((l) => `  ${l.title}（${l.type === 'yang' ? '阳爻' : '阴爻'}）：${l.originalText}`)
+    .join('\n');
+
+  return `【用户问题】
+${input.question || '用户未输入具体问题，请给出通用但可执行的指引。'}
+
+【卦象信息】
+本卦：${input.hexagramName}
+上卦：${input.upperTrigram}
+下卦：${input.lowerTrigram}
+卦辞：${input.judgment}
+
+【六爻详情（初爻→上爻）】
+${linesText}
+
+【占卜时间】
+${input.divinationTime}
+
+请结合卦象、爻辞、问题背景，输出指定 JSON。每爻解读需结合爻位含义和用户实际问题给出有针对性的分析。`;
+}

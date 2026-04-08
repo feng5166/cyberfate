@@ -1,12 +1,15 @@
 import {
   buildBaziPrompt,
   buildDailyPrompt,
+  buildLiuYaoPrompt,
   buildMeihuaDecisionPrompt,
   buildTarotReadingPrompt,
   buildTarotReadingSystemPrompt,
   BAZI_SYSTEM_PROMPT,
   DAILY_SYSTEM_PROMPT,
+  LIUYAO_SYSTEM_PROMPT,
   MEIHUA_DECISION_SYSTEM_PROMPT,
+  type LiuYaoPromptInput,
   type MeihuaDecisionPromptInput,
   type TarotReadingPromptInput,
   type TarotSpread,
@@ -469,6 +472,78 @@ export async function generateMeihuaDecision(
     return { ...normalized, _source: 'deepseek' };
   } catch (error) {
     console.warn('[AI 梅花决策] 生成失败，使用降级结果', error);
+    return { ...fallback, _source: 'fallback' };
+  }
+}
+
+// ─── 六爻占卜 ─────────────────────────────────────
+
+export interface LiuYaoReadingResult {
+  lineInterpretations: string[];
+  overallNarrative: string;
+  summary: string;
+  positives: string[];
+  cautions: string[];
+  actions: string[];
+}
+
+function buildFallbackLiuYaoReading(input: LiuYaoPromptInput): LiuYaoReadingResult {
+  return {
+    lineInterpretations: input.lines.map((l) => {
+      const pos = l.type === 'yang' ? '阳刚' : '阴柔';
+      return `${l.title}为${pos}之象，${l.originalText}此爻提示在当前阶段宜${l.type === 'yang' ? '积极进取' : '静观其变'}，把握节奏稳步推进。`;
+    }),
+    overallNarrative: `${input.hexagramName}，上${input.upperTrigram}下${input.lowerTrigram}。${input.judgment}此卦整体提示当前局势正处于转换阶段，需要在行动与等待之间找到平衡。建议先厘清现状，再分步推进，避免操之过急。从卦象结构看，内外卦的关系暗示需要内外兼顾，既要关注自身条件的积累，也要留意外部环境的变化。`,
+    summary: '稳中求进，把握节奏，分阶段推进为宜。',
+    positives: ['当前形势并非僵局，仍有操作空间。', '内在条件逐步成熟，适合规划布局。'],
+    cautions: ['避免急于求成，需循序渐进。'],
+    actions: ['先梳理当前最重要的一件事，集中精力突破。', '留出观察期，确认反馈后再加大投入。'],
+  };
+}
+
+function normalizeLiuYaoReading(raw: unknown, fallback: LiuYaoReadingResult): LiuYaoReadingResult {
+  const data = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
+
+  const lineInterpretations = Array.isArray(data.lineInterpretations)
+    ? data.lineInterpretations
+        .map((item) => (typeof item === 'string' ? item.replace(/\s+/g, ' ').trim().slice(0, 150) : ''))
+        .filter(Boolean)
+        .slice(0, 6)
+    : [];
+
+  return {
+    lineInterpretations: lineInterpretations.length === 6 ? lineInterpretations : fallback.lineInterpretations,
+    overallNarrative: safeText(data.overallNarrative, fallback.overallNarrative, 400),
+    summary: safeText(data.summary, fallback.summary, 60),
+    positives: safeList(data.positives, fallback.positives, 2, 3, 30),
+    cautions: safeList(data.cautions, fallback.cautions, 1, 2, 30),
+    actions: safeList(data.actions, fallback.actions, 1, 2, 50),
+  };
+}
+
+export async function generateLiuYaoReading(
+  input: LiuYaoPromptInput
+): Promise<LiuYaoReadingResult & { _source: 'deepseek' | 'fallback' }> {
+  const fallback = buildFallbackLiuYaoReading(input);
+  const apiKey = getEnvVar('DEEPSEEK_API_KEY');
+
+  if (!apiKey) {
+    return { ...fallback, _source: 'fallback' };
+  }
+
+  try {
+    const prompt = buildLiuYaoPrompt(input);
+    const text = await callDeepSeek(LIUYAO_SYSTEM_PROMPT, prompt, 1200);
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      return { ...fallback, _source: 'fallback' };
+    }
+
+    const parsed = JSON.parse(jsonMatch[0]) as unknown;
+    const normalized = normalizeLiuYaoReading(parsed, fallback);
+    return { ...normalized, _source: 'deepseek' };
+  } catch (error) {
+    console.warn('[AI 六爻解读] 生成失败，使用降级结果', error);
     return { ...fallback, _source: 'fallback' };
   }
 }

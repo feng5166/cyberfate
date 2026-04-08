@@ -3083,11 +3083,11 @@ Accordion 样式同八字页 FAQ 规格。
 
 **标题**: "选择你的塔罗体验" — H3, text-lg, font-semibold, text-center, mb-6
 
-**4 种模式卡片横排：**
+**4 种模式卡片横排（每卡右上角带 ⓘ Info 图标，hover 出 tooltip）：**
 
 ```
 ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐
-│    ⚫     │  │    ☀️     │  │    🌙     │  │    ✧     │
+│    ⚫   ⓘ │  │    ☀️   ⓘ │  │    🌙   ⓘ │  │    ✧   ⓘ │
 │   经典    │  │   天牌    │  │   月光    │  │   镜像    │
 │          │  │          │  │          │  │          │
 │ 传统三张  │  │ 单张聚焦  │  │ 柔和内省  │  │ 深度反思  │
@@ -3097,18 +3097,47 @@ Accordion 样式同八字页 FAQ 规格。
 └──────────┘  └──────────┘  └──────────┘  └──────────┘
 ```
 
+**ℹ Tooltip 说明（hover 触发，卡片右上角 ⓘ 图标）：**
+
+| 模式 | Tooltip 文案 |
+|------|-------------|
+| **经典** | 最经典的塔罗解读方式，抽取 3 张牌分别代表过去、现在、未来，适合首次体验和日常问题 |
+| **天牌** | 只抽 1 张大牌，直击问题核心，给你一个清晰的行动方向，适合快速决策 |
+| **月光** | 温柔的内在探索模式，AI 语气更柔和，适合情感困惑、内心矛盾、睡前思考 |
+| **镜像** | 从多个角度深度剖析同一问题，抽 5 张牌做交叉验证，适合复杂决策和自我认知 |
+
+> **实现方式（二选一）：**
+> - **方案 A（推荐）**: 卡片右上角放 `ⓘ` 圆形图标（16px，muted 色），鼠标 hover 弹出 tooltip（暗色底白字，最大宽度 240px，2 行以内文案），使用 CSS `:hover` + 伪元素或轻量 tooltip 组件
+> - **方案 B**: 卡片标题旁直接展示一行简短说明文字（不折叠），牺牲卡片简洁度但零交互成本
+>
+> **推荐方案 A**，理由：卡片保持简洁，用户主动 hover 才展开，不增加视觉噪音；移动端可改为 click 触发 tooltip
+
 **布局**: `grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4`
 
 **卡片规格：**
 
 | 属性 | 值 | Tailwind |
 |------|-----|----------|
-| 容器 | bg-white rounded-xl p-4 md:p-5 | `bg-white rounded-xl p-4 md:p-5` |
+| 容器 | bg-white rounded-xl p-4 md:p-5 relative | `bg-white rounded-xl p-4 md:p-5 relative` |
 | 边框 | 默认无；选中态 2px solid #1C1A16 | `border-2 border-transparent` 选中: `border-[#1C1A16]` |
+| Info 图标 | 右上角绝对定位 `ⓘ`，w-4 h-4，muted 色，cursor-pointer | `absolute top-3 right-3 text-[#1C1A16]/40 hover:text-[#1C1A16]/70` |
 | 图标 | text-3xl, 居中 | |
 | 标题 | text-sm font-semibold, text-center, mt-2 | |
 | 描述 | text-xs text-[#1C1A16]/60, text-center, mt-1, leading-relaxed | line-clamp-2 |
-| 选择按钮 | text-xs text-[#1C1A16]/70, mt-3, hover 变深 | |
+| 选择按钮 | text-xs text-[#1C1A1`6]/70, mt-3, hover 变深 | |
+
+**Tooltip 规格（方案 A）：**
+
+| 属性 | 值 |
+|------|-----|
+| 触发方式 | 桌面端 hover / 移动端 click（或 touch） |
+| 位置 | 图标上方弹出（避免遮挡卡片内容） |
+| 容器 | bg-[#1C1A16] text-white text-xs rounded-lg p-3 |
+| 最大宽度 | max-w-[240px] |
+| 行数 | 最大 2 行，超出省略 |
+| 动画 | fade-in 150ms |
+| 箭头 | 底部居中小三角指向 ⓘ 图标 |
+| 遮罩层 | 无需 backdrop，tooltip 本身足够小不干扰 |
 
 **4 种模式详细定义：**
 
