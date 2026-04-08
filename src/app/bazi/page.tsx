@@ -33,6 +33,7 @@ import { QuotaLimitModal } from '@/components/QuotaLimitModal';
 import { Container } from '@/components/ui/Container';
 import { CitySearch } from '@/components/ui/CitySearch';
 import { Tag } from '@/components/ui/Tag';
+import { Footer } from '@/components/layout/Footer';
 import {
   DAYMASTER_TRAITS,
   DIZHI_LIST,
@@ -1068,6 +1069,8 @@ function BaziPageContent() {
       </Container>
 
       {showQuotaModal && <QuotaLimitModal onClose={() => setShowQuotaModal(false)} />}
+
+      <Footer />
 
       <div className="hidden" data-version="20260407-v3"></div>
     </div>

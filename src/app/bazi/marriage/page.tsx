@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Select } from '@/components/ui/Select';
+import { Footer } from '@/components/layout/Footer';
 
 const shichenOptions = [
   { value: '', label: '请选择时辰' },
@@ -316,6 +317,8 @@ export default function MarriagePage() {
           </div>
         </Container>
       </div>
+
+      <Footer />
     </div>
   );
 }
