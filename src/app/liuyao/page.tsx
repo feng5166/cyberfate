@@ -312,19 +312,21 @@ export default function LiuYaoPage() {
                     type="button"
                     disabled={disabled}
                     onClick={() => opt.enabled && setMethod(opt.value)}
-                    className={`relative flex flex-col items-center gap-1 rounded-xl border p-3 text-center transition-all duration-200 ${
+                    className={`relative flex flex-col items-center gap-1 rounded-xl p-3 text-center transition-all duration-200 ${
                       isActive
-                        ? 'border-[#1C1A16]/20 bg-[#1C1A16] text-white shadow-sm'
+                        ? 'border-2 border-[#1C1A16] bg-[rgba(28,26,22,0.03)] text-[#1C1A16] shadow-sm'
                         : disabled
-                          ? 'cursor-not-allowed border-[#1C1A16]/5 bg-gray-50 text-[#1C1A16]/30'
-                          : 'border-[#1C1A16]/10 bg-white text-[#1C1A16] hover:border-[#1C1A16]/20 hover:bg-[#FAF9F6]'
+                          ? 'cursor-not-allowed pointer-events-none border border-[#1C1A16]/5 bg-gray-50 text-[#1C1A16]/30 opacity-50'
+                          : 'border border-[#1C1A16]/10 bg-white text-[#1C1A16] hover:border-[#1C1A16]/20 hover:bg-[#FAF9F6]'
                     }`}
                   >
+                    {disabled && (
+                      <span className="absolute top-1.5 right-1.5 rounded-full bg-[#1C1A16]/10 px-2 py-0.5 text-[10px] text-[#1C1A16]/60">
+                        即将上线
+                      </span>
+                    )}
                     <span className="text-lg">{opt.icon}</span>
                     <span className="text-xs font-medium">{opt.label}</span>
-                    {disabled && (
-                      <span className="text-[10px] text-[#1C1A16]/30">即将上线</span>
-                    )}
                   </button>
                 );
               })}
