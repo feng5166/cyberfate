@@ -66,14 +66,7 @@ export function Header({
 
             {/* Logo - 衬线体 */}
             <Link href="/" className="flex items-center gap-2 font-display text-lg md:text-xl text-[#1C1A16] tracking-widest hover:opacity-70 transition-opacity">
-              <svg className="w-6 h-6 text-[#7C3AED]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" />
-                <circle cx="12" cy="12" r="4" />
-                <line x1="12" y1="2" x2="12" y2="4" />
-                <line x1="12" y1="20" x2="12" y2="22" />
-                <line x1="2" y1="12" x2="4" y2="12" />
-                <line x1="20" y1="12" x2="22" y2="12" />
-              </svg>
+              <img src="/favicon.svg" alt="" className="w-7 h-7" />
               CYBERFATE
             </Link>
           </div>

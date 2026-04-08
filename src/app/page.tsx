@@ -137,9 +137,10 @@ export default function HomePage() {
         <div className="relative z-10 max-w-3xl mx-auto text-center">
           {/* 主标题 */}
           <h1
-            className="font-display text-[36px] sm:text-[48px] md:text-[56px] font-[800] text-[#1C1A16] text-center leading-tight"
+            className="font-display text-[36px] sm:text-[48px] md:text-[56px] font-[800] text-[#1C1A16] leading-tight flex items-center justify-center gap-2"
             style={{ letterSpacing: '0.06em' }}
           >
+            <img src="/favicon.svg" alt="" className="w-7 h-7 sm:w-9 sm:h-9 md:w-11 md:h-11" />
             CYBERFATE
           </h1>
 

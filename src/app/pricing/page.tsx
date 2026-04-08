@@ -1,10 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Container } from '@/components/ui/Container';
-import { PageHeader } from '@/components/ui/PageHeader';
 import { Footer } from '@/components/layout/Footer';
 import { Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { PaymentModal } from '@/components/PaymentModal';
@@ -46,112 +42,106 @@ export default function PricingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   return (
-    <div className="bg-white min-h-screen">
+    <div className="bg-[#FAF9F6] min-h-screen">
       {/* 页面标题 */}
-      <section className="px-4 pt-20 md:pt-26 pb-8">
-        <Container>
-          <div className="text-center max-w-xl mx-auto">
-            <h1 className="font-display text-h1 md:text-display text-brand-black tracking-[0.08em] text-center">
-              选择您的计划
-            </h1>
-            <p className="text-body-sm text-brand-gray text-center mt-3">
-              灵活订阅，随时取消
-            </p>
-          </div>
-        </Container>
+      <section className="px-4 pt-20 md:pt-28 pb-8">
+        <div className="max-w-5xl mx-auto text-center">
+          <h1 className="font-display text-[32px] md:text-[40px] font-semibold text-[#1C1A16] tracking-[0.08em]">
+            选择您的计划
+          </h1>
+          <p className="text-[15px] text-[#1C1A16]/55 mt-3">
+            灵活订阅，随时取消
+          </p>
+        </div>
       </section>
 
       {/* 三列定价卡片 */}
-      <section className="px-4 pb-20 md:pb-26">
-        <Container>
-          <div className="flex flex-col lg:flex-row gap-6 max-w-[1000px] mx-auto">
-            {plans.map((plan) => (
-              <div key={plan.name} className={`flex-1 ${plan.recommended ? 'relative' : ''}`}>
-                {/* 推荐标签 */}
-                {plan.recommended && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
-                    <span className="inline-block bg-brand-black text-white text-xs px-3 py-1 rounded-full font-medium">
-                      ★ 最受欢迎
-                    </span>
+      <section className="px-4 pb-20 md:pb-28">
+        <div className="flex flex-col lg:flex-row gap-6 max-w-[1000px] mx-auto">
+          {plans.map((plan) => (
+            <div key={plan.name} className={`flex-1 ${plan.recommended ? 'relative' : ''}`}>
+              {plan.recommended && (
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
+                  <span className="inline-block bg-[#1C1A16] text-white text-xs px-3 py-1 rounded-full font-medium">
+                    ★ 最受欢迎
+                  </span>
+                </div>
+              )}
+              <div
+                className={`h-full flex flex-col p-9 bg-white rounded-2xl transition-all duration-300 ${
+                  plan.recommended
+                    ? 'shadow-md ring-2 ring-[#1C1A16] lg:scale-[1.03] lg:-translate-y-2'
+                    : 'shadow-sm hover:shadow-md hover:-translate-y-1'
+                }`}
+              >
+                <h2 className="text-[20px] font-semibold text-[#1C1A16] text-center mb-4">
+                  {plan.name}
+                </h2>
+
+                <div className="text-center mb-6 pb-6 border-b border-[#1C1A16]/8">
+                  <div className="flex items-end justify-center gap-1">
+                    <span className="text-[40px] font-semibold leading-none text-[#1C1A16]">¥</span>
+                    <span className="text-[40px] font-semibold leading-none text-[#1C1A16]">{plan.price}</span>
                   </div>
-                )}
-                <Card
-                  variant={plan.recommended ? 'highlight' : 'default'}
-                  hover={!plan.recommended}
-                  className={`h-full flex flex-col p-9 ${plan.recommended ? 'lg:scale-[1.03] lg:-translate-y-2' : ''}`}
+                  <span className="text-sm text-[#1C1A16]/55 ml-1">{plan.period}</span>
+                </div>
+
+                <ul className="space-y-3 flex-1 mb-8">
+                  {plan.perks.map((perk) => (
+                    <li key={perk} className="flex items-start gap-2.5 text-sm text-[#1C1A16]/80">
+                      <Check className="w-4 h-4 text-green-500 mt-0.5 shrink-0" strokeWidth={2.5} />
+                      {perk}
+                    </li>
+                  ))}
+                </ul>
+
+                <button
+                  onClick={() => setModal({ planName: plan.name, price: `¥${plan.price}` })}
+                  className={`w-full h-12 rounded-lg text-sm font-medium transition-colors ${
+                    plan.recommended
+                      ? 'bg-[#1C1A16] text-white hover:bg-[#2A2621]'
+                      : 'border border-[#1C1A16]/15 text-[#1C1A16] hover:border-[#1C1A16]/40 hover:bg-[#1C1A16]/[0.03]'
+                  }`}
                 >
-                  {/* 计划名称 */}
-                  <h2 className="text-h3 font-semibold text-brand-black text-center mb-4">
-                    {plan.name}
-                  </h2>
-
-                  {/* 价格 — ⚠️ Bug B1 修复：¥ 不是 HK$ */}
-                  <div className="text-center mb-6 pb-6 border-b border-brand-border-light">
-                    <div className="flex items-end justify-center gap-1">
-                      <span className="text-[40px] font-semibold leading-none text-brand-black">¥</span>
-                      <span className="text-[40px] font-semibold leading-none text-brand-black">{plan.price}</span>
-                    </div>
-                    <span className="text-sm text-brand-gray ml-1">{plan.period}</span>
-                  </div>
-
-                  {/* 权益列表 — ⚠️ Bug B2 修复：更新权益表 */}
-                  <ul className="space-y-3 flex-1 mb-8">
-                    {plan.perks.map((perk) => (
-                      <li key={perk} className="flex items-start gap-2.5 text-sm text-gray-700">
-                        <Check className="w-4 h-4 text-green-500 mt-0.5 shrink-0" strokeWidth={2.5} />
-                        {perk}
-                      </li>
-                    ))}
-                  </ul>
-
-                  {/* CTA 按钮 */}
-                  <Button
-                    variant={plan.recommended ? 'primary' : 'secondary'}
-                    className="w-full"
-                    onClick={() => setModal({ planName: plan.name, price: `¥${plan.price}` })}
-                  >
-                    {plan.recommended ? '立即开通' : '选择方案'}
-                  </Button>
-                </Card>
+                  {plan.recommended ? '立即开通' : '选择方案'}
+                </button>
               </div>
-            ))}
-          </div>
-        </Container>
+            </div>
+          ))}
+        </div>
       </section>
 
       {/* FAQ 手风琴 */}
-      <section className="px-4 pb-20 md:pb-26 bg-brand-bg">
-        <Container>
-          <h2 className="text-h2 font-semibold text-brand-black text-center mb-8">常见问题</h2>
-          <div className="max-w-[720px] mx-auto divide-y divide-brand-border-light">
+      <section className="px-4 py-16 md:py-20">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="font-display text-[28px] font-semibold text-[#1C1A16] text-center mb-10">常见问题</h2>
+          <div className="max-w-[720px] mx-auto divide-y divide-[#1C1A16]/8">
             {faqs.map((faq, i) => (
-              <div key={i} className="py-4">
+              <div key={i} className="py-5">
                 <button
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
                   className="w-full flex items-center justify-between text-left"
                 >
-                  <span className="text-base font-medium text-brand-black pr-4">{faq.q}</span>
+                  <span className="text-[15px] font-medium text-[#1C1A16] pr-4">{faq.q}</span>
                   {openFaq === i ? (
-                    <ChevronUp className="w-4 h-4 text-brand-light shrink-0" />
+                    <ChevronUp className="w-4 h-4 text-[#1C1A16]/40 shrink-0" />
                   ) : (
-                    <ChevronDown className="w-4 h-4 text-brand-light shrink-0" />
+                    <ChevronDown className="w-4 h-4 text-[#1C1A16]/40 shrink-0" />
                   )}
                 </button>
                 {openFaq === i && (
-                  <p className="text-sm text-brand-gray leading-relaxed mt-3 pt-1 animate-fadeIn">
+                  <p className="text-sm text-[#1C1A16]/55 leading-relaxed mt-3 pt-1 animate-fadeIn">
                     {faq.a}
                   </p>
                 )}
               </div>
             ))}
           </div>
-        </Container>
+        </div>
       </section>
 
-      {/* Footer */}
       <Footer />
 
-      {/* Payment Modal */}
       {modal && (
         <PaymentModal
           planName={modal.planName}
