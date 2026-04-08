@@ -331,6 +331,8 @@ export interface LiuYaoPromptInput {
   }>;
   judgment: string;
   divinationTime: string;
+  movingLines?: string;
+  method?: string;
 }
 
 export const LIUYAO_SYSTEM_PROMPT = `你是赛博命理师的六爻占卜分析引擎，精通《周易》六爻预测体系。
@@ -365,6 +367,15 @@ export function buildLiuYaoPrompt(input: LiuYaoPromptInput): string {
     .map((l) => `  ${l.title}（${l.type === 'yang' ? '阳爻' : '阴爻'}）：${l.originalText}`)
     .join('\n');
 
+  const methodLabels: Record<string, string> = {
+    manual: '手动起卦',
+    coin: '铜钱起卦',
+    time: '时间起卦',
+    number: '数字起卦',
+  };
+  const methodLabel = methodLabels[input.method || 'manual'] || '手动起卦';
+  const movingInfo = input.movingLines || '无动爻（纯静卦）';
+
   return `【用户问题】
 ${input.question || '用户未输入具体问题，请给出通用但可执行的指引。'}
 
@@ -373,6 +384,8 @@ ${input.question || '用户未输入具体问题，请给出通用但可执行�
 上卦：${input.upperTrigram}
 下卦：${input.lowerTrigram}
 卦辞：${input.judgment}
+起卦方式：${methodLabel}
+动爻情况：${movingInfo}
 
 【六爻详情（初爻→上爻）】
 ${linesText}
@@ -380,5 +393,5 @@ ${linesText}
 【占卜时间】
 ${input.divinationTime}
 
-请结合卦象、爻辞、问题背景，输出指定 JSON。每爻解读需结合爻位含义和用户实际问题给出有针对性的分析。`;
+请结合卦象、爻辞、动爻变化、问题背景，输出指定 JSON。动爻所在爻位需重点分析其变化意义。每爻解读需结合爻位含义和用户实际问题给出有针对性的分析。`;
 }

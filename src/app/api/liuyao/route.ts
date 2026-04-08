@@ -15,7 +15,8 @@ interface LiuYaoRequestBody {
   hexagrams: {
     upper: string;
     lower: string;
-    lines: number[]; // 6根爻, 0=阴, 1=阳, 从初爻到上爻
+    lines: number[];
+    movingLines?: number[];
   };
   method: 'manual' | 'coin' | 'time' | 'number';
   divinationTime: string;
@@ -74,6 +75,13 @@ function validateRequest(body: unknown): { valid: true; data: LiuYaoRequestBody 
     return { valid: false, error: '无效的起卦方式' };
   }
 
+  let movingLines: number[] = [];
+  if (Array.isArray(hex.movingLines)) {
+    movingLines = (hex.movingLines as number[]).filter(
+      (v) => typeof v === 'number' && v >= 0 && v <= 5
+    );
+  }
+
   return {
     valid: true,
     data: {
@@ -82,6 +90,7 @@ function validateRequest(body: unknown): { valid: true; data: LiuYaoRequestBody 
         upper: typeof hex.upper === 'string' ? hex.upper : '',
         lower: typeof hex.lower === 'string' ? hex.lower : '',
         lines,
+        movingLines,
       },
       method: method as LiuYaoRequestBody['method'],
       divinationTime: typeof b.divinationTime === 'string' ? b.divinationTime : new Date().toISOString(),
@@ -98,7 +107,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { data } = validation;
-  const { lines } = data.hexagrams;
+  const { lines, movingLines = [] } = data.hexagrams;
 
   const { upperKey, lowerKey, upper, lower } = identifyTrigrams(lines);
 
@@ -114,9 +123,12 @@ export async function POST(req: NextRequest) {
     interpretation: '',
   }));
 
-  const cacheKey = generateCacheKey('liuyao_v1', {
+  const movingSuffix = movingLines.length > 0 ? `_m${movingLines.sort().join('')}` : '';
+  const cacheKey = generateCacheKey('liuyao_v2', {
     lines: lines.join(''),
     question: data.question || '',
+    method: data.method,
+    moving: movingSuffix,
   });
 
   const cached = await getCache(cacheKey);
@@ -150,6 +162,10 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  const movingLineDescriptions = movingLines.length > 0
+    ? movingLines.map((idx) => `第${idx + 1}爻（${linesData[idx]?.title || ''}）为动爻`).join('；')
+    : '无动爻（纯静卦）';
+
   const promptInput: LiuYaoPromptInput = {
     question: data.question || '',
     hexagramName,
@@ -163,6 +179,8 @@ export async function POST(req: NextRequest) {
     })),
     judgment,
     divinationTime: data.divinationTime,
+    movingLines: movingLineDescriptions,
+    method: data.method,
   };
 
   const reading = await generateLiuYaoReading(promptInput);

@@ -2,7 +2,7 @@
 
 import { Footer } from '@/components/layout/Footer';
 import { ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 // ─── 八卦数据 ─────────────────────────────────────
 
@@ -10,7 +10,7 @@ interface TrigramInfo {
   name: string;
   symbol: string;
   nature: string;
-  lines: [number, number, number]; // 从下到上: 0=阴, 1=阳
+  lines: [number, number, number];
 }
 
 const TRIGRAMS_MAP: Record<string, TrigramInfo> = {
@@ -23,6 +23,8 @@ const TRIGRAMS_MAP: Record<string, TrigramInfo> = {
   gen:  { name: '艮', symbol: '☶', nature: '山', lines: [0, 0, 1] },
   kun:  { name: '坤', symbol: '☷', nature: '地', lines: [0, 0, 0] },
 };
+
+const TRIGRAM_KEYS = ['qian', 'dui', 'li', 'zhen', 'xun', 'kan', 'gen', 'kun'];
 
 const HEXAGRAM_MAP: Record<string, Record<string, string>> = {
   qian: { qian: '乾为天', dui: '天泽履', li: '天火同人', zhen: '天雷无妄', xun: '天风姤', kan: '天水讼', gen: '天山遁', kun: '天地否' },
@@ -38,7 +40,10 @@ const HEXAGRAM_MAP: Record<string, Record<string, string>> = {
 // ─── 类型定义 ─────────────────────────────────────
 
 type DivinationMethod = 'manual' | 'coin' | 'time' | 'number';
-type LineValue = 0 | 1 | null; // 0=阴, 1=阳, null=未选
+type LineValue = 0 | 1 | null;
+
+// 铜钱单爻结果: 6=老阴(动), 7=少阳, 8=少阴, 9=老阳(动)
+type CoinLineResult = { coins: boolean[]; value: 6 | 7 | 8 | 9; yinYang: 0 | 1; isMoving: boolean };
 
 interface LineResult {
   index: number;
@@ -72,11 +77,11 @@ const SAMPLE_QUESTIONS = [
   '最近需要注意什么？',
 ];
 
-const METHOD_OPTIONS: Array<{ value: DivinationMethod; label: string; icon: string; enabled: boolean }> = [
-  { value: 'manual', label: '手动起卦', icon: '✋', enabled: true },
-  { value: 'coin', label: '铜钱起卦', icon: '🪙', enabled: false },
-  { value: 'time', label: '时间起卦', icon: '⏰', enabled: false },
-  { value: 'number', label: '数字起卦', icon: '🔢', enabled: false },
+const METHOD_OPTIONS: Array<{ value: DivinationMethod; label: string; icon: string }> = [
+  { value: 'manual', label: '手动起卦', icon: '✋' },
+  { value: 'coin', label: '铜钱起卦', icon: '🪙' },
+  { value: 'time', label: '时间起卦', icon: '⏰' },
+  { value: 'number', label: '数字起卦', icon: '🔢' },
 ];
 
 const LINE_LABELS = ['上六爻', '五爻', '四爻', '三爻', '二爻', '初爻'];
@@ -96,31 +101,80 @@ const FAQ_ITEMS = [
   },
 ] as const;
 
+// ─── 辅助函数 ─────────────────────────────────────
+
+function getTrigramKeyByIndex(idx: number): string {
+  return TRIGRAM_KEYS[((idx % 8) + 8) % 8];
+}
+
+function getTrigramInfoByKey(key: string): TrigramInfo {
+  return TRIGRAMS_MAP[key] || TRIGRAMS_MAP.qian;
+}
+
+function resolveHexagram(upperKey: string, lowerKey: string) {
+  const upper = getTrigramInfoByKey(upperKey);
+  const lower = getTrigramInfoByKey(lowerKey);
+  const name = HEXAGRAM_MAP[upperKey]?.[lowerKey] || '未知卦';
+  const lines: (0 | 1)[] = [...lower.lines, ...upper.lines] as (0 | 1)[];
+  return { upper, lower, upperKey, lowerKey, name, lines };
+}
+
+function getNowLocalString() {
+  const now = new Date();
+  const offset = now.getTimezoneOffset();
+  const local = new Date(now.getTime() - offset * 60 * 1000);
+  return local.toISOString().slice(0, 16);
+}
+
+// 先天伏羲数起卦算法
+function timeToHexagram(dateStr: string) {
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return null;
+  const year = d.getFullYear();
+  const month = d.getMonth() + 1;
+  const day = d.getDate();
+  const hour = d.getHours();
+
+  const yearSum = String(year).split('').reduce((s, c) => s + parseInt(c), 0);
+  const upperIdx = (yearSum + month + day) % 8;
+  const lowerIdx = (yearSum + month + day + hour) % 8;
+  const movingLine = (yearSum + month + day + hour) % 6;
+
+  const upperKey = getTrigramKeyByIndex(upperIdx);
+  const lowerKey = getTrigramKeyByIndex(lowerIdx);
+  return { upperKey, lowerKey, movingLine };
+}
+
+// 数字起卦算法
+function numberToHexagram(upperNum: number, lowerNum: number) {
+  const upperKey = getTrigramKeyByIndex(upperNum % 8);
+  const lowerKey = getTrigramKeyByIndex(lowerNum % 8);
+  return { upperKey, lowerKey };
+}
+
 // ─── 辅助组件 ─────────────────────────────────────
 
-function YaoLine({ type, height = 6, width = '80%' }: { type: 'yin' | 'yang'; height?: number; width?: string }) {
+function YaoLine({ type, height = 6, width = '80%', isMoving = false }: { type: 'yin' | 'yang'; height?: number; width?: string; isMoving?: boolean }) {
+  const color = isMoving ? '#C2410C' : '#1C1A16';
   if (type === 'yang') {
     return (
       <div className="flex justify-center">
-        <div
-          className="rounded-sm bg-[#1C1A16]"
-          style={{ height: `${height}px`, width }}
-        />
+        <div className="rounded-sm" style={{ height: `${height}px`, width, backgroundColor: color }} />
       </div>
     );
   }
   return (
     <div className="flex justify-center" style={{ width }}>
       <div className="mx-auto flex items-center justify-between" style={{ width }}>
-        <div className="rounded-sm bg-[#1C1A16]" style={{ height: `${height}px`, width: '35%' }} />
+        <div className="rounded-sm" style={{ height: `${height}px`, width: '35%', backgroundColor: color }} />
         <div style={{ width: '30%' }} />
-        <div className="rounded-sm bg-[#1C1A16]" style={{ height: `${height}px`, width: '35%' }} />
+        <div className="rounded-sm" style={{ height: `${height}px`, width: '35%', backgroundColor: color }} />
       </div>
     </div>
   );
 }
 
-function HexagramFigure({ lines, size = 'normal' }: { lines: (0 | 1)[]; size?: 'normal' | 'large' }) {
+function HexagramFigure({ lines, size = 'normal', movingLineIdx }: { lines: (0 | 1)[]; size?: 'normal' | 'large'; movingLineIdx?: number }) {
   const h = size === 'large' ? 8 : 6;
   const gap = size === 'large' ? 'gap-2' : 'gap-1.5';
   const w = size === 'large' ? '100px' : '72px';
@@ -128,8 +182,441 @@ function HexagramFigure({ lines, size = 'normal' }: { lines: (0 | 1)[]; size?: '
   return (
     <div className={`flex flex-col-reverse ${gap}`} style={{ width: w }}>
       {lines.map((line, i) => (
-        <YaoLine key={i} type={line === 1 ? 'yang' : 'yin'} height={h} width="100%" />
+        <YaoLine key={i} type={line === 1 ? 'yang' : 'yin'} height={h} width="100%" isMoving={movingLineIdx !== undefined && movingLineIdx === i} />
       ))}
+    </div>
+  );
+}
+
+function HexagramPreviewCard({ upperKey, lowerKey, movingLine, label }: { upperKey: string; lowerKey: string; movingLine?: number; label?: string }) {
+  const hex = resolveHexagram(upperKey, lowerKey);
+  return (
+    <div className="flex flex-col items-center justify-center rounded-xl border border-[#1C1A16]/8 bg-[#FAF9F6] p-4 md:p-6">
+      {label && <p className="mb-2 text-xs text-[#1C1A16]/50">{label}</p>}
+      <HexagramFigure lines={hex.lines} size="large" movingLineIdx={movingLine} />
+      <div className="mt-3 text-center">
+        <div className="flex items-center justify-center gap-2 text-2xl">
+          <span>{hex.upper.symbol}</span>
+          <span>{hex.lower.symbol}</span>
+        </div>
+        <p className="mt-1 text-sm font-semibold text-[#1C1A16]">{hex.name}</p>
+        <p className="mt-1 text-xs text-[#1C1A16]/55">
+          上{hex.upper.name}（{hex.upper.nature}）下{hex.lower.name}（{hex.lower.nature}）
+        </p>
+        {movingLine !== undefined && (
+          <p className="mt-1 text-xs text-orange-700">动爻：第{movingLine + 1}爻</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── 铜钱起卦面板 ─────────────────────────────────
+
+function CoinPanel({ onComplete }: { onComplete: (lines: (0 | 1)[], movingLines: number[]) => void }) {
+  const [coinResults, setCoinResults] = useState<CoinLineResult[]>([]);
+  const [isFlipping, setIsFlipping] = useState(false);
+  const [currentCoins, setCurrentCoins] = useState<boolean[] | null>(null);
+  const [flipKey, setFlipKey] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const currentYao = coinResults.length;
+  const isComplete = coinResults.length === 6;
+
+  const throwCoins = useCallback(() => {
+    if (isFlipping || isComplete) return;
+    setIsFlipping(true);
+    setFlipKey((k) => k + 1);
+
+    // 3枚铜钱: true=背(字面), false=正(背面)
+    const coins = [Math.random() > 0.5, Math.random() > 0.5, Math.random() > 0.5];
+    setCurrentCoins(coins);
+
+    timerRef.current = setTimeout(() => {
+      const backs = coins.filter(Boolean).length;
+      let value: 6 | 7 | 8 | 9;
+      let yinYang: 0 | 1;
+      let isMoving = false;
+
+      if (backs === 3) { value = 9; yinYang = 1; isMoving = true; }      // 3背=老阳(动)
+      else if (backs === 0) { value = 6; yinYang = 0; isMoving = true; }  // 3正=老阴(动)
+      else if (backs === 1) { value = 8; yinYang = 0; isMoving = false; } // 1背2正=少阴
+      else { value = 7; yinYang = 1; isMoving = false; }                  // 2背1正=少阳
+
+      const newResult: CoinLineResult = { coins, value, yinYang, isMoving };
+      const updated = [...coinResults, newResult];
+      setCoinResults(updated);
+      setIsFlipping(false);
+
+      if (updated.length === 6) {
+        const lines = updated.map((r) => r.yinYang) as (0 | 1)[];
+        const moving = updated.reduce<number[]>((acc, r, i) => r.isMoving ? [...acc, i] : acc, []);
+        onComplete(lines, moving);
+      }
+    }, 900);
+  }, [isFlipping, isComplete, coinResults, onComplete]);
+
+  const handleReset = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setCoinResults([]);
+    setIsFlipping(false);
+    setCurrentCoins(null);
+  };
+
+  useEffect(() => {
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, []);
+
+  const getCoinResultLabel = (r: CoinLineResult) => {
+    const backCount = r.coins.filter(Boolean).length;
+    const labels: Record<number, string> = { 9: '三背 → 老阳（动）', 6: '三正 → 老阴（动）', 7: '二背一正 → 少阳', 8: '一背二正 → 少阴' };
+    return `${backCount}背${3 - backCount}正 → ${labels[r.value]}`;
+  };
+
+  return (
+    <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-4 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
+      <h3 className="text-base font-semibold text-[#1C1A16] mb-1">🪙 铜钱起卦</h3>
+      <p className="text-xs text-[#1C1A16]/55 mb-4">模拟传统三枚铜钱起卦，从初爻开始依次抛6次</p>
+
+      {/* 进度指示器 */}
+      <div className="flex items-center justify-center gap-2 mb-4">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div
+            key={i}
+            className={`h-3 w-3 rounded-full transition-all ${
+              i < coinResults.length
+                ? 'bg-[#1C1A16]'
+                : i === coinResults.length && isFlipping
+                  ? 'bg-[#1C1A16]/40 animate-coin-pulse'
+                  : 'bg-[#1C1A16]/15'
+            }`}
+          />
+        ))}
+        <span className="ml-2 text-xs text-[#1C1A16]/60">{coinResults.length}/6 已完成</span>
+      </div>
+
+      {/* 铜钱展示区 */}
+      <div className="flex justify-center gap-4 my-4">
+        {[0, 1, 2].map((idx) => {
+          const isBack = currentCoins ? currentCoins[idx] : null;
+          const showFlip = isFlipping;
+          return (
+            <div
+              key={`${flipKey}-${idx}`}
+              className={`flex h-16 w-16 items-center justify-center rounded-full border-2 text-sm font-bold select-none ${showFlip ? 'animate-coin-flip' : ''}`}
+              style={{
+                perspective: '600px',
+                backgroundColor: isBack === null ? '#E5E0D5' : isBack ? '#D4A574' : '#8B6914',
+                borderColor: isBack === null ? '#C4BFAF' : isBack ? '#B8894D' : '#6B5210',
+                color: isBack === null ? '#999' : '#FFF',
+              }}
+            >
+              {isBack === null ? '？' : isBack ? '通宝' : '☯'}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* 当前爻提示 */}
+      {!isComplete && (
+        <p className="text-center text-xs text-[#1C1A16]/50 mb-3">
+          当前：第{currentYao + 1}爻（{['初爻', '二爻', '三爻', '四爻', '五爻', '上爻'][currentYao]}）
+        </p>
+      )}
+
+      {/* 抛币/结果 */}
+      {!isComplete ? (
+        <div className="flex flex-col items-center gap-2">
+          <button
+            type="button"
+            onClick={throwCoins}
+            disabled={isFlipping}
+            className="flex h-10 items-center justify-center rounded-lg bg-[#1C1A16] px-6 text-sm font-medium text-white transition-all hover:bg-[#2A2621] disabled:opacity-60"
+          >
+            {isFlipping ? '铜钱翻转中...' : coinResults.length === 0 ? '开始抛币' : '抛下一爻的铜钱'}
+          </button>
+          {coinResults.length > 0 && (
+            <button type="button" onClick={handleReset} className="text-xs text-[#1C1A16]/50 underline">
+              🔄 重新抛币
+            </button>
+          )}
+        </div>
+      ) : (
+        <p className="text-center text-sm font-medium text-green-700 mb-3">✓ 六爻抛币完成！</p>
+      )}
+
+      {/* 已完成爻记录 */}
+      {coinResults.length > 0 && (
+        <div className="mt-4 space-y-1.5">
+          {coinResults.map((r, i) => (
+            <div key={i} className="flex items-center gap-3 rounded-lg bg-[#FAF9F6] px-3 py-2 text-xs">
+              <span className="w-10 shrink-0 font-medium text-[#1C1A16]">
+                {['初爻', '二爻', '三爻', '四爻', '五爻', '上爻'][i]}
+              </span>
+              <span className="flex gap-1">
+                {r.coins.map((isBack, ci) => (
+                  <span
+                    key={ci}
+                    className="inline-flex h-5 w-5 items-center justify-center rounded-full text-[8px] font-bold text-white"
+                    style={{ backgroundColor: isBack ? '#D4A574' : '#8B6914' }}
+                  >
+                    {isBack ? '通' : '☯'}
+                  </span>
+                ))}
+              </span>
+              <span className="text-[#1C1A16]/60">{getCoinResultLabel(r)}</span>
+              <span className="ml-auto">
+                <YaoLine type={r.yinYang === 1 ? 'yang' : 'yin'} height={4} width="32px" isMoving={r.isMoving} />
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* 完成后重置 */}
+      {isComplete && (
+        <div className="mt-3 flex justify-center">
+          <button type="button" onClick={handleReset} className="text-xs text-[#1C1A16]/50 underline">
+            🔄 重新抛币
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── 时间起卦面板 ─────────────────────────────────
+
+function TimePanel({ onComplete }: { onComplete: (lines: (0 | 1)[], movingLine: number, upperKey: string, lowerKey: string) => void }) {
+  const [mode, setMode] = useState<'quick' | 'custom'>('quick');
+  const [timeValue, setTimeValue] = useState(getNowLocalString);
+  const [isDone, setIsDone] = useState(false);
+
+  const hexData = useMemo(() => timeToHexagram(timeValue), [timeValue]);
+
+  const handleQuickTime = useCallback(() => {
+    const now = getNowLocalString();
+    setTimeValue(now);
+  }, []);
+
+  const handleConfirm = useCallback(() => {
+    if (!hexData) return;
+    const hex = resolveHexagram(hexData.upperKey, hexData.lowerKey);
+    setIsDone(true);
+    onComplete(hex.lines, hexData.movingLine, hexData.upperKey, hexData.lowerKey);
+  }, [hexData, onComplete]);
+
+  return (
+    <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-4 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
+      <h3 className="text-base font-semibold text-[#1C1A16] mb-1">⏰ 时间起卦</h3>
+      <p className="text-xs text-[#1C1A16]/55 mb-4">基于年月日时数字按易数规律自动生成卦象</p>
+
+      {/* 模式切换 */}
+      <div className="mb-4 flex gap-2">
+        <button
+          type="button"
+          onClick={() => { setMode('quick'); setIsDone(false); }}
+          className={`rounded-lg px-4 py-2 text-xs font-medium transition-all ${
+            mode === 'quick' ? 'bg-[#1C1A16] text-white' : 'border border-[#1C1A16]/10 text-[#1C1A16]/60 hover:border-[#1C1A16]/20'
+          }`}
+        >
+          快速模式
+        </button>
+        <button
+          type="button"
+          onClick={() => { setMode('custom'); setIsDone(false); }}
+          className={`rounded-lg px-4 py-2 text-xs font-medium transition-all ${
+            mode === 'custom' ? 'bg-[#1C1A16] text-white' : 'border border-[#1C1A16]/10 text-[#1C1A16]/60 hover:border-[#1C1A16]/20'
+          }`}
+        >
+          自定义时间
+        </button>
+      </div>
+
+      {mode === 'quick' ? (
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <input
+              type="datetime-local"
+              value={timeValue}
+              readOnly
+              className="h-10 flex-1 rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm text-[#1C1A16] outline-none"
+            />
+            <button
+              type="button"
+              onClick={handleQuickTime}
+              className="shrink-0 rounded-lg border border-[#1C1A16]/15 px-3 py-2 text-xs text-[#1C1A16]/70 transition-colors hover:bg-gray-50"
+            >
+              刷新当前时间
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <label className="block text-xs text-[#1C1A16]/60">选择占卜时间</label>
+          <input
+            type="datetime-local"
+            value={timeValue}
+            max={getNowLocalString()}
+            onChange={(e) => { setTimeValue(e.target.value); setIsDone(false); }}
+            className="h-10 w-full rounded-xl border border-gray-300 px-3 text-sm text-[#1C1A16] outline-none focus:border-[#1C1A16]/30 focus:ring-2 focus:ring-[#1C1A16]/10"
+          />
+        </div>
+      )}
+
+      {/* 卦象预览 */}
+      {hexData && (
+        <div className="mt-4">
+          <HexagramPreviewCard
+            upperKey={hexData.upperKey}
+            lowerKey={hexData.lowerKey}
+            movingLine={hexData.movingLine}
+            label="卦象预览"
+          />
+        </div>
+      )}
+
+      {!isDone && hexData && (
+        <button
+          type="button"
+          onClick={handleConfirm}
+          className="mt-4 flex h-[44px] w-full items-center justify-center rounded-xl bg-[#1C1A16] text-sm font-medium text-white transition-all hover:bg-[#2A2621]"
+        >
+          ⏰ 确认起卦
+        </button>
+      )}
+
+      {isDone && (
+        <p className="mt-4 text-center text-sm font-medium text-green-700">✓ 时间起卦完成！</p>
+      )}
+    </div>
+  );
+}
+
+// ─── 数字起卦面板 ─────────────────────────────────
+
+function NumberPanel({ onComplete }: { onComplete: (lines: (0 | 1)[], movingLine: number | null, upperKey: string, lowerKey: string) => void }) {
+  const [upperNum, setUpperNum] = useState('');
+  const [lowerNum, setLowerNum] = useState('');
+  const [movingPos, setMovingPos] = useState('');
+  const [refNum, setRefNum] = useState('');
+  const [isDone, setIsDone] = useState(false);
+
+  const hexData = useMemo(() => {
+    const up = parseInt(upperNum);
+    const lo = parseInt(lowerNum);
+    if (isNaN(up) || isNaN(lo) || up < 1 || lo < 1) return null;
+    const result = numberToHexagram(up, lo);
+    const movingVal = parseInt(movingPos);
+    const moving = (!isNaN(movingVal) && movingVal >= 1 && movingVal <= 6) ? movingVal - 1 : null;
+    return { ...result, movingLine: moving };
+  }, [upperNum, lowerNum, movingPos]);
+
+  const handleRandomize = () => {
+    setUpperNum(String(Math.floor(Math.random() * 999) + 1));
+    setLowerNum(String(Math.floor(Math.random() * 999) + 1));
+    setMovingPos(Math.random() > 0.5 ? String(Math.floor(Math.random() * 6) + 1) : '0');
+    setRefNum(String(Math.floor(Math.random() * 999) + 1));
+    setIsDone(false);
+  };
+
+  const handleConfirm = () => {
+    if (!hexData) return;
+    const hex = resolveHexagram(hexData.upperKey, hexData.lowerKey);
+    setIsDone(true);
+    onComplete(hex.lines, hexData.movingLine, hexData.upperKey, hexData.lowerKey);
+  };
+
+  return (
+    <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-4 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
+      <h3 className="text-base font-semibold text-[#1C1A16] mb-1">🔢 数字起卦</h3>
+      <p className="text-xs text-[#1C1A16]/55 mb-4">输入数字来生成卦象，适合有特定数字灵感时使用</p>
+
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        <div>
+          <label className="mb-1 block text-xs text-[#1C1A16]/60">上卦数字 *</label>
+          <input
+            type="number"
+            min={1}
+            max={999}
+            value={upperNum}
+            onChange={(e) => { setUpperNum(e.target.value); setIsDone(false); }}
+            placeholder="1-999"
+            className="h-12 w-full rounded-lg border border-gray-300 px-3 text-center text-lg font-medium text-[#1C1A16] outline-none focus:border-[#1C1A16]/30 focus:ring-2 focus:ring-[#1C1A16]/10"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-[#1C1A16]/60">下卦数字 *</label>
+          <input
+            type="number"
+            min={1}
+            max={999}
+            value={lowerNum}
+            onChange={(e) => { setLowerNum(e.target.value); setIsDone(false); }}
+            placeholder="1-999"
+            className="h-12 w-full rounded-lg border border-gray-300 px-3 text-center text-lg font-medium text-[#1C1A16] outline-none focus:border-[#1C1A16]/30 focus:ring-2 focus:ring-[#1C1A16]/10"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-[#1C1A16]/60">动爻位置</label>
+          <input
+            type="number"
+            min={0}
+            max={6}
+            value={movingPos}
+            onChange={(e) => { setMovingPos(e.target.value); setIsDone(false); }}
+            placeholder="1-6 或 0"
+            className="h-12 w-full rounded-lg border border-gray-300 px-3 text-center text-lg font-medium text-[#1C1A16] outline-none focus:border-[#1C1A16]/30 focus:ring-2 focus:ring-[#1C1A16]/10"
+          />
+          <p className="mt-0.5 text-[10px] text-[#1C1A16]/40">0=无动爻</p>
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-[#1C1A16]/60">参考数字</label>
+          <input
+            type="number"
+            min={1}
+            max={999}
+            value={refNum}
+            onChange={(e) => { setRefNum(e.target.value); setIsDone(false); }}
+            placeholder="1-999"
+            className="h-12 w-full rounded-lg border border-gray-300 px-3 text-center text-lg font-medium text-[#1C1A16] outline-none focus:border-[#1C1A16]/30 focus:ring-2 focus:ring-[#1C1A16]/10"
+          />
+          <p className="mt-0.5 text-[10px] text-[#1C1A16]/40">可选</p>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={handleRandomize}
+        className="mb-4 flex h-10 w-full items-center justify-center rounded-lg border border-[#1C1A16]/15 text-sm text-[#1C1A16]/70 transition-colors hover:bg-gray-50"
+      >
+        🎲 随机生成
+      </button>
+
+      {hexData && (
+        <div className="mb-4">
+          <HexagramPreviewCard
+            upperKey={hexData.upperKey}
+            lowerKey={hexData.lowerKey}
+            movingLine={hexData.movingLine ?? undefined}
+            label="卦象预览"
+          />
+        </div>
+      )}
+
+      {!isDone && hexData && (
+        <button
+          type="button"
+          onClick={handleConfirm}
+          className="flex h-[44px] w-full items-center justify-center rounded-xl bg-[#1C1A16] text-sm font-medium text-white transition-all hover:bg-[#2A2621]"
+        >
+          🔮 确认起卦
+        </button>
+      )}
+
+      {isDone && (
+        <p className="mt-2 text-center text-sm font-medium text-green-700">✓ 数字起卦完成！</p>
+      )}
     </div>
   );
 }
@@ -140,24 +627,24 @@ export default function LiuYaoPage() {
   const [question, setQuestion] = useState('');
   const [method, setMethod] = useState<DivinationMethod>('manual');
   const [lineSelections, setLineSelections] = useState<LineValue[]>([null, null, null, null, null, null]);
-  const [divinationTime, setDivinationTime] = useState(() => {
-    const now = new Date();
-    const offset = now.getTimezoneOffset();
-    const local = new Date(now.getTime() - offset * 60 * 1000);
-    return local.toISOString().slice(0, 16);
-  });
+  const [divinationTime, setDivinationTime] = useState(getNowLocalString);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<LiuYaoResult | null>(null);
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
 
-  const allLinesSelected = lineSelections.every((v) => v !== null);
+  // 新增：非手动模式的卦象数据
+  const [resolvedUpperKey, setResolvedUpperKey] = useState<string | null>(null);
+  const [resolvedLowerKey, setResolvedLowerKey] = useState<string | null>(null);
+  const [resolvedMovingLine, setResolvedMovingLine] = useState<number | null>(null);
+  const [resolvedMovingLines, setResolvedMovingLines] = useState<number[]>([]); // 铜钱多动爻
+  const [hexagramReady, setHexagramReady] = useState(false);
 
-  // 从lineSelections推导卦象预览（初爻→上爻顺序即index 0→5）
-  // 但UI显示是从上六爻到初爻（反序）
-  const previewLines = useMemo(() => {
-    return lineSelections as (0 | 1 | null)[];
-  }, [lineSelections]);
+  const allLinesSelected = method === 'manual'
+    ? lineSelections.every((v) => v !== null)
+    : hexagramReady;
+
+  const previewLines = useMemo(() => lineSelections as (0 | 1 | null)[], [lineSelections]);
 
   const lowerTrigram = useMemo(() => {
     const [l0, l1, l2] = previewLines.slice(0, 3);
@@ -184,7 +671,6 @@ export default function LiuYaoPage() {
   }, [upperTrigram, lowerTrigram]);
 
   const setLine = useCallback((displayIndex: number, value: 0 | 1) => {
-    // displayIndex: 0=上六爻, 5=初爻 → 实际index: 5-displayIndex
     const actualIndex = 5 - displayIndex;
     setLineSelections((prev) => {
       const next = [...prev];
@@ -193,9 +679,44 @@ export default function LiuYaoPage() {
     });
   }, []);
 
+  // 铜钱模式完成回调
+  const handleCoinComplete = useCallback((lines: (0 | 1)[], movingLines: number[]) => {
+    setLineSelections(lines);
+    setResolvedMovingLines(movingLines);
+    setHexagramReady(true);
+
+    const lowerLines = lines.slice(0, 3) as [number, number, number];
+    const upperLines = lines.slice(3, 6) as [number, number, number];
+    const lk = Object.entries(TRIGRAMS_MAP).find(([, t]) => t.lines[0] === lowerLines[0] && t.lines[1] === lowerLines[1] && t.lines[2] === lowerLines[2])?.[0] || 'qian';
+    const uk = Object.entries(TRIGRAMS_MAP).find(([, t]) => t.lines[0] === upperLines[0] && t.lines[1] === upperLines[1] && t.lines[2] === upperLines[2])?.[0] || 'qian';
+    setResolvedLowerKey(lk);
+    setResolvedUpperKey(uk);
+    setResolvedMovingLine(movingLines.length > 0 ? movingLines[0] : null);
+  }, []);
+
+  // 时间模式完成回调
+  const handleTimeComplete = useCallback((lines: (0 | 1)[], movingLine: number, upperKey: string, lowerKey: string) => {
+    setLineSelections(lines);
+    setResolvedUpperKey(upperKey);
+    setResolvedLowerKey(lowerKey);
+    setResolvedMovingLine(movingLine);
+    setResolvedMovingLines([movingLine]);
+    setHexagramReady(true);
+  }, []);
+
+  // 数字模式完成回调
+  const handleNumberComplete = useCallback((lines: (0 | 1)[], movingLine: number | null, upperKey: string, lowerKey: string) => {
+    setLineSelections(lines);
+    setResolvedUpperKey(upperKey);
+    setResolvedLowerKey(lowerKey);
+    setResolvedMovingLine(movingLine);
+    setResolvedMovingLines(movingLine !== null ? [movingLine] : []);
+    setHexagramReady(true);
+  }, []);
+
   const handleSubmit = async () => {
     if (!allLinesSelected) {
-      setError('请先选择全部 6 爻的阴阳属性');
+      setError('请先完成起卦');
       return;
     }
 
@@ -204,8 +725,15 @@ export default function LiuYaoPage() {
     setResult(null);
 
     const lines = lineSelections as number[];
-    const upperKey = Object.entries(TRIGRAMS_MAP).find(([, v]) => v === upperTrigram)?.[0] || '';
-    const lowerKey = Object.entries(TRIGRAMS_MAP).find(([, v]) => v === lowerTrigram)?.[0] || '';
+
+    let upperKey: string, lowerKey: string;
+    if (method === 'manual') {
+      upperKey = Object.entries(TRIGRAMS_MAP).find(([, v]) => v === upperTrigram)?.[0] || '';
+      lowerKey = Object.entries(TRIGRAMS_MAP).find(([, v]) => v === lowerTrigram)?.[0] || '';
+    } else {
+      upperKey = resolvedUpperKey || '';
+      lowerKey = resolvedLowerKey || '';
+    }
 
     try {
       const res = await fetch('/api/liuyao', {
@@ -213,7 +741,12 @@ export default function LiuYaoPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           question: question.trim(),
-          hexagrams: { upper: upperKey, lower: lowerKey, lines },
+          hexagrams: {
+            upper: upperKey,
+            lower: lowerKey,
+            lines,
+            movingLines: resolvedMovingLines,
+          },
           method,
           divinationTime: new Date(divinationTime).toISOString(),
         }),
@@ -238,10 +771,24 @@ export default function LiuYaoPage() {
     setLineSelections([null, null, null, null, null, null]);
     setQuestion('');
     setError('');
-    const now = new Date();
-    const offset = now.getTimezoneOffset();
-    const local = new Date(now.getTime() - offset * 60 * 1000);
-    setDivinationTime(local.toISOString().slice(0, 16));
+    setResolvedUpperKey(null);
+    setResolvedLowerKey(null);
+    setResolvedMovingLine(null);
+    setResolvedMovingLines([]);
+    setHexagramReady(false);
+    setDivinationTime(getNowLocalString());
+  };
+
+  const handleMethodChange = (newMethod: DivinationMethod) => {
+    setMethod(newMethod);
+    setLineSelections([null, null, null, null, null, null]);
+    setResolvedUpperKey(null);
+    setResolvedLowerKey(null);
+    setResolvedMovingLine(null);
+    setResolvedMovingLines([]);
+    setHexagramReady(false);
+    setError('');
+    setResult(null);
   };
 
   return (
@@ -305,26 +852,17 @@ export default function LiuYaoPage() {
             <div className="grid grid-cols-4 gap-2">
               {METHOD_OPTIONS.map((opt) => {
                 const isActive = method === opt.value;
-                const disabled = !opt.enabled;
                 return (
                   <button
                     key={opt.value}
                     type="button"
-                    disabled={disabled}
-                    onClick={() => opt.enabled && setMethod(opt.value)}
-                    className={`relative flex flex-col items-center gap-1 rounded-xl p-3 text-center transition-all duration-200 ${
+                    onClick={() => handleMethodChange(opt.value)}
+                    className={`flex flex-col items-center gap-1 rounded-xl p-3 text-center transition-all duration-200 ${
                       isActive
                         ? 'border-2 border-[#1C1A16] bg-[rgba(28,26,22,0.03)] text-[#1C1A16] shadow-sm'
-                        : disabled
-                          ? 'cursor-not-allowed pointer-events-none border border-[#1C1A16]/5 bg-gray-50 text-[#1C1A16]/30 opacity-50'
-                          : 'border border-[#1C1A16]/10 bg-white text-[#1C1A16] hover:border-[#1C1A16]/20 hover:bg-[#FAF9F6]'
+                        : 'border border-[#1C1A16]/10 bg-white text-[#1C1A16] hover:border-[#1C1A16]/20 hover:bg-[#FAF9F6]'
                     }`}
                   >
-                    {disabled && (
-                      <span className="absolute top-1.5 right-1.5 rounded-full bg-[#1C1A16]/10 px-2 py-0.5 text-[10px] text-[#1C1A16]/60">
-                        即将上线
-                      </span>
-                    )}
                     <span className="text-lg">{opt.icon}</span>
                     <span className="text-xs font-medium">{opt.label}</span>
                   </button>
@@ -333,14 +871,15 @@ export default function LiuYaoPage() {
             </div>
           </div>
 
-          {/* ④ 手动起卦面板 */}
+          {/* ④ 起卦参数区（动态面板） */}
+
+          {/* ④-a 手动起卦面板 */}
           {method === 'manual' && (
             <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-4 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
               <h3 className="text-base font-semibold text-[#1C1A16] mb-1">手动起卦</h3>
               <p className="text-xs text-[#1C1A16]/55 mb-4">请从上到下依次选择六爻的阴阳</p>
 
               <div className="flex flex-col gap-4 md:flex-row md:gap-8">
-                {/* 左侧：爻选择器 */}
                 <div className="flex-1 space-y-3">
                   {LINE_LABELS.map((label, displayIdx) => {
                     const actualIdx = 5 - displayIdx;
@@ -383,10 +922,9 @@ export default function LiuYaoPage() {
                   })}
                 </div>
 
-                {/* 右侧：卦象预览 */}
                 <div className="flex flex-col items-center justify-center rounded-xl border border-[#1C1A16]/8 bg-[#FAF9F6] p-6 md:w-[220px]">
                   <p className="mb-3 text-xs text-[#1C1A16]/50">卦象预览</p>
-                  {allLinesSelected ? (
+                  {lineSelections.every((v) => v !== null) ? (
                     <>
                       <HexagramFigure lines={lineSelections as (0 | 1)[]} size="large" />
                       <div className="mt-4 text-center">
@@ -433,19 +971,36 @@ export default function LiuYaoPage() {
             </div>
           )}
 
+          {/* ④-b 铜钱起卦面板 */}
+          {method === 'coin' && !result && (
+            <CoinPanel onComplete={handleCoinComplete} />
+          )}
+
+          {/* ④-c 时间起卦面板 */}
+          {method === 'time' && !result && (
+            <TimePanel onComplete={handleTimeComplete} />
+          )}
+
+          {/* ④-d 数字起卦面板 */}
+          {method === 'number' && !result && (
+            <NumberPanel onComplete={handleNumberComplete} />
+          )}
+
           {/* ⑤ 占卜时间 + ⑥ 解卦按钮 */}
           {!result && (
             <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-4 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
-              <div className="mb-4">
-                <label className="mb-1 block text-sm text-[#1C1A16]/75">占卜时间</label>
-                <input
-                  type="datetime-local"
-                  value={divinationTime}
-                  onChange={(e) => setDivinationTime(e.target.value)}
-                  className="h-10 w-full rounded-xl border border-gray-300 px-3 text-sm text-[#1C1A16] outline-none focus:border-[#1C1A16]/30 focus:ring-2 focus:ring-[#1C1A16]/10 md:w-auto"
-                />
-                <p className="mt-1 text-xs text-[#1C1A16]/45">占卜时间会影响卦象的时效性参考</p>
-              </div>
+              {method !== 'time' && (
+                <div className="mb-4">
+                  <label className="mb-1 block text-sm text-[#1C1A16]/75">占卜时间</label>
+                  <input
+                    type="datetime-local"
+                    value={divinationTime}
+                    onChange={(e) => setDivinationTime(e.target.value)}
+                    className="h-10 w-full rounded-xl border border-gray-300 px-3 text-sm text-[#1C1A16] outline-none focus:border-[#1C1A16]/30 focus:ring-2 focus:ring-[#1C1A16]/10 md:w-auto"
+                  />
+                  <p className="mt-1 text-xs text-[#1C1A16]/45">占卜时间会影响卦象的时效性参考</p>
+                </div>
+              )}
 
               {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
 
@@ -467,13 +1022,15 @@ export default function LiuYaoPage() {
               {!allLinesSelected && method === 'manual' && (
                 <p className="mt-2 text-center text-xs text-[#1C1A16]/45">请先选择全部 6 爻</p>
               )}
+              {!allLinesSelected && method !== 'manual' && (
+                <p className="mt-2 text-center text-xs text-[#1C1A16]/45">请先完成起卦</p>
+              )}
             </div>
           )}
 
           {/* ⑦ 解卦结果区 */}
           {result && (
             <div className="space-y-4 animate-fadeIn">
-              {/* ⑦-a 本卦信息卡 */}
               <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 transition-shadow duration-300 hover:shadow-card-hover">
                 <h3 className="text-sm font-medium text-[#1C1A16]/60 mb-3">卦象信息</h3>
                 <div className="flex flex-col items-start gap-4 md:flex-row md:items-center">
@@ -503,7 +1060,6 @@ export default function LiuYaoPage() {
                 </p>
               </div>
 
-              {/* ⑦-b 各爻详解 */}
               <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 transition-shadow duration-300 hover:shadow-card-hover">
                 <h3 className="text-base font-semibold text-[#1C1A16] mb-4">各爻详解</h3>
                 <div className="space-y-0">
@@ -516,12 +1072,16 @@ export default function LiuYaoPage() {
                         <span className="text-sm font-semibold text-[#1C1A16]">
                           {line.title}（第{line.index + 1}爻）
                         </span>
+                        {resolvedMovingLines.includes(line.index) && (
+                          <span className="rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-medium text-orange-700">动爻</span>
+                        )}
                       </div>
                       <div className="mb-2">
                         <YaoLine
                           type={line.type}
                           height={8}
                           width="120px"
+                          isMoving={resolvedMovingLines.includes(line.index)}
                         />
                       </div>
                       <p className="text-xs italic text-[#1C1A16]/50 mb-2">
@@ -535,7 +1095,6 @@ export default function LiuYaoPage() {
                 </div>
               </div>
 
-              {/* ⑦-d 行动建议 */}
               <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 transition-shadow duration-300 hover:shadow-card-hover">
                 <h3 className="text-base font-semibold text-[#1C1A16] mb-3">💡 六爻指引</h3>
                 <p className="text-sm leading-relaxed text-[#1C1A16]/85 mb-4">
@@ -548,9 +1107,7 @@ export default function LiuYaoPage() {
                       <h4 className="text-sm font-medium text-green-700 mb-1">✓ 有利因素</h4>
                       <ul className="space-y-1 pl-1">
                         {result.actionAdvice.positives.map((item, i) => (
-                          <li key={i} className="text-sm leading-relaxed text-green-700">
-                            · {item}
-                          </li>
+                          <li key={i} className="text-sm leading-relaxed text-green-700">· {item}</li>
                         ))}
                       </ul>
                     </div>
@@ -561,9 +1118,7 @@ export default function LiuYaoPage() {
                       <h4 className="text-sm font-medium text-amber-700 mb-1">⚠ 注意事项</h4>
                       <ul className="space-y-1 pl-1">
                         {result.actionAdvice.cautions.map((item, i) => (
-                          <li key={i} className="text-sm leading-relaxed text-amber-700">
-                            · {item}
-                          </li>
+                          <li key={i} className="text-sm leading-relaxed text-amber-700">· {item}</li>
                         ))}
                       </ul>
                     </div>
@@ -574,9 +1129,7 @@ export default function LiuYaoPage() {
                       <h4 className="text-sm font-medium text-blue-700 mb-1">💡 下一步行动</h4>
                       <div className="space-y-1">
                         {result.actionAdvice.actions.map((item, i) => (
-                          <p key={i} className="text-sm leading-relaxed text-blue-700">
-                            {item}
-                          </p>
+                          <p key={i} className="text-sm leading-relaxed text-blue-700">{item}</p>
                         ))}
                       </div>
                     </div>
@@ -584,7 +1137,6 @@ export default function LiuYaoPage() {
                 </div>
               </div>
 
-              {/* 综合分析 */}
               <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 transition-shadow duration-300 hover:shadow-card-hover">
                 <h3 className="text-base font-semibold text-[#1C1A16] mb-3">综合分析</h3>
                 <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#1C1A16]/75">
@@ -592,7 +1144,6 @@ export default function LiuYaoPage() {
                 </p>
               </div>
 
-              {/* 操作按钮 */}
               <div className="flex justify-center">
                 <button
                   type="button"

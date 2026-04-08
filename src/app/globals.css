@@ -153,6 +153,28 @@ body {
   animation: fadeIn 0.4s ease both;
 }
 
+/* 铜钱翻转动画 */
+@keyframes coinFlip {
+  0% { transform: rotateY(0deg) scale(1); }
+  25% { transform: rotateY(360deg) scale(1.1); }
+  50% { transform: rotateY(540deg) scale(1.05); }
+  100% { transform: rotateY(720deg) scale(1); }
+}
+
+.animate-coin-flip {
+  animation: coinFlip 800ms ease-in-out;
+  transform-style: preserve-3d;
+}
+
+@keyframes coinPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-coin-pulse {
+  animation: coinPulse 1.2s ease-in-out infinite;
+}
+
 /* 强制 Header 固定定位 */
 header {
   position: fixed !important;
