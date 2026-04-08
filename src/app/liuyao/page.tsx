@@ -501,31 +501,82 @@ function NumberPanel({ onComplete }: { onComplete: (lines: (0 | 1)[], movingLine
   const [movingPos, setMovingPos] = useState('');
   const [refNum, setRefNum] = useState('');
   const [isDone, setIsDone] = useState(false);
+  const [numberErrors, setNumberErrors] = useState<{ upper?: string; lower?: string; moving?: string; ref?: string }>({});
+
+  const validateRange = (value: string, min: number, max: number): string | undefined => {
+    if (value === '') return undefined;
+    const num = Number(value);
+    if (!Number.isInteger(num) || num < min || num > max) {
+      return `请输入${min}-${max}的整数`;
+    }
+    return undefined;
+  };
+
+  const handleUpperChange = (value: string) => {
+    setUpperNum(value);
+    setIsDone(false);
+    setNumberErrors((prev) => ({ ...prev, upper: value === '' ? undefined : validateRange(value, 1, 9999) }));
+  };
+
+  const handleLowerChange = (value: string) => {
+    setLowerNum(value);
+    setIsDone(false);
+    setNumberErrors((prev) => ({ ...prev, lower: value === '' ? undefined : validateRange(value, 1, 9999) }));
+  };
+
+  const handleMovingChange = (value: string) => {
+    setMovingPos(value);
+    setIsDone(false);
+    if (value === '' || value === '0') {
+      setNumberErrors((prev) => ({ ...prev, moving: undefined }));
+    } else {
+      const num = Number(value);
+      const err = (!Number.isInteger(num) || num < 1 || num > 6) ? '动爻位置需为1-6' : undefined;
+      setNumberErrors((prev) => ({ ...prev, moving: err }));
+    }
+  };
+
+  const handleRefChange = (value: string) => {
+    setRefNum(value);
+    setIsDone(false);
+    setNumberErrors((prev) => ({ ...prev, ref: value === '' ? undefined : validateRange(value, 1, 9999) }));
+  };
+
+  const hasErrors = !!(numberErrors.upper || numberErrors.lower || numberErrors.moving || numberErrors.ref);
+  const isRequiredFilled = upperNum !== '' && lowerNum !== '' && !numberErrors.upper && !numberErrors.lower;
+  const canConfirm = isRequiredFilled && !hasErrors;
 
   const hexData = useMemo(() => {
     const up = parseInt(upperNum);
     const lo = parseInt(lowerNum);
     if (isNaN(up) || isNaN(lo) || up < 1 || lo < 1) return null;
+    if (numberErrors.upper || numberErrors.lower) return null;
     const result = numberToHexagram(up, lo);
     const movingVal = parseInt(movingPos);
     const moving = (!isNaN(movingVal) && movingVal >= 1 && movingVal <= 6) ? movingVal - 1 : null;
     return { ...result, movingLine: moving };
-  }, [upperNum, lowerNum, movingPos]);
+  }, [upperNum, lowerNum, movingPos, numberErrors.upper, numberErrors.lower]);
 
   const handleRandomize = () => {
-    setUpperNum(String(Math.floor(Math.random() * 999) + 1));
-    setLowerNum(String(Math.floor(Math.random() * 999) + 1));
+    setUpperNum(String(Math.floor(Math.random() * 9999) + 1));
+    setLowerNum(String(Math.floor(Math.random() * 9999) + 1));
     setMovingPos(Math.random() > 0.5 ? String(Math.floor(Math.random() * 6) + 1) : '0');
-    setRefNum(String(Math.floor(Math.random() * 999) + 1));
+    setRefNum(String(Math.floor(Math.random() * 9999) + 1));
+    setNumberErrors({});
     setIsDone(false);
   };
 
   const handleConfirm = () => {
-    if (!hexData) return;
+    if (!hexData || !canConfirm) return;
     const hex = resolveHexagram(hexData.upperKey, hexData.lowerKey);
     setIsDone(true);
     onComplete(hex.lines, hexData.movingLine, hexData.upperKey, hexData.lowerKey);
   };
+
+  const inputBorderClass = (error?: string) =>
+    error
+      ? 'border-red-400 focus:border-red-500 focus:ring-red-200'
+      : 'border-gray-300 focus:border-[#1C1A16]/30 focus:ring-[#1C1A16]/10';
 
   return (
     <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-4 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
@@ -538,24 +589,26 @@ function NumberPanel({ onComplete }: { onComplete: (lines: (0 | 1)[], movingLine
           <input
             type="number"
             min={1}
-            max={999}
+            max={9999}
             value={upperNum}
-            onChange={(e) => { setUpperNum(e.target.value); setIsDone(false); }}
-            placeholder="1-999"
-            className="h-12 w-full rounded-lg border border-gray-300 px-3 text-center text-lg font-medium text-[#1C1A16] outline-none focus:border-[#1C1A16]/30 focus:ring-2 focus:ring-[#1C1A16]/10"
+            onChange={(e) => handleUpperChange(e.target.value)}
+            placeholder="1-9999"
+            className={`h-12 w-full rounded-lg border px-3 text-center text-lg font-medium text-[#1C1A16] outline-none focus:ring-2 ${inputBorderClass(numberErrors.upper)}`}
           />
+          {numberErrors.upper && <p className="text-xs text-red-500 mt-1">{numberErrors.upper}</p>}
         </div>
         <div>
           <label className="mb-1 block text-xs text-[#1C1A16]/60">下卦数字 *</label>
           <input
             type="number"
             min={1}
-            max={999}
+            max={9999}
             value={lowerNum}
-            onChange={(e) => { setLowerNum(e.target.value); setIsDone(false); }}
-            placeholder="1-999"
-            className="h-12 w-full rounded-lg border border-gray-300 px-3 text-center text-lg font-medium text-[#1C1A16] outline-none focus:border-[#1C1A16]/30 focus:ring-2 focus:ring-[#1C1A16]/10"
+            onChange={(e) => handleLowerChange(e.target.value)}
+            placeholder="1-9999"
+            className={`h-12 w-full rounded-lg border px-3 text-center text-lg font-medium text-[#1C1A16] outline-none focus:ring-2 ${inputBorderClass(numberErrors.lower)}`}
           />
+          {numberErrors.lower && <p className="text-xs text-red-500 mt-1">{numberErrors.lower}</p>}
         </div>
         <div>
           <label className="mb-1 block text-xs text-[#1C1A16]/60">动爻位置</label>
@@ -564,24 +617,32 @@ function NumberPanel({ onComplete }: { onComplete: (lines: (0 | 1)[], movingLine
             min={0}
             max={6}
             value={movingPos}
-            onChange={(e) => { setMovingPos(e.target.value); setIsDone(false); }}
+            onChange={(e) => handleMovingChange(e.target.value)}
             placeholder="1-6 或 0"
-            className="h-12 w-full rounded-lg border border-gray-300 px-3 text-center text-lg font-medium text-[#1C1A16] outline-none focus:border-[#1C1A16]/30 focus:ring-2 focus:ring-[#1C1A16]/10"
+            className={`h-12 w-full rounded-lg border px-3 text-center text-lg font-medium text-[#1C1A16] outline-none focus:ring-2 ${inputBorderClass(numberErrors.moving)}`}
           />
-          <p className="mt-0.5 text-[10px] text-[#1C1A16]/40">0=无动爻</p>
+          {numberErrors.moving ? (
+            <p className="text-xs text-red-500 mt-1">{numberErrors.moving}</p>
+          ) : (
+            <p className="mt-0.5 text-[10px] text-[#1C1A16]/40">0=无动爻</p>
+          )}
         </div>
         <div>
           <label className="mb-1 block text-xs text-[#1C1A16]/60">参考数字</label>
           <input
             type="number"
             min={1}
-            max={999}
+            max={9999}
             value={refNum}
-            onChange={(e) => { setRefNum(e.target.value); setIsDone(false); }}
-            placeholder="1-999"
-            className="h-12 w-full rounded-lg border border-gray-300 px-3 text-center text-lg font-medium text-[#1C1A16] outline-none focus:border-[#1C1A16]/30 focus:ring-2 focus:ring-[#1C1A16]/10"
+            onChange={(e) => handleRefChange(e.target.value)}
+            placeholder="1-9999"
+            className={`h-12 w-full rounded-lg border px-3 text-center text-lg font-medium text-[#1C1A16] outline-none focus:ring-2 ${inputBorderClass(numberErrors.ref)}`}
           />
-          <p className="mt-0.5 text-[10px] text-[#1C1A16]/40">可选</p>
+          {numberErrors.ref ? (
+            <p className="text-xs text-red-500 mt-1">{numberErrors.ref}</p>
+          ) : (
+            <p className="mt-0.5 text-[10px] text-[#1C1A16]/40">可选</p>
+          )}
         </div>
       </div>
 
@@ -604,7 +665,7 @@ function NumberPanel({ onComplete }: { onComplete: (lines: (0 | 1)[], movingLine
         </div>
       )}
 
-      {!isDone && hexData && (
+      {!isDone && canConfirm && hexData && (
         <button
           type="button"
           onClick={handleConfirm}
@@ -612,6 +673,19 @@ function NumberPanel({ onComplete }: { onComplete: (lines: (0 | 1)[], movingLine
         >
           🔮 确认起卦
         </button>
+      )}
+
+      {!isDone && !canConfirm && (
+        <div>
+          <button
+            type="button"
+            disabled
+            className="flex h-[44px] w-full items-center justify-center rounded-xl bg-[#1C1A16] text-sm font-medium text-white opacity-60 cursor-not-allowed"
+          >
+            🔮 确认起卦
+          </button>
+          <p className="mt-2 text-center text-xs text-[#1C1A16]/45">请完成起卦参数</p>
+        </div>
       )}
 
       {isDone && (
