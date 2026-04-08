@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
 import { Header } from './Header';
 import { DashboardLayout } from './DashboardLayout';
+import { Footer } from './Footer';
 
 interface LayoutWrapperProps {
   children: ReactNode;
@@ -55,7 +56,7 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
             {children}
           </DashboardLayout>
         ) : (
-          children
+          <>{children}<Footer /></>
         )}
       </main>
     </div>
