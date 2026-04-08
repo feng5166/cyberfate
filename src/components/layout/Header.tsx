@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { ChevronDown, Menu, X } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+
 
 // 导航项配置
 const navItems = [
@@ -27,15 +27,11 @@ const featureMenu = [
 interface NavbarProps {
   onMobileMenuToggle?: () => void;
   showMobileMenu?: boolean;
-  onWorkbenchClick?: () => void;
-  showWorkbench?: boolean;
 }
 
 export function Header({
   onMobileMenuToggle,
   showMobileMenu = false,
-  onWorkbenchClick,
-  showWorkbench = false,
 }: NavbarProps = {}) {
   const [featureOpen, setFeatureOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -43,13 +39,6 @@ export function Header({
   const { data: session } = useSession();
   const pathname = usePathname();
   const isHomePage = pathname === '/';
-  const handleWorkbenchAction = () => {
-    if (onWorkbenchClick) {
-      onWorkbenchClick();
-    } else if (onMobileMenuToggle) {
-      onMobileMenuToggle();
-    }
-  };
 
   return (
     <header
@@ -76,7 +65,15 @@ export function Header({
             )}
 
             {/* Logo - 衬线体 */}
-            <Link href="/" className="font-display text-lg md:text-xl text-[#1C1A16] tracking-widest hover:opacity-70 transition-opacity">
+            <Link href="/" className="flex items-center gap-2 font-display text-lg md:text-xl text-[#1C1A16] tracking-widest hover:opacity-70 transition-opacity">
+              <svg className="w-6 h-6 text-[#7C3AED]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <circle cx="12" cy="12" r="4" />
+                <line x1="12" y1="2" x2="12" y2="4" />
+                <line x1="12" y1="20" x2="12" y2="22" />
+                <line x1="2" y1="12" x2="4" y2="12" />
+                <line x1="20" y1="12" x2="22" y2="12" />
+              </svg>
               CYBERFATE
             </Link>
           </div>
@@ -121,25 +118,13 @@ export function Header({
               )}
             </div>
 
-            {/* 工作台（登录后显示）或 登录按钮 */}
-            {session ? (
-              showWorkbench ? (
-                <Button
-                  variant="text"
-                  className="text-sm text-brand-gray hover:text-[#1C1A16]"
-                  onClick={handleWorkbenchAction}
-                >
-                  工作台
-                </Button>
-              ) : null
-            ) : (
-              <Link
-                href="/auth/login"
-                className="text-sm text-brand-gray hover:text-[#1C1A16] transition-colors duration-200"
-              >
-                登录
-              </Link>
-            )}
+            {/* 工作台 */}
+            <Link
+              href="/bazi"
+              className="text-sm text-brand-gray hover:text-[#1C1A16] transition-colors duration-200"
+            >
+              工作台
+            </Link>
           </div>
 
           {/* 右侧：桌面端账户/登录 */}
@@ -199,17 +184,13 @@ export function Header({
               </Link>
             ))}
 
-            {session && showWorkbench && (
-              <button
-                className="w-full text-left py-2.5 text-sm text-brand-gray hover:text-[#1C1A16]"
-                onClick={() => {
-                  handleWorkbenchAction();
-                  setMobileOpen(false);
-                }}
-              >
-                工作台
-              </button>
-            )}
+            <Link
+              href="/bazi"
+              className="block py-2.5 text-sm text-brand-gray hover:text-[#1C1A16]"
+              onClick={() => setMobileOpen(false)}
+            >
+              工作台
+            </Link>
             
             <div className="pt-2 border-t border-brand-border-light mt-2">
               <p className="px-2 py-1 text-xs text-brand-light font-medium">功能</p>

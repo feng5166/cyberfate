@@ -40,8 +40,6 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
         <Header 
           onMobileMenuToggle={() => setMobileMenuOpen(true)}
           showMobileMenu={showSidebar || false}
-          onWorkbenchClick={handleWorkbenchClick}
-          showWorkbench={!!showSidebar}
         />
       </div>
       <main className="flex-1" style={{ paddingTop: '80px' }}>
