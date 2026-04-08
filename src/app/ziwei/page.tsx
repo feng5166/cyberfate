@@ -1,14 +1,8 @@
 'use client';
-import { Footer } from '@/components/layout/Footer';
-import { Container } from '@/components/ui/Container';
-;
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { DatePicker } from '@/components/ui/DatePicker';
-import { Select } from '@/components/ui/Select';
 import { Sparkles } from 'lucide-react';
+import { Footer } from '@/components/layout/Footer';
 
 const shichenOptions = [
   { value: '', label: '请选择时辰' },
@@ -32,6 +26,12 @@ const genderOptions = [
   { value: 'female', label: '女' },
 ];
 
+const inputClass =
+  'w-full h-12 px-4 rounded-xl border border-[#1C1A16]/15 bg-white text-[#1C1A16] placeholder:text-[#1C1A16]/25 focus:outline-none focus:border-[#1C1A16]/30 transition-colors';
+
+const selectClass =
+  'w-full h-12 px-4 rounded-xl border border-[#1C1A16]/15 bg-white text-[#1C1A16] focus:outline-none focus:border-[#1C1A16]/30 transition-colors appearance-none cursor-pointer';
+
 export default function ZiweiPage() {
   const [formData, setFormData] = useState({
     name: '',
@@ -46,9 +46,17 @@ export default function ZiweiPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    
-    if (!formData.birthDate || !formData.birthHour || !formData.gender) {
-      setError('请填写完整信息');
+
+    if (!formData.gender) {
+      setError('请选择性别');
+      return;
+    }
+    if (!formData.birthDate) {
+      setError('请选择出生日期');
+      return;
+    }
+    if (!formData.birthHour) {
+      setError('请选择出生时辰');
       return;
     }
 
@@ -57,14 +65,14 @@ export default function ZiweiPage() {
       const res = await fetch('/api/ziwei', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
       });
-      
+
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || '请求失败');
       }
-      
+
       const data = await res.json();
       setResult(data);
     } catch (err) {
@@ -75,95 +83,154 @@ export default function ZiweiPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background-alt py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <Sparkles className="w-8 h-8" />
-            <h1 className="font-heading text-3xl font-bold text-primary">紫微斗数</h1>
-          </div>
-          <p className="text-secondary">排盘解读，洞察命运</p>
+    <div className="min-h-screen bg-[#FAF9F6]">
+      {/* 标题区 */}
+      <div className="text-center pt-10 md:pt-14 pb-8">
+        <div className="flex items-center justify-center gap-2.5 mb-3">
+          <Sparkles className="w-7 h-7 text-[#1C1A16]/70" />
+          <h1 className="font-display text-3xl md:text-4xl font-bold text-[#1C1A16]">
+            紫微斗数
+          </h1>
         </div>
+        <p className="text-sm text-[#1C1A16]/55">
+          排盘解读，洞察命运密码
+        </p>
+      </div>
 
+      <div className="max-w-2xl mx-auto px-4 pb-20">
+        {/* 表单区 */}
         {!result && (
-          <Card>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-secondary mb-2">
-                    姓名 <span className="text-muted text-xs">（选填）</span>
+          <div className="bg-white rounded-2xl shadow-sm border border-[#1C1A16]/8 p-6 sm:p-8">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                {/* 姓名 */}
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-medium text-[#1C1A16]">
+                    姓名 <span className="text-[#1C1A16]/25 text-xs">（选填）</span>
                   </label>
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="输入您的姓名"
-                    className="w-full px-4 py-3 rounded bg-white border border-border text-primary placeholder:text-muted focus:outline-none focus:border-primary"
+                    className={inputClass}
                   />
                 </div>
-                
-                <Select
-                  label="性别"
-                  options={genderOptions}
-                  value={formData.gender}
-                  onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                />
-                
-                <DatePicker
-                  label="出生日期"
-                  value={formData.birthDate}
-                  onChange={(value) => setFormData({ ...formData, birthDate: value })}
-                />
-                
-                <Select
-                  label="出生时辰"
-                  options={shichenOptions}
-                  value={formData.birthHour}
-                  onChange={(e) => setFormData({ ...formData, birthHour: e.target.value })}
-                />
+
+                {/* 性别 */}
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-medium text-[#1C1A16]">
+                    性别
+                  </label>
+                  <select
+                    value={formData.gender}
+                    onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                    className={selectClass}
+                  >
+                    {genderOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* 出生日期 */}
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-medium text-[#1C1A16]">
+                    出生日期
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.birthDate}
+                    onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
+                    className={inputClass}
+                  />
+                </div>
+
+                {/* 出生时辰 */}
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-medium text-[#1C1A16]">
+                    出生时辰
+                  </label>
+                  <select
+                    value={formData.birthHour}
+                    onChange={(e) => setFormData({ ...formData, birthHour: e.target.value })}
+                    className={selectClass}
+                  >
+                    {shichenOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
+              {/* 错误提示 */}
               {error && (
                 <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
                   {error}
                 </div>
               )}
 
-              <Button type="submit" className="w-full" size="lg" loading={loading}>
+              {/* 提交按钮 */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-[#1C1A16] text-white rounded-lg px-8 py-3 font-medium hover:bg-[#2C2924] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              >
                 {loading ? '正在排盘...' : '开始排盘'}
-              </Button>
+              </button>
             </form>
-          </Card>
+          </div>
         )}
 
+        {/* 结果区 */}
         {result && (
           <div className="space-y-6">
-            {/* 命盘 */}
-            <Card>
-              <h3 className="font-semibold text-primary mb-4">命盘</h3>
-              <div className="grid grid-cols-4 gap-2 text-xs">
+            {/* 命盘卡片 */}
+            <div className="bg-white rounded-2xl shadow-sm border border-[#1C1A16]/8 p-6 sm:p-8">
+              <h3 className="font-display text-xl font-semibold text-[#1C1A16] mb-5">
+                命盘
+              </h3>
+              <div className="grid grid-cols-4 gap-px bg-[#1C1A16]/8 rounded-xl overflow-hidden">
                 {result.chart.map((palace: any, idx: number) => (
-                  <div key={idx} className="border border-border rounded p-2">
-                    <div className="font-semibold text-primary mb-1">{palace.name}</div>
-                    <div className="text-muted">{palace.stars.join(' ')}</div>
+                  <div key={idx} className="bg-white p-3">
+                    <div className="font-medium text-sm text-[#1C1A16] mb-1">
+                      {palace.name}
+                    </div>
+                    <div className="text-xs text-[#1C1A16]/55 leading-relaxed">
+                      {palace.stars.join(' ')}
+                    </div>
                   </div>
                 ))}
               </div>
-            </Card>
+            </div>
 
-            {/* AI 解读 */}
-            <Card>
-              <h3 className="font-semibold text-primary mb-3">🔮 命盘解读</h3>
-              <p className="text-secondary leading-relaxed whitespace-pre-wrap">{result.analysis}</p>
-            </Card>
+            {/* AI 解读卡片 */}
+            <div className="bg-white rounded-2xl shadow-sm border border-[#1C1A16]/8 p-6 sm:p-8">
+              <h3 className="font-display text-xl font-semibold text-[#1C1A16] mb-4">
+                🔮 命盘解读
+              </h3>
+              <p className="text-sm text-[#1C1A16]/80 leading-relaxed whitespace-pre-wrap">
+                {result.analysis}
+              </p>
+            </div>
 
-            <Button onClick={() => setResult(null)} variant="secondary" className="w-full">
+            {/* 重新排盘按钮 */}
+            <button
+              type="button"
+              onClick={() => setResult(null)}
+              className="w-full rounded-lg px-8 py-3 font-medium border border-[#1C1A16]/20 text-[#1C1A16] bg-transparent hover:bg-[#1C1A16]/5 transition-colors"
+            >
               重新排盘
-            </Button>
+            </button>
           </div>
         )}
       </div>
-          <Footer />
-</div>
+
+      <Footer />
+    </div>
   );
 }
