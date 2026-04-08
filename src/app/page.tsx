@@ -137,10 +137,10 @@ export default function HomePage() {
         <div className="relative z-10 max-w-3xl mx-auto text-center">
           {/* 主标题 */}
           <h1
-            className="font-display text-[36px] sm:text-[48px] md:text-[56px] font-bold text-[#1C1A16] text-center leading-tight"
+            className="font-display text-[36px] sm:text-[48px] md:text-[56px] font-[800] text-[#1C1A16] text-center leading-tight"
             style={{ letterSpacing: '0.06em' }}
           >
-            CyberFate.ME
+            CYBERFATE
           </h1>
 
           {/* 副标题 */}
