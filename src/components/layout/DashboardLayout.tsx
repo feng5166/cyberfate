@@ -42,8 +42,10 @@ export function DashboardLayout({
     onCollapseToggle?.(nextState);
   };
 
+  const sidebarWidth = collapsed ? 64 : 260;
+
   return (
-    <div className="flex min-h-[calc(100vh-64px)]">
+    <div className="min-h-[calc(100vh-64px)]">
       {resolvedShowSidebar && (
         <Sidebar
           collapsed={collapsed}
@@ -53,10 +55,12 @@ export function DashboardLayout({
         />
       )}
       <main
-        className={clsx(
-          'flex-1 min-h-full bg-brand-bg transition-all duration-300 ease',
-          !resolvedShowSidebar && 'w-full'
-        )}
+        style={{
+          marginLeft: resolvedShowSidebar ? sidebarWidth : 0,
+          transition: 'margin-left 0.3s ease',
+          minHeight: 'calc(100vh - 64px)',
+        }}
+        className={clsx('flex-1 bg-brand-bg')}
       >
         {children}
       </main>
