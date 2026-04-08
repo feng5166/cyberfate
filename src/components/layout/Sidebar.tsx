@@ -19,8 +19,8 @@ import {
   Clock,
   Settings,
   LogOut,
-  ChevronLeft,
-  ChevronRight,
+  PanelLeftClose,
+  PanelLeft,
   type LucideIcon,
 } from 'lucide-react';
 import { SidebarMenuItem } from './SidebarMenuItem';
@@ -111,11 +111,28 @@ export function Sidebar({
     onCollapseToggle?.(next);
   };
 
-  const renderAvatar = () => {
+  const [avatarError, setAvatarError] = useState(false);
+
+  const renderAvatar = (isCollapsed: boolean) => {
     const name = session?.user?.name?.trim() || '访客';
     const initial = name.charAt(0).toUpperCase();
+    const imageUrl = session?.user?.image;
+    const sizeClass = isCollapsed ? 'h-9 w-9' : 'h-10 w-10';
+
+    if (imageUrl && !avatarError) {
+      return (
+        <img
+          src={imageUrl}
+          alt={name}
+          className={`${sizeClass} rounded-full object-cover`}
+          onError={() => setAvatarError(true)}
+          referrerPolicy="no-referrer"
+        />
+      );
+    }
+
     return (
-      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-bg text-sm font-semibold text-brand-gray">
+      <div className={`flex ${sizeClass} items-center justify-center rounded-full bg-brand-bg text-sm font-semibold text-brand-gray`}>
         {initial}
       </div>
     );
@@ -124,11 +141,11 @@ export function Sidebar({
   const renderUserArea = (isCollapsed: boolean) => (
     <div className="border-t border-brand-border-light px-5 py-4">
       {isCollapsed ? (
-        <div className="flex justify-center">{renderAvatar()}</div>
+        <div className="flex justify-center">{renderAvatar(true)}</div>
       ) : (
         <div className="space-y-4">
           <div className="flex items-center gap-3">
-            {renderAvatar()}
+            {renderAvatar(false)}
             <div>
               <p className="text-sm font-semibold text-brand-black">{session?.user?.name || '未登录用户'}</p>
               <p className="text-xs text-brand-gray">{session?.user?.email || '未绑定邮箱'}</p>
@@ -158,7 +175,7 @@ export function Sidebar({
   );
 
   const SidebarContent = (isCollapsed: boolean) => (
-    <div className="flex h-full flex-col bg-white">
+    <div className="relative flex h-full flex-col bg-white">
       <div className="px-5 py-5">
         <Link
           href="/"
@@ -173,21 +190,17 @@ export function Sidebar({
         </Link>
       </div>
 
-      <div className="hidden px-3 pb-4 lg:block">
+      {!isCollapsed && (
         <button
           type="button"
           onClick={handleCollapseToggle}
-          className="flex w-full items-center justify-center gap-2 rounded-md border border-brand-border-light py-2 text-sm text-brand-gray hover:text-brand-black"
-          aria-label={isCollapsed ? '展开导航' : '收起导航'}
+          className="absolute right-2 top-3 hidden h-7 w-7 items-center justify-center rounded-md text-brand-gray hover:bg-gray-100/50 hover:text-brand-black lg:flex"
+          title="收起导航"
+          aria-label="收起导航"
         >
-          {isCollapsed ? (
-            <ChevronRight className="h-4 w-4" />
-          ) : (
-            <ChevronLeft className="h-4 w-4" />
-          )}
-          {!isCollapsed && <span>收起导航</span>}
+          <PanelLeftClose className="h-4 w-4" />
         </button>
-      </div>
+      )}
 
       <nav className="flex-1 overflow-y-auto pb-6">
         {MENU_GROUPS.map((group) => (
@@ -214,6 +227,20 @@ export function Sidebar({
       </nav>
 
       {renderUserArea(isCollapsed)}
+
+      {isCollapsed && (
+        <div className="hidden border-t border-brand-border-light px-2 py-3 lg:block">
+          <button
+            type="button"
+            onClick={handleCollapseToggle}
+            className="flex h-7 w-full items-center justify-center rounded-md text-brand-gray hover:bg-gray-100/50 hover:text-brand-black"
+            title="展开导航"
+            aria-label="展开导航"
+          >
+            <PanelLeft className="h-4 w-4" />
+          </button>
+        </div>
+      )}
     </div>
   );
 
