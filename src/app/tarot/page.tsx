@@ -283,10 +283,9 @@ export default function TarotPage() {
   ) => {
     const isFlipped = Boolean(flippedCards[idx]);
     const isCeltic = spread === 'celtic';
-    const containerMax = isCeltic ? 'max-w-[100px]' : 'max-w-[150px]';
-    const cardSizeClass = isCeltic
-      ? 'w-[70px] sm:w-[80px]'
-      : '';
+    const isMirror = spread === 'mirror';
+
+    const containerWidth = isCeltic ? 80 : isMirror ? 110 : 140;
 
     return (
       <div
@@ -302,7 +301,7 @@ export default function TarotPage() {
         <p className="mb-2 text-xs tracking-[0.16em] text-[#1C1A16]/55">
           {card.position || positions[idx]}
         </p>
-        <div className={`card-container mx-auto ${containerMax} ${cardSizeClass}`} style={{ maxWidth: isCeltic ? 100 : 150, width: 'fit-content' }}>
+        <div className="card-container mx-auto" style={{ width: containerWidth, maxWidth: '100%' }}>
           <div className={`card-inner ${isFlipped ? 'flipped' : ''}`}>
             <div
               className="card-front border border-[#1C1A16]/15"
@@ -315,12 +314,10 @@ export default function TarotPage() {
               </div>
             </div>
             <div className="card-back border border-[#1C1A16]/12 bg-[#FAF9F6]">
-              <Image
+              <img
                 src={card.image_url}
                 alt={card.name_zh}
-                fill
-                sizes={isCeltic ? '(max-width: 640px) 25vw, 100px' : '(max-width: 640px) 33vw, 160px'}
-                className="object-cover"
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />
             </div>
           </div>
@@ -781,8 +778,6 @@ export default function TarotPage() {
       <style jsx>{`
         .card-container {
           perspective: 1000px;
-          max-width: 150px;
-          width: fit-content;
         }
 
         .card-inner {
