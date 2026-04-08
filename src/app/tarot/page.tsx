@@ -302,7 +302,7 @@ export default function TarotPage() {
         <p className="mb-2 text-xs tracking-[0.16em] text-[#1C1A16]/55">
           {card.position || positions[idx]}
         </p>
-        <div className={`card-container mx-auto w-full ${containerMax} ${cardSizeClass}`}>
+        <div className={`card-container mx-auto ${containerMax} ${cardSizeClass}`} style={{ maxWidth: isCeltic ? 100 : 150, width: 'fit-content' }}>
           <div className={`card-inner ${isFlipped ? 'flipped' : ''}`}>
             <div
               className="card-front border border-[#1C1A16]/15"
@@ -392,7 +392,7 @@ export default function TarotPage() {
 
     // classic & moonlight: grid-cols-3
     return (
-      <div className="grid grid-cols-3 gap-2 sm:gap-4">
+      <div className="grid grid-cols-3 justify-items-center gap-2 sm:gap-4">
         {result.cards.map((card, idx) => renderResultCard(card, idx, spread, positions))}
       </div>
     );
@@ -781,6 +781,8 @@ export default function TarotPage() {
       <style jsx>{`
         .card-container {
           perspective: 1000px;
+          max-width: 150px;
+          width: fit-content;
         }
 
         .card-inner {
