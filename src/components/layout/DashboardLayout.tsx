@@ -3,7 +3,6 @@
 import { ReactNode, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
-import clsx from 'clsx';
 import { Sidebar } from './Sidebar';
 
 interface DashboardLayoutProps {
@@ -59,8 +58,9 @@ export function DashboardLayout({
           marginLeft: resolvedShowSidebar ? sidebarWidth : 0,
           transition: 'margin-left 0.3s ease',
           minHeight: 'calc(100vh - 64px)',
+          width: resolvedShowSidebar ? `calc(100% - ${sidebarWidth}px)` : '100%',
         }}
-        className={clsx('flex-1 bg-brand-bg')}
+        className="bg-brand-bg"
       >
         {children}
       </main>
