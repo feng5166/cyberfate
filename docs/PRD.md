@@ -619,7 +619,7 @@
 
 | 级别 | 字号 | 字重 | 行高 | 字间距 | 用途 |
 |------|------|------|------|--------|------|
-| **Display - Hero 标题** | 60px (clamp 44-60) | 400 | 1.15 | **10px** | 首页 "CYBERFATE" |
+| **Display - Hero 标题** | 60px (clamp 44-60) | **700 (Bold)** | 1.15 | **8px** | 首页 "CYBERFATE"（全大写，2026-04-09 加粗修正） |
 | **H2 - 区块标题** | 30-32px | 600 | 1.3 | 1px | "分析系统"、CTA 标题 |
 | **H3 - 卡片标题** | 17-19px | 600 | 1.4 | 1px | 功能卡片名称 |
 | **H4 - 小卡片标题** | 18px | 500 | 1.4 | 0 | 八字页功能项标题 |
@@ -1294,11 +1294,35 @@ _美术虾 🎨签字确认 · Frank 审批通过 · 2026-04-03_
 
 1. **顶部留白**: padding-top 80-100px
 2. **主标题**: `CYBERFATE`
-   - font-display (衬线体), 52-56px (桌面) / 36px (移动)
-   - font-weight 400（不要 bold）
-   - letter-spacing 0.15em (tracking-[0.15em])
+   - font-display (衬线体), **52-56px (桌面) / 36px (移动)**
+   - **font-weight: 700 (Bold)**（2026-04-09 修正：原 400 太弱，参考 FateMaster 粗衬线体冲击力）
+   - **text-transform: uppercase**（全大写，增强品牌感）
+   - letter-spacing **0.08em** (tracking-[0.08em])（全大写后间距可稍收窄，原 0.15em 针对小写）
    - color #0F0F0F
    - text-center
+   - **❌ 禁止任何边框/描边/outline 包裹标题文字**（2026-04-09 Frank 反馈：截图出现红色边框像输入框，严重降低品质感）
+
+> ⚠️ **Hero 标题视觉规范（2026-04-09 Frank 反馈 + FateMaster 对标）：**
+>
+> **当前问题（截图对比 FateMaster）：**
+> - 字重太轻（400），存在感不够
+> - 可能有边框包裹（必须去掉）
+> - 整体视觉偏弱，撑不起 Hero 区域
+>
+> **对标 FateMaster 的改进：**
+> | 属性 | 当前值 | 目标值 | 理由 |
+> |------|--------|--------|------|
+> | font-weight | 400 | **700 (Bold)** | FateMaster 用粗衬线体，冲击力强 |
+> | 边框 | 有（红色/橙色）| **无** | 边框让标题像输入框 |
+> | 大小写 | CYBERFATE（混排） | **CYBERFATE（全大写）** | 全大写更有品牌权威感 |
+> | letter-spacing | 0.15em | **0.08em** | 全大写后自然间距大，稍收窄 |
+> | font-family | Cormorant Garamond | **保持 Cormorant Garamond, wght:700** | 字体不变，加粗即可 |
+>
+> **字体加载确认：** Google Fonts 引用必须包含 `wght@700`
+> ```html
+> <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@700&family=..." />
+> ```
+> 如果 Cormorant Garamond 700 不够有力，备选：**Playfair Display** (wght:700-900)，粗细对比更强，更有高级感
 3. **副标题**: `解码命运 · 智见未来`
    - font-sans-serif, 18-20px, font-weight 400
    - color #6B7280 (brand-gray)
