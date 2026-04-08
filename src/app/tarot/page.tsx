@@ -49,10 +49,10 @@ const CELTIC_DESKTOP_LAYOUT: { col: number; row: number }[] = [
 ];
 
 const MODES = [
-  { id: 'classic' as const, icon: '⚫', name: '经典', desc: '传统三张牌阵' },
-  { id: 'celtic' as const, icon: '✝︎', name: '凯尔特十字', desc: '10张深度牌阵' },
-  { id: 'moonlight' as const, icon: '🌙', name: '月光', desc: '柔和内省' },
-  { id: 'mirror' as const, icon: '✧', name: '镜像', desc: '多角度透视' },
+  { id: 'classic' as const, icon: '⚫', name: '经典', desc: '传统三张牌阵', tooltip: '3张牌过去/现在/未来，新手首选' },
+  { id: 'celtic' as const, icon: '✝︎', name: '凯尔特十字', desc: '10张深度牌阵', tooltip: '10张牌深度解读，全面分析人生各维度' },
+  { id: 'moonlight' as const, icon: '🌙', name: '月光', desc: '柔和内省', tooltip: '温柔内省风格，适合情感/睡前探索' },
+  { id: 'mirror' as const, icon: '✧', name: '镜像', desc: '多角度透视', tooltip: '5张多角度深度分析，复杂决策专用' },
 ];
 
 const FAQ_ITEMS = [
@@ -434,15 +434,21 @@ export default function TarotPage() {
                     key={item.id}
                     type="button"
                     onClick={() => handleModeSelect(item.id)}
-                    className={`rounded-xl border p-3 text-left transition-all duration-300 ${
+                    className={`group/tip rounded-xl border p-3 text-left transition-all duration-300 ${
                       active
                         ? 'border-[#1C1A16]/20 bg-[#FAF9F6] shadow-card-hover'
                         : 'border-[#1C1A16]/10 bg-white hover:border-[#1C1A16]/20 hover:shadow-card-hover'
                     }`}
                   >
-                    <p className="text-sm font-semibold text-[#1C1A16]">
+                    <p className="relative flex items-center text-sm font-semibold text-[#1C1A16]">
                       <span className="mr-1">{item.icon}</span>
                       {item.name}
+                      <span className="relative ml-1 inline-block cursor-help text-[12px] text-[#1C1A16]/40">
+                        ⓘ
+                        <span className="pointer-events-none absolute left-1/2 top-full z-50 mt-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-[#1C1A16] px-3 py-2 text-xs font-normal text-white opacity-0 shadow-lg transition-opacity duration-200 group-hover/tip:opacity-100 group-active/tip:opacity-100">
+                          {item.tooltip}
+                        </span>
+                      </span>
                     </p>
                     <p className="mt-1 text-xs text-[#1C1A16]/60">{item.desc}</p>
                   </button>
