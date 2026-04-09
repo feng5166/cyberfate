@@ -1,157 +1,135 @@
 'use client';
 
-import { Footer } from '@/components/layout/Footer';
-import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
-import { Calendar } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { CalendarPicker } from '@/components/huangli/CalendarPicker';
+import { MobileDateBar } from '@/components/huangli/MobileDateBar';
+import { DayDetailCard } from '@/components/huangli/DayDetailCard';
+import { ShenShaPanel } from '@/components/huangli/ShenShaPanel';
+import { AiAskSection } from '@/components/huangli/AiAskSection';
+import { FeaturesSection } from '@/components/huangli/FeaturesSection';
+import type { HuangliData } from '@/lib/huangli/calculator';
+
+function getTodayStr(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 
 export default function HuangliPage() {
-  const { data: session } = useSession();
-  const [selectedDate, setSelectedDate] = useState('');
-  const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(getTodayStr);
+  const [data, setData] = useState<HuangliData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  useEffect(() => {
-    const today = new Date().toISOString().split('T')[0];
-    setSelectedDate(today);
-    loadDate(today);
-  }, []);
-
-  const loadDate = async (date: string) => {
+  const loadDate = useCallback(async (date: string) => {
     setLoading(true);
+    setError('');
     try {
       const res = await fetch(`/api/huangli?date=${date}`);
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || '加载失败');
+      }
       const result = await res.json();
       setData(result);
     } catch (err) {
-      console.error(err);
+      setError(err instanceof Error ? err.message : '数据加载失败，请稍后重试');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const date = e.target.value;
+  useEffect(() => {
+    loadDate(selectedDate);
+  }, [selectedDate, loadDate]);
+
+  const handleDateSelect = (date: string) => {
     setSelectedDate(date);
-    loadDate(date);
   };
 
   return (
     <div className="min-h-screen bg-[#FAF9F6]">
-      <div className="max-w-4xl mx-auto px-4 pt-12 pb-16">
-        {/* 标题区 */}
-        <div className="text-center mb-10">
-          <div className="flex items-center justify-center gap-3 mb-3">
-            <Calendar className="w-8 h-8 text-[#1C1A16]" />
-            <h1 className="font-display text-3xl md:text-4xl font-bold text-[#1C1A16]">
-              AI 黄历
-            </h1>
-          </div>
-          <p className="text-[#1C1A16]/55 text-base">
-            查看每日宜忌，把握吉时
-          </p>
-        </div>
-
-        {/* 日期选择卡片 */}
-        <div className="bg-white rounded-2xl border border-[#1C1A16]/10 shadow-sm p-6 mb-8">
-          <div className="flex items-center gap-4">
-            <label className="text-sm font-medium text-[#1C1A16]/55">
-              选择日期
-            </label>
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={handleDateChange}
-              className="h-12 px-4 rounded-xl border border-[#1C1A16]/15 bg-white text-[#1C1A16] text-sm focus:outline-none focus:ring-2 focus:ring-[#1C1A16]/10 transition-shadow"
-            />
-          </div>
-        </div>
-
-        {/* 加载状态 */}
-        {loading && (
-          <div className="bg-white rounded-2xl border border-[#1C1A16]/10 shadow-sm p-6">
-            <div className="text-center py-10">
-              <div className="inline-block animate-spin text-4xl mb-4">📅</div>
-              <p className="text-[#1C1A16]/55">加载中...</p>
-            </div>
-          </div>
-        )}
-
-        {/* 结果区域 */}
-        {data && !loading && (
-          <div className="space-y-6">
-            {/* 日期信息卡 */}
-            <div className="bg-white rounded-2xl border border-[#1C1A16]/10 shadow-sm p-6">
-              <h3 className="font-display text-lg font-semibold text-[#1C1A16] mb-4">
-                日期信息
-              </h3>
-              <div className="space-y-3 text-sm">
-                <p className="text-[#1C1A16]">
-                  <span className="text-[#1C1A16]/25 mr-2">公历</span>
-                  {data.solar}
-                </p>
-                <p className="text-[#1C1A16]">
-                  <span className="text-[#1C1A16]/25 mr-2">农历</span>
-                  {data.lunar}
-                </p>
-                <p className="text-[#1C1A16]">
-                  <span className="text-[#1C1A16]/25 mr-2">干支</span>
-                  {data.ganzhi}
-                </p>
-              </div>
-            </div>
-
-            {/* 宜忌卡片 */}
-            <div className="bg-white rounded-2xl border border-[#1C1A16]/10 shadow-sm p-6">
-              <h3 className="font-display text-lg font-semibold text-[#1C1A16] mb-5">
-                宜忌事项
-              </h3>
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <p className="text-sm font-medium text-emerald-700 mb-3">宜</p>
-                  <div className="flex flex-wrap gap-2">
-                    {data.yi.map((item: string, i: number) => (
-                      <span
-                        key={i}
-                        className="inline-block px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-sm"
-                      >
-                        {item}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-red-700 mb-3">忌</p>
-                  <div className="flex flex-wrap gap-2">
-                    {data.ji.map((item: string, i: number) => (
-                      <span
-                        key={i}
-                        className="inline-block px-3 py-1 rounded-full bg-red-50 text-red-700 text-sm"
-                      >
-                        {item}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* 个性化建议卡 */}
-            {session && data.personalAdvice && (
-              <div className="bg-white rounded-2xl border border-[#1C1A16]/10 shadow-sm p-6">
-                <h3 className="font-display text-lg font-semibold text-[#1C1A16] mb-3">
-                  🔮 个性化建议
-                </h3>
-                <p className="text-[#1C1A16]/55 leading-relaxed text-sm">
-                  {data.personalAdvice}
-                </p>
-              </div>
-            )}
-          </div>
-        )}
+      {/* 标题区 */}
+      <div className="text-center py-8 md:py-10 px-4">
+        <h1 className="font-display text-2xl md:text-3xl font-semibold text-[#1C1A16]">
+          AI 老黄历
+        </h1>
+        <p className="text-sm md:text-base text-[#1C1A16]/45 mt-2">
+          智能择吉 · 避忌提醒
+        </p>
       </div>
 
-      <Footer />
+      <div className="max-w-7xl mx-auto px-4 pb-16">
+        {/* 移动端日期快捷条 */}
+        <div className="lg:hidden mb-5">
+          <MobileDateBar
+            selectedDate={selectedDate}
+            onDateSelect={handleDateSelect}
+          />
+        </div>
+
+        <div className="flex gap-6">
+          {/* 左侧日历 - 桌面端 */}
+          <div className="hidden lg:block w-[280px] flex-shrink-0 sticky top-[100px] self-start">
+            <CalendarPicker
+              selectedDate={selectedDate}
+              onDateSelect={handleDateSelect}
+            />
+          </div>
+
+          {/* 右侧内容区 */}
+          <div className="flex-1 min-w-0 space-y-5">
+            {/* 加载状态 */}
+            {loading && (
+              <div className="bg-white rounded-2xl shadow-sm border border-[#F0EDE8] p-6">
+                <div className="animate-pulse space-y-4">
+                  <div className="flex gap-2">
+                    <div className="h-6 w-28 bg-[#F0EDE8] rounded" />
+                    <div className="h-6 w-16 bg-[#F0EDE8] rounded" />
+                    <div className="h-6 w-20 bg-[#F0EDE8] rounded" />
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="h-20 bg-[#F0EDE8] rounded-xl" />
+                    <div className="h-20 bg-[#F0EDE8] rounded-xl" />
+                    <div className="h-20 bg-[#F0EDE8] rounded-xl" />
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <div key={i} className="h-7 w-16 bg-[#F0EDE8] rounded-full" />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 错误状态 */}
+            {error && !loading && (
+              <div className="bg-white rounded-2xl shadow-sm border border-red-200 p-6 text-center">
+                <p className="text-red-600 text-sm mb-3">{error}</p>
+                <button
+                  onClick={() => loadDate(selectedDate)}
+                  className="px-4 py-2 text-sm bg-[#1C1A16] text-white rounded-lg hover:bg-[#1C1A16]/90 transition-colors"
+                >
+                  重试
+                </button>
+              </div>
+            )}
+
+            {/* 当日详情 */}
+            {data && !loading && !error && (
+              <>
+                <DayDetailCard data={data} />
+                <ShenShaPanel data={data} />
+                <AiAskSection date={selectedDate} />
+              </>
+            )}
+
+            {/* 底部特性介绍 */}
+            <div className="mt-8">
+              <FeaturesSection />
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
