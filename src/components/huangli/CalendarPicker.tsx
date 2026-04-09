@@ -187,9 +187,9 @@ export function CalendarPicker({ selectedDate, onDateSelect }: CalendarPickerPro
                 aspect-square flex flex-col items-center justify-center relative rounded-lg
                 transition-all duration-150 group
                 ${isToday && isSelected
-                  ? 'bg-[#1C1A16] text-white'
+                  ? 'bg-amber-200 text-[#1C1A16] border-2 border-amber-400'
                   : isToday
-                    ? 'bg-[#1C1A16] text-white'
+                    ? 'bg-amber-100 text-[#1C1A16] border border-amber-300'
                     : isSelected
                       ? 'border-2 border-[#1C1A16] bg-[rgba(28,26,22,0.03)]'
                       : 'hover:bg-[#1C1A16]/5'
@@ -197,14 +197,14 @@ export function CalendarPicker({ selectedDate, onDateSelect }: CalendarPickerPro
               `}
             >
               <span className={`text-sm font-medium leading-none ${
-                isToday ? 'text-white' : isSelected ? 'text-[#1C1A16]' : 'text-[#1C1A16]'
+                isToday ? 'text-[#1C1A16]' : isSelected ? 'text-[#1C1A16]' : 'text-[#1C1A16]'
               }`}>
                 {cell.day}
               </span>
               <span className={`text-[9px] leading-none mt-0.5 ${
                 cell.hasJieqi
-                  ? isToday ? 'text-white/80' : 'text-[#4A7C9B]'
-                  : isToday ? 'text-white/60' : 'text-[#1C1A16]/35'
+                  ? isToday ? 'text-[#4A7C9B]' : 'text-[#4A7C9B]'
+                  : isToday ? 'text-[#1C1A16]/50' : 'text-[#1C1A16]/35'
               }`}>
                 {cell.lunarDay}
               </span>

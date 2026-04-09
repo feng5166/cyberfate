@@ -107,7 +107,7 @@ export default function HuangliPage() {
                 <p className="text-red-600 text-sm mb-3">{error}</p>
                 <button
                   onClick={() => loadDate(selectedDate)}
-                  className="px-4 py-2 text-sm bg-[#1C1A16] text-white rounded-lg hover:bg-[#1C1A16]/90 transition-colors"
+                  className="px-4 py-2 text-sm bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
                 >
                   重试
                 </button>

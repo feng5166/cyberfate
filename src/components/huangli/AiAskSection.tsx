@@ -124,7 +124,7 @@ export function AiAskSection({ date }: AiAskSectionProps) {
         <button
           type="submit"
           disabled={!input.trim() || loading}
-          className="px-4 py-3 bg-[#1C1A16] text-white rounded-xl hover:bg-[#1C1A16]/90 transition-colors disabled:opacity-40 flex items-center gap-1"
+          className="px-4 py-3 bg-amber-600 text-white rounded-xl hover:bg-amber-700 transition-colors disabled:opacity-40 flex items-center gap-1"
         >
           <Send className="w-4 h-4" />
         </button>
