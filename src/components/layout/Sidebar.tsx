@@ -182,9 +182,8 @@ export function Sidebar({
           className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-start gap-2'}`}
           onClick={onMobileClose}
         >
-          {isCollapsed ? (
-            <span className="font-display text-lg font-bold text-brand-black">CF</span>
-          ) : (
+          <img src="/favicon.svg" alt="" className="w-7 h-7 shrink-0" />
+          {!isCollapsed && (
             <span className="font-display text-lg tracking-widest text-brand-black">CYBERFATE</span>
           )}
         </Link>
