@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import clsx from 'clsx';
-import {
+  import {
   Home,
   BarChart3,
   Sun,
@@ -20,7 +20,7 @@ import {
   Settings,
   LogOut,
   PanelLeftClose,
-  PanelLeft,
+  ChevronRight,
   type LucideIcon,
 } from 'lucide-react';
 import { SidebarMenuItem } from './SidebarMenuItem';
@@ -201,6 +201,20 @@ export function Sidebar({
         </button>
       )}
 
+      {isCollapsed && (
+        <div className="hidden px-2 pb-3 lg:block">
+          <button
+            type="button"
+            onClick={handleCollapseToggle}
+            className="group flex h-9 w-full items-center justify-center rounded-full border border-amber-200 bg-amber-50 text-amber-600 shadow-sm transition-all hover:bg-amber-100 hover:shadow-md"
+            title="展开导航"
+            aria-label="展开导航"
+          >
+            <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+          </button>
+        </div>
+      )}
+
       <nav className="flex-1 overflow-y-auto pb-6">
         {MENU_GROUPS.map((group) => (
           <SidebarGroup
@@ -227,19 +241,6 @@ export function Sidebar({
 
       {renderUserArea(isCollapsed)}
 
-      {isCollapsed && (
-        <div className="hidden border-t border-brand-border-light px-2 py-3 lg:block">
-          <button
-            type="button"
-            onClick={handleCollapseToggle}
-            className="flex h-7 w-full items-center justify-center rounded-md text-brand-gray hover:bg-gray-100/50 hover:text-brand-black"
-            title="展开导航"
-            aria-label="展开导航"
-          >
-            <PanelLeft className="h-4 w-4" />
-          </button>
-        </div>
-      )}
     </div>
   );
 
