@@ -88,7 +88,7 @@ export function AiAskSection({ date }: AiAskSectionProps) {
               key={i}
               className={`rounded-xl px-4 py-3 text-sm leading-relaxed ${
                 msg.role === 'user'
-                  ? 'bg-[#1C1A16] text-white ml-8'
+                  ? 'bg-amber-100 text-[#1C1A16] ml-8 border border-amber-200'
                   : 'bg-white text-[#1C1A16]/80 mr-8 border border-[#F0EDE8]'
               }`}
             >
