@@ -19,42 +19,62 @@ interface PalaceGridProps {
  *   寅       丑       子       亥
  *
  * palaces[0]=命宫 ... palaces[11]=父母
- * gridSlots: 16 格（4×4），中间 4 格为 null
+ * gridSlots: 16 格（4×4），中间 4 格为 null / 'center'
  */
 
-// 4×4 grid, 16 slots, palaceIndex=-1 means center placeholder
-const GRID_SLOTS: (number | null)[] = [
+type SlotValue = number | null | 'center';
+
+const GRID_SLOTS: SlotValue[] = [
   // row 0: 巳 午 未 申
   1, 2, 3, 4,
   // row 1: 辰 [center] [center] 酉
-  0, null, null, 5,
+  0, 'center', 'center', 5,
   // row 2: 卯 [center] [center] 戌
-  11, null, null, 6,
+  11, 'center', 'center', 6,
   // row 3: 寅 丑 子 亥
   10, 9, 8, 7,
 ];
 
+function CenterInfo() {
+  return (
+    <div className="col-span-2 row-span-2 flex flex-col items-center justify-center rounded-xl border border-dashed border-[#E8EDE5] bg-[#FAF9F6]/60 p-4">
+      <span className="text-2xl mb-1">☯</span>
+      <span className="text-xs text-[#1C1A16]/40 tracking-widest">紫微斗数命盘</span>
+    </div>
+  );
+}
+
 export function PalaceGrid({ palaces, selectedIndex, onSelect }: PalaceGridProps) {
+  let centerRendered = false;
+
   return (
     <div
-      className="grid grid-cols-4 gap-2"
+      className="grid grid-cols-4 gap-1.5 lg:gap-2"
       role="grid"
       aria-label="紫微斗数十二宫命盘"
     >
-      {GRID_SLOTS.map((palaceIndex, slotIndex) => {
-        if (palaceIndex === null) {
-          return <div key={`empty-${slotIndex}`} />;
+      {GRID_SLOTS.map((slot, slotIndex) => {
+        if (slot === 'center') {
+          if (!centerRendered) {
+            centerRendered = true;
+            return <CenterInfo key="center" />;
+          }
+          return null;
         }
 
-        const palace = palaces[palaceIndex];
+        if (slot === null) {
+          return <div key={`empty-${slotIndex}`} className="min-h-[120px]" />;
+        }
+
+        const palace = palaces[slot];
         if (!palace) return <div key={`missing-${slotIndex}`} />;
 
         return (
           <PalaceCell
-            key={`palace-${palaceIndex}`}
+            key={`palace-${slot}`}
             palace={palace}
-            selected={selectedIndex === palaceIndex}
-            onClick={() => onSelect(palaceIndex)}
+            selected={selectedIndex === slot}
+            onClick={() => onSelect(slot)}
           />
         );
       })}
