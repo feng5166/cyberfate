@@ -206,11 +206,11 @@ export function Sidebar({
           <button
             type="button"
             onClick={handleCollapseToggle}
-            className="group flex h-9 w-full items-center justify-center rounded-full border border-amber-200 bg-amber-50 text-amber-600 shadow-sm transition-all hover:bg-amber-100 hover:shadow-md"
+            className="group flex h-9 w-full items-center justify-center rounded-full border border-amber-200 bg-amber-50 text-[#1C1A16] shadow-sm transition-all hover:bg-amber-100 hover:shadow-md"
             title="展开导航"
             aria-label="展开导航"
           >
-            <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            <ChevronRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
           </button>
         </div>
       )}
