@@ -62,7 +62,7 @@ export function AiAskSection({ date }: AiAskSectionProps) {
   return (
     <div className="bg-gradient-to-r from-yellow-50 to-amber-50 rounded-2xl p-5 md:p-6 border border-yellow-200">
       <h3 className="font-display text-lg font-medium text-[#1C1A16] mb-3">
-        💡 AI 黄历助手
+        💡 AI老黄历助手
       </h3>
 
       {/* 预设快捷问题 */}

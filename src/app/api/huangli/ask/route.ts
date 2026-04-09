@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
 
     const huangli = calculateHuangli(date);
 
-    const prompt = `你是"赛博命理师"的 AI 黄历助手，擅长结合传统黄历数据给出现代生活建议。
+    const prompt = `你是"赛博命理师"的 AI老黄历助手，擅长结合传统黄历数据给出现代生活建议。
 
 当日黄历数据：
 - 公历：${huangli.solar}（${huangli.weekday}）

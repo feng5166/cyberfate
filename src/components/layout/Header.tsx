@@ -21,7 +21,7 @@ const featureMenu = [
   { label: '紫微斗数', href: '/ziwei' },
   { label: '梅花易数', href: '/meihua' },
   { label: '塔罗占卜', href: '/tarot' },
-  { label: 'AI 黄历', href: '/huangli' },
+  { label: 'AI老黄历', href: '/huangli' },
 ];
 
 interface NavbarProps {

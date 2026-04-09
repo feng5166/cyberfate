@@ -72,7 +72,7 @@ const MENU_GROUPS: MenuGroupConfig[] = [
     title: '更多工具',
     items: [
       { label: '紫微斗数', href: '/ziwei', icon: Star },
-      { label: 'AI 黄历', href: '/huangli', icon: Calendar },
+      { label: 'AI老黄历', href: '/huangli', icon: Calendar },
     ],
   },
   {

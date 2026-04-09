@@ -110,7 +110,7 @@ const featureGroups = [
       {
         icon: BarChart3,
         iconColor: 'text-cyan-500',
-        title: 'AI 黄历',
+        title: 'AI老黄历',
         description: 'AI驱动的智能黄历，结合现代生活场景给出建议',
         href: '/huangli',
       },
