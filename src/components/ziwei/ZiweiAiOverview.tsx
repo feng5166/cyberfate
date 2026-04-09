@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Sparkles, Copy, Check } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
+import { getAge, getBirthYear, getGanZhi, getCurrentDayunIndex, STARTING_AGE, DAYUN_SPAN } from '@/lib/utils/dayun';
 import type { PalaceData } from './types';
 
 interface ZiweiAiOverviewProps {
   palaces: PalaceData[];
+  birthDate?: string; // 'YYYY-MM-DD'
   className?: string;
 }
 
@@ -18,7 +20,52 @@ const TABS = [
 
 type TabKey = typeof TABS[number]['key'];
 
-const TAB_CONTENT: Record<TabKey, { title: string; content: string }> = {
+const DAYUN_LABELS = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+
+const DAYUN_PALACE_DETAILS: Record<number, { palace: string; star: string; content: string }> = {
+  0: { palace: '命宫', star: '紫微天府', content: '此大运得紫微天府守护，整体运势平稳上升，贵人运旺，适合打基础。' },
+  1: { palace: '兄弟', star: '太阳', content: '此大运太阳旺度，学业顺利，人际交往活跃，社交圈扩展期。' },
+  2: { palace: '夫妻', star: '武曲天相', content: '此大运武曲天相同度，事业起步期，感情运稳定，利于建立长期关系。' },
+  3: { palace: '官禄', star: '七杀', content: '此大运为事业冲刺期，七杀星主导力量强，适合拼搏进取。工作中将面临较大挑战，但也是建功立业的黄金时期。注意控制脾气与风险，不宜过度冒进。' },
+  4: { palace: '财帛', star: '贪狼化禄', content: '此大运贪狼化禄入财帛，财运亨通，收入渠道多元，适合投资理财与事业拓展。社交带来财运，把握人脉资源。' },
+  5: { palace: '迁移', star: '廉贞', content: '此大运廉贞平度守迁移，宜稳不宜动，安定为上。出行需谨慎，注意身体健康保养。' },
+  6: { palace: '交友', star: '天同巨门', content: '此大运天同巨门同度，生活平稳，宜守不宜攻，人际关系需用心维护。' },
+  7: { palace: '田宅', star: '太阴', content: '此大运太阴旺度，家宅运顺，利于置业安家，家庭关系融洽。' },
+  8: { palace: '福德', star: '天梁', content: '此大运天梁坐守，精神生活丰富，名望提升，宜修身养性。' },
+  9: { palace: '父母', star: '破军', content: '此大运破军独坐，变动较大，需审慎决策，不宜冒进。' },
+};
+
+function getDayunContent(birthDate: string): string {
+  const currentYear = new Date().getFullYear();
+  const birthYear = getBirthYear(birthDate);
+  const currentAge = getAge(birthDate);
+  const dayunIndex = getCurrentDayunIndex(currentAge);
+
+  const startAge = STARTING_AGE + dayunIndex * DAYUN_SPAN;
+  const endAge = startAge + DAYUN_SPAN - 1;
+  const startYear = birthYear + startAge;
+  const endYear = birthYear + endAge;
+  const label = DAYUN_LABELS[dayunIndex] ?? `${dayunIndex + 1}`;
+  const detail = DAYUN_PALACE_DETAILS[dayunIndex % Object.keys(DAYUN_PALACE_DETAILS).length];
+  const yearGanZhi = getGanZhi(currentYear).full;
+
+  return `【当前大运】第${label}大运（${startAge}-${endAge}岁，${startYear}-${endYear}年）—— 大运走到${detail.palace}${detail.star}星
+
+您当前 ${currentAge} 岁，正处于第${label}大运之中。
+
+${detail.content}
+
+【${currentYear} ${yearGanZhi}年 流年运势】
+
+今年${currentAge}岁，流年${yearGanZhi}。事业方面有武曲天相助力，财务决策可适度积极。下半年运势优于上半年，秋季为关键转折期。
+
+【近期提醒】
+• 上半年：注重人际关系维护，防小人口舌
+• 下半年：事业机遇期，把握晋升与合作机会
+• 全年：财运稳中有升，适度投资理财`;
+}
+
+const STATIC_TAB_CONTENT: Record<'overview' | 'sihua', { title: string; content: string }> = {
   overview: {
     title: '命盘总览',
     content: `此命盘紫微天府同宫于命宫，为"紫府同宫"上格，格局清正高贵。命主天生具有领导气质与组织才能，性格沉稳大气，处事有条不紊。
@@ -41,27 +88,22 @@ const TAB_CONTENT: Record<TabKey, { title: string; content: string }> = {
 
 四化飞星整体格局：禄权入命财，科星助友，仅忌星落疾厄，属于上吉格局。事业与财运为人生主要优势，健康为需关注领域。`,
   },
-  dayun: {
-    title: '当前大运与流年',
-    content: `【当前大运】第四大运（33-42岁）—— 大运走到官禄宫七杀星
-
-此大运为事业冲刺期，七杀星主导力量强，适合拼搏进取。工作中将面临较大挑战，但也是建功立业的黄金时期。注意控制脾气与风险，不宜过度冒进。
-
-【2026 流年运势】流年太岁在午位，冲动夫妻宫
-
-今年感情运需注意，夫妻间沟通尤为重要。事业方面有武曲天相助力，财务决策可适度积极。下半年运势优于上半年，秋季为关键转折期。
-
-【近期提醒】
-• 5-7月：财运旺盛，适合投资理财
-• 8-9月：注意人际关系，防小人口舌
-• 10-12月：事业机遇期，把握晋升机会`,
-  },
 };
 
-export function ZiweiAiOverview({ palaces, className }: ZiweiAiOverviewProps) {
+export function ZiweiAiOverview({ palaces, birthDate, className }: ZiweiAiOverviewProps) {
   const [activeTab, setActiveTab] = useState<TabKey>('overview');
   const [copied, setCopied] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  const TAB_CONTENT = useMemo(() => {
+    const dayunContent = birthDate
+      ? getDayunContent(birthDate)
+      : getDayunContent(`${new Date().getFullYear() - 30}-01-01`);
+    return {
+      ...STATIC_TAB_CONTENT,
+      dayun: { title: '大运流年', content: dayunContent },
+    };
+  }, [birthDate]);
 
   const handleCopy = useCallback(async () => {
     const text = TAB_CONTENT[activeTab].content;
@@ -72,7 +114,7 @@ export function ZiweiAiOverview({ palaces, className }: ZiweiAiOverviewProps) {
     } catch {
       // fallback
     }
-  }, [activeTab]);
+  }, [activeTab, TAB_CONTENT]);
 
   const content = TAB_CONTENT[activeTab];
 

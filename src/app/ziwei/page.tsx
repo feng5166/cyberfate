@@ -361,12 +361,12 @@ export default function ZiweiPage() {
 
           {/* P2-3: 大运流年切换器 */}
           <Container className="pb-6">
-            <DayunSwitcher birthYear={birthDate ? parseInt(birthDate.split('-')[0]) : 1990} />
+            <DayunSwitcher birthDate={birthDate} />
           </Container>
 
           {/* P1-2: AI 命盘总览解读 */}
           <Container className="pb-8">
-            <ZiweiAiOverview palaces={palaces} />
+            <ZiweiAiOverview palaces={palaces} birthDate={birthDate} />
           </Container>
         </>
       )}

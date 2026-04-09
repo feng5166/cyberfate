@@ -1,49 +1,129 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
+import { getAge, getBirthYear, getGanZhi, getCurrentDayunIndex, STARTING_AGE, DAYUN_SPAN } from '@/lib/utils/dayun';
 
 interface DayunSwitcherProps {
-  birthYear?: number;
+  birthDate?: string; // 'YYYY-MM-DD'
   className?: string;
 }
 
 interface DayunPeriod {
   label: string;
   ageRange: string;
+  startAge: number;
+  endAge: number;
+  yearRange: string;
   palace: string;
   description: string;
 }
 
-const MOCK_DAYUN: DayunPeriod[] = [
-  { label: '第一大运', ageRange: '3-12岁', palace: '命宫', description: '紫微天府坐守，幼年聪慧，得长辈疼爱' },
-  { label: '第二大运', ageRange: '13-22岁', palace: '兄弟', description: '太阳旺度，学业顺利，交友广泛' },
-  { label: '第三大运', ageRange: '23-32岁', palace: '夫妻', description: '武曲天相同度，事业起步，感情稳定' },
-  { label: '第四大运', ageRange: '33-42岁', palace: '官禄', description: '七杀旺地，事业冲刺，把握机遇' },
-  { label: '第五大运', ageRange: '43-52岁', palace: '财帛', description: '贪狼化禄，财运亨通，收获丰厚' },
-  { label: '第六大运', ageRange: '53-62岁', palace: '迁移', description: '廉贞平度，安定为宜，注意健康' },
+interface LiunianItem {
+  year: number;
+  stem: string;
+  branch: string;
+  summary: string;
+}
+
+const DAYUN_PALACES = ['命宫', '兄弟', '夫妻', '子女', '财帛', '疾厄', '迁移', '交友', '官禄', '田宅'];
+const DAYUN_DESCRIPTIONS = [
+  '紫微天府坐守，幼年聪慧，得长辈疼爱',
+  '太阳旺度，学业顺利，交友广泛',
+  '武曲天相同度，事业起步，感情稳定',
+  '七杀旺地，事业冲刺，把握机遇',
+  '贪狼化禄，财运亨通，收获丰厚',
+  '廉贞平度，安定为宜，注意健康',
+  '天同巨门同度，生活平稳，宜守不宜攻',
+  '太阴旺度，人际融洽，利合作发展',
+  '天梁坐守，事业有成，名望提升',
+  '破军独坐，变动期至，需审慎决策',
 ];
 
-const MOCK_LIUNIAN = [
-  { year: 2024, stem: '甲', branch: '辰', summary: '事业有变动机会' },
-  { year: 2025, stem: '乙', branch: '巳', summary: '贵人运旺，利合作' },
-  { year: 2026, stem: '丙', branch: '午', summary: '感情运提升，注意财务' },
-  { year: 2027, stem: '丁', branch: '未', summary: '学习进修好时机' },
-  { year: 2028, stem: '戊', branch: '申', summary: '财运回升，稳步前进' },
+const LIUNIAN_SUMMARIES = [
+  '新起点，适合规划与布局',
+  '贵人运旺，利合作发展',
+  '感情运提升，注意财务管理',
+  '学习进修好时机，充实自我',
+  '财运回升，稳步前进',
+  '事业有变动机会，需审时度势',
+  '人际拓展期，广结善缘',
+  '沉淀积累，厚积薄发',
+  '突破期至，把握良机',
+  '收获之年，安享成果',
 ];
 
-export function DayunSwitcher({ birthYear = 1990, className }: DayunSwitcherProps) {
-  const [activeIndex, setActiveIndex] = useState(3);
+const NUM_LABELS = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+
+function generateDayunPeriods(birthYear: number, count: number): DayunPeriod[] {
+  return Array.from({ length: count }, (_, i) => {
+    const startAge = STARTING_AGE + i * DAYUN_SPAN;
+    const endAge = startAge + DAYUN_SPAN - 1;
+    const startYear = birthYear + startAge;
+    const endYear = birthYear + endAge;
+    return {
+      label: `第${NUM_LABELS[i] ?? i + 1}大运`,
+      ageRange: `${startAge}-${endAge}岁`,
+      startAge,
+      endAge,
+      yearRange: `${startYear}-${endYear}`,
+      palace: DAYUN_PALACES[i % DAYUN_PALACES.length],
+      description: DAYUN_DESCRIPTIONS[i % DAYUN_DESCRIPTIONS.length],
+    };
+  });
+}
+
+function generateLiunian(birthYear: number): LiunianItem[] {
+  const currentYear = new Date().getFullYear();
+  const startYear = currentYear - 2;
+  const endYear = currentYear + 2;
+  const items: LiunianItem[] = [];
+  for (let year = startYear; year <= endYear; year++) {
+    const { stem, branch } = getGanZhi(year);
+    const age = year - birthYear;
+    const summaryIdx = (year - startYear) % LIUNIAN_SUMMARIES.length;
+    items.push({
+      year,
+      stem,
+      branch,
+      summary: `${age}岁 · ${LIUNIAN_SUMMARIES[summaryIdx]}`,
+    });
+  }
+  return items;
+}
+
+export function DayunSwitcher({ birthDate, className }: DayunSwitcherProps) {
   const [view, setView] = useState<'dayun' | 'liunian'>('dayun');
 
-  const currentYear = new Date().getFullYear();
-  const currentAge = currentYear - birthYear;
+  const birthYear = useMemo(() => getBirthYear(birthDate ?? ''), [birthDate]);
 
-  const currentDayunIndex = MOCK_DAYUN.findIndex((d) => {
-    const [start, end] = d.ageRange.replace('岁', '').split('-').map(Number);
-    return currentAge >= start && currentAge <= end;
-  });
+  const currentAge = useMemo(() => {
+    if (!birthDate) return 30;
+    return getAge(birthDate);
+  }, [birthDate]);
+
+  const currentYear = new Date().getFullYear();
+
+  const dayunPeriods = useMemo(() => {
+    const minCount = 6;
+    const neededCount = Math.max(minCount, Math.ceil((currentAge - STARTING_AGE + DAYUN_SPAN) / DAYUN_SPAN));
+    return generateDayunPeriods(birthYear, neededCount);
+  }, [currentAge, birthYear]);
+
+  const liunianItems = useMemo(() => generateLiunian(birthYear), [birthYear]);
+
+  const currentDayunIndex = useMemo(() => {
+    return dayunPeriods.findIndex(
+      (d) => currentAge >= d.startAge && currentAge <= d.endAge,
+    );
+  }, [dayunPeriods, currentAge]);
+
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    setActiveIndex(currentDayunIndex >= 0 ? currentDayunIndex : 0);
+  }, [currentDayunIndex]);
 
   return (
     <div className={cn('bg-white rounded-2xl shadow-sm border border-[#F0EDE8] p-5 sm:p-6', className)}>
@@ -85,7 +165,7 @@ export function DayunSwitcher({ birthYear = 1990, className }: DayunSwitcherProp
             </button>
 
             <div className="flex gap-1.5 flex-1 justify-center">
-              {MOCK_DAYUN.map((period, idx) => (
+              {dayunPeriods.map((period, idx) => (
                 <button
                   key={idx}
                   onClick={() => setActiveIndex(idx)}
@@ -105,7 +185,7 @@ export function DayunSwitcher({ birthYear = 1990, className }: DayunSwitcherProp
             </div>
 
             <button
-              onClick={() => setActiveIndex(Math.min(MOCK_DAYUN.length - 1, activeIndex + 1))}
+              onClick={() => setActiveIndex(Math.min(dayunPeriods.length - 1, activeIndex + 1))}
               className="p-1 rounded-lg hover:bg-[#FAF9F6] text-[#1C1A16]/40 shrink-0"
               aria-label="下一大运"
             >
@@ -117,29 +197,29 @@ export function DayunSwitcher({ birthYear = 1990, className }: DayunSwitcherProp
           <div className="rounded-xl bg-[#FAF9F6] border border-[#E8E4DD] p-4">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-sm font-semibold text-[#1C1A16]">
-                {MOCK_DAYUN[activeIndex].label}
+                {dayunPeriods[activeIndex].label}
               </span>
               <span className="text-xs text-[#1C1A16]/40">
-                {MOCK_DAYUN[activeIndex].ageRange}
+                {dayunPeriods[activeIndex].ageRange}（{dayunPeriods[activeIndex].yearRange}年）
               </span>
               {activeIndex === currentDayunIndex && (
                 <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">
-                  当前
+                  当前（{currentAge}岁）
                 </span>
               )}
             </div>
             <p className="text-xs text-[#1C1A16]/40 mb-1">
-              走{MOCK_DAYUN[activeIndex].palace}
+              走{dayunPeriods[activeIndex].palace}
             </p>
             <p className="text-sm text-[#1C1A16]/60 leading-relaxed">
-              {MOCK_DAYUN[activeIndex].description}
+              {dayunPeriods[activeIndex].description}
             </p>
           </div>
         </>
       ) : (
         /* 流年列表 */
         <div className="space-y-2">
-          {MOCK_LIUNIAN.map((ly) => (
+          {liunianItems.map((ly) => (
             <div
               key={ly.year}
               className={cn(
