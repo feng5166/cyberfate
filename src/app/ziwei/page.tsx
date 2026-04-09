@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { ChevronRight, AlertTriangle, RefreshCw } from 'lucide-react';
+import { getLunarDate } from '@/lib/bazi/calculator';
 import { Footer } from '@/components/layout/Footer';
 import { Container } from '@/components/ui/Container';
 import { DatePicker } from '@/components/ui/DatePicker';
@@ -14,6 +15,7 @@ import {
   PalaceGrid,
   PalaceMobileList,
   PalaceDetailPanel,
+  CenterInfoCard,
   ZiweiAiOverview,
   ZiweiFeatures,
   ZiweiGuide,
@@ -25,12 +27,19 @@ import {
   SHICHEN_OPTIONS,
   MOCK_PALACES,
 } from '@/components/ziwei';
-import type { PalaceData } from '@/components/ziwei';
+import type { PalaceData, CenterUserInfo } from '@/components/ziwei';
 
 const GENDER_OPTIONS = [
   { value: 'male', label: '男' },
   { value: 'female', label: '女' },
 ];
+
+const SHICHEN_TIME_MAP: Record<string, string> = {
+  '0': '23:00-00:59', '1': '01:00-02:59', '2': '03:00-04:59',
+  '3': '05:00-06:59', '4': '07:00-08:59', '5': '09:00-10:59',
+  '6': '11:00-12:59', '7': '13:00-14:59', '8': '15:00-16:59',
+  '9': '17:00-18:59', '10': '19:00-20:59', '11': '21:00-22:59',
+};
 
 const CACHE_KEY = 'cyberfate_ziwei_cache';
 
@@ -86,6 +95,27 @@ export default function ZiweiPage() {
     if (selectedPalaceIndex === null || !palaces[selectedPalaceIndex]) return null;
     return palaces[selectedPalaceIndex];
   }, [selectedPalaceIndex, palaces]);
+
+  const centerUserInfo = useMemo<CenterUserInfo | undefined>(() => {
+    if (!showChart || palaces.length === 0) return undefined;
+
+    let lunarBirthday: string | undefined;
+    try {
+      lunarBirthday = `农历${getLunarDate(birthDate)}`;
+    } catch {
+      // 日期无效时不显示农历
+    }
+
+    return {
+      gender: gender as 'male' | 'female',
+      wuxingju: '水二局',
+      mingzhu: '贪狼',
+      shenzhu: '火星',
+      inputTime: SHICHEN_TIME_MAP[birthHour],
+      solarBirthday: birthDate,
+      lunarBirthday,
+    };
+  }, [showChart, palaces, birthDate, birthHour, gender]);
 
   // P1-4: 首次进入自动展示示例命盘
   useEffect(() => {
@@ -316,17 +346,23 @@ export default function ZiweiPage() {
                     palaces={palaces}
                     selectedIndex={selectedPalaceIndex}
                     onSelect={setSelectedPalaceIndex}
+                    userInfo={centerUserInfo}
                   />
                 </div>
               </div>
 
-              {/* 移动端：纵向列表 */}
+              {/* 移动端：信息卡片 + 纵向列表 */}
               <div className="md:hidden">
                 <div
                   className={`transition-all duration-500 ${
                     gridAnimated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
                   }`}
                 >
+                  <CenterInfoCard
+                    userInfo={centerUserInfo}
+                    palaces={palaces}
+                    className="w-full mb-4"
+                  />
                   <PalaceMobileList
                     palaces={palaces}
                     selectedIndex={selectedPalaceIndex}

@@ -1,12 +1,14 @@
 'use client';
 
-import { PalaceData } from './types';
+import { PalaceData, CenterUserInfo } from './types';
 import { PalaceCell } from './PalaceCell';
+import { CenterInfoCard } from './CenterInfoCard';
 
 interface PalaceGridProps {
   palaces: PalaceData[];
   selectedIndex: number | null;
   onSelect: (index: number) => void;
+  userInfo?: CenterUserInfo;
 }
 
 /**
@@ -35,16 +37,7 @@ const GRID_SLOTS: SlotValue[] = [
   10, 9, 8, 7,
 ];
 
-function CenterInfo() {
-  return (
-    <div className="col-span-2 row-span-2 flex flex-col items-center justify-center rounded-xl border border-dashed border-[#E8EDE5] bg-[#FAF9F6]/60 p-4">
-      <span className="text-2xl mb-1">☯</span>
-      <span className="text-xs text-[#1C1A16]/40 tracking-widest">紫微斗数命盘</span>
-    </div>
-  );
-}
-
-export function PalaceGrid({ palaces, selectedIndex, onSelect }: PalaceGridProps) {
+export function PalaceGrid({ palaces, selectedIndex, onSelect, userInfo }: PalaceGridProps) {
   let centerRendered = false;
 
   return (
@@ -57,7 +50,14 @@ export function PalaceGrid({ palaces, selectedIndex, onSelect }: PalaceGridProps
         if (slot === 'center') {
           if (!centerRendered) {
             centerRendered = true;
-            return <CenterInfo key="center" />;
+            return (
+              <CenterInfoCard
+                key="center"
+                userInfo={userInfo}
+                palaces={palaces}
+                className="col-span-2 row-span-2"
+              />
+            );
           }
           return null;
         }

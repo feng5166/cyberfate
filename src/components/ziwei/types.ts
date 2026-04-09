@@ -13,6 +13,18 @@ export interface PalaceData {
   isLife?: boolean;      // 是否为命宫
 }
 
+export interface CenterUserInfo {
+  name?: string;
+  gender: 'male' | 'female';
+  wuxingju?: string;        // 如 '水二局'
+  mingzhu?: string;         // 命主星，如 '贪狼'
+  shenzhu?: string;         // 身主星，如 '火星'
+  inputTime?: string;       // 输入时辰文本，如 '05:00-06:59'
+  solarTime?: string;       // 真太阳时 HH:mm（有修正时才传）
+  solarBirthday?: string;   // 阳历 YYYY-MM-DD
+  lunarBirthday?: string;   // 农历文本，如 '农历庚午年闰五月初三'
+}
+
 export const STAR_COLORS: Record<string, string> = {
   '紫微': '#7C3AED',
   '天机': '#059669',
