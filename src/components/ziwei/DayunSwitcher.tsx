@@ -81,7 +81,7 @@ function generateLiunian(birthYear: number): LiunianItem[] {
   const items: LiunianItem[] = [];
   for (let year = startYear; year <= endYear; year++) {
     const { stem, branch } = getGanZhi(year);
-    const age = year - birthYear;
+    const age = year - birthYear + 1;
     const summaryIdx = (year - startYear) % LIUNIAN_SUMMARIES.length;
     items.push({
       year,
@@ -155,47 +155,122 @@ export function DayunSwitcher({ birthDate, className }: DayunSwitcherProps) {
       {view === 'dayun' ? (
         <>
           {/* 大运时间轴 */}
-          <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-2">
-            <button
-              onClick={() => setActiveIndex(Math.max(0, activeIndex - 1))}
-              className="p-1 rounded-lg hover:bg-[#FAF9F6] text-[#1C1A16]/40 shrink-0"
-              aria-label="上一大运"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-
-            <div className="flex gap-1.5 flex-1 justify-center">
-              {dayunPeriods.map((period, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setActiveIndex(idx)}
-                  className={cn(
-                    'px-3 py-1.5 rounded-lg text-xs transition-all whitespace-nowrap',
-                    activeIndex === idx
-                      ? 'border-2 border-[#1C1A16] bg-[rgba(28,26,22,0.03)] font-medium text-[#1C1A16]'
-                      : idx === currentDayunIndex
-                        ? 'border border-amber-300 bg-amber-50/50 text-amber-700'
-                        : 'border border-[#E8E4DD] text-[#1C1A16]/50 hover:border-[#1C1A16]/20',
-                  )}
-                  aria-label={`${period.label} ${period.ageRange}`}
-                >
-                  {period.ageRange}
-                </button>
-              ))}
+          <div className="relative mb-5">
+            {/* 导航按钮 */}
+            <div className="flex items-center gap-2 mb-1">
+              <button
+                onClick={() => setActiveIndex(Math.max(0, activeIndex - 1))}
+                className="p-1.5 rounded-lg hover:bg-[#FAF9F6] text-[#1C1A16]/40 shrink-0 transition-colors"
+                aria-label="上一大运"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <span className="text-xs text-[#1C1A16]/40 flex-1 text-center">
+                {dayunPeriods[activeIndex].label}
+              </span>
+              <button
+                onClick={() => setActiveIndex(Math.min(dayunPeriods.length - 1, activeIndex + 1))}
+                className="p-1.5 rounded-lg hover:bg-[#FAF9F6] text-[#1C1A16]/40 shrink-0 transition-colors"
+                aria-label="下一大运"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
 
-            <button
-              onClick={() => setActiveIndex(Math.min(dayunPeriods.length - 1, activeIndex + 1))}
-              className="p-1 rounded-lg hover:bg-[#FAF9F6] text-[#1C1A16]/40 shrink-0"
-              aria-label="下一大运"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
+            {/* 可视化时间线 */}
+            <div className="overflow-x-auto pb-2 -mx-1 px-1">
+              <div className="relative flex items-start min-w-max pt-2">
+                {/* 底部横线 */}
+                <div
+                  className="absolute top-[18px] left-4 right-4 h-[2px] bg-[#E8E4DD]"
+                  aria-hidden="true"
+                />
+                {/* 已过时间线高亮 */}
+                {currentDayunIndex >= 0 && (
+                  <div
+                    className="absolute top-[18px] left-4 h-[2px] bg-amber-300 transition-all duration-500"
+                    style={{
+                      width: `${((currentDayunIndex + 1) / dayunPeriods.length) * 100}%`,
+                      maxWidth: 'calc(100% - 32px)',
+                    }}
+                    aria-hidden="true"
+                  />
+                )}
+
+                {dayunPeriods.map((period, idx) => {
+                  const isCurrent = idx === currentDayunIndex;
+                  const isActive = idx === activeIndex;
+                  const isPast = currentDayunIndex >= 0 && idx < currentDayunIndex;
+
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => setActiveIndex(idx)}
+                      className="flex flex-col items-center flex-1 min-w-[56px] group cursor-pointer"
+                      aria-label={`${period.label} ${period.ageRange} ${period.palace}`}
+                      aria-pressed={isActive}
+                    >
+                      {/* 节点 */}
+                      <div
+                        className={cn(
+                          'relative w-4 h-4 rounded-full border-2 transition-all duration-300 z-10',
+                          isActive
+                            ? 'w-5 h-5 border-[#1C1A16] bg-[#1C1A16]'
+                            : isCurrent
+                              ? 'border-amber-400 bg-amber-400 shadow-[0_0_0_3px_rgba(251,191,36,0.2)]'
+                              : isPast
+                                ? 'border-amber-300 bg-amber-200'
+                                : 'border-[#D4D0C8] bg-white group-hover:border-[#1C1A16]/30',
+                        )}
+                      >
+                        {isCurrent && !isActive && (
+                          <span className="absolute inset-0 rounded-full animate-ping bg-amber-400/40" />
+                        )}
+                      </div>
+
+                      {/* 年龄区间 */}
+                      <span
+                        className={cn(
+                          'mt-2 text-[10px] leading-tight whitespace-nowrap transition-colors',
+                          isActive
+                            ? 'text-[#1C1A16] font-semibold'
+                            : isCurrent
+                              ? 'text-amber-700 font-medium'
+                              : 'text-[#1C1A16]/35 group-hover:text-[#1C1A16]/60',
+                        )}
+                      >
+                        {period.ageRange}
+                      </span>
+
+                      {/* 宫位名 */}
+                      <span
+                        className={cn(
+                          'text-[10px] leading-tight mt-0.5 whitespace-nowrap transition-colors',
+                          isActive
+                            ? 'text-[#1C1A16]/60'
+                            : isCurrent
+                              ? 'text-amber-600/60'
+                              : 'text-[#1C1A16]/20',
+                        )}
+                      >
+                        {period.palace}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
           {/* 大运详情 */}
-          <div className="rounded-xl bg-[#FAF9F6] border border-[#E8E4DD] p-4">
-            <div className="flex items-center gap-2 mb-2">
+          <div
+            className="rounded-xl border p-4 transition-all duration-300"
+            style={{
+              backgroundColor: activeIndex === currentDayunIndex ? '#FFFBEB' : '#FAF9F6',
+              borderColor: activeIndex === currentDayunIndex ? '#FDE68A' : '#E8E4DD',
+            }}
+          >
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
               <span className="text-sm font-semibold text-[#1C1A16]">
                 {dayunPeriods[activeIndex].label}
               </span>
