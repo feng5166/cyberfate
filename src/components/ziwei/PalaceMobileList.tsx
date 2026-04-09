@@ -12,7 +12,7 @@ interface PalaceMobileListProps {
 
 export function PalaceMobileList({ palaces, selectedIndex, onSelect }: PalaceMobileListProps) {
   return (
-    <div className="flex flex-col gap-3" role="list" aria-label="紫微斗数十二宫命盘">
+    <div className="flex flex-col gap-4" role="list" aria-label="紫微斗数十二宫命盘">
       {palaces.map((palace, index) => {
         const isSelected = selectedIndex === index;
 
@@ -25,24 +25,29 @@ export function PalaceMobileList({ palaces, selectedIndex, onSelect }: PalaceMob
             aria-pressed={isSelected}
             aria-label={`${palace.name} - ${palace.branch}`}
             className={cn(
-              'w-full text-left bg-white border rounded-2xl min-h-[72px]',
+              'w-full text-left bg-white border rounded-2xl min-h-[100px]',
               'px-5 py-4 transition-all duration-200',
               'active:scale-[0.98]',
               'focus:outline-none focus:ring-2 focus:ring-[#1C1A16]/20',
               isSelected
-                ? 'border-2 border-[#1C1A16] bg-[rgba(28,26,22,0.03)] shadow-sm'
-                : 'border border-[#E8EDE5]',
+                ? 'border-2 border-[#1C1A16] bg-[rgba(28,26,22,0.04)] shadow-md'
+                : 'border border-[#E8EDE5] shadow-sm',
             )}
           >
             {/* 第一行：宫名 + 地支 */}
-            <div className="flex items-center justify-between mb-2.5">
+            <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <span className="text-[15px] font-semibold text-[#1C1A16]">
+                <span className="text-base font-semibold text-[#1C1A16]">
                   {palace.name}
                 </span>
                 {palace.isLife && (
                   <span className="text-[9px] px-1.5 py-[2px] rounded-full bg-amber-100 text-amber-700 font-medium leading-tight">
                     命宫
+                  </span>
+                )}
+                {isSelected && (
+                  <span className="text-[9px] px-1.5 py-[2px] rounded-full bg-[#1C1A16] text-white font-medium leading-tight">
+                    查看中
                   </span>
                 )}
               </div>
@@ -52,12 +57,12 @@ export function PalaceMobileList({ palaces, selectedIndex, onSelect }: PalaceMob
             </div>
 
             {/* 第二行：主星 */}
-            <div className="flex items-center gap-4 mb-2.5">
+            <div className="flex items-center gap-4 mb-3">
               {palace.majorStars.map((star) => (
                 <div key={star.name} className="flex items-center gap-1.5">
                   <StarIcon starName={star.name} size={10} />
                   <span
-                    className="text-[16px] font-bold"
+                    className="text-base font-bold"
                     style={{ color: STAR_COLORS[star.name] || '#1C1A16' }}
                   >
                     {star.name}
@@ -77,13 +82,13 @@ export function PalaceMobileList({ palaces, selectedIndex, onSelect }: PalaceMob
             {/* 第三行：分隔线 + 辅星/煞星 */}
             {palace.minorStars.length > 0 && (
               <>
-                <div className="border-t border-[#E8EDE5] mb-2.5" />
+                <div className="border-t border-[#E8EDE5] mb-3" />
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
                   {palace.minorStars.map((star) => (
                     <span
                       key={star.name}
                       className={cn(
-                        'text-[12px]',
+                        'text-xs',
                         star.type === 'evil' ? 'text-red-400/80' : 'text-[#1C1A16]/45',
                       )}
                     >

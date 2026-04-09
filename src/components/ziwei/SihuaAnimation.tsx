@@ -17,29 +17,30 @@ interface SihuaLink {
   toPalace: string;
   color: string;
   bgColor: string;
+  ringColor: string;
   description: string;
 }
 
 const SIHUA_LINKS: SihuaLink[] = [
   {
     type: '化禄', starName: '贪狼', fromPalace: '命宫', toPalace: '财帛',
-    color: '#059669', bgColor: '#ECFDF5',
-    description: '贪狼化禄入财帛，一生财路亨通，善于社交求财，中年后财运尤旺。',
+    color: '#059669', bgColor: '#ECFDF5', ringColor: 'rgba(5,150,105,0.15)',
+    description: '贪狼化禄入财帛，一生财路亨通，善于社交求财，中年后财运尤旺。化禄为四化之首，代表财运、机遇与人缘，飞入财帛宫更是锦上添花，暗示求财渠道多元、贵人相助不断。',
   },
   {
     type: '化权', starName: '紫微', fromPalace: '命宫', toPalace: '命宫',
-    color: '#3B82F6', bgColor: '#EFF6FF',
-    description: '紫微化权坐命，领导力与决断力极强，在人群中自然居于核心地位。',
+    color: '#2563EB', bgColor: '#EFF6FF', ringColor: 'rgba(37,99,235,0.15)',
+    description: '紫微化权坐命，领导力与决断力极强，在人群中自然居于核心地位。化权主权力、掌控与竞争力，紫微帝星化权更是"权中之权"，适合管理层或自主创业。',
   },
   {
     type: '化科', starName: '天机', fromPalace: '命宫', toPalace: '交友',
-    color: '#7C3AED', bgColor: '#F5F3FF',
-    description: '天机化科入交友，社交圈层高雅，多得学识渊博之人指点。',
+    color: '#7C3AED', bgColor: '#F5F3FF', ringColor: 'rgba(124,58,237,0.15)',
+    description: '天机化科入交友，社交圈层高雅，多得学识渊博之人指点。化科主文采、声誉与贵人，落在交友宫暗示朋友圈品质高，能从社交中获得知识与灵感。',
   },
   {
     type: '化忌', starName: '巨门', fromPalace: '命宫', toPalace: '疾厄',
-    color: '#DC2626', bgColor: '#FEF2F2',
-    description: '巨门化忌在疾厄，注意消化系统与口腔健康，防口舌是非引发精神压力。',
+    color: '#DC2626', bgColor: '#FEF2F2', ringColor: 'rgba(220,38,38,0.15)',
+    description: '巨门化忌在疾厄，注意消化系统与口腔健康，防口舌是非引发精神压力。化忌主阻碍、执着与纠结，落在疾厄宫提醒需格外关注身心健康的调养。',
   },
 ];
 
@@ -48,6 +49,13 @@ const SIHUA_TYPE_LABELS: Record<string, string> = {
   '化权': '权',
   '化科': '科',
   '化忌': '忌',
+};
+
+const SIHUA_NATURE: Record<string, string> = {
+  '化禄': '吉',
+  '化权': '吉',
+  '化科': '吉',
+  '化忌': '凶',
 };
 
 export function SihuaAnimation({ palaces, visible = true, className }: SihuaAnimationProps) {
@@ -59,7 +67,7 @@ export function SihuaAnimation({ palaces, visible = true, className }: SihuaAnim
     if (!visible || !autoPlay) return;
     autoPlayRef.current = setInterval(() => {
       setActiveLink((prev) => (prev + 1) % SIHUA_LINKS.length);
-    }, 3500);
+    }, 4000);
     return () => { if (autoPlayRef.current) clearInterval(autoPlayRef.current); };
   }, [visible, autoPlay]);
 
@@ -89,14 +97,15 @@ export function SihuaAnimation({ palaces, visible = true, className }: SihuaAnim
               type="button"
               onClick={() => handleSelect(index)}
               className={cn(
-                'relative flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-300 cursor-pointer',
+                'relative flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl transition-all duration-300 cursor-pointer',
                 isActive
-                  ? 'shadow-md scale-[1.02]'
-                  : 'hover:scale-[1.01] opacity-60 hover:opacity-80',
+                  ? 'shadow-md scale-[1.03]'
+                  : 'hover:scale-[1.01] opacity-55 hover:opacity-85',
               )}
               style={{
                 backgroundColor: isActive ? link.bgColor : '#FAF9F6',
                 border: isActive ? `2px solid ${link.color}` : '1px solid #E8E4DD',
+                boxShadow: isActive ? `0 4px 14px ${link.ringColor}` : undefined,
               }}
               aria-label={`${link.type}: ${link.starName}`}
               aria-pressed={isActive}
@@ -114,6 +123,14 @@ export function SihuaAnimation({ palaces, visible = true, className }: SihuaAnim
               <div className="text-left sm:hidden">
                 <div className="text-xs font-semibold" style={{ color: link.color }}>{link.type}</div>
               </div>
+              {isActive && (
+                <span
+                  className="absolute -top-1.5 -right-1.5 text-[8px] px-1.5 py-0.5 rounded-full text-white font-bold"
+                  style={{ backgroundColor: link.type === '化忌' ? '#EF4444' : '#10B981' }}
+                >
+                  {SIHUA_NATURE[link.type]}
+                </span>
+              )}
             </button>
           );
         })}
@@ -122,10 +139,10 @@ export function SihuaAnimation({ palaces, visible = true, className }: SihuaAnim
       {/* 飞星流程图 SVG */}
       <div className="flex justify-center mb-5">
         <svg
-          width="320"
-          height="72"
-          viewBox="0 0 320 72"
-          className="w-full max-w-[320px]"
+          width="340"
+          height="88"
+          viewBox="0 0 340 88"
+          className="w-full max-w-[340px]"
           aria-hidden="true"
         >
           <defs>
@@ -141,39 +158,60 @@ export function SihuaAnimation({ palaces, visible = true, className }: SihuaAnim
               <path d="M 0 0 L 10 4 L 0 8 z" fill={active.color} />
             </marker>
             <linearGradient id={`line-grad-${activeLink}`} x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor={active.color} stopOpacity="0.3" />
+              <stop offset="0%" stopColor={active.color} stopOpacity="0.2" />
               <stop offset="50%" stopColor={active.color} stopOpacity="1" />
-              <stop offset="100%" stopColor={active.color} stopOpacity="0.3" />
+              <stop offset="100%" stopColor={active.color} stopOpacity="0.2" />
             </linearGradient>
+            <filter id={`glow-${activeLink}`}>
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
           </defs>
 
           {/* 起始宫 */}
-          <rect x="8" y="16" width="80" height="40" rx="10" fill={active.bgColor} stroke={active.color} strokeWidth="1.5" />
-          <text x="48" y="33" textAnchor="middle" fill={active.color} fontSize="11" fontWeight="600">{active.fromPalace}</text>
-          <text x="48" y="48" textAnchor="middle" fill="#1C1A16" fillOpacity="0.4" fontSize="10">{active.starName}</text>
+          <rect x="8" y="20" width="88" height="48" rx="12" fill={active.bgColor} stroke={active.color} strokeWidth="1.5" />
+          <text x="52" y="39" textAnchor="middle" fill={active.color} fontSize="12" fontWeight="700">{active.fromPalace}</text>
+          <text x="52" y="55" textAnchor="middle" fill="#1C1A16" fillOpacity="0.45" fontSize="10">{active.starName}</text>
 
           {/* 连线 + 箭头 */}
-          <line
-            x1="92" y1="36" x2="224" y2="36"
-            stroke={`url(#line-grad-${activeLink})`}
+          <path
+            d="M 100 44 C 140 44, 140 44, 170 44"
+            stroke={active.color}
             strokeWidth="2"
-            strokeDasharray="6 3"
+            strokeOpacity="0.15"
+            fill="none"
+          />
+          <line
+            x1="100" y1="44" x2="234" y2="44"
+            stroke={`url(#line-grad-${activeLink})`}
+            strokeWidth="2.5"
+            strokeDasharray="6 4"
             markerEnd={`url(#arrow-${activeLink})`}
           >
-            <animate attributeName="stroke-dashoffset" from="18" to="0" dur="1.5s" repeatCount="indefinite" />
+            <animate attributeName="stroke-dashoffset" from="20" to="0" dur="1.2s" repeatCount="indefinite" />
           </line>
 
           {/* 四化类型标记 */}
-          <circle cx="160" cy="36" r="14" fill={active.color} />
-          <text x="160" y="40" textAnchor="middle" fill="white" fontSize="11" fontWeight="700">
+          <circle cx="170" cy="44" r="16" fill={active.color} filter={`url(#glow-${activeLink})`}>
+            <animate attributeName="r" values="15;17;15" dur="2s" repeatCount="indefinite" />
+          </circle>
+          <text x="170" y="49" textAnchor="middle" fill="white" fontSize="12" fontWeight="700">
             {SIHUA_TYPE_LABELS[active.type]}
           </text>
 
           {/* 终点宫 */}
-          <rect x="232" y="16" width="80" height="40" rx="10" fill={active.bgColor} stroke={active.color} strokeWidth="1.5" />
-          <text x="272" y="33" textAnchor="middle" fill={active.color} fontSize="11" fontWeight="600">{active.toPalace}</text>
-          <text x="272" y="48" textAnchor="middle" fill="#1C1A16" fillOpacity="0.4" fontSize="10">
+          <rect x="244" y="20" width="88" height="48" rx="12" fill={active.bgColor} stroke={active.color} strokeWidth="1.5" />
+          <text x="288" y="39" textAnchor="middle" fill={active.color} fontSize="12" fontWeight="700">{active.toPalace}</text>
+          <text x="288" y="55" textAnchor="middle" fill="#1C1A16" fillOpacity="0.45" fontSize="10">
             {active.fromPalace === active.toPalace ? '本宫' : '飞入'}
+          </text>
+
+          {/* 底部流向标注 */}
+          <text x="170" y="82" textAnchor="middle" fill={active.color} fillOpacity="0.5" fontSize="9">
+            {active.fromPalace} → {active.type} → {active.toPalace}
           </text>
         </svg>
       </div>
@@ -183,9 +221,20 @@ export function SihuaAnimation({ palaces, visible = true, className }: SihuaAnim
         className="rounded-xl p-4 transition-all duration-300"
         style={{
           backgroundColor: active.bgColor,
-          borderLeft: `3px solid ${active.color}`,
+          borderLeft: `4px solid ${active.color}`,
         }}
       >
+        <div className="flex items-center gap-2 mb-2">
+          <span
+            className="text-xs font-bold px-2 py-0.5 rounded-full text-white"
+            style={{ backgroundColor: active.color }}
+          >
+            {active.type}
+          </span>
+          <span className="text-xs text-[#1C1A16]/50">
+            {active.starName}{active.type} → {active.toPalace}
+          </span>
+        </div>
         <p className="text-sm text-[#1C1A16]/70 leading-relaxed">
           {active.description}
         </p>
