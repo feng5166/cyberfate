@@ -114,7 +114,7 @@ export function Header({
             {/* 工作台 */}
             <Link
               href="/bazi"
-              className="text-sm text-brand-gray hover:text-[#1C1A16] transition-colors duration-200"
+              className="text-sm font-semibold text-brand-gray hover:text-[#1C1A16] transition-colors duration-200"
             >
               工作台
             </Link>
@@ -179,7 +179,7 @@ export function Header({
 
             <Link
               href="/bazi"
-              className="block py-2.5 text-sm text-brand-gray hover:text-[#1C1A16]"
+              className="block py-2.5 text-sm font-semibold text-brand-gray hover:text-[#1C1A16]"
               onClick={() => setMobileOpen(false)}
             >
               工作台
