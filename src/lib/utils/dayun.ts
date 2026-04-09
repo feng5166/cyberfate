@@ -5,14 +5,10 @@ export const STARTING_AGE = 3;
 export const DAYUN_SPAN = 10;
 
 export function getAge(birthDate: string): number {
-  const [y, m, d] = birthDate.split('-').map(Number);
-  if (!y || !m || !d) return 0;
-  const now = new Date();
-  let age = now.getFullYear() - y;
-  if (now.getMonth() + 1 < m || (now.getMonth() + 1 === m && now.getDate() < d)) {
-    age--;
-  }
-  return Math.max(0, age);
+  const y = parseInt(birthDate.split('-')[0]);
+  if (!y) return 0;
+  const currentYear = new Date().getFullYear();
+  return Math.max(1, currentYear - y + 1);
 }
 
 export function getBirthYear(birthDate: string): number {
