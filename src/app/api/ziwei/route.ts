@@ -1,116 +1,111 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { generateCacheKey, getCache, setCache } from '@/lib/ai/cache';
+import { calculateZiwei } from '@/lib/ziwei';
+import type { ZiweiInput } from '@/lib/ziwei';
 
-// 十二宫位
-const palaces = [
-  '命宫', '兄弟宫', '夫妻宫', '子女宫', '财帛宫', '疾厄宫',
-  '迁移宫', '奴仆宫', '官禄宫', '田宅宫', '福德宫', '父母宫'
-];
+const SHICHEN_MAP: Record<string, number> = {
+  '子时': 0, '丑时': 1, '寅时': 2, '卯时': 3,
+  '辰时': 4, '巳时': 5, '午时': 6, '未时': 7,
+  '申时': 8, '酉时': 9, '戌时': 10, '亥时': 11,
+};
 
-// 主星（简化版）
-const mainStars = [
-  '紫微', '天机', '太阳', '武曲', '天同', '廉贞',
-  '天府', '太阴', '贪狼', '巨门', '天相', '天梁', '七杀', '破军'
-];
+const SHICHEN_NAMES = ['子时', '丑时', '寅时', '卯时', '辰时', '巳时', '午时', '未时', '申时', '酉时', '戌时', '亥时'];
 
-// 简化的排盘算法
-function generateChart(birthDate: string, birthHour: string, gender: string) {
-  // 实际应该用专业的紫微斗数算法
-  // 这里用简化版模拟
-  return palaces.map((palace, idx) => {
-    const starCount = Math.floor(Math.random() * 3) + 1;
-    const stars = [];
-    for (let i = 0; i < starCount; i++) {
-      stars.push(mainStars[Math.floor(Math.random() * mainStars.length)]);
-    }
-    return { name: palace, stars };
-  });
+function parseBirthHour(body: Record<string, unknown>): number {
+  if (typeof body.hour === 'number') {
+    const h = body.hour as number;
+    if (h >= 0 && h <= 11) return h;
+    throw new Error(`hour 应为 0-11，收到: ${h}`);
+  }
+
+  if (typeof body.birthTime === 'string') {
+    const key = body.birthTime as string;
+    const normalized = key.endsWith('时') ? key : `${key}时`;
+    const val = SHICHEN_MAP[normalized];
+    if (val !== undefined) return val;
+    throw new Error(`无法识别的时辰: ${body.birthTime}，请使用 子时/丑时/.../亥时`);
+  }
+
+  if (typeof body.birthHour === 'string') {
+    const val = SHICHEN_MAP[body.birthHour as string];
+    if (val !== undefined) return val;
+  }
+  if (typeof body.birthHour === 'number') {
+    const h = body.birthHour as number;
+    if (h >= 0 && h <= 11) return h;
+  }
+
+  throw new Error('缺少出生时辰参数，请提供 hour (0-11) 或 birthTime (子时~亥时)');
+}
+
+function parseGender(body: Record<string, unknown>): 'male' | 'female' {
+  const g = body.gender;
+  if (g === 'male' || g === '男') return 'male';
+  if (g === 'female' || g === '女') return 'female';
+  throw new Error(`无效的性别参数: ${g}，请使用 '男'/'女' 或 'male'/'female'`);
 }
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: '请先登录' }, { status: 401 });
-  }
-
-  const { name, gender, birthDate, birthHour } = await req.json();
-
-  // 缓存 key
-  const cacheKey = generateCacheKey('ziwei', { birthDate, birthHour, gender });
-  
-  // 检查缓存
-  const cached = await getCache(cacheKey);
-  if (cached) {
-    return NextResponse.json({ ...cached, _source: 'cache' });
-  }
-
-  // 生成命盘
-  const chart = generateChart(birthDate, birthHour, gender);
-  
-  // 找到命宫主星
-  const mingGong = chart[0];
-  const mainStar = mingGong.stars[0] || '紫微';
-
-  // AI 解读
-  const prompt = `你是"赛博命理师"的紫微斗数解读功能。
-
-用户信息：
-- 姓名：${name || '缘主'}
-- 性别：${gender === 'male' ? '男' : '女'}
-- 出生日期：${birthDate}
-- 命宫主星：${mainStar}
-
-【输出规则】
-- 严格按照以下结构输出，每段控制在指定字数内
-- 语气温和、积极、有启发性
-- 直接开始解读，不要有前言或套话
-
-【输出结构】（总计 220 字）
-**性格特质**（60字）
-根据命宫主星分析性格特点，3 条要点，简练客观。
-
-**事业运势**（60字）
-分析事业发展方向、运势起伏、适合领域。
-
-**感情运势**（60字）
-分析感情运势、婚姻特点、与伴侣相处建议。
-
-**人生建议**（40字）
-综合建议，2-3 条，切实可行。`;
-
-  let analysis = '';
-  let aiSource: string = 'fallback';
   try {
-    const aiResponse = await fetch('https://api.modelverse.cn/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: 'deepseek-ai/DeepSeek-V3.2',
-        max_tokens: 600,
-        temperature: 0.3,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
+    const body = await req.json();
 
-    if (aiResponse.ok) {
-      const aiData = await aiResponse.json();
-      analysis = aiData.choices?.[0]?.message?.content || '解读生成失败';
-      aiSource = 'deepseek';
+    const birthDate = body.birthDate as string;
+    if (!birthDate || !/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) {
+      return NextResponse.json(
+        { error: '无效的出生日期，格式应为 YYYY-MM-DD' },
+        { status: 400 },
+      );
     }
-  } catch (err) {
-    console.error('AI call failed:', err);
-    analysis = '命盘显示您性格坚毅，事业有成，感情顺遂。';
-    aiSource = 'fallback';
+
+    const birthHour = parseBirthHour(body);
+    const gender = parseGender(body);
+    const longitude = typeof body.longitude === 'number' ? body.longitude as number : undefined;
+    const name = (body.name as string) || undefined;
+
+    const input: ZiweiInput = {
+      birthDate,
+      birthHour,
+      gender,
+      birthPlace: longitude !== undefined ? { longitude, latitude: 0 } : undefined,
+    };
+
+    const result = calculateZiwei(input);
+
+    const response = {
+      palaces: result.palaces,
+      wuxingju: result.wuxingJu,
+      mingzhu: result.mingzhu,
+      shenzhu: result.shenzhu,
+      mingGong: result.mingGong,
+      shenGong: result.shenGong,
+      lunar: {
+        year: result.debug.yearGanZhi,
+        month: result.debug.lunarMonth,
+        day: result.debug.lunarDay,
+        lunarDate: result.debug.lunarDate,
+        isLeapMonth: result.debug.isLeapMonth,
+      },
+      name: name || '缘主',
+      birthHourName: SHICHEN_NAMES[birthHour],
+      debug: {
+        sizhu: [
+          result.debug.yearGanZhi,
+          result.debug.monthGanZhi,
+          result.debug.dayGanZhi,
+          result.debug.hourGanZhi,
+        ],
+        trueSolarOffset: result.debug.trueSolarOffset,
+        algorithm: '三合派' as const,
+        mingGongBranch: result.debug.mingGongBranch,
+        shenGongBranch: result.debug.shenGongBranch,
+        wuxingJuNumber: result.debug.wuxingJuNumber,
+        ziweiStarBranch: result.debug.ziweiStarBranch,
+      },
+    };
+
+    return NextResponse.json(response);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : '排盘计算失败';
+    console.error('[Ziwei API Error]', err);
+    return NextResponse.json({ error: message }, { status: 400 });
   }
-
-  // 写入缓存
-  const result = { chart, analysis };
-  await setCache(cacheKey, result);
-
-  return NextResponse.json({ ...result, _source: aiSource });
 }
