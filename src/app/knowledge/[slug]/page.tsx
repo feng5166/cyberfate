@@ -1,5 +1,3 @@
-import { Sparkles } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
@@ -366,71 +364,71 @@ export default function KnowledgeDetailPage({ params }: { params: { slug: string
   }
 
   return (
-    <div className="min-h-screen bg-background-alt py-8 px-4">
+    <div className="min-h-screen bg-[#FAF9F6] py-8 px-4">
       <div className="max-w-4xl mx-auto">
         {/* 返回导航 */}
         <Link
           href="/knowledge"
-          className="inline-flex items-center gap-2 text-sm text-secondary hover:text-primary mb-6 transition-colors"
+          className="inline-flex items-center gap-2 text-sm text-[#1C1A16]/70 hover:text-[#1C1A16] mb-6 transition-colors"
         >
           ← 返回知识库
         </Link>
 
         {/* 文章内容 */}
-        <Card>
-          <article className="prose prose-invert prose-sm max-w-none">
+        <div className="bg-white rounded-2xl border border-[#1C1A16]/8 shadow-none p-7">
+          <article className="prose prose-sm max-w-none">
             <div
-              className="text-primary leading-relaxed"
+              className="text-[#1C1A16] leading-relaxed"
               dangerouslySetInnerHTML={{
                 __html: data.content
                   .split('\n')
                   .map((line) => {
                     if (line.startsWith('# ')) {
-                      return `<h1 class="text-2xl font-bold mb-4 mt-6">${line.slice(2)}</h1>`;
+                      return `<h1 class="font-display text-2xl font-bold mb-4 mt-6 text-[#1C1A16] tracking-[0.08em]">${line.slice(2)}</h1>`;
                     }
                     if (line.startsWith('## ')) {
-                      return `<h2 class="text-xl font-semibold mb-3 mt-5">${line.slice(3)}</h2>`;
+                      return `<h2 class="font-display text-xl font-semibold mb-3 mt-5 text-[#1C1A16] tracking-[0.08em]">${line.slice(3)}</h2>`;
                     }
                     if (line.startsWith('### ')) {
-                      return `<h3 class="text-lg font-semibold mb-2 mt-4">${line.slice(4)}</h3>`;
+                      return `<h3 class="font-display text-lg font-semibold mb-2 mt-4 text-[#1C1A16]">${line.slice(4)}</h3>`;
                     }
                     if (line.startsWith('- ')) {
-                      return `<li class="ml-4">${line.slice(2)}</li>`;
+                      return `<li class="ml-4 text-[#1C1A16]/85">${line.slice(2)}</li>`;
                     }
                     if (line.startsWith('**') && line.endsWith('**')) {
-                      return `<p class="font-semibold mb-2">${line.slice(2, -2)}</p>`;
+                      return `<p class="font-semibold mb-2 text-[#1C1A16]">${line.slice(2, -2)}</p>`;
                     }
                     if (line.trim() === '') {
                       return '<br />';
                     }
-                    return `<p class="mb-2">${line}</p>`;
+                    return `<p class="mb-2 text-[#1C1A16]/85">${line}</p>`;
                   })
                   .join(''),
               }}
             />
           </article>
-        </Card>
+        </div>
 
         {/* 相关链接 */}
-        <Card className="mt-6">
-          <h3 className="font-heading text-lg font-semibold text-primary mb-4">
+        <div className="bg-white rounded-2xl border border-[#1C1A16]/8 shadow-none p-7 mt-6">
+          <h3 className="font-display text-lg font-semibold text-[#1C1A16] tracking-[0.08em] mb-4">
             📚 继续探索
           </h3>
           <div className="flex flex-wrap gap-2">
             <Link
               href="/knowledge"
-              className="px-4 py-2 rounded bg-primary/10 text-primary text-sm hover:bg-primary/20 transition-colors"
+              className="px-4 py-2 rounded-lg border border-[#1C1A16]/15 text-[#1C1A16] text-sm hover:bg-[#1C1A16]/5 transition-colors"
             >
               知识库首页
             </Link>
             <Link
               href="/bazi"
-              className="px-4 py-2 rounded bg-primary/10 text-primary text-sm hover:bg-primary/20 transition-colors"
+              className="px-4 py-2 rounded-lg border border-[#1C1A16]/15 text-[#1C1A16] text-sm hover:bg-[#1C1A16]/5 transition-colors"
             >
               八字分析
             </Link>
           </div>
-        </Card>
+        </div>
       </div>
     </div>
   );

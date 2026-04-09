@@ -22,16 +22,16 @@ const knowledgeCategories = [
 
 export default function KnowledgePage() {
   return (
-    <div className="min-h-screen bg-[#FAF9F6] text-[#1C1A16]">
+    <div className="min-h-screen bg-[#FAF9F6]">
       {/* 页面标题区 */}
       <section className="text-center pt-16 md:pt-20 pb-8">
         <div className="flex items-center justify-center gap-2 mb-2">
           <Sparkles className="w-7 h-7 text-[#1C1A16]/40" />
-          <h1 className="font-heading text-3xl sm:text-4xl font-semibold text-[#1C1A16]">
+          <h1 className="font-display text-h1 md:text-[44px] text-[#1C1A16]" style={{ letterSpacing: '10px' }}>
             命理知识库
           </h1>
         </div>
-        <p className="text-sm text-[#1C1A16]/60 mt-2">
+        <p className="text-body-sm text-[#1C1A16]/70 mt-3">
           了解八字命理的理论基础，深入传统智慧
         </p>
       </section>
@@ -45,13 +45,13 @@ export default function KnowledgePage() {
               href={`/knowledge/${category.slug}`}
               className="group"
             >
-              <div className="bg-white rounded-2xl border border-[rgba(28,26,22,0.06)] p-7 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 h-full">
+              <div className="bg-white rounded-2xl border border-[#1C1A16]/8 shadow-none p-7 hover:shadow-card-hover hover:-translate-y-1 transition-all duration-300 h-full">
                 <div className="text-center">
                   <div className="text-4xl mb-3">{category.emoji}</div>
-                  <h3 className="font-heading text-lg font-semibold text-[#1C1A16] mb-2 group-hover:underline">
+                  <h3 className="font-display text-lg font-semibold text-[#1C1A16] tracking-[0.08em] mb-2 group-hover:underline">
                     {category.title}
                   </h3>
-                  <p className="text-sm text-[#1C1A16]/60 leading-relaxed">
+                  <p className="text-sm text-[#1C1A16]/70 leading-relaxed">
                     {category.desc}
                   </p>
                 </div>
@@ -61,11 +61,11 @@ export default function KnowledgePage() {
         </div>
 
         {/* 说明 */}
-        <div className="bg-white rounded-2xl border border-[rgba(28,26,22,0.06)] p-7 shadow-sm mb-16">
-          <h3 className="font-heading text-lg font-semibold text-[#1C1A16] mb-4">
+        <div className="bg-white rounded-2xl border border-[#1C1A16]/8 shadow-none p-7 mb-16">
+          <h3 className="font-display text-lg font-semibold text-[#1C1A16] tracking-[0.08em] mb-4">
             💡 知识库说明
           </h3>
-          <ul className="space-y-2 text-sm text-[#1C1A16]/60 leading-relaxed">
+          <ul className="space-y-2 text-sm text-[#1C1A16]/70 leading-relaxed">
             <li>• 本知识库内容来源于传统命理典籍，结合现代通俗解读</li>
             <li>• 仅供学习参考，不代表本站观点或立场</li>
             <li>• 命理学是一种传统文化，建议理性看待，不要过度迷信</li>
