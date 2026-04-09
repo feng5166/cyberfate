@@ -1,5 +1,6 @@
 import { Sparkles } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
+import { Container } from '@/components/ui/Container';
+import { Footer } from '@/components/layout/Footer';
 import Link from 'next/link';
 
 export const metadata = {
@@ -21,57 +22,59 @@ const knowledgeCategories = [
 
 export default function KnowledgePage() {
   return (
-    <div className="min-h-screen bg-background-alt py-8 px-4">
-      <div className="max-w-6xl mx-auto">
-        {/* 页面标题 */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <Sparkles className="w-8 h-8" />
-            <h1 className="font-heading text-3xl sm:text-4xl font-bold text-primary">
-              命理知识库
-            </h1>
-          </div>
-          <p className="text-secondary">
-            了解八字命理的理论基础，深入传统智慧
-          </p>
+    <div className="min-h-screen bg-[#FAF9F6] text-[#1C1A16]">
+      {/* 页面标题区 */}
+      <section className="text-center pt-16 md:pt-20 pb-8">
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <Sparkles className="w-7 h-7 text-[#1C1A16]/40" />
+          <h1 className="font-heading text-3xl sm:text-4xl font-semibold text-[#1C1A16]">
+            命理知识库
+          </h1>
         </div>
+        <p className="text-sm text-[#1C1A16]/60 mt-2">
+          了解八字命理的理论基础，深入传统智慧
+        </p>
+      </section>
 
+      <Container>
         {/* 知识分类网格 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pb-12">
           {knowledgeCategories.map((category) => (
             <Link
               key={category.slug}
               href={`/knowledge/${category.slug}`}
               className="group"
             >
-              <Card className="h-full hover:shadow-lg transition-shadow">
+              <div className="bg-white rounded-2xl border border-[rgba(28,26,22,0.06)] p-7 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 h-full">
                 <div className="text-center">
                   <div className="text-4xl mb-3">{category.emoji}</div>
-                  <h3 className="font-heading text-lg font-semibold text-primary mb-2 group-hover:underline">
+                  <h3 className="font-heading text-lg font-semibold text-[#1C1A16] mb-2 group-hover:underline">
                     {category.title}
                   </h3>
-                  <p className="text-sm text-secondary">
+                  <p className="text-sm text-[#1C1A16]/60 leading-relaxed">
                     {category.desc}
                   </p>
                 </div>
-              </Card>
+              </div>
             </Link>
           ))}
         </div>
 
         {/* 说明 */}
-        <Card className="mt-8">
-          <h3 className="font-heading text-lg font-semibold text-primary mb-4">
+        <div className="bg-white rounded-2xl border border-[rgba(28,26,22,0.06)] p-7 shadow-sm mb-16">
+          <h3 className="font-heading text-lg font-semibold text-[#1C1A16] mb-4">
             💡 知识库说明
           </h3>
-          <ul className="space-y-2 text-sm text-secondary">
+          <ul className="space-y-2 text-sm text-[#1C1A16]/60 leading-relaxed">
             <li>• 本知识库内容来源于传统命理典籍，结合现代通俗解读</li>
             <li>• 仅供学习参考，不代表本站观点或立场</li>
             <li>• 命理学是一种传统文化，建议理性看待，不要过度迷信</li>
             <li>• 知识内容持续更新中，欢迎反馈建议</li>
           </ul>
-        </Card>
-      </div>
+        </div>
+      </Container>
+
+      <Footer />
     </div>
   );
 }
