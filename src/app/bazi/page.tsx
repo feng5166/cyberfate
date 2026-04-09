@@ -41,6 +41,7 @@ import {
   TIANGAN_WUXING,
   WUXING_KEYS,
   getCurrentDayun,
+  getLunarDate,
   getYearGanzhi,
 } from '@/lib/bazi';
 import type {
@@ -498,20 +499,17 @@ function BaziPageContent() {
     if (!result) return null;
 
     const dayunFallback = getDayunStartFallback(formData.birthDate);
-    const correction =
-      result.trueSolarTime ||
-      result.trueSolarCorrection ||
-      (typeof result.trueSolarOffsetMinutes === 'number'
-        ? `${result.trueSolarOffsetMinutes >= 0 ? '+' : ''}${result.trueSolarOffsetMinutes} 分钟`
-        : '未提供');
+
+    const lunarDate = formData.birthDate
+      ? getLunarDate(formData.birthDate)
+      : '未提供';
 
     return {
       baziText: buildBaziText(result),
       name: formData.name || '缘主',
       gender: toGenderLabel(formData.gender),
       birthTime: `${formData.birthDate || '未填写'} ${toHourLabel(formData.birthHour)}`,
-      trueSolarCorrection: correction,
-      lunarDate: result.lunarDate || '未提供',
+      lunarDate,
       zodiac: result.zodiac || getZodiacByBirthDate(formData.birthDate),
       dayunStartDescription: result.dayunStartDescription || dayunFallback.description,
       dayunStartAt: result.dayunStartAt || dayunFallback.at,
@@ -833,7 +831,6 @@ function BaziPageContent() {
                     name={basicInfoData.name}
                     gender={basicInfoData.gender}
                     birthTime={basicInfoData.birthTime}
-                    trueSolarCorrection={basicInfoData.trueSolarCorrection}
                     lunarDate={basicInfoData.lunarDate}
                     zodiac={basicInfoData.zodiac}
                     dayunStartDescription={basicInfoData.dayunStartDescription}

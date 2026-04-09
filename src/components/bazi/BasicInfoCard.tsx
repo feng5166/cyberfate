@@ -9,7 +9,6 @@ interface BasicInfoCardProps {
   name: string;
   gender: string;
   birthTime: string;
-  trueSolarCorrection: string;
   lunarDate: string;
   zodiac: string;
   dayunStartDescription: string;
@@ -36,7 +35,6 @@ export function BasicInfoCard({
   name,
   gender,
   birthTime,
-  trueSolarCorrection,
   lunarDate,
   zodiac,
   dayunStartDescription,
@@ -51,7 +49,6 @@ export function BasicInfoCard({
     { label: '姓名', value: isAuthenticated ? normalizeText(name) : '—' },
     { label: '性别', value: normalizeText(gender) },
     { label: '出生时间', value: normalizeText(birthTime) },
-    { label: '真太阳时修正', value: normalizeText(trueSolarCorrection) },
     { label: '对应农历', value: normalizeText(lunarDate) },
     { label: '生肖', value: normalizeText(zodiac) },
     {

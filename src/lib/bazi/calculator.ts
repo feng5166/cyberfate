@@ -236,12 +236,14 @@ export function getCurrentDayun(birthDate: string, gender: Gender): DayunResult 
 }
 
 /**
- * 获取农历日期字符串
+ * 获取农历日期字符串（含干支年），如 "癸亥年七月十一"
  */
 export function getLunarDate(date: string): string {
   const [year, month, day] = date.split('-').map(Number);
   const solar = Solar.fromYmd(year, month, day);
   const lunar = solar.getLunar();
-  
-  return `${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}`;
+  const eightChar = lunar.getEightChar();
+
+  const yearGanZhi = `${eightChar.getYearGan()}${eightChar.getYearZhi()}`;
+  return `${yearGanZhi}年${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}`;
 }
