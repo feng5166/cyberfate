@@ -25,9 +25,58 @@ import {
   DayunSwitcher,
   DualChartCompare,
   SHICHEN_OPTIONS,
-  MOCK_PALACES,
 } from '@/components/ziwei';
 import type { PalaceData, CenterUserInfo } from '@/components/ziwei';
+
+interface ApiPalace {
+  name: string;
+  branch: string;
+  stem: string;
+  majorStars: Array<{ name: string; type: string; brightness?: string; sihua?: string }>;
+  minorStars: Array<{ name: string; type: string; brightness?: string; sihua?: string }>;
+  auxiliaryStars?: Array<{ name: string; type: string; brightness?: string; sihua?: string }>;
+  isLife?: boolean;
+  isBody?: boolean;
+}
+
+interface ZiweiApiResponse {
+  palaces: ApiPalace[];
+  wuxingju: string;
+  mingzhu: string;
+  shenzhu: string;
+  mingGong: string;
+  shenGong: string;
+  lunar: {
+    year: string;
+    month: number;
+    day: number;
+    lunarDate: string;
+    isLeapMonth: boolean;
+  };
+  error?: string;
+}
+
+function convertApiPalaces(apiPalaces: ApiPalace[]): PalaceData[] {
+  return apiPalaces.map((p) => ({
+    name: p.name,
+    branch: p.branch,
+    stem: p.stem,
+    majorStars: p.majorStars.map((s) => ({
+      name: s.name,
+      type: s.type as PalaceData['majorStars'][number]['type'],
+      brightness: s.brightness as PalaceData['majorStars'][number]['brightness'],
+    })),
+    minorStars: [
+      ...p.minorStars,
+      ...(p.auxiliaryStars || []),
+    ].map((s) => ({
+      name: s.name,
+      type: s.type as PalaceData['minorStars'][number]['type'],
+      brightness: s.brightness as PalaceData['minorStars'][number]['brightness'],
+    })),
+    isLife: p.isLife,
+  }));
+}
 
 const GENDER_OPTIONS = [
   { value: 'male', label: '男' },
@@ -42,13 +91,22 @@ const SHICHEN_TIME_MAP: Record<string, string> = {
 };
 
 const CACHE_KEY = 'cyberfate_ziwei_cache';
+const CACHE_VERSION = '2.0'; // 版本号，修改后自动清除旧缓存
+
+interface ChartMeta {
+  wuxingju: string;
+  mingzhu: string;
+  shenzhu: string;
+}
 
 interface CachedResult {
   palaces: PalaceData[];
   birthDate: string;
   birthHour: string;
   gender: string;
+  meta?: ChartMeta;
   timestamp: number;
+  version?: string;
 }
 
 function loadCachedResult(): CachedResult | null {
@@ -57,6 +115,13 @@ function loadCachedResult(): CachedResult | null {
     const raw = localStorage.getItem(CACHE_KEY);
     if (!raw) return null;
     const data = JSON.parse(raw) as CachedResult;
+    
+    // 版本不匹配，清除旧缓存
+    if (data.version !== CACHE_VERSION) {
+      localStorage.removeItem(CACHE_KEY);
+      return null;
+    }
+    
     if (Date.now() - data.timestamp > 7 * 24 * 3600 * 1000) return null;
     return data;
   } catch {
@@ -88,6 +153,9 @@ export default function ZiweiPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedPalaceIndex, setSelectedPalaceIndex] = useState<number | null>(null);
 
+  // API 返回的命盘元信息
+  const [chartMeta, setChartMeta] = useState<ChartMeta | null>(null);
+
   // 入场动画
   const [gridAnimated, setGridAnimated] = useState(false);
 
@@ -108,16 +176,16 @@ export default function ZiweiPage() {
 
     return {
       gender: gender as 'male' | 'female',
-      wuxingju: '水二局',
-      mingzhu: '贪狼',
-      shenzhu: '火星',
+      wuxingju: chartMeta?.wuxingju,
+      mingzhu: chartMeta?.mingzhu,
+      shenzhu: chartMeta?.shenzhu,
       inputTime: SHICHEN_TIME_MAP[birthHour],
       solarBirthday: birthDate,
       lunarBirthday,
     };
-  }, [showChart, palaces, birthDate, birthHour, gender]);
+  }, [showChart, palaces, birthDate, birthHour, gender, chartMeta]);
 
-  // P1-4: 首次进入自动展示示例命盘
+  // P1-4: 首次进入 — 恢复缓存或用默认参数调用 API 展示示例命盘
   useEffect(() => {
     const cached = loadCachedResult();
     if (cached) {
@@ -125,15 +193,36 @@ export default function ZiweiPage() {
       setBirthDate(cached.birthDate);
       setBirthHour(cached.birthHour);
       setGender(cached.gender);
+      if (cached.meta) setChartMeta(cached.meta);
       setShowChart(true);
       setSelectedPalaceIndex(0);
       setTimeout(() => setGridAnimated(true), 100);
-    } else {
-      setPalaces(MOCK_PALACES);
-      setShowChart(true);
-      setSelectedPalaceIndex(0);
-      setTimeout(() => setGridAnimated(true), 100);
+      return;
     }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/ziwei', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ birthDate, hour: Number(birthHour), gender }),
+        });
+        if (!res.ok) throw new Error('初始排盘失败');
+        const data: ZiweiApiResponse = await res.json();
+        if (cancelled) return;
+        const result = convertApiPalaces(data.palaces);
+        setPalaces(result);
+        setChartMeta({ wuxingju: data.wuxingju, mingzhu: data.mingzhu, shenzhu: data.shenzhu });
+        setShowChart(true);
+        setSelectedPalaceIndex(0);
+        setTimeout(() => setGridAnimated(true), 100);
+      } catch {
+        // 首次加载失败静默处理，用户可手动点击排盘
+      }
+    })();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const validate = useCallback((): boolean => {
@@ -153,14 +242,33 @@ export default function ZiweiPage() {
     setGridAnimated(false);
 
     try {
-      // 模拟排盘计算，后续接真实 API
-      await new Promise((r) => setTimeout(r, 800));
+      const res = await fetch('/api/ziwei', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          birthDate,
+          hour: Number(birthHour),
+          gender,
+        }),
+      });
 
-      // 模拟偶尔的网络错误以测试错误处理
-      // if (Math.random() < 0.1) throw new Error('网络异常');
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.error || `请求失败 (${res.status})`);
+      }
 
-      const result = MOCK_PALACES;
+      const data: ZiweiApiResponse = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      const result = convertApiPalaces(data.palaces);
+      const meta: ChartMeta = {
+        wuxingju: data.wuxingju,
+        mingzhu: data.mingzhu,
+        shenzhu: data.shenzhu,
+      };
+
       setPalaces(result);
+      setChartMeta(meta);
       setShowChart(true);
       setSelectedPalaceIndex(0);
 
@@ -169,7 +277,9 @@ export default function ZiweiPage() {
         birthDate,
         birthHour,
         gender,
+        meta,
         timestamp: Date.now(),
+        version: CACHE_VERSION,
       });
 
       setTimeout(() => setGridAnimated(true), 100);
@@ -177,12 +287,13 @@ export default function ZiweiPage() {
       const cached = loadCachedResult();
       if (cached) {
         setPalaces(cached.palaces);
+        if (cached.meta) setChartMeta(cached.meta);
         setShowChart(true);
         setSelectedPalaceIndex(0);
         setError('网络异常，已显示上次缓存的结果');
         setTimeout(() => setGridAnimated(true), 100);
       } else {
-        setError('排盘失败，请检查网络后重试');
+        setError(err instanceof Error ? err.message : '排盘失败，请检查网络后重试');
       }
     } finally {
       setLoading(false);
