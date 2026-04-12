@@ -187,9 +187,9 @@ export default function HomePage() {
       </section>
 
       {/* ===== Core Principles ===== */}
-      <section className="px-4 py-12 md:py-16 bg-brand-bg/60">
+      <section className="px-4 py-10 md:py-16 bg-brand-bg/60">
         <Container>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
             {corePrinciples.map((principle) => {
               const Icon = principle.icon;
               return (

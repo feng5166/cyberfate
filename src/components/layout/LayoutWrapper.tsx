@@ -7,6 +7,7 @@ import { Header } from './Header';
 import { DashboardLayout } from './DashboardLayout';
 import { Footer } from './Footer';
 import { BackToTop } from '../BackToTop';
+import { TabBar } from '../TabBar';
 
 interface LayoutWrapperProps {
   children: ReactNode;
@@ -28,7 +29,7 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999 }}>
         <Header />
       </div>
-      <main className="flex-1" style={{ paddingTop: '80px' }}>
+      <main className="flex-1 pb-20 lg:pb-0" style={{ paddingTop: '80px' }}>
         {showSidebar ? (
           <DashboardLayout
             collapsed={isSidebarCollapsed}
@@ -42,6 +43,7 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
         )}
       </main>
       <BackToTop />
+      <TabBar />
     </div>
   );
 }
