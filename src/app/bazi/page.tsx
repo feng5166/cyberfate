@@ -620,6 +620,7 @@ function BaziPageContent() {
         性格特质: false,
         事业财运: false,
         婚姻健康: false,
+        十神详解: false,
         大运流年: false,
       });
     } catch (submitError) {
@@ -669,6 +670,7 @@ function BaziPageContent() {
       性格特质: false,
       事业财运: false,
       婚姻健康: false,
+      十神详解: false,
       大运流年: false,
     });
     if (typeof window !== 'undefined') {
