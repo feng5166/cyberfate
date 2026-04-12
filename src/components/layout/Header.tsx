@@ -82,6 +82,7 @@ export function Header() {
   }, [mobileOpen]);
 
   return (
+    <>
     <header
       className={`border-b border-[#1C1A16]/10 ${
         isHomePage ? 'bg-[rgba(255,255,255,0.95)]' : 'bg-[rgba(255,255,255,0.9)]'
@@ -213,18 +214,19 @@ export function Header() {
           </div>
         </div>
       </nav>
+    </header>
 
-      {/* 移动端遮罩层 - S-task4: 添加遮罩层动画 */}
-      {mobileOpen && (
-        <div 
-          className="fixed inset-0 bg-black/40 z-40 lg:hidden transition-opacity duration-200 animate-fadeIn"
-          onClick={() => setMobileOpen(false)}
-          aria-hidden="true"
-        />
-      )}
+    {/* 移动端遮罩层 - S-task4: 添加遮罩层动画 - 放在 header 外部 */}
+    {mobileOpen && (
+      <div 
+        className="fixed inset-0 bg-black/40 z-40 lg:hidden transition-opacity duration-200 animate-fadeIn"
+        onClick={() => setMobileOpen(false)}
+        aria-hidden="true"
+      />
+    )}
 
-      {/* 移动端下拉菜单 - S-task2/S-task4/S-task6: 完整导航 + 动画 */}
-      {mobileOpen && (
+    {/* 移动端下拉菜单 - S-task2/S-task4/S-task6: 完整导航 + 动画 - 放在 header 外部 */}
+    {mobileOpen && (
         <div 
           className="fixed left-0 right-0 top-16 bottom-0 z-50 lg:hidden bg-white overflow-y-auto"
           style={{
@@ -322,7 +324,7 @@ export function Header() {
         </div>
       )}
 
-      <style jsx>{`
+    <style jsx>{`
         @keyframes slideDown {
           from {
             transform: translateY(-8px);
@@ -333,7 +335,7 @@ export function Header() {
             opacity: 1;
           }
         }
-      `}</style>
-    </header>
+    `}</style>
+    </>
   );
 }
