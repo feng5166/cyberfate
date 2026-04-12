@@ -93,10 +93,11 @@ export async function POST(req: NextRequest) {
     
     console.log('[Payment] Mock 支付完成 - 会员已开通至:', expireAt);
     
-    // 直接返回成功页面
+    // 直接返回成功页面（使用生产域名）
+    const baseUrl = process.env.NEXTAUTH_URL || 'https://www.cyberfate.me';
     return NextResponse.json({
       orderId: order.id,
-      checkoutUrl: `${process.env.NEXTAUTH_URL}/payment/success?order_id=${order.id}&mock=true`,
+      checkoutUrl: `${baseUrl}/payment/success?order_id=${order.id}&mock=true`,
       mock: true,
       message: 'Mock 支付模式：会员已自动开通',
     });
