@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
     });
     
     // 创建或更新订阅记录
-    const duration = { monthly: 30, quarterly: 90, yearly: 365 }[plan];
+    const duration = { monthly: 30, quarterly: 90, yearly: 365 }[plan as keyof typeof planPrices];
     const now = new Date();
     const expireAt = new Date(now.getTime() + duration * 24 * 60 * 60 * 1000);
     
