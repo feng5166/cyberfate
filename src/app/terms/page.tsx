@@ -1,117 +1,114 @@
-import { Footer } from '@/components/layout/Footer';
+import { FileText } from 'lucide-react';
 import { Container } from '@/components/ui/Container';
 import { Card } from '@/components/ui/Card';
+import { Footer } from '@/components/layout/Footer';
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-3xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="font-heading text-3xl sm:text-4xl font-bold text-cyber-gold mb-2">
-            📜 服务条款
+    <div className="min-h-screen bg-[#FAF9F6] text-[#1C1A16]">
+      <Container className="py-12 md:py-16">
+        {/* 页面标题 */}
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-[#1C1A16]/5 mb-4">
+            <FileText className="w-6 h-6 text-[#1C1A16]" />
+          </div>
+          <h1 className="font-display text-3xl md:text-4xl text-[#1C1A16] tracking-[0.08em] mb-3">
+            服务条款
           </h1>
-          <p className="text-text-secondary">
+          <p className="text-sm text-[#1C1A16]/60">
             最后更新：2026年3月6日
           </p>
         </div>
 
-        <Card className="prose prose-invert prose-sm max-w-none">
-          <div className="space-y-6 text-text-secondary">
-            <section>
-              <h2 className="text-xl font-heading font-semibold text-cyber-gold mb-3">
-                一、服务说明
-              </h2>
-              <p>
-                赛博命理师（以下简称"本站"）是一个基于人工智能技术的
-                命理分析娱乐平台，提供八字分析、每日运势等服务。
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-xl font-heading font-semibold text-cyber-gold mb-3">
-                二、免责声明
-              </h2>
-              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 my-4">
-                <p className="text-red-400 font-semibold mb-2">⚠️ 重要声明</p>
-                <p>
-                  本站所有命理分析内容<strong>仅供娱乐参考</strong>，
-                  <strong>不构成任何决策建议</strong>。
-                  包括但不限于投资、婚姻、职业、健康等重大人生决策，
-                  请您结合实际情况综合考虑，理性对待。
+        {/* 内容区 */}
+        <div className="max-w-3xl mx-auto">
+          <Card className="p-6 md:p-10">
+            <div className="prose prose-gray max-w-none space-y-8 text-[#1C1A16]/80">
+              <section>
+                <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.06em] mb-4">
+                  一、服务说明
+                </h2>
+                <p className="leading-relaxed">
+                  赛博命理师（以下简称"本站"）提供基于AI技术的命理分析服务。本站提供的所有分析结果仅供参考，不构成任何决策依据或保证。用户应理性看待命理分析，并对自己的决策负责。
                 </p>
-              </div>
-              <p>
-                命理学是中华传统文化的一部分，本站以科学、理性的态度
-                呈现相关内容，不宣扬迷信，不保证预测准确性。
-              </p>
-            </section>
+              </section>
 
-            <section>
-              <h2 className="text-xl font-heading font-semibold text-cyber-gold mb-3">
-                三、用户责任
-              </h2>
-              <p>使用本站服务时，您同意：</p>
-              <ul className="list-disc list-inside space-y-1 ml-4">
-                <li>提供真实的出生信息（以获得准确的计算结果）</li>
-                <li>不将本站服务用于非法目的</li>
-                <li>不对本站进行恶意攻击或滥用</li>
-                <li>理性对待分析结果，不过度依赖</li>
-              </ul>
-            </section>
+              <section>
+                <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.06em] mb-4">
+                  二、用户行为规范
+                </h2>
+                <p className="leading-relaxed mb-3">使用本站服务时，您同意：</p>
+                <ul className="list-disc list-inside space-y-2 ml-4 text-sm">
+                  <li>不利用本站服务从事违法违规活动</li>
+                  <li>不恶意攻击或干扰本站的正常运行</li>
+                  <li>不传播虚假信息或侵犯他人权益</li>
+                  <li>不滥用服务资源（如恶意刷取次数）</li>
+                </ul>
+              </section>
 
-            <section>
-              <h2 className="text-xl font-heading font-semibold text-cyber-gold mb-3">
-                四、知识产权
-              </h2>
-              <p>
-                本站的设计、代码、内容等均受知识产权法保护。
-                未经许可，不得复制、修改、分发本站内容。
-              </p>
-            </section>
+              <section>
+                <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.06em] mb-4">
+                  三、知识产权
+                </h2>
+                <p className="leading-relaxed mb-3">
+                  本站的所有内容（包括但不限于文字、图片、代码、设计）均受知识产权法保护。未经许可，您不得：
+                </p>
+                <ul className="list-disc list-inside space-y-2 ml-4 text-sm">
+                  <li>复制、修改、传播本站的内容</li>
+                  <li>商业使用本站提供的分析结果</li>
+                  <li>逆向工程或抓取本站的算法和数据</li>
+                </ul>
+              </section>
 
-            <section>
-              <h2 className="text-xl font-heading font-semibold text-cyber-gold mb-3">
-                五、服务变更
-              </h2>
-              <p>
-                我们保留随时修改、暂停或终止服务的权利，恕不另行通知。
-                我们将尽力保持服务稳定，但不对服务中断承担责任。
-              </p>
-            </section>
+              <section>
+                <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.06em] mb-4">
+                  四、免责声明
+                </h2>
+                <p className="leading-relaxed mb-3">
+                  本站提供的服务基于算法模型和历史数据，存在一定的局限性。我们不对以下情况承担责任：
+                </p>
+                <ul className="list-disc list-inside space-y-2 ml-4 text-sm">
+                  <li>分析结果的准确性、完整性或适用性</li>
+                  <li>因使用本站服务而产生的任何直接或间接损失</li>
+                  <li>因网络故障、系统维护等导致的服务中断</li>
+                  <li>第三方服务（如支付平台）的问题</li>
+                </ul>
+              </section>
 
-            <section>
-              <h2 className="text-xl font-heading font-semibold text-cyber-gold mb-3">
-                六、责任限制
-              </h2>
-              <p>
-                在法律允许的最大范围内，本站不对因使用或无法使用本站服务
-                而导致的任何直接、间接、偶然、特殊或后果性损害承担责任。
-              </p>
-            </section>
+              <section>
+                <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.06em] mb-4">
+                  五、服务变更与终止
+                </h2>
+                <p className="leading-relaxed">
+                  本站保留随时修改、暂停或终止服务的权利，无需事先通知。对于付费用户，我们会根据退款政策处理相关事宜。
+                </p>
+              </section>
 
-            <section>
-              <h2 className="text-xl font-heading font-semibold text-cyber-gold mb-3">
-                七、条款修改
-              </h2>
-              <p>
-                我们可能会不时修改本服务条款。修改后的条款将在本页面发布，
-                继续使用本站服务即表示您接受修改后的条款。
-              </p>
-            </section>
+              <section>
+                <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.06em] mb-4">
+                  六、争议解决
+                </h2>
+                <p className="leading-relaxed">
+                  因使用本站服务产生的争议，双方应友好协商解决。协商不成的，任何一方均可向本站所在地人民法院提起诉讼。
+                </p>
+              </section>
 
-            <section>
-              <h2 className="text-xl font-heading font-semibold text-cyber-gold mb-3">
-                八、适用法律
-              </h2>
-              <p>
-                本服务条款受中华人民共和国法律管辖。
-                如发生争议，双方应友好协商解决。
-              </p>
-            </section>
-          </div>
-        </Card>
-      </div>
-          <Footer />
-</div>
+              <section>
+                <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.06em] mb-4">
+                  七、联系我们
+                </h2>
+                <p className="leading-relaxed">
+                  如果您对本服务条款有任何疑问，请通过以下方式联系我们：
+                </p>
+                <p className="text-sm mt-2">
+                  邮箱：support@cyberfate.me
+                </p>
+              </section>
+            </div>
+          </Card>
+        </div>
+      </Container>
+      <Footer />
+    </div>
   );
 }
