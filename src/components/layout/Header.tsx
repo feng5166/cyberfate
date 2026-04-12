@@ -82,7 +82,6 @@ export function Header() {
   }, [mobileOpen]);
 
   return (
-    <>
     <header
       className={`border-b border-[#1C1A16]/10 ${
         isHomePage ? 'bg-[rgba(255,255,255,0.95)]' : 'bg-[rgba(255,255,255,0.9)]'
@@ -95,7 +94,7 @@ export function Header() {
             {/* 移动端汉堡菜单 - 任务1: 扩大触摸热区到 44×44px */}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="lg:hidden min-w-[44px] min-h-[44px] p-3 -ml-2 text-brand-gray hover:text-[#1C1A16] transition-transform duration-200 active:scale-95"
+              className="lg:hidden min-w-[44px] min-h-[44px] p-3 -ml-2 text-brand-gray hover:text-[#1C1A16] transition-transform duration-200 active:scale-95 relative z-[10000]"
               aria-label="菜单"
               aria-expanded={mobileOpen}
             >
@@ -214,10 +213,9 @@ export function Header() {
           </div>
         </div>
       </nav>
-    </header>
 
-    {/* 移动端遮罩层 - S-task4: 添加遮罩层动画 - 放在 header 外部 */}
-    {mobileOpen && (
+      {/* 移动端遮罩层 - S-task4: 添加遮罩层动画 */}
+      {mobileOpen && (
       <div 
         className="fixed inset-0 bg-black/40 z-40 lg:hidden transition-opacity duration-200 animate-fadeIn"
         onClick={() => setMobileOpen(false)}
@@ -320,7 +318,6 @@ export function Header() {
           </div>
         </div>
       )}
-
-    </>
+    </header>
   );
 }
