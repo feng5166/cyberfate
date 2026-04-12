@@ -529,6 +529,11 @@ function BaziPageContent() {
         points: buildPoints(`${aiSections.relationship}\n${aiSections.health}`, '关注沟通质量与作息管理，减少内耗'),
         detail: `${aiSections.relationship || '暂无婚姻关系解读。'}\n\n${aiSections.health || '暂无健康解读。'}`,
       },
+      十神详解: {
+        scores: [],
+        points: [],
+        detail: '十神详解通过独立组件渲染，不使用通用模板。',
+      },
       大运流年: {
         scores: dimensions
           ? [
