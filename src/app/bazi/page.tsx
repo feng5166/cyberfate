@@ -883,9 +883,10 @@ function BaziPageContent() {
                     )}
 
                     {activeTab !== '十神详解' && (
-                      <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-5">
-                        <p className="text-sm font-medium text-[#1C1A16] mb-3">评分概览</p>
-                      {activeTabContent.scores.length > 0 ? (
+                      <>
+                        <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-5">
+                          <p className="text-sm font-medium text-[#1C1A16] mb-3">评分概览</p>
+                        {activeTabContent.scores.length > 0 ? (
                         <div className="space-y-3">
                           {activeTabContent.scores.map((score) => {
                             const style = getScoreStyle(score.value);
@@ -902,47 +903,48 @@ function BaziPageContent() {
                             );
                           })}
                         </div>
-                      ) : (
-                        <p className="text-sm text-[#6B7280]">当前数据暂无可量化分数。</p>
-                      )}
-                    </div>
-
-                    <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-5">
-                      <p className="text-sm font-medium text-[#1C1A16] mb-3">AI 要点</p>
-                      <ul className="space-y-2">
-                        {activeTabContent.points.map((point, index) => (
-                          <li key={`${point}_${index}`} className="text-sm text-[#1C1A16]/85 leading-relaxed">
-                            {point}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-5">
-                      <button
-                        type="button"
-                        className="w-full flex items-center justify-between text-left"
-                        onClick={() =>
-                          setTabExpanded(prev => ({
-                            ...prev,
-                            [activeTab]: !prev[activeTab],
-                          }))
-                        }
-                      >
-                        <span className="text-sm font-medium text-[#1C1A16]">详细解读</span>
-                        {tabExpanded[activeTab] ? (
-                          <ChevronUp className="w-4 h-4 text-[#6B7280]" />
                         ) : (
-                          <ChevronDown className="w-4 h-4 text-[#6B7280]" />
+                          <p className="text-sm text-[#6B7280]">当前数据暂无可量化分数。</p>
                         )}
-                      </button>
+                      </div>
 
-                      {tabExpanded[activeTab] && (
-                        <p className="mt-3 text-sm leading-relaxed text-[#1C1A16]/80 whitespace-pre-wrap">
-                          {activeTabContent.detail}
-                        </p>
-                      )}
-                    </div>
+                      <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-5">
+                        <p className="text-sm font-medium text-[#1C1A16] mb-3">AI 要点</p>
+                        <ul className="space-y-2">
+                          {activeTabContent.points.map((point, index) => (
+                            <li key={`${point}_${index}`} className="text-sm text-[#1C1A16]/85 leading-relaxed">
+                              {point}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-5">
+                        <button
+                          type="button"
+                          className="w-full flex items-center justify-between text-left"
+                          onClick={() =>
+                            setTabExpanded(prev => ({
+                              ...prev,
+                              [activeTab]: !prev[activeTab],
+                            }))
+                          }
+                        >
+                          <span className="text-sm font-medium text-[#1C1A16]">详细解读</span>
+                          {tabExpanded[activeTab] ? (
+                            <ChevronUp className="w-4 h-4 text-[#6B7280]" />
+                          ) : (
+                            <ChevronDown className="w-4 h-4 text-[#6B7280]" />
+                          )}
+                        </button>
+
+                        {tabExpanded[activeTab] && (
+                          <p className="mt-3 text-sm leading-relaxed text-[#1C1A16]/80 whitespace-pre-wrap">
+                            {activeTabContent.detail}
+                          </p>
+                        )}
+                      </div>
+                      </>
                     )}
                   </div>
                 </Card>
