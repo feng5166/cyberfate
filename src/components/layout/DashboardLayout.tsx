@@ -48,13 +48,11 @@ export function DashboardLayout({
         />
       )}
       <main
+        className="bg-brand-bg transition-all duration-300 ease lg:ml-[var(--sidebar-width)] lg:w-[calc(100%-var(--sidebar-width))]"
         style={{
-          marginLeft: resolvedShowSidebar ? sidebarWidth : 0,
-          transition: 'margin-left 0.3s ease',
+          '--sidebar-width': resolvedShowSidebar ? `${sidebarWidth}px` : '0px',
           minHeight: 'calc(100vh - 64px)',
-          width: resolvedShowSidebar ? `calc(100% - ${sidebarWidth}px)` : '100%',
-        }}
-        className="bg-brand-bg"
+        } as React.CSSProperties}
       >
         {children}
       </main>
