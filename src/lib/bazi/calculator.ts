@@ -1,5 +1,5 @@
 import { Solar } from 'lunar-javascript';
-import type { BaziInput, BaziResult, BaziChart, Pillar, WuxingCount, WuXing, TianGan, DiZhi, ShiChen, Gender, DayunResult } from './types';
+import type { BaziInput, BaziResult, BaziChart, Pillar, WuxingCount, WuXing, TianGan, DiZhi, ShiChen, Gender, DayunResult, DayunTimelineItem } from './types';
 import { TIANGAN_WUXING, DIZHI_WUXING, SHICHEN_DIZHI, WUXING_KEYS, TIANGAN_LIST, DIZHI_LIST } from './constants';
 
 const YANG_GAN_SET = new Set<TianGan>(['甲', '丙', '戊', '庚', '壬']);
@@ -246,19 +246,6 @@ export function getLunarDate(date: string): string {
 
   const yearGanZhi = `${eightChar.getYearGan()}${eightChar.getYearZhi()}`;
   return `${yearGanZhi}年${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}`;
-}
-
-/**
- * 大运时间轴项
- */
-export interface DayunTimelineItem {
-  index: number;           // 第几步大运（0-based）
-  gan: TianGan;
-  zhi: DiZhi;
-  wuxing: WuXing;
-  ageStart: number;        // 起始年龄
-  ageEnd: number;          // 结束年龄
-  isCurrent: boolean;      // 是否当前大运
 }
 
 /**
