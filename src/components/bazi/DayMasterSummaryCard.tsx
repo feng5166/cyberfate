@@ -1,10 +1,28 @@
 'use client';
 
+import type { WuXing } from '@/lib/bazi/types';
+
+const WUXING_DOT_COLORS: Record<WuXing, string> = {
+  '金': '#F59E0B',
+  '木': '#22C55E',
+  '水': '#3B82F6',
+  '火': '#EF4444',
+  '土': '#EAB308',
+};
+
+interface MingGeDisplayInfo {
+  geju: string;
+  rizhuStrength: '偏强' | '中和' | '偏弱';
+  yongShen: WuXing;
+  jiShen: WuXing;
+}
+
 interface DayMasterSummaryCardProps {
   dayMaster: string;
   personality: string;
   favorableGods: string[];
   avoidGods: string[];
+  mingGe?: MingGeDisplayInfo;
 }
 
 function renderFallback(values: string[]): string {
@@ -12,11 +30,23 @@ function renderFallback(values: string[]): string {
   return filtered.length ? filtered.join('、') : '—';
 }
 
+function WuxingDot({ wuxing }: { wuxing: WuXing }) {
+  const color = WUXING_DOT_COLORS[wuxing] || '#6B7280';
+  return (
+    <span
+      className="inline-block w-2.5 h-2.5 rounded-full mr-1 align-middle"
+      style={{ backgroundColor: color }}
+      aria-label={`${wuxing}行`}
+    />
+  );
+}
+
 export function DayMasterSummaryCard({
   dayMaster,
   personality,
   favorableGods,
   avoidGods,
+  mingGe,
 }: DayMasterSummaryCardProps) {
   return (
     <section className="rounded-2xl bg-gradient-to-r from-[#FFF7EA] via-[#FFFCF5] to-[#FDF4E6] p-5 md:p-6">
@@ -27,6 +57,7 @@ export function DayMasterSummaryCard({
         <p className="mt-2 text-sm leading-relaxed text-[#1C1A16]/82">
           {personality || '命理画像生成中，请稍后重试。'}
         </p>
+
         <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
           <span className="text-[#1C1A16]/70">喜用神：</span>
           <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">
@@ -37,6 +68,36 @@ export function DayMasterSummaryCard({
             {renderFallback(avoidGods)}
           </span>
         </div>
+
+        {mingGe && (
+          <div className="mt-3 pt-3 border-t border-[#1C1A16]/8">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+              <span className="text-[#1C1A16]/60">命格：</span>
+              <span className="font-semibold text-[#1C1A16]">{mingGe.geju}</span>
+
+              <span className="hidden sm:inline text-[#1C1A16]/20">|</span>
+
+              <span className="text-[#1C1A16]/60">日主：</span>
+              <span className="font-medium text-[#1C1A16]">{mingGe.rizhuStrength}</span>
+
+              <span className="hidden sm:inline text-[#1C1A16]/20">|</span>
+
+              <span className="text-[#1C1A16]/60">用神：</span>
+              <span className="inline-flex items-center font-medium text-[#1C1A16]">
+                <WuxingDot wuxing={mingGe.yongShen} />
+                {mingGe.yongShen}
+              </span>
+
+              <span className="hidden sm:inline text-[#1C1A16]/20">|</span>
+
+              <span className="text-[#1C1A16]/60">忌神：</span>
+              <span className="inline-flex items-center font-medium text-[#1C1A16]">
+                <WuxingDot wuxing={mingGe.jiShen} />
+                {mingGe.jiShen}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );

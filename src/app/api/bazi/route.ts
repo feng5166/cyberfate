@@ -2,10 +2,10 @@ import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { calculateBazi, WUXING_KEYS } from '@/lib/bazi';
+import { calculateBazi, WUXING_KEYS, analyzeMingGe } from '@/lib/bazi';
 import { generateBaziAnalysis } from '@/lib/ai';
 import { useBaziQuota } from '@/lib/quota';
-import type { BaziAnalysis, FiveDimensions, PillarRecord, WuxingCount } from '@/lib/bazi/types';
+import type { BaziAnalysis, FiveDimensions, MingGeInfo, PillarRecord, WuxingCount } from '@/lib/bazi/types';
 
 // 时辰映射：数字 -> 时辰名称（不含 -1，单独处理）
 const HOUR_TO_SHICHEN: Record<number, string> = {
@@ -117,12 +117,20 @@ export async function POST(req: NextRequest) {
 
     const fiveDimensions = calculateFiveDimensions(pillars, baziResult.wuxing);
 
-    // 转换为前端期望的格式
+    const mingGeResult = analyzeMingGe(baziResult.chart);
+    const mingGe: MingGeInfo = {
+      geju: mingGeResult.geju,
+      rizhuStrength: mingGeResult.rizhuStrength,
+      yongShen: mingGeResult.yongShen,
+      jiShen: mingGeResult.jiShen,
+    };
+
     return Response.json({
       pillars,
       wuxing: baziResult.wuxing,
       aiAnalysis,
       fiveDimensions,
+      mingGe,
       birthPlace: input.birthPlace,
       _source: _aiSource,
     });

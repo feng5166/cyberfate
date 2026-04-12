@@ -48,6 +48,7 @@ import type {
   BaziApiResult,
   BaziHistoryRecord,
   Gender,
+  MingGeInfo,
   WuxingCount,
   WuXing,
 } from '@/lib/bazi/types';
@@ -872,6 +873,7 @@ function BaziPageContent() {
                     personality={dayMasterInsight.personality}
                     favorableGods={dayMasterInsight.favorableGods}
                     avoidGods={dayMasterInsight.avoidGods}
+                    mingGe={result.mingGe}
                   />
                 </Card>
 

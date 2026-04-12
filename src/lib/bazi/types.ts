@@ -87,11 +87,19 @@ export interface BaziAnalysis {
   health: string;
 }
 
+export interface MingGeInfo {
+  geju: string;
+  rizhuStrength: '偏强' | '中和' | '偏弱';
+  yongShen: WuXing;
+  jiShen: WuXing;
+}
+
 export interface BaziApiResult {
   pillars: PillarRecord;
   wuxing: WuxingCount;
   aiAnalysis: string;
   fiveDimensions?: FiveDimensions;
+  mingGe?: MingGeInfo;
   birthPlace?: string;
   _source?: string;
 }
