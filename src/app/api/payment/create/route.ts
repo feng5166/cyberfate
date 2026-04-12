@@ -5,9 +5,9 @@ import { prisma } from '@/lib/db';
 import { getStripe, STRIPE_PLANS } from '@/lib/stripe';
 
 const planPrices = {
-  monthly: 500,    // 5元/月
-  quarterly: 500,  // 5元/季
-  yearly: 500,     // 5元/年
+  monthly: 2900,    // 29元/月
+  quarterly: 6800,  // 68元/季
+  yearly: 23800,    // 238元/年
 };
 
 export async function POST(req: NextRequest) {
@@ -45,81 +45,49 @@ export async function POST(req: NextRequest) {
   });
 
   if (payMethod === 'stripe') {
-    const stripe = getStripe();
-    if (!stripe) {
-      return NextResponse.json({ error: 'Stripe 未配置' }, { status: 500 });
-    }
-
-    const stripePlan = STRIPE_PLANS[plan as keyof typeof STRIPE_PLANS];
+    // MVP Mock 支付模式：跳过真实支付，直接模拟成功
+    console.log('[Payment] Mock 支付模式 - 订单:', {
+      orderId: order.id,
+      plan,
+      amount,
+      user: user.email,
+    });
     
-    try {
-      // 动态创建 Checkout Session（使用实际价格）
-      console.log('[Stripe] 创建支付会话:', {
+    // 模拟支付成功，更新订单状态为 paid
+    await prisma.order.update({
+      where: { id: order.id },
+      data: { status: 'paid' },
+    });
+    
+    // 创建或更新订阅记录
+    const duration = { monthly: 30, quarterly: 90, yearly: 365 }[plan];
+    const now = new Date();
+    const expireAt = new Date(now.getTime() + duration * 24 * 60 * 60 * 1000);
+    
+    await prisma.subscription.upsert({
+      where: { userId: user.id },
+      update: {
         plan,
-        amount,
-        currency: 'cny',
-        orderId: order.id,
-      });
-
-      const checkoutSession = await stripe.checkout.sessions.create({
-        payment_method_types: ['card'],
-        line_items: [
-          {
-            price_data: {
-              currency: 'hkd',
-              product_data: {
-                name: stripePlan.name,
-                description: `有效期 ${stripePlan.duration} 天`,
-              },
-              unit_amount: amount, // 使用 planPrices 的实际价格（分）
-            },
-            quantity: 1,
-          },
-        ],
-        mode: 'payment',
-        success_url: `${process.env.NEXTAUTH_URL}/payment/success?order_id=${order.id}`,
-        cancel_url: `${process.env.NEXTAUTH_URL}/payment/cancel`,
-        client_reference_id: order.id,
-        customer_email: session.user.email,
-        metadata: {
-          orderId: order.id,
-          userId: user.id,
-          plan,
-        },
-      });
-
-      console.log('[Stripe] 支付会话创建成功:', checkoutSession.id);
-
-      return NextResponse.json({
-        orderId: order.id,
-        checkoutUrl: checkoutSession.url,
-      });
-    } catch (error: any) {
-      console.error('[Stripe] 创建 Checkout Session 失败:', {
-        message: error.message,
-        type: error.type,
-        code: error.code,
-        param: error.param,
-        statusCode: error.statusCode,
-        raw: error.raw,
-      });
-      
-      // 提供用户友好的错误信息
-      let userMessage = 'Stripe 支付暂时不可用';
-      if (error.code === 'api_key_invalid') {
-        userMessage = 'Stripe 配置错误，请联系管理员';
-      } else if (error.code === 'currency_not_supported') {
-        userMessage = 'Stripe 不支持该币种';
-      } else if (error.message) {
-        userMessage = `Stripe 错误: ${error.message}`;
-      }
-      
-      return NextResponse.json({ 
-        error: userMessage,
-        details: error.message,
-        code: error.code,
-      }, { status: 500 });
-    }
+        status: 'active',
+        expireAt,
+      },
+      create: {
+        userId: user.id,
+        plan,
+        status: 'active',
+        expireAt,
+      },
+    });
+    
+    console.log('[Payment] Mock 支付完成 - 会员已开通至:', expireAt);
+    
+    // 直接返回成功页面
+    return NextResponse.json({
+      orderId: order.id,
+      checkoutUrl: `${process.env.NEXTAUTH_URL}/payment/success?order_id=${order.id}&mock=true`,
+      mock: true,
+      message: 'Mock 支付模式：会员已自动开通',
+    });
   }
 
   // MVP: 返回模拟二维码
