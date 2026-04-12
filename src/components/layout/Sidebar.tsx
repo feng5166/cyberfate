@@ -30,8 +30,6 @@ import { SidebarGroup } from './SidebarGroup';
 interface SidebarProps {
   collapsed?: boolean;
   onCollapseToggle?: (nextCollapsed: boolean) => void;
-  mobileOpen?: boolean;
-  onMobileClose?: () => void;
 }
 
 interface MenuItemConfig {
@@ -95,8 +93,6 @@ const normalizePath = (path?: string) => {
 export function Sidebar({
   collapsed: collapsedProp,
   onCollapseToggle,
-  mobileOpen = false,
-  onMobileClose,
 }: SidebarProps = {}) {
   const pathname = usePathname();
   const normalizedPath = useMemo(() => normalizePath(pathname), [pathname]);
@@ -156,7 +152,6 @@ export function Sidebar({
             <Link
               href="/settings"
               className="inline-flex items-center gap-1.5 text-xs text-[#9CA3AF] transition-colors hover:text-brand-black"
-              onClick={onMobileClose}
             >
               <Settings className="h-3.5 w-3.5" />
               <span>设置</span>
@@ -181,7 +176,6 @@ export function Sidebar({
         <Link
           href="/"
           className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-start gap-2'}`}
-          onClick={onMobileClose}
         >
           <img src="/favicon.svg" alt="" className="w-7 h-7 shrink-0" />
           {!isCollapsed && (
@@ -233,7 +227,6 @@ export function Sidebar({
                 href={item.href}
                 collapsed={isCollapsed}
                 active={normalizedPath === normalizePath(item.href)}
-                onSelect={onMobileClose}
               />
             ))}
           </SidebarGroup>
@@ -251,20 +244,6 @@ export function Sidebar({
   );
 
   return (
-    <>
-      <aside className={desktopAsideClasses}>{SidebarContent(collapsed)}</aside>
-
-      {mobileOpen && (
-        <>
-          <div
-            className="fixed inset-0 z-40 bg-black/40 lg:hidden"
-            onClick={onMobileClose}
-          />
-          <aside className="fixed left-0 top-16 bottom-0 z-50 w-[260px] border-r border-brand-border-light bg-white shadow-xl lg:hidden">
-            {SidebarContent(false)}
-          </aside>
-        </>
-      )}
-    </>
+    <aside className={desktopAsideClasses}>{SidebarContent(collapsed)}</aside>
   );
 }

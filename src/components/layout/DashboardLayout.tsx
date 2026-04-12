@@ -9,8 +9,6 @@ interface DashboardLayoutProps {
   children: ReactNode;
   collapsed?: boolean;
   onCollapseToggle?: (next: boolean) => void;
-  mobileOpen?: boolean;
-  onMobileClose?: () => void;
   showSidebar?: boolean;
 }
 
@@ -18,8 +16,6 @@ export function DashboardLayout({
   children,
   collapsed: collapsedProp,
   onCollapseToggle,
-  mobileOpen = false,
-  onMobileClose,
   showSidebar,
 }: DashboardLayoutProps) {
   const { data: session } = useSession();
@@ -49,8 +45,6 @@ export function DashboardLayout({
         <Sidebar
           collapsed={collapsed}
           onCollapseToggle={handleCollapseToggle}
-          mobileOpen={mobileOpen}
-          onMobileClose={onMobileClose}
         />
       )}
       <main

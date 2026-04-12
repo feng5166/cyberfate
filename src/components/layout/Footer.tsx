@@ -50,12 +50,12 @@ export function Footer() {
               <h3 className="text-sm font-semibold text-[#1C1A16] tracking-wide uppercase">
                 {group.title}
               </h3>
-              <ul className="mt-4 space-y-2">
+              <ul className="mt-4 space-y-1">
                 {group.links.map((link) => (
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-[14px] text-brand-gray hover:text-[#1C1A16] transition-colors"
+                      className="block py-2 px-1 text-[14px] text-brand-gray hover:text-[#1C1A16] transition-colors min-h-[44px] flex items-center"
                     >
                       {link.label}
                     </Link>
