@@ -103,6 +103,15 @@ const shichenOptions = [
 
 const resultTabs: ResultTab[] = ['性格特质', '事业财运', '婚姻健康', '十神详解', '大运流年'];
 
+// 移动端简短标签映射
+const mobileTabLabels: Record<ResultTab, string> = {
+  '性格特质': '性格',
+  '事业财运': '事业',
+  '婚姻健康': '婚姻',
+  '十神详解': '十神',
+  '大运流年': '大运',
+};
+
 const aiSectionTitleMap: Record<AiSectionKey, string[]> = {
   dayMaster: ['日主分析'],
   personality: ['性格特点', '性格特质'],
@@ -843,11 +852,14 @@ function BaziPageContent() {
                 <Card className={cardClass}>
                   <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em] mb-5">AI 解读</h2>
                   <SegmentControl
-                    options={resultTabs.map(tab => ({ value: tab, label: tab }))}
+                    options={resultTabs.map(tab => ({ 
+                      value: tab, 
+                      label: tab 
+                    }))}
                     value={activeTab}
                     onChange={(value) => setActiveTab(value as ResultTab)}
                     className="w-full h-11 border border-[#1C1A16]/15"
-                    optionClassName="text-[13px]"
+                    optionClassName="text-[11px] md:text-[13px]"
                   />
 
                   <div className="mt-5 space-y-5">

@@ -41,7 +41,7 @@ export function SegmentControl({
           type="button"
           onClick={() => handleChange(opt.value)}
           className={cn(
-            "flex-1 px-6 py-2.5 text-sm transition-all duration-200 cursor-pointer text-center",
+            "flex-1 px-2 md:px-6 py-2.5 text-xs md:text-sm transition-all duration-200 cursor-pointer text-center",
             selectedValue === opt.value
               ? "bg-[#1C1A16] text-white"
               : "bg-white text-[#1C1A16]/70 hover:bg-[#FAF9F6]",
