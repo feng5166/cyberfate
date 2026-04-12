@@ -62,11 +62,11 @@ export async function POST(req: NextRequest) {
       });
 
       const checkoutSession = await stripe.checkout.sessions.create({
-        payment_method_types: ['card', 'wechat_pay', 'alipay'],
+        payment_method_types: ['card'],
         line_items: [
           {
             price_data: {
-              currency: 'cny',
+              currency: 'hkd',
               product_data: {
                 name: stripePlan.name,
                 description: `有效期 ${stripePlan.duration} 天`,
