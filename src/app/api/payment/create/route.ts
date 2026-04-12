@@ -64,20 +64,32 @@ export async function POST(req: NextRequest) {
     const now = new Date();
     const expireAt = new Date(now.getTime() + duration * 24 * 60 * 60 * 1000);
     
-    await prisma.subscription.upsert({
+    // 查找现有订阅
+    const existingSub = await prisma.subscription.findFirst({
       where: { userId: user.id },
-      update: {
-        plan,
-        status: 'active',
-        expireAt,
-      },
-      create: {
-        userId: user.id,
-        plan,
-        status: 'active',
-        expireAt,
-      },
     });
+    
+    if (existingSub) {
+      // 更新现有订阅
+      await prisma.subscription.update({
+        where: { id: existingSub.id },
+        data: {
+          plan,
+          status: 'active',
+          expireAt,
+        },
+      });
+    } else {
+      // 创建新订阅
+      await prisma.subscription.create({
+        data: {
+          userId: user.id,
+          plan,
+          status: 'active',
+          expireAt,
+        },
+      });
+    }
     
     console.log('[Payment] Mock 支付完成 - 会员已开通至:', expireAt);
     
