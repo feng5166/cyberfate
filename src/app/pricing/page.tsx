@@ -57,7 +57,7 @@ export default function PricingPage() {
 
       {/* 三列定价卡片 */}
       <section className="px-4 pb-20 md:pb-28">
-        <div className="flex flex-col lg:flex-row gap-6 max-w-[1000px] mx-auto">
+        <div className="flex flex-col lg:flex-row gap-5 lg:gap-6 max-w-[1000px] mx-auto">
           {plans.map((plan) => (
             <div key={plan.name} className={`flex-1 ${plan.recommended ? 'relative' : ''}`}>
               {plan.recommended && (
@@ -68,7 +68,7 @@ export default function PricingPage() {
                 </div>
               )}
               <div
-                className={`h-full flex flex-col p-9 bg-white rounded-2xl transition-all duration-300 ${
+                className={`h-full flex flex-col p-5 md:p-9 bg-white rounded-2xl transition-all duration-300 ${
                   plan.recommended
                     ? 'shadow-md ring-2 ring-[#1C1A16] lg:scale-[1.03] lg:-translate-y-2'
                     : 'shadow-sm hover:shadow-md hover:-translate-y-1'

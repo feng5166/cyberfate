@@ -708,7 +708,7 @@ function BaziPageContent() {
 
   return (
     <div className="min-h-screen bg-[#FAF9F6]">
-      <div className="text-center pt-10 md:pt-12 pb-8">
+      <div className="text-center pt-6 md:pt-12 pb-8">
         <h1 className="font-display text-h1 md:text-[44px] text-[#1C1A16]" style={{ letterSpacing: '10px' }}>
           八字分析
         </h1>
@@ -717,7 +717,7 @@ function BaziPageContent() {
 
       <Container>
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 pb-20 md:pb-26">
-          <div className="bazi-input-card flex-shrink-0 w-full lg:w-auto lg:max-w-[440px] rounded-2xl bg-white shadow-none px-6 py-8 sm:px-8 border border-[#1C1A16]/8">
+          <div className="bazi-input-card flex-shrink-0 w-full lg:w-auto lg:max-w-[440px] rounded-2xl bg-white shadow-none px-6 py-6 sm:px-8 sm:py-8 border border-[#1C1A16]/8">
             <form onSubmit={handleSubmit} className="space-y-4">
               <h2 className="font-display text-lg text-[#1C1A16]">📋 出生信息</h2>
 
