@@ -326,11 +326,11 @@ function BaziPageContent() {
   const [showQuotaModal, setShowQuotaModal] = useState(false);
   const [activeTab, setActiveTab] = useState<ResultTab>('性格特质');
   const [tabExpanded, setTabExpanded] = useState<Record<ResultTab, boolean>>({
-    性格特质: false,
-    事业财运: false,
-    婚姻健康: false,
-    十神详解: false,
-    大运流年: false,
+    性格特质: true,
+    事业财运: true,
+    婚姻健康: true,
+    十神详解: true,
+    大运流年: true,
   });
   const [expandedFaqIndex, setExpandedFaqIndex] = useState<number | null>(0);
   const [selectedDayunIndex, setSelectedDayunIndex] = useState(2);

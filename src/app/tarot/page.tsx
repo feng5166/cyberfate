@@ -130,7 +130,7 @@ export default function TarotPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<TarotDrawResult | null>(null);
-  const [detailedExpanded, setDetailedExpanded] = useState(false);
+  const [detailedExpanded, setDetailedExpanded] = useState(true);
   const [flippedCards, setFlippedCards] = useState<boolean[]>([]);
   const [showReading, setShowReading] = useState(false);
   const [useLegacyDrawAnimation] = useState(false);
