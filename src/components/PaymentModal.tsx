@@ -43,7 +43,11 @@ export function PaymentModal({ planName, price, onClose }: PaymentModalProps) {
       const data = await res.json();
       
       if (!res.ok) {
-        setError(data.error || `创建订单失败 (${res.status})`);
+        const errorMsg = data.details 
+          ? `${data.error}\n详情: ${data.details}` 
+          : data.error || `创建订单失败 (${res.status})`;
+        setError(errorMsg);
+        console.error('Payment creation failed:', data);
         return;
       }
       

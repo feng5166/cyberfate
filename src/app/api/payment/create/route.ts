@@ -100,10 +100,24 @@ export async function POST(req: NextRequest) {
         type: error.type,
         code: error.code,
         param: error.param,
+        statusCode: error.statusCode,
+        raw: error.raw,
       });
+      
+      // 提供用户友好的错误信息
+      let userMessage = 'Stripe 支付暂时不可用';
+      if (error.code === 'api_key_invalid') {
+        userMessage = 'Stripe 配置错误，请联系管理员';
+      } else if (error.code === 'currency_not_supported') {
+        userMessage = 'Stripe 不支持该币种';
+      } else if (error.message) {
+        userMessage = `Stripe 错误: ${error.message}`;
+      }
+      
       return NextResponse.json({ 
-        error: 'Stripe 支付创建失败', 
-        details: error.message 
+        error: userMessage,
+        details: error.message,
+        code: error.code,
       }, { status: 500 });
     }
   }
