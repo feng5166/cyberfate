@@ -424,7 +424,7 @@ export default function TarotPage() {
         </section>
 
         <section className="mx-auto max-w-5xl space-y-4 animate-fadeIn">
-          <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-4 md:p-6">
+          <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-3 md:p-6">
             <h2 className="font-display text-lg tracking-[0.08em] text-[#1C1A16]">模式选择</h2>
             <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
               {MODES.map((item) => {
@@ -458,7 +458,7 @@ export default function TarotPage() {
           </div>
 
           {step === 'question' && (
-            <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-4 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
+            <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-3 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
               <label className="mb-2 block text-sm text-[#1C1A16]/75">你的问题</label>
               <div className="relative">
                 <textarea
@@ -500,7 +500,7 @@ export default function TarotPage() {
           )}
 
           {step === 'loading' && (
-            <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-8 text-center transition-shadow duration-300 hover:shadow-card-hover md:p-10">
+            <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 text-center transition-shadow duration-300 hover:shadow-card-hover md:p-10">
               {useLegacyDrawAnimation ? (
                 <CardDrawAnimation cardCount={3} onComplete={() => undefined} />
               ) : (
@@ -531,7 +531,7 @@ export default function TarotPage() {
 
           {step === 'result' && result && (
             <div className="space-y-4">
-              <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-4 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
+              <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-3 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
                 <h3 className="font-display text-2xl tracking-[0.08em] text-[#1C1A16]">{spreadTitle}</h3>
                 <div className="mt-4">
                   {renderCards()}
@@ -541,7 +541,7 @@ export default function TarotPage() {
 
               {showReading && (
                 <>
-                  <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-4 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
+                  <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-3 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
                     <h3 className="font-display text-xl tracking-[0.08em] text-[#1C1A16]">牌面含义</h3>
                     <div className="mt-3 space-y-3">
                       {result.cards.map((card, index) => (
@@ -567,12 +567,12 @@ export default function TarotPage() {
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-4 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
+                  <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-3 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
                     <h3 className="font-display text-xl tracking-[0.08em] text-[#1C1A16]">综合解读</h3>
                     <p className="mt-3 text-sm leading-relaxed text-[#1C1A16]/80">{result.overallNarrative}</p>
                   </div>
 
-                  <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-4 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
+                  <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-3 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
                     <button
                       type="button"
                       onClick={() => setDetailedExpanded((prev) => !prev)}
@@ -589,7 +589,7 @@ export default function TarotPage() {
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-4 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
+                  <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-3 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
                     <h3 className="font-display text-xl tracking-[0.06em] text-[#1C1A16]">💡 塔罗的建议</h3>
                     <p className="mt-3 text-sm leading-relaxed text-[#1C1A16]/80">{result.advice}</p>
                     <p className="mt-3 rounded bg-amber-50 px-2 py-1 text-sm text-amber-700">⚠ {result.caution}</p>
