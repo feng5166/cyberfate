@@ -26,6 +26,7 @@ import {
   BasicInfoCard,
   BaziChart,
   DayMasterSummaryCard,
+  ShishenDetailTab,
   WuxingChart,
   WuxingDonutChart,
 } from '@/components/bazi';
@@ -55,7 +56,7 @@ import type {
   WuXing,
 } from '@/lib/bazi/types';
 
-type ResultTab = '性格特质' | '事业财运' | '婚姻健康' | '大运流年';
+type ResultTab = '性格特质' | '事业财运' | '婚姻健康' | '十神详解' | '大运流年';
 type AiSectionKey = 'dayMaster' | 'personality' | 'career' | 'wealth' | 'relationship' | 'health' | 'dayun';
 
 type TagVariant = 'metal' | 'wood' | 'water' | 'fire' | 'earth';
@@ -99,7 +100,7 @@ const shichenOptions = [
   { value: '-1', label: '不知道（默认午时）' },
 ];
 
-const resultTabs: ResultTab[] = ['性格特质', '事业财运', '婚姻健康', '大运流年'];
+const resultTabs: ResultTab[] = ['性格特质', '事业财运', '婚姻健康', '十神详解', '大运流年'];
 
 const aiSectionTitleMap: Record<AiSectionKey, string[]> = {
   dayMaster: ['日主分析'],
@@ -318,6 +319,7 @@ function BaziPageContent() {
     性格特质: false,
     事业财运: false,
     婚姻健康: false,
+    十神详解: false,
     大运流年: false,
   });
   const [expandedFaqIndex, setExpandedFaqIndex] = useState<number | null>(0);
@@ -841,6 +843,12 @@ function BaziPageContent() {
                   />
 
                   <div className="mt-5 space-y-5">
+                    {activeTab === '十神详解' && (
+                      <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-5">
+                        <ShishenDetailTab pillars={result.pillars} dayGan={result.pillars.day.gan} />
+                      </div>
+                    )}
+
                     {activeTab === '大运流年' && (
                       <div className="rounded-2xl border border-[#1C1A16]/10 bg-[#FAF9F6] p-4 sm:p-5">
                         <p className="text-sm font-medium text-[#1C1A16] mb-3">大运时间轴</p>
@@ -873,8 +881,9 @@ function BaziPageContent() {
                       </div>
                     )}
 
-                    <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-5">
-                      <p className="text-sm font-medium text-[#1C1A16] mb-3">评分概览</p>
+                    {activeTab !== '十神详解' && (
+                      <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-5">
+                        <p className="text-sm font-medium text-[#1C1A16] mb-3">评分概览</p>
                       {activeTabContent.scores.length > 0 ? (
                         <div className="space-y-3">
                           {activeTabContent.scores.map((score) => {
@@ -933,6 +942,7 @@ function BaziPageContent() {
                         </p>
                       )}
                     </div>
+                    )}
                   </div>
                 </Card>
 
