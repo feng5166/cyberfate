@@ -12,7 +12,7 @@ interface PalaceMobileListProps {
 
 export function PalaceMobileList({ palaces, selectedIndex, onSelect }: PalaceMobileListProps) {
   return (
-    <div className="flex flex-col gap-4" role="list" aria-label="紫微斗数十二宫命盘">
+    <div className="flex flex-col gap-3" role="list" aria-label="紫微斗数十二宫命盘">
       {palaces.map((palace, index) => {
         const isSelected = selectedIndex === index;
 
@@ -26,7 +26,7 @@ export function PalaceMobileList({ palaces, selectedIndex, onSelect }: PalaceMob
             aria-label={`${palace.name} - ${palace.branch}`}
             className={cn(
               'w-full text-left bg-white border rounded-2xl min-h-[100px]',
-              'px-5 py-4 transition-all duration-200',
+              'px-4 py-3 transition-all duration-200',
               'active:scale-[0.98]',
               'focus:outline-none focus:ring-2 focus:ring-[#1C1A16]/20',
               isSelected
