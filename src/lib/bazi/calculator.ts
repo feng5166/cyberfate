@@ -1,5 +1,5 @@
 import { Solar } from 'lunar-javascript';
-import type { BaziInput, BaziResult, BaziChart, Pillar, WuxingCount, TianGan, DiZhi, ShiChen, Gender, DayunResult } from './types';
+import type { BaziInput, BaziResult, BaziChart, Pillar, WuxingCount, WuXing, TianGan, DiZhi, ShiChen, Gender, DayunResult } from './types';
 import { TIANGAN_WUXING, DIZHI_WUXING, SHICHEN_DIZHI, WUXING_KEYS, TIANGAN_LIST, DIZHI_LIST } from './constants';
 
 const YANG_GAN_SET = new Set<TianGan>(['甲', '丙', '戊', '庚', '壬']);
