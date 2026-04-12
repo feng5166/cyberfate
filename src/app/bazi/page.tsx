@@ -26,6 +26,7 @@ import {
   BasicInfoCard,
   BaziChart,
   DayMasterSummaryCard,
+  ShareCard,
   ShishenDetailTab,
   WuxingChart,
   WuxingDonutChart,
@@ -1019,6 +1020,16 @@ function BaziPageContent() {
                     </Link>
                   </div>
                   {actionMessage && <p className="mt-3 text-sm text-[#6B7280]">{actionMessage}</p>}
+                </Card>
+
+                <Card className={cardClass}>
+                  <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em] mb-5">分享卡片</h2>
+                  <ShareCard
+                    pillars={result.pillars}
+                    dayMaster={dayMasterInsight.title}
+                    zodiac={result.zodiac || '未知'}
+                    summary={dayMasterInsight.personality.split('。')[0] + '。'}
+                  />
                 </Card>
 
                 <div className="text-center text-xs text-[#6B7280] p-3 bg-white rounded-2xl border border-[#1C1A16]/10">

@@ -5,3 +5,4 @@ export { WuxingDonutChart } from './WuxingDonutChart';
 export { DayMasterSummaryCard } from './DayMasterSummaryCard';
 export { ShishenDetailTab } from './ShishenDetailTab';
 export { DayunTimeline } from './DayunTimeline';
+export { ShareCard } from './ShareCard';
