@@ -5,9 +5,9 @@ import { prisma } from '@/lib/db';
 import { getStripe, STRIPE_PLANS } from '@/lib/stripe';
 
 const planPrices = {
-  monthly: 2900,
-  quarterly: 6900,
-  yearly: 19900,
+  monthly: 500,    // 5元/月
+  quarterly: 500,  // 5元/季
+  yearly: 500,     // 5元/年
 };
 
 export async function POST(req: NextRequest) {
@@ -45,16 +45,50 @@ export async function POST(req: NextRequest) {
   });
 
   if (payMethod === 'stripe') {
-    // 使用预创建的 Stripe Payment Link
+    const stripe = getStripe();
+    if (!stripe) {
+      return NextResponse.json({ error: 'Stripe 未配置' }, { status: 500 });
+    }
+
     const stripePlan = STRIPE_PLANS[plan as keyof typeof STRIPE_PLANS];
     
-    // 添加 client_reference_id 用于 webhook 回调识别订单
-    const checkoutUrl = `${stripePlan.paymentLink}?client_reference_id=${order.id}&prefilled_email=${encodeURIComponent(session.user.email)}`;
-    
-    return NextResponse.json({
-      orderId: order.id,
-      checkoutUrl,
-    });
+    try {
+      // 动态创建 Checkout Session（使用实际价格）
+      const checkoutSession = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price_data: {
+              currency: 'cny',
+              product_data: {
+                name: stripePlan.name,
+                description: `有效期 ${stripePlan.duration} 天`,
+              },
+              unit_amount: amount, // 使用 planPrices 的实际价格（分）
+            },
+            quantity: 1,
+          },
+        ],
+        mode: 'payment',
+        success_url: `${process.env.NEXTAUTH_URL}/payment/success?order_id=${order.id}`,
+        cancel_url: `${process.env.NEXTAUTH_URL}/payment/cancel`,
+        client_reference_id: order.id,
+        customer_email: session.user.email,
+        metadata: {
+          orderId: order.id,
+          userId: user.id,
+          plan,
+        },
+      });
+
+      return NextResponse.json({
+        orderId: order.id,
+        checkoutUrl: checkoutSession.url,
+      });
+    } catch (error) {
+      console.error('[Stripe] 创建 Checkout Session 失败:', error);
+      return NextResponse.json({ error: 'Stripe 支付创建失败' }, { status: 500 });
+    }
   }
 
   // MVP: 返回模拟二维码
