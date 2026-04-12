@@ -54,8 +54,15 @@ export async function POST(req: NextRequest) {
     
     try {
       // 动态创建 Checkout Session（使用实际价格）
+      console.log('[Stripe] 创建支付会话:', {
+        plan,
+        amount,
+        currency: 'cny',
+        orderId: order.id,
+      });
+
       const checkoutSession = await stripe.checkout.sessions.create({
-        payment_method_types: ['card'],
+        payment_method_types: ['card', 'wechat_pay', 'alipay'],
         line_items: [
           {
             price_data: {
@@ -81,13 +88,23 @@ export async function POST(req: NextRequest) {
         },
       });
 
+      console.log('[Stripe] 支付会话创建成功:', checkoutSession.id);
+
       return NextResponse.json({
         orderId: order.id,
         checkoutUrl: checkoutSession.url,
       });
-    } catch (error) {
-      console.error('[Stripe] 创建 Checkout Session 失败:', error);
-      return NextResponse.json({ error: 'Stripe 支付创建失败' }, { status: 500 });
+    } catch (error: any) {
+      console.error('[Stripe] 创建 Checkout Session 失败:', {
+        message: error.message,
+        type: error.type,
+        code: error.code,
+        param: error.param,
+      });
+      return NextResponse.json({ 
+        error: 'Stripe 支付创建失败', 
+        details: error.message 
+      }, { status: 500 });
     }
   }
 
