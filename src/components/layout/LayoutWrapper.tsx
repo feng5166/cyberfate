@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { Header } from './Header';
 import { DashboardLayout } from './DashboardLayout';
 import { Footer } from './Footer';
+import { BackToTop } from '../BackToTop';
 
 interface LayoutWrapperProps {
   children: ReactNode;
@@ -40,6 +41,7 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
           <>{children}<Footer /></>
         )}
       </main>
+      <BackToTop />
     </div>
   );
 }

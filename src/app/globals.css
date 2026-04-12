@@ -183,3 +183,17 @@ header {
   right: 0 !important;
   z-index: 9999 !important;
 }
+
+/* ===== 移动端触摸反馈 (任务9) ===== */
+@media (hover: none) and (pointer: coarse) {
+  button:active, 
+  a:active, 
+  [role="button"]:active {
+    transform: scale(0.97);
+    transition: transform 100ms ease-out;
+  }
+
+  .card:active {
+    background-color: rgba(28, 26, 22, 0.03);
+  }
+}

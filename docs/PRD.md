@@ -6290,3 +6290,67 @@ Frank 测试发现紫微斗数、梅花易数、塔罗占卜也存在"抽卡"问
 - 宠物人格卡
 - 更多命理工具
 - 社区互动功能
+
+---
+
+## Bug Fix: /settings 路由 404（2026-04-13）
+
+### 问题描述
+
+用户从侧边栏点击"设置"按钮后跳转到 `/settings`，返回 **404 页面不存在**。
+
+### 根因
+
+**文件**: `src/components/layout/Sidebar.tsx` 第 153 行
+
+```tsx
+// 当前代码（错误）
+<Link
+  href="/settings"
+  className="inline-flex items-center gap-1.5 text-xs ..."
+  onClick={onMobileClose}
+>
+  <Settings className="h-3.5 w-3.5" />
+  <span>设置</span</span>
+</Link>
+```
+
+侧边栏链接指向 `/settings`，但该路由**在项目中不存在**。
+
+实际存在的个人设置页面路由是 **`/profile`**（文件：`src/app/profile/page.tsx`）。
+
+### 修复方案
+
+将 Sidebar.tsx 第 153 行的 `href="/settings"` 改为 `href="/profile"`：
+
+```tsx
+// 修复后
+<Link
+  href="/profile"    // ← 改这里
+  className="inline-flex items-center gap-1.5 text-xs ..."
+  onClick={onMobileClose}
+>
+  <Settings className="h-3.5 w-3.5" />
+  <span>设置</span</span>
+</Link>
+```
+
+### 涉及文件
+
+| 文件 | 改动 |
+|------|------|
+| `src/components/layout/Sidebar.tsx` | 第 153 行，`href="/settings"` → `href="/profile"` |
+
+### 验收标准
+
+- [ ] 点击侧边栏"设置"按钮正常跳转到 `/profile` 页面
+- [ ] 不再出现 404
+- [ ] 移动端侧边栏同样正常（`onMobileClose` 回调不受影响）
+
+### 排查备注
+
+同时检查了全项目是否还有其他地方引用 `/settings`：
+- Header.tsx — 无引用（Header 的账户菜单指向 `/profile`，正确）
+- 其他组件 — 无引用
+
+仅此一处需要修改。
