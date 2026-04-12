@@ -847,24 +847,7 @@ function BaziPageContent() {
                 </Card>
 
                 <Card className={cardClass}>
-                  <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em] mb-5">五行分布</h2>
-                  <div className="grid grid-cols-1 xl:grid-cols-[220px_minmax(0,1fr)] gap-4">
-                    <div className="rounded-2xl border border-[#1C1A16]/10 bg-[#FAF9F6] p-5 flex flex-col items-center justify-center">
-                      <WuxingDonutChart wuxing={result.wuxing} dayMasterElement={result.pillars.day.ganWuxing} />
-                      <p className="mt-3 text-xs text-[#1C1A16]/62">中心为日主五行</p>
-                    </div>
-
-                    <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-5">
-                      <WuxingChart wuxing={result.wuxing} />
-                      <div className="mt-5 flex flex-wrap gap-2.5">
-                        {wuxingDisplay.map(({ key, label, variant }) => (
-                          <Tag key={key} variant={variant} className="text-xs px-3 py-1.5">
-                            {label} {result.wuxing[key]}
-                          </Tag>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
+                  <WuxingChart wuxing={result.wuxing} dayMasterElement={result.pillars.day.ganWuxing} />
                 </Card>
 
                 <Card className={`${cardClass} p-0`}>
