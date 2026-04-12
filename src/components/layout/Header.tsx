@@ -228,10 +228,7 @@ export function Header() {
     {/* 移动端下拉菜单 - S-task2/S-task4/S-task6: 完整导航 + 动画 - 放在 header 外部 */}
     {mobileOpen && (
         <div 
-          className="fixed left-0 right-0 top-16 bottom-0 z-50 lg:hidden bg-white overflow-y-auto"
-          style={{
-            animation: 'slideDown 200ms ease-out',
-          }}
+          className="fixed left-0 right-0 top-16 bottom-0 z-50 lg:hidden bg-white overflow-y-auto animate-slideDown"
         >
           <div className="px-4 py-4 space-y-1">
             {/* 主导航 */}
@@ -324,18 +321,6 @@ export function Header() {
         </div>
       )}
 
-    <style jsx>{`
-        @keyframes slideDown {
-          from {
-            transform: translateY(-8px);
-            opacity: 0;
-          }
-          to {
-            transform: translateY(0);
-            opacity: 1;
-          }
-        }
-    `}</style>
     </>
   );
 }

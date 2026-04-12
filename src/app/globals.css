@@ -197,3 +197,19 @@ header {
     background-color: rgba(28, 26, 22, 0.03);
   }
 }
+
+/* 移动端菜单滑入动画 */
+@keyframes slideDown {
+  from {
+    transform: translateY(-8px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slideDown {
+  animation: slideDown 200ms ease-out;
+}
