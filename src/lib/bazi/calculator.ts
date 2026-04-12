@@ -247,3 +247,83 @@ export function getLunarDate(date: string): string {
   const yearGanZhi = `${eightChar.getYearGan()}${eightChar.getYearZhi()}`;
   return `${yearGanZhi}年${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}`;
 }
+
+/**
+ * 大运时间轴项
+ */
+export interface DayunTimelineItem {
+  index: number;           // 第几步大运（0-based）
+  gan: TianGan;
+  zhi: DiZhi;
+  wuxing: WuXing;
+  ageStart: number;        // 起始年龄
+  ageEnd: number;          // 结束年龄
+  isCurrent: boolean;      // 是否当前大运
+}
+
+/**
+ * 获取大运时间轴（完整版）
+ * - 返回 6 步大运（过去、当前、未来）
+ * - 每步 10 年
+ * - 阳男阴女顺行，阴男阳女逆行
+ */
+export function getDayunTimeline(birthDate: string, gender: Gender): DayunTimelineItem[] {
+  try {
+    const [year, month, day] = birthDate.split('-').map(Number);
+    if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
+      return [];
+    }
+
+    const solar = Solar.fromYmd(year, month, day);
+    const lunar = solar.getLunar();
+    const eightChar = lunar.getEightChar();
+
+    const yearGan = eightChar.getYearGan() as TianGan;
+    const monthGan = eightChar.getMonthGan() as TianGan;
+    const monthZhi = eightChar.getMonthZhi() as DiZhi;
+
+    const isYearYang = YANG_GAN_SET.has(yearGan);
+    const forward = (isYearYang && gender === 'male') || (!isYearYang && gender === 'female');
+
+    const birth = new Date(year, month - 1, day);
+    const now = new Date();
+    const currentAge = getAgeByBirthDate(birth, now);
+
+    // 起运年龄简化到 3-5 岁
+    const startAge = 3 + ((month + day) % 3);
+
+    const monthGanIndex = TIANGAN_LIST.indexOf(monthGan);
+    const monthZhiIndex = DIZHI_LIST.indexOf(monthZhi);
+    if (monthGanIndex < 0 || monthZhiIndex < 0) {
+      return [];
+    }
+
+    const timeline: DayunTimelineItem[] = [];
+
+    // 生成 6 步大运
+    for (let i = 0; i < 6; i++) {
+      const ageStart = startAge + i * 10;
+      const ageEnd = ageStart + 9;
+      const isCurrent = currentAge >= ageStart && currentAge <= ageEnd;
+
+      const step = forward ? i : -i;
+      const gan = TIANGAN_LIST[(monthGanIndex + step + 10 * 100) % 10];
+      const zhi = DIZHI_LIST[(monthZhiIndex + step + 12 * 100) % 12];
+
+      timeline.push({
+        index: i,
+        gan,
+        zhi,
+        wuxing: TIANGAN_WUXING[gan],
+        ageStart,
+        ageEnd,
+        isCurrent,
+      });
+    }
+
+    return timeline;
+  } catch (error) {
+    console.error('getDayunTimeline error:', error);
+    return [];
+  }
+}

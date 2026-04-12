@@ -77,6 +77,17 @@ export interface DayunResult {
   wuxing: WuXing;
 }
 
+// 大运时间轴项
+export interface DayunTimelineItem {
+  index: number;
+  gan: TianGan;
+  zhi: DiZhi;
+  wuxing: WuXing;
+  ageStart: number;
+  ageEnd: number;
+  isCurrent: boolean;
+}
+
 // AI 解读结果
 export interface BaziAnalysis {
   dayMasterAnalysis: string;

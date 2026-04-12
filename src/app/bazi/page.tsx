@@ -41,12 +41,14 @@ import {
   TIANGAN_WUXING,
   WUXING_KEYS,
   getCurrentDayun,
+  getDayunTimeline,
   getLunarDate,
   getYearGanzhi,
 } from '@/lib/bazi';
 import type {
   BaziApiResult,
   BaziHistoryRecord,
+  DayunTimelineItem,
   Gender,
   MingGeInfo,
   WuxingCount,
@@ -57,16 +59,6 @@ type ResultTab = '性格特质' | '事业财运' | '婚姻健康' | '大运流�
 type AiSectionKey = 'dayMaster' | 'personality' | 'career' | 'wealth' | 'relationship' | 'health' | 'dayun';
 
 type TagVariant = 'metal' | 'wood' | 'water' | 'fire' | 'earth';
-
-interface DayunTimelineItem {
-  key: string;
-  gan: string;
-  zhi: string;
-  wuxing: WuXing;
-  ageStart: number;
-  ageEnd: number;
-  isCurrent: boolean;
-}
 
 interface TabContent {
   scores: Array<{ label: string; value: number }>;
@@ -262,38 +254,16 @@ function getScoreStyle(score: number): { barClass: string; textClass: string } {
   return { barClass: 'bg-rose-500', textClass: 'text-rose-600' };
 }
 
-function buildDayunTimeline(birthDate: string, genderValue: string): DayunTimelineItem[] {
+function buildDayunTimeline(birthDate: string, genderValue: string): Array<DayunTimelineItem & { key: string }> {
   if (!birthDate) return [];
 
   const gender: Gender = genderValue === 'female' ? 'female' : 'male';
-  const current = getCurrentDayun(birthDate, gender);
-  const currentGanIndex = TIANGAN_LIST.indexOf(current.gan);
-  const currentZhiIndex = DIZHI_LIST.indexOf(current.zhi);
+  const timeline = getDayunTimeline(birthDate, gender);
 
-  if (currentGanIndex < 0 || currentZhiIndex < 0) return [];
-
-  const [birthYear, birthMonth, birthDay] = birthDate.split('-').map(Number);
-  if (!birthYear || !birthMonth || !birthDay) return [];
-
-  const startAge = 3 + ((birthMonth + birthDay) % 3);
-  const age = getAge(birthDate);
-  const currentRangeStart = age < startAge ? startAge : startAge + Math.floor((age - startAge) / 10) * 10;
-
-  return [-2, -1, 0, 1, 2].map(offset => {
-    const gan = TIANGAN_LIST[(currentGanIndex + offset + 100) % 10];
-    const zhi = DIZHI_LIST[(currentZhiIndex + offset + 120) % 12];
-    const ageStart = Math.max(0, currentRangeStart + offset * 10);
-
-    return {
-      key: `${gan}${zhi}_${ageStart}`,
-      gan,
-      zhi,
-      wuxing: TIANGAN_WUXING[gan],
-      ageStart,
-      ageEnd: ageStart + 9,
-      isCurrent: offset === 0,
-    };
-  });
+  return timeline.map(item => ({
+    ...item,
+    key: `${item.gan}${item.zhi}_${item.ageStart}`,
+  }));
 }
 
 function buildDayunDetail(
