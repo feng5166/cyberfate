@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { useSession, signOut } from 'next-auth/react';
 import { ChevronDown, Menu, X } from 'lucide-react';
 
 // 导航项配置
@@ -53,8 +52,6 @@ const desktopFeatureMenu = [
 export function Header() {
   const [featureOpen, setFeatureOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const { data: session } = useSession();
   const pathname = usePathname();
   const isHomePage = pathname === '/';
 
@@ -152,65 +149,15 @@ export function Header() {
 
             {/* 工作台 */}
             <Link
-              href="/bazi"
+              href="/bazi?sidebar=open"
               className="text-sm font-semibold text-brand-gray hover:text-[#1C1A16] transition-colors duration-200"
             >
               工作台
             </Link>
           </div>
 
-          {/* 右侧：桌面端账户/登录 */}
-          <div className="hidden lg:flex items-center gap-4">
-            {session ? (
-              <div
-                className="relative"
-                onMouseEnter={() => setUserMenuOpen(true)}
-                onMouseLeave={() => setUserMenuOpen(false)}
-              >
-                <span className="text-sm text-brand-gray hover:text-[#1C1A16] cursor-pointer transition-colors duration-200">
-                  账户
-                </span>
-                {userMenuOpen && (
-                  <div className="absolute right-0 top-full pt-2">
-                    <div className="py-2 bg-white rounded-lg shadow-lg border border-brand-border-light min-w-[140px]">
-                      <Link
-                        href="/profile"
-                        className="block px-4 py-2 text-sm text-brand-gray hover:text-[#1C1A16] hover:bg-brand-bg transition-colors"
-                      >
-                        个人中心
-                      </Link>
-                      <Link
-                        href="/pricing"
-                        className="block px-4 py-2 text-sm text-brand-gray hover:text-[#1C1A16] hover:bg-brand-bg transition-colors"
-                      >
-                        我的会员
-                      </Link>
-                      <Link
-                        href="/history"
-                        className="block px-4 py-2 text-sm text-brand-gray hover:text-[#1C1A16] hover:bg-brand-bg transition-colors"
-                      >
-                        历史记录
-                      </Link>
-                      <hr className="my-1 border-brand-border-light" />
-                      <button
-                        onClick={() => signOut({ callbackUrl: '/' })}
-                        className="w-full text-left px-4 py-2 text-sm text-brand-gray hover:text-[#1C1A16] hover:bg-brand-bg transition-colors"
-                      >
-                        退出登录
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <Link
-                href="/auth/login"
-                className="text-sm text-[#1C1A16] font-medium hover:opacity-70 transition-opacity"
-              >
-                登录 / 注册
-              </Link>
-            )}
-          </div>
+          {/* 右侧占位 - 保持布局平衡 */}
+          <div className="hidden lg:block w-16" />
         </div>
       </nav>
 
@@ -242,7 +189,7 @@ export function Header() {
             ))}
 
             <Link
-              href="/bazi"
+              href="/bazi?sidebar=open"
               className="block py-3 text-sm font-semibold text-brand-gray hover:text-[#1C1A16] active:bg-brand-bg transition-colors"
               onClick={() => setMobileOpen(false)}
             >
@@ -277,44 +224,6 @@ export function Header() {
               </Link>
             </div>
 
-            {/* 用户区域 */}
-            <div className="pt-2 border-t border-brand-border-light mt-2">
-              {session ? (
-                <>
-                  <Link
-                    href="/profile"
-                    className="block py-3 text-sm text-brand-gray hover:text-[#1C1A16] active:bg-brand-bg transition-colors"
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    个人中心
-                  </Link>
-                  <Link
-                    href="/history"
-                    className="block py-3 text-sm text-brand-gray hover:text-[#1C1A16] active:bg-brand-bg transition-colors"
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    历史记录
-                  </Link>
-                  <button
-                    onClick={() => {
-                      setMobileOpen(false);
-                      signOut({ callbackUrl: '/' });
-                    }}
-                    className="block w-full text-left py-3 text-sm text-brand-gray hover:text-[#1C1A16] active:bg-brand-bg transition-colors"
-                  >
-                    退出登录
-                  </button>
-                </>
-              ) : (
-                <Link
-                  href="/auth/login"
-                  className="block py-3 text-sm text-[#1C1A16] font-medium active:bg-brand-bg transition-colors"
-                  onClick={() => setMobileOpen(false)}
-                >
-                  登录 / 注册
-                </Link>
-              )}
-            </div>
           </div>
         </div>
       )}

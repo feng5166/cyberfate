@@ -2,10 +2,9 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useSession, signOut } from 'next-auth/react';
+import { usePathname, useRouter } from 'next/navigation';
 import clsx from 'clsx';
-  import {
+import {
   Home,
   BarChart3,
   Sun,
@@ -19,13 +18,15 @@ import clsx from 'clsx';
   Clock,
   Settings,
   LogOut,
+  Lock,
+  User,
   PanelLeft,
   PanelLeftClose,
-  ChevronRight,
   type LucideIcon,
 } from 'lucide-react';
 import { SidebarMenuItem } from './SidebarMenuItem';
 import { SidebarGroup } from './SidebarGroup';
+import { useAuthStore } from '@/stores/authStore';
 
 interface SidebarProps {
   collapsed?: boolean;
@@ -95,8 +96,9 @@ export function Sidebar({
   onCollapseToggle,
 }: SidebarProps = {}) {
   const pathname = usePathname();
+  const router = useRouter();
   const normalizedPath = useMemo(() => normalizePath(pathname), [pathname]);
-  const { data: session } = useSession();
+  const { status, user, logout } = useAuthStore();
   const [internalCollapsed, setInternalCollapsed] = useState(false);
   const collapsed = collapsedProp ?? internalCollapsed;
 
@@ -110,18 +112,18 @@ export function Sidebar({
 
   const [avatarError, setAvatarError] = useState(false);
 
-  const renderAvatar = (isCollapsed: boolean) => {
-    const name = session?.user?.name?.trim() || '访客';
+  const renderAvatar = (size: 'sm' | 'md') => {
+    const name = user?.name?.trim() || '访客';
     const initial = name.charAt(0).toUpperCase();
-    const imageUrl = session?.user?.image;
-    const sizeClass = isCollapsed ? 'h-10 w-10' : 'h-11 w-11';
+    const imageUrl = user?.avatar;
+    const sizeClass = size === 'sm' ? 'h-10 w-10' : 'h-11 w-11';
 
     if (imageUrl && !avatarError) {
       return (
         <img
           src={imageUrl}
           alt={name}
-          className={`${sizeClass} rounded-full object-cover`}
+          className={`${sizeClass} rounded-full object-cover shrink-0`}
           onError={() => setAvatarError(true)}
           referrerPolicy="no-referrer"
         />
@@ -129,23 +131,113 @@ export function Sidebar({
     }
 
     return (
-      <div className={`flex ${sizeClass} items-center justify-center rounded-full bg-brand-bg text-sm font-semibold text-brand-gray`}>
+      <div className={`flex ${sizeClass} items-center justify-center rounded-full bg-brand-bg text-sm font-semibold text-brand-gray shrink-0`}>
         {initial}
       </div>
     );
   };
 
-  const renderUserArea = (isCollapsed: boolean) => (
+  const UnlockButton = () => (
+    <button
+      type="button"
+      onClick={() => router.push('/pricing')}
+      className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1C1A16] px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-[#2A2620]"
+    >
+      <Lock className="h-4 w-4" />
+      解锁全部功能
+    </button>
+  );
+
+  const renderGuestBottom = (isCollapsed: boolean) => (
+    <div className="border-t border-brand-border-light px-4 py-4">
+      {isCollapsed ? (
+        <div className="flex flex-col items-center gap-2">
+          <button
+            type="button"
+            onClick={() => router.push('/pricing')}
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1C1A16] text-white transition-colors hover:bg-[#2A2620]"
+            title="解锁全部功能"
+          >
+            <Lock className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => router.push('/auth/login')}
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#1C1A16] transition-colors hover:bg-[#F9FAFB]"
+            title="登录 / 注册"
+          >
+            <User className="h-4 w-4" />
+          </button>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          <UnlockButton />
+          <button
+            type="button"
+            onClick={() => router.push('/auth/login')}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] bg-white px-4 py-3 text-sm font-medium text-[#1C1A16] transition-colors hover:bg-[#F9FAFB]"
+          >
+            <User className="h-4 w-4" />
+            登录 / 注册
+          </button>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderFreeBottom = (isCollapsed: boolean) => (
+    <div className="border-t border-brand-border-light px-4 py-4">
+      {isCollapsed ? (
+        <div className="flex flex-col items-center gap-2">
+          <button
+            type="button"
+            onClick={() => router.push('/pricing')}
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1C1A16] text-white transition-colors hover:bg-[#2A2620]"
+            title="解锁全部功能"
+          >
+            <Lock className="h-4 w-4" />
+          </button>
+          {renderAvatar('sm')}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          <UnlockButton />
+          <div className="flex items-center gap-3">
+            {renderAvatar('md')}
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-brand-black">
+                {user?.name || '用户'}
+              </p>
+              <p className="truncate text-xs text-[#9CA3AF]">
+                {user?.email || ''}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderPaidBottom = (isCollapsed: boolean) => (
     <div className="border-t border-brand-border-light px-5 py-4">
       {isCollapsed ? (
-        <div className="flex justify-center">{renderAvatar(true)}</div>
+        <div className="flex justify-center">{renderAvatar('sm')}</div>
       ) : (
         <div className="space-y-4">
           <div className="flex items-center gap-3">
-            {renderAvatar(false)}
-            <div>
-              <p className="text-sm font-semibold text-brand-black">{session?.user?.name || '未登录用户'}</p>
-              <p className="text-xs text-[#9CA3AF]">{session?.user?.email || '未绑定邮箱'}</p>
+            {renderAvatar('md')}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <p className="truncate text-sm font-semibold text-brand-black">
+                  {user?.name || '用户'}
+                </p>
+                <span className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">
+                  VIP
+                </span>
+              </div>
+              <p className="truncate text-xs text-[#9CA3AF]">
+                {user?.email || ''}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -158,7 +250,7 @@ export function Sidebar({
             </Link>
             <button
               type="button"
-              onClick={() => signOut({ callbackUrl: '/' })}
+              onClick={() => logout()}
               className="inline-flex items-center gap-1.5 text-xs text-[#9CA3AF] transition-colors hover:text-brand-black"
             >
               <LogOut className="h-3.5 w-3.5" />
@@ -169,6 +261,17 @@ export function Sidebar({
       )}
     </div>
   );
+
+  const renderBottomArea = (isCollapsed: boolean) => {
+    switch (status) {
+      case 'guest':
+        return renderGuestBottom(isCollapsed);
+      case 'free':
+        return renderFreeBottom(isCollapsed);
+      case 'paid':
+        return renderPaidBottom(isCollapsed);
+    }
+  };
 
   const SidebarContent = (isCollapsed: boolean) => (
     <div className="relative flex h-full flex-col bg-white">
@@ -233,8 +336,7 @@ export function Sidebar({
         ))}
       </nav>
 
-      {renderUserArea(isCollapsed)}
-
+      {renderBottomArea(isCollapsed)}
     </div>
   );
 

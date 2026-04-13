@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Noto_Serif_SC } from "next/font/google";
 import "./globals.css";
-import { Header } from "@/components/layout/Header";
-import { Sidebar } from "@/components/layout/Sidebar";
 import { SessionProvider } from "@/components/providers/SessionProvider";
+import { AuthProvider } from "@/stores/authStore";
 import { LayoutWrapper } from "@/components/layout/LayoutWrapper";
 
 const notoSerifSC = Noto_Serif_SC({
@@ -69,9 +68,11 @@ export default function RootLayout({
     <html lang="zh-CN" className={`${notoSerifSC.variable} ${cormorantGaramond.variable}`}>
       <body className="min-h-screen flex flex-col">
         <SessionProvider>
-          <LayoutWrapper>
-            {children}
-          </LayoutWrapper>
+          <AuthProvider>
+            <LayoutWrapper>
+              {children}
+            </LayoutWrapper>
+          </AuthProvider>
         </SessionProvider>
       </body>
     </html>

@@ -241,7 +241,7 @@ export default function HomePage() {
                         <h4 className="text-lg font-semibold text-[#1C1A16] mt-4 mb-3">{feature.title}</h4>
                         <p className="text-[14px] text-[#1C1A16]/70 leading-relaxed flex-1">{feature.description}</p>
                         <Link
-                          href={feature.href}
+                          href={`${feature.href}?sidebar=open`}
                           className="inline-flex items-center gap-1 text-[14px] text-[#1C1A16] mt-4 transition-all duration-300 group-hover:gap-2"
                         >
                           进入分析

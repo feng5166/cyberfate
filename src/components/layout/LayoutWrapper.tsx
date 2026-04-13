@@ -1,26 +1,37 @@
 'use client';
 
-import { useState, ReactNode } from 'react';
-import { useSession } from 'next-auth/react';
-import { usePathname } from 'next/navigation';
+import { useState, ReactNode, Suspense } from 'react';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { Header } from './Header';
 import { DashboardLayout } from './DashboardLayout';
 import { Footer } from './Footer';
 import { BackToTop } from '../BackToTop';
 import { TabBar } from '../TabBar';
+import { AuthProvider } from '@/stores/authStore';
 
 interface LayoutWrapperProps {
   children: ReactNode;
 }
 
+function SidebarController({ onExpand }: { onExpand: () => void }) {
+  const searchParams = useSearchParams();
+  const currentPath = usePathname();
+
+  // Only run on first render with searchParams
+  if (searchParams.get('sidebar') === 'open') {
+    onExpand();
+    // Clean URL without re-render
+    window.history.replaceState({}, '', currentPath);
+  }
+
+  return null;
+}
+
 export function LayoutWrapper({ children }: LayoutWrapperProps) {
   const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const { data: session } = useSession();
   const pathname = usePathname();
-
-  // 首页不显示侧边栏
   const isHomePage = pathname === '/';
-  const showSidebar = Boolean(session) && !isHomePage;
+  const showSidebar = !isHomePage;
   const layoutClasses = 'flex flex-col min-h-screen';
 
   return (
@@ -30,17 +41,20 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
         <Header />
       </div>
       <main className="flex-1 pb-20 lg:pb-0" style={{ paddingTop: '80px' }}>
-        {showSidebar ? (
-          <DashboardLayout
-            collapsed={isSidebarCollapsed}
-            onCollapseToggle={(next) => setSidebarCollapsed(next)}
-            showSidebar={showSidebar}
-          >
-            {children}
-          </DashboardLayout>
-        ) : (
-          <>{children}<Footer /></>
-        )}
+        <Suspense fallback={null}>
+          {showSidebar ? (
+            <DashboardLayout
+              collapsed={isSidebarCollapsed}
+              onCollapseToggle={(next) => setSidebarCollapsed(next)}
+              showSidebar={showSidebar}
+            >
+              <SidebarController onExpand={() => setSidebarCollapsed(false)} />
+              {children}
+            </DashboardLayout>
+          ) : (
+            <>{children}<Footer /></>
+          )}
+        </Suspense>
       </main>
       <BackToTop />
       <TabBar />
