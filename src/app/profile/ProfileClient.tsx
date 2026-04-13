@@ -40,18 +40,9 @@ export default function ProfileClient({ email, image, vip, expireAt, baziAiCount
         {/* 账号信息 */}
         <Card>
           <h2 className="text-secondary text-sm mb-4 uppercase tracking-wider">账号信息</h2>
-          <div className="flex items-center gap-3">
-            {image ? (
-              <img src={image} alt="头像" className="w-10 h-10 rounded-full border border-primary/20 object-cover" referrerPolicy="no-referrer" />
-            ) : (
-              <div className="w-10 h-10 rounded-full bg-cyber-gold/10 border border-primary/20 flex items-center justify-center text-primary font-bold">
-                {email.charAt(0).toUpperCase()}
-              </div>
-            )}
-            <div>
-              <p className="text-primary">{email}</p>
-              <p className="text-muted text-xs mt-0.5">邮箱账号</p>
-            </div>
+          <div>
+            <p className="text-primary">{email}</p>
+            <p className="text-muted text-xs mt-0.5">邮箱账号</p>
           </div>
         </Card>
 
