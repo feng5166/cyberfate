@@ -150,7 +150,7 @@ export function Sidebar({
           </div>
           <div className="flex items-center gap-4">
             <Link
-              href="/settings"
+              href="/profile"
               className="inline-flex items-center gap-1.5 text-xs text-[#9CA3AF] transition-colors hover:text-brand-black"
             >
               <Settings className="h-3.5 w-3.5" />
