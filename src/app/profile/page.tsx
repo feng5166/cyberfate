@@ -21,6 +21,7 @@ export default async function ProfilePage() {
   return (
     <ProfileClient
       email={session.user.email ?? ''}
+      image={session.user.image ?? null}
       vip={vip}
       expireAt={subscription?.expireAt?.toISOString().slice(0, 10) ?? null}
       baziAiCount={quota.baziAiCount}

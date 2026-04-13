@@ -7,13 +7,14 @@ import { Button } from '@/components/ui/Button'
 
 interface ProfileClientProps {
   email: string
+  image: string | null
   vip: boolean
   expireAt: string | null
   baziAiCount: number
   limit: number | null
 }
 
-export default function ProfileClient({ email, vip, expireAt, baziAiCount, limit }: ProfileClientProps) {
+export default function ProfileClient({ email, image, vip, expireAt, baziAiCount, limit }: ProfileClientProps) {
   const router = useRouter()
 
   const handleSignOut = async () => {
@@ -26,9 +27,13 @@ export default function ProfileClient({ email, vip, expireAt, baziAiCount, limit
     <div className="min-h-screen bg-background-alt py-12 px-4">
       <div className="max-w-lg mx-auto space-y-6">
         <div className="text-center">
-          <div className="w-20 h-20 mx-auto rounded-full bg-background border-2 border-border flex items-center justify-center text-3xl font-bold text-primary">
-            {email.charAt(0).toUpperCase()}
-          </div>
+          {image ? (
+            <img src={image} alt="头像" className="w-20 h-20 mx-auto rounded-full border-2 border-border object-cover" referrerPolicy="no-referrer" />
+          ) : (
+            <div className="w-20 h-20 mx-auto rounded-full bg-background border-2 border-border flex items-center justify-center text-3xl font-bold text-primary">
+              {email.charAt(0).toUpperCase()}
+            </div>
+          )}
           <h1 className="font-heading text-2xl font-bold text-primary mt-3">个人中心</h1>
         </div>
 
@@ -36,9 +41,13 @@ export default function ProfileClient({ email, vip, expireAt, baziAiCount, limit
         <Card>
           <h2 className="text-secondary text-sm mb-4 uppercase tracking-wider">账号信息</h2>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-cyber-gold/10 border border-primary/20 flex items-center justify-center text-primary font-bold">
-              {email.charAt(0).toUpperCase()}
-            </div>
+            {image ? (
+              <img src={image} alt="头像" className="w-10 h-10 rounded-full border border-primary/20 object-cover" referrerPolicy="no-referrer" />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-cyber-gold/10 border border-primary/20 flex items-center justify-center text-primary font-bold">
+                {email.charAt(0).toUpperCase()}
+              </div>
+            )}
             <div>
               <p className="text-primary">{email}</p>
               <p className="text-muted text-xs mt-0.5">邮箱账号</p>
