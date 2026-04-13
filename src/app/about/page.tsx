@@ -104,15 +104,15 @@ export default function AboutPage() {
 
       <section className="pb-24">
         <Container>
-          <Card className="bg-[#1C1A16] text-white border-none shadow-lg" hover={false}>
+          <Card className="bg-gradient-to-br from-[#F5F3EE] to-[#EDE9E2] text-[#1C1A16] border border-[#1C1A16]/10 shadow-lg" hover={false}>
             <div className="grid md:grid-cols-2 gap-8 items-center">
               <div>
                 <h3 className="font-heading text-3xl mb-4">我们相信理性与感性的并行</h3>
-                <p className="text-sm text-white/80 leading-relaxed">
+                <p className="text-sm text-[#1C1A16]/70 leading-relaxed">
                   当你与赛博命理师对话，我们提供的不只是结果，而是一套推理过程：背景假设、可执行的选择、以及必要的提醒。请携带你的经验与判断，与我们一起共创命运叙事。
                 </p>
               </div>
-              <div className="bg-white/10 rounded-xl p-6 text-sm leading-relaxed text-white/80">
+              <div className="bg-white rounded-xl p-6 text-sm leading-relaxed text-[#1C1A16]/70 shadow-sm border border-[#1C1A16]/10">
                 <p>联系方式：support@cyberfate.com</p>
                 <p className="mt-2">办公地点：上海 · 远程协作团队</p>
                 <p className="mt-2">合作方向：AI 算法共创、东方文化内容、心理咨询与疗愈项目</p>
