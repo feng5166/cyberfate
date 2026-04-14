@@ -23,9 +23,9 @@ import {
   PanelLeftClose,
   type LucideIcon,
 } from 'lucide-react';
+import { useSession, signOut } from 'next-auth/react';
 import { SidebarMenuItem } from './SidebarMenuItem';
 import { SidebarGroup } from './SidebarGroup';
-import { useAuthStore } from '@/stores/authStore';
 
 interface SidebarProps {
   collapsed?: boolean;
@@ -98,7 +98,21 @@ export function Sidebar({
   const pathname = usePathname();
   const router = useRouter();
   const normalizedPath = useMemo(() => normalizePath(pathname), [pathname]);
-  const { status, user, logout } = useAuthStore();
+  const { data: session } = useSession();
+
+  const status: 'guest' | 'free' | 'paid' = useMemo(() => {
+    if (!session) return 'guest';
+    return (session.user as any)?.isSubscribed === true ? 'paid' : 'free';
+  }, [session]);
+
+  const user = useMemo(() => ({
+    name: session?.user?.name ?? undefined,
+    email: session?.user?.email ?? undefined,
+    avatar: session?.user?.image ?? undefined,
+  }), [session]);
+
+  const logout = () => signOut({ callbackUrl: '/' });
+
   const [internalCollapsed, setInternalCollapsed] = useState(false);
   const collapsed = collapsedProp ?? internalCollapsed;
 
