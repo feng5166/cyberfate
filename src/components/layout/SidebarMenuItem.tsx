@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import clsx from 'clsx';
-import type { LucideIcon } from 'lucide-react';
+import { Lock as LockIcon, type LucideIcon } from 'lucide-react';
 
 interface SidebarMenuItemProps {
   icon: LucideIcon;
@@ -10,6 +10,7 @@ interface SidebarMenuItemProps {
   href: string;
   active?: boolean;
   collapsed?: boolean;
+  locked?: boolean;
   onSelect?: () => void;
 }
 
@@ -19,8 +20,45 @@ export function SidebarMenuItem({
   href,
   active = false,
   collapsed = false,
+  locked = false,
   onSelect,
 }: SidebarMenuItemProps) {
+  const content = (
+    <span
+      className={clsx(
+        'relative flex items-center gap-2.5 rounded-md text-sm font-medium transition-colors duration-200 ease-out',
+        collapsed ? 'justify-center px-0 py-2.5' : 'px-5 py-2.5',
+        locked
+          ? 'opacity-60 cursor-not-allowed text-[#6B7280]'
+          : active
+            ? 'text-black bg-[#F9FAFB]'
+            : 'text-[#6B7280] hover:text-black hover:bg-[#F9FAFB]'
+      )}
+    >
+      {active && !locked && (
+        <span
+          className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-[#7C3AED]"
+          aria-hidden
+        />
+      )}
+      <Icon className="h-[20px] w-[20px]" />
+      {!collapsed && (
+        <>
+          <span className="truncate flex-1">{label}</span>
+          {locked && <LockIcon className="h-3.5 w-3.5 shrink-0 text-[#9CA3AF]" />}
+        </>
+      )}
+    </span>
+  );
+
+  if (locked) {
+    return (
+      <div className="block" title={collapsed ? `${label}（升级会员解锁）` : '升级会员解锁此功能'}>
+        {content}
+      </div>
+    );
+  }
+
   return (
     <Link
       href={href}
@@ -30,24 +68,7 @@ export function SidebarMenuItem({
       prefetch
       onClick={onSelect}
     >
-      <span
-        className={clsx(
-          'relative flex items-center gap-2.5 rounded-md text-sm font-medium transition-colors duration-200 ease-out',
-          collapsed ? 'justify-center px-0 py-2.5' : 'px-5 py-2.5',
-          active
-            ? 'text-black bg-[#F9FAFB]'
-            : 'text-[#6B7280] hover:text-black hover:bg-[#F9FAFB]'
-        )}
-      >
-        {active && (
-          <span
-            className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-[#7C3AED]"
-            aria-hidden
-          />
-        )}
-        <Icon className="h-[20px] w-[20px]" />
-        {!collapsed && <span className="truncate">{label}</span>}
-      </span>
+      {content}
     </Link>
   );
 }

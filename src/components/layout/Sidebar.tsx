@@ -16,7 +16,6 @@ import {
   Calendar,
   BookOpen,
   Clock,
-  Settings,
   LogOut,
   Lock,
   User,
@@ -37,6 +36,7 @@ interface MenuItemConfig {
   label: string;
   href: string;
   icon: LucideIcon;
+  paidOnly?: boolean;
 }
 
 interface MenuGroupConfig {
@@ -57,22 +57,22 @@ const MENU_GROUPS: MenuGroupConfig[] = [
     items: [
       { label: '八字分析', href: '/bazi', icon: BarChart3 },
       { label: '每日运势', href: '/daily', icon: Sun },
-      { label: '合婚分析', href: '/bazi/marriage', icon: BookHeart },
+      { label: '合婚分析', href: '/bazi/marriage', icon: BookHeart, paidOnly: true },
     ],
   },
   {
     title: '周易占卜',
     items: [
-      { label: '梅花易数', href: '/meihua', icon: Sparkles },
+      { label: '梅花易数', href: '/meihua', icon: Sparkles, paidOnly: true },
       { label: '塔罗占卜', href: '/tarot', icon: Layers },
-      { label: '六爻占卜', href: '/liuyao', icon: Compass },
+      { label: '六爻占卜', href: '/liuyao', icon: Compass, paidOnly: true },
     ],
   },
   {
     title: '更多工具',
     items: [
-      { label: '紫微斗数', href: '/ziwei', icon: Star },
-      { label: 'AI老黄历', href: '/huangli', icon: Calendar },
+      { label: '紫微斗数', href: '/ziwei', icon: Star, paidOnly: true },
+      { label: 'AI老黄历', href: '/huangli', icon: Calendar, paidOnly: true },
     ],
   },
   {
@@ -200,7 +200,7 @@ export function Sidebar({
           {renderAvatar('sm')}
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="space-y-4">
           <UnlockButton />
           <div className="flex items-center gap-3">
             {renderAvatar('md')}
@@ -212,6 +212,23 @@ export function Sidebar({
                 {user?.email || ''}
               </p>
             </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/profile"
+              className="inline-flex items-center gap-1.5 text-xs text-[#9CA3AF] transition-colors hover:text-brand-black"
+            >
+              <User className="h-3.5 w-3.5" />
+              <span>个人资料</span>
+            </Link>
+            <button
+              type="button"
+              onClick={() => logout()}
+              className="inline-flex items-center gap-1.5 text-xs text-[#9CA3AF] transition-colors hover:text-brand-black"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              <span>退出登录</span>
+            </button>
           </div>
         </div>
       )}
@@ -245,8 +262,8 @@ export function Sidebar({
               href="/profile"
               className="inline-flex items-center gap-1.5 text-xs text-[#9CA3AF] transition-colors hover:text-brand-black"
             >
-              <Settings className="h-3.5 w-3.5" />
-              <span>设置</span>
+              <User className="h-3.5 w-3.5" />
+              <span>个人资料</span>
             </Link>
             <button
               type="button"
@@ -254,7 +271,7 @@ export function Sidebar({
               className="inline-flex items-center gap-1.5 text-xs text-[#9CA3AF] transition-colors hover:text-brand-black"
             >
               <LogOut className="h-3.5 w-3.5" />
-              <span>退出</span>
+              <span>退出登录</span>
             </button>
           </div>
         </div>
@@ -330,6 +347,7 @@ export function Sidebar({
                 href={item.href}
                 collapsed={isCollapsed}
                 active={normalizedPath === normalizePath(item.href)}
+                locked={item.paidOnly && status !== 'paid'}
               />
             ))}
           </SidebarGroup>
