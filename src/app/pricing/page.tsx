@@ -44,6 +44,7 @@ export default function PricingPage() {
   const router = useRouter();
   const [modal, setModal] = useState<{ planName: string; price: string } | null>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState('专业版');
 
   const handleSelectPlan = (planName: string, price: string) => {
     if (!session) {
@@ -70,56 +71,67 @@ export default function PricingPage() {
       {/* 三列定价卡片 */}
       <section className="px-4 pb-20 md:pb-28">
         <div className="flex flex-col lg:flex-row gap-5 lg:gap-6 max-w-[1000px] mx-auto">
-          {plans.map((plan) => (
-            <div key={plan.name} className={`flex-1 ${plan.recommended ? 'relative' : ''}`}>
-              {plan.recommended && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
-                  <span className="inline-block bg-[#1C1A16] text-white text-xs px-3 py-1 rounded-full font-medium">
-                    ★ 最受欢迎
-                  </span>
-                </div>
-              )}
+          {plans.map((plan) => {
+            const isSelected = selectedPlan === plan.name;
+            return (
               <div
-                className={`h-full flex flex-col p-5 md:p-9 bg-white rounded-2xl transition-all duration-300 ${
-                  plan.recommended
-                    ? 'shadow-md ring-2 ring-[#1C1A16] lg:scale-[1.03] lg:-translate-y-2'
-                    : 'shadow-sm hover:shadow-md hover:-translate-y-1'
-                }`}
+                key={plan.name}
+                className={`flex-1 cursor-pointer ${plan.recommended ? 'relative' : ''}`}
+                onClick={() => setSelectedPlan(plan.name)}
               >
-                <h2 className="text-[20px] font-semibold text-[#1C1A16] text-center mb-4">
-                  {plan.name}
-                </h2>
-
-                <div className="text-center mb-6 pb-6 border-b border-[#1C1A16]/8">
-                  <div className="flex items-end justify-center gap-1">
-                    <span className="text-[40px] font-semibold leading-none text-[#1C1A16]">¥</span>
-                    <span className="text-[40px] font-semibold leading-none text-[#1C1A16]">{plan.price}</span>
+                {plan.recommended && (
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
+                    <span className="inline-block bg-[#1C1A16] text-white text-xs px-3 py-1 rounded-full font-medium">
+                      ★ 最受欢迎
+                    </span>
                   </div>
-                  <span className="text-sm text-[#1C1A16]/55 ml-1">{plan.period}</span>
-                </div>
-
-                <ul className="space-y-3 flex-1 mb-8">
-                  {plan.perks.map((perk) => (
-                    <li key={perk} className="flex items-start gap-2.5 text-sm text-[#1C1A16]/80">
-                      <Check className="w-4 h-4 text-green-500 mt-0.5 shrink-0" strokeWidth={2.5} />
-                      {perk}
-                    </li>
-                  ))}
-                </ul>
-
-                <button
-                  onClick={() => handleSelectPlan(plan.name, plan.price)}
-                  className={`w-full h-12 rounded-lg text-sm font-medium transition-colors ${
-                    plan.recommended
-                      ? 'bg-[#1C1A16] text-white hover:bg-[#2A2621]'
-                      : 'border border-[#1C1A16]/15 text-[#1C1A16] hover:border-[#1C1A16]/40 hover:bg-[#1C1A16]/[0.03]'
+                )}
+                <div
+                  className={`h-full flex flex-col p-5 md:p-9 bg-white rounded-2xl transition-all duration-300 ${
+                    isSelected
+                      ? 'shadow-md ring-2 ring-[#1C1A16] lg:scale-[1.03] lg:-translate-y-2'
+                      : 'shadow-sm hover:shadow-md hover:-translate-y-1'
                   }`}
                 >
-                  {plan.recommended ? '立即开通' : '选择方案'}
-                </button>
+                  <h2 className="text-[20px] font-semibold text-[#1C1A16] text-center mb-4">
+                    {plan.name}
+                  </h2>
+
+                  <div className="text-center mb-6 pb-6 border-b border-[#1C1A16]/8">
+                    <div className="flex items-end justify-center gap-1">
+                      <span className="text-[40px] font-semibold leading-none text-[#1C1A16]">¥</span>
+                      <span className="text-[40px] font-semibold leading-none text-[#1C1A16]">{plan.price}</span>
+                    </div>
+                    <span className="text-sm text-[#1C1A16]/55 ml-1">{plan.period}</span>
+                  </div>
+
+                  <ul className="space-y-3 flex-1 mb-8">
+                    {plan.perks.map((perk) => (
+                      <li key={perk} className="flex items-start gap-2.5 text-sm text-[#1C1A16]/80">
+                        <Check className="w-4 h-4 text-green-500 mt-0.5 shrink-0" strokeWidth={2.5} />
+                        {perk}
+                      </li>
+                    ))}
+                  </ul>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const selected = plans.find((p) => p.name === selectedPlan);
+                      if (selected) handleSelectPlan(selected.name, selected.price);
+                    }}
+                    className={`w-full h-12 rounded-lg text-sm font-medium transition-colors ${
+                      isSelected
+                        ? 'bg-[#1C1A16] text-white hover:bg-[#2A2621]'
+                        : 'border border-[#1C1A16]/15 text-[#1C1A16] hover:border-[#1C1A16]/40 hover:bg-[#1C1A16]/[0.03]'
+                    }`}
+                  >
+                    {isSelected ? '立即开通' : '选择方案'}
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
