@@ -46,7 +46,7 @@ function LoginForm() {
           password,
         })
         if (result?.error) {
-          setServerError('邮箱或密码错误')
+          setServerError(result.error)
           setLoading(false)
         } else {
           router.push(callbackUrl)

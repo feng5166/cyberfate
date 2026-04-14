@@ -77,7 +77,7 @@ export function AuthModal({ isOpen, onClose, callbackUrl = '/bazi' }: AuthModalP
           password,
         })
         if (result?.error) {
-          setServerError('邮箱或密码错误')
+          setServerError(result.error)
           setLoading(false)
         } else {
           handleClose()

@@ -29,20 +29,24 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          return null
+          throw new Error('请输入邮箱和密码')
         }
 
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
         })
 
-        if (!user || !user.passwordHash) {
-          return null
+        if (!user) {
+          throw new Error('该邮箱尚未注册')
+        }
+
+        if (!user.passwordHash) {
+          throw new Error('该账号通过 Google 注册，请使用 Google 登录')
         }
 
         const isValid = await bcrypt.compare(credentials.password, user.passwordHash)
         if (!isValid) {
-          return null
+          throw new Error('密码错误，请重新输入')
         }
 
         return {
