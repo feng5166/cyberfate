@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Footer } from '@/components/layout/Footer';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { PaymentModal } from '@/components/PaymentModal';
 import { PricingCardList } from '@/components/pricing/PricingCardList';
+import { AuthModal } from '@/components/auth/AuthModal';
 
 const faqs = [
   { q: '免费版和会员版有什么区别？', a: '免费版每天可进行 3 次基础八字分析。会员版解锁无限次分析、AI 深度报告、紫微斗数、塔罗占卜等全部高级功能，同时享受优先客服支持。' },
@@ -22,12 +23,15 @@ export default function PricingPage() {
   const [modal, setModal] = useState<{ planName: string; price: string } | null>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [selectedPlan, setSelectedPlan] = useState('专业版');
+  const [authOpen, setAuthOpen] = useState(false);
+  const [pendingPlan, setPendingPlan] = useState<{ planName: string; price: string } | null>(null);
 
   const isSubscribed = session?.user?.isSubscribed ?? false;
 
   const handleCTAClick = (planName: string, price: string) => {
     if (!session) {
-      router.push('/auth/login');
+      setPendingPlan({ planName, price });
+      setAuthOpen(true);
       return;
     }
     if (isSubscribed) {
@@ -36,6 +40,17 @@ export default function PricingPage() {
     }
     setModal({ planName, price: `¥${price}` });
   };
+
+  useEffect(() => {
+    if (session && pendingPlan) {
+      if (isSubscribed) {
+        router.push('/profile');
+      } else {
+        setModal({ planName: pendingPlan.planName, price: `¥${pendingPlan.price}` });
+      }
+      setPendingPlan(null);
+    }
+  }, [session, pendingPlan, isSubscribed, router]);
 
   return (
     <div className="bg-[#FAF9F6] min-h-screen">
@@ -103,6 +118,8 @@ export default function PricingPage() {
           onClose={() => setModal(null)}
         />
       )}
+
+      <AuthModal isOpen={authOpen} onClose={() => setAuthOpen(false)} />
     </div>
   );
 }
