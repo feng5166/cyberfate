@@ -7,6 +7,8 @@ interface EmailLoginFormProps {
   onSubmit: (email: string, password: string) => void
   loading?: boolean
   serverError?: string
+  agreed?: boolean
+  setAgreed?: (v: boolean) => void
 }
 
 interface FormErrors {
@@ -15,11 +17,19 @@ interface FormErrors {
   agreement?: string
 }
 
-export function EmailLoginForm({ onSubmit, loading, serverError }: EmailLoginFormProps) {
+export function EmailLoginForm({
+  onSubmit,
+  loading,
+  serverError,
+  agreed: agreedProp,
+  setAgreed: setAgreedProp,
+}: EmailLoginFormProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [agreed, setAgreed] = useState(false)
+  const [agreedLocal, setAgreedLocal] = useState(false)
+  const agreed = agreedProp ?? agreedLocal
+  const setAgreed = setAgreedProp ?? setAgreedLocal
   const [errors, setErrors] = useState<FormErrors>({})
   const [agreementShake, setAgreementShake] = useState(false)
 

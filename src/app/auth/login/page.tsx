@@ -15,8 +15,13 @@ function LoginForm() {
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [serverError, setServerError] = useState('')
+  const [agreed, setAgreed] = useState(false)
 
   const handleGoogle = async () => {
+    if (!agreed) {
+      setServerError('请先阅读并同意用户协议和隐私政策')
+      return
+    }
     setGoogleLoading(true)
     setServerError('')
     await signIn('google', { callbackUrl })
@@ -110,6 +115,8 @@ function LoginForm() {
           onSubmit={handleEmailSubmit}
           loading={loading}
           serverError={serverError}
+          agreed={agreed}
+          setAgreed={setAgreed}
         />
       </div>
     </div>

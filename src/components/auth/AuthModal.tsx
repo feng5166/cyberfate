@@ -19,6 +19,7 @@ export function AuthModal({ isOpen, onClose, callbackUrl = '/bazi' }: AuthModalP
   const [googleLoading, setGoogleLoading] = useState(false)
   const [serverError, setServerError] = useState('')
   const [visible, setVisible] = useState(false)
+  const [agreed, setAgreed] = useState(false)
 
   useEffect(() => {
     if (isOpen) {
@@ -48,6 +49,10 @@ export function AuthModal({ isOpen, onClose, callbackUrl = '/bazi' }: AuthModalP
   }, [isOpen, handleClose])
 
   const handleGoogle = async () => {
+    if (!agreed) {
+      setServerError('请先阅读并同意用户协议和隐私政策')
+      return
+    }
     setGoogleLoading(true)
     setServerError('')
     await signIn('google', { callbackUrl })
@@ -167,6 +172,8 @@ export function AuthModal({ isOpen, onClose, callbackUrl = '/bazi' }: AuthModalP
           onSubmit={handleEmailSubmit}
           loading={loading}
           serverError={serverError}
+          agreed={agreed}
+          setAgreed={setAgreed}
         />
       </div>
     </div>
