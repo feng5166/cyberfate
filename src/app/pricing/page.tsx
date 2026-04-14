@@ -23,9 +23,15 @@ export default function PricingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [selectedPlan, setSelectedPlan] = useState('专业版');
 
+  const isSubscribed = session?.user?.isSubscribed ?? false;
+
   const handleCTAClick = (planName: string, price: string) => {
     if (!session) {
       router.push('/auth/login');
+      return;
+    }
+    if (isSubscribed) {
+      router.push('/profile');
       return;
     }
     setModal({ planName, price: `¥${price}` });
@@ -41,6 +47,11 @@ export default function PricingPage() {
           <p className="text-[15px] text-[#1C1A16]/55 mt-3">
             灵活订阅，随时取消
           </p>
+          {isSubscribed && (
+            <div className="mt-6 inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 text-sm font-medium px-5 py-2.5 rounded-full border border-emerald-200">
+              <span>您已是会员 ✨ 感谢支持</span>
+            </div>
+          )}
         </div>
       </section>
 
@@ -50,6 +61,7 @@ export default function PricingPage() {
             selectedPlan={selectedPlan}
             onSelectPlan={setSelectedPlan}
             onCTAClick={handleCTAClick}
+            isSubscribed={isSubscribed}
           />
         </div>
       </section>

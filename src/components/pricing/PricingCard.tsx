@@ -9,6 +9,9 @@ export interface PricingCardProps {
   recommended: boolean;
   perks: string[];
   isSelected: boolean;
+  isCurrentPlan?: boolean;
+  isSubscribed?: boolean;
+  ctaText?: string;
   onClick: () => void;
   onCTAClick: () => void;
 }
@@ -20,15 +23,25 @@ export function PricingCard({
   recommended,
   perks,
   isSelected,
+  isCurrentPlan = false,
+  isSubscribed = false,
+  ctaText,
   onClick,
   onCTAClick,
 }: PricingCardProps) {
   return (
     <div
-      className={`flex-1 cursor-pointer ${recommended ? 'relative' : ''}`}
+      className={`flex-1 cursor-pointer ${recommended || isCurrentPlan ? 'relative' : ''}`}
       onClick={onClick}
     >
-      {recommended && (
+      {isCurrentPlan && (
+        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
+          <span className="inline-block bg-emerald-600 text-white text-xs px-3 py-1 rounded-full font-medium">
+            ✓ 当前计划
+          </span>
+        </div>
+      )}
+      {recommended && !isCurrentPlan && (
         <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
           <span className="inline-block bg-[#1C1A16] text-white text-xs px-3 py-1 rounded-full font-medium">
             ★ 最受欢迎
@@ -37,9 +50,11 @@ export function PricingCard({
       )}
       <div
         className={`h-full flex flex-col p-5 md:p-9 bg-white rounded-2xl transition-all duration-300 ${
-          isSelected
-            ? 'shadow-md ring-2 ring-[#1C1A16] lg:scale-[1.03] lg:-translate-y-2'
-            : 'shadow-sm hover:shadow-md hover:-translate-y-1'
+          isCurrentPlan
+            ? 'shadow-md ring-2 ring-emerald-500 lg:scale-[1.03] lg:-translate-y-2'
+            : isSelected
+              ? 'shadow-md ring-2 ring-[#1C1A16] lg:scale-[1.03] lg:-translate-y-2'
+              : 'shadow-sm hover:shadow-md hover:-translate-y-1'
         }`}
       >
         <h2 className="text-[20px] font-semibold text-[#1C1A16] text-center mb-4">
@@ -66,15 +81,20 @@ export function PricingCard({
         <button
           onClick={(e) => {
             e.stopPropagation();
-            onCTAClick();
+            if (!isCurrentPlan) onCTAClick();
           }}
+          disabled={isCurrentPlan}
           className={`w-full h-12 rounded-lg text-sm font-medium transition-colors ${
-            isSelected
-              ? 'bg-[#1C1A16] text-white hover:bg-[#2A2621]'
-              : 'border border-[#1C1A16]/15 text-[#1C1A16] hover:border-[#1C1A16]/40 hover:bg-[#1C1A16]/[0.03]'
+            isCurrentPlan
+              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default'
+              : isSubscribed
+                ? 'border border-[#1C1A16]/15 text-[#1C1A16] hover:border-[#1C1A16]/40 hover:bg-[#1C1A16]/[0.03]'
+                : isSelected
+                  ? 'bg-[#1C1A16] text-white hover:bg-[#2A2621]'
+                  : 'border border-[#1C1A16]/15 text-[#1C1A16] hover:border-[#1C1A16]/40 hover:bg-[#1C1A16]/[0.03]'
           }`}
         >
-          {isSelected ? '立即开通' : '选择方案'}
+          {ctaText ?? (isCurrentPlan ? '当前计划' : isSelected ? '立即开通' : '选择方案')}
         </button>
       </div>
     </div>
