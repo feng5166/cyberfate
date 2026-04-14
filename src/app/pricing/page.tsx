@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { Footer } from '@/components/layout/Footer';
 import { Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { PaymentModal } from '@/components/PaymentModal';
@@ -38,8 +40,18 @@ const faqs = [
 ];
 
 export default function PricingPage() {
+  const { data: session } = useSession();
+  const router = useRouter();
   const [modal, setModal] = useState<{ planName: string; price: string } | null>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  const handleSelectPlan = (planName: string, price: string) => {
+    if (!session) {
+      router.push('/auth/login');
+      return;
+    }
+    setModal({ planName, price: `¥${price}` });
+  };
 
   return (
     <div className="bg-[#FAF9F6] min-h-screen">
@@ -96,7 +108,7 @@ export default function PricingPage() {
                 </ul>
 
                 <button
-                  onClick={() => setModal({ planName: plan.name, price: `¥${plan.price}` })}
+                  onClick={() => handleSelectPlan(plan.name, plan.price)}
                   className={`w-full h-12 rounded-lg text-sm font-medium transition-colors ${
                     plan.recommended
                       ? 'bg-[#1C1A16] text-white hover:bg-[#2A2621]'
