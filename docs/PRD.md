@@ -207,17 +207,207 @@
 
 ---
 
-### 4.2 登录/注册页 (/auth/login)
+### 4.2 登录/注册弹窗 (Login/Register Modal)
 
-#### 页面结构
-- Google 账号登录按钮（主要方式）
-- 邮箱密码登录表单（备选方式）
-- 用户协议勾选框
+> 2026-04-14 重写 — 对标 FateMaster 登录体验，从简陋弹窗升级为完整登录流程
 
-#### 交互说明
-- Google 登录：跳转 OAuth 授权，新用户自动创建账号
-- 邮箱登录：输入邮箱密码，系统自动判断登录/注册
-- 密码要求：至少 8 个字符
+#### 触发入口
+
+| 入口 | 触发条件 | 行为 |
+|------|---------|------|
+| 导航栏「登录」按钮 | 未登录状态点击 | 弹出登录 Modal |
+| 侧边栏「登录 / 注册」按钮 | 未登录态点击 | 弹出登录 Modal |
+| 功能页付费功能锁定点击 | guest 态点击锁定功能 | 弹出登录 Modal |
+| 「解锁全部功能」按钮 | guest / logged_in 点击 | logged_in 跳 pricing；guest 弹登录 Modal |
+| API 返回 401 | 任意需要登录的接口未授权 | 自动弹出登录 Modal |
+
+#### 弹窗容器规格
+
+| 属性 | 值 |
+|------|-----|
+| 形式 | 居中 Modal（非全屏、非 Drawer） |
+| 遮罩 | `bg-black/50` backdrop-blur-sm，点击遮罩关闭 |
+| 宽度 | `w-full max-w-[420px]`（桌面端） |
+| 圆角 | `rounded-2xl` |
+| 内边距 | `p-8`（桌面）/ `p-6`（移动） |
+| 背景 | `#FFFFFF` |
+| 阴影 | `shadow-2xl` |
+| 关闭按钮 | 右上角 ✕ 图标（20px，muted 色），点击关闭弹窗 |
+| 动画 | fade-in + scale(0.95→1)，200ms ease-out |
+
+#### 弹窗内容结构（从上到下）
+
+```
+┌─────────────────────────────────────┐
+│                                     │
+│         ✕                           │  ← 右上角关闭
+│                                     │
+│       登录 / 注册                    │  ← 标题
+│  登录或创建账号以继续使用             │  ← 副标题（muted 色）
+│                                     │
+│  ┌───────────────────────────────┐  │
+│  │  G    使用 Google 登录         │  │  ← Google OAuth 按钮
+│  └───────────────────────────────┘  │
+│                                     │
+│  ────── 或使用邮箱登录 ──────        │  ← 分割线
+│                                     │
+│  邮箱                               │  ← 输入标签
+│  ┌───────────────────────────────┐  │
+│  │  example@example.com          │  │  ← 邮箱输入框
+│  └───────────────────────────────┘  │
+│                                     │
+│  密码                               │  ← 输入标签
+│  ┌───────────────────────────────┐  │
+│  │  ••••••••                 👁   │  │  ← 密码输入框+显示切换
+│  └───────────────────────────────┘  │
+│  至少8个字符                         │  ← 密码提示（error 时变红）
+│                            忘记密码? │  ← 右对齐链接
+│                                     │
+│  ☐ 我已阅读并同意 用户协议 和 隐私政策 │  ← 协议 checkbox
+│                                     │
+│  ┌───────────────────────────────┐  │
+│  │        登录 / 注册            │  │  ← 主按钮
+│  └───────────────────────────────┘  │
+│                                     │
+└─────────────────────────────────────┘
+```
+
+##### ① 标题区
+
+| 元素 | 样式 |
+|------|------|
+| 标题 | `text-[#1C1A16] text-2xl font-semibold text-center` |
+| 副标题 | `text-[#9B9590] text-sm text-center mt-2` |
+
+文案：
+- 标题：「登录 / 注册」
+- 副标题：「登录或创建账号以继续使用」
+
+##### ② Google 登录按钮
+
+| 属性 | 值 |
+|------|-----|
+| 样式 | `w-full border border-[#E5E2DD] rounded-lg py-3 px-4 flex items-center justify-center gap-3 hover:bg-[#FAF9F6] transition-colors cursor-pointer` |
+| 图标 | Google 官方 G Logo（彩色，20px） |
+| 文字 | `text-[#1C1A16] text-sm font-medium` |
+| 文案：「使用 Google 登录」 |
+
+交互：点击 → 跳转 Google OAuth 授权 → 回调后自动关闭弹窗 → 刷新页面状态
+
+##### ③ 分割线
+
+```
+          或使用邮箱登录
+```
+
+| 属性 | 值 |
+|------|-----|
+| 样式 | `flex items-center gap-4 my-6` |
+| 线条 | `flex-1 h-px bg-[#E5E2DD]` |
+| 文字 | `text-[#9B9590] text-xs whitespace-nowrap` |
+
+##### ④ 邮箱输入框
+
+| 属性 | 值 |
+|------|-----|
+| 标签 | `text-[#1C1A16] text-sm font-medium mb-2 block`（左对齐） |
+| 文案：「邮箱」 |
+| 输入框 | `w-full border border-[#E5E2DD] rounded-lg px-4 py-3 text-sm placeholder:text-[#C4C0BA] focus:outline-none focus:ring-2 focus:ring-[#1C1A16]/10 focus:border-[#1C1A16]` |
+| placeholder | `example@example.com` |
+| 类型 | `email`（自动触发浏览器邮箱补全） |
+| autocomplete | `email` |
+
+##### ⑤ 密码输入框
+
+| 属性 | 值 |
+|------|-----|
+| 标签 | `text-[#1C1A16] text-sm font-medium mb-2 block`（左对齐） |
+| 文案：「密码」 |
+| 输入框 | 同邮箱输入框样式 |
+| placeholder | `至少8个字符` |
+| 类型 | `password`（默认隐藏） |
+| autocomplete | `current-password` |
+| 右侧图标 | 👁 眼睛图标（16px，muted 色），点击切换 password/text |
+
+密码显示/隐藏切换逻辑：
+- 默认 `type="password"`，显示 ••••••••
+- 点击眼睛图标 → 切换为 `type="text"`，显示明文密码
+- 图标联动：闭眼👁（隐藏态）↔ 睁眼👁‍🗨（显示态）
+
+##### ⑥ 密码提示 + 忘记密码
+
+| 元素 | 样式 | 位置 |
+|------|------|------|
+| 密码提示 | `text-[#C4C0BA] text-xs mt-1` | 左对齐，输入框下方 |
+| 提示文案 | 「至少8个字符」（错误时变 `text-red-500`：「密码至少8个字符」） |
+| 忘记密码链接 | `text-[#1C1A16] text-xs hover:underline cursor-pointer` | 右对齐，与提示同行或独立一行右对齐 |
+| 链接文案 | 「忘记密码?」 |
+
+> ⚠️ 「忘记密码?」P0 可先做 UI 占位，点击后 toast 提示「请联系客服重置密码」，P1 再接入邮件重置流程。
+
+##### ⑦ 协议勾选
+
+| 属性 | 值 |
+|------|-----|
+| 容器 | `flex items-start gap-2 mt-5` |
+| Checkbox | `mt-0.5 w-4 h-4 rounded border-[#D5D0CA] text-[#1C1A16] focus:ring-[#1C1A16]/10` |
+| 文字 | `text-[#6B6560] text-xs leading-relaxed` |
+| 文案前缀 | 「我已阅读并同意 」 |
+| 「用户协议」链接 | `text-[#1C1A16] underline hover:no-underline cursor-pointer` → 跳转 `/terms` |
+| 「 和 」 | 纯文字 |
+| 「隐私政策」链接 | `text-[#1C1A16] underline hover:no-underline cursor-pointer` → 跳转 `/privacy` |
+
+交互：
+- **未勾选时**：「登录 / 注册」按钮禁用（`opacity-50 pointer-events-none`），或允许点击但 shake 动画提示先勾选
+- **推荐方案**：不禁止点击，提交时未勾选则 checkbox 边框闪红 + tooltip 提示
+
+##### ⑧ 提交按钮
+
+| 属性 | 值 |
+|------|-----|
+| 样式 | `w-full bg-[#1C1A16] text-white rounded-lg py-3.5 px-4 font-medium text-sm hover:bg-[#1C1A16]/90 transition-colors disabled:opacity-50` |
+| 文案：「登录 / 注册」 |
+| loading 态 | 文字变为 spinner + 「登录中...」，按钮 `pointer-events-none` |
+
+提交逻辑：
+1. 校验邮箱格式
+2. 校验密码长度 ≥ 8
+3. 校验协议已勾选
+4. 调用 `/api/auth/login`（或 `/api/auth/register`）
+5. 成功 → 关闭弹窗 → 刷新页面/更新登录态
+6. 失败 → 对应字段下方显示错误提示（红色小字）
+
+#### 错误状态处理
+
+| 错误场景 | 处理方式 |
+|---------|---------|
+| 邮箱格式无效 | 邮箱输入框下方红字「请输入有效的邮箱地址」+ 边框变红 |
+| 密码不足8位 | 密码提示变红「密码至少8个字符」+ 输入框边框变红 |
+| 未勾选协议 | checkbox 闪红 + 下方红字「请先阅读并同意用户协议和隐私政策」 |
+| 账号不存在 | 按钮下方红字「该邮箱尚未注册，将自动创建新账号」（或直接静默注册） |
+| 密码错误 | 按钮下方红字「邮箱或密码错误」 |
+| 网络错误 | 按钮下方红字「网络异常，请稍后重试」+ 重试按钮 |
+| Google OAuth 失败 | toast 提示「Google 登录失败，请重试」 |
+
+#### 移动端适配
+
+| 断点 | 调整 |
+|------|------|
+| < 640px | 弹窗宽度 `w-[90%] max-w-[360px]`，内边距 `p-6` |
+| < 640px | 字号整体缩小一档：标题 `text-xl`，正文 `text-sm` |
+| 所有断点 | 弹窗最大高度 `max-h-[90vh]`，内容超出时弹窗本身可 scroll |
+
+#### 组件文件
+
+| 组件 | 路径 | 说明 |
+|------|------|------|
+| AuthModal | components/auth/AuthModal.tsx | 登录/注册弹窗主组件 |
+| GoogleLoginButton | components/auth/GoogleLoginButton.tsx | Google OAuth 按钮 |
+| EmailLoginForm | components/auth/EmailLoginForm.tsx | 邮箱密码表单 |
+
+#### 开发优先级：P0
+
+登录转化是商业化关键路径，与侧边栏三态逻辑同步开发。
 
 ---
 

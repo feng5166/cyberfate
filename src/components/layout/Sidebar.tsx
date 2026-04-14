@@ -26,6 +26,7 @@ import {
 import { useSession, signOut } from 'next-auth/react';
 import { SidebarMenuItem } from './SidebarMenuItem';
 import { SidebarGroup } from './SidebarGroup';
+import { AuthModal } from '@/components/auth/AuthModal';
 
 interface SidebarProps {
   collapsed?: boolean;
@@ -113,6 +114,7 @@ export function Sidebar({
 
   const logout = () => signOut({ callbackUrl: '/' });
 
+  const [authOpen, setAuthOpen] = useState(false);
   const [internalCollapsed, setInternalCollapsed] = useState(false);
   const collapsed = collapsedProp ?? internalCollapsed;
 
@@ -176,7 +178,7 @@ export function Sidebar({
           </button>
           <button
             type="button"
-            onClick={() => router.push('/auth/login')}
+            onClick={() => setAuthOpen(true)}
             className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#1C1A16] transition-colors hover:bg-[#F9FAFB]"
             title="登录 / 注册"
           >
@@ -188,7 +190,7 @@ export function Sidebar({
           <UnlockButton />
           <button
             type="button"
-            onClick={() => router.push('/auth/login')}
+            onClick={() => setAuthOpen(true)}
             className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] bg-white px-4 py-3 text-sm font-medium text-[#1C1A16] transition-colors hover:bg-[#F9FAFB]"
           >
             <User className="h-4 w-4" />
@@ -378,6 +380,9 @@ export function Sidebar({
   );
 
   return (
-    <aside className={desktopAsideClasses}>{SidebarContent(collapsed)}</aside>
+    <>
+      <aside className={desktopAsideClasses}>{SidebarContent(collapsed)}</aside>
+      <AuthModal isOpen={authOpen} onClose={() => setAuthOpen(false)} />
+    </>
   );
 }

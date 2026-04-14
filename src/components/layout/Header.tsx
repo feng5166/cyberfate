@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { ChevronDown, Menu, X } from 'lucide-react';
+import { AuthModal } from '@/components/auth/AuthModal';
 
 // 导航项配置
 const navItems = [
@@ -54,6 +55,7 @@ export function Header() {
   const [featureOpen, setFeatureOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
   const { data: session } = useSession();
   const pathname = usePathname();
   const isHomePage = pathname === '/';
@@ -204,12 +206,12 @@ export function Header() {
                 )}
               </div>
             ) : (
-              <Link
-                href="/auth/login"
+              <button
+                onClick={() => setAuthOpen(true)}
                 className="text-sm text-brand-gray hover:text-[#1C1A16] transition-colors duration-200"
               >
                 登录
-              </Link>
+              </button>
             )}
           </div>
         </div>
@@ -300,19 +302,22 @@ export function Header() {
                   </button>
                 </>
               ) : (
-                <Link
-                  href="/auth/login"
-                  className="block py-3 text-sm text-[#1C1A16] font-medium active:bg-brand-bg transition-colors"
-                  onClick={() => setMobileOpen(false)}
+                <button
+                  className="block w-full text-left py-3 text-sm text-[#1C1A16] font-medium active:bg-brand-bg transition-colors"
+                  onClick={() => {
+                    setMobileOpen(false);
+                    setAuthOpen(true);
+                  }}
                 >
                   登录 / 注册
-                </Link>
+                </button>
               )}
             </div>
 
           </div>
         </div>
       )}
+      <AuthModal isOpen={authOpen} onClose={() => setAuthOpen(false)} />
     </header>
   );
 }
