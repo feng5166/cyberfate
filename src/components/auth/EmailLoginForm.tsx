@@ -53,7 +53,10 @@ export function EmailLoginForm({ onSubmit, loading, serverError }: EmailLoginFor
 
     setErrors(newErrors)
 
-    if (Object.keys(newErrors).length > 0) return
+    if (Object.keys(newErrors).length > 0) {
+      console.log('[EmailLoginForm] 表单校验失败:', newErrors)
+      return
+    }
 
     onSubmit(email, password)
   }
