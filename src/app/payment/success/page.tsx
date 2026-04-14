@@ -2,7 +2,6 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
 
 function SuccessContent() {
   const searchParams = useSearchParams();
@@ -14,7 +13,7 @@ function SuccessContent() {
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          router.push('/');
+          router.push('/bazi');
           return 0;
         }
         return prev - 1;
@@ -30,20 +29,12 @@ function SuccessContent() {
         <h1 className="font-heading text-3xl font-bold text-primary mb-4">支付成功！</h1>
         <p className="text-secondary mb-2">感谢你开通赛博命理师会员</p>
         <p className="text-secondary mb-8">你的专属 AI 命理体验已解锁</p>
-        <div className="space-y-3">
-          <Link
-            href="/bazi"
-            className="block w-full px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors"
-          >
-            开始八字分析
-          </Link>
-          <Link
-            href="/"
-            className="block w-full px-6 py-3 border border-primary/30 text-secondary rounded-lg hover:bg-background-alt transition-colors"
-          >
-            返回首页（{countdown}s）
-          </Link>
-        </div>
+        <button
+          onClick={() => router.push('/bazi')}
+          className="w-full px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors"
+        >
+          开始八字分析（{countdown}s）
+        </button>
       </div>
     </div>
   );
