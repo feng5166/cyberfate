@@ -112,6 +112,15 @@ export const authOptions: NextAuthOptions = {
           select: { avatar: true },
         })
         session.user.image = dbUser?.avatar ?? null
+
+        const activeSubscription = await prisma.subscription.findFirst({
+          where: {
+            userId: token.id as string,
+            status: 'active',
+            expireAt: { gt: new Date() },
+          },
+        })
+        session.user.isSubscribed = !!activeSubscription
       }
       return session
     },
