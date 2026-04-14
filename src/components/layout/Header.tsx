@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import { useSession, signOut } from 'next-auth/react';
 import { ChevronDown, Menu, X } from 'lucide-react';
 
 // 导航项配置
@@ -52,6 +53,8 @@ const desktopFeatureMenu = [
 export function Header() {
   const [featureOpen, setFeatureOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const { data: session } = useSession();
   const pathname = usePathname();
   const isHomePage = pathname === '/';
 
@@ -156,8 +159,59 @@ export function Header() {
             </Link>
           </div>
 
-          {/* 右侧占位 - 保持布局平衡 */}
-          <div className="hidden lg:block w-16" />
+          {/* 右侧：桌面端账户/登录 */}
+          <div className="hidden lg:flex items-center gap-4">
+            {session ? (
+              <div
+                className="relative"
+                onMouseEnter={() => setUserMenuOpen(true)}
+                onMouseLeave={() => setUserMenuOpen(false)}
+              >
+                <button className="flex items-center gap-2 text-sm text-brand-gray hover:text-[#1C1A16] cursor-pointer transition-colors duration-200">
+                  {session.user?.image ? (
+                    <img src={session.user.image} alt="" className="w-6 h-6 rounded-full" />
+                  ) : (
+                    <span className="w-6 h-6 rounded-full bg-brand-bg flex items-center justify-center text-xs font-medium text-[#1C1A16]">
+                      {session.user?.name?.[0] || '我'}
+                    </span>
+                  )}
+                  {session.user?.name || '账户'}
+                </button>
+                {userMenuOpen && (
+                  <div className="absolute right-0 top-full pt-2">
+                    <div className="py-2 bg-white rounded-lg shadow-lg border border-brand-border-light min-w-[140px] animate-fadeIn">
+                      <Link
+                        href="/profile"
+                        className="block px-4 py-2 text-sm text-brand-gray hover:text-[#1C1A16] hover:bg-brand-bg transition-colors"
+                      >
+                        个人中心
+                      </Link>
+                      <Link
+                        href="/pricing"
+                        className="block px-4 py-2 text-sm text-brand-gray hover:text-[#1C1A16] hover:bg-brand-bg transition-colors"
+                      >
+                        我的会员
+                      </Link>
+                      <hr className="my-1 border-brand-border-light" />
+                      <button
+                        onClick={() => signOut({ callbackUrl: '/' })}
+                        className="w-full text-left px-4 py-2 text-sm text-brand-gray hover:text-[#1C1A16] hover:bg-brand-bg transition-colors"
+                      >
+                        退出登录
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link
+                href="/auth/login"
+                className="text-sm text-brand-gray hover:text-[#1C1A16] transition-colors duration-200"
+              >
+                登录
+              </Link>
+            )}
+          </div>
         </div>
       </nav>
 
@@ -222,6 +276,38 @@ export function Header() {
               >
                 知识库
               </Link>
+            </div>
+
+            {/* 登录/账户 */}
+            <div className="pt-2 border-t border-brand-border-light mt-2">
+              {session ? (
+                <>
+                  <Link
+                    href="/profile"
+                    className="block py-3 text-sm text-brand-gray hover:text-[#1C1A16] active:bg-brand-bg transition-colors"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    个人中心
+                  </Link>
+                  <button
+                    onClick={() => {
+                      signOut({ callbackUrl: '/' });
+                      setMobileOpen(false);
+                    }}
+                    className="block w-full text-left py-3 text-sm text-brand-gray hover:text-[#1C1A16] active:bg-brand-bg transition-colors"
+                  >
+                    退出登录
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href="/auth/login"
+                  className="block py-3 text-sm text-[#1C1A16] font-medium active:bg-brand-bg transition-colors"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  登录 / 注册
+                </Link>
+              )}
             </div>
 
           </div>
