@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import clsx from 'clsx';
@@ -27,6 +27,7 @@ import { useSession, signOut } from 'next-auth/react';
 import { SidebarMenuItem } from './SidebarMenuItem';
 import { SidebarGroup } from './SidebarGroup';
 import { AuthModal } from '@/components/auth/AuthModal';
+import { UpgradeModal } from '@/components/pricing/UpgradeModal';
 
 interface SidebarProps {
   collapsed?: boolean;
@@ -115,6 +116,18 @@ export function Sidebar({
   const logout = () => signOut({ callbackUrl: '/' });
 
   const [authOpen, setAuthOpen] = useState(false);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const shouldOpenUpgrade = useRef(false);
+  const prevSession = useRef(session);
+
+  useEffect(() => {
+    if (!prevSession.current && session && shouldOpenUpgrade.current) {
+      shouldOpenUpgrade.current = false;
+      setUpgradeModalOpen(true);
+    }
+    prevSession.current = session;
+  }, [session]);
+
   const [internalCollapsed, setInternalCollapsed] = useState(false);
   const collapsed = collapsedProp ?? internalCollapsed;
 
@@ -153,10 +166,19 @@ export function Sidebar({
     );
   };
 
+  const handleUnlock = () => {
+    if (!session) {
+      shouldOpenUpgrade.current = true;
+      setAuthOpen(true);
+    } else {
+      setUpgradeModalOpen(true);
+    }
+  };
+
   const UnlockButton = () => (
     <button
       type="button"
-      onClick={() => router.push('/pricing')}
+      onClick={handleUnlock}
       className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1C1A16] px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-[#2A2620]"
     >
       <Lock className="h-4 w-4" />
@@ -170,7 +192,7 @@ export function Sidebar({
         <div className="flex flex-col items-center gap-2">
           <button
             type="button"
-            onClick={() => router.push('/pricing')}
+            onClick={handleUnlock}
             className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1C1A16] text-white transition-colors hover:bg-[#2A2620]"
             title="解锁全部功能"
           >
@@ -207,7 +229,7 @@ export function Sidebar({
         <div className="flex flex-col items-center gap-2">
           <button
             type="button"
-            onClick={() => router.push('/pricing')}
+            onClick={handleUnlock}
             className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1C1A16] text-white transition-colors hover:bg-[#2A2620]"
             title="解锁全部功能"
           >
@@ -383,6 +405,7 @@ export function Sidebar({
     <>
       <aside className={desktopAsideClasses}>{SidebarContent(collapsed)}</aside>
       <AuthModal isOpen={authOpen} onClose={() => setAuthOpen(false)} />
+      <UpgradeModal isOpen={upgradeModalOpen} onClose={() => setUpgradeModalOpen(false)} />
     </>
   );
 }
