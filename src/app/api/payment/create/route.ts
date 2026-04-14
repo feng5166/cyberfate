@@ -93,8 +93,8 @@ export async function POST(req: NextRequest) {
     
     console.log('[Payment] Mock 支付完成 - 会员已开通至:', expireAt);
     
-    // 直接返回成功页面（使用生产域名）
-    const baseUrl = process.env.NEXTAUTH_URL || 'https://www.cyberfate.me';
+    // 生产环境固定域名，避免环境变量格式问题导致跳转到错误域名
+    const baseUrl = 'https://www.cyberfate.me';
     return NextResponse.json({
       orderId: order.id,
       checkoutUrl: `${baseUrl}/payment/success?order_id=${order.id}&mock=true`,
