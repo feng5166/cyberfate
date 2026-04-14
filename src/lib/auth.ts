@@ -37,7 +37,7 @@ export const authOptions: NextAuthOptions = {
         })
 
         if (!user) {
-          throw new Error('该邮箱尚未注册')
+          return null
         }
 
         if (!user.passwordHash) {
