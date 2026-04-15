@@ -128,6 +128,12 @@ export function Sidebar({
     prevSession.current = session;
   }, [session]);
 
+  useEffect(() => {
+    if ((session?.user as any)?.isSubscribed === true) {
+      setUpgradeModalOpen(false);
+    }
+  }, [(session?.user as any)?.isSubscribed]);
+
   const [internalCollapsed, setInternalCollapsed] = useState(false);
   const collapsed = collapsedProp ?? internalCollapsed;
 
