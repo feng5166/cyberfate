@@ -16,6 +16,9 @@ interface UpgradeModalProps {
 export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
   const { data: session } = useSession();
   const router = useRouter();
+  const isSubscribed = (session?.user as { isSubscribed?: boolean } | undefined)?.isSubscribed;
+  const shouldShow = isOpen && !isSubscribed;
+
   const [selectedPlan, setSelectedPlan] = useState('专业版');
   const [visible, setVisible] = useState(false);
   const [paymentModal, setPaymentModal] = useState<{ planName: string; price: string } | null>(null);
@@ -23,7 +26,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
   const [pendingPayment, setPendingPayment] = useState<{ planName: string; price: string } | null>(null);
 
   useEffect(() => {
-    if (isOpen) {
+    if (shouldShow) {
       requestAnimationFrame(() => setVisible(true));
       document.body.style.overflow = 'hidden';
     } else {
@@ -33,7 +36,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
     return () => {
       document.body.style.overflow = '';
     };
-  }, [isOpen]);
+  }, [shouldShow]);
 
   const handleClose = useCallback(() => {
     setVisible(false);
@@ -41,13 +44,13 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
   }, [onClose]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!shouldShow) return;
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') handleClose();
     };
     window.addEventListener('keydown', handleEsc);
     return () => window.removeEventListener('keydown', handleEsc);
-  }, [isOpen, handleClose]);
+  }, [shouldShow, handleClose]);
 
   useEffect(() => {
     if (session && pendingPayment) {
@@ -56,16 +59,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
     }
   }, [session, pendingPayment]);
 
-  const isSubscribed = (session?.user as { isSubscribed?: boolean } | undefined)?.isSubscribed;
-
-  console.log('[UpgradeModal] 每次渲染 - isSubscribed:', isSubscribed);
-  console.log('[UpgradeModal] session 对象:', JSON.stringify(session, null, 2));
-  console.log('[UpgradeModal] 即将 return null?', !!isSubscribed);
-
-  if (isSubscribed) {
-    console.log('[UpgradeModal] ✅ isSubscribed=true, return null（弹窗隐藏）');
-    return null;
-  }
+  if (!shouldShow) return null;
 
   const handleCTAClick = (planName: string, price: string) => {
     if (!session) {
@@ -80,8 +74,6 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
     handleClose();
     router.push('/pricing');
   };
-
-  if (!isOpen) return null;
 
   return (
     <>
