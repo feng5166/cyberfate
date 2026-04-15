@@ -52,9 +52,7 @@ export function SubscriptionManagePanel({ subscription, paymentMethod, onBack }:
       const data = await res.json();
 
       if (res.ok) {
-        alert(`需补差价 ¥${data.prorated_amount}，请前往支付`);
-        // TODO: 调起支付流程
-        router.push('/pricing');
+        router.push(`/pricing?plan=${targetPlan}&upgrade=true&amount=${data.prorated_amount}`);
       } else {
         alert(data.error || '升级失败');
       }
