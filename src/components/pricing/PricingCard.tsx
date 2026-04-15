@@ -41,7 +41,7 @@ export function PricingCard({
           </span>
         </div>
       )}
-      {recommended && !isCurrentPlan && (
+      {recommended && !isCurrentPlan && !isSubscribed && (
         <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
           <span className="inline-block bg-[#1C1A16] text-white text-xs px-3 py-1 rounded-full font-medium">
             ★ 最受欢迎
