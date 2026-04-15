@@ -52,7 +52,7 @@ export function PricingCard({
         className={`h-full flex flex-col p-5 md:p-9 bg-white rounded-2xl transition-all duration-300 ${
           isCurrentPlan
             ? 'shadow-md ring-2 ring-emerald-500 lg:scale-[1.03] lg:-translate-y-2'
-            : isSelected
+            : isSelected && !isCurrentPlan
               ? 'shadow-md ring-2 ring-[#1C1A16] lg:scale-[1.03] lg:-translate-y-2'
               : 'shadow-sm hover:shadow-md hover:-translate-y-1'
         }`}

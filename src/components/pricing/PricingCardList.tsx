@@ -53,7 +53,7 @@ export function PricingCardList({
             period={plan.period}
             recommended={plan.recommended}
             perks={plan.perks}
-            isSelected={isCurrent ? true : selectedPlan === plan.name}
+            isSelected={!isCurrent && selectedPlan === plan.name}
             isCurrentPlan={isCurrent}
             isSubscribed={isSubscribed}
             ctaText={isCurrent ? '当前计划' : isSubscribed ? '管理订阅 →' : undefined}
