@@ -30,7 +30,9 @@ export async function GET(req: NextRequest) {
       description: planNames[order.plan] || order.plan,
       amount: order.amount / 100, // 分转元
       currency: 'CNY',
-      status: order.status === 'paid' ? 'paid' : order.status === 'failed' ? 'failed' : 'pending'
+      status: order.status === 'paid' ? 'paid' : order.status === 'failed' ? 'failed' : 'pending',
+      plan: order.plan,
+      outTradeNo: order.outTradeNo,
     }));
 
     return NextResponse.json({ invoices });
