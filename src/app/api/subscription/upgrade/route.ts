@@ -2,18 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
-
-const planPriceMap: Record<string, number> = {
-  monthly: 29,
-  quarterly: 69,
-  yearly: 199,
-}
-
-const planDurationMap: Record<string, number> = {
-  monthly: 30,
-  quarterly: 90,
-  yearly: 365,
-}
+import { PRICING_CONFIG, type PlanId } from '@/lib/pricing-config'
 
 const planRankMap: Record<string, number> = {
   monthly: 1,
@@ -54,14 +43,14 @@ export async function POST(req: NextRequest) {
 
   const now = new Date()
   const remainingDays = Math.max(0, Math.ceil((subscription.expireAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
-  const currentDuration = planDurationMap[subscription.plan] ?? 30
-  const currentPrice = planPriceMap[subscription.plan] ?? 0
-  const newPrice = planPriceMap[new_plan] ?? 0
+  const currentDuration = PRICING_CONFIG[subscription.plan as PlanId].duration
+  const currentPrice = PRICING_CONFIG[subscription.plan as PlanId].amount / 100
+  const newPrice = PRICING_CONFIG[new_plan as PlanId].amount / 100
 
   const remainingValue = currentPrice * (remainingDays / currentDuration)
   const proratedAmount = Math.max(0, Math.round((newPrice - remainingValue) * 100) / 100)
 
-  const newDuration = planDurationMap[new_plan] ?? 30
+  const newDuration = PRICING_CONFIG[new_plan as PlanId].duration
   const newExpireAt = new Date(now.getTime() + newDuration * 24 * 60 * 60 * 1000)
 
   // MVP Mock: 直接完成升级，跳过真实支付

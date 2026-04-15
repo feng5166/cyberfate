@@ -2,18 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-
-const PLAN_PRICES = {
-  monthly: 2900,    // 29 元（分）
-  quarterly: 6800,  // 68 元
-  yearly: 23800     // 238 元
-};
-
-const PLAN_DAYS = {
-  monthly: 30,
-  quarterly: 90,
-  yearly: 365
-};
+import { PRICING_CONFIG, type PlanId } from '@/lib/pricing-config';
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,8 +18,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '无效的套餐类型' }, { status: 400 });
     }
 
-    type PlanType = 'monthly' | 'quarterly' | 'yearly';
-
     // 获取用户当前有效订阅
     const subscription = await prisma.subscription.findFirst({
       where: {
@@ -45,9 +32,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '没有有效订阅' }, { status: 404 });
     }
 
-    const currentPlan = subscription.plan as PlanType;
-    const currentPrice = PLAN_PRICES[currentPlan];
-    const newPrice = PLAN_PRICES[new_plan as PlanType];
+    const currentPlan = subscription.plan as PlanId;
+    const currentPrice = PRICING_CONFIG[currentPlan].amount;
+    const newPrice = PRICING_CONFIG[new_plan as PlanId].amount;
 
     // 判断是升级还是降级
     const isUpgrade = newPrice > currentPrice;
@@ -56,7 +43,7 @@ export async function POST(req: NextRequest) {
       // 升级：计算补差价
       const now = new Date();
       const expireAt = new Date(subscription.expireAt);
-      const totalDays = PLAN_DAYS[currentPlan];
+      const totalDays = PRICING_CONFIG[currentPlan].duration;
       const remainingDays = Math.ceil((expireAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
       
       // 补差价 = (新套餐价 - 旧套餐价) × (剩余天数 / 旧套餐总天数)
@@ -81,7 +68,7 @@ export async function POST(req: NextRequest) {
       await prisma.subscription.update({
         where: { id: subscription.id },
         data: {
-          pendingPlan: new_plan as PlanType,
+          pendingPlan: new_plan as PlanId,
           pendingPlanDate: subscription.expireAt
         }
       });
