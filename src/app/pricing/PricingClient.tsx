@@ -39,7 +39,7 @@ export default function PricingClient({ currentPlan }: PricingClientProps) {
       return;
     }
     if (isSubscribed) {
-      router.push('/profile');
+      router.push('/profile?manage=true');
       return;
     }
     setModal({ planName, price: `¥${price}` });
@@ -48,7 +48,7 @@ export default function PricingClient({ currentPlan }: PricingClientProps) {
   useEffect(() => {
     if (session && pendingPlan) {
       if (isSubscribed) {
-        router.push('/profile');
+        router.push('/profile?manage=true');
       } else {
         setModal({ planName: pendingPlan.planName, price: `¥${pendingPlan.price}` });
       }

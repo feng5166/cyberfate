@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { signOut } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { SubscriptionCard } from '@/components/profile/SubscriptionCard'
@@ -40,7 +40,14 @@ export default function ProfileClient({
   email, image, vip, subscriptionPlan, subscriptionDetail, expireAt, baziAiCount, limit,
 }: ProfileClientProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [showManagePanel, setShowManagePanel] = useState(false)
+
+  useEffect(() => {
+    if (searchParams.get('manage') === 'true' && vip && subscriptionDetail) {
+      setShowManagePanel(true)
+    }
+  }, [searchParams, vip, subscriptionDetail])
 
   const handleSignOut = async () => {
     await signOut({ redirect: false })
