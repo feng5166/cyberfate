@@ -29,6 +29,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '无效的套餐类型' }, { status: 400 });
     }
 
+    type PlanType = 'monthly' | 'quarterly' | 'yearly';
+
     // 获取用户当前有效订阅
     const subscription = await prisma.subscription.findFirst({
       where: {
@@ -43,9 +45,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '没有有效订阅' }, { status: 404 });
     }
 
-    const currentPlan = subscription.plan;
+    const currentPlan = subscription.plan as PlanType;
     const currentPrice = PLAN_PRICES[currentPlan];
-    const newPrice = PLAN_PRICES[new_plan];
+    const newPrice = PLAN_PRICES[new_plan as PlanType];
 
     // 判断是升级还是降级
     const isUpgrade = newPrice > currentPrice;
