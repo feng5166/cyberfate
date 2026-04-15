@@ -16,24 +16,3 @@ export function getStripe(): Stripe | null {
   }
   return stripeInstance;
 }
-
-export const STRIPE_PLANS = {
-  monthly: {
-    name: '月卡会员',
-    amount: 500, // HK$5 in cents
-    currency: 'hkd',
-    duration: 30,
-  },
-  quarterly: {
-    name: '季卡会员',
-    amount: 600, // HK$6 in cents
-    currency: 'hkd',
-    duration: 90,
-  },
-  yearly: {
-    name: '年卡会员',
-    amount: 700, // HK$7 in cents
-    currency: 'hkd',
-    duration: 365,
-  },
-} as const;

@@ -2,13 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { getStripe, STRIPE_PLANS } from '@/lib/stripe';
-
-const planPrices = {
-  monthly: 500,     // ¥5/月
-  quarterly: 600,   // ¥6/季
-  yearly: 700,      // ¥7/年
-};
+import { getStripe } from '@/lib/stripe';
+import { PRICING_CONFIG, isValidPlanId } from '@/lib/pricing-config';
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -18,7 +13,7 @@ export async function POST(req: NextRequest) {
 
   const { plan, payMethod } = await req.json();
 
-  if (!['monthly', 'quarterly', 'yearly'].includes(plan)) {
+  if (!isValidPlanId(plan)) {
     return NextResponse.json({ error: '无效的套餐' }, { status: 400 });
   }
 
@@ -30,7 +25,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '用户不存在' }, { status: 404 });
   }
 
-  const amount = planPrices[plan as keyof typeof planPrices];
+  const planConfig = PRICING_CONFIG[plan];
+  const amount = planConfig.amount;
   const outTradeNo = `CF${Date.now()}${Math.random().toString(36).slice(2, 9)}`;
 
   const order = await prisma.order.create({
@@ -51,20 +47,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Stripe 未配置' }, { status: 500 });
     }
 
-    const stripePlan = STRIPE_PLANS[plan as keyof typeof STRIPE_PLANS];
-    if (!stripePlan) {
-      return NextResponse.json({ error: '无效的 Stripe 套餐' }, { status: 400 });
-    }
-
     const baseUrl = 'https://www.cyberfate.me';
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: 'payment',
       payment_method_types: ['card'],
       line_items: [{
         price_data: {
-          currency: stripePlan.currency,
-          product_data: { name: stripePlan.name },
-          unit_amount: stripePlan.amount,
+          currency: planConfig.currency,
+          product_data: { name: planConfig.name },
+          unit_amount: planConfig.amount,
         },
         quantity: 1,
       }],
