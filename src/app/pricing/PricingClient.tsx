@@ -121,6 +121,7 @@ export default function PricingClient({ currentPlan }: PricingClientProps) {
           planName={modal.planName}
           price={modal.price}
           onClose={() => setModal(null)}
+          onSuccess={() => router.push('/profile')}
         />
       )}
 
