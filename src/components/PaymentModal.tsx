@@ -28,7 +28,11 @@ export function PaymentModal({ planName, price, onClose }: PaymentModalProps) {
 
     setLoading(true);
     try {
-      const planKey = planName === '月卡' ? 'monthly' : planName === '季卡' ? 'quarterly' : 'yearly';
+      // 修复：根据实际的 planName（基础版/专业版/尊享版）映射到后端的 plan key
+      const planKey = 
+        planName === '基础版' ? 'monthly' : 
+        planName === '专业版' ? 'quarterly' : 
+        'yearly';
       
       const res = await fetch('/api/payment/create', {
         method: 'POST',
