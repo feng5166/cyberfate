@@ -9,10 +9,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '缺少邮箱' }, { status: 400 });
     }
 
-    // 查找用户
+    // 查找用户及其订阅
     const user = await prisma.user.findUnique({
       where: { email },
-      include: { payments: { orderBy: { createdAt: 'desc' } } }
+      include: { 
+        subscriptions: { orderBy: { createdAt: 'desc' } },
+        orders: { orderBy: { createdAt: 'desc' } }
+      }
     });
 
     if (!user) {
@@ -20,9 +23,9 @@ export async function POST(req: NextRequest) {
     }
 
     // 获取最近一次订阅
-    const latestPayment = user.payments[0];
+    const latestSub = user.subscriptions[0];
     
-    if (!latestPayment) {
+    if (!latestSub) {
       return NextResponse.json({ error: '无订阅记录' }, { status: 404 });
     }
 
@@ -30,7 +33,7 @@ export async function POST(req: NextRequest) {
     const now = new Date();
     let correctExpiry = new Date(now);
     
-    switch (latestPayment.plan) {
+    switch (latestSub.plan) {
       case 'monthly':
         correctExpiry.setMonth(correctExpiry.getMonth() + 1);
         break;
@@ -42,19 +45,19 @@ export async function POST(req: NextRequest) {
         break;
     }
 
-    // 更新用户到期时间
-    const updated = await prisma.user.update({
-      where: { id: user.id },
-      data: { premiumExpiry: correctExpiry }
+    // 更新订阅到期时间
+    const updated = await prisma.subscription.update({
+      where: { id: latestSub.id },
+      data: { expireAt: correctExpiry }
     });
 
     return NextResponse.json({
       success: true,
       user: {
-        email: updated.email,
-        plan: latestPayment.plan,
-        oldExpiry: user.premiumExpiry,
-        newExpiry: updated.premiumExpiry
+        email: user.email,
+        plan: latestSub.plan,
+        oldExpiry: latestSub.expireAt,
+        newExpiry: updated.expireAt
       }
     });
     
