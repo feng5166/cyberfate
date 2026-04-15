@@ -106,15 +106,9 @@ export function PaymentModal({ planName, price, onClose, onSuccess }: PaymentMod
         return;
       }
       
-      if (payMethod === 'stripe') {
-        if (data.mock) {
-          handlePaymentSuccess();
-          return;
-        }
-        if (data.checkoutUrl) {
-          window.location.href = data.checkoutUrl;
-          return;
-        }
+      if (payMethod === 'stripe' && data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+        return;
       }
 
       if (data.qrCode) {

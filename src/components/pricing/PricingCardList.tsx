@@ -5,21 +5,21 @@ import { PricingCard } from './PricingCard';
 export const PRICING_PLANS = [
   {
     name: '基础版',
-    price: '29',
+    price: '5',
     period: '/ 月',
     recommended: false,
     perks: ['无限次八字解读', '每日运势推送', 'AI 深度分析报告', '标准客服支持'],
   },
   {
     name: '专业版',
-    price: '68',
+    price: '5',
     period: '/ 季',
     recommended: true,
     perks: ['无限次八字解读', '每日运势推送', 'AI 深度分析报告', '优先客服支持', '紫微斗数', '周易占卜（梅花易数）'],
   },
   {
     name: '尊享版',
-    price: '238',
+    price: '5',
     period: '/ 年',
     recommended: false,
     perks: ['无限次八字解读', '每日运势推送', 'AI 深度分析报告', '专属客服支持', '紫微斗数', '周易占卜（梅花易数）', '塔罗占卜', '新功能优先体验'],

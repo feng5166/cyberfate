@@ -5,9 +5,9 @@ import { prisma } from '@/lib/db';
 import { getStripe, STRIPE_PLANS } from '@/lib/stripe';
 
 const planPrices = {
-  monthly: 2900,    // 29元/月
-  quarterly: 6800,  // 68元/季
-  yearly: 23800,    // 238元/年
+  monthly: 500,     // ¥5/月
+  quarterly: 500,   // ¥5/季
+  yearly: 500,      // ¥5/年
 };
 
 export async function POST(req: NextRequest) {
@@ -45,61 +45,42 @@ export async function POST(req: NextRequest) {
   });
 
   if (payMethod === 'stripe') {
-    // MVP Mock 支付模式：跳过真实支付，直接模拟成功
-    console.log('[Payment] Mock 支付模式 - 订单:', {
-      orderId: order.id,
-      plan,
-      amount,
-      user: user.email,
-    });
-    
-    // 模拟支付成功，更新订单状态为 paid
-    await prisma.order.update({
-      where: { id: order.id },
-      data: { status: 'paid' },
-    });
-    
-    // 创建或更新订阅记录
-    const duration = { monthly: 30, quarterly: 90, yearly: 365 }[plan as keyof typeof planPrices];
-    const now = new Date();
-    const expireAt = new Date(now.getTime() + duration * 24 * 60 * 60 * 1000);
-    
-    // 查找现有订阅
-    const existingSub = await prisma.subscription.findFirst({
-      where: { userId: user.id },
-    });
-    
-    if (existingSub) {
-      // 更新现有订阅
-      await prisma.subscription.update({
-        where: { id: existingSub.id },
-        data: {
-          plan,
-          status: 'active',
-          expireAt,
-        },
-      });
-    } else {
-      // 创建新订阅
-      await prisma.subscription.create({
-        data: {
-          userId: user.id,
-          plan,
-          status: 'active',
-          expireAt,
-        },
-      });
+    const stripe = getStripe();
+
+    if (!stripe) {
+      return NextResponse.json({ error: 'Stripe 未配置' }, { status: 500 });
     }
-    
-    console.log('[Payment] Mock 支付完成 - 会员已开通至:', expireAt);
-    
-    // 生产环境固定域名，避免环境变量格式问题导致跳转到错误域名
+
+    const stripePlan = STRIPE_PLANS[plan as keyof typeof STRIPE_PLANS];
+    if (!stripePlan) {
+      return NextResponse.json({ error: '无效的 Stripe 套餐' }, { status: 400 });
+    }
+
     const baseUrl = 'https://www.cyberfate.me';
+    const checkoutSession = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      payment_method_types: ['card'],
+      line_items: [{
+        price_data: {
+          currency: stripePlan.currency,
+          product_data: { name: stripePlan.name },
+          unit_amount: stripePlan.amount,
+        },
+        quantity: 1,
+      }],
+      success_url: `${baseUrl}/payment/success?order_id=${order.id}&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/pricing`,
+      metadata: {
+        orderId: order.id,
+        plan,
+        userId: user.id,
+      },
+      customer_email: user.email || undefined,
+    });
+
     return NextResponse.json({
       orderId: order.id,
-      checkoutUrl: `${baseUrl}/payment/success?order_id=${order.id}&mock=true`,
-      mock: true,
-      message: 'Mock 支付模式：会员已自动开通',
+      checkoutUrl: checkoutSession.url,
     });
   }
 
