@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { getSubscription } from '@/lib/subscription'
@@ -21,5 +22,9 @@ export default async function PricingPage() {
     }
   }
 
-  return <PricingClient currentPlan={currentPlan} />
+  return (
+    <Suspense>
+      <PricingClient currentPlan={currentPlan} />
+    </Suspense>
+  )
 }

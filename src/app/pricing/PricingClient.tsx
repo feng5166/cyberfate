@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Footer } from '@/components/layout/Footer';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { PaymentModal } from '@/components/PaymentModal';
@@ -24,6 +24,8 @@ interface PricingClientProps {
 export default function PricingClient({ currentPlan }: PricingClientProps) {
   const { data: session } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const from = searchParams.get('from');
   const [modal, setModal] = useState<{ planName: string; price: string } | null>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [selectedPlan, setSelectedPlan] = useState('专业版');
@@ -121,7 +123,7 @@ export default function PricingClient({ currentPlan }: PricingClientProps) {
           planName={modal.planName}
           price={modal.price}
           onClose={() => setModal(null)}
-          onSuccess={() => router.push('/profile')}
+          onSuccess={() => router.push(from === 'home' ? '/' : '/profile')}
         />
       )}
 

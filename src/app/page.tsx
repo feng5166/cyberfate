@@ -159,7 +159,7 @@ export default function HomePage() {
                 开始分析
               </Button>
             </Link>
-            <Link href="/pricing">
+            <Link href="/pricing?from=home">
               <Button
                 variant="secondary"
                 size="lg"
@@ -273,7 +273,7 @@ export default function HomePage() {
                   开始探索 ▸
                 </button>
               </Link>
-              <Link href="/pricing">
+              <Link href="/pricing?from=home">
                 <button className="px-[38px] py-[14px] text-[13px] tracking-[0.08em] border border-[#1C1A16]/30 text-[#1C1A16] rounded-lg hover:border-[#1C1A16] transition-colors">
                   了解更多 ▸
                 </button>
