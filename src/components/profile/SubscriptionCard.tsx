@@ -12,9 +12,10 @@ interface SubscriptionCardProps {
   isSubscribed: boolean;
   quotaUsed: number;
   quotaLimit: number | null;
+  onManage?: () => void;
 }
 
-export function SubscriptionCard({ subscription, isSubscribed, quotaUsed, quotaLimit }: SubscriptionCardProps) {
+export function SubscriptionCard({ subscription, isSubscribed, quotaUsed, quotaLimit, onManage }: SubscriptionCardProps) {
   const router = useRouter();
 
   if (!isSubscribed || !subscription) {
@@ -52,12 +53,14 @@ export function SubscriptionCard({ subscription, isSubscribed, quotaUsed, quotaL
     <div className="bg-white border border-emerald-200 rounded-xl p-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-[#1C1A16]">📋 订阅管理</h2>
-        <button
-          onClick={() => router.push('/pricing?tab=manage')}
-          className="text-sm text-[#1C1A16]/60 hover:text-[#1C1A16] transition-colors"
-        >
-          查看详情 →
-        </button>
+        {onManage && (
+          <button
+            onClick={onManage}
+            className="text-sm text-[#1C1A16]/60 hover:text-[#1C1A16] transition-colors"
+          >
+            查看详情 →
+          </button>
+        )}
       </div>
 
       <div className="space-y-2 mb-6">
@@ -83,10 +86,7 @@ export function SubscriptionCard({ subscription, isSubscribed, quotaUsed, quotaL
           📈 升级套餐
         </button>
         <button
-          onClick={() => {
-            // TODO: 展开管理面板
-            router.push('/pricing?tab=manage');
-          }}
+          onClick={onManage || (() => router.push('/pricing?tab=manage'))}
           className="flex-1 border border-[#1C1A16]/20 text-[#1C1A16] py-2.5 rounded-lg text-sm font-medium hover:border-[#1C1A16]/40 hover:bg-[#1C1A16]/[0.03] transition-colors"
         >
           ⚙️ 管理订阅

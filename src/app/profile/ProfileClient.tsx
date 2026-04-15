@@ -80,14 +80,13 @@ export default function ProfileClient({
             </Card>
 
             {/* 订阅管理卡片 */}
-            <div onClick={() => vip && setShowManagePanel(true)}>
-              <SubscriptionCard
-                subscription={subscriptionDetail}
-                isSubscribed={vip}
-                quotaUsed={baziAiCount}
-                quotaLimit={limit}
-              />
-            </div>
+            <SubscriptionCard
+              subscription={subscriptionDetail}
+              isSubscribed={vip}
+              quotaUsed={baziAiCount}
+              quotaLimit={limit}
+              onManage={() => setShowManagePanel(true)}
+            />
 
             {/* 退出登录 */}
             <Button variant="ghost" className="w-full" onClick={handleSignOut}>
