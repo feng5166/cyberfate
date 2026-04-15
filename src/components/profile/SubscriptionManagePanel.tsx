@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { PlanSwitcher } from './PlanSwitcher';
 import { InvoiceHistory } from './InvoiceHistory';
 import { CancelSection } from './CancelSection';
-import { PaymentMethodSection } from './PaymentMethodSection';
 import { PaymentModal } from '@/components/PaymentModal';
 
 interface SubscriptionManagePanelProps {
@@ -17,14 +16,10 @@ interface SubscriptionManagePanelProps {
     cancel_at_period_end: boolean;
     pending_plan: string | null;
   };
-  paymentMethod: {
-    type: string;
-    last4: string;
-  } | null;
   onBack: () => void;
 }
 
-export function SubscriptionManagePanel({ subscription, paymentMethod, onBack }: SubscriptionManagePanelProps) {
+export function SubscriptionManagePanel({ subscription, onBack }: SubscriptionManagePanelProps) {
   const router = useRouter();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showDowngradeModal, setShowDowngradeModal] = useState(false);
@@ -137,12 +132,6 @@ export function SubscriptionManagePanel({ subscription, paymentMethod, onBack }:
           onPlanChange={handlePlanChange}
         />
       </div>
-
-      {/* 支付方式 */}
-      <PaymentMethodSection
-        currentMethod={paymentMethod}
-        onMethodUpdated={() => router.refresh()}
-      />
 
       {/* 账单历史 */}
       <div className="border-t border-[#E5E2DD] pt-6 mt-6">

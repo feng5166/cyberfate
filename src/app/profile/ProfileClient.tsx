@@ -106,7 +106,6 @@ export default function ProfileClient({
           subscriptionDetail && (
             <SubscriptionManagePanel
               subscription={subscriptionDetail}
-              paymentMethod={subscriptionDetail.payment_method}
               onBack={() => {
                 setShowManagePanel(false)
                 router.refresh()
