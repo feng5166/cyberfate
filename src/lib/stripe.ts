@@ -26,13 +26,13 @@ export const STRIPE_PLANS = {
   },
   quarterly: {
     name: '季卡会员',
-    amount: 500, // HK$5 in cents
+    amount: 600, // HK$6 in cents
     currency: 'hkd',
     duration: 90,
   },
   yearly: {
     name: '年卡会员',
-    amount: 500, // HK$5 in cents
+    amount: 700, // HK$7 in cents
     currency: 'hkd',
     duration: 365,
   },

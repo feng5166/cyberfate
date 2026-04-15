@@ -6,8 +6,8 @@ import { getStripe, STRIPE_PLANS } from '@/lib/stripe';
 
 const planPrices = {
   monthly: 500,     // ¥5/月
-  quarterly: 500,   // ¥5/季
-  yearly: 500,      // ¥5/年
+  quarterly: 600,   // ¥6/季
+  yearly: 700,      // ¥7/年
 };
 
 export async function POST(req: NextRequest) {

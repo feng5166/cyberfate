@@ -12,14 +12,14 @@ export const PRICING_PLANS = [
   },
   {
     name: '专业版',
-    price: '5',
+    price: '6',
     period: '/ 季',
     recommended: true,
     perks: ['无限次八字解读', '每日运势推送', 'AI 深度分析报告', '优先客服支持', '紫微斗数', '周易占卜（梅花易数）'],
   },
   {
     name: '尊享版',
-    price: '5',
+    price: '7',
     period: '/ 年',
     recommended: false,
     perks: ['无限次八字解读', '每日运势推送', 'AI 深度分析报告', '专属客服支持', '紫微斗数', '周易占卜（梅花易数）', '塔罗占卜', '新功能优先体验'],
