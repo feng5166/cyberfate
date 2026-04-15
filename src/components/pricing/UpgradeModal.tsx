@@ -57,12 +57,8 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
   }, [session, pendingPayment]);
 
   const isSubscribed = (session?.user as { isSubscribed?: boolean } | undefined)?.isSubscribed;
-  useEffect(() => {
-    if (isOpen && isSubscribed) {
-      setVisible(false);
-      onClose();
-    }
-  }, [isOpen, isSubscribed, onClose]);
+
+  if (isSubscribed) return null;
 
   const handleCTAClick = (planName: string, price: string) => {
     if (!session) {
