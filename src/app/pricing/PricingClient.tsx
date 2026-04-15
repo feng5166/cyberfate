@@ -28,7 +28,7 @@ export default function PricingClient({ currentPlan }: PricingClientProps) {
   const from = searchParams.get('from');
   const [modal, setModal] = useState<{ planName: string; price: string } | null>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const [selectedPlan, setSelectedPlan] = useState('专业版');
+  const [selectedPlan, setSelectedPlan] = useState('');
   const [authOpen, setAuthOpen] = useState(false);
   const [pendingPlan, setPendingPlan] = useState<{ planName: string; price: string } | null>(null);
 
