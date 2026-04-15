@@ -72,10 +72,12 @@ export default function ProfileClient({
 
             {/* 账号信息 */}
             <Card hover={false}>
-              <h2 className="text-secondary text-sm mb-4 uppercase tracking-wider">账号信息</h2>
-              <div>
-                <p className="text-primary">{email}</p>
-                <p className="text-muted text-xs mt-0.5">邮箱账号</p>
+              <h2 className="text-sm font-medium uppercase tracking-wider mb-4" style={{ color: '#666666' }}>
+                账号信息
+              </h2>
+              <div className="flex flex-col gap-0.5">
+                <p className="text-base font-medium" style={{ color: '#0F0F0F' }}>{email}</p>
+                <p className="text-xs" style={{ color: '#999999' }}>邮箱账号</p>
               </div>
             </Card>
 
