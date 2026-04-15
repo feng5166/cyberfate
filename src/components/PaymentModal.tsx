@@ -36,8 +36,11 @@ export function PaymentModal({ planName, price, onClose, onSuccess }: PaymentMod
   const handlePaymentSuccess = useCallback(() => {
     stopPolling();
     setPaymentSuccess(true);
-    onSuccess?.();
-    setTimeout(onClose, 1500);
+    if (onSuccess) {
+      onSuccess();
+    } else {
+      setTimeout(onClose, 1500);
+    }
   }, [stopPolling, onSuccess, onClose]);
 
   const startPolling = useCallback((targetOrderId: string) => {

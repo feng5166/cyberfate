@@ -124,6 +124,7 @@ export default function PricingClient({ currentPlan }: PricingClientProps) {
           price={modal.price}
           onClose={() => setModal(null)}
           onSuccess={() => {
+            setModal(null);
             if (from === 'home') {
               router.push('/?payment_success=true');
             } else {
