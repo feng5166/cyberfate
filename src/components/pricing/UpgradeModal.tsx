@@ -56,6 +56,14 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
     }
   }, [session, pendingPayment]);
 
+  // 支付成功后 session 更新，isSubscribed 变为 true 时自动关闭弹窗
+  const isSubscribed = (session?.user as { isSubscribed?: boolean } | undefined)?.isSubscribed;
+  useEffect(() => {
+    if (isOpen && isSubscribed) {
+      handleClose();
+    }
+  }, [isOpen, isSubscribed, handleClose]);
+
   const handleCTAClick = (planName: string, price: string) => {
     if (!session) {
       setPendingPayment({ planName, price: `¥${price}` });
