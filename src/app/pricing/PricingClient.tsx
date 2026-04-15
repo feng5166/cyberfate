@@ -22,7 +22,7 @@ interface PricingClientProps {
 }
 
 export default function PricingClient({ currentPlan }: PricingClientProps) {
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
   const from = searchParams.get('from');
@@ -123,8 +123,9 @@ export default function PricingClient({ currentPlan }: PricingClientProps) {
           planName={modal.planName}
           price={modal.price}
           onClose={() => setModal(null)}
-          onSuccess={() => {
+          onSuccess={async () => {
             setModal(null);
+            await update();
             if (from === 'home') {
               router.push('/?payment_success=true');
             } else {
