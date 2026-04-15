@@ -36,10 +36,14 @@ export async function POST() {
     });
 
     return NextResponse.json({ portal_url: portalSession.url });
-  } catch (error) {
+  } catch (error: any) {
     console.error('[Stripe create-portal] Error:', error);
     return NextResponse.json(
-      { error: '创建管理门户失败，请稍后重试' },
+      { 
+        error: '创建管理门户失败',
+        details: error.message || String(error),
+        hint: '请检查 Stripe 配置是否正确'
+      },
       { status: 500 }
     );
   }

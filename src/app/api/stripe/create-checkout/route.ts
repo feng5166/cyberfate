@@ -130,10 +130,14 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ checkout_url: checkoutSession.url });
-  } catch (error) {
+  } catch (error: any) {
     console.error('[Stripe create-checkout] Error:', error);
     return NextResponse.json(
-      { error: '创建支付会话失败，请稍后重试' },
+      { 
+        error: '创建支付会话失败',
+        details: error.message || String(error),
+        hint: '请检查 Stripe 配置是否正确'
+      },
       { status: 500 }
     );
   }
