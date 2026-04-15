@@ -35,7 +35,9 @@ export default async function ProfilePage() {
     plan: subscription.plan,
     plan_name: planNames[subscription.plan],
     price: prices[subscription.plan],
-    current_period_end: subscription.expireAt.toISOString()
+    current_period_end: subscription.expireAt.toISOString(),
+    cancel_at_period_end: subscription.cancelAtPeriodEnd || false,
+    pending_plan: subscription.pendingPlan || null
   } : null;
 
   return (

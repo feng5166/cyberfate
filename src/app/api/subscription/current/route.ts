@@ -50,11 +50,14 @@ export async function GET(req: NextRequest) {
       status: subscription.status,
       current_period_start: subscription.startAt.toISOString(),
       current_period_end: subscription.expireAt.toISOString(),
-      cancel_at_period_end: false, // TODO: 实现取消续订后需从 subscription 表读取
-      payment_method: {
-        type: 'stripe', // TODO: 从订单记录读取真实支付方式
-        last4: '****'
-      }
+      cancel_at_period_end: subscription.cancelAtPeriodEnd,
+      pending_plan: subscription.pendingPlan,
+      pending_plan_date: subscription.pendingPlanDate?.toISOString() || null,
+      auto_renew: subscription.autoRenew && !subscription.cancelAtPeriodEnd,
+      payment_method: subscription.paymentMethod ? {
+        type: subscription.paymentMethod,
+        last4: subscription.paymentMethodLast4 || '****'
+      } : null
     });
     
   } catch (error: any) {

@@ -78,7 +78,13 @@ export async function POST(req: NextRequest) {
       
     } else {
       // 降级：预约到期后生效
-      // TODO: 存储 scheduledPlan 到 subscription 表（需新增字段）
+      await prisma.subscription.update({
+        where: { id: subscription.id },
+        data: {
+          pendingPlan: new_plan as PlanType,
+          pendingPlanDate: subscription.expireAt
+        }
+      });
       
       return NextResponse.json({
         ok: true,
