@@ -123,7 +123,14 @@ export default function PricingClient({ currentPlan }: PricingClientProps) {
           planName={modal.planName}
           price={modal.price}
           onClose={() => setModal(null)}
-          onSuccess={() => router.push(from === 'home' ? '/' : '/profile')}
+          onSuccess={() => {
+            if (from === 'home') {
+              router.refresh();
+              setTimeout(() => router.push('/'), 100);
+            } else {
+              router.push('/profile');
+            }
+          }}
         />
       )}
 
