@@ -5,16 +5,23 @@ import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 
+const planLabelMap: Record<string, string> = {
+  monthly: '月度会员',
+  quarterly: '季度会员',
+  yearly: '年度会员',
+}
+
 interface ProfileClientProps {
   email: string
   image: string | null
   vip: boolean
+  subscriptionPlan: 'monthly' | 'quarterly' | 'yearly' | null
   expireAt: string | null
   baziAiCount: number
   limit: number | null
 }
 
-export default function ProfileClient({ email, image, vip, expireAt, baziAiCount, limit }: ProfileClientProps) {
+export default function ProfileClient({ email, image, vip, subscriptionPlan, expireAt, baziAiCount, limit }: ProfileClientProps) {
   const router = useRouter()
 
   const handleSignOut = async () => {
@@ -53,7 +60,7 @@ export default function ProfileClient({ email, image, vip, expireAt, baziAiCount
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <span className="text-primary text-lg">★</span>
-                <span className="text-primary font-semibold">VIP 会员</span>
+                <span className="text-primary font-semibold">{subscriptionPlan ? planLabelMap[subscriptionPlan] : 'VIP 会员'}</span>
               </div>
               <p className="text-muted text-sm">
                 有效期至 <span className="text-primary">{expireAt}</span>

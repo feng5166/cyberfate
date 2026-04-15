@@ -23,6 +23,7 @@ export default async function ProfilePage() {
       email={session.user.email ?? ''}
       image={session.user.image ?? null}
       vip={vip}
+      subscriptionPlan={subscription?.plan ?? null}
       expireAt={subscription?.expireAt?.toISOString().slice(0, 10) ?? null}
       baziAiCount={quota.baziAiCount}
       limit={vip ? null : quota.limit}
