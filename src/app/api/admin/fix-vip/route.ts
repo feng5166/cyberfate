@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 
 export async function POST(req: NextRequest) {
   try {
-    const { email } = await req.json();
+    const { email, correctPlan } = await req.json();
     
     if (!email) {
       return NextResponse.json({ error: '缺少邮箱' }, { status: 400 });
@@ -29,11 +29,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '无订阅记录' }, { status: 404 });
     }
 
+    // 如果指定了 correctPlan，使用它；否则用现有的 plan
+    const targetPlan = correctPlan || latestSub.plan;
+
     // 根据订阅类型计算正确到期时间
     const now = new Date();
     let correctExpiry = new Date(now);
     
-    switch (latestSub.plan) {
+    switch (targetPlan) {
       case 'monthly':
         correctExpiry.setMonth(correctExpiry.getMonth() + 1);
         break;
@@ -45,17 +48,21 @@ export async function POST(req: NextRequest) {
         break;
     }
 
-    // 更新订阅到期时间
+    // 更新订阅 plan 和到期时间
     const updated = await prisma.subscription.update({
       where: { id: latestSub.id },
-      data: { expireAt: correctExpiry }
+      data: { 
+        plan: targetPlan,
+        expireAt: correctExpiry 
+      }
     });
 
     return NextResponse.json({
       success: true,
       user: {
         email: user.email,
-        plan: latestSub.plan,
+        oldPlan: latestSub.plan,
+        newPlan: updated.plan,
         oldExpiry: latestSub.expireAt,
         newExpiry: updated.expireAt
       }
