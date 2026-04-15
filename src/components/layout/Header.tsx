@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
-import { ChevronDown, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { AuthModal } from '@/components/auth/AuthModal';
 
 // 导航项配置
@@ -40,19 +40,7 @@ const featureGroups = [
   },
 ];
 
-// 桌面端功能下拉菜单（简化版）
-const desktopFeatureMenu = [
-  { label: '八字分析', href: '/bazi' },
-  { label: '每日运势', href: '/daily' },
-  { label: '八字合婚', href: '/bazi/marriage' },
-  { label: '紫微斗数', href: '/ziwei' },
-  { label: '梅花易数', href: '/meihua' },
-  { label: '塔罗占卜', href: '/tarot' },
-  { label: 'AI老黄历', href: '/huangli' },
-];
-
 export function Header() {
-  const [featureOpen, setFeatureOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
@@ -114,45 +102,30 @@ export function Header() {
 
           {/* Desktop Nav - 中间 */}
           <div className="hidden lg:flex items-center gap-10">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="text-sm text-brand-gray hover:text-[#1C1A16] transition-colors duration-200"
-              >
-                {item.label}
-              </Link>
-            ))}
-
-            {/* 功能下拉菜单 */}
-            <div
-              className="relative"
-              onMouseEnter={() => setFeatureOpen(true)}
-              onMouseLeave={() => setFeatureOpen(false)}
+            <Link
+              href="/"
+              className="text-sm text-brand-gray hover:text-[#1C1A16] transition-colors duration-200"
             >
-              <button className="flex items-center gap-1 text-sm text-brand-gray hover:text-[#1C1A16] transition-colors duration-200">
-                功能
-                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${featureOpen ? 'rotate-180' : ''}`} />
-              </button>
-              
-              {featureOpen && (
-                <div className="absolute left-0 top-full pt-2">
-                  <div className="bg-white rounded-lg shadow-lg border border-brand-border-light py-2 min-w-[160px] animate-fadeIn">
-                    {desktopFeatureMenu.map((item) => (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        className="block px-4 py-2.5 text-sm text-brand-gray hover:text-[#1C1A16] hover:bg-brand-bg transition-colors"
-                      >
-                        {item.label}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* 工作台 */}
+              首页
+            </Link>
+            <Link
+              href="/bazi"
+              className="text-sm text-brand-gray hover:text-[#1C1A16] transition-colors duration-200"
+            >
+              八字分析
+            </Link>
+            <Link
+              href="/knowledge"
+              className="text-sm text-brand-gray hover:text-[#1C1A16] transition-colors duration-200"
+            >
+              知识库
+            </Link>
+            <Link
+              href="/pricing"
+              className="text-sm text-brand-gray hover:text-[#1C1A16] transition-colors duration-200"
+            >
+              定价
+            </Link>
             <Link
               href="/bazi?sidebar=open"
               className="text-sm font-semibold text-brand-gray hover:text-[#1C1A16] transition-colors duration-200"
