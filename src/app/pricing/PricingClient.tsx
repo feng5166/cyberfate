@@ -28,11 +28,11 @@ export default function PricingClient({ currentPlan }: PricingClientProps) {
   const from = searchParams.get('from');
   const [modal, setModal] = useState<{ planName: string; price: string } | null>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const [selectedPlan, setSelectedPlan] = useState('');
   const [authOpen, setAuthOpen] = useState(false);
   const [pendingPlan, setPendingPlan] = useState<{ planName: string; price: string } | null>(null);
 
   const isSubscribed = session?.user?.isSubscribed ?? false;
+  const [selectedPlan, setSelectedPlan] = useState(isSubscribed ? '' : '专业版');
 
   const handleCTAClick = (planName: string, price: string) => {
     if (!session) {
