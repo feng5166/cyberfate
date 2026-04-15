@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Footer } from '@/components/layout/Footer';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { PaymentModal } from '@/components/PaymentModal';
@@ -21,16 +21,9 @@ interface PricingClientProps {
   currentPlan?: string;
 }
 
-const PLAN_NAME_MAP: Record<string, string> = {
-  monthly: '基础版',
-  quarterly: '专业版',
-  yearly: '尊享版',
-};
-
 export default function PricingClient({ currentPlan }: PricingClientProps) {
   const { data: session } = useSession();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [modal, setModal] = useState<{ planName: string; price: string } | null>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [selectedPlan, setSelectedPlan] = useState('专业版');
@@ -38,23 +31,6 @@ export default function PricingClient({ currentPlan }: PricingClientProps) {
   const [pendingPlan, setPendingPlan] = useState<{ planName: string; price: string } | null>(null);
 
   const isSubscribed = session?.user?.isSubscribed ?? false;
-
-  useEffect(() => {
-    const isUpgrade = searchParams.get('upgrade');
-    const plan = searchParams.get('plan');
-    const amount = searchParams.get('amount');
-
-    if (isUpgrade === 'true' && plan && amount) {
-      const planName = PLAN_NAME_MAP[plan] || plan;
-      setModal({ planName, price: `¥${amount}` });
-
-      const url = new URL(window.location.href);
-      url.searchParams.delete('upgrade');
-      url.searchParams.delete('plan');
-      url.searchParams.delete('amount');
-      router.replace(url.pathname, { scroll: false });
-    }
-  }, [searchParams, router]);
 
   const handleCTAClick = (planName: string, price: string) => {
     if (!session) {

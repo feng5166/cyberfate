@@ -6,6 +6,7 @@ import { PlanSwitcher } from './PlanSwitcher';
 import { InvoiceHistory } from './InvoiceHistory';
 import { CancelSection } from './CancelSection';
 import { PaymentMethodSection } from './PaymentMethodSection';
+import { PaymentModal } from '@/components/PaymentModal';
 
 interface SubscriptionManagePanelProps {
   subscription: {
@@ -28,6 +29,7 @@ export function SubscriptionManagePanel({ subscription, paymentMethod, onBack }:
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showDowngradeModal, setShowDowngradeModal] = useState(false);
   const [targetPlan, setTargetPlan] = useState<string | null>(null);
+  const [paymentModal, setPaymentModal] = useState<{ planName: string; price: string } | null>(null);
 
   const handlePlanChange = async (newPlan: string, isUpgrade: boolean) => {
     setTargetPlan(newPlan);
@@ -37,6 +39,12 @@ export function SubscriptionManagePanel({ subscription, paymentMethod, onBack }:
     } else {
       setShowDowngradeModal(true);
     }
+  };
+
+  const PLAN_NAME_MAP: Record<string, string> = {
+    monthly: '基础版',
+    quarterly: '专业版',
+    yearly: '尊享版',
   };
 
   const confirmUpgrade = async () => {
@@ -52,7 +60,8 @@ export function SubscriptionManagePanel({ subscription, paymentMethod, onBack }:
       const data = await res.json();
 
       if (res.ok) {
-        router.push(`/pricing?plan=${targetPlan}&upgrade=true&amount=${data.prorated_amount}`);
+        const planName = PLAN_NAME_MAP[targetPlan] || targetPlan;
+        setPaymentModal({ planName, price: `¥${data.prorated_amount}` });
       } else {
         alert(data.error || '升级失败');
       }
@@ -178,6 +187,19 @@ export function SubscriptionManagePanel({ subscription, paymentMethod, onBack }:
             </div>
           </div>
         </div>
+      )}
+
+      {/* 支付弹窗 */}
+      {paymentModal && (
+        <PaymentModal
+          planName={paymentModal.planName}
+          price={paymentModal.price}
+          onClose={() => setPaymentModal(null)}
+          onSuccess={() => {
+            setPaymentModal(null);
+            router.refresh();
+          }}
+        />
       )}
 
       {/* 降级确认弹窗 */}

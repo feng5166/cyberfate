@@ -8,9 +8,10 @@ interface PaymentModalProps {
   planName: string;
   price: string;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
-export function PaymentModal({ planName, price, onClose }: PaymentModalProps) {
+export function PaymentModal({ planName, price, onClose, onSuccess }: PaymentModalProps) {
   const { data: session } = useSession();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
