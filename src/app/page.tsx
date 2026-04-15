@@ -275,7 +275,7 @@ export default function HomePage() {
               </Link>
               <Link href="/meihua">
                 <button className="px-[38px] py-[14px] text-[13px] tracking-[0.08em] border border-[#1C1A16]/30 text-[#1C1A16] rounded-lg hover:border-[#1C1A16] transition-colors">
-                  了解更多 ▸
+                  了解更多
                 </button>
               </Link>
             </div>
