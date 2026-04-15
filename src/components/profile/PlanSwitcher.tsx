@@ -51,17 +51,18 @@ export function PlanSwitcher({ currentPlan, onPlanChange }: PlanSwitcherProps) {
               <div className="text-lg font-bold text-[#1C1A16] mb-1">¥{plan.price}</div>
               <div className="text-xs text-[#1C1A16]/50 mb-3">/{plan.period}</div>
               
-              {!isCurrent && (
+              {!isCurrent && isUpgrade && (
                 <button
                   onClick={() => onPlanChange(plan.id, isUpgrade)}
-                  className={`w-full text-xs py-2 rounded transition-colors ${
-                    isUpgrade
-                      ? 'bg-[#1C1A16] text-white hover:bg-[#2A2621]'
-                      : 'border border-[#1C1A16]/20 text-[#1C1A16] hover:bg-[#1C1A16]/[0.03]'
-                  }`}
+                  className="w-full text-xs py-2 rounded bg-[#1C1A16] text-white hover:bg-[#2A2621] transition-colors"
                 >
-                  {isUpgrade ? '升级 →' : '切换 ↓'}
+                  升级 →
                 </button>
+              )}
+              {!isCurrent && isDowngrade && (
+                <div className="text-xs text-[#1C1A16]/40 text-center py-2">
+                  —
+                </div>
               )}
               {isCurrent && (
                 <div className="text-xs text-emerald-600 font-medium">当前计划</div>
