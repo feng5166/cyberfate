@@ -14,7 +14,7 @@ interface UpgradeModalProps {
 }
 
 export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
   const router = useRouter();
   const isSubscribed = (session?.user as { isSubscribed?: boolean } | undefined)?.isSubscribed;
   const shouldShow = isOpen && !isSubscribed;
@@ -129,8 +129,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
           price={paymentModal.price}
           onSuccess={async () => {
             setPaymentModal(null);
-            router.refresh();
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await update();
             onClose();
           }}
           onClose={() => setPaymentModal(null)}
