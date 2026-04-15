@@ -127,10 +127,11 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
         <PaymentModal
           planName={paymentModal.planName}
           price={paymentModal.price}
-          onSuccess={() => {
+          onSuccess={async () => {
             setPaymentModal(null);
-            onClose();
             router.refresh();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            onClose();
           }}
           onClose={() => setPaymentModal(null)}
         />
