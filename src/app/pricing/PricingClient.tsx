@@ -125,8 +125,7 @@ export default function PricingClient({ currentPlan }: PricingClientProps) {
           onClose={() => setModal(null)}
           onSuccess={() => {
             if (from === 'home') {
-              router.refresh();
-              setTimeout(() => router.push('/'), 100);
+              router.push('/?payment_success=true');
             } else {
               router.push('/profile');
             }

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, ReactNode, Suspense } from 'react';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { useState, useEffect, ReactNode, Suspense } from 'react';
+import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import { Header } from './Header';
 import { DashboardLayout } from './DashboardLayout';
 import { Footer } from './Footer';
@@ -27,6 +27,21 @@ function SidebarController({ onExpand }: { onExpand: () => void }) {
   return null;
 }
 
+function PaymentSuccessHandler() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (searchParams.get('payment_success') !== 'true') return;
+
+    window.history.replaceState({}, '', pathname);
+    router.refresh();
+  }, [searchParams, router, pathname]);
+
+  return null;
+}
+
 export function LayoutWrapper({ children }: LayoutWrapperProps) {
   const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
   const pathname = usePathname();
@@ -42,6 +57,7 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
       </div>
       <main className="flex-1 pb-20 lg:pb-0" style={{ paddingTop: '80px' }}>
         <Suspense fallback={null}>
+          <PaymentSuccessHandler />
           {showSidebar ? (
             <DashboardLayout
               collapsed={isSidebarCollapsed}
