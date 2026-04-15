@@ -20,6 +20,10 @@ interface ProfileClientProps {
     current_period_end: string
     cancel_at_period_end: boolean
     pending_plan: string | null
+    payment_method: {
+      type: string
+      last4: string
+    } | null
   } | null
   expireAt: string | null
   baziAiCount: number
@@ -94,6 +98,7 @@ export default function ProfileClient({
           subscriptionDetail && (
             <SubscriptionManagePanel
               subscription={subscriptionDetail}
+              paymentMethod={subscriptionDetail.payment_method}
               onBack={() => {
                 setShowManagePanel(false)
                 router.refresh()
