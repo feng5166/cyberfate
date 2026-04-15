@@ -165,7 +165,7 @@ export default function HomePage() {
                 size="lg"
                 className="px-[38px] py-[14px] text-[13px] tracking-[0.08em] !text-[#1C1A16] !border-[#1C1A16]/30 hover:!border-[#1C1A16] hover:!bg-[#FDFBF7]"
               >
-                了解更多
+                梅花易数
               </Button>
             </Link>
           </div>
@@ -275,7 +275,7 @@ export default function HomePage() {
               </Link>
               <Link href="/meihua">
                 <button className="px-[38px] py-[14px] text-[13px] tracking-[0.08em] border border-[#1C1A16]/30 text-[#1C1A16] rounded-lg hover:border-[#1C1A16] transition-colors">
-                  了解更多
+                  梅花易数
                 </button>
               </Link>
             </div>
