@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
@@ -11,6 +11,9 @@ interface PaymentModalProps {
   onSuccess?: () => void;
 }
 
+const POLL_INTERVAL = 3000;
+const MAX_POLL_DURATION = 10 * 60 * 1000;
+
 export function PaymentModal({ planName, price, onClose, onSuccess }: PaymentModalProps) {
   const { data: session } = useSession();
   const router = useRouter();
@@ -18,6 +21,51 @@ export function PaymentModal({ planName, price, onClose, onSuccess }: PaymentMod
   const [payMethod, setPayMethod] = useState<'wechat' | 'alipay' | 'stripe'>('stripe');
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [orderId, setOrderId] = useState<string | null>(null);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const pollTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const pollStartRef = useRef<number>(0);
+
+  const stopPolling = useCallback(() => {
+    if (pollTimerRef.current) {
+      clearInterval(pollTimerRef.current);
+      pollTimerRef.current = null;
+    }
+  }, []);
+
+  const handlePaymentSuccess = useCallback(() => {
+    stopPolling();
+    setPaymentSuccess(true);
+    onSuccess?.();
+    setTimeout(onClose, 1500);
+  }, [stopPolling, onSuccess, onClose]);
+
+  const startPolling = useCallback((targetOrderId: string) => {
+    stopPolling();
+    pollStartRef.current = Date.now();
+
+    pollTimerRef.current = setInterval(async () => {
+      if (Date.now() - pollStartRef.current > MAX_POLL_DURATION) {
+        stopPolling();
+        setError('支付超时，请重试');
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/payment/status?orderId=${targetOrderId}`);
+        const data = await res.json();
+        if (data.status === 'paid') {
+          handlePaymentSuccess();
+        }
+      } catch {
+        // 网络抖动时静默忽略，继续轮询
+      }
+    }, POLL_INTERVAL);
+  }, [stopPolling, handlePaymentSuccess]);
+
+  useEffect(() => {
+    return stopPolling;
+  }, [stopPolling]);
 
   const handlePay = async () => {
     setError(null);
@@ -29,7 +77,6 @@ export function PaymentModal({ planName, price, onClose, onSuccess }: PaymentMod
 
     setLoading(true);
     try {
-      // 修复：根据实际的 planName（基础版/专业版/尊享版）映射到后端的 plan key
       const planKey = 
         planName === '基础版' ? 'monthly' : 
         planName === '专业版' ? 'quarterly' : 
@@ -56,13 +103,21 @@ export function PaymentModal({ planName, price, onClose, onSuccess }: PaymentMod
         return;
       }
       
-      if (payMethod === 'stripe' && data.checkoutUrl) {
-        window.location.href = data.checkoutUrl;
-        return;
+      if (payMethod === 'stripe') {
+        if (data.mock) {
+          handlePaymentSuccess();
+          return;
+        }
+        if (data.checkoutUrl) {
+          window.location.href = data.checkoutUrl;
+          return;
+        }
       }
 
       if (data.qrCode) {
         setQrCode(data.qrCode);
+        setOrderId(data.orderId);
+        startPolling(data.orderId);
       }
     } catch (err: any) {
       console.error('Payment error:', err);
@@ -154,6 +209,12 @@ export function PaymentModal({ planName, price, onClose, onSuccess }: PaymentMod
               </button>
             </div>
           </>
+        ) : paymentSuccess ? (
+          <div className="text-center py-8">
+            <div className="text-5xl mb-4">✅</div>
+            <div className="text-xl font-bold text-green-600 mb-2">支付成功</div>
+            <div className="text-sm text-gray-500">正在跳转...</div>
+          </div>
         ) : (
           <>
             <div className="text-center mb-6">
@@ -163,15 +224,15 @@ export function PaymentModal({ planName, price, onClose, onSuccess }: PaymentMod
               <div className="mt-4 text-sm text-gray-500">
                 使用{payMethod === 'wechat' ? '微信' : '支付宝'}扫码完成支付
               </div>
-              <div className="mt-2 text-xs text-orange-600">
-                ⚠️ 演示模式：实际项目需接入真实支付
+              <div className="mt-2 text-xs text-gray-400">
+                支付完成后将自动跳转
               </div>
             </div>
             <button
-              onClick={onClose}
+              onClick={() => { stopPolling(); onClose(); }}
               className="w-full px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50 transition-colors"
             >
-              关闭
+              取消支付
             </button>
           </>
         )}
