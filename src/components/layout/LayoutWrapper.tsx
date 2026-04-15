@@ -35,8 +35,10 @@ function PaymentSuccessHandler() {
   useEffect(() => {
     if (searchParams.get('payment_success') !== 'true') return;
 
+    console.log('[PaymentSuccessHandler] payment_success=true detected, pathname:', pathname);
     window.history.replaceState({}, '', pathname);
     router.refresh();
+    console.log('[PaymentSuccessHandler] router.refresh() called');
   }, [searchParams, router, pathname]);
 
   return null;

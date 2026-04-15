@@ -129,7 +129,10 @@ export function Sidebar({
   }, [session]);
 
   useEffect(() => {
-    if ((session?.user as any)?.isSubscribed === true) {
+    const isSubscribed = (session?.user as any)?.isSubscribed;
+    console.log('[Sidebar] isSubscribed changed:', isSubscribed, '| session:', !!session);
+    if (isSubscribed === true) {
+      console.log('[Sidebar] isSubscribed=true, closing UpgradeModal');
       setUpgradeModalOpen(false);
     }
   }, [(session?.user as any)?.isSubscribed]);
