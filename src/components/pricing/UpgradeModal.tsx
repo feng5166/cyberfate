@@ -127,6 +127,11 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
         <PaymentModal
           planName={paymentModal.planName}
           price={paymentModal.price}
+          onSuccess={() => {
+            setPaymentModal(null);
+            onClose();
+            router.refresh();
+          }}
           onClose={() => setPaymentModal(null)}
         />
       )}
