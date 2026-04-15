@@ -103,13 +103,19 @@ enum SubscriptionStatus {
 
 // 订阅表
 model Subscription {
-  id        String             @id @default(cuid())
-  userId    String
-  plan      SubscriptionPlan
-  status    SubscriptionStatus @default(active)
-  startAt   DateTime           @default(now())
-  expireAt  DateTime
-  autoRenew Boolean            @default(false)
+  id                 String             @id @default(cuid())
+  userId             String
+  plan               SubscriptionPlan
+  status             SubscriptionStatus @default(active)
+  startAt            DateTime           @default(now())
+  expireAt           DateTime
+  autoRenew          Boolean            @default(false)
+  cancelAtPeriodEnd  Boolean            @default(false)
+  pendingPlan        SubscriptionPlan?
+  pendingPlanDate    DateTime?
+  paymentMethod      PayMethod?
+  paymentMethodLast4 String?
+  cancelFeedback     String?
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

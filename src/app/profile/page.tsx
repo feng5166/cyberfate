@@ -18,12 +18,33 @@ export default async function ProfilePage() {
 
   const vip = subscription !== null
 
+  // 映射 subscription 详情
+  const planNames = {
+    monthly: '基础版（月卡）',
+    quarterly: '专业版（季卡）',
+    yearly: '尊享版（年卡）'
+  };
+
+  const prices = {
+    monthly: 29,
+    quarterly: 68,
+    yearly: 238
+  };
+
+  const subscriptionDetail = subscription ? {
+    plan: subscription.plan,
+    plan_name: planNames[subscription.plan],
+    price: prices[subscription.plan],
+    current_period_end: subscription.expireAt.toISOString()
+  } : null;
+
   return (
     <ProfileClient
       email={session.user.email ?? ''}
       image={session.user.image ?? null}
       vip={vip}
       subscriptionPlan={subscription?.plan ?? null}
+      subscriptionDetail={subscriptionDetail}
       expireAt={subscription?.expireAt?.toISOString().slice(0, 10) ?? null}
       baziAiCount={quota.baziAiCount}
       limit={vip ? null : quota.limit}
