@@ -51,17 +51,7 @@ export function SubscriptionCard({ subscription, isSubscribed, quotaUsed, quotaL
 
   return (
     <div className="bg-white border border-emerald-200 rounded-xl p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-[#1C1A16]">📋 订阅管理</h2>
-        {onManage && (
-          <button
-            onClick={onManage}
-            className="text-sm text-[#1C1A16]/60 hover:text-[#1C1A16] transition-colors"
-          >
-            查看详情 →
-          </button>
-        )}
-      </div>
+      <h2 className="text-lg font-semibold text-[#1C1A16] mb-4">📋 订阅管理</h2>
 
       <div className="space-y-2 mb-6">
         <p className="text-[#1C1A16]">
@@ -78,20 +68,12 @@ export function SubscriptionCard({ subscription, isSubscribed, quotaUsed, quotaL
         </p>
       </div>
 
-      <div className="flex gap-3">
-        <button
-          onClick={() => router.push('/pricing')}
-          className="flex-1 border border-[#1C1A16]/20 text-[#1C1A16] py-2.5 rounded-lg text-sm font-medium hover:border-[#1C1A16]/40 hover:bg-[#1C1A16]/[0.03] transition-colors"
-        >
-          📈 升级套餐
-        </button>
-        <button
-          onClick={onManage || (() => router.push('/pricing?tab=manage'))}
-          className="flex-1 border border-[#1C1A16]/20 text-[#1C1A16] py-2.5 rounded-lg text-sm font-medium hover:border-[#1C1A16]/40 hover:bg-[#1C1A16]/[0.03] transition-colors"
-        >
-          ⚙️ 管理订阅
-        </button>
-      </div>
+      <button
+        onClick={onManage || (() => router.push('/pricing?tab=manage'))}
+        className="w-full bg-[#1C1A16] text-white py-3 rounded-lg font-medium hover:bg-[#2A2621] transition-colors"
+      >
+        管理我的订阅
+      </button>
     </div>
   );
 }
