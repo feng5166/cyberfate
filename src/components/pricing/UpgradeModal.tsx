@@ -58,7 +58,14 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
 
   const isSubscribed = (session?.user as { isSubscribed?: boolean } | undefined)?.isSubscribed;
 
-  if (isSubscribed) return null;
+  console.log('[UpgradeModal] 每次渲染 - isSubscribed:', isSubscribed);
+  console.log('[UpgradeModal] session 对象:', JSON.stringify(session, null, 2));
+  console.log('[UpgradeModal] 即将 return null?', !!isSubscribed);
+
+  if (isSubscribed) {
+    console.log('[UpgradeModal] ✅ isSubscribed=true, return null（弹窗隐藏）');
+    return null;
+  }
 
   const handleCTAClick = (planName: string, price: string) => {
     if (!session) {

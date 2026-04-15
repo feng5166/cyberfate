@@ -36,9 +36,10 @@ function PaymentSuccessHandler() {
     if (searchParams.get('payment_success') !== 'true') return;
 
     console.log('[PaymentSuccessHandler] payment_success=true detected, pathname:', pathname);
+    console.log('[PaymentSuccessHandler] >>> router.refresh() 前');
     window.history.replaceState({}, '', pathname);
     router.refresh();
-    console.log('[PaymentSuccessHandler] router.refresh() called');
+    console.log('[PaymentSuccessHandler] <<< router.refresh() 后');
   }, [searchParams, router, pathname]);
 
   return null;
