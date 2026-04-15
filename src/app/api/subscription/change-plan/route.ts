@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { getStripe } from '@/lib/stripe';
 import { PRICING_CONFIG, type PlanId } from '@/lib/pricing-config';
 
 export async function POST(req: NextRequest) {
@@ -51,15 +52,57 @@ export async function POST(req: NextRequest) {
         (newPrice - currentPrice) * (remainingDays / totalDays)
       );
 
-      // TODO: 创建支付订单，返回支付链接
-      // 现在先返回模拟数据
+      const stripe = getStripe();
+      if (!stripe) {
+        return NextResponse.json({ error: 'Stripe 未配置' }, { status: 500 });
+      }
+
+      const outTradeNo = `CF${Date.now()}${Math.random().toString(36).slice(2, 9)}`;
+      const newPlanConfig = PRICING_CONFIG[new_plan as PlanId];
+
+      const order = await prisma.order.create({
+        data: {
+          userId: session.user.id,
+          plan: new_plan,
+          amount: proratedAmount,
+          payMethod: 'stripe',
+          outTradeNo,
+          status: 'pending',
+        },
+      });
+
+      const baseUrl = 'https://www.cyberfate.me';
+      const checkoutSession = await stripe.checkout.sessions.create({
+        mode: 'payment',
+        payment_method_types: ['card'],
+        line_items: [{
+          price_data: {
+            currency: newPlanConfig.currency,
+            product_data: { name: `升级至${newPlanConfig.name}（补差价）` },
+            unit_amount: proratedAmount,
+          },
+          quantity: 1,
+        }],
+        success_url: `${baseUrl}/payment/success?order_id=${order.id}&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${baseUrl}/pricing`,
+        metadata: {
+          orderId: order.id,
+          plan: new_plan,
+          userId: session.user.id,
+          action: 'upgrade',
+          fromPlan: currentPlan,
+        },
+        customer_email: session.user.email || undefined,
+      });
+
       return NextResponse.json({
         ok: true,
         action: 'upgrade',
-        prorated_amount: proratedAmount / 100, // 转为元
+        prorated_amount: proratedAmount / 100,
         effective_date: now.toISOString().split('T')[0],
         requires_payment: true,
-        payment_url: '/pricing', // TODO: 实际支付链接
+        checkout_url: checkoutSession.url,
+        orderId: order.id,
         message: `需补差价 ¥${(proratedAmount / 100).toFixed(2)}，支付后立即生效`
       });
       

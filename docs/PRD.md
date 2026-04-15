@@ -1116,20 +1116,20 @@ POST /api/auth/login (修改)
 │  │  下次扣费：2026-07-15                            │ │
 │  └────────────────────────────────────────────────┘ │
 │                                                      │
-│  ── 变更套餐 ───────────────────────────────────    │
+│  ── 套餐信息 ───────────────────────────────────    │
 │                                                      │
 │  ┌──────────┐ ┌──────────┐ ┌──────────┐            │
 │  │  基础版   │ │  专业版   │ │  尊享版   │            │
 │  │          │ │ ★ 当前   │ │          │            │
 │  │   ¥29    │ │   ¥69    │ │   ¥199   │            │
 │  │  /月     │ │  /季     │ │  /年     │            │
-│  │ [切换 ↓] │ │  当前计划 │ │ [升级 →] │            │
+│  │          │ │  当前计划 │ │          │            │
 │  └──────────┘ └──────────┘ └──────────┘            │
 │                                                      │
-│  ── 支付方式 ───────────────────────────────────    │
+│  ── 支付与账单（Stripe 托管） ──────────────────    │
 │                                                      │
 │  ┌────────────────────────────────────────────────┐ │
-│  │  💳 支付宝  **** 4567              更改 →       │ │  ← 当前支付方式
+│  │  💳 管理支付方式与账单        在 Stripe 中打开 → ││  ← 跳转 Portal
 │  └────────────────────────────────────────────────┘ │
 │                                                      │
 │  ── 订阅操作 ───────────────────────────────────    │
@@ -1137,12 +1137,6 @@ POST /api/auth/login (修改)
 │  ┌────────────────────────────────────────────────┐ │
 │  │  ⚠️ 取消自动续订                                 │ │  ← 危险操作，红色文字
 │  └────────────────────────────────────────────────┘ │
-│                                                      │
-│  ── 账单历史 ──────────────────────────────────     │
-│                                                      │
-│  2026-04-15  专业版（季卡）  ¥69  ✓ 已支付         │
-│  2026-03-15  专业版（季卡）  ¥69  ✓ 已支付         │
-│  2026-02-15  基础版（月卡）    ¥29  ✓ 已支付         │
 │                                                      │
 └──────────────────────────────────────────────────────┘
 ```
@@ -1218,58 +1212,39 @@ POST /api/auth/login (修改)
 **点击「更改 →」后的流程**：
 
 ```
-步骤 1：展开支付方式选择面板
+步骤 1：后端创建 Stripe Customer Portal Session
+  POST /api/create-portal
+  → 返回 { url: "billing.stripe.com/portal/cs_xxx..." }
 
-┌────────────────────────────────────────────────┐
-│                                                │
-│  更改支付方式                                   │
-│                                                │
-│  当前方式：                                     │
-│  ● 支付宝  **** 4567                           │
-│                                                │
-│  选择新方式：                                   │
-│                                                │
-│  ┌──────────────────────────────────────────┐  │
-│  │  ○ 支付宝                                │  │
-│  │  ┌─────────────────────────────────────┐ │  │
-│  │  │  支付宝扫码支付                      │ │  │
-│  │  │  [二维码图片]                        │ │  │
-│  │  │  请使用支付宝扫描二维码完成绑定       │ │  │
-│  │  └─────────────────────────────────────┘ │  │
-│  │                                          │  │
-│  │  ○ 微信支付                             │  │
-│  │  ○ 银行卡 (Stripe)                      │  │
-│  │  ┌─────────────────────────────────────┐ │  │
-│  │  │  [Stripe Card Element]              │ │  │
-│  │  │  卡号  有效期  CVC                  │ │  │
-│  │  └─────────────────────────────────────┘ │  │
-│  └──────────────────────────────────────────┘  │
-│                                                │
-│  [ 取消 ]                [ 确认更改 ]          │
-│                                                │
-└────────────────────────────────────────────────┘
+步骤 2：前端整页跳转 Stripe Customer Portal
+  window.location.href = url
 
-步骤 2：用户完成支付 → 后端验证 → 更新支付方式
-步骤 3：成功 toast：「支付方式已更新」
+步骤 3：用户在 Stripe Portal 中：
+  - 查看支付历史
+  - 更新支付方式（银行卡/微信/支付宝）
+  - 下载发票
+  - （这些功能全部由 Stripe Portal 托管，不需要自己开发 UI）
 ```
 
-**支付方式优先级**：
-- 支付宝（国内主推）
-- 微信支付（备选）
-- Stripe 银行卡（国际用户 / 备选）
+> **核心决策**：支付方式更新、账单查看、发票下载等操作**全部交给 Stripe Customer Portal** 托管。CyberFate 不自己开发这些 UI。
+>
+> 原因：
+> 1. Stripe Portal 已经提供了完整的订阅管理界面（支付方式/账单/发票）
+> 2. 零开发量，只需一个 API 调用跳转
+> 3. 自动支持多语言、多币种、多种支付方式
+> 4. 用户数据安全由 Stripe 托管，减少合规风险
 
-> ⚠️ **MVP 注意**：如果支付系统暂只接了单一渠道（如只有 Stripe），则「更新支付方式」整块先隐藏，等接入多渠道后再开放。
+**管理面板中的「更新支付方式」和「账单历史」按钮行为统一改为**：跳转 Stripe Customer Portal。
+
+**保留在 CyberFate 内开发的只有**：
+- 当前计划信息展示（从 `GET /api/subscription/current` 获取）
+- 取消续订（`POST /api/subscription/cancel`）— 因为需要自定义挽留流程和取消后状态管理
 
 ###### B-1-d) 账单历史
 
-| 元素 | 规格 |
-|------|------|
-| 展示条数 | 全部展示（不分页），通常 < 50 条 |
-| 排序 | 按时间倒序（最新在上） |
-| 每条字段 | 日期 / 套餐名称 / 金额 / 状态（✓ 已支付 / ✗ 失败 / ⏳ 待支付）|
-| 发票下载 | 每条右侧有「下载发票」链接（P2，MVP 先不提供）|
-
-**空状态**：无任何账单时显示「暂无支付记录」
+> **已移交 Stripe Customer Portal 托管**。用户点击「管理支付方式与账单」跳转 Stripe Portal 后可查看完整账单历史、下载发票、更新支付方式。
+>
+> CyberFate 侧不再自建账单历史列表和发票下载功能。
 
 ###### B-1-e) API 设计（订阅管理）
 
@@ -1332,12 +1307,10 @@ Response:
 |------|------|------|------|
 | 新增 | SubscriptionManagePanel | components/profile/SubscriptionManagePanel.tsx | 管理订阅完整面板 |
 | 新增 | CancelSubscription | components/profile/CancelSubscription.tsx | 取消续订流程（含确认+挽留） |
-| 新增 | UpdatePaymentMethod | components/profile/UpdatePaymentMethod.tsx | 更新支付方式 |
-| 新增 | InvoiceHistory | components/profile/InvoiceHistory.tsx | 账单历史列表 |
 | 新增 API | app/api/subscription/current/route.ts | 查询当前订阅 |
 | 新增 API | app/api/subscription/cancel/route.ts | 取消订阅 |
-| 新增 API | app/api/subscription/update-payment-method/route.ts | 更新支付方式 |
-| 新增 API | app/api/subscription/invoices/route.ts | 账单历史 |
+| 新增 API | app/api/create-checkout/route.ts | 创建 Stripe Checkout Session（购买/升级）|
+| 新增 API | app/api/create-portal/route.ts | 创建 Stripe Portal Session（支付方式/账单）|
 
 ---
 
@@ -1390,7 +1363,7 @@ Response:
 - 会员权益对比表（免费 vs VIP）
 - 套餐选择卡片（月卡/季卡/年卡）
 - 立即开通按钮
-- 支付方式：Stripe / 支付宝
+- **支付方式：Stripe Checkout（跳转式支付）**
 
 **已订阅用户看到**（**新增 — 解决已订阅用户无入口问题**）：
 
@@ -1441,8 +1414,42 @@ Response:
 
 #### 通用交互说明
 - 默认选中季卡（主推）— **仅未订阅用户适用**
-- 点击开通 → 检查登录 → 选择支付方式 → 完成支付
+- 点击开通 → 检查登录 → **后端创建 Stripe Checkout Session → 前端跳转 `checkout.stripe.com` 支付页** → 用户在 Stripe 完成支付 → Stripe 回调 `success_url`（跳回 CyberFate 并激活会员）
 - **已订阅用户访问 `/pricing` 时自动切换到上述「已订阅视图」**
+
+#### 支付流程：Stripe Checkout（跳转式）
+
+**完整流程**：
+
+```
+用户点击「立即开通」或「升级」
+    ↓
+前端 POST /api/create-checkout { plan: "quarterly" }
+    ↓
+后端 stripe.checkout.sessions.create({
+  mode: "subscription",
+  line_items: [{ price: "price_xxx", quantity: 1 }],
+  success_url: "https://cyberfate.me/success?session_id={CHECKOUT_SESSION_ID}",
+  cancel_url: "https://cyberfate.me/pricing",
+})
+    ↓
+返回 { url: "https://checkout.stripe.com/c/pay/cs_xxx..." }
+    ↓
+前端 window.location.href = url  （整页跳转）
+    ↓
+用户在 Stripe Checkout 页面完成支付
+（支持银行卡/微信支付/支付宝等，由 Stripe 决定可用方式）
+    ↓
+支付成功 → Stripe 自动跳转 success_url
+    ↓
+CyberFate /success 页面 → 验证 session_id → 激活会员 → 跳转 /profile 或首页
+```
+
+**关键设计决策**：
+- **不做内嵌支付表单**（不使用 Stripe Card Element），直接用 Stripe Checkout 托管页面
+- 用户看到的支付界面就是你截图中的标准 Stripe Checkout 页面
+- 支持的支付方式由 Stripe 根据用户 IP/浏览器自动展示（银行卡、微信、支付宝等）
+- 不需要自己处理 PCI 合规（Stripe Checkout 托管）
 
 ---
 
