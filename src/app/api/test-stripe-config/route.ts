@@ -45,22 +45,25 @@ export async function GET() {
     }
 
     try {
-      const balance = await stripe.balance.retrieve();
+      const customers = await stripe.customers.list({ limit: 1 });
       return NextResponse.json({
         ok: true,
         message: 'Stripe 配置正常',
         mode: diagnostics.keyPrefix === 'sk_live_' ? 'live' : 'test',
-        currency: balance.available[0]?.currency || 'hkd',
+        customerCount: customers.data.length,
         diagnostics,
       });
     } catch (stripeError: any) {
       return NextResponse.json({
         ok: false,
         error: 'Stripe API Key 无效或权限不足',
+        type: stripeError.type ?? 'unknown',
+        code: stripeError.code ?? 'unknown',
+        statusCode: stripeError.statusCode ?? null,
         details: stripeError.message,
         hint: '请检查 STRIPE_SECRET_KEY 是否正确',
         diagnostics,
-      }, { status: 500 });
+      }, { status: stripeError.statusCode || 500 });
     }
   } catch (error: any) {
     return NextResponse.json({
