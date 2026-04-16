@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getStripe } from '@/lib/stripe';
+import { testStripeConnection } from '@/lib/stripe-direct';
 
 function getDiagnostics() {
   const key = process.env.STRIPE_SECRET_KEY;
@@ -32,6 +33,13 @@ function getDiagnostics() {
 export async function GET() {
   const diagnostics = getDiagnostics();
 
+  let directApiTest;
+  try {
+    directApiTest = await testStripeConnection();
+  } catch (e: any) {
+    directApiTest = { ok: false, message: `直接 API 调用异常: ${e.message}` };
+  }
+
   try {
     const stripe = getStripe();
 
@@ -40,7 +48,7 @@ export async function GET() {
         ok: false,
         error: 'STRIPE_SECRET_KEY 未配置或为空',
         hint: '请在 Vercel 环境变量中设置 STRIPE_SECRET_KEY',
-        diagnostics,
+        diagnostics: { ...diagnostics, directApiTest },
       });
     }
 
@@ -51,7 +59,7 @@ export async function GET() {
         message: 'Stripe 配置正常',
         mode: diagnostics.keyPrefix === 'sk_live_' ? 'live' : 'test',
         customerCount: customers.data.length,
-        diagnostics,
+        diagnostics: { ...diagnostics, directApiTest },
       });
     } catch (stripeError: any) {
       return NextResponse.json({
@@ -62,7 +70,7 @@ export async function GET() {
         statusCode: stripeError.statusCode ?? null,
         details: stripeError.message,
         hint: '请检查 STRIPE_SECRET_KEY 是否正确',
-        diagnostics,
+        diagnostics: { ...diagnostics, directApiTest },
       }, { status: stripeError.statusCode || 500 });
     }
   } catch (error: any) {
@@ -70,7 +78,7 @@ export async function GET() {
       ok: false,
       error: '配置检查失败',
       details: error.message,
-      diagnostics,
+      diagnostics: { ...diagnostics, directApiTest },
     }, { status: 500 });
   }
 }
