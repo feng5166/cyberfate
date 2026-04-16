@@ -11,7 +11,7 @@ export function getStripe(): Stripe | null {
       return null;
     }
     stripeInstance = new Stripe(apiKey, {
-      apiVersion: '2026-02-25.clover',
+      apiVersion: '2024-12-18.acacia',
     });
   }
   return stripeInstance;
