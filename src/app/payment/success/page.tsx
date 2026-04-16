@@ -2,11 +2,24 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 
 function SuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { update: updateSession } = useSession();
   const [countdown, setCountdown] = useState(5);
+  const [sessionRefreshed, setSessionRefreshed] = useState(false);
+
+  // 刷新 session 以获取最新 VIP 状态
+  useEffect(() => {
+    if (!sessionRefreshed) {
+      updateSession().then(() => {
+        setSessionRefreshed(true);
+        console.log('[PaymentSuccess] Session refreshed');
+      });
+    }
+  }, [updateSession, sessionRefreshed]);
 
   useEffect(() => {
     if (window.location.hostname === 'cyberfate.vercel.app') {
