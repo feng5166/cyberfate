@@ -41,7 +41,6 @@ export async function POST(req: NextRequest) {
         status: 'active',
         startAt: now,
         expireAt,
-        stripeSubscriptionId: `manual_${Date.now()}`,
       },
     });
 
