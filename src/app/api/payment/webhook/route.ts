@@ -2,55 +2,86 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import crypto from 'crypto';
 
-// 手动验证 Stripe Webhook 签名（不依赖 Stripe SDK）
-function verifyStripeSignature(
+// Stripe 签名验证（参考官方 SDK 实现）
+function verifyStripeWebhook(
   payload: string,
-  signature: string,
-  secret: string
+  header: string,
+  secret: string,
+  tolerance: number = 300
 ): { valid: boolean; event?: StripeEvent; error?: string } {
+  const details = parseSignatureHeader(header);
+  
+  if (!details || details.timestamp === -1) {
+    return { valid: false, error: 'Unable to extract timestamp and signatures from header' };
+  }
+  
+  if (details.signatures.length === 0) {
+    return { valid: false, error: 'No signatures found with expected scheme v1' };
+  }
+
+  const expectedSignature = computeSignature(
+    `${details.timestamp}.${payload}`,
+    secret
+  );
+
+  const signatureFound = details.signatures.some((sig) =>
+    secureCompare(sig, expectedSignature)
+  );
+
+  if (!signatureFound) {
+    return { 
+      valid: false, 
+      error: `No signature matched. Expected: ${expectedSignature.substring(0, 20)}..., Got: ${details.signatures[0]?.substring(0, 20)}...` 
+    };
+  }
+
+  const timestampAge = Math.floor(Date.now() / 1000) - details.timestamp;
+  if (tolerance > 0 && timestampAge > tolerance) {
+    return { valid: false, error: `Timestamp outside tolerance. Age: ${timestampAge}s` };
+  }
+
   try {
-    const parts = signature.split(',').reduce((acc, part) => {
-      const [key, value] = part.split('=');
-      acc[key] = value;
-      return acc;
-    }, {} as Record<string, string>);
-
-    const timestamp = parts['t'];
-    const v1Signature = parts['v1'];
-
-    if (!timestamp || !v1Signature) {
-      return { valid: false, error: 'Missing signature parts' };
-    }
-
-    // 检查时间戳（5分钟容差）
-    const timestampNum = parseInt(timestamp, 10);
-    const now = Math.floor(Date.now() / 1000);
-    if (Math.abs(now - timestampNum) > 300) {
-      return { valid: false, error: 'Timestamp too old' };
-    }
-
-    // 计算期望的签名
-    const signedPayload = `${timestamp}.${payload}`;
-    const expectedSignature = crypto
-      .createHmac('sha256', secret)
-      .update(signedPayload, 'utf8')
-      .digest('hex');
-
-    // 比较签名
-    const isValid = crypto.timingSafeEqual(
-      Buffer.from(v1Signature, 'hex'),
-      Buffer.from(expectedSignature, 'hex')
-    );
-
-    if (!isValid) {
-      return { valid: false, error: 'Signature mismatch' };
-    }
-
     const event = JSON.parse(payload) as StripeEvent;
     return { valid: true, event };
-  } catch (err) {
-    return { valid: false, error: `Verification error: ${err}` };
+  } catch (e) {
+    return { valid: false, error: 'Invalid JSON payload' };
   }
+}
+
+function parseSignatureHeader(header: string): { timestamp: number; signatures: string[] } | null {
+  if (typeof header !== 'string') {
+    return null;
+  }
+
+  const items = header.split(',');
+  const timestamp = items
+    .map((item) => item.split('='))
+    .filter(([key]) => key === 't')
+    .map(([, value]) => parseInt(value, 10))[0] ?? -1;
+    
+  const signatures = items
+    .map((item) => item.split('='))
+    .filter(([key]) => key === 'v1')
+    .map(([, value]) => value);
+
+  return { timestamp, signatures };
+}
+
+function computeSignature(payload: string, secret: string): string {
+  return crypto
+    .createHmac('sha256', secret)
+    .update(payload, 'utf8')
+    .digest('hex');
+}
+
+function secureCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+  
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  return crypto.timingSafeEqual(bufA, bufB);
 }
 
 interface StripeEvent {
@@ -78,10 +109,9 @@ export async function POST(req: NextRequest) {
   const body = await req.text();
   const sig = req.headers.get('stripe-signature');
 
+  console.log('[Webhook] Request received');
   console.log('[Webhook] Body length:', body.length);
-  console.log('[Webhook] Body (first 200):', body.substring(0, 200));
-  console.log('[Webhook] Signature header:', sig);
-  console.log('[Webhook] Received request, signature:', sig ? 'present' : 'missing');
+  console.log('[Webhook] Signature:', sig);
 
   if (!sig) {
     return NextResponse.json({ error: 'No signature' }, { status: 400 });
@@ -93,8 +123,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
   }
 
+  console.log('[Webhook] Secret prefix:', webhookSecret.substring(0, 10));
+
   // 验证签名
-  const verification = verifyStripeSignature(body, sig, webhookSecret);
+  const verification = verifyStripeWebhook(body, sig, webhookSecret);
   if (!verification.valid || !verification.event) {
     console.error('[Webhook] Signature verification failed:', verification.error);
     return NextResponse.json(
@@ -104,7 +136,7 @@ export async function POST(req: NextRequest) {
   }
 
   const event = verification.event;
-  console.log('[Webhook] Event type:', event.type, 'ID:', event.id);
+  console.log('[Webhook] ✅ Signature verified! Event type:', event.type, 'ID:', event.id);
 
   if (event.type === 'checkout.session.completed') {
     const checkoutSession = event.data.object;
@@ -181,7 +213,7 @@ export async function POST(req: NextRequest) {
           },
         });
       });
-      console.log('[Webhook] Direct flow completed, subscription created for user:', userId);
+      console.log('[Webhook] ✅ Direct flow completed, subscription created for user:', userId);
     } else {
       console.error('[Webhook] No orderId or userId/plan in metadata');
       return NextResponse.json({ error: 'No orderId or userId/plan in metadata' }, { status: 400 });
