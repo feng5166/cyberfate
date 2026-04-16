@@ -1,7 +1,7 @@
 {
   "buildCommand": "npm run build",
   "env": {
-    "NEXTAUTH_URL": "https://cyberfate.vercel.app",
+    "NEXTAUTH_URL": "https://www.cyberfate.me",
     "SKIP_PRISMA_DB_PUSH": "1"
   },
   "regions": ["hkg1"],
