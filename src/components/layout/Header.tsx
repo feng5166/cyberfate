@@ -1,49 +1,34 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, ChevronDown } from 'lucide-react';
 import { AuthModal } from '@/components/auth/AuthModal';
 
-// 导航项配置
-const navItems = [
+// 主导航项（桌面端直接展示，移动端平铺）
+const mainNavItems = [
   { label: '首页', href: '/' },
-  { label: '定价', href: '/pricing' },
+  { label: '八字分析', href: '/bazi' },
+  { label: '每日运势', href: '/daily' },
+  { label: '塔罗占卜', href: '/tarot' },
+  { label: '紫微斗数', href: '/ziwei' },
 ];
 
-// 功能菜单 - 完整版（包含所有导航项）
-const featureGroups = [
-  {
-    title: '八字命理',
-    items: [
-      { label: '八字分析', href: '/bazi' },
-      { label: '每日运势', href: '/daily' },
-      { label: '八字合婚', href: '/bazi/marriage' },
-    ],
-  },
-  {
-    title: '周易占卜',
-    items: [
-      { label: '梅花易数', href: '/meihua' },
-      { label: '塔罗占卜', href: '/tarot' },
-      { label: '六爻占卜', href: '/liuyao' },
-    ],
-  },
-  {
-    title: '更多工具',
-    items: [
-      { label: '紫微斗数', href: '/ziwei' },
-      { label: 'AI老黄历', href: '/huangli' },
-    ],
-  },
+// "更多"下拉菜单项
+const moreMenuItems = [
+  { label: '合婚配对', href: '/bazi/marriage' },
+  { label: '黄历查询', href: '/huangli' },
+  { label: '知识库', href: '/knowledge' },
 ];
 
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+  const moreRef = useRef<HTMLDivElement>(null);
   const { data: session } = useSession();
   const pathname = usePathname();
   const isHomePage = pathname === '/';
@@ -101,36 +86,57 @@ export function Header() {
           </div>
 
           {/* Desktop Nav - 中间 */}
-          <div className="hidden lg:flex items-center gap-10">
-            <Link
-              href="/"
-              className="text-sm text-brand-gray hover:text-[#1C1A16] transition-colors duration-200"
+          <div className="hidden lg:flex items-center gap-8">
+            {mainNavItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`text-sm transition-colors duration-200 ${pathname === item.href ? 'text-[#1C1A16] font-medium' : 'text-brand-gray hover:text-[#1C1A16]'}`}
+              >
+                {item.label}
+              </Link>
+            ))}
+            <div
+              ref={moreRef}
+              className="relative"
+              onMouseEnter={() => setMoreOpen(true)}
+              onMouseLeave={() => setMoreOpen(false)}
             >
-              首页
-            </Link>
-            <Link
-              href="/bazi"
-              className="text-sm text-brand-gray hover:text-[#1C1A16] transition-colors duration-200"
-            >
-              八字分析
-            </Link>
-            <Link
-              href="/knowledge"
-              className="text-sm text-brand-gray hover:text-[#1C1A16] transition-colors duration-200"
-            >
-              知识库
-            </Link>
+              <button
+                className={`flex items-center gap-1 text-sm transition-colors duration-200 ${
+                  moreMenuItems.some((item) => pathname === item.href)
+                    ? 'text-[#1C1A16] font-medium'
+                    : 'text-brand-gray hover:text-[#1C1A16]'
+                }`}
+              >
+                更多
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${moreOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {moreOpen && (
+                <div className="absolute left-1/2 -translate-x-1/2 top-full pt-2">
+                  <div className="py-2 bg-white rounded-lg shadow-lg border border-brand-border-light min-w-[130px] animate-fadeIn">
+                    {moreMenuItems.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`block px-4 py-2 text-sm transition-colors ${
+                          pathname === item.href
+                            ? 'text-[#1C1A16] font-medium bg-brand-bg'
+                            : 'text-brand-gray hover:text-[#1C1A16] hover:bg-brand-bg'
+                        }`}
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
             <Link
               href="/pricing"
-              className="text-sm text-brand-gray hover:text-[#1C1A16] transition-colors duration-200"
+              className={`text-sm transition-colors duration-200 ${pathname === '/pricing' ? 'text-[#1C1A16] font-medium' : 'text-brand-gray hover:text-[#1C1A16]'}`}
             >
               定价
-            </Link>
-            <Link
-              href="/bazi?sidebar=open"
-              className="text-sm font-semibold text-brand-gray hover:text-[#1C1A16] transition-colors duration-200"
-            >
-              工作台
             </Link>
           </div>
 
@@ -205,51 +211,47 @@ export function Header() {
           className="fixed left-0 right-0 top-16 bottom-0 z-50 lg:hidden bg-white overflow-y-auto animate-slideDown"
         >
           <div className="px-4 py-4 space-y-1">
-            {/* 主导航 */}
-            {navItems.map((item) => (
+            {/* 主导航项 */}
+            {mainNavItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="block py-3 text-sm text-brand-gray hover:text-[#1C1A16] active:bg-brand-bg transition-colors"
+                className={`block py-3 text-sm transition-colors active:bg-brand-bg ${
+                  pathname === item.href ? 'text-[#1C1A16] font-medium' : 'text-brand-gray hover:text-[#1C1A16]'
+                }`}
                 onClick={() => setMobileOpen(false)}
               >
                 {item.label}
               </Link>
             ))}
 
-            <Link
-              href="/bazi?sidebar=open"
-              className="block py-3 text-sm font-semibold text-brand-gray hover:text-[#1C1A16] active:bg-brand-bg transition-colors"
-              onClick={() => setMobileOpen(false)}
-            >
-              工作台
-            </Link>
-            
-            {/* 功能分组 - S-task6: 补齐所有导航项 */}
-            {featureGroups.map((group, index) => (
-              <div key={group.title} className="pt-2 border-t border-brand-border-light mt-2">
-                <p className="px-2 py-2 text-xs text-brand-light font-medium tracking-wide">{group.title}</p>
-                {group.items.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className="block pl-4 py-2.5 text-sm text-brand-gray hover:text-[#1C1A16] active:bg-brand-bg transition-colors"
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-              </div>
-            ))}
+            {/* 更多 */}
+            <div className="pt-2 border-t border-brand-border-light mt-2">
+              <p className="px-2 py-2 text-xs text-brand-light font-medium tracking-wide">更多</p>
+              {moreMenuItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`block pl-4 py-2.5 text-sm transition-colors active:bg-brand-bg ${
+                    pathname === item.href ? 'text-[#1C1A16] font-medium' : 'text-brand-gray hover:text-[#1C1A16]'
+                  }`}
+                  onClick={() => setMobileOpen(false)}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
 
-            {/* 知识库 */}
+            {/* 定价 */}
             <div className="pt-2 border-t border-brand-border-light mt-2">
               <Link
-                href="/knowledge"
-                className="block py-3 text-sm text-brand-gray hover:text-[#1C1A16] active:bg-brand-bg transition-colors"
+                href="/pricing"
+                className={`block py-3 text-sm transition-colors active:bg-brand-bg ${
+                  pathname === '/pricing' ? 'text-[#1C1A16] font-medium' : 'text-brand-gray hover:text-[#1C1A16]'
+                }`}
                 onClick={() => setMobileOpen(false)}
               >
-                知识库
+                定价
               </Link>
             </div>
 
