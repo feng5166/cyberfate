@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { getStripe } from '@/lib/stripe';
+import { listCustomers, createPortalSession } from '@/lib/stripe-direct';
 
 export async function POST() {
   try {
@@ -10,32 +10,38 @@ export async function POST() {
       return NextResponse.json({ error: '未登录' }, { status: 401 });
     }
 
-    const stripe = getStripe();
-    if (!stripe) {
-      return NextResponse.json({ error: 'Stripe 未配置' }, { status: 500 });
+    const customersRes = await listCustomers(session.user.email);
+
+    if (!customersRes.ok) {
+      return NextResponse.json(
+        { error: customersRes.error ?? 'Stripe 未配置' },
+        { status: customersRes.status || 500 }
+      );
     }
 
-    const customers = await stripe.customers.list({
-      email: session.user.email,
-      limit: 1,
-    });
-
-    if (customers.data.length === 0) {
+    if (!customersRes.data || customersRes.data.data.length === 0) {
       return NextResponse.json(
         { error: '未找到订阅记录，请先购买套餐' },
         { status: 404 }
       );
     }
 
-    const customerId = customers.data[0].id;
+    const customerId = customersRes.data.data[0].id;
     const baseUrl = process.env.NEXTAUTH_URL || 'https://www.cyberfate.me';
 
-    const portalSession = await stripe.billingPortal.sessions.create({
-      customer: customerId,
-      return_url: `${baseUrl}/profile`,
-    });
+    const portalRes = await createPortalSession(
+      customerId,
+      `${baseUrl}/profile`,
+    );
 
-    return NextResponse.json({ portal_url: portalSession.url });
+    if (!portalRes.ok || !portalRes.data) {
+      return NextResponse.json(
+        { error: portalRes.error ?? '创建管理门户失败' },
+        { status: portalRes.status || 500 }
+      );
+    }
+
+    return NextResponse.json({ portal_url: portalRes.data.url });
   } catch (error: any) {
     console.error('[Stripe create-portal] Error:', error);
     return NextResponse.json(

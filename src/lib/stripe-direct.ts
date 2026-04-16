@@ -206,4 +206,32 @@ export async function listCustomers(
   );
 }
 
+// ── Customer Portal Session ──
+
+export interface StripePortalSession {
+  id: string;
+  object: string;
+  url: string;
+  customer: string;
+  return_url: string;
+  created: number;
+}
+
+export async function createPortalSession(
+  customerId: string,
+  returnUrl: string,
+): Promise<StripeDirectResponse<StripePortalSession>> {
+  const body = new URLSearchParams();
+  body.set('customer', customerId);
+  body.set('return_url', returnUrl);
+
+  return stripeRequest<StripePortalSession>(
+    '/billing_portal/sessions',
+    {
+      method: 'POST',
+      body: body.toString(),
+    },
+  );
+}
+
 export { stripeRequest };
