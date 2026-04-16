@@ -9,6 +9,13 @@ function SuccessContent() {
   const [countdown, setCountdown] = useState(5);
 
   useEffect(() => {
+    if (window.location.hostname === 'cyberfate.vercel.app') {
+      window.location.replace(
+        `https://www.cyberfate.me${window.location.pathname}${window.location.search}`
+      );
+      return;
+    }
+
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
