@@ -133,10 +133,16 @@ export async function createCheckoutSession(
   body.set('success_url', params.successUrl);
   body.set('cancel_url', params.cancelUrl);
 
+  body.set('payment_method_types[0]', 'card');
+  body.set('payment_method_types[1]', 'alipay');
+  body.set('payment_method_types[2]', 'wechat_pay');
+  body.set('billing_address_collection', 'auto');
+
   if (params.priceData) {
     body.set('line_items[0][price_data][currency]', params.priceData.currency);
     body.set('line_items[0][price_data][unit_amount]', String(params.priceData.unit_amount));
     body.set('line_items[0][price_data][product_data][name]', params.priceData.product_data.name);
+    body.set('line_items[0][price_data][product_data][statement_descriptor_suffix]', 'CYBERFATE');
     if (params.priceData.product_data.description) {
       body.set('line_items[0][price_data][product_data][description]', params.priceData.product_data.description);
     }
