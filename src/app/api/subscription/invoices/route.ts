@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { PRICING_CONFIG } from '@/lib/pricing-config';
+import { PRICING_CONFIG, type PlanId } from '@/lib/pricing-config';
 
 export async function GET(req: NextRequest) {
   try {
@@ -12,11 +12,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // 映射 plan 名称
-    const planNames: Record<string, string> = {
-      monthly: '基础版（月卡）',
-      quarterly: '专业版（季卡）',
-      yearly: '尊享版（年卡）'
+    const getPlanDisplayName = (plan: string): string => {
+      const config = PRICING_CONFIG[plan as PlanId];
+      return config ? `${config.name}（${config.period}卡）` : plan;
     };
 
     // 1. 获取支付成功的订单
@@ -31,7 +29,7 @@ export async function GET(req: NextRequest) {
     const orderInvoices = orders.map(order => ({
       id: order.id,
       date: order.createdAt.toISOString().split('T')[0],
-      description: planNames[order.plan] || order.plan,
+      description: getPlanDisplayName(order.plan),
       amount: order.amount / 100,
       currency: 'CNY',
       status: 'paid',
@@ -64,7 +62,7 @@ export async function GET(req: NextRequest) {
         return {
           id: sub.id,
           date: sub.createdAt.toISOString().split('T')[0],
-          description: planNames[sub.plan] || sub.plan,
+          description: getPlanDisplayName(sub.plan),
           amount: planConfig ? planConfig.amount / 100 : 0,
           currency: 'CNY',
           status: 'paid',

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { PRICING_CONFIG, type PlanId } from '@/lib/pricing-config';
 
 export async function GET(req: NextRequest) {
   try {
@@ -28,24 +29,14 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // 映射 plan 名称
-    const planNames = {
-      monthly: '基础版（月卡）',
-      quarterly: '专业版（季卡）',
-      yearly: '尊享版（年卡）'
-    };
-
-    const prices = {
-      monthly: 29,
-      quarterly: 68,
-      yearly: 238
-    };
+    const planId = subscription.plan as PlanId;
+    const config = PRICING_CONFIG[planId];
 
     return NextResponse.json({
       subscribed: true,
       plan: subscription.plan,
-      plan_name: planNames[subscription.plan],
-      price: prices[subscription.plan],
+      plan_name: config ? `${config.name}（${config.period}卡）` : subscription.plan,
+      price: config ? config.amount / 100 : 0,
       currency: 'CNY',
       status: subscription.status,
       current_period_start: subscription.startAt.toISOString(),

@@ -30,6 +30,7 @@ interface ProfileClientProps {
   limit: number | null
 }
 
+// plan_name 已由服务端从 PRICING_CONFIG 生成，此处仅作 fallback
 const planNameMap: Record<string, string> = {
   monthly: '基础版（月卡）',
   quarterly: '专业版（季卡）',

@@ -2,11 +2,11 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { PRICING_CONFIG, type PlanId } from '@/lib/pricing-config'
 
-const planNameMap: Record<string, string> = {
-  monthly: '基础版（月卡）',
-  quarterly: '专业版（季卡）',
-  yearly: '尊享版（年卡）',
+function getPlanDisplayName(plan: string): string {
+  const config = PRICING_CONFIG[plan as PlanId]
+  return config ? `${config.name}（${config.period}卡）` : plan
 }
 
 const statusMap: Record<string, string> = {
@@ -30,7 +30,7 @@ export async function GET() {
   const invoices = orders.map((order) => ({
     id: order.id,
     date: (order.paidAt ?? order.createdAt).toISOString().slice(0, 10),
-    description: planNameMap[order.plan] ?? order.plan,
+    description: getPlanDisplayName(order.plan),
     amount: order.amount / 100,
     currency: 'CNY',
     status: statusMap[order.status] ?? order.status,

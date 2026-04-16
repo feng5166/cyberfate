@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth'
 import { redirect } from 'next/navigation'
 import { authOptions } from '@/lib/auth'
 import { getSubscription, checkQuota } from '@/lib/subscription'
+import { PRICING_CONFIG, type PlanId } from '@/lib/pricing-config'
 import ProfileClient from './ProfileClient'
 
 export default async function ProfilePage() {
@@ -18,31 +19,22 @@ export default async function ProfilePage() {
 
   const vip = subscription !== null
 
-  // 映射 subscription 详情
-  const planNames = {
-    monthly: '基础版（月卡）',
-    quarterly: '专业版（季卡）',
-    yearly: '尊享版（年卡）'
-  };
-
-  const prices = {
-    monthly: 29,
-    quarterly: 68,
-    yearly: 238
-  };
-
-  const subscriptionDetail = subscription ? {
-    plan: subscription.plan,
-    plan_name: planNames[subscription.plan],
-    price: prices[subscription.plan],
-    current_period_end: subscription.expireAt.toISOString(),
-    cancel_at_period_end: subscription.cancelAtPeriodEnd || false,
-    pending_plan: subscription.pendingPlan || null,
-    payment_method: subscription.paymentMethod ? {
-      type: subscription.paymentMethod,
-      last4: subscription.paymentMethodLast4 || '****'
-    } : null
-  } : null;
+  const subscriptionDetail = subscription ? (() => {
+    const planId = subscription.plan as PlanId;
+    const config = PRICING_CONFIG[planId];
+    return {
+      plan: subscription.plan,
+      plan_name: config ? `${config.name}（${config.period}卡）` : subscription.plan,
+      price: config ? config.amount / 100 : 0,
+      current_period_end: subscription.expireAt.toISOString(),
+      cancel_at_period_end: subscription.cancelAtPeriodEnd || false,
+      pending_plan: subscription.pendingPlan || null,
+      payment_method: subscription.paymentMethod ? {
+        type: subscription.paymentMethod,
+        last4: subscription.paymentMethodLast4 || '****'
+      } : null
+    };
+  })() : null;
 
   return (
     <ProfileClient
