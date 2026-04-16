@@ -5,8 +5,14 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
 import { PricingCardList } from './PricingCardList';
-import { PaymentModal } from '@/components/PaymentModal';
 import { AuthModal } from '@/components/auth/AuthModal';
+import { type PlanId } from '@/lib/pricing-config';
+
+const PLAN_NAME_TO_ID: Record<string, PlanId> = {
+  '基础版': 'monthly',
+  '专业版': 'quarterly',
+  '尊享版': 'yearly',
+};
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -14,16 +20,16 @@ interface UpgradeModalProps {
 }
 
 export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
-  const { data: session, update } = useSession();
+  const { data: session } = useSession();
   const router = useRouter();
   const isSubscribed = (session?.user as { isSubscribed?: boolean } | undefined)?.isSubscribed;
   const shouldShow = isOpen && !isSubscribed;
 
   const [selectedPlan, setSelectedPlan] = useState('专业版');
   const [visible, setVisible] = useState(false);
-  const [paymentModal, setPaymentModal] = useState<{ planName: string; price: string } | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
-  const [pendingPayment, setPendingPayment] = useState<{ planName: string; price: string } | null>(null);
+  const [pendingPlan, setPendingPlan] = useState<{ planName: string; price: string } | null>(null);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   useEffect(() => {
     if (shouldShow) {
@@ -52,22 +58,50 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
     return () => window.removeEventListener('keydown', handleEsc);
   }, [shouldShow, handleClose]);
 
-  useEffect(() => {
-    if (session && pendingPayment) {
-      setPaymentModal(pendingPayment);
-      setPendingPayment(null);
+  const redirectToCheckout = useCallback(async (planName: string) => {
+    const planId = PLAN_NAME_TO_ID[planName];
+    if (!planId) return;
+
+    setCheckoutLoading(true);
+    try {
+      const res = await fetch('/api/stripe/create-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: planId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        console.error('Checkout error response:', data);
+        const errorMsg = data.details || data.error || '创建支付会话失败，请稍后重试';
+        alert(errorMsg);
+        return;
+      }
+      window.location.href = data.checkout_url;
+    } catch (error) {
+      console.error('Checkout network error:', error);
+      const msg = error instanceof Error ? error.message : '网络错误';
+      alert(`请求失败: ${msg}`);
+    } finally {
+      setCheckoutLoading(false);
     }
-  }, [session, pendingPayment]);
+  }, []);
+
+  useEffect(() => {
+    if (session && pendingPlan) {
+      redirectToCheckout(pendingPlan.planName);
+      setPendingPlan(null);
+    }
+  }, [session, pendingPlan, redirectToCheckout]);
 
   if (!shouldShow) return null;
 
   const handleCTAClick = (planName: string, price: string) => {
     if (!session) {
-      setPendingPayment({ planName, price: `¥${price}` });
+      setPendingPlan({ planName, price });
       setAuthOpen(true);
       return;
     }
-    setPaymentModal({ planName, price: `¥${price}` });
+    redirectToCheckout(planName);
   };
 
   const handleViewFullPricing = () => {
@@ -122,19 +156,6 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
           </div>
         </div>
       </div>
-
-      {paymentModal && (
-        <PaymentModal
-          planName={paymentModal.planName}
-          price={paymentModal.price}
-          onSuccess={async () => {
-            setPaymentModal(null);
-            await update();
-            onClose();
-          }}
-          onClose={() => setPaymentModal(null)}
-        />
-      )}
 
       <AuthModal
         isOpen={authOpen}
