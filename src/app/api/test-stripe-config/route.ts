@@ -44,6 +44,14 @@ export async function GET() {
     const stripe = getStripe();
 
     if (!stripe) {
+      if (directApiTest?.ok) {
+        return NextResponse.json({
+          ok: true,
+          message: 'Stripe 配置正常（使用直接 API）',
+          mode: diagnostics.keyPrefix === 'sk_live_' ? 'live' : 'test',
+          diagnostics: { ...diagnostics, directApiTest, sdkError: 'STRIPE_SECRET_KEY 未配置或为空' },
+        });
+      }
       return NextResponse.json({
         ok: false,
         error: 'STRIPE_SECRET_KEY 未配置或为空',
@@ -62,6 +70,14 @@ export async function GET() {
         diagnostics: { ...diagnostics, directApiTest },
       });
     } catch (stripeError: any) {
+      if (directApiTest?.ok) {
+        return NextResponse.json({
+          ok: true,
+          message: 'Stripe 配置正常（使用直接 API）',
+          mode: diagnostics.keyPrefix === 'sk_live_' ? 'live' : 'test',
+          diagnostics: { ...diagnostics, directApiTest, sdkError: stripeError.message },
+        });
+      }
       return NextResponse.json({
         ok: false,
         error: 'Stripe API Key 无效或权限不足',
@@ -74,6 +90,14 @@ export async function GET() {
       }, { status: stripeError.statusCode || 500 });
     }
   } catch (error: any) {
+    if (directApiTest?.ok) {
+      return NextResponse.json({
+        ok: true,
+        message: 'Stripe 配置正常（使用直接 API）',
+        mode: diagnostics.keyPrefix === 'sk_live_' ? 'live' : 'test',
+        diagnostics: { ...diagnostics, directApiTest, sdkError: error.message },
+      });
+    }
     return NextResponse.json({
       ok: false,
       error: '配置检查失败',
