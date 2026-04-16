@@ -89,4 +89,121 @@ export async function testStripeConnection(): Promise<TestConnectionResult> {
   };
 }
 
+// ── Checkout Session ──
+
+export interface PriceData {
+  currency: string;
+  unit_amount: number;
+  product_data: {
+    name: string;
+    description?: string;
+  };
+}
+
+export interface CheckoutSessionParams {
+  customerEmail?: string;
+  customerId?: string;
+  priceId?: string;
+  priceData?: PriceData;
+  quantity?: number;
+  successUrl: string;
+  cancelUrl: string;
+  mode?: 'payment' | 'subscription';
+  metadata?: Record<string, string>;
+}
+
+export interface StripeCheckoutSession {
+  id: string;
+  object: string;
+  url: string | null;
+  status: string;
+  payment_status: string;
+  customer: string | null;
+  customer_email: string | null;
+  mode: string;
+  metadata: Record<string, string>;
+}
+
+export async function createCheckoutSession(
+  params: CheckoutSessionParams,
+): Promise<StripeDirectResponse<StripeCheckoutSession>> {
+  const body = new URLSearchParams();
+
+  body.set('mode', params.mode ?? 'payment');
+  body.set('success_url', params.successUrl);
+  body.set('cancel_url', params.cancelUrl);
+
+  if (params.priceData) {
+    body.set('line_items[0][price_data][currency]', params.priceData.currency);
+    body.set('line_items[0][price_data][unit_amount]', String(params.priceData.unit_amount));
+    body.set('line_items[0][price_data][product_data][name]', params.priceData.product_data.name);
+    if (params.priceData.product_data.description) {
+      body.set('line_items[0][price_data][product_data][description]', params.priceData.product_data.description);
+    }
+  } else if (params.priceId) {
+    body.set('line_items[0][price]', params.priceId);
+  }
+
+  body.set('line_items[0][quantity]', String(params.quantity ?? 1));
+
+  if (params.customerId) {
+    body.set('customer', params.customerId);
+  } else if (params.customerEmail) {
+    body.set('customer_email', params.customerEmail);
+  }
+
+  if (params.metadata) {
+    for (const [k, v] of Object.entries(params.metadata)) {
+      body.set(`metadata[${k}]`, v);
+    }
+  }
+
+  return stripeRequest<StripeCheckoutSession>('/checkout/sessions', {
+    method: 'POST',
+    body: body.toString(),
+  });
+}
+
+// ── Customer ──
+
+export interface StripeCustomer {
+  id: string;
+  object: string;
+  email: string | null;
+  name: string | null;
+  created: number;
+  metadata: Record<string, string>;
+}
+
+export async function createCustomer(
+  email: string,
+  name?: string,
+  metadata?: Record<string, string>,
+): Promise<StripeDirectResponse<StripeCustomer>> {
+  const body = new URLSearchParams();
+  body.set('email', email);
+  if (name) {
+    body.set('name', name);
+  }
+  if (metadata) {
+    for (const [k, v] of Object.entries(metadata)) {
+      body.set(`metadata[${k}]`, v);
+    }
+  }
+
+  return stripeRequest<StripeCustomer>('/customers', {
+    method: 'POST',
+    body: body.toString(),
+  });
+}
+
+export async function listCustomers(
+  email: string,
+): Promise<StripeDirectResponse<StripeCustomerList>> {
+  const encodedEmail = encodeURIComponent(email);
+  return stripeRequest<StripeCustomerList>(
+    `/customers?email=${encodedEmail}&limit=10`,
+  );
+}
+
 export { stripeRequest };

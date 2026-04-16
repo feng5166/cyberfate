@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { getStripe } from '@/lib/stripe';
+import { listCustomers, createCustomer, createCheckoutSession } from '@/lib/stripe-direct';
 import { PRICING_CONFIG, isValidPlanId, type PlanId } from '@/lib/pricing-config';
 
 const PLAN_RANK: Record<PlanId, number> = {
@@ -43,8 +43,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '无效的套餐' }, { status: 400 });
     }
 
-    const stripe = getStripe();
-    if (!stripe) {
+    if (!process.env.STRIPE_SECRET_KEY) {
       return NextResponse.json({ error: 'Stripe 未配置' }, { status: 500 });
     }
 
@@ -80,45 +79,52 @@ export async function POST(req: NextRequest) {
       action = 'upgrade';
     }
 
-    const customers = await stripe.customers.list({
-      email: user.email!,
-      limit: 1,
-    });
+    const customersRes = await listCustomers(user.email!);
+    if (!customersRes.ok) {
+      return NextResponse.json(
+        { error: '查询客户失败', details: customersRes.error },
+        { status: 500 }
+      );
+    }
 
     let customerId: string;
-    if (customers.data.length > 0) {
-      customerId = customers.data[0].id;
+    if (customersRes.data!.data.length > 0) {
+      customerId = customersRes.data!.data[0].id;
     } else {
-      const customer = await stripe.customers.create({
-        email: user.email!,
-        name: user.nickname || undefined,
-        metadata: { userId: user.id },
-      });
-      customerId = customer.id;
+      const customerRes = await createCustomer(
+        user.email!,
+        user.nickname || undefined,
+        { userId: user.id },
+      );
+      if (!customerRes.ok) {
+        return NextResponse.json(
+          { error: '创建客户失败', details: customerRes.error },
+          { status: 500 }
+        );
+      }
+      customerId = customerRes.data!.id;
     }
 
     const baseUrl = process.env.NEXTAUTH_URL || 'https://www.cyberfate.me';
 
-    const checkoutSession = await stripe.checkout.sessions.create({
+    const description = action === 'upgrade'
+      ? `从当前套餐升级到${planConfig.name}（补差价）`
+      : `${planConfig.name} ${planConfig.period}付套餐`;
+
+    const checkoutRes = await createCheckoutSession({
       mode: 'payment',
-      customer: customerId,
-      line_items: [
-        {
-          price_data: {
-            currency: planConfig.currency,
-            product_data: {
-              name: `${planConfig.name} - ${planConfig.period}付`,
-              description: action === 'upgrade'
-                ? `从当前套餐升级到${planConfig.name}（补差价）`
-                : `${planConfig.name} ${planConfig.period}付套餐`,
-            },
-            unit_amount: amount,
-          },
-          quantity: 1,
+      customerId,
+      priceData: {
+        currency: planConfig.currency,
+        unit_amount: amount,
+        product_data: {
+          name: `${planConfig.name} - ${planConfig.period}付`,
+          description,
         },
-      ],
-      success_url: `${baseUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/pricing`,
+      },
+      quantity: 1,
+      successUrl: `${baseUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancelUrl: `${baseUrl}/pricing`,
       metadata: {
         userId: user.id,
         plan,
@@ -129,7 +135,14 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({ checkout_url: checkoutSession.url });
+    if (!checkoutRes.ok) {
+      return NextResponse.json(
+        { error: '创建支付会话失败', details: checkoutRes.error },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ checkout_url: checkoutRes.data!.url });
   } catch (error: any) {
     console.error('[Stripe create-checkout] Error:', error);
     return NextResponse.json(
