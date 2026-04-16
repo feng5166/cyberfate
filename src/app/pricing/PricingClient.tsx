@@ -51,12 +51,16 @@ export default function PricingClient({ currentPlan }: PricingClientProps) {
       });
       const data = await res.json();
       if (!res.ok) {
-        alert(data.error || '创建支付会话失败，请稍后重试');
+        console.error('Checkout error response:', data);
+        const errorMsg = data.details || data.error || '创建支付会话失败，请稍后重试';
+        alert(errorMsg);
         return;
       }
       window.location.href = data.checkout_url;
-    } catch {
-      alert('网络错误，请稍后重试');
+    } catch (error) {
+      console.error('Checkout network error:', error);
+      const msg = error instanceof Error ? error.message : '网络错误';
+      alert(`请求失败: ${msg}`);
     } finally {
       setCheckoutLoading(false);
     }
