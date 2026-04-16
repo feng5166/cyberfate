@@ -1,7 +1,8 @@
 {
-  "buildCommand": "prisma generate && prisma db push && next build",
+  "buildCommand": "npm run build",
   "env": {
-    "NEXTAUTH_URL": "https://cyberfate.vercel.app"
+    "NEXTAUTH_URL": "https://cyberfate.vercel.app",
+    "SKIP_PRISMA_DB_PUSH": "1"
   },
   "regions": ["hkg1"],
   "functions": {
