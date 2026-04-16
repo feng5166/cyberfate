@@ -1,13 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Footer } from '@/components/layout/Footer';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { PaymentModal } from '@/components/PaymentModal';
 import { PricingCardList } from '@/components/pricing/PricingCardList';
 import { AuthModal } from '@/components/auth/AuthModal';
+import { type PlanId } from '@/lib/pricing-config';
+
+const PLAN_NAME_TO_ID: Record<string, PlanId> = {
+  '基础版': 'monthly',
+  '专业版': 'quarterly',
+  '尊享版': 'yearly',
+};
 
 const faqs = [
   { q: '免费版和会员版有什么区别？', a: '免费版每天可进行 3 次基础八字分析。会员版解锁无限次分析、AI 深度报告、紫微斗数、塔罗占卜等全部高级功能，同时享受优先客服支持。' },
@@ -22,17 +28,39 @@ interface PricingClientProps {
 }
 
 export default function PricingClient({ currentPlan }: PricingClientProps) {
-  const { data: session, update } = useSession();
+  const { data: session } = useSession();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const from = searchParams.get('from');
-  const [modal, setModal] = useState<{ planName: string; price: string } | null>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [pendingPlan, setPendingPlan] = useState<{ planName: string; price: string } | null>(null);
 
   const isSubscribed = session?.user?.isSubscribed ?? false;
   const [selectedPlan, setSelectedPlan] = useState(isSubscribed ? '' : '专业版');
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+
+  const redirectToCheckout = useCallback(async (planName: string) => {
+    const planId = PLAN_NAME_TO_ID[planName];
+    if (!planId) return;
+
+    setCheckoutLoading(true);
+    try {
+      const res = await fetch('/api/stripe/create-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: planId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || '创建支付会话失败，请稍后重试');
+        return;
+      }
+      window.location.href = data.checkout_url;
+    } catch {
+      alert('网络错误，请稍后重试');
+    } finally {
+      setCheckoutLoading(false);
+    }
+  }, []);
 
   const handleCTAClick = (planName: string, price: string) => {
     if (!session) {
@@ -44,7 +72,7 @@ export default function PricingClient({ currentPlan }: PricingClientProps) {
       router.push('/profile?manage=true');
       return;
     }
-    setModal({ planName, price: `¥${price}` });
+    redirectToCheckout(planName);
   };
 
   useEffect(() => {
@@ -52,11 +80,11 @@ export default function PricingClient({ currentPlan }: PricingClientProps) {
       if (isSubscribed) {
         router.push('/profile?manage=true');
       } else {
-        setModal({ planName: pendingPlan.planName, price: `¥${pendingPlan.price}` });
+        redirectToCheckout(pendingPlan.planName);
       }
       setPendingPlan(null);
     }
-  }, [session, pendingPlan, isSubscribed, router]);
+  }, [session, pendingPlan, isSubscribed, router, redirectToCheckout]);
 
   return (
     <div className="bg-[#FAF9F6] min-h-screen">
@@ -117,23 +145,6 @@ export default function PricingClient({ currentPlan }: PricingClientProps) {
       </section>
 
       <Footer />
-
-      {modal && (
-        <PaymentModal
-          planName={modal.planName}
-          price={modal.price}
-          onClose={() => setModal(null)}
-          onSuccess={async () => {
-            setModal(null);
-            await update();
-            if (from === 'home') {
-              router.push('/?payment_success=true');
-            } else {
-              router.push('/profile');
-            }
-          }}
-        />
-      )}
 
       <AuthModal isOpen={authOpen} onClose={() => setAuthOpen(false)} />
     </div>
