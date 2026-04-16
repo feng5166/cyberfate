@@ -44,7 +44,8 @@ const featureGroups = [
       {
         icon: BarChart3,
         iconColor: 'text-blue-500',
-        title: '命盘解析',
+        title: '八字分析',
+        subtitle: '输入生辰，AI 解读性格事业财运',
         description: 'AI智能八字分析系统，揭示个人命盘特质与发展规律',
         href: '/bazi',
       },
@@ -52,13 +53,15 @@ const featureGroups = [
         icon: Sun,
         iconColor: 'text-orange-400',
         title: '每日运势',
+        subtitle: '今日五行宜忌 + 五维运势评分',
         description: '基于八字的每日运势分析，助你把握每日吉凶',
         href: '/daily',
       },
       {
         icon: BookHeart,
         iconColor: 'text-pink-500',
-        title: '合婚分析',
+        title: '合婚配对',
+        subtitle: '双方八字匹配度深度分析',
         description: '基于八字的深度匹配分析，揭示双方关系契合度',
         href: '/bazi/marriage',
       },
@@ -71,6 +74,7 @@ const featureGroups = [
         icon: Sparkles,
         iconColor: 'text-purple-500',
         title: '梅花易数',
+        subtitle: '数字起卦，速断吉凶方向',
         description: '基于梅花易数的每日决策指导，助你做出重要选择',
         href: '/meihua',
       },
@@ -78,6 +82,7 @@ const featureGroups = [
         icon: Layers,
         iconColor: 'text-indigo-400',
         title: '塔罗占卜',
+        subtitle: '抽牌问卦，解读当下困惑',
         description: '塔罗牌参考配合AI观察，从不同角度思考当前处境',
         href: '/tarot',
       },
@@ -85,6 +90,7 @@ const featureGroups = [
         icon: Compass,
         iconColor: 'text-emerald-500',
         title: '六爻占卜',
+        subtitle: '铜钱摇卦，推演事态走向',
         description: '传统六爻预测，结合AI深度解析卦象变化',
         href: '/liuyao',
       },
@@ -97,6 +103,7 @@ const featureGroups = [
         icon: Star,
         iconColor: 'text-yellow-500',
         title: '紫微斗数',
+        subtitle: '十二宫位命盘全面解析',
         description: '根据出生时间排出紫微命盘，分析十二宫位与主星格局',
         href: '/ziwei',
       },
@@ -104,6 +111,7 @@ const featureGroups = [
         icon: Calendar,
         iconColor: 'text-red-400',
         title: '黄历查询',
+        subtitle: '每日宜忌、吉时凶煞速查',
         description: '传统中国黄历，查询各类活动的吉日良辰',
         href: '/huangli',
       },
@@ -111,6 +119,7 @@ const featureGroups = [
         icon: BarChart3,
         iconColor: 'text-cyan-500',
         title: 'AI老黄历',
+        subtitle: 'AI 智能黄历，场景化建议',
         description: 'AI驱动的智能黄历，结合现代生活场景给出建议',
         href: '/huangli',
       },
@@ -145,8 +154,26 @@ export default function HomePage() {
 
           {/* 副标题 */}
           <p className="text-[17px] tracking-[0.05em] text-[#1C1A16]/70 text-center mt-6">
-            解码命运 · 智见未来
+            AI 驱动的八字命理、每日运势、塔罗占卜 —— 东方智慧，科学态度
           </p>
+
+          {/* 信任锚点 */}
+          <div className="flex flex-wrap items-center justify-center gap-6 mt-8 text-[14px] text-[#1C1A16]/60 tracking-wide">
+            <span className="flex items-center gap-1.5">
+              <span className="text-[20px] font-semibold text-[#1C1A16]">10万+</span>
+              <span>次分析</span>
+            </span>
+            <span className="text-[#1C1A16]/20">|</span>
+            <span className="flex items-center gap-1.5">
+              <span className="text-[20px] font-semibold text-[#1C1A16]">5万+</span>
+              <span>用户</span>
+            </span>
+            <span className="text-[#1C1A16]/20">|</span>
+            <span className="flex items-center gap-1.5">
+              <span className="text-[15px] font-medium text-[#1C1A16]">AI + 传统命理</span>
+              <span>双引擎</span>
+            </span>
+          </div>
 
           {/* 按钮组 */}
           <div className="flex flex-col sm:flex-row justify-center gap-4 mt-10">
@@ -238,7 +265,10 @@ export default function HomePage() {
                         <div className="w-[52px] h-[52px] rounded-full bg-gray-100 flex items-center justify-center">
                           <Icon className={`w-6 h-6 ${feature.iconColor}`} strokeWidth={1.5} />
                         </div>
-                        <h4 className="text-lg font-semibold text-[#1C1A16] mt-4 mb-3">{feature.title}</h4>
+                        <h4 className="text-lg font-semibold text-[#1C1A16] mt-4 mb-1">{feature.title}</h4>
+                        {'subtitle' in feature && feature.subtitle && (
+                          <p className="text-[13px] text-[#1C1A16]/50 mb-3">{feature.subtitle}</p>
+                        )}
                         <p className="text-[14px] text-[#1C1A16]/70 leading-relaxed flex-1">{feature.description}</p>
                         <Link
                           href={`${feature.href}?sidebar=open`}
