@@ -134,8 +134,7 @@ export async function createCheckoutSession(
   body.set('cancel_url', params.cancelUrl);
 
   body.set('payment_method_types[0]', 'card');
-  body.set('payment_method_types[1]', 'alipay');
-  body.set('payment_method_types[2]', 'wechat_pay');
+  body.set('payment_method_options[card][request_three_d_secure]', 'automatic');
   body.set('billing_address_collection', 'auto');
 
   if (params.priceData) {
