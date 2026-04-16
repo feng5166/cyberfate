@@ -11,9 +11,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // 获取用户所有订单（按时间倒序）
+    // 只获取支付成功的订单（按时间倒序）
     const orders = await prisma.order.findMany({
-      where: { userId: session.user.id },
+      where: { 
+        userId: session.user.id,
+        status: 'paid'  // 只返回已支付的订单
+      },
       orderBy: { createdAt: 'desc' }
     });
 
