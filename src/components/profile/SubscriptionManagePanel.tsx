@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { PlanSwitcher } from './PlanSwitcher';
 import { InvoiceHistory } from './InvoiceHistory';
 import { CancelSection } from './CancelSection';
-import { PaymentModal } from '@/components/PaymentModal';
+
 
 interface SubscriptionManagePanelProps {
   subscription: {
@@ -24,7 +24,7 @@ export function SubscriptionManagePanel({ subscription, onBack }: SubscriptionMa
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showDowngradeModal, setShowDowngradeModal] = useState(false);
   const [targetPlan, setTargetPlan] = useState<string | null>(null);
-  const [paymentModal, setPaymentModal] = useState<{ planName: string; price: string } | null>(null);
+
 
   const handlePlanChange = async (newPlan: string, isUpgrade: boolean) => {
     setTargetPlan(newPlan);
@@ -54,15 +54,15 @@ export function SubscriptionManagePanel({ subscription, onBack }: SubscriptionMa
 
       const data = await res.json();
 
-      if (res.ok) {
-        const planName = PLAN_NAME_MAP[targetPlan] || targetPlan;
-        setPaymentModal({ planName, price: `¥${data.prorated_amount}` });
+      if (res.ok && data.checkout_url) {
+        // 直接跳转 Stripe 支付页面
+        window.location.href = data.checkout_url;
       } else {
         alert(data.error || '升级失败');
+        setShowUpgradeModal(false);
       }
     } catch (err) {
       alert('网络错误，请重试');
-    } finally {
       setShowUpgradeModal(false);
     }
   };
@@ -178,18 +178,7 @@ export function SubscriptionManagePanel({ subscription, onBack }: SubscriptionMa
         </div>
       )}
 
-      {/* 支付弹窗 */}
-      {paymentModal && (
-        <PaymentModal
-          planName={paymentModal.planName}
-          price={paymentModal.price}
-          onClose={() => setPaymentModal(null)}
-          onSuccess={() => {
-            setPaymentModal(null);
-            router.refresh();
-          }}
-        />
-      )}
+
 
       {/* 降级确认弹窗 */}
       {showDowngradeModal && (
