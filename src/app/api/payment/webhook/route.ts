@@ -78,6 +78,9 @@ export async function POST(req: NextRequest) {
   const body = await req.text();
   const sig = req.headers.get('stripe-signature');
 
+  console.log('[Webhook] Body length:', body.length);
+  console.log('[Webhook] Body (first 200):', body.substring(0, 200));
+  console.log('[Webhook] Signature header:', sig);
   console.log('[Webhook] Received request, signature:', sig ? 'present' : 'missing');
 
   if (!sig) {
