@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { getStripe } from '@/lib/stripe';
+import { createCheckoutSession } from '@/lib/stripe-direct';
 import { PRICING_CONFIG, type PlanId } from '@/lib/pricing-config';
 
 export async function POST(req: NextRequest) {
@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { new_plan, action } = await req.json();
+    const { new_plan } = await req.json();
 
     if (!['monthly', 'quarterly', 'yearly'].includes(new_plan)) {
       return NextResponse.json({ error: '无效的套餐类型' }, { status: 400 });
@@ -52,11 +52,6 @@ export async function POST(req: NextRequest) {
         (newPrice - currentPrice) * (remainingDays / totalDays)
       );
 
-      const stripe = getStripe();
-      if (!stripe) {
-        return NextResponse.json({ error: 'Stripe 未配置' }, { status: 500 });
-      }
-
       const outTradeNo = `CF${Date.now()}${Math.random().toString(36).slice(2, 9)}`;
       const newPlanConfig = PRICING_CONFIG[new_plan as PlanId];
 
@@ -72,19 +67,21 @@ export async function POST(req: NextRequest) {
       });
 
       const baseUrl = 'https://www.cyberfate.me';
-      const checkoutSession = await stripe.checkout.sessions.create({
-        mode: 'payment',
-        payment_method_types: ['card'],
-        line_items: [{
-          price_data: {
-            currency: newPlanConfig.currency,
-            product_data: { name: `升级至${newPlanConfig.name}（补差价）` },
-            unit_amount: proratedAmount,
+      
+      // 使用 stripe-direct 创建 checkout session
+      const result = await createCheckoutSession({
+        priceData: {
+          currency: newPlanConfig.currency,
+          unit_amount: proratedAmount,
+          product_data: {
+            name: `升级至${newPlanConfig.name}（补差价）`,
+            description: `从${PRICING_CONFIG[currentPlan].name}升级`,
           },
-          quantity: 1,
-        }],
-        success_url: `${baseUrl}/payment/success?order_id=${order.id}&session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${baseUrl}/pricing`,
+        },
+        quantity: 1,
+        successUrl: `${baseUrl}/payment/success?order_id=${order.id}&session_id={CHECKOUT_SESSION_ID}`,
+        cancelUrl: `${baseUrl}/pricing`,
+        customerEmail: session.user.email || undefined,
         metadata: {
           orderId: order.id,
           plan: new_plan,
@@ -92,8 +89,15 @@ export async function POST(req: NextRequest) {
           action: 'upgrade',
           fromPlan: currentPlan,
         },
-        customer_email: session.user.email || undefined,
       });
+
+      if (!result.ok || !result.data) {
+        console.error('Stripe checkout error:', result.error);
+        return NextResponse.json(
+          { error: result.error || '创建支付会话失败' },
+          { status: 500 }
+        );
+      }
 
       return NextResponse.json({
         ok: true,
@@ -101,7 +105,7 @@ export async function POST(req: NextRequest) {
         prorated_amount: proratedAmount / 100,
         effective_date: now.toISOString().split('T')[0],
         requires_payment: true,
-        checkout_url: checkoutSession.url,
+        checkout_url: result.data.url,
         orderId: order.id,
         message: `需补差价 ¥${(proratedAmount / 100).toFixed(2)}，支付后立即生效`
       });
@@ -125,10 +129,11 @@ export async function POST(req: NextRequest) {
       });
     }
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Change plan error:', error);
+    const message = error instanceof Error ? error.message : '变更套餐失败';
     return NextResponse.json(
-      { error: error.message || '变更套餐失败' },
+      { error: message },
       { status: 500 }
     );
   }
