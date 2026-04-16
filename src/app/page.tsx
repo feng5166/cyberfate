@@ -213,6 +213,69 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ===== 新手推荐路径 ===== */}
+      <section className="px-4 py-10 md:py-14">
+        <Container>
+          <div className="max-w-3xl mx-auto">
+            <h2 className="text-center text-[14px] text-[#1C1A16]/50 tracking-wide mb-6">
+              新手推荐路径
+            </h2>
+            <div className="flex flex-col md:flex-row items-stretch gap-4">
+              {[
+                {
+                  step: '第一步',
+                  title: '测测你的八字',
+                  desc: '输入生辰，了解你的命盘特质',
+                  href: '/bazi',
+                  icon: BarChart3,
+                  iconColor: 'text-blue-500',
+                },
+                {
+                  step: '第二步',
+                  title: '看今日运势',
+                  desc: '掌握每日五行宜忌与运势评分',
+                  href: '/daily',
+                  icon: Sun,
+                  iconColor: 'text-orange-400',
+                },
+                {
+                  step: '第三步',
+                  title: '探索更多功能',
+                  desc: '梅花易数、塔罗占卜、紫微斗数',
+                  href: '#features',
+                  icon: Sparkles,
+                  iconColor: 'text-purple-500',
+                },
+              ].map((item, i) => {
+                const Icon = item.icon;
+                return (
+                  <div key={item.step} className="flex items-center gap-4 flex-1">
+                    <Link href={item.href} className="flex-1">
+                      <Card
+                        hover={false}
+                        className="text-center p-6 border-none shadow-none hover:shadow-card-hover hover:-translate-y-1 transition-all duration-300 h-full"
+                      >
+                        <div className="flex flex-col items-center">
+                          <span className="text-[11px] text-[#1C1A16]/40 tracking-widest uppercase mb-2">{item.step}</span>
+                          <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+                            <Icon className={`w-5 h-5 ${item.iconColor}`} strokeWidth={1.5} />
+                          </div>
+                          <h3 className="text-[15px] font-semibold text-[#1C1A16]">{item.title}</h3>
+                          <p className="text-[12px] text-[#1C1A16]/50 mt-1.5">{item.desc}</p>
+                        </div>
+                      </Card>
+                    </Link>
+                    {i < 2 && (
+                      <ArrowRight className="w-4 h-4 text-[#1C1A16]/20 flex-shrink-0 hidden md:block" />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </Container>
+      </section>
+
       {/* ===== Core Principles ===== */}
       <section className="px-4 py-10 md:py-16 bg-brand-bg/60">
         <Container>
@@ -237,6 +300,43 @@ export default function HomePage() {
                 </Card>
               );
             })}
+          </div>
+        </Container>
+      </section>
+
+      {/* ===== Social Proof ===== */}
+      <section className="px-4 py-6 overflow-hidden">
+        <Container>
+          <div className="text-center mb-4">
+            <p className="text-[14px] text-[#1C1A16]/60 tracking-wide">
+              <span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse" />
+              <span className="text-[18px] font-semibold text-[#1C1A16]">1,234</span> 人今日已分析
+            </p>
+          </div>
+          <div className="relative max-w-3xl mx-auto">
+            <div className="flex gap-4 overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
+              <div className="flex gap-4 animate-[scroll_30s_linear_infinite]">
+                {[
+                  { text: '八字分析很准，对我的事业方向有了新的认识', author: '张先生', tag: '八字分析' },
+                  { text: '每日运势很实用，每天早上都会看一看', author: '李女士', tag: '每日运势' },
+                  { text: '合婚分析给了我们很好的参考，非常详细', author: '王先生', tag: '合婚配对' },
+                  { text: '梅花易数的解读角度很独特，值得一试', author: '赵女士', tag: '梅花易数' },
+                  { text: 'AI解读比传统命理师更客观，推荐！', author: '刘先生', tag: '八字分析' },
+                  { text: '紫微斗数分析很详细，十二宫位都有解读', author: '陈女士', tag: '紫微斗数' },
+                ].flatMap((review, i) => [review, review].map((r, j) => (
+                  <div
+                    key={`${i}-${j}`}
+                    className="flex-shrink-0 w-[260px] bg-white/80 backdrop-blur-sm rounded-xl border border-[#1C1A16]/[0.06] p-4"
+                  >
+                    <p className="text-[13px] text-[#1C1A16]/70 leading-relaxed line-clamp-2">&ldquo;{r.text}&rdquo;</p>
+                    <div className="flex items-center justify-between mt-3">
+                      <span className="text-[12px] text-[#1C1A16]/50">{r.author}</span>
+                      <span className="text-[11px] text-[#1C1A16]/40 bg-[#1C1A16]/[0.04] px-2 py-0.5 rounded-full">{r.tag}</span>
+                    </div>
+                  </div>
+                )))}
+              </div>
+            </div>
           </div>
         </Container>
       </section>

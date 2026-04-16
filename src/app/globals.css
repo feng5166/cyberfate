@@ -213,3 +213,9 @@ header {
 .animate-slideDown {
   animation: slideDown 200ms ease-out;
 }
+
+/* Social Proof 滚动动画 */
+@keyframes scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}

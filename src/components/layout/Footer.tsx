@@ -30,13 +30,17 @@ const FOOTER_GROUPS = [
       { label: '退款政策', href: '/refund' },
     ],
   },
+  {
+    title: '联系我们',
+    links: [],
+  },
 ];
 
 export function Footer() {
   return (
     <footer className="bg-brand-bg border-t border-brand-border-light">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-20 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
           <div>
             <Link href="/" className="font-display text-lg text-[#1C1A16] tracking-widest hover:opacity-70 transition-opacity">
               CYBERFATE
@@ -50,24 +54,36 @@ export function Footer() {
               <h3 className="text-sm font-semibold text-[#1C1A16] tracking-wide uppercase">
                 {group.title}
               </h3>
-              <ul className="mt-4 space-y-1">
-                {group.links.map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      className="block py-2 px-1 text-[14px] text-brand-gray hover:text-[#1C1A16] transition-colors min-h-[44px] flex items-center"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+              {group.links.length > 0 ? (
+                <ul className="mt-4 space-y-1">
+                  {group.links.map((link) => (
+                    <li key={link.href}>
+                      <Link
+                        href={link.href}
+                        className="block py-2 px-1 text-[14px] text-brand-gray hover:text-[#1C1A16] transition-colors min-h-[44px] flex items-center"
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="mt-4 space-y-4">
+                  <div className="w-[100px] h-[100px] rounded-lg border border-[#F0EDE8] bg-white flex items-center justify-center">
+                    <span className="text-[12px] text-[#1C1A16]/40 text-center leading-tight px-2">扫码关注<br />公众号</span>
+                  </div>
+                  <p className="text-[13px] text-[#1C1A16]/60">
+                    微信客服: CyberFate01
+                  </p>
+                </div>
+              )}
             </div>
           ))}
         </div>
 
         <div className="mt-10 pt-6 border-t border-brand-border-light flex flex-col md:flex-row items-center justify-between gap-4 text-[14px] text-[#1C1A16]/60">
           <p>© 2026 CyberFate. All rights reserved.</p>
+          <p className="text-[12px] text-[#1C1A16]/40">京ICP备xxxxxx号</p>
         </div>
       </div>
     </footer>
