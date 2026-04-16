@@ -26,44 +26,74 @@ export async function POST(req: NextRequest) {
     const checkoutSession = event.data.object as Stripe.Checkout.Session;
     const orderId = checkoutSession.metadata?.orderId;
 
-    if (!orderId) {
-      return NextResponse.json({ error: 'No orderId in metadata' }, { status: 400 });
-    }
+    if (orderId) {
+      // 通过 Order 流程处理
+      const order = await prisma.order.findUnique({ where: { id: orderId } });
+      if (!order || order.status === 'paid') {
+        return NextResponse.json({ message: 'Already processed' });
+      }
 
-    const order = await prisma.order.findUnique({ where: { id: orderId } });
-    if (!order || order.status === 'paid') {
-      return NextResponse.json({ message: 'Already processed' });
-    }
+      await prisma.$transaction(async (tx) => {
+        await tx.order.update({
+          where: { id: orderId },
+          data: {
+            status: 'paid',
+            transactionId: checkoutSession.payment_intent as string,
+            paidAt: new Date(),
+          },
+        });
 
-    await prisma.$transaction(async (tx) => {
-      await tx.order.update({
-        where: { id: orderId },
-        data: {
-          status: 'paid',
-          transactionId: checkoutSession.payment_intent as string,
-          paidAt: new Date(),
-        },
+        const duration = { monthly: 30, quarterly: 90, yearly: 365 }[order.plan];
+        const expireAt = new Date();
+        expireAt.setDate(expireAt.getDate() + duration);
+
+        await tx.subscription.updateMany({
+          where: { userId: order.userId, status: 'active' },
+          data: { status: 'expired' },
+        });
+
+        await tx.subscription.create({
+          data: {
+            userId: order.userId,
+            plan: order.plan,
+            status: 'active',
+            expireAt,
+          },
+        });
       });
+    } else {
+      // Stripe 直接支付流程（无 Order）
+      const userId = checkoutSession.metadata?.userId;
+      const plan = checkoutSession.metadata?.plan as 'monthly' | 'quarterly' | 'yearly' | undefined;
 
-      const duration = { monthly: 30, quarterly: 90, yearly: 365 }[order.plan];
+      if (!userId || !plan) {
+        return NextResponse.json({ error: 'No orderId or userId/plan in metadata' }, { status: 400 });
+      }
+
+      const duration = { monthly: 30, quarterly: 90, yearly: 365 }[plan];
+      if (!duration) {
+        return NextResponse.json({ error: 'Invalid plan' }, { status: 400 });
+      }
+
       const expireAt = new Date();
       expireAt.setDate(expireAt.getDate() + duration);
 
-      // 先让已存在的活跃订阅过期
-      await tx.subscription.updateMany({
-        where: { userId: order.userId, status: 'active' },
-        data: { status: 'expired' },
-      });
+      await prisma.$transaction(async (tx) => {
+        await tx.subscription.updateMany({
+          where: { userId, status: 'active' },
+          data: { status: 'expired' },
+        });
 
-      await tx.subscription.create({
-        data: {
-          userId: order.userId,
-          plan: order.plan,
-          status: 'active',
-          expireAt,
-        },
+        await tx.subscription.create({
+          data: {
+            userId,
+            plan,
+            status: 'active',
+            expireAt,
+          },
+        });
       });
-    });
+    }
   }
 
   return NextResponse.json({ received: true });
