@@ -149,7 +149,7 @@ export function DatePicker({
         onClick={() => setIsOpen(!isOpen)}
       >
         <span className={displayValue ? 'text-[#1C1A16]' : 'text-[#1C1A16]/40'}>
-          {displayValue || '请选择出生日期'}
+          {displayValue || '如 1990年1月1日'}
         </span>
         <Calendar className="w-5 h-5 text-[#1C1A16]/40" />
       </div>

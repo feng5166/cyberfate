@@ -727,59 +727,67 @@ function BaziPageContent() {
       <Container>
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 pb-20 md:pb-26">
           <div className="bazi-input-card flex-shrink-0 w-full lg:w-auto lg:max-w-[440px] rounded-2xl bg-white shadow-none px-6 py-6 sm:px-8 sm:py-8 border border-[#1C1A16]/8">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <h2 className="font-display text-lg text-[#1C1A16]">📋 出生信息</h2>
+            <form onSubmit={handleSubmit} className="space-y-8">
+              {/* 基本信息组 */}
+              <fieldset className="space-y-5 rounded-xl bg-[#FAF9F6] p-5 border border-[#1C1A16]/6">
+                <legend className="font-display text-base text-[#1C1A16]/85 px-2 tracking-wide">📋 基本信息</legend>
 
-              <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-[#1C1A16]">姓名</label>
-                <input
-                  type="text"
-                  placeholder="输入您的姓名"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className={inputClass}
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-medium text-[#1C1A16]/70">姓名</label>
+                  <input
+                    type="text"
+                    placeholder="请输入姓名"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className={inputClass}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-medium text-[#1C1A16]/70">性别</label>
+                  <SegmentControl
+                    options={[
+                      { value: 'male', label: '男' },
+                      { value: 'female', label: '女' },
+                    ]}
+                    value={formData.gender}
+                    onChange={(value) => setFormData({ ...formData, gender: value })}
+                    className="h-10 rounded-lg border border-[#1C1A16]/15 bg-white text-[#1C1A16] overflow-hidden"
+                    optionClassName="px-3 py-0 h-full flex items-center justify-center text-sm"
+                  />
+                </div>
+
+                <DatePicker
+                  label="出生日期"
+                  value={formData.birthDate}
+                  onChange={(value) => setFormData({ ...formData, birthDate: value })}
+                  className="space-y-1.5"
+                  triggerClassName="h-10 rounded-lg"
                 />
-              </div>
+              </fieldset>
 
-              <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-[#1C1A16]">性别</label>
-                <SegmentControl
-                  options={[
-                    { value: 'male', label: '男' },
-                    { value: 'female', label: '女' },
-                  ]}
-                  value={formData.gender}
-                  onChange={(value) => setFormData({ ...formData, gender: value })}
-                  className="h-10 rounded-lg border border-[#1C1A16]/15 bg-white text-[#1C1A16] overflow-hidden"
-                  optionClassName="px-3 py-0 h-full flex items-center justify-center text-sm"
+              {/* 时辰组 */}
+              <fieldset className="space-y-5 rounded-xl bg-[#FAF9F6] p-5 border border-[#1C1A16]/6">
+                <legend className="font-display text-base text-[#1C1A16]/85 px-2 tracking-wide">🕐 时辰信息</legend>
+
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-medium text-[#1C1A16]/70">出生时辰</label>
+                  <Select
+                    options={shichenOptions}
+                    value={formData.birthHour}
+                    onChange={(e) => setFormData({ ...formData, birthHour: e.target.value })}
+                    className="h-10 rounded-lg border border-[#1C1A16]/15 bg-white px-4 text-sm text-[#1C1A16]"
+                  />
+                </div>
+
+                <CitySearch
+                  label="出生地"
+                  placeholder="如 北京市、上海市"
+                  value={formData.birthPlace}
+                  onInputChange={(value) => setFormData(prev => ({ ...prev, birthPlace: value }))}
+                  onSelect={(city) => setFormData(prev => ({ ...prev, birthPlace: city.name }))}
                 />
-              </div>
-
-              <DatePicker
-                label="出生日期"
-                value={formData.birthDate}
-                onChange={(value) => setFormData({ ...formData, birthDate: value })}
-                className="space-y-1.5"
-                triggerClassName="h-10 rounded-lg"
-              />
-
-              <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-[#1C1A16]">出生时辰</label>
-                <Select
-                  options={shichenOptions}
-                  value={formData.birthHour}
-                  onChange={(e) => setFormData({ ...formData, birthHour: e.target.value })}
-                  className="h-10 rounded-lg border border-[#1C1A16]/15 bg-white px-4 text-sm text-[#1C1A16]"
-                />
-              </div>
-
-              <CitySearch
-                label="出生地"
-                placeholder="搜索并选择出生地"
-                value={formData.birthPlace}
-                onInputChange={(value) => setFormData(prev => ({ ...prev, birthPlace: value }))}
-                onSelect={(city) => setFormData(prev => ({ ...prev, birthPlace: city.name }))}
-              />
+              </fieldset>
 
               {error && <div className="p-3.5 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">{error}</div>}
 
@@ -787,7 +795,7 @@ function BaziPageContent() {
                 type="submit"
                 variant="ghost"
                 loading={loading}
-                className="w-full mt-1 text-[13px] px-[38px] py-[12px] rounded-xl border border-[#1C1A16]/30 text-[#1C1A16] bg-transparent hover:bg-[#1C1A16]/5"
+                className="w-full text-[13px] px-[38px] py-[12px] rounded-xl border border-[#1C1A16]/30 text-[#1C1A16] bg-transparent hover:bg-[#1C1A16]/5"
               >
                 {loading ? '正在计算...' : '开始分析'}
               </Button>
