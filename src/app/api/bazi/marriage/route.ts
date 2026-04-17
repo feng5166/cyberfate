@@ -292,6 +292,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '请先登录' }, { status: 401 });
   }
 
+  // Security Fix: SEC-022 — 合婚 API 配额控制（VIP 无限制，免费用户每日 1 次）
+  const { useBaziQuota } = await import('@/lib/quota');
+  const hasQuota = await useBaziQuota(session.user.id);
+  if (!hasQuota) {
+    return NextResponse.json(
+      { error: 'QUOTA_EXCEEDED', message: '今日免费合婚次数已用完，请升级 VIP' },
+      { status: 403 }
+    );
+  }
+
   const { maleName, maleBirthDate, maleBirthHour, femaleName, femaleBirthDate, femaleBirthHour } = await req.json();
 
   // [安全修复] 输入清洗：防止 prompt injection
@@ -314,7 +324,8 @@ export async function POST(req: NextRequest) {
   const maleBazi = formatBazi(maleInfo);
   const femaleBazi = formatBazi(femaleInfo);
 
-  const { score, hearts, level, details, _debug } = calculateScore(maleInfo, femaleInfo);
+  // Security Fix: SEC-024 — 不暴露 _debug 字段到 API 响应
+  const { score, hearts, level, details } = calculateScore(maleInfo, femaleInfo);
 
   // 缓存 key
   const cacheKey = generateCacheKey('marriage', { male: maleBazi, female: femaleBazi });
@@ -323,7 +334,7 @@ export async function POST(req: NextRequest) {
   if (cached) {
     return NextResponse.json({
       score, hearts, level, maleBazi, femaleBazi,
-      analysis: cached.analysis, _debug,
+      analysis: cached.analysis,
       disclaimer: '⚠️ 仅供参考，匹配度评分基于五行互补、日干关系、生肖相合等传统命理算法，不代表真实命运。人生幸福取决于彼此的理解与经营。',
       _source: 'cache',
     });
@@ -380,7 +391,7 @@ ${details.join('\n')}
   }
 
   return NextResponse.json({
-    score, hearts, level, maleBazi, femaleBazi, analysis, _debug,
+    score, hearts, level, maleBazi, femaleBazi, analysis,
     disclaimer: '⚠️ 仅供参考，匹配度评分基于五行互补、日干关系、生肖相合等传统命理算法，不代表真实命运。人生幸福取决于彼此的理解与经营。',
     _source: aiSource,
   });

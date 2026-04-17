@@ -75,10 +75,13 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // MVP: 返回模拟二维码
+  // Security Fix: SEC-013 — 生产环境禁用模拟支付
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: '请使用 Stripe 支付' }, { status: 400 });
+  }
+
   return NextResponse.json({
     orderId: order.id,
-    qrCode: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${outTradeNo}`,
-    outTradeNo,
+    qrCode: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=demo`,
   });
 }

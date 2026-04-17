@@ -25,8 +25,10 @@ function checkRateLimit(ip: string): { allowed: boolean; retryAfter?: number } {
 }
 
 export async function POST(request: NextRequest) {
-  // ── 速率限制 ──
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown';
+  // Security Fix: SEC-006 — Vercel 环境优先使用 x-vercel-forwarded-for 防止伪造
+  const ip = request.headers.get('x-vercel-forwarded-for')?.split(',')[0]
+    || request.headers.get('x-forwarded-for')?.split(',')[0]
+    || 'unknown';
   const rateResult = checkRateLimit(ip);
   if (!rateResult.allowed) {
     return Response.json(

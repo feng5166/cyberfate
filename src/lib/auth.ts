@@ -82,7 +82,8 @@ export const authOptions: NextAuthOptions = {
       
       if (account?.provider === 'wechat') {
         // 微信登录：查找或创建用户
-        const wechatProfile = profile as any
+        // Security Fix: SEC-010 — 使用明确接口代替 any
+        const wechatProfile = profile as { openid?: string; unionid?: string; nickname?: string; headimgurl?: string }
         const existingUser = await prisma.user.findUnique({
           where: { wechatOpenId: wechatProfile.openid },
         })

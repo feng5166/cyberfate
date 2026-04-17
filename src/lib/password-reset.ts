@@ -23,12 +23,18 @@ export function isRateLimited(email: string): boolean {
   return Date.now() - lastRequest < RATE_LIMIT_WINDOW_MS
 }
 
+// Security Fix: SEC-005 — 存储 token 的 sha256 哈希而非明文
+function hashToken(token: string): string {
+  return crypto.createHash('sha256').update(token).digest('hex')
+}
+
 export async function createAndSaveResetToken(email: string): Promise<string> {
   const token = generateResetToken()
+  const tokenHash = hashToken(token)
   const expiresAt = new Date(Date.now() + TOKEN_EXPIRY_MINUTES * 60 * 1000)
 
   await prisma.passwordResetToken.create({
-    data: { email, token, expiresAt },
+    data: { email, token: tokenHash, expiresAt },
   })
 
   rateLimitMap.set(email, Date.now())
@@ -36,11 +42,13 @@ export async function createAndSaveResetToken(email: string): Promise<string> {
   return token
 }
 
+// Security Fix: SEC-005 — 通过哈希查找 token
 export async function validateResetToken(
   token: string
 ): Promise<{ email: string } | null> {
+  const tokenHash = hashToken(token)
   const record = await prisma.passwordResetToken.findUnique({
-    where: { token },
+    where: { token: tokenHash },
   })
 
   if (!record) return null
@@ -51,8 +59,9 @@ export async function validateResetToken(
 }
 
 export async function markTokenUsed(token: string): Promise<void> {
+  const tokenHash = hashToken(token)
   await prisma.passwordResetToken.update({
-    where: { token },
+    where: { token: tokenHash },
     data: { used: true },
   })
 }
@@ -70,16 +79,16 @@ export async function resetPassword(
 
   const passwordHash = await bcrypt.hash(newPassword, BCRYPT_SALT_ROUNDS)
 
-  // [安全修复] 使用事务 + 先标记 token used 防止竞态重放
+  // Security Fix: SEC-005 — 事务内使用 token 哈希查找
+  const tokenHash = hashToken(token)
   try {
     await prisma.$transaction(async (tx) => {
-      // 1. 先标记 token 为已使用（防止同一 token 并发重放）
-      const tokenRecord = await tx.passwordResetToken.findUnique({ where: { token } })
+      const tokenRecord = await tx.passwordResetToken.findUnique({ where: { token: tokenHash } })
       if (!tokenRecord || tokenRecord.used || tokenRecord.expiresAt < new Date()) {
         throw new Error('TOKEN_INVALID')
       }
       await tx.passwordResetToken.update({
-        where: { token },
+        where: { token: tokenHash },
         data: { used: true },
       })
 
@@ -106,10 +115,19 @@ export async function resetPassword(
   return { success: true }
 }
 
+// Security Fix: SEC-020 — 校验重置 URL 域名
+const ALLOWED_ORIGINS = ['https://www.cyberfate.me', 'https://cyberfate.me', 'http://localhost:3000']
+
 export async function sendResetEmail(
   email: string,
   resetUrl: string
 ): Promise<void> {
+  const isAllowed = ALLOWED_ORIGINS.some(origin => resetUrl.startsWith(origin + '/'));
+  if (!isAllowed) {
+    console.error(`[Security] 拒绝发送密码重置邮件：非法 URL ${resetUrl}`);
+    throw new Error('非法重置链接');
+  }
+
   if (!process.env.RESEND_API_KEY) {
     console.log('=== 密码重置邮件（开发模式，未配置 RESEND_API_KEY） ===')
     console.log(`收件人: ${email}`)

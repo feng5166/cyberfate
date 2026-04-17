@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { addDays, addYears } from 'date-fns';
+import { isValidPlanId } from '@/lib/pricing-config'; // Security Fix: SEC-021
 
 const ADMIN_EMAILS: string[] = (process.env.ADMIN_EMAILS || '').split(',').filter(Boolean);
 
@@ -23,6 +24,11 @@ export async function POST(req: NextRequest) {
     
     if (!email) {
       return NextResponse.json({ error: '缺少邮箱' }, { status: 400 });
+    }
+
+    // Security Fix: SEC-021 — plan 枚举校验
+    if (!isValidPlanId(plan)) {
+      return NextResponse.json({ error: `无效的套餐类型: ${plan}` }, { status: 400 });
     }
 
     const user = await prisma.user.findUnique({
@@ -47,6 +53,9 @@ export async function POST(req: NextRequest) {
       case 'lifetime':
         expireAt = addYears(expireAt, 100);
         break;
+      default:
+        // Security Fix: SEC-021 — 不可能到达（上面已校验），但保险起见
+        return NextResponse.json({ error: `不支持的套餐: ${plan}` }, { status: 400 });
     }
 
     // 创建订阅记录

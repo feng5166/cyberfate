@@ -1,5 +1,7 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { calculateBazi, getCurrentDayun, getDayGanzhi, getLunarDate, getYearGanzhi } from '@/lib/bazi';
 import { generateDailyFortune } from '@/lib/ai';
 
@@ -39,6 +41,11 @@ function normalizeRatings(ratings: any, overall: number) {
 }
 
 export async function POST(req: NextRequest) {
+  // Security Fix: SEC-012 — AI 端点需要登录
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: '请先登录' }, { status: 401 });
+  }
   try {
     const body = await req.json();
     const input = requestSchema.parse(body);

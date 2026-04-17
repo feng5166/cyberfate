@@ -45,6 +45,14 @@ function parseGender(body: Record<string, unknown>): 'male' | 'female' {
 }
 
 export async function POST(req: NextRequest) {
+  // Security Fix: SEC-012 — 添加登录检查
+  const { getServerSession } = await import('next-auth');
+  const { authOptions } = await import('@/lib/auth');
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: '请先登录' }, { status: 401 });
+  }
+
   try {
     const body = await req.json();
 

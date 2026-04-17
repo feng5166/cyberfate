@@ -106,6 +106,14 @@ function firstSentence(text: string): string {
 }
 
 export async function POST(req: NextRequest) {
+  // Security Fix: SEC-012 — 添加登录检查
+  const { getServerSession } = await import('next-auth');
+  const { authOptions } = await import('@/lib/auth');
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: '请先登录' }, { status: 401 });
+  }
+
   const body = await req.json().catch(() => ({}));
   const method = (body?.method as DrawMethod) || 'time';
   const numbers = body?.numbers as { num1?: unknown; num2?: unknown } | undefined;

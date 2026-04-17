@@ -6,8 +6,9 @@ import { addDays } from 'date-fns';
 function verifyCallbackSignature(body: string, signature: string | null): boolean {
   const secret = process.env.CALLBACK_SECRET;
   if (!secret) {
-    console.warn('[PaymentCallback] CALLBACK_SECRET 未配置，跳过签名验证');
-    return true;
+    // Security Fix: SEC-001 — 未配置时拒绝请求，不可跳过验证
+    console.error('[PaymentCallback] CALLBACK_SECRET 未配置，拒绝请求');
+    return false;
   }
   if (!signature) {
     return false;

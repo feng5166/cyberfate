@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { addDays, addYears } from 'date-fns';
+import { isValidPlanId } from '@/lib/pricing-config'; // Security Fix: SEC-021
 
 const ADMIN_EMAILS: string[] = (process.env.ADMIN_EMAILS || '').split(',').filter(Boolean);
 
@@ -48,6 +49,11 @@ export async function POST(req: NextRequest) {
     // 如果指定了 correctPlan，使用它；否则用现有的 plan
     const targetPlan = correctPlan || latestSub.plan;
 
+    // Security Fix: SEC-021 — plan 枚举校验
+    if (!isValidPlanId(targetPlan)) {
+      return NextResponse.json({ error: `无效的套餐类型: ${targetPlan}` }, { status: 400 });
+    }
+
     // 根据订阅类型计算正确到期时间
     const now = new Date();
     let correctExpiry = new Date(now);
@@ -62,6 +68,8 @@ export async function POST(req: NextRequest) {
       case 'lifetime':
         correctExpiry = addYears(correctExpiry, 100);
         break;
+      default:
+        return NextResponse.json({ error: `不支持的套餐: ${targetPlan}` }, { status: 400 });
     }
 
     // 更新订阅 plan 和到期时间
