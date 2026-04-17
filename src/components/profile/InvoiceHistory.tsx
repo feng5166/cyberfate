@@ -6,7 +6,7 @@ import { PaymentModal } from '@/components/PaymentModal';
 const planNameMap: Record<string, string> = {
   daily: '基础版',
   yearly: '专业版',
-  yearly: '尊享版',
+  lifetime: '尊享版',
 };
 
 interface Invoice {

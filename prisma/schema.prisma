@@ -89,9 +89,9 @@ model VerificationToken {
 
 // 订阅计划类型
 enum SubscriptionPlan {
-  monthly
-  quarterly
+  daily
   yearly
+  lifetime
 }
 
 // 订阅状态

@@ -39,7 +39,7 @@ export function SubscriptionManagePanel({ subscription, onBack }: SubscriptionMa
   const PLAN_NAME_MAP: Record<string, string> = {
     daily: '基础版',
     yearly: '专业版',
-    yearly: '尊享版',
+    lifetime: '尊享版',
   };
 
   const confirmUpgrade = async () => {
