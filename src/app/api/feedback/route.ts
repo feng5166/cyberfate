@@ -77,12 +77,16 @@ async function sendFeishuNotification(payload: {
 
   try {
     // 1. 获取 tenant_access_token
+    const tokenParams = new URLSearchParams();
+    tokenParams.set('app_id', appId);
+    tokenParams.set('app_secret', appSecret);
+
     const tokenRes = await fetch(
       'https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal',
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ app_id: appId, app_secret: appSecret }),
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: tokenParams.toString(),
       }
     );
     const tokenData = (await tokenRes.json()) as {
@@ -113,20 +117,20 @@ async function sendFeishuNotification(payload: {
       `ID：${payload.id}`,
     ].join('\n');
 
-    // 3. 发送消息（text 类型）
+    // 3. 发送消息（text 类型，使用 URLSearchParams 兼容 Vercel Serverless）
+    const msgParams = new URLSearchParams();
+    msgParams.set('receive_id', userOpenId);
+    msgParams.set('msg_type', 'text');
+    msgParams.set('content', JSON.stringify({ text: textContent }));
+
     const sendRes = await fetch(
       'https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=open_id',
       {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${tokenData.tenant_access_token}`,
+          'Authorization': `Bearer ${tokenData.tenant_access_token}`,
         },
-        body: JSON.stringify({
-          receive_id: userOpenId,
-          msg_type: 'text',
-          content: JSON.stringify({ text: textContent }),
-        }),
+        body: msgParams.toString(),
       }
     );
     const sendData = await sendRes.json() as { code: number; msg?: string };
