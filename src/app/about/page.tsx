@@ -113,8 +113,8 @@ export default function AboutPage() {
                 </p>
               </div>
               <div className="bg-white rounded-xl p-6 text-sm leading-relaxed text-[#1C1A16]/70 shadow-sm border border-[#1C1A16]/10">
-                <p>联系方式：support@cyberfate.com</p>
-                <p className="mt-2">办公地点：上海 · 远程协作团队</p>
+                <p>联系方式：feng5166@gmail.com</p>
+                <p className="mt-2">办公地点：新加坡 · 远程协作团队</p>
                 <p className="mt-2">合作方向：AI 算法共创、东方文化内容、心理咨询与疗愈项目</p>
               </div>
             </div>
