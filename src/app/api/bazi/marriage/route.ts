@@ -332,12 +332,12 @@ export async function POST(req: NextRequest) {
 算法维度：
 ${details.join('\n')}
 
-请给出200-300字的合婚分析，包括：
-1. 性格匹配分析
-2. 感情运势分析
-3. 相处建议
+请给出300-500字的合婚分析，包括：
+1. 性格匹配分析（双方日干五行特质、性格异同）
+2. 感情运势分析（相处模式、潜在摩擦点）
+3. 相处建议（具体可操作的建议）
 
-语气温和、积极、有建设性。直接开始分析，不要有前言。`;
+语气温和、积极、有建设性。内容要充实具体，不要泛泛而谈。直接开始分析，不要有前言。`;
 
   let analysis = '';
   let aiSource: string = 'fallback';
@@ -347,8 +347,8 @@ ${details.join('\n')}
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}` },
       body: JSON.stringify({
         model: 'deepseek-ai/DeepSeek-V3.2',
-        max_tokens: 600,
-        temperature: 0.3,
+        max_tokens: 1500,
+        temperature: 0.4,
         messages: [{ role: 'user', content: prompt }],
       }),
     });
@@ -361,7 +361,7 @@ ${details.join('\n')}
     }
   } catch (err) {
     console.error('AI call failed:', err);
-    analysis = '根据双方八字，你们的匹配度较好，建议多沟通、互相理解。';
+    analysis = '根据双方八字分析，你们的命理配置有一定互补性。性格上各有特点，相处中多体谅对方、加强沟通，感情会愈发稳固。建议在重要决定上互相商量，共同经营美好生活。';
   }
 
   return NextResponse.json({
