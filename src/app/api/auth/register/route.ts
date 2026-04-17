@@ -14,6 +14,12 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: '密码至少6位' }, { status: 400 })
   }
 
+  // nickname 长度限制
+  const safeNickname = (nickname || email.split('@')[0]).trim().slice(0, 30);
+  if (!safeNickname) {
+    return Response.json({ error: '昵称不能为空' }, { status: 400 })
+  }
+
   const existing = await prisma.user.findUnique({ where: { email } })
   if (existing) {
     return Response.json({ error: '该邮箱已注册' }, { status: 409 })
@@ -25,7 +31,7 @@ export async function POST(request: NextRequest) {
     data: {
       email,
       passwordHash,
-      nickname: nickname || email.split('@')[0],
+      nickname: safeNickname,
     },
   })
 
