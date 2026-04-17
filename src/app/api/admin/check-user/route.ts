@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 
-const ADMIN_EMAILS = [process.env.ADMIN_EMAIL || 'admin@cyberfate.app'];
+const ADMIN_EMAILS: string[] = (process.env.ADMIN_EMAILS || '').split(',').filter(Boolean);
 
 async function requireAdmin(): Promise<NextResponse | null> {
   const session = await getServerSession(authOptions);
