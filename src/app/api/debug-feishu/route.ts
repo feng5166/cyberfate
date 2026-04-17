@@ -46,10 +46,11 @@ export async function GET() {
       return NextResponse.json({ ...results, error: 'FEISHU_USER_OPEN_ID 未配置，跳过发送测试' });
     }
 
-    const msgParams = new URLSearchParams();
-    msgParams.set('receive_id', userOpenId);
-    msgParams.set('msg_type', 'text');
-    msgParams.set('content', JSON.stringify({ text: '🔧 CyberFate 飞书连接测试 - 如果你看到这条消息，说明飞书通知正常！' }));
+    const sendBody = {
+      receive_id: userOpenId,
+      msg_type: 'text',
+      content: JSON.stringify({ text: '🔧 CyberFate 飞书连接测试 - 如果你看到这条消息，说明飞书通知正常！' }),
+    };
 
     const sendRes = await fetch(
       'https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=open_id',
@@ -57,8 +58,9 @@ export async function GET() {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${tokenData.tenant_access_token}`,
+          'Content-Type': 'application/json; charset=utf-8',
         },
-        body: msgParams.toString(),
+        body: JSON.stringify(sendBody),
       }
     );
     const sendData = await sendRes.json() as { code: number; msg?: string };

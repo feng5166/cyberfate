@@ -117,11 +117,12 @@ async function sendFeishuNotification(payload: {
       `ID：${payload.id}`,
     ].join('\n');
 
-    // 3. 发送消息（text 类型，使用 URLSearchParams 兼容 Vercel Serverless）
-    const msgParams = new URLSearchParams();
-    msgParams.set('receive_id', userOpenId);
-    msgParams.set('msg_type', 'text');
-    msgParams.set('content', JSON.stringify({ text: textContent }));
+    // 3. 发送消息（text 类型，飞书要求 Content-Type: application/json）
+    const sendBody = {
+      receive_id: userOpenId,
+      msg_type: 'text',
+      content: JSON.stringify({ text: textContent }),
+    };
 
     const sendRes = await fetch(
       'https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=open_id',
@@ -129,8 +130,9 @@ async function sendFeishuNotification(payload: {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${tokenData.tenant_access_token}`,
+          'Content-Type': 'application/json; charset=utf-8',
         },
-        body: msgParams.toString(),
+        body: JSON.stringify(sendBody),
       }
     );
     const sendData = await sendRes.json() as { code: number; msg?: string };
