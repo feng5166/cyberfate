@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { Resend } from 'resend';
 import crypto from 'crypto';
 import { authOptions } from '@/lib/auth';
 
@@ -14,56 +13,46 @@ const TYPE_LABEL: Record<FeedbackType, string> = {
   other: '其他',
 };
 
+// ── 频率限制 ──────────────────────────────────────────────
 const MINUTE_LIMIT = 3;
 const DAY_LIMIT = 20;
-const MINUTE_MS = 60 * 1000;
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-type Bucket = { timestamps: number[] };
-const ipBuckets = new Map<string, Bucket>();
+const ipBuckets = new Map<string, { timestamps: number[] }>();
 
 function getClientIp(req: NextRequest): string {
-  const forwarded = req.headers.get('x-forwarded-for');
-  if (forwarded) return forwarded.split(',')[0].trim();
-  const real = req.headers.get('x-real-ip');
-  if (real) return real.trim();
-  return 'unknown';
+  return (
+    req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+    req.headers.get('x-real-ip')?.trim() ||
+    'unknown'
+  );
 }
 
 function checkRateLimit(ip: string): { ok: boolean } {
   const now = Date.now();
   const bucket = ipBuckets.get(ip) ?? { timestamps: [] };
-  bucket.timestamps = bucket.timestamps.filter((t) => now - t < DAY_MS);
-
-  const recentMinute = bucket.timestamps.filter((t) => now - t < MINUTE_MS);
-  if (recentMinute.length >= MINUTE_LIMIT) {
+  bucket.timestamps = bucket.timestamps.filter((t) => now - t < 24 * 60 * 60 * 1000);
+  if (
+    bucket.timestamps.filter((t) => now - t < 60 * 1000).length >= MINUTE_LIMIT ||
+    bucket.timestamps.length >= DAY_LIMIT
+  ) {
     ipBuckets.set(ip, bucket);
     return { ok: false };
   }
-  if (bucket.timestamps.length >= DAY_LIMIT) {
-    ipBuckets.set(ip, bucket);
-    return { ok: false };
-  }
-
   bucket.timestamps.push(now);
   ipBuckets.set(ip, bucket);
   return { ok: true };
 }
 
-function generateFeedbackId(): string {
-  return 'fb_' + crypto.randomBytes(6).toString('hex');
-}
-
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-async function sendFeedbackEmail(payload: {
+// ── 飞书消息通知 ─────────────────────────────────────────
+/**
+ * 通过飞书 Bot 发送消息到 Frank 的飞书私聊。
+ * 使用 Bot Token 调用飞书开放 API 发送富文本消息。
+ *
+ * 环境变量：
+ *   FEISHU_BOT_APP_ID     — 飞书 App ID（如需要）
+ *   FEISHU_BOT_APP_SECRET — 飞书 App Secret（用于获取 tenant_access_token）
+ *   FEISHU_USER_OPEN_ID   — Frank 的 open_id（消息接收人）
+ */
+async function sendFeishuNotification(payload: {
   id: string;
   content: string;
   type?: FeedbackType;
@@ -74,72 +63,86 @@ async function sendFeedbackEmail(payload: {
   userId?: string;
   createdAt: string;
 }): Promise<void> {
-  const to = 'feng5166@gmail.com';
+  const appId = process.env.FEISHU_BOT_APP_ID;
+  const appSecret = process.env.FEISHU_BOT_APP_SECRET;
+  const userOpenId = process.env.FEISHU_USER_OPEN_ID;
 
-  if (!process.env.RESEND_API_KEY) {
-    console.log('=== 用户反馈（开发模式，未配置 RESEND_API_KEY） ===');
+  if (!appId || !appSecret || !userOpenId) {
+    // 未配置飞书时降级为 console.log
+    console.log('=== 📝 CyberFate 用户反馈（飞书未配置，降级输出） ===');
     console.log(JSON.stringify(payload, null, 2));
     console.log('=== 反馈结束 ===');
     return;
   }
 
-  const typeLabel = payload.type ? TYPE_LABEL[payload.type] : '未分类';
-  const subject = `[CyberFate 反馈] ${typeLabel} - ${payload.id}`;
-
-  const html = `
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 640px; margin: 0 auto; padding: 24px; background: #FAF9F6;">
-      <div style="background: white; border-radius: 12px; padding: 24px; border: 1px solid rgba(28,26,22,0.06);">
-        <h2 style="margin: 0 0 16px; color: #1C1A16; font-size: 18px;">新的用户反馈</h2>
-        <p style="margin: 0 0 8px; color: #6B6560; font-size: 13px;">ID: <code>${payload.id}</code></p>
-        <p style="margin: 0 0 8px; color: #6B6560; font-size: 13px;">类型: <strong>${typeLabel}</strong></p>
-        <p style="margin: 0 0 16px; color: #6B6560; font-size: 13px;">时间: ${payload.createdAt}</p>
-        <div style="background: #FAF9F6; border-radius: 8px; padding: 16px; margin: 16px 0; white-space: pre-wrap; color: #1C1A16; font-size: 14px; line-height: 1.6;">${escapeHtml(payload.content)}</div>
-        <hr style="border: none; border-top: 1px solid rgba(28,26,22,0.06); margin: 16px 0;" />
-        <p style="margin: 0 0 6px; color: #B8B4AE; font-size: 12px;">用户: ${payload.userEmail ? escapeHtml(payload.userEmail) : '(未登录)'}</p>
-        ${payload.userId ? `<p style="margin: 0 0 6px; color: #B8B4AE; font-size: 12px;">UID: ${escapeHtml(payload.userId)}</p>` : ''}
-        <p style="margin: 0 0 6px; color: #B8B4AE; font-size: 12px;">IP: ${escapeHtml(payload.ip)}</p>
-        ${payload.pageUrl ? `<p style="margin: 0 0 6px; color: #B8B4AE; font-size: 12px;">页面: ${escapeHtml(payload.pageUrl)}</p>` : ''}
-        ${payload.userAgent ? `<p style="margin: 0 0 6px; color: #B8B4AE; font-size: 12px; word-break: break-all;">UA: ${escapeHtml(payload.userAgent)}</p>` : ''}
-      </div>
-    </div>
-  `.trim();
-
-  const text = [
-    `新的用户反馈`,
-    `ID: ${payload.id}`,
-    `类型: ${typeLabel}`,
-    `时间: ${payload.createdAt}`,
-    ``,
-    `内容:`,
-    payload.content,
-    ``,
-    `用户: ${payload.userEmail || '(未登录)'}`,
-    payload.userId ? `UID: ${payload.userId}` : '',
-    `IP: ${payload.ip}`,
-    payload.pageUrl ? `页面: ${payload.pageUrl}` : '',
-    payload.userAgent ? `UA: ${payload.userAgent}` : '',
-  ]
-    .filter(Boolean)
-    .join('\n');
-
   try {
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    const { error } = await resend.emails.send({
-      from: 'CyberFate <noreply@cyberfate.me>',
-      to: [to],
-      subject,
-      html,
-      text,
-      replyTo: payload.userEmail,
+    // 1. 获取 tenant_access_token
+    const tokenRes = await fetch(
+      'https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ app_id: appId, app_secret: appSecret }),
+      }
+    );
+    const tokenData = (await tokenRes.json()) as {
+      code: number;
+      tenant_access_token?: string;
+      msg?: string;
+    };
+    if (tokenData.code !== 0 || !tokenData.tenant_access_token) {
+      console.error('[feedback] feishu token error:', tokenData);
+      return;
+    }
+
+    // 2. 构建消息内容
+    const typeLabel = payload.type ? TYPE_LABEL[payload.type] : '未分类';
+    const userLabel = payload.userEmail ? `${payload.userEmail}` : '匿名';
+
+    const now = new Date(payload.createdAt);
+    const timeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+    // 使用富文本消息格式
+    const messageContent = JSON.stringify({
+      zh_cn: {
+        title: '📝 CyberFate 收到新反馈',
+        content: [
+          [{ tag: 'text', text: `类型：${typeLabel}\n` }],
+          [{ tag: 'text', text: `内容：${payload.content}\n` }],
+          ...(payload.pageUrl ? [[{ tag: 'text', text: `页面：${payload.pageUrl}\n` }]] : []),
+          [{ tag: 'text', text: `时间：${timeStr}\n` }],
+          [{ tag: 'text', text: `用户：${userLabel}\n` }],
+          [{ tag: 'text', text: `ID：${payload.id}` }],
+        ].flat(),
+      },
     });
-    if (error) {
-      console.error('[feedback] resend error:', error);
+
+    // 3. 发送消息
+    const sendRes = await fetch(
+      'https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=open_id',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${tokenData.tenant_access_token}`,
+        },
+        body: JSON.stringify({
+          receive_id: userOpenId,
+          msg_type: 'post',
+          content: messageContent,
+        }),
+      }
+    );
+    const sendData = await sendRes.json() as { code: number; msg?: string };
+    if (sendData.code !== 0) {
+      console.error('[feedback] feishu send error:', sendData);
     }
   } catch (err) {
-    console.error('[feedback] send email exception:', err);
+    console.error('[feedback] feishu notification exception:', err);
   }
 }
 
+// ── 主逻辑 ───────────────────────────────────────────────
 export async function POST(req: NextRequest) {
   try {
     const ip = getClientIp(req);
@@ -184,7 +187,7 @@ export async function POST(req: NextRequest) {
     if (typeof body.type === 'string' && body.type.length > 0) {
       if (!VALID_TYPES.includes(body.type as FeedbackType)) {
         return NextResponse.json(
-          { success: false, error: 'CONTENT_EMPTY', message: '反馈类型无效' },
+          { success: false, error: 'INVALID_TYPE', message: '反馈类型无效' },
           { status: 400 }
         );
       }
@@ -226,7 +229,8 @@ export async function POST(req: NextRequest) {
       pageUrl,
     });
 
-    void sendFeedbackEmail(record);
+    // 异步发送飞书通知（不阻塞响应）
+    void sendFeishuNotification(record);
 
     return NextResponse.json({ success: true, id });
   } catch (err) {
@@ -236,4 +240,8 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+function generateFeedbackId(): string {
+  return 'fb_' + crypto.randomBytes(6).toString('hex');
 }

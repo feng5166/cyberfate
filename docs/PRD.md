@@ -2454,18 +2454,62 @@ Content-Type: application/json
 | 429 | `{ "error: "RATE_LIMITED" }` | 频率限制（同一 IP 每分钟最多 3 次，每天最多 20 次） |
 | 500 | `{ "error: "INTERNAL_ERROR" }` | 服务端错误 |
 
-#### 数据存储建议
+#### 数据存储与通知方案
 
-MVP 阶段存储方案（按复杂度排序）：
+##### MVP 方案：飞书消息通知（已确认 ✅）
 
-| 方案 | 实现 | 适用阶段 |
-|------|------|----------|
-| **方案 1：Vercel KV (Redis)** | `kv.lpush('feedback', JSON.stringify(data))` | MVP 推荐 — 零运维，Vercel 原生支持 |
-| 方案 2：Supabase / PlanetScale | 新建 feedback 表 | 有数据库时优先 |
-| 方案 3：邮件通知 | 提交后直接发邮件给 Frank | 最快上线，但无历史记录 |
-| 方案 4：飞书多维表格 | Webhook 写入 Bitable | 团队内部用方便 |
+用户提交反馈后，后端通过飞书 Webhook 直接推送消息给 Frank。零后台、零运维、实时触达。
 
-> 建议 MVP 先用 **方案 1（Vercel KV）或方案 3（邮件通知）**，后续有需要再迁移到正式数据库。
+**通知渠道（二选一）：**
+
+| 渠道 | 配置 | 说明 |
+|------|------|------|
+| **Frank 飞书私聊** | Webhook 指向 Frank 的 open_id (`ou_7ea0ee762e7214b99ff0bee8fbc05ebf`) | 最直接，不会漏 |
+| **龙虾游戏工作室群** | Webhook 指向群聊 ID (`oc_e1dc3983839f944588e6cb2deb0741e7`) | 全团队可见，方便代码虾跟进 Bug |
+
+**推荐：先推私聊**，确保 Frank 第一时间看到。后续量大了再同时推群里。
+
+**推送消息格式：**
+
+```
+📝 CyberFate 收到新反馈
+
+类型: Bug 反馈
+内容: 八字分析结果加载太慢了
+页面: /bazi
+时间: 2026-04-17 15:18
+用户: 已登录 (user@example.com)
+```
+
+**未登录时用户行显示为：** `用户: 匿名`
+
+**后端实现方式：**
+```
+POST /api/feedback
+  → 存储反馈数据（Vercel KV 或数据库）
+  → 调用飞书 API 发送消息
+  → 返回 { success: true } 给前端
+```
+
+飞书发送使用服务端 Bot Token（已有 `productshrimp` bot 或新建专用 bot），调用接口：
+- `POST https://open.feishu.cn/open-apis/im/v1/messages` （bot 发私信）
+- 或使用飞书群 Webhook 地址直接 POST（更简单）
+
+**错误降级：**
+- 飞书发送失败不影响用户体验——前端仍然显示「提交成功」
+- 飞书失败记录到服务端日志（Vercel Functions 日志可查）
+- 可选：失败时 fallback 发送邮件给 Frank
+
+##### V2 升级路径（反馈量 > 20 条/天时触发）
+
+| 阶段 | 方案 | 说明 |
+|------|------|------|
+| MVP（当前） | 飞书消息通知 | 实时推送，无历史查询 |
+| V1.5 | 飞书多维表格 + 消息通知双写 | 反馈自动写入 Bitable 表格，保留历史 + 可搜索，同时继续推飞书消息 |
+| V2 | 后台管理面板 `/admin/feedback` | 分页列表、状态标记（待处理/已处理/已关闭）、批量操作 |
+| V3 | 用户反馈闭环 | 可在 /profile 查看自己提交的反馈及回复状态 |
+
+> V1.5 推荐使用飞书 Bitable API，团队已经在飞书生态内，零额外成本。
 
 #### 组件文件清单
 
