@@ -34,8 +34,23 @@ export default function AdminPage() {
   const { data: session, status } = useSession();
   const [tab, setTab] = useState<Tab>('check');
 
+  // 管理员邮箱白名单
+  const ADMIN_EMAILS = ['feng5166@gmail.com', 'feng.5166@163.com'];
+
   if (status === 'loading') return <LoadingSpinner />;
   if (!session) return <LoginPrompt />;
+  // 前端二次校验：非管理员邮箱禁止访问
+  if (!session.user?.email || !ADMIN_EMAILS.includes(session.user.email)) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="text-center p-8 rounded-2xl bg-white border border-gray-200 shadow-sm max-w-md">
+          <div className="text-4xl mb-4">🚫</div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">无权访问</h2>
+          <p className="text-gray-500 text-sm">当前账号 ({session.user?.email}) 不在管理员列表中</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
