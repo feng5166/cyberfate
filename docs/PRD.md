@@ -1446,8 +1446,8 @@ POST /api/auth/login (修改)
 │  ┌──────────────────────────────────────────────┐   │
 │  │  📋 订阅管理                       查看详情 → │   │  ← 订阅管理卡片（核心新增）
 │  │                                              │   │
-│  │  当前计划：专业版（季卡）                     │   │
-│  │  ¥69/季 · 下次扣费：2026-07-15              │   │
+│  │  当前计划：年费会员                       │   │
+│  │  $10/年 · 下次扣费：2027-04-17              │   │
 │  │                                              │   │
 │  │  ┌────────────┐ ┌────────────┐              │   │
 │  │  │  升级套餐   │ │  管理订阅   │              │   │  ← 操作按钮
@@ -1502,10 +1502,10 @@ POST /api/auth/login (修改)
 ┌──────────────────────────────────────────────┐
 │  📋 订阅管理                        查看详情 → │  ← 点击展开管理面板 / 跳转 #subscription
 │                                              │
-│  当前计划：专业版（季卡）                     │
-│  ¥69/季                                      │
-│  状态：✅ 有效中                               │
-│  下次扣费日期：2026-07-15                     │
+│  当前计划：年费会员                           │   │
+│  $10/年                                       │   │
+│  状态：✅ 有效中                               │   │
+│  下次扣费日期：2027-04-17                     │   │
 │                                              │
 │  ┌─────────────────────────────────────────┐ │
 │  │            ⚙️ 管理我的订阅               │ │  ← 唯一操作入口
@@ -1557,21 +1557,21 @@ POST /api/auth/login (修改)
 │  ┌────────────────────────────────────────────────┐ │
 │  │  📋 当前计划                                     │ │
 │  │                                                │ │
-│  │  专业版（季卡）                    ✅ 当前计划   │ │
-│  │  ¥69/季                                         │ │
-│  │  开始日期：2026-04-15                            │ │
-│  │  到期日期：2026-07-15                            │ │
+│  │  年费会员                          ✅ 当前计划   │ │
+│  │  $10/年                                         │ │
+│  │  开始日期：2026-04-17                            │ │
+│  │  到期日期：2027-04-17                            │ │
 │  │  自动续订：已开启                                │ │
-│  │  下次扣费：2026-07-15                            │ │
+│  │  下次扣费：2027-04-17                            │ │
 │  └────────────────────────────────────────────────┘ │
 │                                                      │
 │  ── 套餐信息 ───────────────────────────────────    │
 │                                                      │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐            │
-│  │  基础版   │ │  专业版   │ │  尊享版   │            │
-│  │          │ │ ★ 当前   │ │          │            │
-│  │   ¥29    │ │   ¥69    │ │   ¥199   │            │
-│  │  /月     │ │  /季     │ │  /年     │            │
+│  ┌───────────┐  ┌───────────┐                      │
+│  │  单日会员  │  │  年费会员  │                      │
+│  │           │  │  ★ 当前   │                      │
+│  │   $5      │  │   $10     │                      │
+│  │  /天      │  │  /年      │                      │
 │  │          │ │  当前计划 │ │          │            │
 │  └──────────┘ └──────────┘ └──────────┘            │
 │                                                      │
@@ -1602,15 +1602,15 @@ POST /api/auth/login (修改)
 **面板中套餐区域展示规则**：
 
 ```
-┌──────────┐ ┌──────────┐ ┌──────────┐
-│  基础版   │ │  专业版   │ │  尊享版   │
-│          │ │ ★ 当前   │ │          │
-│   ¥29    │ │   ¥69    │ │   ¥199   │
-│  /月     │ │  /季     │ │  /年     │
+┌───────────┐  ┌───────────┐
+│  单日会员  │  │  年费会员  │
+│           │  │  ★ 当前   │
+│   $5      │  │   $10     │
+│  /天      │  │  /年      │
 │          │ │  当前计划 │ │          │
-└──────────┘ └──────────┘ └──────────┘
+└───────────┘ └───────────┘
             ↑ 仅此卡有 tag
-            其余两卡无按钮、opacity-70（弱化）
+            其余一卡无按钮、opacity-70（弱化）
 ```
 
 > 未来如果需要开放套餐切换功能，基于本节注释中保留的升级/降级逻辑扩展即可。
@@ -1701,10 +1701,10 @@ POST /api/auth/login (修改)
 GET /api/subscription/current
 Response:
 {
-  "plan": "quarterly",
-  "plan_name": "专业版（季卡）",
-  "price": 69,
-  "currency": "CNY",
+  "plan": "yearly",
+  "plan_name": "年费会员",
+  "price": 10,
+  "currency": "USD",
   "status": "active",          // active | cancelled | past_due
   "current_period_start": "2026-04-15T00:00:00Z",
   "current_period_end": "2026-07-15T00:00:00Z",
@@ -1740,9 +1740,9 @@ Response:
     {
       "id": "inv_xxx",
       "date": "2026-04-15",
-      "description": "专业版（季卡）",
-      "amount": 69,
-      "currency": "CNY",
+      "description": "年费会员",
+      "amount": 10,
+      "currency": "USD",
       "status": "paid",
       "invoice_url": null  // P2: PDF 下载链接
     }
@@ -1900,6 +1900,96 @@ CyberFate /success 页面 → 验证 session_id → 激活会员 → 跳转 /pro
 - 支持的支付方式由 Stripe 根据用户 IP/浏览器自动展示（银行卡、微信、支付宝等）
 - 不需要自己处理 PCI 合规（Stripe Checkout 托管）
 
+#### 定价 API（动态价格获取）
+
+> 2026-04-17 新增 — 前端不硬编码价格，统一通过 API 获取
+
+##### GET /api/pricing-plans
+
+**用途：** 前端获取所有套餐的实时价格、Stripe Price ID 等信息。定价页和 Upgrade Modal 都调用此接口渲染卡片。
+
+**请求：** 无参数（或可选 `?country=CN` 用于区域定价）
+
+**成功响应 (200)：**
+
+```json
+{
+  "plans": [
+    {
+      "id": "daily",
+      "name": "单日会员",
+      "nameEn": "Daily Pass",
+      "price": 5.00,
+      "currency": "USD",
+      "priceDisplay": "$5",
+      "period": "/天",
+      "periodDays": 1,
+      "stripePriceId": "price_daily_xxx",
+      "recommended": false,
+      "features": [
+        { "text": "八字分析无限次", "included": true },
+        { "text": "每日运势完整版", "included": true },
+        { "text": "所有功能解锁", "included": true },
+        { "text": "历史记录保存", "included": true }
+      ]
+    },
+    {
+      "id": "yearly",
+      "name": "年费会员",
+      "nameEn": "Yearly Membership",
+      "price": 10.00,
+      "currency": "USD",
+      "priceDisplay": "$10",
+      "period": "/年",
+      "periodDays": 365,
+      "stripePriceId": "price_yearly_xxx",
+      "recommended": true,
+      "features": [
+        { "text": "八字分析无限次", "included": true },
+        { "text": "每日运势完整版", "included": true },
+        { "text": "所有功能解锁", "included": true },
+        { "text": "历史记录永久保存", "included": true }
+      ],
+      "highlight": "超值 · 仅 $0.03/天"
+    }
+  ],
+  "defaultCurrency": "USD",
+  "supportedCurrencies": ["USD", "CNY"]
+}
+```
+
+**后端实现要点：**
+- 价格从环境变量读取（`DAILY_PRICE` / `YEARLY_PRICE`），fallback 到 Stripe Price API 实时拉取
+- Stripe Price ID 从环境变量读取（`STRIPE_PRICE_DAILY` / `STRIPE_PRICE_YEARLY`）
+- 支持未来扩展多币种（根据用户 IP 或选择返回对应价格）
+- 响应缓存 60 秒（Vercel Edge / ISR），不需要实时计算
+
+**前端使用方式：**
+```typescript
+// pricing 页或 Upgrade Modal 组件中
+const { data } = await fetch('/api/pricing-plans').then(r => r.json());
+// data.plans → 直接渲染卡片列表
+// data.plans[0].priceDisplay → "$5" （已格式化）
+// data.plans[0].stripePriceId → 传给 create-checkout API
+```
+
+##### POST /api/create-checkout（更新）
+
+**请求体更新：**
+
+```json
+{
+  "planId": "daily" | "yearly"
+}
+```
+
+**后端逻辑：**
+1. 根据 `planId` 查找对应的 `stripePriceId`（从环境变量或 config）
+2. 创建 Stripe Checkout Session（mode: payment for daily / subscription for yearly）
+3. 返回 checkout URL
+
+> **注意：单日会员用 `mode: "payment"`（一次性付款），年费会员用 `mode: "subscription"`（自动续订订阅）。两者 Stripe 模式不同。
+
 ---
 
 ### 4.8 解锁全部功能弹窗 (Upgrade Modal)
@@ -1945,16 +2035,16 @@ CyberFate /success 页面 → 验证 session_id → 激活会员 → 跳转 /pro
 │           ✕                                        │  ← 关闭按钮
 │                                                     │
 │        解锁全部功能                                  │  ← 标题
-│  选择适合您的计划，开启完整体验                       │  ← 副标题
+││  选择适合您的计划，开启完整体验                       │  ← 副标题
 │                                                     │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐            │
-│  │  基础版   │ │  专业版   │ │  尊享版   │            │
-│  │          │ │ ★ 最受欢迎│ │          │            │
-│  │          │ │          │ │          │            │
-│  │   ¥29    │ │   ¥69    │ │   ¥199   │            │
-│  │  /月     │ │  /季     │ │  /年     │            │
-│  │          │ │          │ │          │            │
-│  │ [开始使用]│ │ [立即开通]│ │ [开始使用]│            │
+│  ┌───────────┐  ┌───────────┐                      │
+│  │  单日会员  │  │  年费会员  │                      │
+│  │           │  │ ★ 最受欢迎 │                      │
+│  │           │  │           │                      │
+│  │   $5      │  │   $10     │                      │
+│  │  /天      │  │  /年      │                      │
+│  │           │  │           │                      │
+│  │ [开始使用] │  │ [立即开通] │                      │
 │  └──────────┘ └──────────┘ └──────────┘            │
 │                                                     │
 │  「查看完整权益对比 →」                               │  ← 链接到 /pricing
@@ -1973,43 +2063,32 @@ CyberFate /success 页面 → 验证 session_id → 激活会员 → 跳转 /pro
 - 标题：「解锁全部功能」
 - 副标题：「选择适合您的计划，开启完整体验」
 
-##### ② 三列套餐卡片（核心：复用 pricing 页组件）
+##### ② 两列套餐卡片（核心：复用 pricing 页组件）
 
-**布局**: `flex flex-col lg:flex-row gap-5 max-w-[800px] mx-auto px-8`
+**布局**: `flex flex-col lg:flex-row gap-5 max-w-[600px] mx-auto px-8`
 
-卡片内容与 `/pricing` 页面 **完全一致**，复用同一套组件/数据源：
+卡片内容与 `/pricing` 页面 **完全一致**，复用同一套组件/数据源。价格从 `GET /api/pricing-plans` 动态获取，不硬编码。
 
-**基础版（月卡）**
+**单日会员**
 | 属性 | 值 |
 |------|-----|
-| 名称 | 「基础版」 |
-| 价格 | `¥29` + `/月` |
-| 折算日均 | `约 ¥0.97/天`（小字 muted） |
+| 名称 | 「单日会员」 |
+| 价格 | 从 API 动态获取（参考 $5）+ `/天` |
 | 容器样式 | `bg-white border border-[#E5E2DD] rounded-xl p-6 flex flex-col` |
 | 权益列表 | 复用 pricing 页权益数据（见下方） |
 | CTA 按钮 | `w-full border border-[#1C1A16] text-[#1C1A16] rounded-lg py-3 font-medium text-sm hover:bg-[#1C1A16]/5` |
 | CTA 文案 | 「开始使用」 |
 
-**专业版（季卡）— 推荐**
+**年费会员 — 推荐**
 | 属性 | 值 |
 |------|-----|
-| 名称 | 「专业版」 |
-| 价格 | `¥69` + `/季` |
-| 折算日均 | `约 ¥0.77/天` |
+| 名称 | 「年费会员」 |
+| 价格 | 从 API 动态获取（参考 $10）+ `/年` |
 | 容器样式 | `bg-white border-2 border-[#1C1A16] rounded-xl p-6 flex flex-col transform lg:scale-[1.03] shadow-lg relative` |
 | 推荐标签 | 顶部居中 `bg-[#1C1A16] text-white text-xs px-3 py-1 rounded-full -mt-3 absolute top-0 left-1/2 -translate-x-1/2`，文案「★ 最受欢迎」 |
 | 权益 check | 绿色 ✅（`#10B981`） |
 | CTA 按钮 | `w-full bg-[#1C1A16] text-white rounded-lg py-3 font-medium text-sm hover:bg-[#1C1A16]/90` |
 | CTA 文案 | 「立即开通」 |
-
-**尊享版（年卡）**
-| 属性 | 值 |
-|------|-----|
-| 名称 | 「尊享版」 |
-| 价格 | `¥199` + `/年` |
-| 折算日均 | `约 ¥0.55/天` |
-| 容器样式 | 同基础版 |
-| CTA 文案 | 「开始使用」 |
 
 ##### ③ 权益列表（三列卡片共用数据源）
 
@@ -2070,8 +2149,8 @@ CyberFate /success 页面 → 验证 session_id → 激活会员 → 跳转 /pro
 | 维度 | Upgrade Modal | /pricing 页面 |
 |------|--------------|---------------|
 | 触发方式 | 被动（点击解锁/CTA） | 主动（导航/链接） |
-| 内容 | 三列卡片 + 简化权益 | 三列卡片 + 完整权益对比表 + FAQ + Footer |
-| 宽度 | max-w-[900px] 弹窗 | 全宽页面 |
+| 内容 | **两列**卡片 + 简化权益 | **两列**卡片 + 完整权益对比表 + FAQ + Footer |
+| 宽度 | max-w-[700px] 弹窗 | 全宽页面 |
 | 组件复用 | 复用 PricingCard 组件 | PricingCard 完整版 |
 | 适用场景 | 快速转化 | 了解详情后决策 |
 
@@ -2080,7 +2159,7 @@ CyberFate /success 页面 → 验证 session_id → 激活会员 → 跳转 /pro
 | 断点 | 调整 |
 |------|------|
 | < 768px | 弹窗宽度 `w-[95%] max-w-[none]` |
-| < 768px | 三列卡片改为 **垂直堆叠**（`flex-col`），不再横排 |
+| < 768px | **两列**卡片改为 **垂直堆叠**（`flex-col`），不再横排 |
 | < 768px | 卡片内 padding 缩小为 `p-5` |
 | 所有断点 | 弹窗 `max-h-[95vh]`，内部 `overflow-y-auto` |
 
@@ -2090,9 +2169,9 @@ CyberFate /success 页面 → 验证 session_id → 激活会员 → 跳转 /pro
 |------|------|------|
 | UpgradeModal | components/pricing/UpgradeModal.tsx | 解锁弹窗主组件 |
 | PricingCard | components/pricing/PricingCard.tsx | 单个套餐卡片（**与 /pricing 页共用**） |
-| PricingCardList | components/pricing/PricingCardList.tsx | 三列卡片容器（**与 /pricing 页共用**） |
+| PricingCardList | components/pricing/PricingCardList.tsx | **两列**卡片容器（**与 /pricing 页共用**） |
 
-> ⚠️ **组件复用是硬性要求**：PricingCard 和 PricingCardList 必须是同一套组件，Upgrade Modal 和 /pricing 页面都引用它。不允许维护两份重复代码。
+> ⚠️ **组件复用是硬性要求**：PricingCard 和 PricingCardList 必须是同一套组件，Upgrade Modal 和 /pricing 页面都引用它。不允许维护两份重复代码。价格必须从 `config/pricing.ts` 或 API 动态获取，**禁止在组件中硬编码金额**。
 
 #### 开发优先级：P0
 
@@ -8377,7 +8456,7 @@ export function identify(userId: string, traits?: Record<string, any>) {
 |--------|----------|------|
 | `pricing_page_view` | 进入定价页 `/pricing` | `source`（导航栏/CTA/升级弹窗/SEO） |
 | `upgrade_modal_open` | 升级弹窗打开 | `trigger`（功能锁定/Header/侧边栏） |
-| `plan_select` | 选择套餐 | `plan_name`（monthly/yearly/lifetime）、`price`、`currency` |
+| `plan_select` | 选择套餐 | `plan_name`（daily/yearly）、`price`、`currency` |
 | `checkout_start` | 点击订阅/购买按钮 → 发起 Stripe Checkout | `plan_name`, `price`, `payment_method`（stripe） |
 | `checkout_success` | 支付成功回调（Stripe webhook `checkout.session.completed`） | `plan_name`, `price`, `currency`, `transaction_id` |
 | `checkout_fail` | 支付失败/取消 | `plan_name`, `fail_reason`（cancel/fail/timeout） |
@@ -8421,7 +8500,7 @@ export function identify(userId: string, traits?: Record<string, any>) {
   │   事件链：pricing_page_view → plan_select → checkout_start → checkout_success
   ├─ 付费转化率 = checkout_success UV / pricing_page_view UV
   ├─ ARPU / ARPPU
-  └─ 套餐选择分布（月付/年付/终身）
+  └─ 套餐选择分布（单日/年费）
 
 推荐 (Referral)
   ├─ 分享按钮点击率
@@ -8753,7 +8832,7 @@ const handleSubmit = () => {
 #### Bug #3: 定价页货币与金额不一致
 - **页面**: /pricing
 - **现象**: 显示 HK$30/月、HK$78/季、HK$238/年
-- **PRD 定价**: ¥29/月、¥69/季、¥199/年
+- **PRD 定价**: 单日会员 $5/天、年费会员 $10/年（价格通过配置文件动态管理）
 - **修复要求**: 确认最终定价货币（人民币 or 港币），统一价格。如果面向国际用户用 USD，也可以，但需要更新 PRD 并保持一致
 
 #### Bug #4: 隐私政策页联系方式乱码
