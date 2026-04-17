@@ -1,52 +1,41 @@
 import { NextResponse } from 'next/server';
 
 export async function GET() {
-  // 直接硬编码测试，排除环境变量问题
-  const appId = 'cli_a9296a8b2a615bc4';
-  const appSecret = 'bckaWsC4bzt8L7XgAA5RQd7CdrvP7Tj2';
-  const userOpenId = 'ou_d89016d494198c864ceb11bdcdb1127a';
-
+  // 测试1: DNS 解析
+  let dnsResult = 'unknown';
   try {
-    const tokenRes = await fetch(
-      'https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ app_id: appId, appSecret }),
-      }
-    );
-    const tokenData = await tokenRes.json();
-
-    if (tokenData.code !== 0) {
-      return NextResponse.json({ error: 'token_failed', tokenData });
-    }
-
-    const textContent = [
-      '🔧 硬编码诊断测试',
-      '',
-      '如果你收到这条，说明 Vercel→飞书完全打通！',
-      '时间：' + new Date().toISOString(),
-    ].join('\n');
-
-    const sendRes = await fetch(
-      'https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=open_id',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${tokenData.tenant_access_token}`,
-        },
-        body: JSON.stringify({
-          receive_id: userOpenId,
-          msg_type: 'text',
-          content: JSON.stringify({ text: textContent }),
-        }),
-      }
-    );
-    const sendData = await sendRes.json();
-
-    return NextResponse.json({ success: sendData.code === 0, code: sendData.code, msg: sendData.msg, messageId: sendData.data?.message_id });
-  } catch (err: unknown) {
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+    const dnsStart = Date.now();
+    const dnsRes = await fetch('https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ app_id: 'cli_a9296a8b2a615bc4', appSecret: 'bckaWsC4bzt8L7XgAA5RQd7CdrvP7Tj2' }),
+    });
+    const dnsData = await dnsRes.json();
+    const dnsMs = Date.now() - dnsStart;
+    dnsResult = JSON.stringify({ code: dnsData.code, msg: dnsData.msg, ms: dnsMs, status: dnsRes.status, headers: Object.fromEntries(dnsRes.headers.entries()) });
+  } catch (e) {
+    dnsResult = `fetch_error: ${e}`;
   }
+
+  // 测试2: 用另一个 HTTPS 站点对比（确保 fetch 本身能用）
+  let httpTest = 'unknown';
+  try {
+    const httpStart = Date.now();
+    const httpRes = await fetch('https://httpbin.org/post', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ test: true }),
+    });
+    const httpMs = Date.now() - httpStart;
+    const httpData = await httpRes.json();
+    httpTest = JSON.stringify({ ms: httpMs, status: httpRes.status });
+  } catch (e) {
+    httpTest = `fetch_error: ${e}`;
+  }
+
+  return NextResponse.json({
+    feishu: dnsResult,
+    httpbin: httpTest,
+    timestamp: new Date().toISOString(),
+  });
 }
