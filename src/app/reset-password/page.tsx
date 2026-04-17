@@ -114,7 +114,7 @@ function ResetPasswordContent() {
       <div className="w-full max-w-[420px] p-8 bg-white rounded-2xl shadow-lg">
         {/* Logo */}
         <div className="text-center mb-6">
-          <span className="text-3xl">🔮</span>
+          <img src="/favicon.svg" alt="CyberFate" className="w-8 h-8 inline-block" />
           <span className="text-xl font-bold text-[#1C1A16] ml-2">CyberFate</span>
         </div>
 
