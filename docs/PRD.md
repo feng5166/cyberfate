@@ -112,25 +112,35 @@
 ```typescript
 // 套餐配置 — 所有价格从此处读取，代码中禁止硬编码价格
 export const PLANS = {
-  daily: {
-    id: 'daily',
-    name: '单日会员',
-    nameEn: 'Daily Pass',
-    priceId: process.env.STRIPE_PRICE_DAILY!,   // Stripe Price ID
-    duration: '1 day',
-    durationDays: 1,
-    features: ['unlimited_bazi', 'unlimited_daily', 'unlimited_all_features'],
+  basic: {
+    id: 'basic',
+    name: '基础版',
+    nameEn: 'Basic',
+    priceId: process.env.STRIPE_PRICE_BASIC!,   // Stripe Price ID
+    duration: '1 month',
+    durationDays: 30,
+    features: ['unlimited_bazi', 'unlimited_daily'],
     recommended: false,
   },
-  yearly: {
-    id: 'yearly',
-    name: '年费会员',
-    nameEn: 'Yearly Membership',
-    priceId: process.env.STRIPE_PRICE_YEARLY!,  // Stripe Price ID
+  pro: {
+    id: 'pro',
+    name: '专业版',
+    nameEn: 'Pro',
+    priceId: process.env.STRIPE_PRICE_PRO!,     // Stripe Price ID
+    duration: '1 month',
+    durationDays: 30,
+    features: ['unlimited_bazi', 'unlimited_daily', 'unlimited_all_features', 'history_forever'],
+    recommended: true,  // 主推
+  },
+  ultimate: {
+    id: 'ultimate',
+    name: '尊享版',
+    nameEn: 'Ultimate',
+    priceId: process.env.STRIPE_PRICE_ULTIMATE!, // Stripe Price ID
     duration: '1 year',
     durationDays: 365,
-    features: ['unlimited_bazi', 'unlimited_daily', 'unlimited_all_features'],
-    recommended: true,  // 主推
+    features: ['unlimited_bazi', 'unlimited_daily', 'unlimited_all_features', 'history_forever', 'priority_support', 'early_access'],
+    recommended: false,
   },
 } as const;
 
@@ -144,8 +154,15 @@ export type PlanId = keyof typeof PLANS;
 
 | 套餐 | 参考价格 | 周期 | 定位 |
 |------|----------|------|------|
-| 单日会员 | $5 USD / ~¥36 CNY | 1 天 | 低门槛尝鲜 |
-| 年费会员 | $10 USD / ~¥72 CNY | 1 年 | 主推套餐（超值） |
+| 基础版 | $9.99 USD / 月 | 月付 | 锚定 + 低门槛尝鲜 |
+| 专业版 | **$19.99 USD** / 月 | 月付 | **主推套餐（推荐）** |
+| 尊享版 | **$49 USD** / 年 | 年付 | 超值锚定（折算仅 $0.13/月） |
+
+> **定价策略说明（锚定原理）：**
+> - 基础版 $9.99：作为价格锚点，让专业版 $19.99 看起来"只贵一倍但权益多很多"
+> - 专业版 $19.99：主推目标，大多数用户会选中间档
+> - 尊享版 $49/年：强力锚定——年费仅比专业版月付多一点点，但用一年。让年费看起来极其超值，同时拉高产品价值感
+> - 用户心理路径：看到尊享版 $49/年 → 觉得"好便宜" → 再看专业版 $19.99/月 → "那更划算" → 成交
 
 > **关键原则：价格不写死在前端代码中。** 前端通过 `GET /api/pricing-plans` 获取实时价格和 Stripe Price ID。这样改价只需改 Stripe Dashboard 或环境变量，无需重新部署。
 
@@ -1446,8 +1463,8 @@ POST /api/auth/login (修改)
 │  ┌──────────────────────────────────────────────┐   │
 │  │  📋 订阅管理                       查看详情 → │   │  ← 订阅管理卡片（核心新增）
 │  │                                              │   │
-│  │  当前计划：年费会员                       │   │
-│  │  $10/年 · 下次扣费：2027-04-17              │   │
+│  │  当前计划：专业版                       │   │
+│  │  $19.99/月 · 下次扣费：2026-05-17              │   │
 │  │                                              │   │
 │  │  ┌────────────┐ ┌────────────┐              │   │
 │  │  │  升级套餐   │ │  管理订阅   │              │   │  ← 操作按钮
@@ -1502,10 +1519,10 @@ POST /api/auth/login (修改)
 ┌──────────────────────────────────────────────┐
 │  📋 订阅管理                        查看详情 → │  ← 点击展开管理面板 / 跳转 #subscription
 │                                              │
-│  当前计划：年费会员                           │   │
-│  $10/年                                       │   │
+│  当前计划：专业版                           │   │
+│  $19.99/年                                       │   │
 │  状态：✅ 有效中                               │   │
-│  下次扣费日期：2027-04-17                     │   │
+│  下次扣费日期：2026-05-17                     │   │
 │                                              │
 │  ┌─────────────────────────────────────────┐ │
 │  │            ⚙️ 管理我的订阅               │ │  ← 唯一操作入口
@@ -1557,22 +1574,22 @@ POST /api/auth/login (修改)
 │  ┌────────────────────────────────────────────────┐ │
 │  │  📋 当前计划                                     │ │
 │  │                                                │ │
-│  │  年费会员                          ✅ 当前计划   │ │
-│  │  $10/年                                         │ │
+│  │  专业版                          ✅ 当前计划   │ │
+│  │  $19.99/年                                         │ │
 │  │  开始日期：2026-04-17                            │ │
-│  │  到期日期：2027-04-17                            │ │
+│  │  到期日期：2026-05-17                            │ │
 │  │  自动续订：已开启                                │ │
-│  │  下次扣费：2027-04-17                            │ │
+│  │  下次扣费：2026-05-17                            │ │
 │  └────────────────────────────────────────────────┘ │
 │                                                      │
 │  ── 套餐信息 ───────────────────────────────────    │
 │                                                      │
-│  ┌───────────┐  ┌───────────┐                      │
-│  │  单日会员  │  │  年费会员  │                      │
-│  │           │  │  ★ 当前   │                      │
-│  │   $5      │  │   $10     │                      │
-│  │  /天      │  │  /年      │                      │
-│  │          │ │  当前计划 │ │          │            │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐            │
+│  │  基础版   │ │  专业版   │ │  尊享版   │            │
+│  │          │ │ ★ 当前   │ │          │            │
+│  │  $9.99   │ │  $19.99  │ │   $49    │            │
+│  │  /月     │ │  /月     │ │  /年     │            │
+│  │          │ │ 当前计划 │ │          │            │
 │  └──────────┘ └──────────┘ └──────────┘            │
 │                                                      │
 │  ── 支付与账单（Stripe 托管） ──────────────────    │
@@ -1603,10 +1620,10 @@ POST /api/auth/login (修改)
 
 ```
 ┌───────────┐  ┌───────────┐
-│  单日会员  │  │  年费会员  │
+│  基础版  │  │  专业版  │
 │           │  │  ★ 当前   │
-│   $5      │  │   $10     │
-│  /天      │  │  /年      │
+│   $9.99      │  │   $19.99     │
+│  /月      │  │  /年      │
 │          │ │  当前计划 │ │          │
 └───────────┘ └───────────┘
             ↑ 仅此卡有 tag
@@ -1701,8 +1718,8 @@ POST /api/auth/login (修改)
 GET /api/subscription/current
 Response:
 {
-  "plan": "yearly",
-  "plan_name": "年费会员",
+  "plan": "pro",
+  "plan_name": "专业版",
   "price": 10,
   "currency": "USD",
   "status": "active",          // active | cancelled | past_due
@@ -1740,7 +1757,7 @@ Response:
     {
       "id": "inv_xxx",
       "date": "2026-04-15",
-      "description": "年费会员",
+      "description": "专业版",
       "amount": 10,
       "currency": "USD",
       "status": "paid",
@@ -1810,7 +1827,7 @@ Response:
 
 **未登录 / 免费用户看到**：
 - 会员权益对比表（免费 vs VIP）
-- 套餐选择卡片（**单日会员 / 年费会员**，2 列）
+- 套餐选择卡片（**基础版 / 专业版 / 尊享版**，3 列）
 - 立即开通按钮
 - **支付方式：Stripe Checkout（跳转式支付）**
 
@@ -1824,10 +1841,10 @@ Response:
 │  ┌──────────────────────────────────────────────┐   │
 │  │  📋 当前订阅                                  │   │  ← 已订阅用户的专属卡片
 │  │                                              │   │
-│  │  年费会员                        当前计划    │   │  ← 高亮标签
-│  │  有效期至 2027-04-17                       │   │
+│  │  专业版                        当前计划    │   │  ← 高亮标签
+│  │  有效期至 2026-05-17                       │   │
 │  │                                              │   │
-│  │  下次扣费：2027-04-17 · 自动续订已开启       │   │
+│  │  下次扣费：2026-05-17 · 自动续订已开启       │   │
 │  │                                              │   │
 │  │  ┌──────────┐ ┌──────────┐                  │   │
 │  │  │ 查看账单  │ │ 管理订阅  │                  │   │
@@ -1836,13 +1853,13 @@ Response:
 │                                                     │
 │  ── 或选择其他计划 ────────────────────────────     │
 │                                                     │
-│  ┌───────────┐  ┌───────────┐                     │
-│  │  单日会员  │  │  年费会员  │                     │
-│  │           │  │  ★ 推荐   │                     │
-│  │   $5      │  │   $10     │                     │
-│  │  /天      │  │  /年      │                     │
-│  │ [开通]    │  │ 当前计划  │                     │
-│  └───────────┘  └───────────┘                     │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐           │
+│  │  基础版   │ │  专业版   │ │  尊享版   │           │
+│  │          │ │ ★ 推荐   │ │          │           │
+│  │  $9.99   │ │  $19.99  │ │   $49    │           │
+│  │  /月     │ │  /月     │ │  /年     │           │
+│  │ [切换]   │ │ 当前计划 │ │ [升级 ✓] │           │
+│  └──────────┘ └──────────┘ └──────────┘           │
 │                                                     │
 │  FAQ                                                │
 │  权益对比表                                         │
@@ -1862,7 +1879,7 @@ Response:
 > **不允许套餐切换**：已订阅用户不能在周期内变更套餐。如需更换，先取消当前订阅，到期后重新选择。
 
 #### 通用交互说明
-- 默认选中**年费会员**（主推）— **仅未订阅用户适用**
+- 默认选中**专业版**（主推）— **仅未订阅用户适用**
 - 点击开通 → 检查登录 → **后端创建 Stripe Checkout Session → 前端跳转 `checkout.stripe.com` 支付页** → 用户在 Stripe 完成支付 → Stripe 回调 `success_url`（跳回 CyberFate 并激活会员）
 - **已订阅用户访问 `/pricing` 时自动切换到上述「已订阅视图」**
 
@@ -1873,7 +1890,7 @@ Response:
 ```
 用户点击「立即开通」或「升级」
     ↓
-前端 POST /api/create-checkout { plan: "daily" | "yearly" }
+前端 POST /api/create-checkout { planId: "basic" | "pro" | "ultimate" }
     ↓
 后端 stripe.checkout.sessions.create({
   mode: "subscription",
@@ -1916,41 +1933,61 @@ CyberFate /success 页面 → 验证 session_id → 激活会员 → 跳转 /pro
 {
   "plans": [
     {
-      "id": "daily",
-      "name": "单日会员",
-      "nameEn": "Daily Pass",
-      "price": 5.00,
+      "id": "basic",
+      "name": "基础版",
+      "nameEn": "Basic",
+      "price": 9.99,
       "currency": "USD",
-      "priceDisplay": "$5",
-      "period": "/天",
-      "periodDays": 1,
-      "stripePriceId": "price_daily_xxx",
+      "priceDisplay": "$9.99",
+      "period": "/月",
+      "periodDays": 30,
+      "stripePriceId": "price_basic_xxx",
       "recommended": false,
       "features": [
         { "text": "八字分析无限次", "included": true },
         { "text": "每日运势完整版", "included": true },
-        { "text": "所有功能解锁", "included": true },
-        { "text": "历史记录保存", "included": true }
+        { "text": "合婚分析", "included": false, "upgradeText": "升级解锁" },
+        { "text": "塔罗占卜（每日3次）", "included": true },
+        { "text": "历史记录（7天）", "included": true }
       ]
     },
     {
-      "id": "yearly",
-      "name": "年费会员",
-      "nameEn": "Yearly Membership",
-      "price": 10.00,
+      "id": "pro",
+      "name": "专业版",
+      "nameEn": "Pro",
+      "price": 19.99,
       "currency": "USD",
-      "priceDisplay": "$10",
-      "period": "/年",
-      "periodDays": 365,
-      "stripePriceId": "price_yearly_xxx",
+      "priceDisplay": "$19.99",
+      "period": "/月",
+      "periodDays": 30,
+      "stripePriceId": "price_pro_xxx",
       "recommended": true,
       "features": [
-        { "text": "八字分析无限次", "included": true },
-        { "text": "每日运势完整版", "included": true },
-        { "text": "所有功能解锁", "included": true },
+        { "text": "八字分析无限次 + AI深度解读", "included": true },
+        { "text": "每日运势完整版 + AI建议", "included": true },
+        { "text": "合婚分析无限次", "included": true },
+        { "text": "塔罗占卜无限次", "included": true },
+        { "text": "所有命理功能解锁", "included": true },
         { "text": "历史记录永久保存", "included": true }
-      ],
-      "highlight": "超值 · 仅 $0.03/天"
+      ]
+    },
+    {
+      "id": "ultimate",
+      "name": "尊享版",
+      "nameEn": "Ultimate",
+      "price": 49.00,
+      "currency": "USD",
+      "priceDisplay": "$49",
+      "period": "/年",
+      "periodDays": 365,
+      "stripePriceId": "price_ultimate_xxx",
+      "recommended": false,
+      "highlight": "超值 · 仅 $0.13/天",
+      "features": [
+        { "text": "包含专业版全部权益", "included": true },
+        { "text": "优先客服支持", "included": true },
+        { "text": "新功能优先体验", "included": true }
+      ]
     }
   ],
   "defaultCurrency": "USD",
@@ -1969,7 +2006,7 @@ CyberFate /success 页面 → 验证 session_id → 激活会员 → 跳转 /pro
 // pricing 页或 Upgrade Modal 组件中
 const { data } = await fetch('/api/pricing-plans').then(r => r.json());
 // data.plans → 直接渲染卡片列表
-// data.plans[0].priceDisplay → "$5" （已格式化）
+// data.plans[0].priceDisplay → "$9.99" （已格式化）
 // data.plans[0].stripePriceId → 传给 create-checkout API
 ```
 
@@ -1985,10 +2022,10 @@ const { data } = await fetch('/api/pricing-plans').then(r => r.json());
 
 **后端逻辑：**
 1. 根据 `planId` 查找对应的 `stripePriceId`（从环境变量或 config）
-2. 创建 Stripe Checkout Session（mode: payment for daily / subscription for yearly）
+2. 创建 Stripe Checkout Session（mode: "subscription" (basic/pro 月付订阅) + mode: "payment" (ultimate 年付一次性)）
 3. 返回 checkout URL
 
-> **注意：单日会员用 `mode: "payment"`（一次性付款），年费会员用 `mode: "subscription"`（自动续订订阅）。两者 Stripe 模式不同。
+> **注意：基础版和专业版用 mode: "subscription"（月付自动续订），尊享版用 mode: "payment"（年付一次性）
 
 ---
 
@@ -2037,14 +2074,14 @@ const { data } = await fetch('/api/pricing-plans').then(r => r.json());
 │        解锁全部功能                                  │  ← 标题
 ││  选择适合您的计划，开启完整体验                       │  ← 副标题
 │                                                     │
-│  ┌───────────┐  ┌───────────┐                      │
-│  │  单日会员  │  │  年费会员  │                      │
-│  │           │  │ ★ 最受欢迎 │                      │
-│  │           │  │           │                      │
-│  │   $5      │  │   $10     │                      │
-│  │  /天      │  │  /年      │                      │
-│  │           │  │           │                      │
-│  │ [开始使用] │  │ [立即开通] │                      │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐            │
+│  │  基础版   │ │  专业版   │ │  尊享版   │            │
+│  │          │ │ ★ 最受欢迎│ │          │            │
+│  │          │ │          │ │          │            │
+│  │  $9.99   │ │  $19.99  │ │   $49    │            │
+│  │  /月     │ │  /月     │ │  /年     │            │
+│  │          │ │          │ │ 超值     │            │
+│  │ [开始使用]│ │ [立即开通]│ │ [立即开通]│            │
 │  └──────────┘ └──────────┘ └──────────┘            │
 │                                                     │
 │  「查看完整权益对比 →」                               │  ← 链接到 /pricing
@@ -2063,31 +2100,40 @@ const { data } = await fetch('/api/pricing-plans').then(r => r.json());
 - 标题：「解锁全部功能」
 - 副标题：「选择适合您的计划，开启完整体验」
 
-##### ② 两列套餐卡片（核心：复用 pricing 页组件）
+##### ② 三列套餐卡片（核心：复用 pricing 页组件）
 
-**布局**: `flex flex-col lg:flex-row gap-5 max-w-[600px] mx-auto px-8`
+**布局**: `flex flex-col lg:flex-row gap-5 max-w-[900px] mx-auto px-8`
 
 卡片内容与 `/pricing` 页面 **完全一致**，复用同一套组件/数据源。价格从 `GET /api/pricing-plans` 动态获取，不硬编码。
 
-**单日会员**
+**基础版**
 | 属性 | 值 |
 |------|-----|
-| 名称 | 「单日会员」 |
-| 价格 | 从 API 动态获取（参考 $5）+ `/天` |
+| 名称 | 「基础版」 |
+| 价格 | 从 API 动态获取（参考 $9.99）+ `/月` |
 | 容器样式 | `bg-white border border-[#E5E2DD] rounded-xl p-6 flex flex-col` |
 | 权益列表 | 复用 pricing 页权益数据（见下方） |
 | CTA 按钮 | `w-full border border-[#1C1A16] text-[#1C1A16] rounded-lg py-3 font-medium text-sm hover:bg-[#1C1A16]/5` |
 | CTA 文案 | 「开始使用」 |
 
-**年费会员 — 推荐**
+**专业版 — 推荐**
 | 属性 | 值 |
 |------|-----|
-| 名称 | 「年费会员」 |
-| 价格 | 从 API 动态获取（参考 $10）+ `/年` |
+| 名称 | 「专业版」 |
+| 价格 | 从 API 动态获取（参考 $19.99）+ `/月` |
 | 容器样式 | `bg-white border-2 border-[#1C1A16] rounded-xl p-6 flex flex-col transform lg:scale-[1.03] shadow-lg relative` |
 | 推荐标签 | 顶部居中 `bg-[#1C1A16] text-white text-xs px-3 py-1 rounded-full -mt-3 absolute top-0 left-1/2 -translate-x-1/2`，文案「★ 最受欢迎」 |
 | 权益 check | 绿色 ✅（`#10B981`） |
 | CTA 按钮 | `w-full bg-[#1C1A16] text-white rounded-lg py-3 font-medium text-sm hover:bg-[#1C1A16]/90` |
+| CTA 文案 | 「立即开通」 |
+
+**尊享版**
+| 属性 | 值 |
+|------|-----|
+| 名称 | 「尊享版」 |
+| 价格 | 从 API 动态获取（参考 $49）+ `/年` |
+| 容器样式 | 同基础版 |
+| 超值提示 | 卡片内底部小字 muted 色：`仅 $0.13/天` |
 | CTA 文案 | 「立即开通」 |
 
 ##### ③ 权益列表（三列卡片共用数据源）
@@ -2149,7 +2195,7 @@ const { data } = await fetch('/api/pricing-plans').then(r => r.json());
 | 维度 | Upgrade Modal | /pricing 页面 |
 |------|--------------|---------------|
 | 触发方式 | 被动（点击解锁/CTA） | 主动（导航/链接） |
-| 内容 | **两列**卡片 + 简化权益 | **两列**卡片 + 完整权益对比表 + FAQ + Footer |
+| 内容 | 三列卡片 + 简化权益 | 三列卡片 + 完整权益对比表 + FAQ + Footer |
 | 宽度 | max-w-[700px] 弹窗 | 全宽页面 |
 | 组件复用 | 复用 PricingCard 组件 | PricingCard 完整版 |
 | 适用场景 | 快速转化 | 了解详情后决策 |
@@ -2159,7 +2205,7 @@ const { data } = await fetch('/api/pricing-plans').then(r => r.json());
 | 断点 | 调整 |
 |------|------|
 | < 768px | 弹窗宽度 `w-[95%] max-w-[none]` |
-| < 768px | **两列**卡片改为 **垂直堆叠**（`flex-col`），不再横排 |
+| < 768px | 三列卡片改为 **垂直堆叠**（`flex-col`），不再横排 |
 | < 768px | 卡片内 padding 缩小为 `p-5` |
 | 所有断点 | 弹窗 `max-h-[95vh]`，内部 `overflow-y-auto` |
 
@@ -2169,7 +2215,7 @@ const { data } = await fetch('/api/pricing-plans').then(r => r.json());
 |------|------|------|
 | UpgradeModal | components/pricing/UpgradeModal.tsx | 解锁弹窗主组件 |
 | PricingCard | components/pricing/PricingCard.tsx | 单个套餐卡片（**与 /pricing 页共用**） |
-| PricingCardList | components/pricing/PricingCardList.tsx | **两列**卡片容器（**与 /pricing 页共用**） |
+| PricingCardList | components/pricing/PricingCardList.tsx | 三列卡片容器（**与 /pricing 页共用**） |
 
 > ⚠️ **组件复用是硬性要求**：PricingCard 和 PricingCardList 必须是同一套组件，Upgrade Modal 和 /pricing 页面都引用它。不允许维护两份重复代码。价格必须从 `config/pricing.ts` 或 API 动态获取，**禁止在组件中硬编码金额**。
 
@@ -2617,7 +2663,7 @@ POST /api/feedback
 - 飞书失败记录到服务端日志（Vercel Functions 日志可查）
 - 可选：失败时 fallback 发送邮件给 Frank
 
-##### V2 升级路径（反馈量 > 20 条/天时触发）
+##### V2 升级路径（反馈量 > 20 条/月时触发）
 
 | 阶段 | 方案 | 说明 |
 |------|------|------|
@@ -3763,7 +3809,7 @@ _美术虾 🎨签字确认 · Frank 审批通过 · 2026-04-03_
 | # | 标题 | 图标方向 | 描述文案（参考，可调整） |
 |---|------|---------|----------------------|
 | 1 | AI 智能，科学解析 | 大脑/芯片图标 | 融合现代 AI 技术与传统命理智慧，通过大数据分析与机器学习，提供客观的命理解读，让玄学不再玄 |
-| 2 | 文化传承，理性态度 | 灯卷/天平图标 | 以开放理性的态度传承东方智慧，去芜存菁、不迷信、不神化，让千年命理文化以更健康的方式融入现代生活 |
+| 2 | 文化传承，理性态度 | 灯卷/月平图标 | 以开放理性的态度传承东方智慧，去芜存菁、不迷信、不神化，让千年命理文化以更健康的方式融入现代生活 |
 | 3 | 自主探索，独立思考 | 指南针/眼睛图标 | 我们相信每个人都是自己命运的解读者。通过 AI 工具赋能，让每个人能独立进行命理分析，自主思考人生方向 |
 
 **卡片规格**:
@@ -5824,7 +5870,7 @@ interface BaziHistoryRecord {
 | 相夫 | 土棕 | #A16207 |
 | 七杀 | 暗红 | #991B1B |
 | 破军 | 深紫 | #6D28D9 |
-| （天梁/天相视实现情况补充） | | |
+| （天梁/月相视实现情况补充） | | |
 
 > 注：颜色用于命盘图中星名旁的小圆点/图标色，辅助快速扫描。不要给宫格上色。
 
@@ -8456,7 +8502,7 @@ export function identify(userId: string, traits?: Record<string, any>) {
 |--------|----------|------|
 | `pricing_page_view` | 进入定价页 `/pricing` | `source`（导航栏/CTA/升级弹窗/SEO） |
 | `upgrade_modal_open` | 升级弹窗打开 | `trigger`（功能锁定/Header/侧边栏） |
-| `plan_select` | 选择套餐 | `plan_name`（daily/yearly）、`price`、`currency` |
+| `plan_select` | 选择套餐 | `plan_name`（basic/pro/ultimate）、`price`、`currency` |
 | `checkout_start` | 点击订阅/购买按钮 → 发起 Stripe Checkout | `plan_name`, `price`, `payment_method`（stripe） |
 | `checkout_success` | 支付成功回调（Stripe webhook `checkout.session.completed`） | `plan_name`, `price`, `currency`, `transaction_id` |
 | `checkout_fail` | 支付失败/取消 | `plan_name`, `fail_reason`（cancel/fail/timeout） |
@@ -8832,7 +8878,7 @@ const handleSubmit = () => {
 #### Bug #3: 定价页货币与金额不一致
 - **页面**: /pricing
 - **现象**: 显示 HK$30/月、HK$78/季、HK$238/年
-- **PRD 定价**: 单日会员 $5/天、年费会员 $10/年（价格通过配置文件动态管理）
+- **PRD 定价**: 基础版 $9.99/月、专业版 $19.99/月、尊享版 $49/年（价格通过配置文件动态管理，锚定定价）
 - **修复要求**: 确认最终定价货币（人民币 or 港币），统一价格。如果面向国际用户用 USD，也可以，但需要更新 PRD 并保持一致
 
 #### Bug #4: 隐私政策页联系方式乱码

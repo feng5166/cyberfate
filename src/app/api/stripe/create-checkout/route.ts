@@ -37,12 +37,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '未登录' }, { status: 401 });
     }
 
-    const { plan } = await req.json();
-
-    if (!isValidPlanId(plan)) {
-      return NextResponse.json({ error: '无效的套餐' }, { status: 400 });
-    }
-
     if (!process.env.STRIPE_SECRET_KEY) {
       return NextResponse.json({ error: 'Stripe 未配置' }, { status: 500 });
     }
@@ -55,8 +49,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '用户不存在' }, { status: 404 });
     }
 
+    const { plan, clientAmount } = await req.json();
+
+    if (!isValidPlanId(plan)) {
+      return NextResponse.json({ error: '无效的套餐' }, { status: 400 });
+    }
+
+    // ── 安全校验：服务端独立计算金额，不信任客户端 ──
     const planConfig = PRICING_CONFIG[plan];
-    let amount = planConfig.amount;
+    let amount: number;
     let action: 'purchase' | 'upgrade' = 'purchase';
 
     const activeSubscription = await prisma.subscription.findFirst({
@@ -75,8 +76,28 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
-      amount = calculateProratedAmount(currentPlan, plan, activeSubscription.expireAt);
+      const serverAmount = calculateProratedAmount(currentPlan, plan, activeSubscription.expireAt);
+      amount = serverAmount;
       action = 'upgrade';
+
+      // 安全日志：记录升级操作
+      console.log(`[Stripe Security] User ${user.id} upgrade ${currentPlan}→${plan}, serverAmount=${serverAmount}, clientProvided=${clientAmount ?? 'N/A'}`);
+    } else {
+      // 新购：金额完全由服务端定价决定
+      amount = planConfig.amount;
+
+      // 安全校验：如果客户端传了金额且与服务端差异过大，记录告警
+      if (clientAmount && Math.abs(clientAmount - amount) > 1) {
+        console.warn(`[Stripe Security] ⚠️ 金额异常! User ${user.id} plan=${plan}, server=${amount}, clientSent=${clientAmount}, IP=${req.headers.get('x-forwarded-for') || 'unknown'}`);
+        // 不阻止请求（因为最终以服务端为准），但记录异常用于监控
+      }
+    }
+
+    // 金额合理性边界检查：不能低于最低价的一半（防止极端篡改）
+    const minPlanPrice = Math.min(...Object.values(PRICING_CONFIG).map(c => c.amount));
+    if (amount < minPlanPrice * 0.5 && action === 'purchase') {
+      console.error(`[Stripe Security] 🔴 金额过低! User ${user.id} plan=${plan}, amount=${amount}, expected>=${minPlanPrice}`);
+      return NextResponse.json({ error: '价格计算异常，请联系客服' }, { status: 400 });
     }
 
     const customersRes = await listCustomers(user.email!);

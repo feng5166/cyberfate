@@ -88,16 +88,29 @@ export const authOptions: NextAuthOptions = {
         })
 
         if (!existingUser) {
-          // 创建新用户
+          // 创建新用户 — 微信无邮箱，生成合成邮箱以确保唯一性
+          const syntheticEmail = `wechat.${wechatProfile.unionid || wechatProfile.openid}@cyberfate.internal`
           await prisma.user.create({
             data: {
               id: user.id,
+              email: syntheticEmail,
+              emailVerified: new Date(),
               wechatOpenId: wechatProfile.openid,
               wechatUnionId: wechatProfile.unionid,
               nickname: wechatProfile.nickname,
               avatar: wechatProfile.headimgurl,
             },
           })
+          // 同步更新 session user 的 email（否则后续流程拿不到）
+          user.email = syntheticEmail
+        } else if (!existingUser.email || existingUser.email.endsWith('@cyberfate.internal')) {
+          // 老用户补丁：如果之前创建时没有 email，补上
+          const syntheticEmail = `wechat.${existingUser.wechatUnionId || existingUser.wechatOpenId}@cyberfate.internal`
+          await prisma.user.update({
+            where: { id: existingUser.id },
+            data: { email: syntheticEmail, emailVerified: new Date() },
+          })
+          user.email = syntheticEmail
         }
       }
       return true
