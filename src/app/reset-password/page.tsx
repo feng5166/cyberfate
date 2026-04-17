@@ -29,7 +29,7 @@ function ResetPasswordContent() {
 
     async function verifyToken() {
       try {
-        const res = await fetch(`/api/auth/reset-password?token=${encodeURIComponent(token)}`)
+        const res = await fetch(`/api/auth/reset-password?token=${encodeURIComponent(token ?? '')}`)
         const data = await res.json()
 
         if (data.valid) {
