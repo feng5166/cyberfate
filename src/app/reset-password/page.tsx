@@ -21,35 +21,13 @@ function ResetPasswordContent() {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (!token) {
+    if (!token || token.length < 10) {
       setPageState('error')
       setErrorMessage('重置链接无效，缺少必要参数')
       return
     }
 
-    async function verifyToken() {
-      try {
-        const res = await fetch('/api/auth/reset-password', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token, password: 'check_only', confirmPassword: 'check_only' }),
-        })
-        const data = await res.json()
-
-        if (data.error === 'PASSWORD_TOO_SHORT' || data.error === 'PASSWORD_MISMATCH') {
-          setPageState('form')
-        } else if (!res.ok) {
-          setPageState('error')
-          setErrorMessage(data.message || '重置链接无效')
-        } else {
-          setPageState('form')
-        }
-      } catch {
-        setPageState('form')
-      }
-    }
-
-    verifyToken()
+    setPageState('form')
   }, [token])
 
   const handleSubmit = async (e: React.FormEvent) => {
