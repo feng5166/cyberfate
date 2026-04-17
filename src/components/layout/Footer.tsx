@@ -68,13 +68,35 @@ export function Footer() {
                   ))}
                 </ul>
               ) : (
-                <div className="mt-4 space-y-4">
-                  <div className="w-[100px] h-[100px] rounded-lg border border-[#F0EDE8] bg-white flex items-center justify-center">
-                    <span className="text-[12px] text-[#1C1A16]/40 text-center leading-tight px-2">扫码关注<br />公众号</span>
+                <div className="mt-4 space-y-3">
+                  <div className="w-12 h-12 rounded-xl bg-[#1C1A16] flex items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="w-6 h-6 text-white"
+                      aria-hidden="true"
+                    >
+                      <circle cx="12" cy="12" r="8" />
+                      <path d="M4 13c2-1.5 4-1.5 6 0s4 1.5 6 0 4-1.5 6 0" />
+                      <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+                    </svg>
                   </div>
-                  <p className="text-[13px] text-[#1C1A16]/60">
-                    微信客服: CyberFate01
+                  <p className="text-[12px] text-[#1C1A16]/50">
+                    AI 赛博命理 · 探索命运之谜
                   </p>
+                  <div className="space-y-1.5 pt-1">
+                    <p className="text-[13px] text-[#1C1A16]/60">
+                      📧 support@cyberfate.me
+                    </p>
+                    <p className="text-[13px] text-[#1C1A16]/60">
+                      💬 微信：feng5166
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
