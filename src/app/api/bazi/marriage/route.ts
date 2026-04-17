@@ -57,8 +57,9 @@ function formatBazi(info: BaziInfo): string {
 // ── 合婚算法 ───────────────────────────────────────
 
 /**
- * 基于传统命理学的合婚匹配度算法
- * 五大维度：五行互补(30) + 日干关系(25) + 生肖相合(20) + 日主平衡(15) + 神煞(10)
+ * 基于传统命理学的合婚匹配度算法（纯维度加分制）
+ * 五大维度：五行互补(30) + 日干关系(25) + 生肖相合(20) + 日主平衡(15) + 神煞(10) = 满分100
+ * 无基准分，各维度从 0 开始计分，实际分布区间约 50-95
  */
 function calculateScore(male: BaziInfo, female: BaziInfo) {
   const details: string[] = [];
@@ -83,22 +84,20 @@ function calculateScore(male: BaziInfo, female: BaziInfo) {
   const shenshaScore = calcShenSha(male, female);
   details.push(`神煞参考：${shenshaScore.desc} (+${shenshaScore.score}分)`);
 
-  // 总分：基准60分 + 各维度加分，限制在 50-100 区间
-  let total = 60
-    + wuxingScore.score
+  let total = wuxingScore.score
     + ganScore.score
     + zodiacScore.score
     + balanceScore.score
     + shenshaScore.score;
 
-  total = Math.max(50, Math.min(100, total));
+  total = Math.max(40, Math.min(100, total));
 
   let hearts = '';
   let level = '';
-  if (total >= 92) { hearts = '❤️❤️❤️❤️❤️'; level = '天作之合'; }
-  else if (total >= 82) { hearts = '❤️❤️❤️❤️☆'; level = '良缘佳配'; }
+  if (total >= 90) { hearts = '❤️❤️❤️❤️❤️'; level = '天作之合'; }
+  else if (total >= 80) { hearts = '❤️❤️❤️❤️☆'; level = '良缘佳配'; }
   else if (total >= 70) { hearts = '❤️❤️❤️☆☆'; level = '相处融洽'; }
-  else if (total >= 58) { hearts = '❤️❤️☆☆☆'; level = '需要磨合'; }
+  else if (total >= 60) { hearts = '❤️❤️☆☆☆'; level = '需要磨合'; }
   else { hearts = '❤️☆☆☆☆'; level = '缘分较浅'; }
 
   return { score: total, hearts, level, details };
@@ -106,50 +105,57 @@ function calculateScore(male: BaziInfo, female: BaziInfo) {
 
 // ── 维度1：五行互补 (满分30) ────────────────────────
 function calcWuxingComplement(male: WuxingCount, female: WuxingCount): { score: number; desc: string } {
-  // 五行相生：木生火、火生土、土生金、金生水、水生木
-  // 理想情况：一方偏某行，另一方正好缺或弱该行 → 互补
-  // 或者双方五行分布均匀不冲突
-
   const SHENG: Record<string, string> = { '木': '火', '火': '土', '土': '金', '金': '水', '水': '木' };
   const KE: Record<string, string> = { '木': '土', '土': '水', '水': '火', '火': '金', '金': '木' };
 
-  const mTotal = male.metal + male.wood + male.water + male.fire + male.earth;
-  const fTotal = female.metal + female.wood + female.water + female.fire + female.earth;
+  const WX_KEYS: (keyof WuxingCount)[] = ['metal', 'wood', 'water', 'fire', 'earth'];
+  const WX_CN: Record<string, keyof WuxingCount> = { '金': 'metal', '木': 'wood', '水': 'water', '火': 'fire', '土': 'earth' };
 
-  let score = 15; // 基础分
+  let score = 8;
   const reasons: string[] = [];
 
-  // 检查互补：男多的五行恰好是女缺的或少的
+  // 互补加分：一方旺的五行恰好能生助另一方所需
   for (const [element, count] of Object.entries(male)) {
-    if (count >= 3 && female[element as keyof WuxingCount] <= 1) {
-      // 男多女少 — 男的可以生女的
+    const key = element as keyof WuxingCount;
+    if (!WX_KEYS.includes(key)) continue;
+    if (count >= 3 && female[key] <= 1) {
       const target = SHENG[element];
-      if (target && female[target as keyof WuxingCount] >= 2) {
-        score += 4;
+      if (target && female[WX_CN[target] || target as keyof WuxingCount] >= 2) {
+        score += 3;
         reasons.push(`${element}多→生${target}(女有)`);
       }
     }
-    if (count <= 1 && female[element as keyof WuxingCount] >= 3) {
+    if (count <= 1 && female[key] >= 3) {
       const target = SHENG[element];
-      if (target && male[target as keyof WuxingCount] >= 2) {
-        score += 4;
+      if (target && male[WX_CN[target] || target as keyof WuxingCount] >= 2) {
+        score += 3;
         reasons.push(`${element}少←被${target}(男有)生`);
       }
     }
   }
 
-  // 检查相克扣分
+  // 相克扣分
   for (const [element, count] of Object.entries(male)) {
-    if (count >= 3 && female[KE[element] as keyof WuxingCount] >= 3) {
-      score -= 3;
-      reasons.push(`${element}克${KE[element]}(冲突)`);
+    if (!WX_KEYS.includes(element as keyof WuxingCount)) continue;
+    const keTarget = KE[element];
+    if (keTarget && count >= 3 && female[WX_CN[keTarget] || keTarget as keyof WuxingCount] >= 3) {
+      score -= 4;
+      reasons.push(`${element}克${keTarget}(冲突)`);
     }
   }
+
+  // 五行分布均衡度：合并后五行越均匀越好
+  const combined = WX_KEYS.map(k => male[k] + female[k]);
+  const avg = combined.reduce((a, b) => a + b, 0) / 5;
+  const variance = combined.reduce((s, v) => s + (v - avg) ** 2, 0) / 5;
+  if (variance <= 1.5) { score += 6; reasons.push('双方五行合璧均衡'); }
+  else if (variance <= 3) { score += 3; reasons.push('五行分布较均'); }
 
   // 五行齐全加分
   const mComplete = Object.values(male).every(v => v > 0);
   const fComplete = Object.values(female).every(v => v > 0);
-  if (mComplete && fComplete) { score += 6; reasons.push('双方五行齐全'); }
+  if (mComplete && fComplete) { score += 4; reasons.push('双方五行齐全'); }
+  else if (mComplete || fComplete) { score += 2; reasons.push('一方五行齐全'); }
 
   score = Math.max(0, Math.min(30, score));
   return { score, desc: reasons.length > 0 ? reasons.join('，') : '五行分布正常' };
@@ -163,44 +169,37 @@ const WUHE: Record<string, string> = { '甲': '己', '乙': '庚', '丙': '辛',
 const GAN_SHENG: Record<string, string> = { '甲': '丙', '乙': '丙', '丙': '戊', '丁': '戊', '戊': '庚', '己': '庚', '庚': '壬', '辛': '壬', '壬': '甲', '癸': '甲' };
 
 function calcDayMasterRelation(mGan: string, mWx: string, fGan: string, fWx: string): { score: number; desc: string } {
-  // 五合（最吉）— 中和之象
   if (WUHE[mGan] === fGan) {
     return { score: 25, desc: `「${mGan}${fGan}」天干五合，中和吉利` };
   }
 
-  // 同性阴阳不同 — 阴阳调和
   const YANG_GAN = new Set(['甲', '丙', '戊', '庚', '壬']);
   const isYangM = YANG_GAN.has(mGan);
   const isYangF = YANG_GAN.has(fGan);
   if (isYangM !== isYangF) {
-    // 相生检查
     if (GAN_SHENG[mGan] === fGan) {
-      return { score: 22, desc: `「${mGan}」生「${fGan}」，阴阳相生` };
+      return { score: 20, desc: `「${mGan}」生「${fGan}」，阴阳相生` };
     }
     if (GAN_SHENG[fGan] === mGan) {
-      return { score: 20, desc: `「${fGan}」生「${mGan}」，阴阳相生` };
+      return { score: 18, desc: `「${fGan}」生「${mGan}」，阴阳相生` };
     }
-    // 同类五行（不同阴阳）
     if (mWx === fWx) {
-      return { score: 18, desc: `同属${mWx}，阴阳调和` };
+      return { score: 16, desc: `同属${mWx}，阴阳调和` };
     }
-    return { score: 14, desc: '阴阳异性的基础和谐' };
+    return { score: 12, desc: '阴阳异性的基础和谐' };
   }
 
-  // 同阴阳
   if (mWx === fWx) {
-    return { score: 12, desc: `同属${mWx}，同性相帮` };
+    return { score: 10, desc: `同属${mWx}，同性相帮` };
   }
-  // 相生
   if (GAN_SHENG[mGan] === fGan) {
-    return { score: 14, desc: `「${mGan}」生「${fGan}」` };
+    return { score: 11, desc: `「${mGan}」生「${fGan}」` };
   }
   if (GAN_SHENG[fGan] === mGan) {
-    return { score: 12, desc: `「${fGan}」生「${mGan}」` };
+    return { score: 9, desc: `「${fGan}」生「${mGan}」` };
   }
 
-  // 无特殊关系
-  return { score: 8, desc: `「${mGan}」「${fGan}」无特殊冲合` };
+  return { score: 6, desc: `「${mGan}」「${fGan}」无特殊冲合` };
 }
 
 // ── 维度3：生肖相合 (满分20) ──────────────────────
@@ -215,13 +214,11 @@ const LIUHAI: Record<string, string> = { '子': '未', '未': '子', '丑': '午
 
 function calcZodiacRelation(mZhi: string, fZhi: string): { score: number; desc: string } {
   if (LIUHE[mZhi] === fZhi) return { score: 20, desc: `「${mZhi}${fZhi}」六合，最吉` };
-  if (SANHE[mZhi]?.includes(fZhi)) return { score: 17, desc: `「${mZhi}${fZhi}」三合，大吉` };
-  if (LIUCHONG[mZhi] === fZhi) return { score: 8, desc: `「${mZhi}${fZhi}」六冲，需磨合` };
-  if (LIUHAI[mZhi] === fZhi) return { score: 10, desc: `「${mZhi}${fZhi}」六害，有小碍` };
-  // 同生肖
-  if (mZhi === fZhi) return { score: 12, desc: `同生肖${mZhi}，性格相近` };
-  // 无特殊关系
-  return { score: 14, desc: `「${mZhi}」「${fZhi}」无特殊冲合` };
+  if (SANHE[mZhi]?.includes(fZhi)) return { score: 16, desc: `「${mZhi}${fZhi}」三合，大吉` };
+  if (mZhi === fZhi) return { score: 11, desc: `同生肖${mZhi}，性格相近` };
+  if (LIUHAI[mZhi] === fZhi) return { score: 6, desc: `「${mZhi}${fZhi}」六害，有小碍` };
+  if (LIUCHONG[mZhi] === fZhi) return { score: 3, desc: `「${mZhi}${fZhi}」六冲，需磨合` };
+  return { score: 10, desc: `「${mZhi}」「${fZhi}」无特殊冲合` };
 }
 
 // ── 维度4：日主强弱平衡 (满分15) ─────────────────
@@ -244,11 +241,10 @@ function calcDayMasterBalance(male: BaziInfo, female: BaziInfo): { score: number
   const fStr = getStrength(female);
   const diff = Math.abs(mStr - fStr);
 
-  // 一强一弱为佳（互补）
   if (diff >= 3 && diff <= 6) return { score: 15, desc: '日主一强一弱，刚柔并济' };
-  if (diff < 3) return { score: 11, desc: '日主强度相近，性格类似' };
-  if (diff <= 9) return { score: 8, desc: '日主强度差异较大' };
-  return { score: 5, desc: '日主强度悬殊，需互相包容' };
+  if (diff <= 2) return { score: 10, desc: '日主强度相近，性格类似' };
+  if (diff <= 9) return { score: 6, desc: '日主强度差异较大' };
+  return { score: 3, desc: '日主强度悬殊，需互相包容' };
 }
 
 // ── 维度5：神煞参考 (满分10) ─────────────────────
@@ -260,21 +256,20 @@ function calcShenSha(male: BaziInfo, female: BaziInfo): { score: number; desc: s
     '壬': ['卯', '巳'], '癸': ['卯', '巳'],
   };
 
-  let score = 5; // 基础分
+  let score = 3;
   const benefits: string[] = [];
 
-  // 男日主的贵人是女方某个柱？
   const fPillars = [female.chart.year.zhi, female.chart.month.zhi, female.chart.day.zhi];
   if (female.chart.hour) fPillars.push(female.chart.hour.zhi);
   const mGuiRens = GUIREN[male.dayMasterGan] || [];
   for (const zhi of fPillars) {
-    if (mGuiRens.includes(zhi)) { score += 3; benefits.push('女带贵人'); break; }
+    if (mGuiRens.includes(zhi)) { score += 4; benefits.push('女带贵人'); break; }
   }
   const fGuiRens = GUIREN[female.dayMasterGan] || [];
   const mPillars = [male.chart.year.zhi, male.chart.month.zhi, male.chart.day.zhi];
   if (male.chart.hour) mPillars.push(male.chart.hour.zhi);
   for (const zhi of mPillars) {
-    if (fGuiRens.includes(zhi)) { score += 2; benefits.push('男带贵人'); break; }
+    if (fGuiRens.includes(zhi)) { score += 3; benefits.push('男带贵人'); break; }
   }
 
   score = Math.min(10, Math.max(0, score));
@@ -380,6 +375,20 @@ ${details.join('\n')}
     maleBazi,
     femaleBazi,
     analysis,
+    _debug: {
+      wuxing: wuxingScore.score,
+      gan: ganScore.score,
+      zodiac: zodiacScore.score,
+      balance: balanceScore.score,
+      shensha: shenshaScore.score,
+      rawTotal: wuxingScore.score + ganScore.score + zodiacScore.score + balanceScore.score + shenshaScore.score,
+      maleWuxing: male.wuxing,
+      femaleWuxing: female.wuxing,
+      maleDayMaster: `${male.dayMasterGan}(${male.dayMasterWuxing})`,
+      femaleDayMaster: `${female.dayMasterGan}(${female.dayMasterWuxing})`,
+      maleZodiac: male.yearZhi,
+      femaleZodiac: female.yearZhi,
+    },
     disclaimer: '⚠️ 仅供参考，匹配度评分基于五行互补、日干关系、生肖相合等传统命理算法，不代表真实命运。人生幸福取决于彼此的理解与经营。',
     _source: aiSource,
   });
