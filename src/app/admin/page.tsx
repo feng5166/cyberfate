@@ -189,9 +189,9 @@ function CheckUserTab() {
             </div>
 
             {/* 订阅状态摘要 */}
-            {result.subs && result.subs.length > 0 && (() => {
-              const activeSub = result.subs!.find((s: SubInfo) => s.status === 'active' && new Date(s.expireAt) > new Date());
-              const latestSub = result.subs![0];
+            {result.subscriptions && result.subscriptions.length > 0 && (() => {
+              const activeSub = result.subscriptions!.find((s: SubInfo) => s.status === 'active' && new Date(s.expireAt) > new Date());
+              const latestSub = result.subscriptions![0];
               const isVip = !!activeSub;
               const daysLeft = activeSub ? Math.ceil((new Date(activeSub.expireAt).getTime() - Date.now()) / 86400000) : null;
               return (
@@ -218,7 +218,7 @@ function CheckUserTab() {
           </div>
 
           {/* Subscriptions */}
-          {result.subs && result.subs.length > 0 && (
+          {result.subscriptions && result.subscriptions.length > 0 && (
             <div className="p-4 rounded-xl bg-white border border-gray-200 shadow-sm">
               <h3 className="text-sm font-medium text-gray-400 mb-3">💳 订阅记录</h3>
               <div className="overflow-x-auto">
@@ -232,7 +232,7 @@ function CheckUserTab() {
                     </tr>
                   </thead>
                   <tbody>
-                    {result.subs.map((s) => (
+                    {result.subscriptions.map((s) => (
                       <tr key={s.id} className="border-b border-gray-50">
                         <td className="py-2.5 pr-4"><span className={`px-2 py-0.5 rounded-full text-xs font-medium ${planBadge(s.plan)}`}>{s.plan}</span></td>
                         <td className="py-2.5 pr-4"><span className={`text-xs font-medium ${s.status === 'active' ? 'text-emerald-600' : 'text-gray-400'}`}>{s.status}</span></td>
@@ -284,7 +284,7 @@ function CheckUserTab() {
             </div>
           )}
 
-          {(!result.subs || result.subs.length === 0) && (!result.orders || result.orders.length === 0) && (
+          {(!result.subscriptions || result.subscriptions.length === 0) && (!result.orders || result.orders.length === 0) && (
             <div className="text-center py-8 text-gray-400 text-sm">该用户暂无订阅和订单记录</div>
           )}
         </div>
@@ -466,10 +466,10 @@ function CreateSubTab() {
         <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-sm space-y-2">
           <div className="font-medium text-emerald-700">✅ 订阅创建成功</div>
           <div className="grid grid-cols-2 gap-2 text-gray-700">
-            <div><span className="text-gray-400">套餐：</span><span className={`px-2 py-0.5 rounded-full text-xs font-medium ${planBadge(result.subscription?.plan)}`}>{result.subscription?.plan}</span></div>
-            <div><span className="text-gray-400">状态：</span>{result.subscription?.status}</div>
-            <div><span className="text-gray-400">开始：</span>{result.subscription?.startAt ? new Date(result.subscription.startAt).toLocaleString('zh-CN') : '-'}</div>
-            <div><span className="text-gray-400">到期：</span>{result.subscription?.expireAt ? new Date(result.subscription.expireAt).toLocaleString('zh-CN') : '-'}</div>
+            <div><span className="text-gray-400">套餐：</span><span className={`px-2 py-0.5 rounded-full text-xs font-medium ${planBadge(result.subscriptionscription?.plan)}`}>{result.subscriptionscription?.plan}</span></div>
+            <div><span className="text-gray-400">状态：</span>{result.subscriptionscription?.status}</div>
+            <div><span className="text-gray-400">开始：</span>{result.subscriptionscription?.startAt ? new Date(result.subscriptionscription.startAt).toLocaleString('zh-CN') : '-'}</div>
+            <div><span className="text-gray-400">到期：</span>{result.subscriptionscription?.expireAt ? new Date(result.subscriptionscription.expireAt).toLocaleString('zh-CN') : '-'}</div>
           </div>
         </div>
       )}
