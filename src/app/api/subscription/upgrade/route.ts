@@ -6,8 +6,8 @@ import { PRICING_CONFIG, type PlanId } from '@/lib/pricing-config'
 
 const planRankMap: Record<string, number> = {
   daily: 1,
-  lifetime: 2,
-  yearly: 3,
+  yearly: 2,
+  lifetime: 3,
 }
 
 export async function POST(req: NextRequest) {

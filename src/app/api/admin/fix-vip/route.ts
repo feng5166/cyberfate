@@ -54,13 +54,13 @@ export async function POST(req: NextRequest) {
     
     switch (targetPlan) {
       case 'daily':
-        correctExpiry = addMonths(correctExpiry, 1);
-        break;
-      case 'lifetime':
-        correctExpiry = addMonths(correctExpiry, 3);
+        correctExpiry = addDays(correctExpiry, 1);
         break;
       case 'yearly':
         correctExpiry = addYears(correctExpiry, 1);
+        break;
+      case 'lifetime':
+        correctExpiry = addYears(correctExpiry, 100);
         break;
     }
 

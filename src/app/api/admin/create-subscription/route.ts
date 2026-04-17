@@ -39,13 +39,13 @@ export async function POST(req: NextRequest) {
     
     switch (plan) {
       case 'daily':
-        expireAt = addMonths(expireAt, 1);
-        break;
-      case 'lifetime':
-        expireAt = addMonths(expireAt, 3);
+        expireAt = addDays(expireAt, 1);
         break;
       case 'yearly':
         expireAt = addYears(expireAt, 1);
+        break;
+      case 'lifetime':
+        expireAt = addYears(expireAt, 100);
         break;
     }
 

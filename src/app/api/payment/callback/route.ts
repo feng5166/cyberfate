@@ -49,9 +49,9 @@ export async function POST(req: NextRequest) {
     });
 
     const duration = {
-      daily: 30,
-      lifetime: 90,
+      daily: 1,
       yearly: 365,
+      lifetime: 36500,
     }[order.plan];
 
     const expireAt = addDays(new Date(), duration);
