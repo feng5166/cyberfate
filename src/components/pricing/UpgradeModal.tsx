@@ -9,9 +9,9 @@ import { AuthModal } from '@/components/auth/AuthModal';
 import { type PlanId } from '@/lib/pricing-config';
 
 const PLAN_NAME_TO_ID: Record<string, PlanId> = {
-  '基础版': 'monthly',
-  '专业版': 'quarterly',
-  '尊享版': 'yearly',
+  '基础版': 'daily',
+  '专业版': 'yearly',
+  '尊享版': 'lifetime',
 };
 
 interface UpgradeModalProps {

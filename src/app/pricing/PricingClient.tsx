@@ -10,16 +10,17 @@ import { AuthModal } from '@/components/auth/AuthModal';
 import { type PlanId } from '@/lib/pricing-config';
 
 const PLAN_NAME_TO_ID: Record<string, PlanId> = {
-  '基础版': 'monthly',
-  '专业版': 'quarterly',
-  '尊享版': 'yearly',
+  '基础版': 'daily',
+  '专业版': 'yearly',
+  '尊享版': 'lifetime',
 };
 
 const faqs = [
   { q: '免费版和会员版有什么区别？', a: '免费版每天可进行 3 次基础八字分析。会员版解锁无限次分析、AI 深度报告、紫微斗数、塔罗占卜等全部高级功能，同时享受优先客服支持。' },
-  { q: '如何取消订阅？', a: '您可以随时在个人中心取消订阅，取消后当前计费周期结束前仍可享受会员权益。我们不会设置任何隐藏的自动续费陷阱。' },
-  { q: '支付方式有哪些？', a: '目前支持支付宝、微信支付等主流支付方式。所有交易均经过加密处理，确保您的支付安全。' },
-  { q: '会员权益可以共享吗？', a: '每个账号的会员权益仅限该账号使用。如需多人使用，建议分别开通或联系我们的团队方案。' },
+  { q: '基础版（按天）和年费/终身有什么区别？', a: '基础版 $9.99/天，适合想先体验全部功能的用户。专业版 $49/年 性价比最高，适合长期使用者。尊享版 $199 终身一次性付费，永久解锁所有功能包括未来更新。' },
+  { q: '支付方式有哪些？', a: '目前支持 Stripe 信用卡/借记卡支付。所有交易均经过加密处理，确保您的支付安全。' },
+  { q: '终身版真的永久有效吗？', a: '是的！尊享版为一次性终身付费，无需续费，永久享受所有功能及未来新功能。' },
+  { q: '可以升级套餐吗？', a: '可以！如果您购买了基础版或专业版，后续可以补差价升级到更高版本。请联系客服或在个人中心操作。' },
   { q: '分析结果准确吗？', a: '我们的 AI 命理分析基于传统命理学体系结合现代 AI 技术，提供参考性解读。命理分析仅供娱乐和参考，不构成任何决策依据，请理性对待。' },
 ];
 
@@ -98,7 +99,7 @@ export default function PricingClient({ currentPlan }: PricingClientProps) {
             选择您的计划
           </h1>
           <p className="text-[15px] text-[#1C1A16]/55 mt-3">
-            灵活订阅，随时取消
+            一次付费，无需续费
           </p>
           {isSubscribed && (
             <div className="mt-6 inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 text-sm font-medium px-5 py-2.5 rounded-full border border-emerald-200">

@@ -3,6 +3,8 @@
 import { PricingCard } from './PricingCard';
 import { PRICING_PLANS_LIST } from '@/lib/pricing-config';
 
+const CURRENCY_SYMBOLS: Record<string, string> = { usd: '$', cny: '¥' };
+
 interface PricingCardListProps {
   selectedPlan: string;
   onSelectPlan: (name: string) => void;
@@ -24,18 +26,19 @@ export function PricingCardList({
         const isCurrent = isSubscribed && currentPlan === plan.name;
         return (
           <PricingCard
-            key={plan.name}
+            key={plan.id}
             name={plan.name}
             price={plan.displayPrice}
             period={plan.periodLabel}
             recommended={plan.recommended}
             perks={plan.perks}
-            isSelected={!isCurrent && selectedPlan === plan.name}
+            isSelected={!isCurrent && selectedPlan === plan.id}
             isCurrentPlan={isCurrent}
             isSubscribed={isSubscribed}
             ctaText={isCurrent ? '当前计划' : isSubscribed ? '管理订阅 →' : undefined}
-            onClick={() => onSelectPlan(plan.name)}
-            onCTAClick={() => onCTAClick(plan.name, plan.displayPrice)}
+            currencySymbol={CURRENCY_SYMBOLS[plan.currency] || '$'}
+            onClick={() => onSelectPlan(plan.id)}
+            onCTAClick={() => onCTAClick(plan.id, plan.displayPrice)}
           />
         );
       })}

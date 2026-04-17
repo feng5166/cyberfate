@@ -6,9 +6,9 @@ import { listCustomers, createCustomer, createCheckoutSession } from '@/lib/stri
 import { PRICING_CONFIG, isValidPlanId, type PlanId } from '@/lib/pricing-config';
 
 const PLAN_RANK: Record<PlanId, number> = {
-  monthly: 1,
-  quarterly: 2,
-  yearly: 3,
+  daily: 1,
+  yearly: 2,
+  lifetime: 3,
 };
 
 function calculateProratedAmount(

@@ -296,7 +296,7 @@ function CheckUserTab() {
 // ── Tab 2: 修正 VIP ─────────────────────────────────
 function FixVipTab() {
   const [email, setEmail] = useState('');
-  const [plan, setPlan] = useState<'monthly' | 'quarterly' | 'yearly'>('monthly');
+  const [plan, setPlan] = useState<'daily' | 'lifetime' | 'yearly'>('daily');
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -343,7 +343,7 @@ function FixVipTab() {
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">目标套餐（决定到期时间）</label>
           <div className="flex gap-2">
-            {(['monthly', 'quarterly', 'yearly'] as const).map((p) => (
+            {(['daily', 'lifetime', 'yearly'] as const).map((p) => (
               <button
                 key={p}
                 onClick={() => setPlan(p)}
@@ -353,7 +353,7 @@ function FixVipTab() {
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                {p === 'monthly' ? '📅 月付 +30天' : p === 'quarterly' ? '📅 季付 +90天' : '📅 年付 +365天'}
+                {p === 'daily' ? '📅 月付 +30天' : p === 'lifetime' ? '📅 季付 +90天' : '📅 年付 +365天'}
               </button>
             ))}
           </div>
@@ -388,7 +388,7 @@ function FixVipTab() {
 // ── Tab 3: 创建订阅 ─────────────────────────────────
 function CreateSubTab() {
   const [email, setEmail] = useState('');
-  const [plan, setPlan] = useState<'monthly' | 'quarterly' | 'yearly'>('monthly');
+  const [plan, setPlan] = useState<'daily' | 'lifetime' | 'yearly'>('daily');
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -435,7 +435,7 @@ function CreateSubTab() {
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">套餐类型</label>
           <div className="flex gap-2">
-            {(['monthly', 'quarterly', 'yearly'] as const).map((p) => (
+            {(['daily', 'lifetime', 'yearly'] as const).map((p) => (
               <button
                 key={p}
                 onClick={() => setPlan(p)}
@@ -445,7 +445,7 @@ function CreateSubTab() {
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                {p === 'monthly' ? '月付' : p === 'quarterly' ? '季付' : '年付'}
+                {p === 'daily' ? '月付' : p === 'lifetime' ? '季付' : '年付'}
               </button>
             ))}
           </div>
@@ -480,8 +480,8 @@ function CreateSubTab() {
 // ── Helpers ──────────────────────────────────────────
 function planBadge(plan: string): string {
   switch (plan) {
-    case 'monthly': return 'bg-emerald-100 text-emerald-700';
-    case 'quarterly': return 'bg-blue-100 text-blue-700';
+    case 'daily': return 'bg-emerald-100 text-emerald-700';
+    case 'lifetime': return 'bg-blue-100 text-blue-700';
     case 'yearly': return 'bg-purple-100 text-purple-700';
     default: return 'bg-gray-100 text-gray-600';
   }

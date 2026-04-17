@@ -4,8 +4,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { PaymentModal } from '@/components/PaymentModal';
 
 const planNameMap: Record<string, string> = {
-  monthly: '基础版',
-  quarterly: '专业版',
+  daily: '基础版',
+  yearly: '专业版',
   yearly: '尊享版',
 };
 

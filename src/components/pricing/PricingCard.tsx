@@ -12,6 +12,7 @@ export interface PricingCardProps {
   isCurrentPlan?: boolean;
   isSubscribed?: boolean;
   ctaText?: string;
+  currencySymbol?: string;  // 新增：货币符号
   onClick: () => void;
   onCTAClick: () => void;
 }
@@ -26,6 +27,7 @@ export function PricingCard({
   isCurrentPlan = false,
   isSubscribed = false,
   ctaText,
+  currencySymbol = '¥',
   onClick,
   onCTAClick,
 }: PricingCardProps) {
@@ -63,7 +65,7 @@ export function PricingCard({
 
         <div className="text-center mb-6 pb-6 border-b border-[#1C1A16]/8">
           <div className="flex items-end justify-center gap-1">
-            <span className="text-[40px] font-semibold leading-none text-[#1C1A16]">¥</span>
+            <span className="text-[40px] font-semibold leading-none text-[#1C1A16]">{currencySymbol}</span>
             <span className="text-[40px] font-semibold leading-none text-[#1C1A16]">{price}</span>
           </div>
           <span className="text-sm text-[#1C1A16]/55 ml-1">{period}</span>

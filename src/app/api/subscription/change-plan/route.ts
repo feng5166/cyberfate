@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
 
     const { new_plan } = await req.json();
 
-    if (!['monthly', 'quarterly', 'yearly'].includes(new_plan)) {
+    if (!['daily', 'lifetime', 'yearly'].includes(new_plan)) {
       return NextResponse.json({ error: '无效的套餐类型' }, { status: 400 });
     }
 

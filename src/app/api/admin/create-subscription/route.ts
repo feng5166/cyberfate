@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     const unauthorized = await requireAdmin();
     if (unauthorized) return unauthorized;
 
-    const { email, plan = 'monthly' } = await req.json();
+    const { email, plan = 'daily' } = await req.json();
     
     if (!email) {
       return NextResponse.json({ error: '缺少邮箱' }, { status: 400 });
@@ -38,10 +38,10 @@ export async function POST(req: NextRequest) {
     let expireAt = new Date(now);
     
     switch (plan) {
-      case 'monthly':
+      case 'daily':
         expireAt = addMonths(expireAt, 1);
         break;
-      case 'quarterly':
+      case 'lifetime':
         expireAt = addMonths(expireAt, 3);
         break;
       case 'yearly':

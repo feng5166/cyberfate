@@ -5,8 +5,8 @@ import { prisma } from '@/lib/db'
 import { PRICING_CONFIG, type PlanId } from '@/lib/pricing-config'
 
 const planRankMap: Record<string, number> = {
-  monthly: 1,
-  quarterly: 2,
+  daily: 1,
+  lifetime: 2,
   yearly: 3,
 }
 
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
     })
   }
 
-  if (!['monthly', 'quarterly', 'yearly'].includes(new_plan)) {
+  if (!['daily', 'lifetime', 'yearly'].includes(new_plan)) {
     return NextResponse.json({ error: '无效的套餐' }, { status: 400 })
   }
 

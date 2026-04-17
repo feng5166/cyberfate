@@ -9,7 +9,7 @@ interface ProfileClientProps {
   email: string
   image: string | null
   vip: boolean
-  subscriptionPlan: 'monthly' | 'quarterly' | 'yearly' | null
+  subscriptionPlan: 'daily' | 'lifetime' | 'yearly' | null
   subscriptionDetail: {
     plan: string
     plan_name: string
@@ -31,9 +31,9 @@ interface ProfileClientProps {
 }
 
 const periodMap: Record<string, string> = {
-  monthly: '月',
-  quarterly: '季',
+  daily: '天',
   yearly: '年',
+  lifetime: '终身',
 }
 
 export default function ProfileClient({
@@ -175,7 +175,7 @@ export default function ProfileClient({
 
               {subscriptionDetail.pending_plan && (
                 <p className="text-sm text-blue-600 mb-4">
-                  ⏳ 下一周期将切换为{subscriptionDetail.pending_plan === 'monthly' ? '基础版' : subscriptionDetail.pending_plan === 'quarterly' ? '专业版' : '尊享版'}
+                  ⏳ 下一周期将切换为{subscriptionDetail.pending_plan === 'daily' ? '基础版' : subscriptionDetail.pending_plan === 'yearly' ? '专业版' : '尊享版'}
                 </p>
               )}
 

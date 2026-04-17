@@ -49,8 +49,8 @@ export async function POST(req: NextRequest) {
     });
 
     const duration = {
-      monthly: 30,
-      quarterly: 90,
+      daily: 30,
+      lifetime: 90,
       yearly: 365,
     }[order.plan];
 

@@ -37,8 +37,8 @@ export function SubscriptionManagePanel({ subscription, onBack }: SubscriptionMa
   };
 
   const PLAN_NAME_MAP: Record<string, string> = {
-    monthly: '基础版',
-    quarterly: '专业版',
+    daily: '基础版',
+    yearly: '专业版',
     yearly: '尊享版',
   };
 
@@ -120,7 +120,7 @@ export function SubscriptionManagePanel({ subscription, onBack }: SubscriptionMa
         )}
         {subscription.pending_plan && (
           <p className="text-blue-600 text-sm mt-1">
-            ⏳ 将于到期后切换为 {subscription.pending_plan === 'monthly' ? '基础版' : subscription.pending_plan === 'quarterly' ? '专业版' : '尊享版'}
+            ⏳ 将于到期后切换为 {subscription.pending_plan === 'daily' ? '基础版' : subscription.pending_plan === 'yearly' ? '专业版' : '尊享版'}
           </p>
         )}
       </div>
@@ -154,7 +154,7 @@ export function SubscriptionManagePanel({ subscription, onBack }: SubscriptionMa
             <p className="text-sm text-[#1C1A16]/70 mb-4">
               从 <span className="font-semibold">{subscription.plan_name}</span> 升级到{' '}
               <span className="font-semibold">
-                {targetPlan === 'yearly' ? '尊享版（年卡）' : targetPlan === 'quarterly' ? '专业版（季卡）' : '基础版（月卡）'}
+                {targetPlan === 'lifetime' ? '尊享版（终身卡）' : targetPlan === 'yearly' ? '专业版（年卡）' : '基础版（月卡）'}
               </span>
             </p>
             <p className="text-sm text-[#1C1A16]/50 mb-6">
@@ -188,7 +188,7 @@ export function SubscriptionManagePanel({ subscription, onBack }: SubscriptionMa
             <p className="text-sm text-[#1C1A16]/70 mb-4">
               从 <span className="font-semibold">{subscription.plan_name}</span> 切换到{' '}
               <span className="font-semibold">
-                {targetPlan === 'monthly' ? '基础版（月卡）' : targetPlan === 'quarterly' ? '专业版（季卡）' : '尊享版（年卡）'}
+                {targetPlan === 'daily' ? '基础版（天卡）' : targetPlan === 'yearly' ? '专业版（年卡）' : '尊享版（年卡）'}
               </span>
             </p>
             <p className="text-sm text-[#1C1A16]/70 mb-2">

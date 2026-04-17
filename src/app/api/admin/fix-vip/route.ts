@@ -53,10 +53,10 @@ export async function POST(req: NextRequest) {
     let correctExpiry = new Date(now);
     
     switch (targetPlan) {
-      case 'monthly':
+      case 'daily':
         correctExpiry = addMonths(correctExpiry, 1);
         break;
-      case 'quarterly':
+      case 'lifetime':
         correctExpiry = addMonths(correctExpiry, 3);
         break;
       case 'yearly':

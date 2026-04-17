@@ -100,7 +100,7 @@ interface StripeCheckoutSession {
   metadata?: {
     orderId?: string;
     userId?: string;
-    plan?: 'monthly' | 'quarterly' | 'yearly';
+    plan?: 'daily' | 'lifetime' | 'yearly';
     action?: string;
   };
   payment_intent?: string;
@@ -155,7 +155,7 @@ export async function POST(req: NextRequest) {
           },
         });
 
-        const duration = { monthly: 30, quarterly: 90, yearly: 365 }[order.plan];
+        const duration = { daily: 1, yearly: 365, lifetime: 36500 }[order.plan];
         const expireAt = addDays(new Date(), duration);
 
         await tx.subscription.updateMany({
@@ -174,13 +174,13 @@ export async function POST(req: NextRequest) {
       });
     } else if (userId && plan) {
       // Stripe 直接支付流程（无 Order）
-      const validPlans = ['monthly', 'quarterly', 'yearly'] as const;
+      const validPlans = ['daily', 'lifetime', 'yearly'] as const;
       if (!validPlans.includes(plan)) {
         console.error('[Webhook] Invalid plan:', plan);
         return NextResponse.json({ error: 'Invalid plan' }, { status: 400 });
       }
 
-      const duration = { monthly: 30, quarterly: 90, yearly: 365 }[plan];
+      const duration = { daily: 1, yearly: 365, lifetime: 36500 }[plan];
       const expireAt = addDays(new Date(), duration);
 
       await prisma.$transaction(async (tx) => {
