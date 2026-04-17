@@ -14,8 +14,17 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: '缺少订单ID' }, { status: 400 });
   }
 
-  const order = await prisma.order.findUnique({
-    where: { id: orderId },
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email },
+    select: { id: true },
+  });
+
+  if (!user) {
+    return NextResponse.json({ error: '用户不存在' }, { status: 404 });
+  }
+
+  const order = await prisma.order.findFirst({
+    where: { id: orderId, userId: user.id },
   });
 
   if (!order) {
