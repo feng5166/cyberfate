@@ -91,7 +91,7 @@ export function Footer() {
                   </p>
                   <div className="space-y-1.5 pt-1">
                     <p className="text-[13px] text-[#1C1A16]/60">
-                      📧 support@cyberfate.me
+                      📧 feng5166@gmail.com
                     </p>
                     <p className="text-[13px] text-[#1C1A16]/60">
                       💬 微信：feng5166
