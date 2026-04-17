@@ -123,7 +123,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
   }
 
-  console.log('[Webhook] Secret prefix:', webhookSecret.substring(0, 10));
+  console.log('[Webhook] Webhook secret configured:', !!webhookSecret);
 
   // 验证签名
   const verification = verifyStripeWebhook(body, sig, webhookSecret);
