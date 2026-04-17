@@ -1,8 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+
+const ADMIN_EMAILS = [process.env.ADMIN_EMAIL || 'admin@cyberfate.app'];
+
+async function requireAdmin(): Promise<NextResponse | null> {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email || !ADMIN_EMAILS.includes(session.user.email)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  return null;
+}
 
 export async function POST(req: NextRequest) {
   try {
+    const unauthorized = await requireAdmin();
+    if (unauthorized) return unauthorized;
+
     const { email } = await req.json();
     
     if (!email) {
