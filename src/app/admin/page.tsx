@@ -115,7 +115,7 @@ function LoadingSpinner() {
 function CheckUserTab() {
   const [email, setEmail] = useState('');
   const [result, setResult] = useState<{ user?: UserInfo; orders?: OrderInfo[]; subs?: SubInfo[] } | null>(null);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleCheck = async () => {
@@ -249,7 +249,7 @@ function FixVipTab() {
   const [email, setEmail] = useState('');
   const [plan, setPlan] = useState<'monthly' | 'quarterly' | 'yearly'>('monthly');
   const [result, setResult] = useState<any>(null);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleFix = async () => {
@@ -339,7 +339,7 @@ function CreateSubTab() {
   const [email, setEmail] = useState('');
   const [plan, setPlan] = useState<'monthly' | 'quarterly' | 'yearly'>('monthly');
   const [result, setResult] = useState<any>(null);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleCreate = async () => {
