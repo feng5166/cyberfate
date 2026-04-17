@@ -57,23 +57,41 @@ export async function markTokenUsed(token: string): Promise<void> {
   })
 }
 
+export type ResetPasswordResult =
+  | { success: true }
+  | { success: false; error: 'INVALID_TOKEN' | 'USER_NOT_FOUND' | 'UPDATE_FAILED'; detail?: string }
+
 export async function resetPassword(
   token: string,
   newPassword: string
-): Promise<boolean> {
+): Promise<ResetPasswordResult> {
   const result = await validateResetToken(token)
-  if (!result) return false
+  if (!result) return { success: false, error: 'INVALID_TOKEN' }
 
   const passwordHash = await bcrypt.hash(newPassword, BCRYPT_SALT_ROUNDS)
 
-  await prisma.user.update({
-    where: { email: result.email },
-    data: { passwordHash },
-  })
+  try {
+    await prisma.user.update({
+      where: { email: result.email },
+      data: { passwordHash },
+    })
+  } catch (err: unknown) {
+    const prismaError = err as { code?: string; message?: string }
+    console.error('resetPassword prisma.user.update failed:', {
+      email: result.email,
+      code: prismaError.code,
+      message: prismaError.message,
+    })
+
+    if (prismaError.code === 'P2025') {
+      return { success: false, error: 'USER_NOT_FOUND', detail: `email: ${result.email}` }
+    }
+    return { success: false, error: 'UPDATE_FAILED', detail: prismaError.message }
+  }
 
   await markTokenUsed(token)
 
-  return true
+  return { success: true }
 }
 
 export async function sendResetEmail(

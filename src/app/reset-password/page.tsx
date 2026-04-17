@@ -83,11 +83,16 @@ function ResetPasswordContent() {
       const data = await res.json()
 
       if (!res.ok) {
-        if (data.error === 'TOKEN_EXPIRED' || data.error === 'TOKEN_USED' || data.error === 'TOKEN_INVALID') {
+        const isTokenError = ['TOKEN_EXPIRED', 'TOKEN_USED', 'TOKEN_INVALID', 'INVALID_TOKEN'].includes(data.error)
+        const isUserError = data.error === 'USER_NOT_FOUND'
+
+        if (isTokenError || isUserError) {
           setPageState('error')
-          setErrorMessage(data.message)
+          setErrorMessage(data.message || '重置链接无效')
+        } else if (data.error === 'INTERNAL_ERROR' || data.error === 'DATABASE_ERROR') {
+          setErrors({ password: `服务器异常，请稍后重试 [${data.error}]` })
         } else {
-          setErrors({ password: data.message || '重置失败，请重试' })
+          setErrors({ password: data.message || `重置失败 (${data.error || '未知错误'})` })
         }
         setLoading(false)
         return

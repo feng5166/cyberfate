@@ -1,6 +1,16 @@
 import { NextRequest } from 'next/server'
 import { validateResetToken, resetPassword } from '@/lib/password-reset'
 
+const ERROR_MESSAGES: Record<string, string> = {
+  MISSING_FIELDS: '缺少必要参数',
+  PASSWORD_MISMATCH: '两次输入的密码不一致',
+  PASSWORD_TOO_WEAK: '密码长度不足（至少8个字符）',
+  INVALID_TOKEN: '重置链接无效或已过期，请重新申请',
+  USER_NOT_FOUND: '未找到对应的用户账号，请联系客服',
+  UPDATE_FAILED: '密码更新失败，请稍后重试',
+  INTERNAL_ERROR: '服务器内部错误，请稍后重试',
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -12,46 +22,62 @@ export async function POST(request: NextRequest) {
 
     if (!token || !password || !confirmPassword) {
       return Response.json(
-        { success: false, error: 'MISSING_FIELDS' },
+        { success: false, error: 'MISSING_FIELDS', message: ERROR_MESSAGES.MISSING_FIELDS },
         { status: 400 }
       )
     }
 
     if (password !== confirmPassword) {
       return Response.json(
-        { success: false, error: 'PASSWORD_MISMATCH' },
+        { success: false, error: 'PASSWORD_MISMATCH', message: ERROR_MESSAGES.PASSWORD_MISMATCH },
         { status: 400 }
       )
     }
 
     if (password.length < 8) {
       return Response.json(
-        { success: false, error: 'PASSWORD_TOO_WEAK' },
+        { success: false, error: 'PASSWORD_TOO_WEAK', message: ERROR_MESSAGES.PASSWORD_TOO_WEAK },
         { status: 400 }
       )
     }
 
-    const result = await validateResetToken(token)
-    if (!result) {
+    const tokenResult = await validateResetToken(token)
+    if (!tokenResult) {
       return Response.json(
-        { success: false, error: 'INVALID_TOKEN' },
+        { success: false, error: 'INVALID_TOKEN', message: ERROR_MESSAGES.INVALID_TOKEN },
         { status: 400 }
       )
     }
 
-    const success = await resetPassword(token, password)
-    if (!success) {
+    const result = await resetPassword(token, password)
+    if (!result.success) {
+      const message = ERROR_MESSAGES[result.error] || ERROR_MESSAGES.INTERNAL_ERROR
+      const status = result.error === 'USER_NOT_FOUND' ? 400 : 500
+      console.error('resetPassword failed:', { error: result.error, detail: result.detail })
       return Response.json(
-        { success: false, error: 'RESET_FAILED' },
+        { success: false, error: result.error, message },
+        { status }
+      )
+    }
+
+    return Response.json({ success: true, message: '密码重置成功' })
+  } catch (error: unknown) {
+    const prismaError = error as { code?: string; message?: string }
+    console.error('reset-password unhandled error:', {
+      code: prismaError.code,
+      message: prismaError.message,
+      stack: error instanceof Error ? error.stack : undefined,
+    })
+
+    if (prismaError.code?.startsWith('P')) {
+      return Response.json(
+        { success: false, error: 'DATABASE_ERROR', message: '数据库操作失败，请稍后重试' },
         { status: 500 }
       )
     }
 
-    return Response.json({ success: true })
-  } catch (error) {
-    console.error('reset-password error:', error)
     return Response.json(
-      { success: false, error: 'INTERNAL_ERROR' },
+      { success: false, error: 'INTERNAL_ERROR', message: ERROR_MESSAGES.INTERNAL_ERROR },
       { status: 500 }
     )
   }
