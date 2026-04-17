@@ -151,8 +151,10 @@ export function Sidebar({
   const [avatarError, setAvatarError] = useState(false);
 
   const renderAvatar = (size: 'sm' | 'md') => {
-    const name = user?.name?.trim() || '访客';
-    const initial = name.charAt(0).toUpperCase();
+    const fallbackSource = status === 'paid'
+      ? (user?.email?.trim() || user?.name?.trim() || 'V')
+      : (user?.name?.trim() || '访客');
+    const initial = fallbackSource.charAt(0).toUpperCase();
     const imageUrl = user?.avatar;
     const sizeClass = size === 'sm' ? 'h-10 w-10' : 'h-11 w-11';
 
@@ -160,7 +162,7 @@ export function Sidebar({
       return (
         <img
           src={imageUrl}
-          alt={name}
+          alt={user?.name || 'avatar'}
           className={`${sizeClass} rounded-full object-cover shrink-0`}
           onError={() => setAvatarError(true)}
           referrerPolicy="no-referrer"
