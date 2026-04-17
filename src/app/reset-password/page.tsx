@@ -27,7 +27,24 @@ function ResetPasswordContent() {
       return
     }
 
-    setPageState('form')
+    async function verifyToken() {
+      try {
+        const res = await fetch(`/api/auth/reset-password?token=${encodeURIComponent(token)}`)
+        const data = await res.json()
+
+        if (data.valid) {
+          setPageState('form')
+        } else {
+          setPageState('error')
+          setErrorMessage(data.message || '重置链接无效或已过期')
+        }
+      } catch {
+        // 网络异常时仍显示表单，提交时再验证
+        setPageState('form')
+      }
+    }
+
+    verifyToken()
   }, [token])
 
   const handleSubmit = async (e: React.FormEvent) => {

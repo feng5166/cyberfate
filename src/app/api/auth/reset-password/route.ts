@@ -11,6 +11,42 @@ const ERROR_MESSAGES: Record<string, string> = {
   INTERNAL_ERROR: '服务器内部错误，请稍后重试',
 }
 
+// ── GET: 只读验证 token（不消耗）─────────────────────────────────
+export async function GET(request: NextRequest) {
+  try {
+    const token = request.nextUrl.searchParams.get('token')
+
+    if (!token) {
+      return Response.json(
+        { valid: false, error: 'MISSING_TOKEN', message: '缺少重置令牌' },
+        { status: 400 }
+      )
+    }
+
+    const result = await validateResetToken(token)
+
+    if (!result) {
+      return Response.json(
+        { valid: false, error: 'INVALID_TOKEN', message: '重置链接无效或已过期，请重新申请' },
+        { status: 410 }
+      )
+    }
+
+    return Response.json({
+      valid: true,
+      email: result.email,
+      message: '重置链接有效',
+    })
+  } catch (error) {
+    console.error('validate-token error:', error)
+    return Response.json(
+      { valid: false, error: 'INTERNAL_ERROR', message: '服务器异常，请稍后重试' },
+      { status: 500 }
+    )
+  }
+}
+
+// ── POST: 执行密码重置（消耗 token）──────────────────────────────
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
