@@ -95,29 +95,25 @@ async function sendFeishuNotification(payload: {
       return;
     }
 
-    // 2. 构建消息内容
+    // 2. 构建消息内容（使用 text 类型，兼容性最好）
     const typeLabel = payload.type ? TYPE_LABEL[payload.type] : '未分类';
     const userLabel = payload.userEmail ? `${payload.userEmail}` : '匿名';
 
     const now = new Date(payload.createdAt);
     const timeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-    // 使用富文本消息格式
-    const messageContent = JSON.stringify({
-      zh_cn: {
-        title: '📝 CyberFate 收到新反馈',
-        content: [
-          [{ tag: 'text', text: `类型：${typeLabel}\n` }],
-          [{ tag: 'text', text: `内容：${payload.content}\n` }],
-          ...(payload.pageUrl ? [[{ tag: 'text', text: `页面：${payload.pageUrl}\n` }]] : []),
-          [{ tag: 'text', text: `时间：${timeStr}\n` }],
-          [{ tag: 'text', text: `用户：${userLabel}\n` }],
-          [{ tag: 'text', text: `ID：${payload.id}` }],
-        ].flat(),
-      },
-    });
+    const textContent = [
+      `📝 CyberFate 收到新反馈`,
+      ``,
+      `类型：${typeLabel}`,
+      `内容：${payload.content}`,
+      ...(payload.pageUrl ? [`页面：${payload.pageUrl}`] : []),
+      `时间：${timeStr}`,
+      `用户：${userLabel}`,
+      `ID：${payload.id}`,
+    ].join('\n');
 
-    // 3. 发送消息
+    // 3. 发送消息（text 类型）
     const sendRes = await fetch(
       'https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=open_id',
       {
@@ -128,8 +124,8 @@ async function sendFeishuNotification(payload: {
         },
         body: JSON.stringify({
           receive_id: userOpenId,
-          msg_type: 'post',
-          content: messageContent,
+          msg_type: 'text',
+          content: JSON.stringify({ text: textContent }),
         }),
       }
     );
