@@ -295,7 +295,7 @@ export function Sidebar({
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <p className="truncate text-sm font-semibold text-brand-black">
-                  {'VIP会员'}
+                  {user?.email?.split('@')[0] || 'VIP'}
                 </p>
                 <span className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">
                   VIP
