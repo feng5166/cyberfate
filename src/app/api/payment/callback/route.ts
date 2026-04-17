@@ -1,8 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
 import { prisma } from '@/lib/db';
 
+function verifyCallbackSignature(body: string, signature: string | null): boolean {
+  const secret = process.env.CALLBACK_SECRET;
+  if (!secret) {
+    console.warn('[PaymentCallback] CALLBACK_SECRET 未配置，跳过签名验证');
+    return true;
+  }
+  if (!signature) {
+    return false;
+  }
+  const expected = crypto.createHmac('sha256', secret).update(body, 'utf8').digest('hex');
+  return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
+}
+
 export async function POST(req: NextRequest) {
-  const { outTradeNo, transactionId } = await req.json();
+  const rawBody = await req.text();
+  const signature = req.headers.get('x-callback-signature');
+
+  if (!verifyCallbackSignature(rawBody, signature)) {
+    return NextResponse.json({ error: '签名验证失败' }, { status: 403 });
+  }
+
+  const { outTradeNo, transactionId } = JSON.parse(rawBody);
 
   const order = await prisma.order.findUnique({
     where: { outTradeNo },
