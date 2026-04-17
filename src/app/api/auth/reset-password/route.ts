@@ -12,13 +12,15 @@ const ERROR_MESSAGES: Record<string, string> = {
 }
 
 // ── GET: 只读验证 token（不消耗）─────────────────────────────────
+// 支持 query param (?token=xxx) 和 hash fragment (#token=xxx) 两种方式
 export async function GET(request: NextRequest) {
   try {
+    // 优先从 query 获取，如果没有则返回提示前端从 hash 读取
     const token = request.nextUrl.searchParams.get('token')
 
     if (!token) {
       return Response.json(
-        { valid: false, error: 'MISSING_TOKEN', message: '缺少重置令牌' },
+        { valid: false, error: 'MISSING_TOKEN', message: '缺少重置令牌', hint: 'hash' },
         { status: 400 }
       )
     }
@@ -77,10 +79,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const tokenResult = await validateResetToken(token)
-    if (!tokenResult) {
+    // 密码强度：不能纯数字/纯字母
+    const hasLetter = /[a-zA-Z]/.test(password);
+    const hasDigit = /\d/.test(password);
+    if (!hasLetter || !hasDigit) {
       return Response.json(
-        { success: false, error: 'INVALID_TOKEN', message: ERROR_MESSAGES.INVALID_TOKEN },
+        { success: false, error: 'PASSWORD_TOO_WEAK', message: '密码需包含字母和数字' },
         { status: 400 }
       )
     }
@@ -98,7 +102,7 @@ export async function POST(request: NextRequest) {
 
     return Response.json({ success: true, message: '密码重置成功' })
   } catch (error: unknown) {
-    const prismaError = error as { code?: string; message?: string }
+    const prismaError = error as { code?: string; message?: string };
     console.error('reset-password unhandled error:', {
       code: prismaError.code,
       message: prismaError.message,

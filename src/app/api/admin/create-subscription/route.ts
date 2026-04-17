@@ -8,7 +8,7 @@ const ADMIN_EMAILS: string[] = (process.env.ADMIN_EMAILS || '').split(',').filte
 
 async function requireAdmin(): Promise<NextResponse | null> {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.email || !ADMIN_EMAILS.includes(session.user.email)) {
+  if (!session?.user?.email || !ADMIN_EMAILS.map(e => e.toLowerCase().trim()).includes(session.user.email.toLowerCase().trim())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   return null;

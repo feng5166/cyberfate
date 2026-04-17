@@ -70,26 +70,38 @@ export async function resetPassword(
 
   const passwordHash = await bcrypt.hash(newPassword, BCRYPT_SALT_ROUNDS)
 
+  // [安全修复] 使用事务 + 先标记 token used 防止竞态重放
   try {
-    await prisma.user.update({
-      where: { email: result.email },
-      data: { passwordHash },
+    await prisma.$transaction(async (tx) => {
+      // 1. 先标记 token 为已使用（防止同一 token 并发重放）
+      const tokenRecord = await tx.passwordResetToken.findUnique({ where: { token } })
+      if (!tokenRecord || tokenRecord.used || tokenRecord.expiresAt < new Date()) {
+        throw new Error('TOKEN_INVALID')
+      }
+      await tx.passwordResetToken.update({
+        where: { token },
+        data: { used: true },
+      })
+
+      // 2. 再更新密码
+      await tx.user.update({
+        where: { email: result.email },
+        data: { passwordHash },
+      })
     })
   } catch (err: unknown) {
     const prismaError = err as { code?: string; message?: string }
-    console.error('resetPassword prisma.user.update failed:', {
+    console.error('resetPassword transaction failed:', {
       email: result.email,
       code: prismaError.code,
       message: prismaError.message,
     })
 
-    if (prismaError.code === 'P2025') {
+    if (prismaError?.message === 'TOKEN_INVALID' || prismaError.code === 'P2025') {
       return { success: false, error: 'USER_NOT_FOUND', detail: `email: ${result.email}` }
     }
-    return { success: false, error: 'UPDATE_FAILED', detail: prismaError.message }
+    return { success: false, error: 'UPDATE_FAILED', detail: prismaError?.message || String(err) }
   }
-
-  await markTokenUsed(token)
 
   return { success: true }
 }

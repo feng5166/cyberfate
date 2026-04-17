@@ -7,7 +7,13 @@ const ADMIN_EMAILS: string[] = (process.env.ADMIN_EMAILS || '').split(',').filte
 
 async function requireAdmin(): Promise<NextResponse | null> {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.email || !ADMIN_EMAILS.includes(session.user.email)) {
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  // [安全修复] 统一小写比较，防止大小写绕过
+  const sessionEmail = session.user.email.toLowerCase().trim();
+  const normalizedAdmins = ADMIN_EMAILS.map(e => e.toLowerCase().trim());
+  if (!normalizedAdmins.includes(sessionEmail)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   return null;

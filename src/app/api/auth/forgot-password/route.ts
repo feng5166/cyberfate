@@ -20,6 +20,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // [安全修复] 统一小写 + trim，防止大小写绕过
     const normalizedEmail = email.toLowerCase().trim()
 
     if (isRateLimited(normalizedEmail)) {
@@ -29,20 +30,30 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // [安全修复] 不暴露用户是否存在 — 统一返回成功（防止邮箱枚举）
+    // 但仍生成 token 以保持一致的时间响应
     const user = await prisma.user.findUnique({
       where: { email: normalizedEmail },
     })
 
     if (!user) {
-      return Response.json(
-        { success: false, error: 'EMAIL_NOT_FOUND' },
-        { status: 400 }
-      )
+      // 静默成功：不透露该邮箱是否已注册
+      console.log(`[Security] forgot-password attempt for unregistered email: ${normalizedEmail}`)
+      return Response.json({ success: true })
+    }
+
+    // 过滤内部合成邮箱（微信用户不支持邮件重置）
+    if (normalizedEmail.endsWith('@cyberfate.internal')) {
+      console.log(`[Security] forgot-password attempt for synthetic email: ${normalizedEmail}`)
+      return Response.json({ success: true }) // 同样静默
     }
 
     const token = await createAndSaveResetToken(normalizedEmail)
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
-    const resetUrl = `${baseUrl}/reset-password?token=${token}`
+    
+    // [安全修复] token 不直接放在 URL query 中，改用 hash fragment
+    // 浏览器不会将 # 后面的内容发送到服务器，避免 Referer 泄露
+    const resetUrl = `${baseUrl}/reset-password#${token}`
 
     await sendResetEmail(normalizedEmail, resetUrl)
 
