@@ -8172,7 +8172,453 @@ Q3: 能不能通过改运化解凶神？
 
 ---
 
-## 八、项目排期
+## 八、数据埋点与转化漏斗 (Analytics & Funnel)
+
+> 2026-04-17 新增 — CyberFate 上线后全链路数据追踪方案
+
+### 8.1 目标
+
+回答以下核心业务问题：
+1. **用户从哪来？** — 流量来源、渠道质量
+2. **用户做了什么？** — 功能使用分布、热门路径
+3. **哪里流失了？** — 转化漏斗每步流失率
+4. **谁付费了？** — 付费用户画像、转化路径
+
+### 8.2 技术选型
+
+| 方案 | 优点 | 缺点 | 推荐度 |
+|------|------|------|--------|
+| **Vercel Analytics** | 零配置、Next.js 原生集成、隐私友好（无 Cookie）、免费额度够用 | 自定义事件能力弱、无法追踪个体用户 | **基础层（必选）** |
+| **Google Analytics 4 (GA4)** | 免费功能强大、自定义事件/漏斗/受众、生态成熟 | 需要隐私合规（Cookie 横幅）、国内访问需 VPN | **推荐启用** |
+| **PostHog / Mixpanel** | 产品分析能力强、漏斗可视化好、免费额度大 | 多一套 SDK、海外服务国内可能慢 | P2 可选 |
+
+**MVP 方案：Vercel Analytics + GA4 双轨制**
+- Vercel Analytics：自动采集 PV/UV/性能指标，零开发量
+- GA4：自定义事件 + 转化漏斗 + 渠道归因
+
+### 8.3 埋点架构
+
+```
+┌─────────────────────────────────────────────┐
+│              埋点层 (lib/analytics.ts)        │
+│                                              │
+│  track(event, properties)                    │
+│    → Vercel Analytics (自动)                 │
+│    → GA4 (gtag.js / GTM)                     │
+│    → (未来) PostHog                          │
+│                                              │
+│  identify(userId, traits)                    │
+│    → GA4 User Properties                     │
+│    → (未来) PostHog                          │
+└─────────────────────────────────────────────┘
+         ↑
+┌─────────────────────────────────────────────┐
+│           业务代码调用点                      │
+│  页面浏览 / 按钮点击 / 表单提交 / API 成功   │
+└─────────────────────────────────────────────┘
+```
+
+#### 核心工具函数
+
+```typescript
+// lib/analytics.ts
+
+// 事件上报（统一入口）
+export function track(eventName: string, properties?: Record<string, any>) {
+  // GA4
+  if (typeof window !== 'undefined' && window.gtag) {
+    window.gtag('event', eventName, {
+      ...properties,
+      page_path: window.location.pathname,
+      // 自动附带登录态
+      is_logged_in: !!getAuthState(),
+    });
+  }
+  // Vercel Analytics（通过 @vercel/analytics 自动采集页面视图）
+  // 自定义事件通过 @vercel/analytics 的 track() 方法
+  try {
+    const { track: vcTrack } = require('@vercel/analytics');
+    vcTrack(eventName);
+  } catch {}
+}
+
+// 用户身份关联
+export function identify(userId: string, traits?: Record<string, any>) {
+  if (typeof window !== 'undefined' && window.gtag) {
+    window.gtag('config', 'GA_MEASUREMENT_ID', {
+      user_id: userId,
+      ...traits,
+    });
+  }
+}
+```
+
+### 8.4 全局自动采集（无需手动埋点）
+
+以下由 Vercel Analytics + GA4 自动完成：
+
+| 数据类型 | 采集方式 | 说明 |
+|----------|----------|------|
+| 页面浏览 (PV) | Vercel Analytics 自动 | 每次 SPA 路由切换自动记录 |
+| 独立访客 (UV) | Vercel Analytics 自动 | 基于 IP + UA 去重 |
+| 性能指标 (Web Vitals) | Vercel Analytics 自动 | LCP / FID / CLS / TTFB |
+| 流量来源 (UTM) | GA4 自动 | utm_source / utm_medium / utm_campaign / utm_content / utm_term |
+| 设备/浏览器/系统 | GA4 自动 | 内置维度 |
+| 地理位置 | GA4 自动 | 国家/城市级别 |
+| 新老访客 | GA4 自动 | 内置判断 |
+
+### 8.5 自定义事件清单（手动埋点）
+
+按功能模块分类，每个事件包含：事件名、触发时机、携带参数。
+
+#### 8.5.1 通用事件
+
+| 事件名 | 触发时机 | 参数 |
+|--------|----------|------|
+| `page_view_custom` | 特殊页面加载完成时（补充 SPA 自动采集） | `page`, `referrer`, `utm_*` |
+| `cta_click` | 点击任意 CTA 按钮 | `button_text`, `destination_url`, `location` |
+| `external_link_click` | 点击外部链接 | `url`, `link_text`, `location` |
+| `error_boundary` | React Error Boundary 触发 | `error_message`, `component_stack`, `page` |
+| `feedback_submit` | 提交反馈（4.8 反馈区） | `type`, `content_length`, `page_url` |
+
+#### 8.5.2 认证相关事件
+
+| 事件名 | 触发时机 | 参数 |
+|--------|----------|------|
+| `auth_modal_open` | 登录弹窗打开 | `trigger`（导航栏/侧边栏/付费锁定/API_401/升级弹窗） |
+| `auth_google_start` | 点击 Google 登录按钮 | `source`（弹窗位置） |
+| `auth_google_success` | Google OAuth 成功回调 | - |
+| `auth_google_fail` | Google OAuth 失败 | `error_type` |
+| `auth_email_submit` | 提交邮箱密码表单 | - |
+| `auth_email_success` | 邮箱登录成功 | - |
+| `auth_email_fail` | 邮箱登录失败 | `error_type`（密码错误/账号不存在/格式错误） |
+| `auth_register_email_sent` | 注册验证码发送成功 | - |
+| `auth_register_verify_success` | 邮箱验证码验证成功 | - |
+| `auth_forgot_password_open` | 忘记密码弹窗打开 | - |
+| `auth_forgot_password_submit` | 提交忘记密码邮箱 | - |
+| `auth_forgot_password_success` | 重置邮件发送成功 | - |
+| `auth_reset_password_success` | 密码重置成功 | - |
+
+#### 8.5.3 核心功能事件 — 八字分析
+
+| 事件名 | 触发时机 | 参数 |
+|--------|----------|------|
+| `bazi_page_view` | 进入 `/bazi` 页面 | `source`（导航栏/直接访问/搜索引擎） |
+| `bazi_form_start` | 开始填写八字表单（首次输入框 focus） | - |
+| `bazi_form_fill_complete` | 所有必填字段已填完 | `fill_duration_ms`（从开始到填完的时间） |
+| `bazi_submit` | 点击「开始分析」按钮 | - |
+| `bazi_result_view` | 八字结果页渲染完成 | `result_load_time_ms` |
+| `bazi_result_tab_switch` | 切换结果 Tab（精准命盘/AI解读/科学客观） | `tab_name` |
+| `bazi_result_share` | 点击分享按钮 | `share_method`（复制链接/图片/其他） |
+| `bazi_result_retry` | 点击「重新分析」 | - |
+
+#### 8.5.4 核心功能事件 — 其他命理功能
+
+| 事件名 | 触发时机 | 参数 |
+|--------|----------|------|
+| `daily_page_view` | 进入每日运势页 `/daily` | - |
+| `daily_date_change` | 切换日期 | `date` |
+| `tarot_page_view` | 进入塔罗占卜页 `/tarot` | - |
+| `tarot_mode_select` | 选择塔罗模式 | `mode`（classic/sky/moon/mirror） |
+| `tarot_question_input` | 输入问题 | `has_question`（boolean） |
+| `tarot_draw_cards` | 点击抽牌 | `mode`, `card_count` |
+| `tarot_result_view` | 塔罗结果展示 | `mode` |
+| `ziwei_page_view` | 进入紫微斗数页 `/ziwei` | - |
+| `ziwei_submit` | 点击「开始排盘」 | - |
+| `ziwei_result_view` | 紫微结果渲染完成 | - |
+| `meihua_page_view` | 进入梅花易数页 `/meihua` | - |
+| `meihua_submit` | 点击起卦 | `method`（manual/coin/time） |
+| `huangli_page_view` | 进入 AI 黄历页 `/huangli` | - |
+| `huangli_date_select` | 选择日期 | - |
+| `marriage_page_view` | 进入八字合婚页 `/bazi/marriage` | - |
+| `marriage_submit` | 点击合婚分析 | - |
+
+#### 8.5.5 付费转化事件（核心漏斗）
+
+| 事件名 | 触发时机 | 参数 |
+|--------|----------|------|
+| `pricing_page_view` | 进入定价页 `/pricing` | `source`（导航栏/CTA/升级弹窗/SEO） |
+| `upgrade_modal_open` | 升级弹窗打开 | `trigger`（功能锁定/Header/侧边栏） |
+| `plan_select` | 选择套餐 | `plan_name`（monthly/yearly/lifetime）、`price`、`currency` |
+| `checkout_start` | 点击订阅/购买按钮 → 发起 Stripe Checkout | `plan_name`, `price`, `payment_method`（stripe） |
+| `checkout_success` | 支付成功回调（Stripe webhook `checkout.session.completed`） | `plan_name`, `price`, `currency`, `transaction_id` |
+| `checkout_fail` | 支付失败/取消 | `plan_name`, `fail_reason`（cancel/fail/timeout） |
+| `portal_open` | 打开 Stripe Customer Portal（管理订阅） | `action`（update_payment/cancel/view_invoice） |
+| `subscription_cancel` | 取消订阅确认 | `plan_name`, `reason`（可选） |
+
+#### 8.5.6 内容互动事件
+
+| 事件名 | 触发时机 | 参数 |
+|--------|----------|------|
+| `nav_click` | 导航栏菜单点击 | `item`, `url` |
+| `sidebar_toggle` | 侧边栏打开/收起 | `state`（open/close） |
+| `sidebar_item_click` | 侧边栏菜单项点击 | `item` |
+| `footer_link_click` | Footer 链接点击 | `link_text`, `url` |
+| `lang_switch` | 语言切换 | `from`, `to`（zh/en） |
+| `search_use` | 使用搜索功能（如有） | `query`, `result_count` |
+
+### 8.6 核心转化漏斗定义
+
+#### 漏斗 1：AARRR 海盗模型（全局）
+
+```
+获取 (Acquisition)
+  ├─ 渠道来源分布（organic / paid social / SEO / direct / referral）
+  ├─ Landing Page 分布
+  └─ UTM Campaign 效果对比
+
+激活 (Activation)
+  ├─ 首次访问 → 完成一次功能使用（如八字分析）
+  │   事件链：page_view → bazi_form_start → bazi_submit → bazi_result_view
+  ├─ 激活率 = 完成首功能使用的 UV / 总 UV
+  └─ 关键行为：提交过至少一次命理分析请求
+
+留存 (Retention)
+  ├─ 次日留存 / 7 日留存 / 30 日留存
+  ├─ DAU / WAU / MAU
+  └─ 回访路径：直接访问 vs 通知召回
+
+变现 (Revenue)
+  ├─ 免费用户 → 定价页浏览 → 选套餐 → 发起支付 → 支付成功
+  │   事件链：pricing_page_view → plan_select → checkout_start → checkout_success
+  ├─ 付费转化率 = checkout_success UV / pricing_page_view UV
+  ├─ ARPU / ARPPU
+  └─ 套餐选择分布（月付/年付/终身）
+
+推荐 (Referral)
+  ├─ 分享按钮点击率
+  ├─ 分享方式分布
+  └─ （未来）邀请注册转化
+```
+
+#### 漏斗 2：核心功能使用深度
+
+```
+Level 0: 仅浏览首页
+Level 1: 浏览过功能页（看过八字/运势等）
+Level 2: 完成一次完整分析（输入→提交→看结果）
+Level 3: 使用过 2 种以上不同功能
+Level 4: 多次回访（3+ 天有使用记录）
+Level 5: 付费用户
+```
+
+用途：用户分层，后续可做精细化运营（如对 Level 2 但未付费的用户推送优惠）
+
+#### 漏斗 3：八字分析详细漏斗（标杆功能）
+
+```
+步骤 1: bazi_page_view          ─── 100%（基准）
+步骤 2: bazi_form_start         ─── ?%   （开始填写）
+步骤 3: bazi_form_fill_complete ─── ?%   （填完信息）
+步骤 4: bazi_submit              ─── ?%   （点击分析）
+步骤 5: bazi_result_view         ─── ?%   （看到结果）
+步骤 6: pricing_page_view        ─── ?%   （去定价页）
+步骤 7: checkout_success         ─── ?%   （付费）
+```
+
+关键关注：
+- 步骤 1→2 的流失：页面是否清晰引导用户操作？
+- 步骤 3→4 的流失：表单是否太复杂？是否有报错？
+- 步骤 4→5 的流失：结果加载是否太慢？是否需要付费墙？
+- 步骤 5→6 的流失：结果页的付费引导是否足够吸引？
+
+#### 漏斗 4：认证转化漏斗
+
+```
+步骤 1: auth_modal_open     ─── 100%
+步骤 2: auth_google_start   ─── ?%  （选 Google）
+       auth_email_submit   ─── ?%  （选邮箱）
+步骤 3: auth_google_success ─── ?%
+       auth_email_success  ─── ?%
+步骤 4: （新用户）auth_register_verify_success ─── ?%
+```
+
+### 8.7 GA4 后台配置指南
+
+#### 8.7.1 转化事件标记（Conventions）
+
+在 GA4 后台将以下事件标记为「转化」：
+
+| 事件名 | 转化名称 | 说明 |
+|--------|----------|------|
+| `checkout_success` | Purchase | 付费成功（核心转化） |
+| `auth_email_success` | Sign Up | 邮箱注册/登录成功 |
+| `auth_google_success` | Google Sign In | Google 登录成功 |
+| `bazi_submit` | Bazi Analysis | 八字分析提交（核心功能转化） |
+| `bazi_result_view` | Bazi Result View | 八字结果查看 |
+| `feedback_submit` | Feedback Submit | 反馈提交 |
+
+#### 8.7.2 受众群体（Audiences）定义
+
+| 受众名称 | 条件 | 用途 |
+|----------|------|------|
+| **所有用户** | 无条件 | 基准人群 |
+| **活跃用户** | 近 7 天内有 `bazi_submit` 或同类事件 | 高价值用户 |
+| **高意向付费** | 近 3 天内访问过 `/pricing` 且未付费 | 再营销目标 |
+| **付费用户** | 有 `checkout_success` 事件 | 排除在广告受众外 |
+| **弃购用户** | 有 `checkout_start` 但无 `checkout_success` | 优惠券召回目标 |
+| **功能深度用户** | 使用过 3 种以上不同功能 | 核心种子用户 |
+| **单次跳出** | 只有 `page_view` 无任何交互事件 | 需优化落地页 |
+
+#### 8.7.3 自定义报表 / 仪表盘建议
+
+GA4 中创建以下探索报表（Explorations）：
+
+1. **漏斗报表（Funnel Exploration）**：付费转化漏斗（pricing → plan_select → checkout_start → checkout_success）
+2. **路径报表（Path Exploration）**：用户从 Landing Page 到付费的 Top 10 路径
+3. **用户轨迹报表（User Exploration）**：抽样查看个体用户的完整行为序列
+4. **细分对比（Segment Overlay）**：付费用户 vs 免费用户的行为差异
+
+### 8.8 广告投放追踪（UTM 规范）
+
+所有广告渠道必须带 UTM 参数，用于 GA4 归因：
+
+| UTM 参数 | 值示例 | 说明 |
+|----------|--------|------|
+| `utm_source` | `google` / `facebook` / `xiaohongshu` / `tiktok` | 广告平台 |
+| `utm_medium` | `cpc` / `cpm` / `organic` / `referral` | 媒介类型 |
+| `utm_campaign` | `cyberfate_launch_apr2026` / `brand_q22026` | 广告活动名称 |
+| `utm_content` | `banner_a` / `video_15s` / `text_ad_v1` | 创意/素材版本 |
+| `utm_term` | `chinese horoscope` / `ba zi reading` | 关键词（搜索广告用） |
+
+**标准 URL 示例：**
+```
+https://www.cyberfate.me/?utm_source=google&utm_medium=cpc&utm_campaign=launch_apr2026&utm_content=text_bazi&utm_term=free%20ba%20zi
+```
+
+**内部渠道规范：**
+
+| 来源 | utm_source | utm_medium |
+|------|-----------|------------|
+| 小红书笔记 | `xiaohongshu` | `organic` 或 `cpc`（视是否付费推广） |
+| 微信公众号文章 | `wechat` | `organic` |
+| 飞书群分享链接 | `feishu` | `referral` |
+| Discord 社区 | `discord` | `referral` |
+
+### 8.9 组件级埋点接入要求
+
+#### 通用规则
+
+1. **所有 CTA 按钮必须埋点** — 不论大小
+2. **所有表单提交必须埋点** — 成功和失败分开
+3. **所有 Modal 弹窗 open/close 都要埋点**
+4. **支付相关事件必须精确到具体套餐和金额**
+5. **不要在事件中传 PII**（密码/邮箱/手机号等敏感信息）
+
+#### 接入方式
+
+推荐封装一个 `useTrack` Hook 或 `TrackButton` 组件，降低接入成本：
+
+```tsx
+// 方式 A：Hook（适合复杂逻辑）
+const { track } = useTrack();
+const handleSubmit = () => {
+  track('bazi_submit');
+  // ...
+};
+
+// 方式 B：组件包装（适合简单按钮）
+<TrackButton
+  event="cta_click"
+  eventProps={{ button_text: '开始分析', location: 'hero' }}
+  onClick={handleStart}
+>
+  开始分析
+</TrackButton>
+
+// 方式 C：data 属性 + 全局事件代理（适合大量按钮批量处理）
+<button data-track="cta_click" data-track-props='{"button_text":"开始分析"}'>
+  开始分析
+</button>
+```
+
+> MVP 推荐方式 A（useTrack Hook），最灵活且不侵入现有组件结构。P2 可考虑方式 C 做全量覆盖。
+
+### 8.10 隐私合规
+
+| 要求 | 实现 |
+|------|------|
+| GDPR / CCPA 合规 | GA4 启用 IP 匿名化 (`anonymize_ip: true`) |
+| Cookie 同意 | 上线欧洲/美国流量前必须加 Cookie Banner（cookieconsent 库等） |
+| 数据最小化 | 事件中不收集姓名/邮箱/密码等 PII |
+| 用户权利 | 提供「关闭 analytics」选项（P1） |
+| 国内合规 | 如主要用户在国内，GA4 数据需评估跨境传输合规性；Vercel Analytics 无此问题（服务器端聚合） |
+
+### 8.11 文件清单与开发任务
+
+| 文件/模块 | 路径 | 说明 |
+|-----------|------|------|
+| 埋点核心库 | `lib/analytics.ts` | track() / identify() 统一入口 |
+| GA4 配置 | `app/layout.tsx`（Head 内注入 gtag.js script）或 `next/script` | GA4 Measurement ID 注入 |
+| Vercel Analytics | `components/VercelAnalytics.tsx`（@vercel/analytics 组件） | 已有则无需新建 |
+| TrackProvider | `components/analytics/TrackProvider.tsx` | 全局 Provider（提供 track/identify context） |
+| useTrack Hook | `hooks/useTrack.ts` | 业务代码调用的 Hook |
+| GA4 ID 配置 | `.env.local` 的 `NEXT_PUBLIC_GA_ID` | 环境变量 |
+
+**需修改的现有文件：**
+
+| 文件 | 修改内容 |
+|------|----------|
+| `app/layout.tsx` | 注入 GA4 script + VercelAnalytics 组件 |
+| `components/auth/AuthModal.tsx` | 认证相关事件埋点（~10 个事件） |
+| `components/auth/ForgotPasswordModal.tsx` | 忘记密码事件埋点（~3 个事件） |
+| 各功能页（八字/塔罗/紫微/梅花/黄历/合婚/运势） | 功能使用事件埋点（每个页面 ~3-8 个事件） |
+| `components/pricing/PricingPage.tsx` 或类似 | 付费转化事件埋点（~7 个事件） |
+| `components/layout/Footer.tsx` | Footer 链接点击埋点 |
+| `components/layout/Sidebar.tsx` | 侧边栏交互埋点 |
+| `components/layout/Header.tsx` | 导航栏交互埋点 |
+| `components/feedback/FeedbackSection.tsx` | 反馈提交埋点 |
+| Stripe Webhook Handler | 支付成功/失败事件（服务端触发） |
+
+### 8.12 开发优先级
+
+| 优先级 | 内容 | 理由 |
+|--------|------|------|
+| **P0** | `lib/analytics.ts` + GA4 脚本注入 + Vercel Analytics 确认运行 | 基础设施，不做这个后面全没数据 |
+| **P0** | 付费转化漏斗事件（pricing ~7 个 + checkout success/fail） | 直接影响收入，上线第一天就要能看 |
+| **P0** | 认证漏斗事件（auth_modal_open → login success） | 注册转化是第二重要指标 |
+| **P1** | 核心功能事件（八字/塔罗/紫微/运势） | 了解产品使用情况 |
+| **P1** | UTM 参数规范文档 + 广告链接生成器 | 投放前必须就绪 |
+| **P2** | 其余辅助事件（内容互动/反馈/Error Boundary） | 锦上添花 |
+| **P2** | PostHog / Mixpanel 接入（如果 GA4 不够用） | 按需启动 |
+
+### 8.13 验收标准 Checklist
+
+#### 基础设施
+- [ ] GA4 Measurement ID 已配置在环境变量中
+- [ ] GA4 gtag.js 在 layout.tsx 中正确注入
+- [ ] Vercel Analytics 组件已在全局 layout 中挂载
+- [ ] `lib/analytics.ts` track() / identify() 函数可用
+- [ ] GA4 Realtime 报表中能看到实时事件（测试环境验证）
+
+#### 付费漏斗
+- [ ] `pricing_page_view` 事件正确触发（含 source 参数）
+- [ ] `plan_select` 事件正确触发（含 plan_name / price）
+- [ ] `checkout_start` 事件正确触发
+- [ ] `checkout_success` 通过 Stripe Webhook 正确触发（含 transaction_id）
+- [ ] `checkout_fail` 正确触发（含 fail_reason）
+- [ ] GA4 后台能看到完整的付费转化漏斗数据
+
+#### 认证漏斗
+- [ ] `auth_modal_open` 正确触发（含 trigger 参数区分来源）
+- [ ] `auth_google_start` / `auth_google_success` / `auth_google_fail` 均正常
+- [ ] `auth_email_submit` / `auth_email_success` / `auth_email_fail` 均正常
+- [ ] GA4 后台能看到认证转化漏斗
+
+#### 功能事件
+- [ ] 八字分析完整事件链：page_view → form_start → submit → result_view
+- [ ] 塔罗占卜完整事件链：page_view → mode_select → draw_cards → result_view
+- [ ] 其余功能页至少有 page_view + submit + result_view 三件套
+- [ ] 事件参数符合 8.5 节定义的 schema
+
+#### 隐私与合规
+- [ ] IP 匿名化已开启
+- [ ] 事件中不含 PII 数据（抽查验证）
+- [ ] Cookie Banner 已部署（面向海外用户时）
+
+---
+
+## 九、项目排期
 
 | 阶段 | 时间 | 交付物 |
 |------|------|--------|
