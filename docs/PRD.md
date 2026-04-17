@@ -2251,6 +2251,272 @@ CyberFate /success 页面 → 验证 session_id → 激活会员 → 跳转 /pro
 - 特殊情况处理
 - 联系方式
 
+### 4.8 反馈留言区 (Feedback Section)
+
+> 2026-04-17 新增 — Footer 内嵌轻量反馈组件，全站覆盖
+
+#### 功能概述
+
+在网站 Footer 上方嵌入一个轻量反馈输入区域。用户无需跳转，在任何页面底部即可提交反馈（功能建议 / Bug 报告 / 体验问题 / 其他）。支持快捷标签一键分类，提交后 toast 提示成功。
+
+**设计原则：**
+- 极简——只问必要信息，降低填写门槛
+- 全站复用——一个组件，所有页面共享
+-不打断流——放在 Footer 上方，不干扰主内容
+
+#### 位置与触发
+
+| 属性 | 值 |
+|------|-----|
+| 位置 | 所有页面的 Footer 组件正上方 |
+| 展示方式 | 内联渲染（非弹窗、非独立页） |
+| 触发 | 页面滚动到Footer 区域时自然可见，无需用户额外操作 |
+| 可选入口 | 侧边栏底部可加「意见反馈」链接，点击平滑滚动到反馈区 |
+
+#### 区域结构
+
+```
+┌─ 反馈留言区（Footer 正上方）────────────────────────────┐
+│                                                          │
+│   有任何想法或建议？我们想听听                            │  ← 标题
+│                                                          │
+│   ┌──────────────────────────────────────────┐ ┌──────┐ │
+│   │ 请输入您的反馈...                          │ │ 提交 │ │  ← 输入框 + 按钮
+│   └──────────────────────────────────────────┘ └──────┘ │
+│                                                          │
+│   [功能建议]  [Bug 反馈]  [体验问题]  [其他]             │  ← 快捷标签
+│                                                          │
+└──────────────────────────────────────────────────────────┘
+```
+
+#### 容器规格
+
+| 属性 | 值 |
+|------|-----|
+| 组件名 | `FeedbackSection` |
+| 背景 | `bg-[#FAF9F6]`（与首页 Hero 背景一致，暖米白） |
+| 上边框 | `border-t border-[rgba(28,26,22,0.06)]`（细分割线） |
+| 内边距 | `py-12 px-6`（桌面端）/ `py-8 px-4`（移动端） |
+| 最大宽度 | `max-w-[720px] mx-auto`（居中，不撑满全宽） |
+| 圆角 | 无（通栏区域） |
+
+##### ① 标题
+
+| 属性 | 值 |
+|------|-----|
+| 文案 | 「有任何想法或建议？我们想听听」 |
+| 样式 | `text-lg font-medium text-[#1C1A16] text-center mb-6` |
+| 字体 | body 字体栈（Inter / -apple-system） |
+
+##### ② 输入行（输入框 + 提交按钮）
+
+容器：`flex items-center gap-3`
+
+**反馈输入框：**
+
+| 属性 | 值 |
+|------|-----|
+| 类型 | `<textarea>` 或 `<input>`（单行足够 MVP） |
+| 元素 | `<input type="text" />` 单行输入，MVP 够用 |
+| placeholder | 「请输入您的反馈...」 |
+| 容器样式 | `flex-1` |
+| 输入框样式 | `w-full px-4 py-3 rounded-xl border border-[#D5D0CA] bg-white text-[#1C1A16] placeholder:text-[#B8B4AE] text-sm focus:outline-none focus:ring-2 focus:ring-[#1C1A16]/10 focus:border-[#1C1A16] transition-all` |
+| 高度 | `h-[48px]`（与全局表单输入框高度一致） |
+| 最小宽度 | 不限制，flex-1 自适应 |
+| 自动聚焦 | 否（页面滚动到此处时不自动 focus，避免移动端弹键盘顶起页面） |
+| 最大字符数 | 500 字符（`maxLength={500}`），右下角显示计数 `xx/500` |
+
+**提交按钮：**
+
+| 属性 | 值 |
+|------|-----|
+| 文案 | 「提交」 |
+| 默认样式 | `px-6 py-3 h-[48px] rounded-xl bg-[#1C1A16] text-white text-sm font-medium hover:bg-[#1C1A16]/90 cursor-pointer transition-colors whitespace-nowrap` |
+| disabled 态 | 输入为空或纯空格时 `opacity-50 pointer-events-none` |
+| loading 态 | spinner + 「提交中...」，`pointer-events-none` |
+| 成功后短暂态 | 背景变绿 `bg-green-600` + 文字「已收到」（300ms）→ 恢复原态 |
+
+##### ③ 快捷标签
+
+| 属性 | 值 |
+|------|-----|
+| 容器 | `flex items-center justify-center gap-2 flex-wrap mt-4` |
+| 标签样式 | `px-3 py-1.5 rounded-full border border-[#D5D0CA] text-[#6B6560] text-xs cursor-pointer hover:bg-[#1C1A16] hover:text-white hover:border-[#1C1A16] transition-all duration-200` |
+| 选中态 | `bg-[#1C1A16] text-white border-[#1C1A16]` |
+| 标签列表 | `["功能建议", "Bug 反馈", "体验问题", "其他"]` |
+
+**交互逻辑：**
+- 点击标签 → 切换选中/未选中态（单选）
+- 选中后，标签文案自动作为前缀填入输入框：`[Bug 反馈] ` （带空格分隔）
+- 用户可在填入的前缀后面继续输入具体内容
+- 再次点击同一标签 → 取消选中，移除前缀（需智能匹配移除）
+- 切换不同标签 → 替换前缀为新标签文案
+- 用户手动删除了前缀文字 → 对应标签自动取消选中
+
+> MVP 简化方案：标签仅做视觉选中态，不自动填入文字。提交时将选中标签类型一并传给后端。这样前端逻辑更简单。
+
+##### ④ 字数统计（可选 P1）
+
+| 属性 | 值 |
+|------|-----|
+| 位置 | 输入框右下角内侧（absolute 定位）或输入框下方右侧 |
+| 样式 | `text-[#B8B4AE] text-xs` |
+| 格式 | `当前字数/500` |
+| 接近上限（>450） | 变 `text-orange-500` |
+| 超上限 | 变 `text-red-500`（但仍允许提交，由后端截断） |
+
+#### 提交流程
+
+```
+用户输入内容 → (可选) 选择快捷标签 → 点击「提交」
+    → 前端校验：内容不为空
+    → POST /api/feedback
+    → loading 态：按钮 spinner
+    → 成功：
+        - toast 提示：「感谢您的反馈，我们会认真阅读 💡」
+        - 输入框清空
+        - 标签取消选中
+        - 按钮短暂绿色闪烁后恢复
+    → 失败：
+        - toast 提示：「提交失败，请稍后重试」
+        - 输入框保留内容（不丢失用户输入）
+```
+
+#### 错误状态处理
+
+| 场景 | 处理方式 |
+|------|----------|
+| 输入为空点击提交 | 按钮保持 disabled，不触发请求（前端拦截） |
+| 只有空格/纯换行 | `trim()` 后判断为空，同上 |
+| 网络异常 | toast 提示「网络异常，请稍后重试」 |
+| 服务端限流 (429) | toast 提示「提交过于频繁，请稍后再试」 |
+| 服务端错误 (5xx) | toast 提示「服务器繁忙，请稍后重试」 |
+
+#### 未登录态处理
+
+| 态 | 行为 |
+|----|------|
+| 已登录 | 自动带入用户信息（email、uid），提交时传给后端 |
+| 未登录 (guest) | 允许提交反馈（不强制登录），后端记录为匿名反馈 |
+| guest 可选增强 (P1) | 提交成功后 toast 附加提示：「留下邮箱以便我们回复您」（可选输入，不强求） |
+
+> 设计理由：降低反馈门槛。强制登录会劝退大量只想随手提一句的用户。MVP 阶段 anonymous 即可。
+
+#### API 设计
+
+##### POST /api/feedback
+
+**请求头：**
+```
+Authorization: Bearer <token>  // 可选，未登录不传
+Content-Type: application/json
+```
+
+**请求体：**
+
+```json
+{
+  "content": "八字分析结果加载太慢了",
+  "type": "bug",
+  "pageUrl": "/bazi",
+  "userAgent": "Mozilla/5.0 ...",
+  "metadata": {
+    "screenWidth": 1440,
+    "isLoggedIn": true
+  }
+}
+```
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| content | string | 是 | 反馈内容，trim 后长度 1-500 |
+| type | string | 否 | 反馈类型枚举：`suggestion` / `bug` / `experience` / `other`，默认 `other` |
+| pageUrl | string | 否 | 当前页面路径，前端自动填充（`usePathname()`） |
+| userAgent | string | 否 | 浏览器 UA，前端自动填充 |
+| metadata | object | 否 | 扩展信息（屏幕尺寸、登录态等） |
+
+**成功响应 (200)：**
+
+```json
+{
+  "success": true,
+  "message": "Feedback submitted",
+  "id": "fb_abc123"
+}
+```
+
+**错误响应：**
+
+| HTTP Status | Body | 含义 |
+|-------------|------|------|
+| 400 | `{ "error: "CONTENT_EMPTY" }` | 内容为空 |
+| 400 | `{ "error: "CONTENT_TOO_LONG" }` | 超过 500 字符 |
+| 429 | `{ "error: "RATE_LIMITED" }` | 频率限制（同一 IP 每分钟最多 3 次，每天最多 20 次） |
+| 500 | `{ "error: "INTERNAL_ERROR" }` | 服务端错误 |
+
+#### 数据存储建议
+
+MVP 阶段存储方案（按复杂度排序）：
+
+| 方案 | 实现 | 适用阶段 |
+|------|------|----------|
+| **方案 1：Vercel KV (Redis)** | `kv.lpush('feedback', JSON.stringify(data))` | MVP 推荐 — 零运维，Vercel 原生支持 |
+| 方案 2：Supabase / PlanetScale | 新建 feedback 表 | 有数据库时优先 |
+| 方案 3：邮件通知 | 提交后直接发邮件给 Frank | 最快上线，但无历史记录 |
+| 方案 4：飞书多维表格 | Webhook 写入 Bitable | 团队内部用方便 |
+
+> 建议 MVP 先用 **方案 1（Vercel KV）或方案 3（邮件通知）**，后续有需要再迁移到正式数据库。
+
+#### 组件文件清单
+
+| 组件/文件 | 路径 | 说明 |
+|-----------|------|------|
+| FeedbackSection | `components/feedback/FeedbackSection.tsx` | 反馈区主组件 |
+| FeedbackForm | `components/feedback/FeedbackForm.tsx` | 表单子组件（输入框+按钮+标签） |
+| QuickTag | `components/feedback/QuickTag.tsx` | 快捷标签组件（可内联） |
+
+**需修改的现有文件：**
+
+| 文件 | 修改内容 |
+|------|----------|
+| `components/layout/Footer.tsx` | 在 Footer 渲染前插入 `<FeedbackSection />` |
+| `app/layout.tsx` 或全局布局 | 无需改动（FeedbackSection 在 Footer 内部引入） |
+
+#### 移动端适配
+
+| 断点 | 调整 |
+|------|------|
+| < 640px | 容器内边距 `py-8 px-4` |
+| < 640px | 输入框和按钮改为纵向排列（按钮 `w-full` 在输入框下方） |
+| < 640px | 标题字号 `text-base` |
+| < 640px | 快捷标签允许换行，`justify-center flex-wrap` |
+| < 640px | 最大宽度 `max-w-full`（去掉限制） |
+
+#### 开发优先级
+
+| 优先级 | 内容 |
+|--------|------|
+| **P0** | FeedbackSection 组件 UI + 快捷标签交互 + POST /api/feedback + 存储方案 |
+| **P0** | 全站 Footer 集成（所有页面可见） |
+| **P1** | 字数统计 + 频率限制倒计时 |
+| **P2** | guest 态可选留邮箱回复 + 反馈历史列表（/profile 内查看自己提交的反馈） |
+
+#### 验收标准 Checklist
+
+- [ ] 反馈区出现在所有页面 Footer 上方
+- [ ] 样式符合 Design Tokens v6（暖米白底、圆角输入框、黑底白字按钮）
+- [ ] 输入框 placeholder 为「请输入您的反馈...」
+- [ ] 输入为空时提交按钮 disabled
+- [ ] 点击提交后 loading 态正确（spinner + 「提交中...」）
+- [ ] 提交成功后 toast 提示 + 输入框清空 + 标签重置
+- [ ] 4 个快捷标签可点击切换选中态（单选）
+- [ ] 选中标签视觉为黑底白字，未选中为边框+灰字
+- [ ] 未登录用户可以正常提交反馈（不强制登录）
+- [ ] 已登录用户提交时自动带上用户信息
+- [ ] 提交失败时保留用户输入内容不丢失
+- [ ] 移动端输入框+按钮纵向排列，布局不溢出
+- [ ] 同一 IP 频率限制生效（服务端）
+
 ---
 
 ## 五、技术规格
