@@ -332,12 +332,13 @@ export async function POST(req: NextRequest) {
 算法维度：
 ${details.join('\n')}
 
-请给出300-500字的合婚分析，包括：
-1. 性格匹配分析（双方日干五行特质、性格异同）
-2. 感情运势分析（相处模式、潜在摩擦点）
-3. 相处建议（具体可操作的建议）
+请给出400-600字的合婚深度分析，要求：
+1. **性格匹配**：深入分析双方日干五行特质、性格优缺点、互补性
+2. **感情运势**：推演感情发展走势、潜在摩擦点、长期稳定性
+3. **相处建议**：给出3-5条具体可操作的生活建议（如沟通方式、生活细节、情感经营）
+4. **亮点总结**：用一句话概括这对组合最大的优势
 
-语气温和、积极、有建设性。内容要充实具体，不要泛泛而谈。直接开始分析，不要有前言。`;
+语气温和、积极、真诚。内容要充实、具体、有画面感，像一位经验丰富的命理师在当面解读。直接开始分析，不要有前言。`;
 
   let analysis = '';
   let aiSource: string = 'fallback';
@@ -347,8 +348,8 @@ ${details.join('\n')}
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}` },
       body: JSON.stringify({
         model: 'deepseek-ai/DeepSeek-V3.2',
-        max_tokens: 1500,
-        temperature: 0.4,
+        max_tokens: 2000,
+        temperature: 0.45,
         messages: [{ role: 'user', content: prompt }],
       }),
     });
