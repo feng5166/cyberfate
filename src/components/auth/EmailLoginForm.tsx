@@ -9,6 +9,7 @@ interface EmailLoginFormProps {
   serverError?: string
   agreed?: boolean
   setAgreed?: (v: boolean) => void
+  onForgotPassword?: (email: string) => void
 }
 
 interface FormErrors {
@@ -23,6 +24,7 @@ export function EmailLoginForm({
   serverError,
   agreed: agreedProp,
   setAgreed: setAgreedProp,
+  onForgotPassword,
 }: EmailLoginFormProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -72,13 +74,9 @@ export function EmailLoginForm({
   }
 
   const handleForgotPassword = () => {
-    if (typeof window !== 'undefined') {
-      const event = new CustomEvent('toast', {
-        detail: { message: '请联系客服重置密码' },
-      })
-      window.dispatchEvent(event)
+    if (onForgotPassword) {
+      onForgotPassword(email)
     }
-    alert('请联系客服重置密码')
   }
 
   const inputBaseClass =

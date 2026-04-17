@@ -343,7 +343,7 @@
 | 忘记密码链接 | `text-[#1C1A16] text-xs hover:underline cursor-pointer` | 右对齐，与提示同行或独立一行右对齐 |
 | 链接文案 | 「忘记密码?」 |
 
-> ⚠️ 「忘记密码?」P0 可先做 UI 占位，点击后 toast 提示「请联系客服重置密码」，P1 再接入邮件重置流程。
+> ✅ 完整实现见 **4.2.1 忘记密码弹窗 (Forgot Password Modal)**，点击后弹出独立弹窗。
 
 ##### ⑦ 协议勾选
 
@@ -408,6 +408,417 @@
 #### 开发优先级：P0
 
 登录转化是商业化关键路径，与侧边栏三态逻辑同步开发。
+
+---
+
+### 4.2.1 忘记密码弹窗 (Forgot Password Modal)
+
+> 2026-04-17 新增 — 对标 FateMaster 忘记密码体验，独立弹窗 + 邮件重置链接
+
+#### 功能概述
+
+用户在登录弹窗点击「忘记密码?」后，弹出独立的忘记密码弹窗。用户输入注册邮箱，系统发送含重置链接的邮件。用户通过邮件链接跳转到重置密码页，设置新密码后完成重置。
+
+#### 用户流程
+
+```
+登录弹窗 → 点击「忘记密码?」→ 弹出 ForgotPasswordModal
+    → 输入邮箱地址 → 点击「发送重置链接」
+    → 调用 POST /api/auth/forgot-password
+    → 成功：toast 提示「重置链接已发送到您的邮箱」+ 关闭弹窗
+    → 失败：内联错误提示
+```
+
+**邮件链接流程：**
+```
+用户收到邮件 → 点击「重置密码」链接 → 跳转 /reset-password?token=xxx
+    → 输入新密码 + 确认密码 → 点击「重置密码」
+    → 调用 POST /api/auth/reset-password
+    → 成功：跳转首页 / 弹登录弹窗（预填邮箱）+ toast「密码已重置成功」
+    → 失败：错误提示（token 过期/无效等）
+```
+
+#### 弹窗容器规格
+
+| 属性 | 值 |
+|------|-----|
+| 组件名 | `ForgotPasswordModal` |
+| 容器 | 白底圆角卡片，浮于登录弹窗之上（更高 z-index） |
+| 尺寸 | `w-[480px] max-w-[90vw]` |
+| 圆角 | `rounded-2xl` |
+| 阴影 | `shadow-2xl` |
+| 内边距 | `p-8` |
+| 动画 | `animate-in fade-in zoom-in-95 duration-200` |
+| 关闭方式 | 右上角 X 按钮 + 点击遮罩层关闭 + ESC 键关闭 |
+| z-index | 比 AuthModal 高一层（`z-[110]` vs AuthModal 的 `z-[100]`） |
+
+#### 弹窗内容结构（从上到下）
+
+```
+┌─────────────────────────────────────────────┐
+│                                             │
+│   忘记密码                              ✕    │  ← 标题行：标题左 + 关闭按钮右
+│                                             │
+│   请输入您的账号邮箱，我们将向您            │  ← 副标题（说明文字）
+│   发送重置密码的链接。                      │
+│                                             │
+│   邮箱地址                                   │  ← 输入框标签
+│   ┌───────────────────────────────────┐     │
+│   │ example@example.com               │     │  ← 邮箱输入框
+│   └───────────────────────────────────┘     │
+│                                             │
+│   我们将向此邮箱发送重置密码的链接           │  ← 提示文字（muted 色）
+│                                             │
+│          ┌─────────┐  ┌────────────────┐   │
+│          │  取消   │  │ 发送重置链接   │   │  ← 取消(次按钮) + 主按钮
+│          └─────────┘  └────────────────┘   │
+│                                             │
+└─────────────────────────────────────────────┘
+```
+
+##### ① 标题行
+
+| 元素 | 样式 |
+|------|------|
+| 容器 | `flex items-center justify-between mb-2` |
+| 标题文字 | 「忘记密码」，`text-xl font-semibold text-[#1C1A16]` |
+| 关闭按钮 (X) | `text-[#6B6560] hover:text-[#1C1A16] cursor-pointer transition-colors p-1`，图标 20px |
+
+##### ② 副标题（说明文字）
+
+| 属性 | 值 |
+|------|-----|
+| 文案 | 「请输入您的账号邮箱，我们将向您发送重置密码的链接。」 |
+| 样式 | `text-[#6B6560] text-sm leading-relaxed mb-6` |
+
+##### ③ 邮箱地址标签
+
+| 属性 | 值 |
+|------|-----|
+| 文案 | 「邮箱地址」 |
+| 样式 | `text-sm font-medium text-[#1C1A16] mb-2 block` |
+
+##### ④ 邮箱输入框
+
+| 属性 | 值 |
+|------|-----|
+| 类型 | `<input type="email" />` |
+| placeholder | `example@example.com` |
+| 容器样式 | `w-full` |
+| 输入框样式 | `w-full px-4 py-3 rounded-xl border border-[#D5D0CA] bg-white text-[#1C1A16] placeholder:text-[#B8B4AE] text-sm focus:outline-none focus:ring-2 focus:ring-[#1C1A16]/10 focus:border-[#1C1A16] transition-all` |
+| 错误态 | `border-red-400 focus:ring-red-400/10 focus:border-red-400`，下方显示红色错误文字 |
+| 自动聚焦 | 弹窗打开时自动 focus 到输入框 (`autoFocus`) |
+
+##### ⑤ 提示文字
+
+| 属性 | 值 |
+|------|-----|
+| 文案 | 「我们将向此邮箱发送重置密码的链接」 |
+| 样式 | `text-[#B8B4AE] text-xs mt-3 mb-6` |
+
+##### ⑥ 按钮区域
+
+| 属性 | 值 |
+|------|-----|
+| 容器 | `flex items-center justify-end gap-3 mt-2` |
+
+**取消按钮：**
+
+| 属性 | 值 |
+|------|-----|
+| 文案 | 「取消」 |
+| 样式 | `px-5 py-2.5 rounded-xl border border-[#D5D0CA] text-[#1C1A16] text-sm font-medium hover:bg-[#F5F3EF] cursor-pointer transition-colors` |
+| 行为 | 关闭 ForgotPasswordModal，回到登录弹窗 |
+
+**发送重置链接按钮（主按钮）：**
+
+| 属性 | 值 |
+|------|-----|
+| 文案 | 「发送重置链接」 |
+| 默认样式 | `px-5 py-2.5 rounded-xl bg-[#1C1A16] text-white text-sm font-medium hover:bg-[#1C1A16]/90 cursor-pointer transition-colors` |
+| disabled 态 | 邮箱为空或格式不合法时 `opacity-50 pointer-events-none` |
+| loading 态 | 文字变为 spinner + 「发送中...」，按钮 `pointer-events-none` |
+| 成功后态 | 按钮短暂变绿（`bg-green-600`）+ 文字「已发送」，500ms 后关闭弹窗 |
+
+#### 错误状态处理
+
+| 场景 | 处理方式 |
+|------|----------|
+| 邮箱为空提交 | 不显示错误，按钮保持 disabled（前端拦截） |
+| 邮箱格式不合法 | 输入框下方显示 `text-red-500 text-xs mt-1`：「请输入有效的邮箱地址」 |
+| 邮箱未注册 | 输入框下方显示：「该邮箱尚未注册账号」 |
+| 发送频率限制（同一邮箱 60s 内重复请求） | 按钮显示倒计时 `text-[#6B6560]`：「重新发送 (59s)」，disabled |
+| API 网络错误 | toast 提示「网络异常，请稍后重试」 |
+| 服务端限流 (429) | 输入框下方显示：「操作过于频繁，请 1 分钟后再试」 |
+
+#### 发送成功状态
+
+点击「发送重置链接」且 API 返回成功后：
+
+1. 按钮变为 loading 态（spinner + 「发送中...」）
+2. API 成功返回后：
+   - 显示成功态：按钮背景短暂变绿 + 文字「已发送」（300ms）
+   - **同时** toast 提示（页面级）：「重置链接已发送到您的邮箱，请在 15 分钟内完成重置」
+   - **延迟 500ms 后自动关闭弹窗**，回到登录弹窗
+3. 登录弹窗保持打开状态（方便用户检查邮箱后回来登录）
+
+> 设计理由：参考截图的成功交互模式——发送成功即关闭子弹窗回到主弹窗，不打断用户流。
+
+#### 移动端适配
+
+| 断点 | 调整 |
+|------|------|
+| < 640px | 弹窗宽度 `w-[90% max-w-[360px]]`，内边距 `p-6` |
+| < 640px | 标题 `text-lg`，正文 `text-sm` |
+| 所有断点 | 弹窗最大高度 `max-h-[90vh]`，内容超出时可 scroll |
+| < 640px | 按钮区改为纵向排列（主按钮在上、取消在下）或保持横向但缩小 padding |
+
+#### 重置密码页面 (/reset-password)
+
+> 用户从邮件链接落地到此页面，非弹窗形式，是独立全屏页面。
+
+##### 页面结构
+
+```
+┌──────────────────────────────────────────────┐
+│  CyberFate Logo                              │  ← 居中 Logo
+│                                              │
+│         重置密码                               │  ← 页面标题
+│  请输入您的新密码                             │  ← 副标题
+│                                              │
+│  新密码                                       │  ← 标签
+│  ┌────────────────────────────┐              │
+│  │ ••••••••            👁     │              │  ← 新密码输入框 + 显示切换
+│  └────────────────────────────┘              │
+│  至少8个字符                                   │  ← 密码提示
+│                                              │
+│  确认新密码                                    │  ← 标签
+│  ┌────────────────────────────┐              │
+│  │ ••••••••            👁     │              │  ← 确认密码输入框
+│  └────────────────────────────┘              │
+│                                              │
+│  ┌────────────────────────────┐              │
+│  │        重置密码             │              │  ← 主按钮
+│  └────────────────────────────┘              │
+│                                              │
+│  返回登录                                     │  ← 链接
+└──────────────────────────────────────────────┘
+```
+
+##### 页面规格
+
+| 属性 | 值 |
+|------|-----|
+| 路由 | `/reset-password` |
+| URL 参数 | `?token=xxx`（从邮件链接携带） |
+| 页面布局 | 居中卡片，`min-h-screen flex items-center justify-center bg-[#FAF9F6]` |
+| 卡片容器 | `w-full max-w-[420px] mx-auto p-8 bg-white rounded-2xl shadow-lg` |
+| Logo | CyberFate Logo，`w-10 h-10 mx-auto mb-6` |
+| 页面标题 | 「重置密码」，`text-2xl font-semibold text-[#1C1A16] text-center mb-2` |
+| 副标题 | 「请输入您的新密码」，`text-[#6B6560] text-sm text-center mb-8` |
+
+##### 表单字段
+
+**新密码输入框：**
+
+| 属性 | 值 |
+|------|-----|
+| 标签 | 「新密码」，`text-sm font-medium text-[#1C1A16] mb-2 block` |
+| 输入框 | 与登录弹窗密码框同规格（含 👁 显示/隐藏切换） |
+| placeholder | `••••••••` |
+| 密码规则提示 | `text-[#C4C0BA] text-xs mt-1`：「至少8个字符」；不满足时变红 |
+
+**确认新密码输入框：**
+
+| 属性 | 值 |
+|------|-----|
+| 标签 | 「确认新密码」，`text-sm font-medium text-[#1C1A16] mb-2 block mt-4` |
+| 输入框 | 同上规格（含 👁 切换） |
+| 校验 | 必须与新密码一致；不一致时下方显示 `text-red-500 text-xs mt-1`：「两次输入的密码不一致」 |
+
+**重置密码按钮：**
+
+| 属性 | 值 |
+|------|-----|
+| 文案 | 「重置密码」 |
+| 样式 | `w-full py-3 rounded-xl bg-[#1C1A16] text-white text-sm font-medium hover:bg-[#1C1A16]/90 transition-colors` |
+| disabled | 任一密码为空或不满足规则时 `opacity-50 pointer-events-none` |
+| loading | spinner + 「重置中...」 |
+
+**返回登录链接：**
+
+| 属性 | 值 |
+|------|-----|
+| 文案 | 「返回登录」 |
+| 样式 | `block text-center text-[#6B6560] text-sm hover:text-[#1C1A16] underline cursor-pointer mt-4` |
+| 行为 | 跳转首页并弹出登录弹窗 |
+
+##### 重置密码页错误状态
+
+| 场景 | 处理 |
+|------|------|
+| token 缺失或无效 | 全屏居中显示：「重置链接无效或已过期，请重新申请」+ 「重新获取重置链接」按钮 |
+| token 已过期 | 同上 |
+| token 已被使用 | 同上 |
+| 两密码不一致 | 确认密码框下方红色提示 |
+
+##### 重置成功状态
+
+API 返回成功后：
+1. 页面显示成功提示（替代表单）：✅ 图标 + 「密码重置成功」
+2. **2 秒后自动跳转首页**，并弹出登录弹窗（预填该用户邮箱）
+3. 或提供「立即登录」按钮让用户手动触发
+
+#### API 设计
+
+##### POST /api/auth/forgot-password
+
+**请求：**
+
+```json
+{
+  "email": "user@example.com"
+}
+```
+
+**成功响应 (200)：**
+
+```json
+{
+  "success": true,
+  "message": "Reset email sent"
+}
+```
+
+**错误响应：**
+
+| HTTP Status | Body | 含义 |
+|-------------|------|------|
+| 400 | `{ "error": "EMAIL_NOT_FOUND" }` | 邮箱未注册 |
+| 400 | `{ "error": "INVALID_EMAIL" }` | 邮箱格式不合法 |
+| 429 | `{ "error": "RATE_LIMITED" }` | 操作过于频繁 |
+| 500 | `{ "error": "INTERNAL_ERROR" }` | 服务端内部错误 |
+
+> 安全注意：无论邮箱是否注册，返回相同的成功响应更安全（防枚举），但为了 UX 可以区分。建议生产环境统一返回成功（仅对已注册邮箱实际发信）。
+
+##### POST /api/auth/reset-password
+
+**请求：**
+
+```json
+{
+  "token": "reset-token-from-email",
+  "password": "new-password123",
+  "confirmPassword": "new-password123"
+}
+```
+
+**成功响应 (200)：**
+
+```json
+{
+  "success": true,
+  "message": "Password reset successfully"
+}
+```
+
+**错误响应：**
+
+| HTTP Status | Body | 含义 |
+|-------------|------|------|
+| 400 | `{ "error": "INVALID_TOKEN" }` | Token 无效或过期 |
+| 400 | `{ "error": "PASSWORD_MISMATCH" }` | 两次密码不一致 |
+| 400 | `{ "error": "PASSWORD_TOO_WEAK" }` | 密码不符合规则 |
+| 400 | `{ "error": "TOKEN_USED" }` | Token 已被使用 |
+| 500 | `{ "error": "INTERNAL_ERROR" }` | 服务端内部错误 |
+
+#### 邮件模板设计
+
+##### 重置密码邮件
+
+| 属性 | 值 |
+|------|-----|
+| 主题 | 「重置您的 CyberFate 密码」 |
+| 发件人 | `CyberFate <noreply@cyberfate.me>` |
+
+**邮件正文（纯文本 + HTML 双版本）：**
+
+```
+您好，
+
+我们收到了重置您 CyberFate 账号密码的请求。
+
+如果这是您本人的操作，请点击以下链接重置密码（链接 15 分钟内有效）：
+
+👉 重置密码：{RESET_URL}
+
+如果您没有发起此请求，可以安全地忽略这封邮件。您的密码不会被更改。
+
+此致，
+CyberFate 团队
+```
+
+**HTML 版本要求：**
+- 居中布局，最大宽 520px
+- 主 CTA 按钮：黑底白字，「重置密码」，链接指向 {RESET_URL}
+- 按钮 `padding: 14px 32px; border-radius: 8px;`
+- 底部小字 muted 色：非本人操作可忽略
+- 响应式：移动端自适应宽度
+
+#### 安全策略
+
+| 策略 | 实现 |
+|------|------|
+| Token 格式 | 随机 64 字符 hex 字符串（crypto.randomBytes(32)） |
+| Token 有效期 | 15 分钟（生产可调至 30 分钟） |
+| Token 单次使用 | 使用后立即标记失效 |
+| 频率限制 | 同一 IP 每小时最多 10 次；同一邮箱每分钟最多 1 次 |
+| 防枚举 | 生产建议：无论邮箱是否存在均返回成功（仅对已注册邮箱实际发信） |
+| HTTPS 强制 | 重置链接必须走 HTTPS |
+| 新密码不可与旧密码相同 | 后端校验（可选 P1） |
+
+#### 组件文件清单
+
+| 组件/文件 | 路径 | 说明 |
+|-----------|------|------|
+| ForgotPasswordModal | `components/auth/ForgotPasswordModal.tsx` | 忘记密码弹窗组件 |
+| ResetPasswordPage | `app/reset-password/page.tsx` | 重置密码全屏页面 |
+| EmailInput | 可复用 `components/auth/EmailInput.tsx` 或内联 | 邮箱输入组件 |
+| PasswordInput | 可复用登录弹窗的密码框 | 密码输入组件（含 👁 切换） |
+
+**需修改的现有文件：**
+
+| 文件 | 修改内容 |
+|------|----------|
+| `components/auth/AuthModal.tsx` | 「忘记密码?」链接绑定 onClick 打开 ForgotPasswordModal |
+| `components/auth/EmailLoginForm.tsx` | 传递 onForgotPassword 回调 |
+
+#### 开发优先级
+
+| 优先级 | 内容 |
+|--------|------|
+| **P0** | ForgotPasswordModal 弹窗 UI + POST /api/auth/forgot-password + 邮件发送 |
+| **P0** | /reset-password 页面 + POST /api/auth/reset-password |
+| **P1** | 频率限制（倒计时）+ token 安全策略完善 |
+| **P2** | 邮件 HTML 版本美化 + 新旧密码不可相同校验 |
+
+#### 验收标准 Checklist
+
+- [ ] 登录弹窗「忘记密码?」可点击，弹出 ForgotPasswordModal
+- [ ] 弹窗样式与截图一致（标题/副标题/邮箱输入框/提示文字/两个按钮）
+- [ ] 邮箱输入框有格式校验，空值/非法格式有正确提示
+- [ ] 点击「发送重置链接」调用 API，loading 态正确
+- [ ] 发送成功后 toast 提示 + 500ms 后关闭弹窗
+- [ ] X 按钮 / 点击遮罩 / ESC 均可关闭弹窗
+- [ ] 邮件内容正确（含重置链接、有效期说明）
+- [ ] 邮件链接跳转 /reset-password?token=xxx 正常
+- [ ] 重置密码页面可正常渲染（居中卡片布局）
+- [ ] 新密码 + 确认密码输入及校验正常（一致性/长度）
+- [ ] 密码框支持 👁 显示/隐藏切换
+- [ ] 重置成功后跳转首页 + 弹登录弹窗（预填邮箱）
+- [ ] token 无效/过期有友好错误提示
+- [ ] 移动端适配正常（< 640px）
+- [ ] 同一邮箱 60s 内重复请求有倒计时限制
 
 ---
 

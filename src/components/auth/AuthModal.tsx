@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { X } from 'lucide-react'
 import { GoogleLoginButton } from './GoogleLoginButton'
 import { EmailLoginForm } from './EmailLoginForm'
+import { ForgotPasswordModal } from './ForgotPasswordModal'
 
 interface AuthModalProps {
   isOpen: boolean
@@ -20,6 +21,8 @@ export function AuthModal({ isOpen, onClose, callbackUrl = '/bazi' }: AuthModalP
   const [serverError, setServerError] = useState('')
   const [visible, setVisible] = useState(false)
   const [agreed, setAgreed] = useState(false)
+  const [showForgotPwd, setShowForgotPwd] = useState(false)
+  const [forgotPwdEmail, setForgotPwdEmail] = useState('')
 
   useEffect(() => {
     if (isOpen) {
@@ -174,6 +177,16 @@ export function AuthModal({ isOpen, onClose, callbackUrl = '/bazi' }: AuthModalP
           serverError={serverError}
           agreed={agreed}
           setAgreed={setAgreed}
+          onForgotPassword={(email) => {
+            setForgotPwdEmail(email)
+            setShowForgotPwd(true)
+          }}
+        />
+
+        <ForgotPasswordModal
+          isOpen={showForgotPwd}
+          onClose={() => setShowForgotPwd(false)}
+          initialEmail={forgotPwdEmail}
         />
       </div>
     </div>

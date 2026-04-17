@@ -178,6 +178,19 @@ model UsageQuota {
   @@map("usage_quotas")
 }
 
+// 密码重置 Token
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  used      Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  
+  @@index([email])
+  @@map("password_reset_tokens")
+}
+
 // 塔罗占卜记录
 model TarotReading {
   id        String   @id @default(cuid())
