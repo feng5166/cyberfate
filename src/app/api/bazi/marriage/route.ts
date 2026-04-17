@@ -30,9 +30,9 @@ function calculateBazi(birthDate: string, birthHour: string) {
 }
 
 // 计算匹配度
-function calculateScore(maleBazi: string, femaleBazi: string) {
-  // 简化版：实际应该根据五行、生肖等计算
-  const score = Math.floor(Math.random() * 30) + 70; // 70-100分
+// ⚠️ TODO: 当前为简化版随机评分（70-100分），待实现基于五行互补/生肖相合/日干关系的真实算法
+function calculateScore(_maleBazi: string, _femaleBazi: string) {
+  const score = Math.floor(Math.random() * 30) + 70; // 70-100分（简化版）
   
   let hearts = '';
   let level = '';
@@ -85,6 +85,7 @@ export async function POST(req: NextRequest) {
       maleBazi,
       femaleBazi,
       analysis: cached.analysis,
+      disclaimer: '⚠️ 仅供参考，匹配度评分基于简化算法，不代表真实命运。人生幸福取决于彼此的理解与经营。',
       _source: 'cache',
     });
   }
@@ -147,6 +148,7 @@ export async function POST(req: NextRequest) {
     maleBazi,
     femaleBazi,
     analysis,
+    disclaimer: '⚠️ 仅供参考，匹配度评分基于简化算法，不代表真实命运。人生幸福取决于彼此的理解与经营。',
     _source: aiSource,
   });
 }

@@ -5,7 +5,7 @@ import type { TarotReadingPromptInput } from '@/lib/ai/prompts';
 
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/db';
 import { drawRandomCards, getCardImageUrl } from '@/data/tarot';
 
 type TarotSpread = 'single' | 'three' | 'celtic' | 'moonlight' | 'mirror';
@@ -68,7 +68,7 @@ async function checkQuota(userId: string, spread: TarotSpread): Promise<{ allowe
   }
 
   const limit = DAILY_LIMITS[spread];
-  const used = 0; // spread === 'single' ? quota.tarotSingleCount : spread === 'three' ? quota.tarotThreeCount : 0;
+  const used = spread === 'single' ? quota.tarotSingleCount : quota.tarotThreeCount;
 
   return { allowed: used < limit, remaining: Math.max(0, limit - used) };
 }
@@ -79,18 +79,14 @@ async function useQuota(userId: string, spread: TarotSpread) {
   if (spread === 'single') {
     await prisma.usageQuota.upsert({
       where: { userId_date: { userId, date: today } },
-      update: {
-        /* tarotSingleCount: { increment: 1 } */
-      },
-      create: { userId, date: today /* , tarotSingleCount: 1 */ },
+      update: { tarotSingleCount: { increment: 1 } },
+      create: { userId, date: today, tarotSingleCount: 1 },
     });
-  } else if (spread === 'three' || spread === 'moonlight' || spread === 'mirror') {
+  } else {
     await prisma.usageQuota.upsert({
       where: { userId_date: { userId, date: today } },
-      update: {
-        /* tarotThreeCount: { increment: 1 } */
-      },
-      create: { userId, date: today /* , tarotThreeCount: 1 */ },
+      update: { tarotThreeCount: { increment: 1 } },
+      create: { userId, date: today, tarotThreeCount: 1 },
     });
   }
 }
@@ -231,28 +227,13 @@ export async function POST(req: NextRequest) {
 
   await setCache(cacheKey, readingPayload, 12 * 60 * 60);
 
-  // 保存历史记录（登录用户）
-  // 注释：Prisma schema 缺 tarotReading 表
-  /*
+  // 扣除配额（非 VIP 登录用户）
   if (session?.user?.id) {
-    await prisma.tarotReading.create({
-      data: {
-        userId: session.user.id,
-        question,
-        spread,
-        cards: cardsWithImages,
-        aiReading: readingPayload.detailedReading
-      }
-    });
-
-    // 扣除配额
     const vip = await isVip(session.user.id);
     if (!vip && spread !== 'celtic') {
       await useQuota(session.user.id, spread);
     }
   }
-  */
-  void useQuota;
 
   return NextResponse.json({
     spread,

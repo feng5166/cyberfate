@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/db';
+import { addMonths, addYears } from 'date-fns';
 
 const ADMIN_EMAILS = [process.env.ADMIN_EMAIL || 'admin@cyberfate.app'];
 
@@ -53,13 +54,13 @@ export async function POST(req: NextRequest) {
     
     switch (targetPlan) {
       case 'monthly':
-        correctExpiry.setMonth(correctExpiry.getMonth() + 1);
+        correctExpiry = addMonths(correctExpiry, 1);
         break;
       case 'quarterly':
-        correctExpiry.setMonth(correctExpiry.getMonth() + 3);
+        correctExpiry = addMonths(correctExpiry, 3);
         break;
       case 'yearly':
-        correctExpiry.setFullYear(correctExpiry.getFullYear() + 1);
+        correctExpiry = addYears(correctExpiry, 1);
         break;
     }
 

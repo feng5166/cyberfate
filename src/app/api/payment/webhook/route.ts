@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import crypto from 'crypto';
+import { addDays } from 'date-fns';
 
 // Stripe 签名验证（参考官方 SDK 实现）
 function verifyStripeWebhook(
@@ -166,8 +167,7 @@ export async function POST(req: NextRequest) {
         });
 
         const duration = { monthly: 30, quarterly: 90, yearly: 365 }[order.plan];
-        const expireAt = new Date();
-        expireAt.setDate(expireAt.getDate() + duration);
+        const expireAt = addDays(new Date(), duration);
 
         await tx.subscription.updateMany({
           where: { userId: order.userId, status: 'active' },
@@ -195,8 +195,7 @@ export async function POST(req: NextRequest) {
       }
 
       const duration = { monthly: 30, quarterly: 90, yearly: 365 }[plan];
-      const expireAt = new Date();
-      expireAt.setDate(expireAt.getDate() + duration);
+      const expireAt = addDays(new Date(), duration);
 
       await prisma.$transaction(async (tx) => {
         await tx.subscription.updateMany({

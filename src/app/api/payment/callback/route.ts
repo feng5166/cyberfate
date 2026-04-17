@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { prisma } from '@/lib/db';
+import { addDays } from 'date-fns';
 
 function verifyCallbackSignature(body: string, signature: string | null): boolean {
   const secret = process.env.CALLBACK_SECRET;
@@ -53,8 +54,7 @@ export async function POST(req: NextRequest) {
       yearly: 365,
     }[order.plan];
 
-    const expireAt = new Date();
-    expireAt.setDate(expireAt.getDate() + duration);
+    const expireAt = addDays(new Date(), duration);
 
     await tx.subscription.create({
       data: {
