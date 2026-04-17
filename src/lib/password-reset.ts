@@ -1,6 +1,11 @@
 import crypto from 'crypto'
+import { Resend } from 'resend'
 import { prisma } from '@/lib/db'
 import bcrypt from 'bcryptjs'
+import {
+  getPasswordResetEmailHtml,
+  getPasswordResetEmailText,
+} from '@/lib/email-templates/password-reset'
 
 const rateLimitMap = new Map<string, number>()
 
@@ -75,15 +80,26 @@ export async function sendResetEmail(
   email: string,
   resetUrl: string
 ): Promise<void> {
-  const subject = '重置您的 CyberFate 密码'
-  const from = 'noreply@cyberfate.me'
+  if (!process.env.RESEND_API_KEY) {
+    console.log('=== 密码重置邮件（开发模式，未配置 RESEND_API_KEY） ===')
+    console.log(`收件人: ${email}`)
+    console.log(`链接: ${resetUrl}`)
+    console.log('=== 邮件结束 ===')
+    return
+  }
 
-  console.log('=== 密码重置邮件（开发模式） ===')
-  console.log(`发件人: ${from}`)
-  console.log(`收件人: ${email}`)
-  console.log(`主题: ${subject}`)
-  console.log(`内容: 您正在重置 CyberFate 密码，请点击以下链接完成重置：`)
-  console.log(`链接: ${resetUrl}`)
-  console.log(`此链接将在 ${TOKEN_EXPIRY_MINUTES} 分钟后过期。`)
-  console.log('=== 邮件结束 ===')
+  const resend = new Resend(process.env.RESEND_API_KEY)
+
+  const { error } = await resend.emails.send({
+    from: 'CyberFate <noreply@cyberfate.me>',
+    to: [email],
+    subject: '重置您的 CyberFate 密码',
+    html: getPasswordResetEmailHtml({ resetUrl }),
+    text: getPasswordResetEmailText({ resetUrl }),
+  })
+
+  if (error) {
+    console.error('发送密码重置邮件失败:', error)
+    throw new Error('邮件发送失败')
+  }
 }
