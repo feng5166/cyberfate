@@ -100,7 +100,7 @@ function calculateScore(male: BaziInfo, female: BaziInfo) {
   else if (total >= 60) { hearts = '❤️❤️☆☆☆'; level = '需要磨合'; }
   else { hearts = '❤️☆☆☆☆'; level = '缘分较浅'; }
 
-  return { score: total, hearts, level, details };
+  return { score: total, hearts, level, details, _debug: { wuxing: wuxingScore.score, gan: ganScore.score, zodiac: zodiacScore.score, balance: balanceScore.score, shensha: shenshaScore.score, rawTotal: total } };
 }
 
 // ── 维度1：五行互补 (满分30) ────────────────────────
@@ -292,7 +292,7 @@ export async function POST(req: NextRequest) {
   const femaleBazi = formatBazi(femaleInfo);
 
   // 基于算法计算匹配度
-  const { score, hearts, level, details } = calculateScore(maleInfo, femaleInfo);
+  const { score, hearts, level, details, _debug } = calculateScore(maleInfo, femaleInfo);
 
   // 缓存 key
   const cacheKey = generateCacheKey('marriage', { 
@@ -310,6 +310,7 @@ export async function POST(req: NextRequest) {
       maleBazi,
       femaleBazi,
       analysis: cached.analysis,
+      _debug,
       disclaimer: '⚠️ 仅供参考，匹配度评分基于五行互补、日干关系、生肖相合等传统命理算法，不代表真实命运。人生幸福取决于彼此的理解与经营。',
       _source: 'cache',
     });
@@ -375,20 +376,7 @@ ${details.join('\n')}
     maleBazi,
     femaleBazi,
     analysis,
-    _debug: {
-      wuxing: wuxingScore.score,
-      gan: ganScore.score,
-      zodiac: zodiacScore.score,
-      balance: balanceScore.score,
-      shensha: shenshaScore.score,
-      rawTotal: wuxingScore.score + ganScore.score + zodiacScore.score + balanceScore.score + shenshaScore.score,
-      maleWuxing: male.wuxing,
-      femaleWuxing: female.wuxing,
-      maleDayMaster: `${male.dayMasterGan}(${male.dayMasterWuxing})`,
-      femaleDayMaster: `${female.dayMasterGan}(${female.dayMasterWuxing})`,
-      maleZodiac: male.yearZhi,
-      femaleZodiac: female.yearZhi,
-    },
+    _debug,
     disclaimer: '⚠️ 仅供参考，匹配度评分基于五行互补、日干关系、生肖相合等传统命理算法，不代表真实命运。人生幸福取决于彼此的理解与经营。',
     _source: aiSource,
   });
