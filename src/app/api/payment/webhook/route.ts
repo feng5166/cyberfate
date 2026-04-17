@@ -110,10 +110,6 @@ export async function POST(req: NextRequest) {
   const body = await req.text();
   const sig = req.headers.get('stripe-signature');
 
-  console.log('[Webhook] Request received');
-  console.log('[Webhook] Body length:', body.length);
-  console.log('[Webhook] Signature:', sig);
-
   if (!sig) {
     return NextResponse.json({ error: 'No signature' }, { status: 400 });
   }
@@ -123,8 +119,6 @@ export async function POST(req: NextRequest) {
     console.error('[Webhook] STRIPE_WEBHOOK_SECRET not configured');
     return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
   }
-
-  console.log('[Webhook] Webhook secret configured:', !!webhookSecret);
 
   // 验证签名
   const verification = verifyStripeWebhook(body, sig, webhookSecret);
@@ -137,7 +131,6 @@ export async function POST(req: NextRequest) {
   }
 
   const event = verification.event;
-  console.log('[Webhook] ✅ Signature verified! Event type:', event.type, 'ID:', event.id);
 
   if (event.type === 'checkout.session.completed') {
     const checkoutSession = event.data.object;
@@ -145,14 +138,10 @@ export async function POST(req: NextRequest) {
     const userId = checkoutSession.metadata?.userId;
     const plan = checkoutSession.metadata?.plan;
 
-    console.log('[Webhook] checkout.session.completed - orderId:', orderId, 'userId:', userId, 'plan:', plan);
-
     if (orderId) {
       // 通过 Order 流程处理
-      console.log('[Webhook] Processing via Order flow');
       const order = await prisma.order.findUnique({ where: { id: orderId } });
       if (!order || order.status === 'paid') {
-        console.log('[Webhook] Order already processed or not found');
         return NextResponse.json({ message: 'Already processed' });
       }
 
@@ -183,11 +172,8 @@ export async function POST(req: NextRequest) {
           },
         });
       });
-      console.log('[Webhook] Order flow completed');
     } else if (userId && plan) {
       // Stripe 直接支付流程（无 Order）
-      console.log('[Webhook] Processing via direct Stripe flow');
-      
       const validPlans = ['monthly', 'quarterly', 'yearly'] as const;
       if (!validPlans.includes(plan)) {
         console.error('[Webhook] Invalid plan:', plan);
@@ -212,7 +198,6 @@ export async function POST(req: NextRequest) {
           },
         });
       });
-      console.log('[Webhook] ✅ Direct flow completed, subscription created for user:', userId);
     } else {
       console.error('[Webhook] No orderId or userId/plan in metadata');
       return NextResponse.json({ error: 'No orderId or userId/plan in metadata' }, { status: 400 });

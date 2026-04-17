@@ -12,7 +12,7 @@ interface DualChartCompareProps {
   className?: string;
 }
 
-const MOCK_CHART_B: PalaceData[] = MOCK_PALACES.map((p, i) => ({
+const MOCK_CHART_B: PalaceData[] = (MOCK_PALACES as any).map((p, i) => ({
   ...p,
   stem: ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸', '甲', '乙'][i],
   majorStars: p.majorStars.length > 0
