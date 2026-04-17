@@ -21,7 +21,7 @@ export async function GET() {
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ app_id: appId, app_secret }),
+        body: JSON.stringify({ app_id: appId, appSecret }),
       }
     );
     const tokenData = await tokenRes.json();
