@@ -83,7 +83,7 @@ export function Footer() {
                       📧 feng5166@gmail.com
                     </p>
                     <p className="text-[13px] text-[#1C1A16]/60">
-                      💬 wechat
+                      💬 wechat: feng5166
                     </p>
                   </div>
                 </div>
