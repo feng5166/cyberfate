@@ -253,7 +253,7 @@ export function Sidebar({
             {renderAvatar('md')}
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-brand-black">
-                {user?.name || '用户'}
+                {'免费用户'}
               </p>
               <p className="truncate text-xs text-[#9CA3AF]">
                 {user?.email || ''}
@@ -293,7 +293,7 @@ export function Sidebar({
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <p className="truncate text-sm font-semibold text-brand-black">
-                  {user?.name || '用户'}
+                  {'VIP会员'}
                 </p>
                 <span className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">
                   VIP

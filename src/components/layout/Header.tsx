@@ -156,7 +156,7 @@ export function Header() {
                       {session.user?.name?.[0] || '我'}
                     </span>
                   )}
-                  {session.user?.name || '账户'}
+                  {'个人中心'}
                 </button>
                 {userMenuOpen && (
                   <div className="absolute right-0 top-full pt-2">
