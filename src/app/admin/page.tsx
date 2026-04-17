@@ -172,6 +172,34 @@ function CheckUserTab() {
                 <span className="text-gray-900">{result.user?.createdAt ? new Date(result.user.createdAt).toLocaleString('zh-CN') : '-'}</span>
               </div>
             </div>
+
+            {/* 订阅状态摘要 */}
+            {result.subs && result.subs.length > 0 && (() => {
+              const activeSub = result.subs!.find((s: SubInfo) => s.status === 'active' && new Date(s.expireAt) > new Date());
+              const latestSub = result.subs![0];
+              const isVip = !!activeSub;
+              const daysLeft = activeSub ? Math.ceil((new Date(activeSub.expireAt).getTime() - Date.now()) / 86400000) : null;
+              return (
+                <div className={`mt-4 pt-4 border-t border-gray-100 ${isVip ? 'bg-emerald-50/50 -mx-4 px-4 pb-4' : ''}`}>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${
+                      isVip ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'
+                    }`}>
+                      {isVip ? '✅ VIP 有效' : '❌ 非VIP'}
+                    </span>
+                    {latestSub && (
+                      <>
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${planBadge(latestSub.plan)}`}>{latestSub.plan}</span>
+                        <span className="text-xs text-gray-400">
+                          到期：{new Date(latestSub.expireAt).toLocaleDateString('zh-CN')}
+                          {daysLeft !== null ? `（${daysLeft > 0 ? `剩${daysLeft}天` : '已过期'}）` : ''}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
 
           {/* Subscriptions */}
