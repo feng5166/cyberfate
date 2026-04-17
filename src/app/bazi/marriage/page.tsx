@@ -285,6 +285,16 @@ export default function MarriagePage() {
                   </div>
                 </Card>
 
+                {/* Debug: 评分明细 */}
+                {result._debug && (
+                  <Card hover={false} className="rounded-2xl border border-dashed border-[#E5484D]/30 bg-[#FFF5F5] shadow-none p-4">
+                    <h3 className="text-sm font-semibold text-[#B42318] mb-2">🔍 评分明细（调试）</h3>
+                    <pre className="text-xs text-[#B42318]/80 whitespace-pre-wrap font-mono">
+                      {JSON.stringify(result._debug, null, 2)}
+                    </pre>
+                  </Card>
+                )}
+
                 <Card hover={false} className="rounded-2xl border border-[#1C1A16]/10 bg-white shadow-none p-6">
                   <h3 className="text-lg font-semibold text-[#1C1A16] mb-4">双方八字命盘</h3>
                   <div className="grid gap-4 md:grid-cols-2">

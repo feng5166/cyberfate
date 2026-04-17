@@ -105,11 +105,49 @@
 
 ### 3.2 定价策略
 
-| 套餐 | 定价 | 折算日均 | 定位 |
-|------|------|----------|------|
-| 月卡 | ¥29/月 | ¥0.97/天 | 尝鲜用户 |
-| 季卡 | ¥69/季 | ¥0.77/天 | 主推套餐 |
-| 年卡 | ¥199/年 | ¥0.55/天 | 忠实用户 |
+> 2026-04-17 更新 — 套餐从 3 个精简为 2 个，价格通过配置文件管理，不写死在代码中。
+
+**配置文件：`config/pricing.ts`（或 `lib/pricing-config.ts`）**
+
+```typescript
+// 套餐配置 — 所有价格从此处读取，代码中禁止硬编码价格
+export const PLANS = {
+  daily: {
+    id: 'daily',
+    name: '单日会员',
+    nameEn: 'Daily Pass',
+    priceId: process.env.STRIPE_PRICE_DAILY!,   // Stripe Price ID
+    duration: '1 day',
+    durationDays: 1,
+    features: ['unlimited_bazi', 'unlimited_daily', 'unlimited_all_features'],
+    recommended: false,
+  },
+  yearly: {
+    id: 'yearly',
+    name: '年费会员',
+    nameEn: 'Yearly Membership',
+    priceId: process.env.STRIPE_PRICE_YEARLY!,  // Stripe Price ID
+    duration: '1 year',
+    durationDays: 365,
+    features: ['unlimited_bazi', 'unlimited_daily', 'unlimited_all_features'],
+    recommended: true,  // 主推
+  },
+} as const;
+
+export type PlanId = keyof typeof PLANS;
+
+// 获取套餐显示价格（从 Stripe 实时获取或缓存）
+// 不在前端硬编码金额，由后端 API 返回
+```
+
+**默认定价参考（可通过 Stripe Dashboard 或环境变量调整）：**
+
+| 套餐 | 参考价格 | 周期 | 定位 |
+|------|----------|------|------|
+| 单日会员 | $5 USD / ~¥36 CNY | 1 天 | 低门槛尝鲜 |
+| 年费会员 | $10 USD / ~¥72 CNY | 1 年 | 主推套餐（超值） |
+
+> **关键原则：价格不写死在前端代码中。** 前端通过 `GET /api/pricing-plans` 获取实时价格和 Stripe Price ID。这样改价只需改 Stripe Dashboard 或环境变量，无需重新部署。
 
 ### 3.3 付费触发点
 
@@ -1772,7 +1810,7 @@ Response:
 
 **未登录 / 免费用户看到**：
 - 会员权益对比表（免费 vs VIP）
-- 套餐选择卡片（月卡/季卡/年卡）
+- 套餐选择卡片（**单日会员 / 年费会员**，2 列）
 - 立即开通按钮
 - **支付方式：Stripe Checkout（跳转式支付）**
 
@@ -1786,10 +1824,10 @@ Response:
 │  ┌──────────────────────────────────────────────┐   │
 │  │  📋 当前订阅                                  │   │  ← 已订阅用户的专属卡片
 │  │                                              │   │
-│  │  专业版（季卡）                      当前计划  │   │  ← 高亮标签
-│  │  ¥69/季 · 有效期至 2026-07-15               │   │
+│  │  年费会员                        当前计划    │   │  ← 高亮标签
+│  │  有效期至 2027-04-17                       │   │
 │  │                                              │   │
-│  │  下次扣费：2026-07-15 · 自动续订已开启       │   │
+│  │  下次扣费：2027-04-17 · 自动续订已开启       │   │
 │  │                                              │   │
 │  │  ┌──────────┐ ┌──────────┐                  │   │
 │  │  │ 查看账单  │ │ 管理订阅  │                  │   │
@@ -1798,13 +1836,13 @@ Response:
 │                                                     │
 │  ── 或选择其他计划 ────────────────────────────     │
 │                                                     │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐           │
-│  │  基础版   │ │  专业版   │ │  尊享版   │           │
-│  │          │ │ ★ 当前   │ │          │           │
-│  │   ¥29    │ │   ¥69    │ │   ¥199   │           │
-│  │  /月     │ │  /季     │ │  /年     │           │
-│  │ [切换]   │ │  当前计划 │ │ [升级 ✓] │           │  ← CTA 文案变化
-│  └──────────┘ └──────────┘ └──────────┘           │
+│  ┌───────────┐  ┌───────────┐                     │
+│  │  单日会员  │  │  年费会员  │                     │
+│  │           │  │  ★ 推荐   │                     │
+│  │   $5      │  │   $10     │                     │
+│  │  /天      │  │  /年      │                     │
+│  │ [开通]    │  │ 当前计划  │                     │
+│  └───────────┘  └───────────┘                     │
 │                                                     │
 │  FAQ                                                │
 │  权益对比表                                         │
@@ -1824,7 +1862,7 @@ Response:
 > **不允许套餐切换**：已订阅用户不能在周期内变更套餐。如需更换，先取消当前订阅，到期后重新选择。
 
 #### 通用交互说明
-- 默认选中季卡（主推）— **仅未订阅用户适用**
+- 默认选中**年费会员**（主推）— **仅未订阅用户适用**
 - 点击开通 → 检查登录 → **后端创建 Stripe Checkout Session → 前端跳转 `checkout.stripe.com` 支付页** → 用户在 Stripe 完成支付 → Stripe 回调 `success_url`（跳回 CyberFate 并激活会员）
 - **已订阅用户访问 `/pricing` 时自动切换到上述「已订阅视图」**
 
@@ -1835,7 +1873,7 @@ Response:
 ```
 用户点击「立即开通」或「升级」
     ↓
-前端 POST /api/create-checkout { plan: "quarterly" }
+前端 POST /api/create-checkout { plan: "daily" | "yearly" }
     ↓
 后端 stripe.checkout.sessions.create({
   mode: "subscription",
