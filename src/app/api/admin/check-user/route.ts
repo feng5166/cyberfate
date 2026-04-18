@@ -30,8 +30,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '缺少邮箱' }, { status: 400 });
     }
 
+    const normalizedEmail = email.toLowerCase().trim();
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
       include: {
         orders: { orderBy: { createdAt: 'desc' } },
         subscriptions: { orderBy: { createdAt: 'desc' } }

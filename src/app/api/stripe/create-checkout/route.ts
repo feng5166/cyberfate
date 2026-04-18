@@ -21,8 +21,8 @@ function calculateProratedAmount(
   const remainingDays = Math.max(0, Math.ceil(remainingMs / (1000 * 60 * 60 * 24)));
 
   const currentConfig = PRICING_CONFIG[currentPlan];
-  const dailyRate = currentConfig.amount / currentConfig.duration;
-  const remainingValue = Math.round(dailyRate * remainingDays);
+  // 整数运算避免浮点精度问题：先乘后除
+  const remainingValue = Math.round((currentConfig.amount * remainingDays) / currentConfig.duration);
 
   const newConfig = PRICING_CONFIG[newPlan];
   const proratedAmount = Math.max(0, newConfig.amount - remainingValue);

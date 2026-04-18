@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     // [安全修复] 统一小写 + trim，防止大小写绕过
     const normalizedEmail = email.toLowerCase().trim()
 
-    if (isRateLimited(normalizedEmail)) {
+    if (await isRateLimited(normalizedEmail)) {
       return Response.json(
         { success: false, error: 'RATE_LIMITED' },
         { status: 429 }

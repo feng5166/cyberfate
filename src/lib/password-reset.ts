@@ -6,10 +6,8 @@ import {
   getPasswordResetEmailHtml,
   getPasswordResetEmailText,
 } from '@/lib/email-templates/password-reset'
+import { checkRateLimit } from '@/lib/rate-limit'
 
-const rateLimitMap = new Map<string, number>()
-
-const RATE_LIMIT_WINDOW_MS = 60 * 1000
 const TOKEN_EXPIRY_MINUTES = 15
 const BCRYPT_SALT_ROUNDS = 10
 
@@ -17,10 +15,9 @@ export function generateResetToken(): string {
   return crypto.randomBytes(32).toString('hex')
 }
 
-export function isRateLimited(email: string): boolean {
-  const lastRequest = rateLimitMap.get(email)
-  if (!lastRequest) return false
-  return Date.now() - lastRequest < RATE_LIMIT_WINDOW_MS
+export async function isRateLimited(email: string): Promise<boolean> {
+  const result = await checkRateLimit('pwd_reset', email, 3, 300)
+  return !result.allowed
 }
 
 // Security Fix: SEC-005 — 存储 token 的 sha256 哈希而非明文
@@ -36,8 +33,6 @@ export async function createAndSaveResetToken(email: string): Promise<string> {
   await prisma.passwordResetToken.create({
     data: { email, token: tokenHash, expiresAt },
   })
-
-  rateLimitMap.set(email, Date.now())
 
   return token
 }

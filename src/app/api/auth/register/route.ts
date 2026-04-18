@@ -1,38 +1,17 @@
 import { NextRequest } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/db'
-
-// ── 简单内存速率限制（每 IP 每小时最多 5 次注册） ──
-const registerAttempts = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 小时
-const RATE_LIMIT_MAX = 5;
-
-function checkRateLimit(ip: string): { allowed: boolean; retryAfter?: number } {
-  const now = Date.now();
-  const record = registerAttempts.get(ip);
-
-  if (!record || now > record.resetAt) {
-    registerAttempts.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW });
-    return { allowed: true };
-  }
-
-  if (record.count >= RATE_LIMIT_MAX) {
-    return { allowed: false, retryAfter: Math.ceil((record.resetAt - now) / 1000) };
-  }
-
-  record.count++;
-  return { allowed: true };
-}
+import { checkRateLimit } from '@/lib/rate-limit'
 
 export async function POST(request: NextRequest) {
   // Security Fix: SEC-006 — Vercel 环境优先使用 x-vercel-forwarded-for 防止伪造
   const ip = request.headers.get('x-vercel-forwarded-for')?.split(',')[0]
     || request.headers.get('x-forwarded-for')?.split(',')[0]
     || 'unknown';
-  const rateResult = checkRateLimit(ip);
+  const rateResult = await checkRateLimit('register', ip, 5, 3600);
   if (!rateResult.allowed) {
     return Response.json(
-      { error: `注册频率限制，请 ${rateResult.retryAfter} 秒后重试` },
+      { error: '注册频率限制，请稍后重试' },
       { status: 429 }
     );
   }
