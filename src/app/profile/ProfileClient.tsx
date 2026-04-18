@@ -170,7 +170,9 @@ export default function ProfileClient({
 
               {/* 当前周期 */}
               <p className="text-sm text-gray-500 mb-4">
-                当前周期：{formatDate(subscriptionDetail.current_period_start)} - {formatDate(subscriptionDetail.current_period_end)}
+                {subscriptionDetail.plan === 'lifetime'
+                  ? '🎉 终身有效，无需续费'
+                  : `当前周期：${formatDate(subscriptionDetail.current_period_start)} - ${formatDate(subscriptionDetail.current_period_end)}`}
               </p>
 
               {subscriptionDetail.pending_plan && (

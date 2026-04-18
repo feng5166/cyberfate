@@ -47,7 +47,8 @@ export function SubscriptionCard({ subscription, isSubscribed, quotaUsed, quotaL
   }
 
   // 已订阅用户
-  const expireDate = new Date(subscription.current_period_end).toLocaleDateString('zh-CN');
+  const isLifetime = subscription.plan === 'lifetime';
+  const expireDate = isLifetime ? '终身有效' : new Date(subscription.current_period_end).toLocaleDateString('zh-CN');
 
   return (
     <div className="bg-white border border-emerald-200 rounded-xl p-6">
@@ -64,7 +65,7 @@ export function SubscriptionCard({ subscription, isSubscribed, quotaUsed, quotaL
           ✅ 有效中
         </p>
         <p className="text-[#1C1A16]/60 text-sm">
-          下次扣费日期：{expireDate}
+          {isLifetime ? '🎉 终身有效，无需续费' : `到期日期：${expireDate}`}
         </p>
       </div>
 

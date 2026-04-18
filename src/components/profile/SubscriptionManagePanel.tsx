@@ -92,7 +92,8 @@ export function SubscriptionManagePanel({ subscription, onBack }: SubscriptionMa
     }
   };
 
-  const expireDate = new Date(subscription.current_period_end).toLocaleDateString('zh-CN');
+  const isLifetime = subscription.plan === 'lifetime';
+  const expireDate = isLifetime ? '终身有效' : new Date(subscription.current_period_end).toLocaleDateString('zh-CN');
 
   return (
     <div className="bg-white border border-[#E5E2DD] rounded-xl p-6">
@@ -114,7 +115,7 @@ export function SubscriptionManagePanel({ subscription, onBack }: SubscriptionMa
           {subscription.plan_name} <span className="text-emerald-600 text-sm font-medium">✅ 当前计划</span>
         </p>
         <p className="text-[#1C1A16]/70 text-sm">${subscription.price}</p>
-        <p className="text-[#1C1A16]/60 text-sm mt-2">到期日期：{expireDate}</p>
+        <p className="text-[#1C1A16]/60 text-sm mt-2">{isLifetime ? '🎉 终身有效，无需续费' : `到期日期：${expireDate}`}</p>
         {subscription.cancel_at_period_end && (
           <p className="text-orange-600 text-sm mt-1">⚠️ 将于到期后取消</p>
         )}
@@ -138,8 +139,8 @@ export function SubscriptionManagePanel({ subscription, onBack }: SubscriptionMa
         <InvoiceHistory />
       </div>
 
-      {/* 取消续订 */}
-      {!subscription.cancel_at_period_end && (
+      {/* 取消续订（终身版无需取消） */}
+      {!isLifetime && !subscription.cancel_at_period_end && (
         <CancelSection
           expireDate={expireDate}
           onCancelled={() => router.refresh()}
