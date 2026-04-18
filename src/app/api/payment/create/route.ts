@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { getStripe } from '@/lib/stripe';
+import { listCustomers, createCustomer, createCheckoutSession } from '@/lib/stripe-direct';
 import { PRICING_CONFIG, isValidPlanId } from '@/lib/pricing-config';
 
 export async function POST(req: NextRequest) {
@@ -42,37 +42,57 @@ export async function POST(req: NextRequest) {
   });
 
   if (payMethod === 'stripe') {
-    const stripe = getStripe();
-
-    if (!stripe) {
+    if (!process.env.STRIPE_SECRET_KEY) {
       return NextResponse.json({ error: 'Stripe 未配置' }, { status: 500 });
     }
 
+    const customersRes = await listCustomers(user.email!);
+    if (!customersRes.ok) {
+      return NextResponse.json({ error: 'Stripe 未配置' }, { status: 500 });
+    }
+
+    let customerId: string;
+    if (customersRes.data!.data.length > 0) {
+      customerId = customersRes.data!.data[0].id;
+    } else {
+      const customerRes = await createCustomer(
+        user.email!,
+        user.nickname || undefined,
+        { userId: user.id },
+      );
+      if (!customerRes.ok) {
+        return NextResponse.json({ error: 'Stripe 未配置' }, { status: 500 });
+      }
+      customerId = customerRes.data!.id;
+    }
+
     const baseUrl = process.env.NEXTAUTH_URL || 'https://www.cyberfate.me';
-    const checkoutSession = await stripe.checkout.sessions.create({
+
+    const checkoutRes = await createCheckoutSession({
       mode: 'payment',
-      payment_method_types: ['card'],
-      line_items: [{
-        price_data: {
-          currency: planConfig.currency,
-          product_data: { name: planConfig.name },
-          unit_amount: planConfig.amount,
-        },
-        quantity: 1,
-      }],
-      success_url: `${baseUrl}/payment/success?order_id=${order.id}&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/pricing`,
+      customerId,
+      priceData: {
+        currency: planConfig.currency,
+        unit_amount: amount,
+        product_data: { name: planConfig.name },
+      },
+      quantity: 1,
+      successUrl: `${baseUrl}/payment/success?order_id=${order.id}&session_id={CHECKOUT_SESSION_ID}`,
+      cancelUrl: `${baseUrl}/pricing`,
       metadata: {
         orderId: order.id,
         plan,
         userId: user.id,
       },
-      customer_email: user.email || undefined,
     });
+
+    if (!checkoutRes.ok) {
+      return NextResponse.json({ error: 'Stripe 未配置' }, { status: 500 });
+    }
 
     return NextResponse.json({
       orderId: order.id,
-      checkoutUrl: checkoutSession.url,
+      checkoutUrl: checkoutRes.data!.url,
     });
   }
 

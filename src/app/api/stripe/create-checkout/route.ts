@@ -169,8 +169,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       { 
         error: '创建支付会话失败',
-        details: error.message || String(error),
-        hint: '请检查 Stripe 配置是否正确'
+        details: '请检查 Stripe 配置是否正确',
       },
       { status: 500 }
     );

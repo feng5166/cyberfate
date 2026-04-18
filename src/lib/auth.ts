@@ -125,6 +125,7 @@ export const authOptions: NextAuthOptions = {
           })
         } catch (error) {
           console.error('[auth] Google signIn transaction failed:', error)
+          return false
         }
       }
       

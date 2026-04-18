@@ -81,9 +81,8 @@ export async function GET(req: NextRequest) {
     
   } catch (error: unknown) {
     console.error('Get invoices error:', error);
-    const message = error instanceof Error ? error.message : '获取账单历史失败';
     return NextResponse.json(
-      { error: message },
+      { error: '获取账单历史失败' },
       { status: 500 }
     );
   }

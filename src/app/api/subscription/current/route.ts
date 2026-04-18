@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
   } catch (error: any) {
     console.error('Get subscription error:', error);
     return NextResponse.json(
-      { error: error.message || '获取订阅信息失败' },
+      { error: '获取订阅信息失败' },
       { status: 500 }
     );
   }

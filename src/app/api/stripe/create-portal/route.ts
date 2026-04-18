@@ -47,8 +47,7 @@ export async function POST() {
     return NextResponse.json(
       { 
         error: '创建管理门户失败',
-        details: error.message || String(error),
-        hint: '请检查 Stripe 配置是否正确'
+        details: '请检查 Stripe 配置是否正确',
       },
       { status: 500 }
     );
