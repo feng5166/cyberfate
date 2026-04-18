@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
 import { PricingCardList } from './PricingCardList';
 import { AuthModal } from '@/components/auth/AuthModal';
-import { type PlanId, PLAN_NAME_TO_ID, PRICING_CONFIG, getDefaultPlanId } from '@/lib/pricing-config';
+import { type PlanId, PLAN_NAME_TO_ID, PRICING_CONFIG, getDefaultPlanId, isValidPlanId } from '@/lib/pricing-config';
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -53,7 +53,8 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
   }, [shouldShow, handleClose]);
 
   const redirectToCheckout = useCallback(async (planName: string) => {
-    const planId = PLAN_NAME_TO_ID[planName];
+    // planName 可能是中文名（如"体验版"）或英文 ID（如"daily"）
+    const planId = PLAN_NAME_TO_ID[planName] || (isValidPlanId(planName as PlanId) ? planName as PlanId : null);
     if (!planId) return;
 
     setCheckoutLoading(true);
