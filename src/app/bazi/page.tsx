@@ -628,6 +628,31 @@ function BaziPageContent() {
       }
 
       setResult(data);
+
+      // 自动保存到历史记录
+      try {
+        const autoSave = {
+          name: formData.name || '缘主',
+          gender: formData.gender || 'unknown',
+          birthDate: formData.birthDate,
+          birthHour: formData.birthHour,
+          birthPlace: formData.birthPlace,
+          dayMaster: data.pillars?.day?.gan || '',
+          aiSummary: (data.aiAnalysis || '').split(/[。！？]/)[0] || '已保存命盘记录。',
+          aiAnalysis: data.aiAnalysis || '',
+          pillars: data.pillars,
+          wuxing: data.wuxing,
+          fiveDimensions: data.fiveDimensions,
+          dayMasterElement: data.pillars?.day?.ganWuxing,
+          lunarDate: data.lunarDate,
+          zodiac: data.zodiac,
+          trueSolarOffsetMinutes: data.trueSolarOffsetMinutes ?? null,
+          dayunStartDescription: data.dayunStartDescription,
+          dayunStartAt: data.dayunStartAt,
+        };
+        saveRecord(autoSave);
+      } catch(e) { console.error('auto save failed', e); }
+
       setActiveTab('性格特质');
       setTabExpanded({
         性格特质: false,

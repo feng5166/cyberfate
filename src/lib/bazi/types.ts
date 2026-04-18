@@ -115,6 +115,11 @@ export interface BaziApiResult {
   mingGe?: MingGeInfo;
   birthPlace?: string;
   _source?: string;
+  lunarDate?: string;
+  zodiac?: string;
+  trueSolarOffsetMinutes?: number | null;
+  dayunStartDescription?: string;
+  dayunStartAt?: string;
 }
 
 export interface BaziHistoryRecord {
