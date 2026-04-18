@@ -1,1 +1,1 @@
-{"buildCommand": "npm run build", "env": {"NEXTAUTH_URL": "https://www.cyberfate.me", "SKIP_PRISMA_DB_PUSH": "1"}, "regions": ["hkg1"], "functions": {"src/app/api/payment/**/*.ts": {"maxDuration": 30}}}
+{"buildCommand": "npm run build", "env": {"NEXTAUTH_URL": "https://www.cyberfate.me", "SKIP_PRISMA_DB_PUSH": "1"}, "regions": ["hkg1", "sin1"], "functions": {"src/app/api/payment/**/*.ts": {"maxDuration": 30}}}
