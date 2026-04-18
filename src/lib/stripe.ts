@@ -12,7 +12,7 @@ export function getStripe(): Stripe | null {
     }
     stripeInstance = new Stripe(apiKey, {
       timeout: 10000,
-      maxNetworkRetries: 2,
+      maxNetworkRetries: 3,
     });
   }
   return stripeInstance;

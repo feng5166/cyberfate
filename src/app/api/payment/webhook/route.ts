@@ -158,25 +158,20 @@ export async function POST(req: NextRequest) {
     if (orderId) {
       const order = await prisma.order.findUnique({ where: { id: orderId } });
       if (order) {
-        // BUG-R2-033: only expire subscriptions started at/before this order's paidAt,
-        // to avoid cancelling a newer subscription the user purchased after the refunded one.
-        const refundCutoff = order.paidAt ?? order.createdAt;
+        // Only expire the subscription created for this specific order (startAt >= paidAt),
+        // to avoid cancelling newer subscriptions the user purchased after this refunded one.
+        const orderPaidAt = order.paidAt ?? order.createdAt;
         const result = await prisma.subscription.updateMany({
           where: {
             userId: order.userId,
+            plan: order.plan,
             status: 'active',
-            startAt: { lte: refundCutoff },
+            startAt: { gte: orderPaidAt },
           },
           data: { status: 'expired' },
         });
         console.log(`[Webhook] charge.refunded: expired ${result.count} subscription(s) for orderId=${orderId}, userId=${order.userId}`);
       }
-    } else if (userId) {
-      await prisma.subscription.updateMany({
-        where: { userId, status: 'active' },
-        data: { status: 'expired' },
-      });
-      console.log(`[Webhook] charge.refunded: expired subscriptions for userId=${userId}`);
     } else {
       console.warn('[Webhook] charge.refunded: no orderId or userId in charge metadata', charge.id);
     }
