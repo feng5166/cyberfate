@@ -27,7 +27,7 @@ export function PricingCard({
   isCurrentPlan = false,
   isSubscribed = false,
   ctaText,
-  currencySymbol = '¥',
+  currencySymbol = '$',
   onClick,
   onCTAClick,
 }: PricingCardProps) {

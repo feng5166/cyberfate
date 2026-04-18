@@ -97,7 +97,7 @@ export function InvoiceHistory() {
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-sm font-semibold text-[#1C1A16]">
-                  ¥{invoice.amount.toFixed(2)}
+                  ${invoice.amount.toFixed(2)}
                 </span>
                 {getStatusBadge(invoice)}
               </div>
@@ -109,7 +109,7 @@ export function InvoiceHistory() {
       {payingInvoice && (
         <PaymentModal
           planName={planNameMap[payingInvoice.plan] || payingInvoice.plan}
-          price={`¥${payingInvoice.amount.toFixed(2)}`}
+          price={`$${payingInvoice.amount.toFixed(2)}`}
           onClose={() => setPayingInvoice(null)}
           onSuccess={() => {
             setPayingInvoice(null);

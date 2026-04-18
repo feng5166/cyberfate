@@ -113,7 +113,7 @@ export function SubscriptionManagePanel({ subscription, onBack }: SubscriptionMa
         <p className="text-[#1C1A16] mb-1">
           {subscription.plan_name} <span className="text-emerald-600 text-sm font-medium">✅ 当前计划</span>
         </p>
-        <p className="text-[#1C1A16]/70 text-sm">¥{subscription.price}</p>
+        <p className="text-[#1C1A16]/70 text-sm">${subscription.price}</p>
         <p className="text-[#1C1A16]/60 text-sm mt-2">到期日期：{expireDate}</p>
         {subscription.cancel_at_period_end && (
           <p className="text-orange-600 text-sm mt-1">⚠️ 将于到期后取消</p>

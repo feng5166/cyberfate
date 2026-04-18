@@ -272,7 +272,7 @@ function CheckUserTab() {
                       <tr key={o.id} className="border-b border-gray-50">
                         <td className="py-2.5 pr-4"><code className="text-xs text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">{o.id.slice(0, 12)}...</code></td>
                         <td className="py-2.5 pr-4"><span className={`px-2 py-0.5 rounded-full text-xs font-medium ${planBadge(o.plan)}`}>{o.plan}</span></td>
-                        <td className="py-2.5 pr-4 text-gray-900">¥{(o.amount / 100).toFixed(2)}</td>
+                        <td className="py-2.5 pr-4 text-gray-900">${(o.amount / 100).toFixed(2)}</td>
                         <td className="py-2.5 pr-4 text-xs text-gray-400">{o.payMethod || '-'}</td>
                         <td className="py-2.5 pr-4"><span className={`text-xs font-medium ${o.status === 'paid' ? 'text-emerald-600' : 'text-amber-600'}`}>{o.status}</span></td>
                         <td className="py-2.5 text-xs text-gray-400">{new Date(o.createdAt).toLocaleString('zh-CN')}</td>

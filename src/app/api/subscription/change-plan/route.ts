@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
         requires_payment: true,
         checkout_url: result.data.url,
         orderId: order.id,
-        message: `需补差价 ¥${(proratedAmount / 100).toFixed(2)}，支付后立即生效`
+        message: `需补差价 $${(proratedAmount / 100).toFixed(2)}，支付后立即生效`
       });
       
     } else {

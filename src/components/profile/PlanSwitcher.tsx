@@ -35,7 +35,7 @@ export function PlanSwitcher({ currentPlan, onPlanChange }: PlanSwitcherProps) {
               {isCurrent && (
                 <div className="text-xs text-emerald-600 font-medium mb-2">★ 当前</div>
               )}
-              <div className="text-lg font-bold text-[#1C1A16] mb-1">¥{plan.displayPrice}</div>
+              <div className="text-lg font-bold text-[#1C1A16] mb-1">${plan.displayPrice}</div>
               <div className="text-xs text-[#1C1A16]/50 mb-3">/{plan.period}</div>
               
               {!isCurrent && isUpgrade && (
