@@ -135,9 +135,8 @@ export async function POST(req: NextRequest) {
     
   } catch (error: unknown) {
     console.error('Change plan error:', error);
-    const message = error instanceof Error ? error.message : '变更套餐失败';
     return NextResponse.json(
-      { error: message },
+      { error: '变更套餐失败，请稍后重试' },
       { status: 500 }
     );
   }

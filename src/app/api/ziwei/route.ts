@@ -135,8 +135,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(response);
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : '排盘计算失败';
     console.error('[Ziwei API Error]', err);
-    return NextResponse.json({ error: message }, { status: 400 });
+    return NextResponse.json({ error: '排盘计算失败，请稍后重试' }, { status: 400 });
   }
 }

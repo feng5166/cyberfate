@@ -13,7 +13,7 @@ const FEEDBACK_TAGS: { label: string; value: FeedbackType }[] = [
   { label: '其他', value: 'other' },
 ];
 
-const MAX_LENGTH = 500;
+const MAX_FEEDBACK_LENGTH = 500;
 
 type ToastState = {
   message: string;
@@ -39,7 +39,7 @@ export default function FeedbackSection() {
 
   const trimmedLength = content.trim().length;
   const currentLength = content.length;
-  const isOverLimit = currentLength > MAX_LENGTH;
+  const isOverLimit = currentLength > MAX_FEEDBACK_LENGTH;
   const isNearLimit = currentLength > 450 && !isOverLimit;
 
   const disabled =
@@ -140,9 +140,9 @@ export default function FeedbackSection() {
             <input
               type="text"
               value={content}
-              onChange={(e) => setContent(e.target.value.slice(0, MAX_LENGTH + 50))}
+              onChange={(e) => setContent(e.target.value.slice(0, MAX_FEEDBACK_LENGTH))}
               placeholder="请输入您的反馈..."
-              maxLength={MAX_LENGTH}
+              maxLength={MAX_FEEDBACK_LENGTH}
               disabled={submitState === 'loading' || submitState === 'success'}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
@@ -155,7 +155,7 @@ export default function FeedbackSection() {
             <div
               className={`mt-1.5 flex justify-end text-xs ${counterColor} transition-colors`}
             >
-              {currentLength}/{MAX_LENGTH}
+              {currentLength}/{MAX_FEEDBACK_LENGTH}
             </div>
           </div>
 

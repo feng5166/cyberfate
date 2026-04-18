@@ -5,16 +5,20 @@ import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/db'
 import WechatProvider from '@/lib/wechat-provider'
 
+const googleClientId = process.env.GOOGLE_CLIENT_ID
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET
+
+export const isGoogleAuthEnabled = !!(googleClientId && googleClientSecret)
+
 export const authOptions: NextAuthOptions = {
   session: {
     strategy: 'jwt',
   },
   providers: [
-    // Google 登录
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || '',
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
-    }),
+    // Google 登录（仅在配置了 Client ID/Secret 时注册）
+    ...(isGoogleAuthEnabled
+      ? [GoogleProvider({ clientId: googleClientId!, clientSecret: googleClientSecret! })]
+      : []),
     // 微信登录
     WechatProvider({
       clientId: process.env.WECHAT_APP_ID || '',
@@ -61,60 +65,66 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async signIn({ user, account, profile }) {
       if (account?.provider === 'google') {
-        // Google 登录：查找或创建用户
-        let existingUser = await prisma.user.findUnique({
-          where: { email: user.email! },
-        })
-
-        if (!existingUser) {
-          existingUser = await prisma.user.create({
-            data: {
-              email: user.email!,
-              nickname: user.name || user.email!.split('@')[0],
-              avatar: user.image,
-            },
+        try {
+          // 先做只读查询，在事务外避免不必要的锁
+          const existingUserBefore = await prisma.user.findUnique({
+            where: { email: user.email! },
           })
-        } else {
-          // BUG-003: 邮箱已存在（含密码账号），link Google — 更新头像但不覆盖 passwordHash
-          if (!existingUser.avatar && user.image) {
-            await prisma.user.update({
-              where: { id: existingUser.id },
-              data: { avatar: user.image },
-            })
-          }
-        }
 
-        // 将数据库 ID 存到 user 对象
-        user.id = existingUser.id
+          await prisma.$transaction(async (tx) => {
+            let existingUser = existingUserBefore
 
-        // BUG-R2-001: 写入 Account 记录，关联 Google provider
-        if (account) {
-          await prisma.account.upsert({
-            where: {
-              provider_providerAccountId: {
+            if (!existingUser) {
+              existingUser = await tx.user.create({
+                data: {
+                  email: user.email!,
+                  nickname: user.name || user.email!.split('@')[0],
+                  avatar: user.image,
+                },
+              })
+            } else {
+              // BUG-003: 邮箱已存在（含密码账号），link Google — 更新头像但不覆盖 passwordHash
+              if (!existingUser.avatar && user.image) {
+                await tx.user.update({
+                  where: { id: existingUser.id },
+                  data: { avatar: user.image },
+                })
+              }
+            }
+
+            // 将数据库 ID 存到 user 对象
+            user.id = existingUser.id
+
+            // 写入 Account 记录，关联 Google provider
+            await tx.account.upsert({
+              where: {
+                provider_providerAccountId: {
+                  provider: 'google',
+                  providerAccountId: (profile as { sub?: string })?.sub ?? account.providerAccountId,
+                },
+              },
+              update: {
+                access_token: account.access_token,
+                expires_at: account.expires_at,
+                id_token: account.id_token,
+                scope: account.scope,
+                token_type: account.token_type,
+              },
+              create: {
+                userId: existingUser.id,
+                type: account.type,
                 provider: 'google',
                 providerAccountId: (profile as { sub?: string })?.sub ?? account.providerAccountId,
+                access_token: account.access_token,
+                expires_at: account.expires_at,
+                id_token: account.id_token,
+                scope: account.scope,
+                token_type: account.token_type,
               },
-            },
-            update: {
-              access_token: account.access_token,
-              expires_at: account.expires_at,
-              id_token: account.id_token,
-              scope: account.scope,
-              token_type: account.token_type,
-            },
-            create: {
-              userId: existingUser.id,
-              type: account.type,
-              provider: 'google',
-              providerAccountId: (profile as { sub?: string })?.sub ?? account.providerAccountId,
-              access_token: account.access_token,
-              expires_at: account.expires_at,
-              id_token: account.id_token,
-              scope: account.scope,
-              token_type: account.token_type,
-            },
+            })
           })
+        } catch (error) {
+          console.error('[auth] Google signIn transaction failed:', error)
         }
       }
       
@@ -154,26 +164,25 @@ export const authOptions: NextAuthOptions = {
       }
       return true
     },
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id
+    async jwt({ token, user, trigger }) {
+      const DB_TTL_MS = 5 * 60 * 1000
+      const now = Date.now()
+      const needsRefresh =
+        !!user ||
+        trigger === 'update' ||
+        !token.dbCheckedAt ||
+        now - token.dbCheckedAt > DB_TTL_MS
+
+      if (needsRefresh) {
+        if (user) {
+          token.id = user.id
+        }
         const dbUser = await prisma.user.findUnique({
-          where: { id: user.id },
-          select: { passwordChangedAt: true },
-        })
-        token.passwordChangedAt = dbUser?.passwordChangedAt?.getTime() ?? null
-      }
-      return token
-    },
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id as string
-        const dbUser = await prisma.user.findUnique({
-          where: { id: token.id as string },
+          where: { id: (token.id ?? user?.id) as string },
           select: {
-            nickname: true,
-            avatar: true,
             passwordChangedAt: true,
+            avatar: true,
+            nickname: true,
             subscriptions: {
               where: { status: 'active', expireAt: { gt: new Date() } },
               select: { id: true },
@@ -181,14 +190,20 @@ export const authOptions: NextAuthOptions = {
             },
           },
         })
-        // Invalidate token if password was changed after token was issued
-        const dbChangedAt = dbUser?.passwordChangedAt?.getTime() ?? null
-        if (dbChangedAt !== null && token.passwordChangedAt !== dbChangedAt) {
-          return null as never
-        }
-        session.user.name = dbUser?.nickname ?? session.user.name
-        session.user.image = dbUser?.avatar ?? null
-        session.user.isSubscribed = (dbUser?.subscriptions?.length ?? 0) > 0
+        token.passwordChangedAt = dbUser?.passwordChangedAt?.getTime() ?? null
+        token.avatar = dbUser?.avatar ?? null
+        token.nickname = dbUser?.nickname ?? null
+        token.isSubscribed = (dbUser?.subscriptions?.length ?? 0) > 0
+        token.dbCheckedAt = now
+      }
+      return token
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id as string
+        session.user.name = token.nickname ?? session.user.name
+        session.user.image = token.avatar ?? null
+        session.user.isSubscribed = token.isSubscribed ?? false
       }
       return session
     },

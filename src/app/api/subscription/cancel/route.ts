@@ -13,6 +13,12 @@ export async function POST(req: NextRequest) {
 
     const { feedback, reactivate } = await req.json();
 
+    if (feedback !== undefined && feedback !== null) {
+      if (typeof feedback !== 'string' || feedback.length > 500) {
+        return NextResponse.json({ error: '反馈内容不能超过500字符' }, { status: 400 });
+      }
+    }
+
     const subscription = await prisma.subscription.findFirst({
       where: {
         userId: session.user.id,
@@ -46,7 +52,7 @@ export async function POST(req: NextRequest) {
       data: {
         autoRenew: false,
         cancelAtPeriodEnd: true,
-        cancelFeedback: feedback || null,
+        cancelFeedback: feedback ? feedback.slice(0, 500) : null,
         cancelledAt: new Date(),
       }
     });
@@ -57,10 +63,10 @@ export async function POST(req: NextRequest) {
       message: '订阅将在当前周期结束后取消'
     });
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Cancel subscription error:', error);
     return NextResponse.json(
-      { error: error.message || '取消订阅失败' },
+      { error: '取消订阅失败，请稍后重试' },
       { status: 500 }
     );
   }

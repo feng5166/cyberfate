@@ -1,3 +1,10 @@
+/**
+ * 使用原生 fetch 直接调用 Stripe REST API，是项目的主要 Stripe 实现。
+ * 背景：Stripe Node.js SDK（stripe.ts）在 Vercel Serverless 环境会触发
+ * StripeConnectionError，原因是 SDK 使用的底层 HTTP 客户端与 Vercel 的
+ * 网络层存在兼容性问题。改用原生 fetch 后连接稳定，故以此为准。
+ * 所有新的 Stripe 调用应使用本文件的导出函数。
+ */
 const STRIPE_API_BASE = 'https://api.stripe.com/v1';
 
 function getStripeKey(): string | null {
@@ -236,13 +243,26 @@ export async function createPortalSession(
   body.set('customer', customerId);
   body.set('return_url', returnUrl);
 
-  return stripeRequest<StripePortalSession>(
-    '/billing_portal/sessions',
-    {
+  const MAX_RETRIES = 3;
+  let lastResult: StripeDirectResponse<StripePortalSession> = { ok: false, status: 0, error: '未执行' };
+
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    if (attempt > 0) {
+      await new Promise((resolve) => setTimeout(resolve, 2 ** (attempt - 1) * 500));
+    }
+
+    lastResult = await stripeRequest<StripePortalSession>('/billing_portal/sessions', {
       method: 'POST',
       body: body.toString(),
-    },
-  );
+    });
+
+    if (lastResult.ok) return lastResult;
+
+    // 4xx 客户端错误不重试
+    if (lastResult.status >= 400 && lastResult.status < 500) break;
+  }
+
+  return lastResult;
 }
 
 export { stripeRequest };

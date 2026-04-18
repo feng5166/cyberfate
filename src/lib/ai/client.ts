@@ -22,12 +22,26 @@ import { redis } from '../cache/redis';
 const DEEPSEEK_BASE_URL = 'https://api.modelverse.cn/v1';
 const DEEPSEEK_MODEL = 'deepseek-ai/DeepSeek-V3.2';
 
-async function callDeepSeek(systemPrompt: string, userPrompt: string, maxTokens = 800): Promise<string> {
+const TIMEOUT_CONFIG: Record<string, number> = {
+  bazi: 15000,
+  daily: 15000,
+  marriage: 30000,
+  tarot: 10000,
+  huangli: 10000,
+  default: 15000,
+};
+
+function getTimeout(feature?: string): number {
+  if (!feature) return TIMEOUT_CONFIG.default;
+  return TIMEOUT_CONFIG[feature] ?? TIMEOUT_CONFIG.default;
+}
+
+async function callDeepSeek(systemPrompt: string, userPrompt: string, maxTokens = 800, feature?: string): Promise<string> {
   const apiKey = getEnvVar('DEEPSEEK_API_KEY');
   if (!apiKey) throw new Error('DEEPSEEK_API_KEY 未配置');
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 8000);
+  const timeoutId = setTimeout(() => controller.abort(), getTimeout(feature));
   const response = await fetch(`${DEEPSEEK_BASE_URL}/chat/completions`, {
     method: 'POST',
     signal: controller.signal,
@@ -95,7 +109,7 @@ export async function generateBaziAnalysis(
 
   const apiResult = await callExternalAPI(
     async () => {
-      const text = await callDeepSeek(BAZI_SYSTEM_PROMPT, prompt, 800);
+      const text = await callDeepSeek(BAZI_SYSTEM_PROMPT, prompt, 800, 'bazi');
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error('No JSON found in response');
@@ -187,7 +201,7 @@ export async function generateDailyFortune(
 
   const apiResult = await callExternalAPI(
     async () => {
-      const text = await callDeepSeek(DAILY_SYSTEM_PROMPT, prompt, 600);
+      const text = await callDeepSeek(DAILY_SYSTEM_PROMPT, prompt, 600, 'daily');
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error('No JSON found in response');
@@ -337,7 +351,7 @@ export async function generateTarotReading(
       spread: input.spread,
       spreadName: input.spreadName,
     });
-    const text = await callDeepSeek(systemPrompt, prompt, getTarotMaxTokens(input.spread));
+    const text = await callDeepSeek(systemPrompt, prompt, getTarotMaxTokens(input.spread), 'tarot');
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       return { ...fallback, _source: 'fallback' };

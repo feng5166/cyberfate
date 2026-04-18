@@ -91,6 +91,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // 密码策略：8位以上 + 至少1数字1字母。有意选择：兼顾安全性与用户体验，
+    // 不要求特殊字符以降低重置摩擦，字母+数字组合可防范纯数字/纯字母弱密码。
     if (password.length < 8) {
       return Response.json(
         { success: false, error: 'PASSWORD_TOO_WEAK', message: ERROR_MESSAGES.PASSWORD_TOO_WEAK },
@@ -98,7 +100,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 密码强度：不能纯数字/纯字母
     const hasLetter = /[a-zA-Z]/.test(password);
     const hasDigit = /\d/.test(password);
     if (!hasLetter || !hasDigit) {

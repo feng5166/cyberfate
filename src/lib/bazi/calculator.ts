@@ -216,7 +216,7 @@ export function getCurrentDayun(birthDate: string, gender: Gender): DayunResult 
     const now = new Date();
     const age = getAgeByBirthDate(birth, now);
 
-    // 估算：3-5 岁，非精确节气数日法（BUG-017）
+    // 估算值仅供参考：3-5 岁，非精确节气数日法（BUG-017）
     const startAge = 3 + ((month + day) % 3);
     const offset = age < startAge ? 0 : Math.floor((age - startAge) / 10) + 1;
 
@@ -282,7 +282,7 @@ export function getDayunTimeline(birthDate: string, gender: Gender): DayunTimeli
     const now = new Date();
     const currentAge = getAgeByBirthDate(birth, now);
 
-    // 估算：3-5 岁，非精确节气数日法（BUG-017）
+    // 估算值仅供参考：3-5 岁，非精确节气数日法（BUG-017）
     const startAge = 3 + ((month + day) % 3);
 
     const monthGanIndex = TIANGAN_LIST.indexOf(monthGan);

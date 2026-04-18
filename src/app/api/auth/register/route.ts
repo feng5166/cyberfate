@@ -24,8 +24,10 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: '邮箱和密码不能为空' }, { status: 400 })
   }
 
-  if (password.length < 6) {
-    return Response.json({ error: '密码至少6位' }, { status: 400 })
+  // 密码策略：8位以上 + 至少1个数字。有意选择：兼顾安全性与用户体验，
+  // 不要求特殊字符以降低注册摩擦，数字要求可防范纯字母弱密码。
+  if (password.length < 8) {
+    return Response.json({ error: '密码至少8位' }, { status: 400 })
   }
 
   if (!/\d/.test(password)) {
