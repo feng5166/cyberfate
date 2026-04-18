@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { PLAN_NAME_TO_ID } from '@/lib/pricing-config';
 
 interface PaymentModalProps {
   planName: string;
@@ -80,10 +81,7 @@ export function PaymentModal({ planName, price, onClose, onSuccess }: PaymentMod
 
     setLoading(true);
     try {
-      const planKey = 
-        planName === '基础版' ? 'daily' : 
-        planName === '专业版' ? 'yearly' : 
-        'lifetime';
+      const planKey = PLAN_NAME_TO_ID[planName] ?? 'daily';
       
       const res = await fetch('/api/payment/create', {
         method: 'POST',

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { signIn } from 'next-auth/react';
+import { PRICING_CONFIG, type PlanId } from '@/lib/pricing-config';
 
 // ── 类型 ───────────────────────────────────────────
 interface UserInfo {
@@ -359,7 +360,7 @@ function FixVipTab() {
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                {p === 'daily' ? '📅 天付 +1天' : p === 'yearly' ? '📅 年付 +365天' : '📅 终身'}
+                {`📅 ${PRICING_CONFIG[p as PlanId]?.adminLabel ?? p}`}
               </button>
             ))}
           </div>
@@ -451,7 +452,7 @@ function CreateSubTab() {
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                {p === 'daily' ? '天付' : p === 'yearly' ? '年付' : '终身'}
+                {PRICING_CONFIG[p as PlanId]?.adminShortLabel ?? p}
               </button>
             ))}
           </div>

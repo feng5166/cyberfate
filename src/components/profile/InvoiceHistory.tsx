@@ -2,12 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { PaymentModal } from '@/components/PaymentModal';
-
-const planNameMap: Record<string, string> = {
-  daily: '基础版',
-  yearly: '专业版',
-  lifetime: '尊享版',
-};
+import { getPlanName } from '@/lib/pricing-config';
 
 interface Invoice {
   id: string;
@@ -108,7 +103,7 @@ export function InvoiceHistory() {
 
       {payingInvoice && (
         <PaymentModal
-          planName={planNameMap[payingInvoice.plan] || payingInvoice.plan}
+          planName={getPlanName(payingInvoice.plan)}
           price={`$${payingInvoice.amount.toFixed(2)}`}
           onClose={() => setPayingInvoice(null)}
           onSuccess={() => {

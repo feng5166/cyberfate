@@ -6,13 +6,7 @@ import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
 import { PricingCardList } from './PricingCardList';
 import { AuthModal } from '@/components/auth/AuthModal';
-import { type PlanId } from '@/lib/pricing-config';
-
-const PLAN_NAME_TO_ID: Record<string, PlanId> = {
-  '基础版': 'daily',
-  '专业版': 'yearly',
-  '尊享版': 'lifetime',
-};
+import { type PlanId, PLAN_NAME_TO_ID, PRICING_CONFIG, getDefaultPlanId } from '@/lib/pricing-config';
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -25,7 +19,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
   const isSubscribed = (session?.user as { isSubscribed?: boolean } | undefined)?.isSubscribed;
   const shouldShow = isOpen && !isSubscribed;
 
-  const [selectedPlan, setSelectedPlan] = useState('专业版');
+  const [selectedPlan, setSelectedPlan] = useState(PRICING_CONFIG[getDefaultPlanId()].name);
   const [visible, setVisible] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [pendingPlan, setPendingPlan] = useState<{ planName: string; price: string } | null>(null);

@@ -2,13 +2,8 @@ import { Suspense } from 'react'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { getSubscription } from '@/lib/subscription'
+import { getPlanName } from '@/lib/pricing-config'
 import PricingClient from './PricingClient'
-
-const planNameMap: Record<string, string> = {
-  daily: '基础版',
-  yearly: '专业版',
-  lifetime: '尊享版',
-}
 
 export default async function PricingPage() {
   const session = await getServerSession(authOptions)
@@ -18,7 +13,7 @@ export default async function PricingPage() {
   if (session?.user) {
     const subscription = await getSubscription(session.user.id)
     if (subscription?.plan) {
-      currentPlan = planNameMap[subscription.plan]
+      currentPlan = getPlanName(subscription.plan)
     }
   }
 

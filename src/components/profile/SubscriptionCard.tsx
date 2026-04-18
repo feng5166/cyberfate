@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { isLifetimePlan, getPlanPeriodLabel } from '@/lib/pricing-config';
 
 interface SubscriptionCardProps {
   subscription: {
@@ -47,7 +48,7 @@ export function SubscriptionCard({ subscription, isSubscribed, quotaUsed, quotaL
   }
 
   // 已订阅用户
-  const isLifetime = subscription.plan === 'lifetime';
+  const isLifetime = isLifetimePlan(subscription.plan);
   const expireDate = isLifetime ? '终身有效' : new Date(subscription.current_period_end).toLocaleDateString('zh-CN');
 
   return (
@@ -59,7 +60,7 @@ export function SubscriptionCard({ subscription, isSubscribed, quotaUsed, quotaL
           当前计划：<span className="font-semibold">{subscription.plan_name}</span>
         </p>
         <p className="text-[#1C1A16]/70 text-sm">
-          ${subscription.price}/{subscription.plan === 'daily' ? '天' : subscription.plan === 'lifetime' ? '终身' : '年'}
+          ${subscription.price}/{getPlanPeriodLabel(subscription.plan)}
         </p>
         <p className="text-emerald-600 text-sm font-medium">
           ✅ 有效中

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { signOut } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { SubscriptionManagePanel } from '@/components/profile/SubscriptionManagePanel'
+import { getPlanName, getPlanPeriodLabel, isLifetimePlan } from '@/lib/pricing-config'
 
 interface ProfileClientProps {
   email: string
@@ -29,11 +30,6 @@ interface ProfileClientProps {
   subscriptionStart: string | null
 }
 
-const periodMap: Record<string, string> = {
-  daily: '天',
-  yearly: '年',
-  lifetime: '终身',
-}
 
 export default function ProfileClient({
   email, image, vip, subscriptionPlan, subscriptionDetail, expireAt, baziAiCount, limit,
@@ -156,21 +152,21 @@ export default function ProfileClient({
                 <span className="text-base font-semibold text-gray-900">
                   ${subscriptionDetail.price}
                   <span className="text-sm font-normal text-gray-400">
-                    /{periodMap[subscriptionDetail.plan] || '天'}
+                    /{getPlanPeriodLabel(subscriptionDetail.plan) || '天'}
                   </span>
                 </span>
               </div>
 
               {/* 当前周期 */}
               <p className="text-sm text-gray-500 mb-4">
-                {subscriptionDetail.plan === 'lifetime'
+                  {isLifetimePlan(subscriptionDetail.plan)
                   ? '🎉 终身有效，无需续费'
                   : `当前周期：${formatDate(subscriptionDetail.current_period_start)} - ${formatDate(subscriptionDetail.current_period_end)}`}
               </p>
 
               {subscriptionDetail.pending_plan && (
                 <p className="text-sm text-blue-600 mb-4">
-                  ⏳ 下一周期将切换为{subscriptionDetail.pending_plan === 'daily' ? '基础版' : subscriptionDetail.pending_plan === 'yearly' ? '专业版' : '尊享版'}
+                  ⏳ 下一周期将切换为{getPlanName(subscriptionDetail.pending_plan)}
                 </p>
               )}
 

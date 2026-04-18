@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { PlanSwitcher } from './PlanSwitcher';
 import { InvoiceHistory } from './InvoiceHistory';
 import { CancelSection } from './CancelSection';
+import { getPlanName, getPlanDisplayName, isLifetimePlan } from '@/lib/pricing-config';
 
 
 interface SubscriptionManagePanelProps {
@@ -28,18 +29,11 @@ export function SubscriptionManagePanel({ subscription, onBack }: SubscriptionMa
 
   const handlePlanChange = async (newPlan: string, isUpgrade: boolean) => {
     setTargetPlan(newPlan);
-    
     if (isUpgrade) {
       setShowUpgradeModal(true);
     } else {
       setShowDowngradeModal(true);
     }
-  };
-
-  const PLAN_NAME_MAP: Record<string, string> = {
-    daily: '基础版',
-    yearly: '专业版',
-    lifetime: '尊享版',
   };
 
   const confirmUpgrade = async () => {
@@ -92,7 +86,7 @@ export function SubscriptionManagePanel({ subscription, onBack }: SubscriptionMa
     }
   };
 
-  const isLifetime = subscription.plan === 'lifetime';
+  const isLifetime = isLifetimePlan(subscription.plan);
   const expireDate = isLifetime ? '终身有效' : new Date(subscription.current_period_end).toLocaleDateString('zh-CN');
 
   return (
@@ -121,7 +115,7 @@ export function SubscriptionManagePanel({ subscription, onBack }: SubscriptionMa
         )}
         {subscription.pending_plan && (
           <p className="text-blue-600 text-sm mt-1">
-            ⏳ 将于到期后切换为 {subscription.pending_plan === 'daily' ? '基础版' : subscription.pending_plan === 'yearly' ? '专业版' : '尊享版'}
+            ⏳ 将于到期后切换为 {getPlanName(subscription.pending_plan ?? '')}
           </p>
         )}
       </div>
@@ -155,7 +149,7 @@ export function SubscriptionManagePanel({ subscription, onBack }: SubscriptionMa
             <p className="text-sm text-[#1C1A16]/70 mb-4">
               从 <span className="font-semibold">{subscription.plan_name}</span> 升级到{' '}
               <span className="font-semibold">
-                {targetPlan === 'lifetime' ? '尊享版（终身卡）' : targetPlan === 'yearly' ? '专业版（年卡）' : '基础版（天卡）'}
+                {getPlanDisplayName(targetPlan ?? '')}
               </span>
             </p>
             <p className="text-sm text-[#1C1A16]/50 mb-6">
@@ -189,7 +183,7 @@ export function SubscriptionManagePanel({ subscription, onBack }: SubscriptionMa
             <p className="text-sm text-[#1C1A16]/70 mb-4">
               从 <span className="font-semibold">{subscription.plan_name}</span> 切换到{' '}
               <span className="font-semibold">
-                {targetPlan === 'daily' ? '基础版（天卡）' : targetPlan === 'yearly' ? '专业版（年卡）' : '尊享版（终身卡）'}
+                {getPlanDisplayName(targetPlan ?? '')}
               </span>
             </p>
             <p className="text-sm text-[#1C1A16]/70 mb-2">

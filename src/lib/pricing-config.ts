@@ -11,6 +11,9 @@ export interface PlanConfig {
   duration: number;      // 天数（lifetime 用一个很大的数或特殊处理）
   recommended: boolean;
   perks: string[];
+  periodCard: string;    // '天卡' | '年卡' | '终身卡'
+  adminLabel: string;    // '天付 +1天' | '年付 +365天' | '终身'
+  adminShortLabel: string; // '天付' | '年付' | '终身'
   /** Stripe 价格 ID（可选，预定义价格模式） */
   stripePriceId?: string;
 }
@@ -26,6 +29,9 @@ export const PRICING_CONFIG: Record<PlanId, PlanConfig> = {
     periodLabel: '/ 天',
     duration: 1,
     recommended: false,
+    periodCard: '天卡',
+    adminLabel: '天付 +1天',
+    adminShortLabel: '天付',
     perks: [
       '当日全功能解锁',
       '八字深度解读',
@@ -43,6 +49,9 @@ export const PRICING_CONFIG: Record<PlanId, PlanConfig> = {
     periodLabel: '/ 年',
     duration: 365,
     recommended: true,
+    periodCard: '年卡',
+    adminLabel: '年付 +365天',
+    adminShortLabel: '年付',
     perks: [
       '全年全功能解锁',
       '八字 + 紫微斗数',
@@ -63,6 +72,9 @@ export const PRICING_CONFIG: Record<PlanId, PlanConfig> = {
     periodLabel: '',
     duration: 36500,     // ~100 年，实际视为永久
     recommended: false,
+    periodCard: '终身卡',
+    adminLabel: '终身',
+    adminShortLabel: '终身',
     perks: [
       '终身全部功能',
       '所有命理模块永久解锁',
@@ -83,4 +95,55 @@ export const PRICING_PLANS_LIST: PlanConfig[] = PLAN_IDS.map(
 
 export function isValidPlanId(id: string): id is PlanId {
   return PLAN_IDS.includes(id as PlanId);
+}
+
+export const PLAN_NAME_TO_ID: Record<string, PlanId> = Object.fromEntries(
+  PLAN_IDS.map((id) => [PRICING_CONFIG[id].name, id])
+) as Record<string, PlanId>;
+
+export const PLAN_ID_TO_NAME: Record<PlanId, string> = Object.fromEntries(
+  PLAN_IDS.map((id) => [id, PRICING_CONFIG[id].name])
+) as Record<PlanId, string>;
+
+export const CURRENCY_SYMBOLS: Record<string, string> = {
+  usd: '$',
+  cny: '¥',
+};
+
+export function getPlanName(planId: string): string {
+  if (!isValidPlanId(planId)) return planId;
+  return PRICING_CONFIG[planId].name;
+}
+
+export function getPlanDisplayName(planId: string): string {
+  if (!isValidPlanId(planId)) return planId;
+  const config = PRICING_CONFIG[planId];
+  return `${config.name}（${config.periodCard}）`;
+}
+
+export function getPlanPeriodLabel(planId: string): string {
+  if (!isValidPlanId(planId)) return '';
+  return PRICING_CONFIG[planId].period;
+}
+
+export function isLifetimePlan(planId: string): boolean {
+  return planId === 'lifetime';
+}
+
+export function getDefaultPlanId(): PlanId {
+  const found = PLAN_IDS.find((id) => PRICING_CONFIG[id].recommended);
+  return found ?? PLAN_IDS[0];
+}
+
+export function getCurrencySymbol(planId?: PlanId): string {
+  if (!planId || !isValidPlanId(planId)) return '$';
+  return CURRENCY_SYMBOLS[PRICING_CONFIG[planId].currency] ?? '$';
+}
+
+export function formatPrice(planId: PlanId): string {
+  const config = PRICING_CONFIG[planId];
+  const symbol = getCurrencySymbol(planId);
+  const price = config.displayPrice;
+  if (isLifetimePlan(planId)) return `${symbol}${price}`;
+  return `${symbol}${price} / ${config.period}`;
 }

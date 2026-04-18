@@ -7,20 +7,20 @@ import { Footer } from '@/components/layout/Footer';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { PricingCardList } from '@/components/pricing/PricingCardList';
 import { AuthModal } from '@/components/auth/AuthModal';
-import { type PlanId, isValidPlanId } from '@/lib/pricing-config';
+import { type PlanId, isValidPlanId, PLAN_NAME_TO_ID, getDefaultPlanId, PRICING_CONFIG } from '@/lib/pricing-config';
 
-const PLAN_NAME_TO_ID: Record<string, PlanId> = {
-  '基础版': 'daily',
-  '专业版': 'yearly',
-  '尊享版': 'lifetime',
-};
+const defaultPlanId = getDefaultPlanId();
+const defaultPlanConfig = PRICING_CONFIG[defaultPlanId];
+const dailyConfig = PRICING_CONFIG['daily'];
+const yearlyConfig = PRICING_CONFIG['yearly'];
+const lifetimeConfig = PRICING_CONFIG['lifetime'];
 
 const faqs = [
   { q: '免费版和会员版有什么区别？', a: '免费版每天可进行 3 次基础八字分析。会员版解锁无限次分析、AI 深度报告、紫微斗数、塔罗占卜等全部高级功能，同时享受优先客服支持。' },
-  { q: '基础版（按天）和年费/终身有什么区别？', a: '基础版 $9.99/天，适合想先体验全部功能的用户。专业版 $49/年 性价比最高，适合长期使用者。尊享版 $199 终身一次性付费，永久解锁所有功能包括未来更新。' },
+  { q: `${dailyConfig.name}（按天）和年费/终身有什么区别？`, a: `${dailyConfig.name} $${dailyConfig.displayPrice}/天，适合想先体验全部功能的用户。${yearlyConfig.name} $${yearlyConfig.displayPrice}/年 性价比最高，适合长期使用者。${lifetimeConfig.name} $${lifetimeConfig.displayPrice} 终身一次性付费，永久解锁所有功能包括未来更新。` },
   { q: '支付方式有哪些？', a: '目前支持 Stripe 信用卡/借记卡支付。所有交易均经过加密处理，确保您的支付安全。' },
-  { q: '终身版真的永久有效吗？', a: '是的！尊享版为一次性终身付费，无需续费，永久享受所有功能及未来新功能。' },
-  { q: '可以升级套餐吗？', a: '可以！如果您购买了基础版或专业版，后续可以补差价升级到更高版本。请联系客服或在个人中心操作。' },
+  { q: '终身版真的永久有效吗？', a: `是的！${lifetimeConfig.name}为一次性终身付费，无需续费，永久享受所有功能及未来新功能。` },
+  { q: '可以升级套餐吗？', a: `可以！如果您购买了${dailyConfig.name}或${yearlyConfig.name}，后续可以补差价升级到更高版本。请联系客服或在个人中心操作。` },
   { q: '分析结果准确吗？', a: '我们的 AI 命理分析基于传统命理学体系结合现代 AI 技术，提供参考性解读。命理分析仅供娱乐和参考，不构成任何决策依据，请理性对待。' },
 ];
 
@@ -36,7 +36,7 @@ export default function PricingClient({ currentPlan }: PricingClientProps) {
   const [pendingPlan, setPendingPlan] = useState<{ planName: string; price: string } | null>(null);
 
   const isSubscribed = session?.user?.isSubscribed ?? false;
-  const [selectedPlan, setSelectedPlan] = useState(isSubscribed ? '' : '专业版');
+  const [selectedPlan, setSelectedPlan] = useState(isSubscribed ? '' : defaultPlanConfig.name);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   const redirectToCheckout = useCallback(async (planName: string) => {
