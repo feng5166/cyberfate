@@ -86,6 +86,6 @@ export async function POST(req: NextRequest) {
     effective_date: now.toISOString().slice(0, 10),
     new_period_start: now.toISOString(),
     new_period_end: newExpireAt.toISOString(),
-    message: `已升级到${new_plan === 'yearly' ? '尊享版' : '专业版'}，新周期即刻生效`,
+    message: `已升级到${new_plan === 'lifetime' ? '尊享版' : new_plan === 'yearly' ? '专业版' : '基础版'}，新周期即刻生效`,
   })
 }

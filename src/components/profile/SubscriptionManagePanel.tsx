@@ -154,7 +154,7 @@ export function SubscriptionManagePanel({ subscription, onBack }: SubscriptionMa
             <p className="text-sm text-[#1C1A16]/70 mb-4">
               从 <span className="font-semibold">{subscription.plan_name}</span> 升级到{' '}
               <span className="font-semibold">
-                {targetPlan === 'lifetime' ? '尊享版（终身卡）' : targetPlan === 'yearly' ? '专业版（年卡）' : '基础版（月卡）'}
+                {targetPlan === 'lifetime' ? '尊享版（终身卡）' : targetPlan === 'yearly' ? '专业版（年卡）' : '基础版（天卡）'}
               </span>
             </p>
             <p className="text-sm text-[#1C1A16]/50 mb-6">
@@ -188,7 +188,7 @@ export function SubscriptionManagePanel({ subscription, onBack }: SubscriptionMa
             <p className="text-sm text-[#1C1A16]/70 mb-4">
               从 <span className="font-semibold">{subscription.plan_name}</span> 切换到{' '}
               <span className="font-semibold">
-                {targetPlan === 'daily' ? '基础版（天卡）' : targetPlan === 'yearly' ? '专业版（年卡）' : '尊享版（年卡）'}
+                {targetPlan === 'daily' ? '基础版（天卡）' : targetPlan === 'yearly' ? '专业版（年卡）' : '尊享版（终身卡）'}
               </span>
             </p>
             <p className="text-sm text-[#1C1A16]/70 mb-2">

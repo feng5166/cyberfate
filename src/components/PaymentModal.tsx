@@ -82,8 +82,8 @@ export function PaymentModal({ planName, price, onClose, onSuccess }: PaymentMod
     try {
       const planKey = 
         planName === '基础版' ? 'daily' : 
-        planName === '专业版' ? 'lifetime' : 
-        'yearly';
+        planName === '专业版' ? 'yearly' : 
+        'lifetime';
       
       const res = await fetch('/api/payment/create', {
         method: 'POST',

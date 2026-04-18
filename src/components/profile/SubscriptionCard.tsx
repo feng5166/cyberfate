@@ -58,7 +58,7 @@ export function SubscriptionCard({ subscription, isSubscribed, quotaUsed, quotaL
           当前计划：<span className="font-semibold">{subscription.plan_name}</span>
         </p>
         <p className="text-[#1C1A16]/70 text-sm">
-          ${subscription.price}/{subscription.plan === 'daily' ? 'day' : subscription.plan === 'lifetime' ? 'lifetime' : 'year'}
+          ${subscription.price}/{subscription.plan === 'daily' ? '天' : subscription.plan === 'lifetime' ? '终身' : '年'}
         </p>
         <p className="text-emerald-600 text-sm font-medium">
           ✅ 有效中

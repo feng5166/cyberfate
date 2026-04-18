@@ -163,7 +163,7 @@ export default function ProfileClient({
                 <span className="text-base font-semibold text-gray-900">
                   ${subscriptionDetail.price}
                   <span className="text-sm font-normal text-gray-400">
-                    /{periodMap[subscriptionDetail.plan] || '月'}
+                    /{periodMap[subscriptionDetail.plan] || '天'}
                   </span>
                 </span>
               </div>
