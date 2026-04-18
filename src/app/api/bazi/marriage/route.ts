@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { generateCacheKey, getCache, setCache } from '@/lib/ai/cache';
+import { sanitizeUserInput } from '@/lib/utils/sanitize';
 
 import { authOptions } from '@/lib/auth';
 import { calculateBazi as realCalculateBazi } from '@/lib/bazi';
@@ -320,19 +321,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '女方出生日期无效，请使用 YYYY-MM-DD 格式，年份范围 1900-2030' }, { status: 400 });
   }
 
-  // [安全修复] 输入清洗：防止 prompt injection
-  const sanitize = (s: string): string => {
-    if (!s) return '';
-    return s
-      .replace(/[\x00-\x1f\x7f]/g, '')   // 去除控制字符
-      .replace(/<!--[\s\S]*?-->/g, '')   // 去除 HTML 注释
-      .replace(/[{}[\]()`]/g, ' ')        // 去除可能被用于注入的特殊字符（JSON/模板/反引号）
-      .trim()
-      .slice(0, 50);                      // 长度限制
-  };
-
-  const safeMaleName = sanitize(maleName) || '男方';
-  const safeFemaleName = sanitize(femaleName) || '女方';
+  const safeMaleName = (maleName ? sanitizeUserInput(String(maleName), 50) : '') || '男方';
+  const safeFemaleName = (femaleName ? sanitizeUserInput(String(femaleName), 50) : '') || '女方';
 
   const maleInfo = calculateFullBazi(maleBirthDate, maleBirthHour);
   const femaleInfo = calculateFullBazi(femaleBirthDate, femaleBirthHour);

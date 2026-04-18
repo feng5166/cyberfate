@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { calculateHuangli } from '@/lib/huangli/calculator';
+import { sanitizeUserInput } from '@/lib/utils/sanitize';
 
 export async function POST(req: NextRequest) {
   // Security Fix: SEC-012 — 添加登录检查
@@ -17,12 +18,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '缺少参数' }, { status: 400 });
     }
 
-    const sanitizedQuestion = String(question).replace(/[\x00-\x1F\x7F]/g, '').trim();
+    const sanitizedQuestion = sanitizeUserInput(String(question), 200).trim();
     if (!sanitizedQuestion) {
       return NextResponse.json({ error: '问题内容无效' }, { status: 400 });
-    }
-    if (sanitizedQuestion.length > 200) {
-      return NextResponse.json({ error: '问题不能超过200字' }, { status: 400 });
     }
 
     const huangli = calculateHuangli(date);

@@ -1,6 +1,6 @@
 /**
  * Redis-based rate limiting (Upstash)
- * Gracefully degrades to allow-all when Redis is unavailable
+ * Fails closed when Redis is unavailable (BUG-R2-002)
  */
 
 import { getRedis } from '@/lib/cache/redis';
@@ -10,11 +10,11 @@ export async function checkRateLimit(
   identifier: string,
   limit: number,
   windowSeconds: number
-): Promise<{ allowed: boolean; remaining: number }> {
+): Promise<{ allowed: boolean; remaining: number; reason?: string }> {
   const redis = getRedis();
   if (!redis) {
-    // Redis 不可用时降级放行
-    return { allowed: true, remaining: limit };
+    console.error('[rate-limit] Redis unavailable, denying request');
+    return { allowed: false, remaining: 0, reason: 'service_unavailable' };
   }
 
   const key = `rl:${prefix}:${identifier}`;
@@ -28,7 +28,7 @@ export async function checkRateLimit(
       remaining: Math.max(0, limit - count),
     };
   } catch (err) {
-    console.error('[rate-limit] Redis error, degrading to allow:', err);
-    return { allowed: true, remaining: limit };
+    console.error('[rate-limit] Redis error, denying request:', err);
+    return { allowed: false, remaining: 0, reason: 'service_unavailable' };
   }
 }

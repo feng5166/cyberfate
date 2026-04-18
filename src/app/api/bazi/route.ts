@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
+import { sanitizeUserInput } from '@/lib/utils/sanitize';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { calculateBazi, WUXING_KEYS, analyzeMingGe } from '@/lib/bazi';
@@ -54,7 +55,10 @@ export async function POST(req: NextRequest) {
     
     const body = await req.json();
     const input = requestSchema.parse(body);
-    
+    if (input.name !== undefined) {
+      input.name = sanitizeUserInput(input.name, 50);
+    }
+
     // 转换时辰（-1 表示不知道，默认午时）
     const shichen = input.birthHour === -1 ? '午时' : (HOUR_TO_SHICHEN[input.birthHour] || '午时');
     

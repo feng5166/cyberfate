@@ -274,13 +274,18 @@ export async function POST(req: NextRequest) {
         }
         throw err;
       }
-    } else if (userId && plan) {
+    } else if (userId) {
       // Stripe 直接支付流程（无 Order）
-      const validPlans = ['daily', 'lifetime', 'yearly'] as const;
-      if (!validPlans.includes(plan)) {
-        console.error('[Webhook] Invalid plan:', plan);
-        return NextResponse.json({ error: 'Invalid plan' }, { status: 400 });
+      // BUG-R2-005: 从 amount_total 反查套餐，不信任 metadata.plan
+      const amountTotal = (checkoutSession as unknown as { amount_total?: number }).amount_total;
+      const resolvedPlanId = amountTotal != null
+        ? (Object.keys(PRICING_CONFIG) as PlanId[]).find((id) => PRICING_CONFIG[id].amount === amountTotal)
+        : undefined;
+      if (!resolvedPlanId) {
+        console.error('[Webhook] Cannot resolve plan from amount_total:', amountTotal);
+        return NextResponse.json({ error: 'Cannot resolve plan from amount' }, { status: 400 });
       }
+      const resolvedPlan = resolvedPlanId;
 
       // 幂等查重：检查是否已有相同 transactionId 的订单
       const existingOrder = await prisma.order.findFirst({
@@ -297,7 +302,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'User not found' }, { status: 400 });
       }
 
-      const duration = isLifetimePlan(plan) ? LIFETIME_DURATION : PRICING_CONFIG[plan as PlanId]?.duration ?? 1;
+      const duration = isLifetimePlan(resolvedPlan) ? LIFETIME_DURATION : PRICING_CONFIG[resolvedPlan]?.duration ?? 1;
       // BUG-007: 续费从 max(旧expireAt, now) 开始计算，保留剩余天数
       const existingSubForUser = await prisma.subscription.findFirst({
         where: { userId, status: 'active', expireAt: { gt: new Date() } },
@@ -311,8 +316,8 @@ export async function POST(req: NextRequest) {
           await tx.order.create({
             data: {
               userId,
-              plan,
-              amount: PRICING_CONFIG[plan as PlanId]?.amount ?? 0,
+              plan: resolvedPlan,
+              amount: PRICING_CONFIG[resolvedPlan]?.amount ?? 0,
               status: 'paid',
               transactionId: checkoutSession.id,
               paidAt: new Date(),
@@ -328,7 +333,7 @@ export async function POST(req: NextRequest) {
           await tx.subscription.create({
             data: {
               userId,
-              plan,
+              plan: resolvedPlan,
               status: 'active',
               expireAt,
             },
@@ -343,8 +348,8 @@ export async function POST(req: NextRequest) {
         throw err;
       }
     } else {
-      console.error('[Webhook] No orderId or userId/plan in metadata');
-      return NextResponse.json({ error: 'No orderId or userId/plan in metadata' }, { status: 400 });
+      console.error('[Webhook] No orderId or userId in metadata');
+      return NextResponse.json({ error: 'No orderId or userId in metadata' }, { status: 400 });
     }
   }
 

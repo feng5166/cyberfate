@@ -34,8 +34,10 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: '邮箱格式不正确' }, { status: 400 })
   }
 
+  const normalizedEmail = email.toLowerCase().trim();
+
   // nickname 长度限制
-  const safeNickname = (nickname || email.split('@')[0]).trim().slice(0, 30);
+  const safeNickname = (nickname || normalizedEmail.split('@')[0]).trim().slice(0, 30);
   if (!safeNickname || safeNickname.length < 1) {
     return Response.json({ error: '昵称不能为空' }, { status: 400 })
   }
@@ -45,7 +47,7 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: '昵称包含非法字符' }, { status: 400 })
   }
 
-  const existing = await prisma.user.findUnique({ where: { email } })
+  const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } })
   if (existing) {
     return Response.json({ error: '该邮箱已注册' }, { status: 409 })
   }
@@ -54,7 +56,7 @@ export async function POST(request: NextRequest) {
 
   const user = await prisma.user.create({
     data: {
-      email,
+      email: normalizedEmail,
       passwordHash,
       nickname: safeNickname,
     },

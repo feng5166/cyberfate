@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import {
   buildBaziPrompt,
   buildDailyPrompt,
@@ -61,11 +62,12 @@ export async function generateBaziAnalysis(
   birthInfo?: { birthDate: string; birthHour: number }
 ): Promise<BaziAnalysis & { _source: 'deepseek' | 'fallback' | 'cache' }> {
   
-  // 1. 构建缓存 key（基于出生日期和时辰，BUG-015: 移除姓名避免 PII 泄漏和结果串号）
+  // 1. 构建缓存 key（hash摘要，避免明文PII写入Redis）
   let cacheKey = 'bazi:default';
   if (birthInfo) {
     const { birthDate, birthHour } = birthInfo;
-    cacheKey = `bazi:${birthDate}:${birthHour}`;
+    const hash = crypto.createHash('sha256').update(JSON.stringify({ birthDate, birthHour, gender: undefined })).digest('hex').slice(0, 16);
+    cacheKey = `bazi:${hash}`;
   }
   
   // 2. 尝试从 Redis 读取
