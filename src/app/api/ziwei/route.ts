@@ -64,9 +64,29 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // BUG-045: 年份范围校验
+    const birthYear = parseInt(birthDate.slice(0, 4), 10);
+    if (birthYear < 1900 || birthYear > 2030) {
+      return NextResponse.json(
+        { error: '出生年份须在 1900 至 2030 之间' },
+        { status: 400 },
+      );
+    }
+
     const birthHour = parseBirthHour(body);
     const gender = parseGender(body);
-    const longitude = typeof body.longitude === 'number' ? body.longitude as number : undefined;
+
+    // BUG-032: 经度校验 -180 到 180
+    let longitude: number | undefined;
+    if (body.longitude !== undefined) {
+      if (typeof body.longitude !== 'number' || body.longitude < -180 || body.longitude > 180) {
+        return NextResponse.json(
+          { error: '经度须在 -180 到 180 之间' },
+          { status: 400 },
+        );
+      }
+      longitude = body.longitude as number;
+    }
     const name = (body.name as string) || undefined;
 
     const input: ZiweiInput = {

@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { getServerSession } from 'next-auth'
 import { redirect } from 'next/navigation'
 import { authOptions } from '@/lib/auth'
@@ -40,16 +41,18 @@ export default async function ProfilePage() {
   })() : null;
 
   return (
-    <ProfileClient
-      email={email}
-      image={session.user.image ?? null}
-      vip={vip}
-      subscriptionPlan={subscription?.plan ?? null}
-      subscriptionDetail={subscriptionDetail}
-      expireAt={subscription?.expireAt?.toISOString().slice(0, 10) ?? null}
-      baziAiCount={quota.baziAiCount}
-      limit={vip ? null : quota.limit}
-      subscriptionStart={subscription?.startAt?.toISOString() ?? null}
-    />
+    <Suspense fallback={null}>
+      <ProfileClient
+        email={email}
+        image={session.user.image ?? null}
+        vip={vip}
+        subscriptionPlan={subscription?.plan ?? null}
+        subscriptionDetail={subscriptionDetail}
+        expireAt={subscription?.expireAt?.toISOString().slice(0, 10) ?? null}
+        baziAiCount={quota.baziAiCount}
+        limit={vip ? null : quota.limit}
+        subscriptionStart={subscription?.startAt?.toISOString() ?? null}
+      />
+    </Suspense>
   )
 }

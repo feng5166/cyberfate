@@ -59,6 +59,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '降级只能选择更低档套餐' }, { status: 400 })
   }
 
+  if (subscription.pendingPlan && subscription.pendingPlan !== new_plan) {
+    console.warn(
+      `[downgrade] subscription ${subscription.id}: overwriting pendingPlan "${subscription.pendingPlan}" -> "${new_plan}"`
+    )
+  }
+
   await prisma.subscription.update({
     where: { id: subscription.id },
     data: {

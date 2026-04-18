@@ -48,12 +48,21 @@ try {
   // 静默失败，使用 getRedis() 延迟初始化
 }
 
-export const redis: Redis | Record<string, never> = _redis ?? new Proxy({} as any, {
+// BUG-013: 始终通过 Proxy 包装，确保 JSON.parse/stringify 异常被捕获并记录，返回 null 而非静默吞掉
+export const redis: Record<string, (...args: unknown[]) => Promise<unknown>> = new Proxy({} as any, {
   get(_target: any, prop: string) {
     return (...args: any[]) => {
       const r = getRedis();
-      if (!r) return Promise.reject(new Error('Redis 未初始化，请检查环境变量'));
-      return (r as any)[prop](...args);
+      if (!r) {
+        console.warn(`[Redis] 操作 ${prop} 跳过：Redis 未初始化`);
+        return Promise.resolve(null);
+      }
+      return Promise.resolve()
+        .then(() => (r as any)[prop](...args))
+        .catch((err: unknown) => {
+          console.error(`[Redis] 操作 ${prop} 失败:`, err);
+          return null;
+        });
     };
   },
 });

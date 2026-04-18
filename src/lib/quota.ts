@@ -1,5 +1,6 @@
 // 配额管理工具
 import { prisma } from '@/lib/db'
+import { isVip as isUserVip } from '@/lib/subscription'
 
 // BUG-031: 用北京时间 (UTC+8) 计算日期，避免 0:00-7:59 算成昨天
 function getBeijingDateString(): string {
@@ -7,6 +8,9 @@ function getBeijingDateString(): string {
   const beijingTime = new Date(now.getTime() + 8 * 60 * 60 * 1000)
   return beijingTime.toISOString().split('T')[0]
 }
+
+// BUG-010: VIP 判断统一使用 subscription.ts 的 isVip（re-exported as isUserVip）
+export { isUserVip }
 
 /**
  * 检查并原子扣减用户今日八字 AI 解读配额
@@ -17,15 +21,9 @@ export async function checkBaziQuota(userId: string): Promise<{
   limit: number
   isVip: boolean
 }> {
-  const subscription = await prisma.subscription.findFirst({
-    where: {
-      userId,
-      status: 'active',
-      expireAt: { gt: new Date() }
-    }
-  })
+  const vip = await isUserVip(userId)
 
-  if (subscription) {
+  if (vip) {
     return { hasQuota: true, limit: -1, isVip: true }
   }
 
@@ -60,15 +58,9 @@ export async function useBaziQuota(userId: string): Promise<boolean> {
  * 仅检查八字配额（不扣减），用于 fallback 场景的预检
  */
 export async function peekBaziQuota(userId: string): Promise<{ hasQuota: boolean; isVip: boolean }> {
-  const subscription = await prisma.subscription.findFirst({
-    where: {
-      userId,
-      status: 'active',
-      expireAt: { gt: new Date() }
-    }
-  })
+  const vip = await isUserVip(userId)
 
-  if (subscription) {
+  if (vip) {
     return { hasQuota: true, isVip: true }
   }
 

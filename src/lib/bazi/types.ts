@@ -75,6 +75,8 @@ export interface DayunResult {
   gan: TianGan;
   zhi: DiZhi;
   wuxing: WuXing;
+  /** 起运年龄为估算值（非精确节气数日法） */
+  estimated?: true;
 }
 
 // 大运时间轴项

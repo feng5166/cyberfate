@@ -27,7 +27,10 @@ const HOUR_TO_SHICHEN: Record<number, string> = {
 const requestSchema = z.object({
   name: z.string().optional(),
   gender: z.enum(['male', 'female', 'unknown']).optional(),
-  birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '日期格式应为 YYYY-MM-DD'),
+  birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '日期格式应为 YYYY-MM-DD').refine(
+    (d) => { const y = parseInt(d.slice(0, 4), 10); return y >= 1900 && y <= 2030; },
+    '出生年份须在 1900 至 2030 之间'
+  ),
   birthHour: z.number().int().min(-1).max(11),
   birthPlace: z.string().optional(),
 });

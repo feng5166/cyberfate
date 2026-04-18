@@ -110,6 +110,14 @@ export async function resetPassword(
   return { success: true }
 }
 
+// BUG-020: 清理过期 token，使用 deleteMany 避免 cursor 分页泄漏
+export async function cleanExpiredTokens(): Promise<number> {
+  const result = await prisma.passwordResetToken.deleteMany({
+    where: { expiresAt: { lt: new Date() } },
+  })
+  return result.count
+}
+
 // Security Fix: SEC-020 — 校验重置 URL 域名
 const ALLOWED_ORIGINS = ['https://www.cyberfate.me', 'https://cyberfate.me', 'http://localhost:3000']
 

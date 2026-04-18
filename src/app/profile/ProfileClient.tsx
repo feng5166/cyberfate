@@ -65,7 +65,7 @@ export default function ProfileClient({
             subscription={subscriptionDetail}
             onBack={() => {
               setShowManagePanel(false)
-              router.refresh()
+              router.replace('/profile')
             }}
           />
         </div>

@@ -61,12 +61,11 @@ export async function generateBaziAnalysis(
   birthInfo?: { birthDate: string; birthHour: number }
 ): Promise<BaziAnalysis & { _source: 'deepseek' | 'fallback' | 'cache' }> {
   
-  // 1. 构建缓存 key（基于出生日期、时辰和姓名）
+  // 1. 构建缓存 key（基于出生日期和时辰，BUG-015: 移除姓名避免 PII 泄漏和结果串号）
   let cacheKey = 'bazi:default';
   if (birthInfo) {
     const { birthDate, birthHour } = birthInfo;
-    const nameSlug = name?.trim() || '_anonymous';
-    cacheKey = `bazi:${birthDate}:${birthHour}:${nameSlug}`;
+    cacheKey = `bazi:${birthDate}:${birthHour}`;
   }
   
   // 2. 尝试从 Redis 读取

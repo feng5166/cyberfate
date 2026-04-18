@@ -24,19 +24,24 @@ export async function POST(req: NextRequest) {
     const unauthorized = await requireAdmin();
     if (unauthorized) return unauthorized;
 
-    const { email } = await req.json();
-    
+    const body = await req.json();
+    const { email, page = 1 } = body;
+
     if (!email) {
       return NextResponse.json({ error: '缺少邮箱' }, { status: 400 });
     }
+
+    const PAGE_SIZE = 20;
+    const skip = (Math.max(1, page) - 1) * PAGE_SIZE;
 
     const normalizedEmail = email.toLowerCase().trim();
     const user = await prisma.user.findUnique({
       where: { email: normalizedEmail },
       include: {
-        orders: { orderBy: { createdAt: 'desc' } },
-        subscriptions: { orderBy: { createdAt: 'desc' } }
-      }
+        // BUG-023: 加分页，防止大量数据 OOM
+        orders: { orderBy: { createdAt: 'desc' }, take: PAGE_SIZE, skip },
+        subscriptions: { orderBy: { createdAt: 'desc' }, take: PAGE_SIZE, skip },
+      },
     });
 
     if (!user) {

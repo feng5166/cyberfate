@@ -54,14 +54,6 @@ export async function setCache(key: string, data: any, ttl?: number): Promise<vo
 }
 
 /**
- * 清空缓存（调试用）
- */
-export async function clearCache(pattern = '*'): Promise<void> {
-  console.warn('[Clear Cache] Redis 不支持全局 clear，请用 pattern 删除');
-  // Redis 没有全局 clear，需要扫描 key 逐个删除
-}
-
-/**
  * 缓存统计（占位）
  */
 export async function getCacheStats() {

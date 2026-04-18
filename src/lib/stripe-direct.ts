@@ -20,12 +20,18 @@ async function stripeRequest<T = unknown>(
     return { ok: false, status: 0, error: 'STRIPE_SECRET_KEY 未配置' };
   }
 
+  const isWrite = options?.method && options.method !== 'GET';
+  const idempotencyHeaders: Record<string, string> = isWrite
+    ? { 'Idempotency-Key': crypto.randomUUID() }
+    : {};
+
   const url = `${STRIPE_API_BASE}${endpoint}`;
   const res = await fetch(url, {
     ...options,
     headers: {
       Authorization: `Bearer ${key}`,
       'Content-Type': 'application/x-www-form-urlencoded',
+      ...idempotencyHeaders,
       ...options?.headers,
     },
   });

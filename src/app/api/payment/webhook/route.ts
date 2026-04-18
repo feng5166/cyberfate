@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import crypto from 'crypto';
 import { addDays } from 'date-fns';
+import { isLifetimePlan, LIFETIME_DURATION, PRICING_CONFIG, type PlanId } from '@/lib/pricing-config';
 
 // Stripe 签名验证（参考官方 SDK 实现）
 function verifyStripeWebhook(
@@ -175,20 +176,46 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ received: true });
   }
 
-  // BUG-008: customer.subscription.deleted → sync DB status
+  // BUG-043 + BUG-008: customer.subscription.deleted → sync DB status
   if (event.type === 'customer.subscription.deleted') {
     const stripeSub = event.data.object as StripeSubscription;
     const userId = stripeSub.metadata?.userId;
 
     if (userId) {
-      await prisma.subscription.updateMany({
+      const result = await prisma.subscription.updateMany({
         where: { userId, status: 'active' },
         data: { status: 'expired' },
       });
-      console.log(`[Webhook] customer.subscription.deleted: expired subscriptions for userId=${userId}`);
+      console.log(`[Webhook] customer.subscription.deleted: expired ${result.count} subscription(s) for userId=${userId}`);
     } else {
       console.warn('[Webhook] customer.subscription.deleted: no userId in subscription metadata', stripeSub.id);
     }
+    return NextResponse.json({ received: true });
+  }
+
+  // BUG-009: invoice.paid — 仅处理独立 invoice（非 checkout session），避免与 checkout.session.completed 重复创建订阅
+  if (event.type === 'invoice.paid') {
+    const invoice = event.data.object as { subscription?: string; metadata?: { orderId?: string; userId?: string } };
+    const invoiceUserId = invoice.metadata?.userId;
+    const invoiceOrderId = invoice.metadata?.orderId;
+
+    if (invoiceOrderId) {
+      // 有 orderId 说明走了 checkout 流程，checkout.session.completed 已处理，跳过
+      console.log(`[Webhook] invoice.paid skipped (orderId=${invoiceOrderId}, handled by checkout.session.completed)`);
+      return NextResponse.json({ received: true });
+    }
+
+    if (invoiceUserId) {
+      // 检查是否已存在同 invoiceId 对应的订单记录
+      const invoiceId = (event.data.object as { id: string }).id;
+      const existing = await prisma.order.findFirst({ where: { transactionId: invoiceId } });
+      if (existing) {
+        console.log(`[Webhook] invoice.paid already processed: ${invoiceId}`);
+        return NextResponse.json({ received: true });
+      }
+      console.log(`[Webhook] invoice.paid: no orderId, userId=${invoiceUserId} — consider handling separately`);
+    }
+
     return NextResponse.json({ received: true });
   }
 
@@ -205,39 +232,48 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ message: 'Already processed' });
       }
 
-      await prisma.$transaction(async (tx) => {
-        await tx.order.update({
-          where: { id: orderId },
-          data: {
-            status: 'paid',
-            transactionId: checkoutSession.payment_intent as string,
-            paidAt: new Date(),
-          },
-        });
+      try {
+        await prisma.$transaction(async (tx) => {
+          await tx.order.update({
+            where: { id: orderId },
+            data: {
+              status: 'paid',
+              transactionId: checkoutSession.payment_intent as string,
+              paidAt: new Date(),
+            },
+          });
 
-        const duration = { daily: 1, yearly: 365, lifetime: 36500 }[order.plan];
-        // BUG-007: 续费从 max(旧expireAt, now) 开始计算，保留剩余天数
-        const existingSub = await tx.subscription.findFirst({
-          where: { userId: order.userId, status: 'active', expireAt: { gt: new Date() } },
-          orderBy: { expireAt: 'desc' },
-        });
-        const baseDate = existingSub && existingSub.expireAt > new Date() ? existingSub.expireAt : new Date();
-        const expireAt = addDays(baseDate, duration);
+          const duration = isLifetimePlan(order.plan) ? LIFETIME_DURATION : PRICING_CONFIG[order.plan as PlanId]?.duration ?? 1;
+          // BUG-007: 续费从 max(旧expireAt, now) 开始计算，保留剩余天数
+          const existingSub = await tx.subscription.findFirst({
+            where: { userId: order.userId, status: 'active', expireAt: { gt: new Date() } },
+            orderBy: { expireAt: 'desc' },
+          });
+          const baseDate = existingSub && existingSub.expireAt > new Date() ? existingSub.expireAt : new Date();
+          const expireAt = addDays(baseDate, duration);
 
-        await tx.subscription.updateMany({
-          where: { userId: order.userId, status: 'active' },
-          data: { status: 'expired' },
-        });
+          await tx.subscription.updateMany({
+            where: { userId: order.userId, status: 'active' },
+            data: { status: 'expired' },
+          });
 
-        await tx.subscription.create({
-          data: {
-            userId: order.userId,
-            plan: order.plan,
-            status: 'active',
-            expireAt,
-          },
+          await tx.subscription.create({
+            data: {
+              userId: order.userId,
+              plan: order.plan,
+              status: 'active',
+              expireAt,
+            },
+          });
         });
-      });
+      } catch (err: unknown) {
+        // P2002: transactionId unique constraint — duplicate event, already processed
+        if ((err as { code?: string })?.code === 'P2002') {
+          console.warn('[Webhook] Duplicate transactionId for orderId:', orderId);
+          return NextResponse.json({ message: 'Already processed' });
+        }
+        throw err;
+      }
     } else if (userId && plan) {
       // Stripe 直接支付流程（无 Order）
       const validPlans = ['daily', 'lifetime', 'yearly'] as const;
@@ -261,7 +297,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'User not found' }, { status: 400 });
       }
 
-      const duration = { daily: 1, yearly: 365, lifetime: 36500 }[plan];
+      const duration = isLifetimePlan(plan) ? LIFETIME_DURATION : PRICING_CONFIG[plan as PlanId]?.duration ?? 1;
       // BUG-007: 续费从 max(旧expireAt, now) 开始计算，保留剩余天数
       const existingSubForUser = await prisma.subscription.findFirst({
         where: { userId, status: 'active', expireAt: { gt: new Date() } },

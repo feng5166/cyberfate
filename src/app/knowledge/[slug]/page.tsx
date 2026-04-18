@@ -22,7 +22,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const article = knowledgeData[slug];
+  const article = knowledgeData[slug.toLowerCase()];
   if (!article) {
     return { title: '页面不存在 | CyberFate' };
   }
@@ -46,7 +46,7 @@ export default async function KnowledgeDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const article = knowledgeData[slug];
+  const article = knowledgeData[slug.toLowerCase()];
 
   if (!article) {
     notFound();

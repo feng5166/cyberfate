@@ -189,10 +189,10 @@ function getFallbackDayun(): DayunResult {
 }
 
 /**
- * 获取当前大运（简化版）
+ * 获取当前大运（简化版 — 起运年龄为估算值，非精确节气数日法）
  * - 以月柱干支为起点
  * - 阳男阴女顺行，阴男阳女逆行
- * - 起运年龄采用 3-5 岁简化估算，每步 10 年
+ * - 起运年龄采用 3-5 岁简化估算（BUG-017：如需精确，改用节气 API 计算），每步 10 年
  */
 export function getCurrentDayun(birthDate: string, gender: Gender): DayunResult {
   try {
@@ -216,7 +216,7 @@ export function getCurrentDayun(birthDate: string, gender: Gender): DayunResult 
     const now = new Date();
     const age = getAgeByBirthDate(birth, now);
 
-    // 起运年龄简化到 3-5 岁，避免固定值导致偏差过大
+    // 估算：3-5 岁，非精确节气数日法（BUG-017）
     const startAge = 3 + ((month + day) % 3);
     const offset = age < startAge ? 0 : Math.floor((age - startAge) / 10) + 1;
 
@@ -234,6 +234,7 @@ export function getCurrentDayun(birthDate: string, gender: Gender): DayunResult 
       gan,
       zhi,
       wuxing: TIANGAN_WUXING[gan],
+      estimated: true,
     };
   } catch {
     return getFallbackDayun();
@@ -281,7 +282,7 @@ export function getDayunTimeline(birthDate: string, gender: Gender): DayunTimeli
     const now = new Date();
     const currentAge = getAgeByBirthDate(birth, now);
 
-    // 起运年龄简化到 3-5 岁
+    // 估算：3-5 岁，非精确节气数日法（BUG-017）
     const startAge = 3 + ((month + day) % 3);
 
     const monthGanIndex = TIANGAN_LIST.indexOf(monthGan);

@@ -1,5 +1,8 @@
 export type PlanId = 'daily' | 'yearly' | 'lifetime';
 
+// BUG-014: 终身版 duration 常量，全链路统一使用而非硬编码 36500
+export const LIFETIME_DURATION = 36500;
+
 export interface PlanConfig {
   id: PlanId;
   name: string;

@@ -74,8 +74,16 @@ export const authOptions: NextAuthOptions = {
               avatar: user.image,
             },
           })
+        } else {
+          // BUG-003: 邮箱已存在（含密码账号），link Google — 更新头像但不覆盖 passwordHash
+          if (!existingUser.avatar && user.image) {
+            await prisma.user.update({
+              where: { id: existingUser.id },
+              data: { avatar: user.image },
+            })
+          }
         }
-        
+
         // 将数据库 ID 存到 user 对象
         user.id = existingUser.id
       }
@@ -127,18 +135,17 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id as string
         const dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },
-          select: { avatar: true },
-        })
-        session.user.image = dbUser?.avatar ?? null
-
-        const activeSubscription = await prisma.subscription.findFirst({
-          where: {
-            userId: token.id as string,
-            status: 'active',
-            expireAt: { gt: new Date() },
+          select: {
+            avatar: true,
+            subscriptions: {
+              where: { status: 'active', expireAt: { gt: new Date() } },
+              select: { id: true },
+              take: 1,
+            },
           },
         })
-        session.user.isSubscribed = !!activeSubscription
+        session.user.image = dbUser?.avatar ?? null
+        session.user.isSubscribed = (dbUser?.subscriptions?.length ?? 0) > 0
       }
       return session
     },
