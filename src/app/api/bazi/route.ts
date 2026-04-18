@@ -4,7 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { calculateBazi, WUXING_KEYS, analyzeMingGe } from '@/lib/bazi';
 import { generateBaziAnalysis } from '@/lib/ai';
-import { useBaziQuota } from '@/lib/quota';
+import { peekBaziQuota, deductBaziQuota } from '@/lib/quota';
 import type { BaziAnalysis, FiveDimensions, MingGeInfo, PillarRecord, WuxingCount } from '@/lib/bazi/types';
 
 // 时辰映射：数字 -> 时辰名称（不含 -1，单独处理）
@@ -37,12 +37,12 @@ export async function POST(req: NextRequest) {
     // 检查登录状态和配额（游客可以试用）
     const session = await getServerSession(authOptions);
     
-    // 登录用户检查配额
+    // BUG-012: 先仅检查配额（不扣减），AI fallback 不扣配额
     if (session?.user?.id) {
-      const hasQuota = await useBaziQuota(session.user.id);
-      
+      const { hasQuota } = await peekBaziQuota(session.user.id);
+
       if (!hasQuota) {
-        return Response.json({ 
+        return Response.json({
           error: 'QUOTA_EXCEEDED',
           message: '今日免费解读次数已用完，请升级 VIP'
         }, { status: 403 });
@@ -78,6 +78,14 @@ export async function POST(req: NextRequest) {
     // 将分析对象转换为可读文本
     const aiAnalysis = formatAnalysis(analysisObj);
     const _aiSource = (analysisObj as any)._source ?? 'unknown';
+
+    // BUG-012: 仅在非 fallback 时扣减配额
+    if (session?.user?.id && _aiSource !== 'fallback') {
+      const { isVip } = await peekBaziQuota(session.user.id);
+      if (!isVip) {
+        await deductBaziQuota(session.user.id);
+      }
+    }
     
     // 处理时柱（可能为 null）
     // Provide a valid placeholder pillar when hour data is unavailable.

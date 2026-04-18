@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { redis } from '@/lib/cache/redis';
 
 // GET: 获取用户出生信息
 export async function GET() {
@@ -28,10 +29,26 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const { name, birthDate, birthHour, gender } = body;
 
+  const oldUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { birthDate: true, birthHour: true, nickname: true },
+  });
+
   await prisma.user.update({
     where: { id: session.user.id },
     data: { nickname: name, birthDate, birthHour, gender },
   });
+
+  // BUG-028: 生日变更时清除旧的 AI 缓存
+  if (oldUser?.birthDate && oldUser.birthDate !== birthDate) {
+    try {
+      const oldNameSlug = oldUser.nickname?.trim() || '_anonymous';
+      const oldCacheKey = `bazi:${oldUser.birthDate}:${oldUser.birthHour ?? -1}:${oldNameSlug}`;
+      await (redis as any).del(oldCacheKey);
+    } catch {
+      // 缓存清除失败不阻塞主流程
+    }
+  }
 
   return NextResponse.json({ success: true });
 }

@@ -160,10 +160,15 @@ function getAgeByBirthDate(birthDate: Date, now: Date): number {
   return Math.max(0, age);
 }
 
+function getBeijingNow(): Date {
+  const now = new Date();
+  return new Date(now.getTime() + 8 * 60 * 60 * 1000);
+}
+
 function getFallbackDayun(): DayunResult {
   try {
-    const today = new Date();
-    const solar = Solar.fromYmd(today.getFullYear(), today.getMonth() + 1, today.getDate());
+    const today = getBeijingNow();
+    const solar = Solar.fromYmd(today.getUTCFullYear(), today.getUTCMonth() + 1, today.getUTCDate());
     const lunar = solar.getLunar();
     const eightChar = lunar.getEightChar();
     const gan = eightChar.getYearGan() as TianGan;

@@ -55,7 +55,8 @@ interface CachedTarotReading {
 }
 
 async function checkQuota(userId: string, spread: TarotSpread): Promise<{ allowed: boolean; remaining: number }> {
-  const today = new Date().toISOString().split('T')[0];
+  const now = new Date();
+  const today = new Date(now.getTime() + 8 * 60 * 60 * 1000).toISOString().split('T')[0];
 
   let quota = await prisma.usageQuota.findUnique({
     where: { userId_date: { userId, date: today } },
@@ -74,7 +75,8 @@ async function checkQuota(userId: string, spread: TarotSpread): Promise<{ allowe
 }
 
 async function useQuota(userId: string, spread: TarotSpread) {
-  const today = new Date().toISOString().split('T')[0];
+  const now = new Date();
+  const today = new Date(now.getTime() + 8 * 60 * 60 * 1000).toISOString().split('T')[0];
 
   if (spread === 'single') {
     await prisma.usageQuota.upsert({

@@ -47,10 +47,9 @@ export async function POST(req: NextRequest) {
       const totalDays = PRICING_CONFIG[currentPlan].duration;
       const remainingDays = Math.ceil((expireAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
       
-      // 补差价 = (新套餐价 - 旧套餐价) × (剩余天数 / 旧套餐总天数)
-      const proratedAmount = Math.round(
-        (newPrice - currentPrice) * (remainingDays / totalDays)
-      );
+      // 补差价 = 新套餐价 - 旧套餐剩余价值
+      const remainingValue = Math.round(currentPrice * (remainingDays / totalDays));
+      const proratedAmount = Math.max(0, newPrice - remainingValue);
 
       const outTradeNo = `CF${Date.now()}${Math.random().toString(36).slice(2, 9)}`;
       const newPlanConfig = PRICING_CONFIG[new_plan as PlanId];

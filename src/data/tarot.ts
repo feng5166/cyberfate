@@ -36,8 +36,17 @@ function addOrientation(card: TarotCard): CardWithOrientation {
   };
 }
 
+function fisherYatesShuffle<T>(arr: T[]): T[] {
+  const result = [...arr];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
 export function drawMajorArcana(count: number): CardWithOrientation[] {
-  const shuffled = [...majorArcanaCards].sort(() => Math.random() - 0.5);
+  const shuffled = fisherYatesShuffle(majorArcanaCards);
   return shuffled.slice(0, count).map(addOrientation);
 }
 
@@ -47,7 +56,7 @@ export function drawRandomCards(count: number): CardWithOrientation[] {
     return drawMajorArcana(count);
   }
 
-  const shuffled = [...allCards].sort(() => Math.random() - 0.5);
+  const shuffled = fisherYatesShuffle(allCards);
   return shuffled.slice(0, count).map(addOrientation);
 }
 

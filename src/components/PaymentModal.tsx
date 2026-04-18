@@ -72,14 +72,15 @@ export function PaymentModal({ planName, price, onClose, onSuccess }: PaymentMod
   }, [stopPolling]);
 
   const handlePay = async () => {
+    if (loading) return;
+    setLoading(true);
     setError(null);
-    
+
     if (!session) {
+      setLoading(false);
       router.push('/auth/login');
       return;
     }
-
-    setLoading(true);
     try {
       const planKey = PLAN_NAME_TO_ID[planName] ?? 'daily';
       

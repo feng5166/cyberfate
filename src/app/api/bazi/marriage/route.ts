@@ -304,6 +304,22 @@ export async function POST(req: NextRequest) {
 
   const { maleName, maleBirthDate, maleBirthHour, femaleName, femaleBirthDate, femaleBirthHour } = await req.json();
 
+  // BUG-018: 校验日期合法性（格式 + 年份范围 1900-2030）
+  function isValidBirthDate(dateStr: unknown): boolean {
+    if (typeof dateStr !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return false;
+    const ts = Date.parse(dateStr);
+    if (isNaN(ts)) return false;
+    const year = new Date(ts).getUTCFullYear();
+    return year >= 1900 && year <= 2030;
+  }
+
+  if (!isValidBirthDate(maleBirthDate)) {
+    return NextResponse.json({ error: '男方出生日期无效，请使用 YYYY-MM-DD 格式，年份范围 1900-2030' }, { status: 400 });
+  }
+  if (!isValidBirthDate(femaleBirthDate)) {
+    return NextResponse.json({ error: '女方出生日期无效，请使用 YYYY-MM-DD 格式，年份范围 1900-2030' }, { status: 400 });
+  }
+
   // [安全修复] 输入清洗：防止 prompt injection
   const sanitize = (s: string): string => {
     if (!s) return '';

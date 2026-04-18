@@ -82,14 +82,6 @@ function secureCompare(a: string, b: string): boolean {
   return crypto.timingSafeEqual(bufA, bufB);
 }
 
-interface StripeEvent {
-  id: string;
-  type: string;
-  data: {
-    object: StripeCheckoutSession;
-  };
-}
-
 interface StripeCheckoutSession {
   id: string;
   object: string;
@@ -101,6 +93,33 @@ interface StripeCheckoutSession {
     action?: string;
   };
   payment_intent?: string;
+}
+
+interface StripeCharge {
+  id: string;
+  object: 'charge';
+  payment_intent?: string;
+  metadata?: {
+    orderId?: string;
+    userId?: string;
+  };
+}
+
+interface StripeSubscription {
+  id: string;
+  object: 'subscription';
+  customer?: string;
+  metadata?: {
+    userId?: string;
+  };
+}
+
+interface StripeEvent {
+  id: string;
+  type: string;
+  data: {
+    object: StripeCheckoutSession | StripeCharge | StripeSubscription;
+  };
 }
 
 export async function POST(req: NextRequest) {
@@ -129,8 +148,52 @@ export async function POST(req: NextRequest) {
 
   const event = verification.event;
 
+  // BUG-008: charge.refunded → mark subscription as expired
+  if (event.type === 'charge.refunded') {
+    const charge = event.data.object as StripeCharge;
+    const orderId = charge.metadata?.orderId;
+    const userId = charge.metadata?.userId;
+
+    if (orderId) {
+      const order = await prisma.order.findUnique({ where: { id: orderId } });
+      if (order) {
+        await prisma.subscription.updateMany({
+          where: { userId: order.userId, status: 'active' },
+          data: { status: 'expired' },
+        });
+        console.log(`[Webhook] charge.refunded: expired subscriptions for orderId=${orderId}, userId=${order.userId}`);
+      }
+    } else if (userId) {
+      await prisma.subscription.updateMany({
+        where: { userId, status: 'active' },
+        data: { status: 'expired' },
+      });
+      console.log(`[Webhook] charge.refunded: expired subscriptions for userId=${userId}`);
+    } else {
+      console.warn('[Webhook] charge.refunded: no orderId or userId in charge metadata', charge.id);
+    }
+    return NextResponse.json({ received: true });
+  }
+
+  // BUG-008: customer.subscription.deleted → sync DB status
+  if (event.type === 'customer.subscription.deleted') {
+    const stripeSub = event.data.object as StripeSubscription;
+    const userId = stripeSub.metadata?.userId;
+
+    if (userId) {
+      await prisma.subscription.updateMany({
+        where: { userId, status: 'active' },
+        data: { status: 'expired' },
+      });
+      console.log(`[Webhook] customer.subscription.deleted: expired subscriptions for userId=${userId}`);
+    } else {
+      console.warn('[Webhook] customer.subscription.deleted: no userId in subscription metadata', stripeSub.id);
+    }
+    return NextResponse.json({ received: true });
+  }
+
   if (event.type === 'checkout.session.completed') {
-    const checkoutSession = event.data.object;
+    const checkoutSession = event.data.object as StripeCheckoutSession;
     const orderId = checkoutSession.metadata?.orderId;
     const userId = checkoutSession.metadata?.userId;
     const plan = checkoutSession.metadata?.plan;
@@ -153,7 +216,13 @@ export async function POST(req: NextRequest) {
         });
 
         const duration = { daily: 1, yearly: 365, lifetime: 36500 }[order.plan];
-        const expireAt = addDays(new Date(), duration);
+        // BUG-007: 续费从 max(旧expireAt, now) 开始计算，保留剩余天数
+        const existingSub = await tx.subscription.findFirst({
+          where: { userId: order.userId, status: 'active', expireAt: { gt: new Date() } },
+          orderBy: { expireAt: 'desc' },
+        });
+        const baseDate = existingSub && existingSub.expireAt > new Date() ? existingSub.expireAt : new Date();
+        const expireAt = addDays(baseDate, duration);
 
         await tx.subscription.updateMany({
           where: { userId: order.userId, status: 'active' },
@@ -193,7 +262,13 @@ export async function POST(req: NextRequest) {
       }
 
       const duration = { daily: 1, yearly: 365, lifetime: 36500 }[plan];
-      const expireAt = addDays(new Date(), duration);
+      // BUG-007: 续费从 max(旧expireAt, now) 开始计算，保留剩余天数
+      const existingSubForUser = await prisma.subscription.findFirst({
+        where: { userId, status: 'active', expireAt: { gt: new Date() } },
+        orderBy: { expireAt: 'desc' },
+      });
+      const baseDateForUser = existingSubForUser && existingSubForUser.expireAt > new Date() ? existingSubForUser.expireAt : new Date();
+      const expireAt = addDays(baseDateForUser, duration);
 
       try {
         await prisma.$transaction(async (tx) => {

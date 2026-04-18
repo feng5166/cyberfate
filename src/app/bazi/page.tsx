@@ -563,6 +563,10 @@ function BaziPageContent() {
     setResult(null);
     setActionMessage('');
 
+    if (!formData.gender) {
+      setError('请选择性别');
+      return;
+    }
     if (!formData.birthDate) {
       setError('请选择出生日期');
       return;

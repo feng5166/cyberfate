@@ -123,7 +123,7 @@ interface TarotDrawResult {
 }
 
 export default function TarotPage() {
-  const { data: session } = useSession();
+  const { data: session, status: authStatus } = useSession();
   const [step, setStep] = useState<Step>('question');
   const [mode, setMode] = useState<ModeId>('classic');
   const [question, setQuestion] = useState('');
@@ -178,6 +178,9 @@ export default function TarotPage() {
   };
 
   const handleModeSelect = (targetMode: ModeId) => {
+    if (targetMode === 'celtic' && authStatus === 'loading') {
+      return;
+    }
     if (targetMode === 'celtic' && !session) {
       window.location.href = '/auth/login?redirect=/tarot';
       return;

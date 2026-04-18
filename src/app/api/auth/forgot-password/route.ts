@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     
     // [安全修复] token 不直接放在 URL query 中，改用 hash fragment
     // 浏览器不会将 # 后面的内容发送到服务器，避免 Referer 泄露
-    const resetUrl = `${baseUrl}/reset-password#${token}`
+    const resetUrl = `${baseUrl}/reset-password#${encodeURIComponent(token)}`
 
     await sendResetEmail(normalizedEmail, resetUrl)
 

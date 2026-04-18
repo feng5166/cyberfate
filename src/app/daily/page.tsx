@@ -134,16 +134,25 @@ export default function DailyPage() {
   const [hasSavedData, setHasSavedData] = useState(false);
   const autoSubmittedRef = useRef(false);
 
-  const fetchFortune = async (birthDate: string, birthHour: string, targetDate: string) => {
+  const fetchFortune = async (birthDate: string, birthHour: string, targetDate: string, gender?: string) => {
     setError('');
     setLoading(true);
     try {
       const response = await fetch('/api/daily', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ birthDate, birthHour: parseInt(birthHour), targetDate }),
+        body: JSON.stringify({ birthDate, birthHour: parseInt(birthHour), targetDate, gender: gender || undefined }),
       });
-      if (!response.ok) throw new Error('获取运势失败');
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        if (response.status === 400 && data.code === 'MISSING_BIRTH_DATE') {
+          setHasSavedData(false);
+          setError('请填写出生日期和时辰后再查看运势');
+        } else {
+          throw new Error(data.message || '获取运势失败');
+        }
+        return;
+      }
       setResult(await response.json());
     } catch (err) {
       setError(err instanceof Error ? err.message : '未知错误');
@@ -161,7 +170,7 @@ export default function DailyPage() {
       setHasSavedData(true);
       if (!autoSubmittedRef.current) {
         autoSubmittedRef.current = true;
-        fetchFortune(saved.birthDate, saved.birthHour, dateStr);
+        fetchFortune(saved.birthDate, saved.birthHour, dateStr, saved.gender || undefined);
       }
     }
   }, []);
@@ -184,7 +193,7 @@ export default function DailyPage() {
       const response = await fetch('/api/daily', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ birthDate: formData.birthDate, birthHour: parseInt(formData.birthHour), targetDate: today }),
+        body: JSON.stringify({ birthDate: formData.birthDate, birthHour: parseInt(formData.birthHour), targetDate: today, gender: formData.gender || undefined }),
       });
       if (!response.ok) throw new Error('获取运势失败');
       setResult(await response.json());
@@ -206,7 +215,7 @@ export default function DailyPage() {
     const dateStr = d.toISOString().split('T')[0];
     if (formData.birthDate && formData.birthHour) {
       setResult(null);
-      fetchFortune(formData.birthDate, formData.birthHour, dateStr);
+      fetchFortune(formData.birthDate, formData.birthHour, dateStr, formData.gender || undefined);
     }
   };
 
@@ -223,13 +232,19 @@ export default function DailyPage() {
 
         {/* 输入表单（紧凑版） */}
         {!hasSavedData && !result && (
-          <Card hover={false} className="max-w-[500px mx-auto mb-8">
+          <Card hover={false} className="max-w-[500px] mx-auto mb-8">
             <form onSubmit={handleSubmit} className="space-y-5">
               <p className="text-sm text-brand-gray text-center mb-4">输入出生信息获取专属运势</p>
-              <Select label="出生日期" options={[
-                { value: '', label: '请选择' },
-                ...Array.from({ length: 31 }, (_, i) => ({ value: `${i + 1}`, label: `${i + 1}日` })),
-              ]} value={formData.birthDate} onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })} required />
+              <div>
+                <label className="block text-sm font-medium text-brand-black mb-1.5">出生日期</label>
+                <input
+                  type="date"
+                  required
+                  value={formData.birthDate}
+                  onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-black"
+                />
+              </div>
               <Select label="出生时辰" options={shichenOptions} value={formData.birthHour} onChange={(e) => setFormData({ ...formData, birthHour: e.target.value })} required />
               {error && <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">{error}</div>}
               <Button type="submit" variant="primary" loading={loading} className="w-full">查看{currentDayText.short}运势</Button>

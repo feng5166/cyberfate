@@ -47,6 +47,7 @@ export async function POST(req: NextRequest) {
         autoRenew: false,
         cancelAtPeriodEnd: true,
         cancelFeedback: feedback || null,
+        cancelledAt: new Date(),
       }
     });
 
