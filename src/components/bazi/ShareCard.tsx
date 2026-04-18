@@ -21,6 +21,24 @@ export function ShareCard({ pillars, dayMaster, zodiac, summary, className }: Sh
 
   const baziText = `${pillars.year.gan}${pillars.year.zhi} ${pillars.month.gan}${pillars.month.zhi} ${pillars.day.gan}${pillars.day.zhi} ${pillars.hour.gan}${pillars.hour.zhi}`;
 
+  const fallbackCopyText = () => {
+    const text = `我的八字命盘\n${baziText}\n日主：${dayMaster} | 生肖：${zodiac}\n\n${summary || ''}\n\n访问 CyberFate.me 查看你的命盘`;
+    navigator.clipboard.writeText(text).then(() => {
+      alert('图片生成失败，已将命盘信息复制到剪贴板');
+    }).catch(() => {
+      alert('生成失败，请重试');
+    });
+  };
+
+  const downloadBlob = (blob: Blob) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `cyberfate-bazi-${Date.now()}.png`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const handleGenerate = async () => {
     if (!cardRef.current || isGenerating) return;
 
@@ -34,27 +52,19 @@ export function ShareCard({ pillars, dayMaster, zodiac, summary, className }: Sh
         useCORS: true,
       });
 
-      // 转换为 Blob
       canvas.toBlob((blob) => {
         if (!blob) {
-          alert('图片生成失败，请重试');
+          fallbackCopyText();
           setIsGenerating(false);
           return;
         }
 
-        // 下载图片
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `cyberfate-bazi-${Date.now()}.png`;
-        a.click();
-        URL.revokeObjectURL(url);
-
+        downloadBlob(blob);
         setIsGenerating(false);
       }, 'image/png');
     } catch (error) {
       console.error('生成分享卡片失败:', error);
-      alert('生成失败，请重试');
+      fallbackCopyText();
       setIsGenerating(false);
     }
   };
@@ -74,7 +84,7 @@ export function ShareCard({ pillars, dayMaster, zodiac, summary, className }: Sh
 
       canvas.toBlob(async (blob) => {
         if (!blob) {
-          alert('图片生成失败，请重试');
+          fallbackCopyText();
           setIsGenerating(false);
           return;
         }
@@ -85,16 +95,17 @@ export function ShareCard({ pillars, dayMaster, zodiac, summary, className }: Sh
           ]);
           setCopied(true);
           setTimeout(() => setCopied(false), 2000);
-        } catch (err) {
-          console.error('复制失败:', err);
-          alert('复制失败，请使用下载功能');
+        } catch {
+          // clipboard.write not supported — fallback to download
+          downloadBlob(blob);
+          alert('您的浏览器不支持复制图片，已为您下载');
         }
 
         setIsGenerating(false);
       }, 'image/png');
     } catch (error) {
       console.error('生成分享卡片失败:', error);
-      alert('生成失败，请重试');
+      fallbackCopyText();
       setIsGenerating(false);
     }
   };
@@ -164,14 +175,15 @@ export function ShareCard({ pillars, dayMaster, zodiac, summary, className }: Sh
 
           {/* 底部 CTA */}
           <div className="absolute bottom-16 left-0 right-0 text-center px-8">
-            <div className="rounded-xl bg-[#1C1A16] text-white px-6 py-3 inline-block">
-              <p className="text-sm font-medium">
-                扫码查看你的命盘 →
+            <div className="rounded-xl bg-[#1C1A16] text-white px-6 py-4 inline-block">
+              <p className="text-xs text-white/60 mb-1">访问以下网址</p>
+              <p className="text-base font-bold tracking-wide">
+                CyberFate.me
+              </p>
+              <p className="text-xs text-white/70 mt-1">
+                查看你的命盘
               </p>
             </div>
-            <p className="mt-4 text-xs text-[#1C1A16]/40">
-              www.cyberfate.me/bazi
-            </p>
           </div>
 
           {/* 装饰元素 */}
