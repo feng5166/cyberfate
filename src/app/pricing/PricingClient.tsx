@@ -7,7 +7,7 @@ import { Footer } from '@/components/layout/Footer';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { PricingCardList } from '@/components/pricing/PricingCardList';
 import { AuthModal } from '@/components/auth/AuthModal';
-import { type PlanId } from '@/lib/pricing-config';
+import { type PlanId, isValidPlanId } from '@/lib/pricing-config';
 
 const PLAN_NAME_TO_ID: Record<string, PlanId> = {
   '基础版': 'daily',
@@ -40,8 +40,8 @@ export default function PricingClient({ currentPlan }: PricingClientProps) {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   const redirectToCheckout = useCallback(async (planName: string) => {
-    const planId = PLAN_NAME_TO_ID[planName];
-    if (!planId) return;
+    const planId = PLAN_NAME_TO_ID[planName] || planName as PlanId;
+    if (!isValidPlanId(planId)) return;
 
     setCheckoutLoading(true);
     try {
