@@ -67,10 +67,10 @@ export async function POST(req: NextRequest) {
       }))
     });
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Check user error:', error);
     return NextResponse.json(
-      { error: error.message || '查询失败' },
+      { error: '查询失败，请稍后重试' },
       { status: 500 }
     );
   }

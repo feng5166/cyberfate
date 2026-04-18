@@ -30,10 +30,7 @@ function verifyStripeWebhook(
   );
 
   if (!signatureFound) {
-    return { 
-      valid: false, 
-      error: `No signature matched. Expected: ${expectedSignature.substring(0, 20)}..., Got: ${details.signatures[0]?.substring(0, 20)}...` 
-    };
+    return { valid: false, error: 'Webhook signature verification failed' };
   }
 
   const timestampAge = Math.floor(Date.now() / 1000) - details.timestamp;
@@ -125,7 +122,7 @@ export async function POST(req: NextRequest) {
   if (!verification.valid || !verification.event) {
     console.error('[Webhook] Signature verification failed:', verification.error);
     return NextResponse.json(
-      { error: 'Webhook signature verification failed', details: verification.error },
+      { error: 'Webhook verification failed' },
       { status: 400 }
     );
   }
@@ -180,10 +177,37 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Invalid plan' }, { status: 400 });
       }
 
+      // 幂等查重：检查是否已有相同 transactionId 的订单
+      const existingOrder = await prisma.order.findFirst({
+        where: { transactionId: checkoutSession.id },
+      });
+      if (existingOrder) {
+        return NextResponse.json({ message: 'Already processed' });
+      }
+
+      // 验证 userId 存在性，防止 metadata 被篡改
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (!user) {
+        console.error('[Webhook] User not found:', userId);
+        return NextResponse.json({ error: 'User not found' }, { status: 400 });
+      }
+
       const duration = { daily: 1, yearly: 365, lifetime: 36500 }[plan];
       const expireAt = addDays(new Date(), duration);
 
       await prisma.$transaction(async (tx) => {
+        await tx.order.create({
+          data: {
+            userId,
+            plan,
+            amount: 0,
+            status: 'paid',
+            transactionId: checkoutSession.id,
+            paidAt: new Date(),
+            outTradeNo: `WH-${checkoutSession.id}`,
+          },
+        });
+
         await tx.subscription.updateMany({
           where: { userId, status: 'active' },
           data: { status: 'expired' },

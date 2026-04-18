@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
 
   const planConfig = PRICING_CONFIG[plan];
   const amount = planConfig.amount;
-  const outTradeNo = `CF${Date.now()}${Math.random().toString(36).slice(2, 9)}`;
+  const outTradeNo = `CF${crypto.randomUUID().replace(/-/g, '')}`;
 
   const order = await prisma.order.create({
     data: {
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Stripe 未配置' }, { status: 500 });
     }
 
-    const baseUrl = 'https://www.cyberfate.me';
+    const baseUrl = process.env.NEXTAUTH_URL || 'https://www.cyberfate.me';
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: 'payment',
       payment_method_types: ['card'],

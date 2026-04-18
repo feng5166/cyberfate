@@ -92,10 +92,10 @@ export async function POST(req: NextRequest) {
       }
     });
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Fix VIP error:', error);
     return NextResponse.json(
-      { error: error.message || '修正失败' },
+      { error: '修正失败，请稍后重试' },
       { status: 500 }
     );
   }

@@ -61,11 +61,12 @@ export async function generateBaziAnalysis(
   birthInfo?: { birthDate: string; birthHour: number }
 ): Promise<BaziAnalysis & { _source: 'deepseek' | 'fallback' | 'cache' }> {
   
-  // 1. 构建缓存 key（基于出生日期和时辰）
+  // 1. 构建缓存 key（基于出生日期、时辰和姓名）
   let cacheKey = 'bazi:default';
   if (birthInfo) {
     const { birthDate, birthHour } = birthInfo;
-    cacheKey = `bazi:${birthDate}:${birthHour}`;
+    const nameSlug = name?.trim() || '_anonymous';
+    cacheKey = `bazi:${birthDate}:${birthHour}:${nameSlug}`;
   }
   
   // 2. 尝试从 Redis 读取
@@ -102,15 +103,17 @@ export async function generateBaziAnalysis(
     }
   );
 
-  // 3. 写入 Redis 缓存（永久保存）
+  // 3. 写入 Redis 缓存（仅非降级结果）
   if (apiResult.success) {
-    try {
-      await redis.set(cacheKey, apiResult.data);
-      console.log(`[Cache Set] ${cacheKey}`);
-    } catch (err) {
-      console.warn('[Cache Write Error]', err);
+    if (!apiResult.fromFallback) {
+      try {
+        await redis.set(cacheKey, apiResult.data);
+        console.log(`[Cache Set] ${cacheKey}`);
+      } catch (err) {
+        console.warn('[Cache Write Error]', err);
+      }
     }
-    return { ...apiResult.data, _source: 'deepseek' };
+    return { ...apiResult.data, _source: apiResult.fromFallback ? 'fallback' : 'deepseek' };
   }
   
   return { ...generateFallbackBaziAnalysis(result), _source: 'fallback' };
@@ -192,15 +195,17 @@ export async function generateDailyFortune(
     }
   );
 
-  // 3. 写入 Redis 缓存（24小时过期）
+  // 3. 写入 Redis 缓存（仅非降级结果，24小时过期）
   if (apiResult.success) {
-    try {
-      await redis.setex(cacheKey, 86400, apiResult.data); // 24小时后自动删除
-      console.log(`[Cache Set] ${cacheKey} (TTL: 24h)`);
-    } catch (err) {
-      console.warn('[Cache Write Error]', err);
+    if (!apiResult.fromFallback) {
+      try {
+        await redis.setex(cacheKey, 86400, apiResult.data);
+        console.log(`[Cache Set] ${cacheKey} (TTL: 24h)`);
+      } catch (err) {
+        console.warn('[Cache Write Error]', err);
+      }
     }
-    return { ...apiResult.data, _source: 'deepseek' };
+    return { ...apiResult.data, _source: apiResult.fromFallback ? 'fallback' : 'deepseek' };
   }
   
   return { ...generateFallbackDailyFortune(), _source: 'fallback' };

@@ -58,6 +58,12 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: `不支持的套餐: ${plan}` }, { status: 400 });
     }
 
+    // 将该用户已有的 active 订阅更新为 expired
+    await prisma.subscription.updateMany({
+      where: { userId: user.id, status: 'active' },
+      data: { status: 'expired' },
+    });
+
     // 创建订阅记录
     const subscription = await prisma.subscription.create({
       data: {
@@ -82,9 +88,8 @@ export async function POST(req: NextRequest) {
     
   } catch (error: unknown) {
     console.error('Create subscription error:', error);
-    const message = error instanceof Error ? error.message : '创建失败';
     return NextResponse.json(
-      { error: message },
+      { error: '创建失败，请稍后重试' },
       { status: 500 }
     );
   }

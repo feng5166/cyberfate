@@ -43,7 +43,12 @@ export async function GET() {
       }
     );
     const tokenData = (await tokenRes.json()) as { code: number; tenant_access_token?: string; msg?: string };
-    results.tokenResponse = tokenData;
+    results.tokenResponse = {
+      code: tokenData.code,
+      msg: tokenData.msg,
+      tenant_access_token_length: tokenData.tenant_access_token?.length ?? 0,
+      tenant_access_token_ok: !!tokenData.tenant_access_token,
+    };
 
     if (tokenData.code !== 0 || !tokenData.tenant_access_token) {
       return NextResponse.json({ ...results, error: 'Token 获取失败' });

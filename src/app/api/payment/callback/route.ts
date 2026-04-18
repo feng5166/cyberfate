@@ -3,10 +3,11 @@ import crypto from 'crypto';
 import { prisma } from '@/lib/db';
 import { addDays } from 'date-fns';
 
+const REPLAY_TOLERANCE_MS = 5 * 60 * 1000; // ±5分钟
+
 function verifyCallbackSignature(body: string, signature: string | null): boolean {
   const secret = process.env.CALLBACK_SECRET;
   if (!secret) {
-    // Security Fix: SEC-001 — 未配置时拒绝请求，不可跳过验证
     console.error('[PaymentCallback] CALLBACK_SECRET 未配置，拒绝请求');
     return false;
   }
@@ -14,6 +15,7 @@ function verifyCallbackSignature(body: string, signature: string | null): boolea
     return false;
   }
   const expected = crypto.createHmac('sha256', secret).update(body, 'utf8').digest('hex');
+  if (expected.length !== signature.length) return false;
   return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
 }
 
@@ -25,7 +27,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '签名验证失败' }, { status: 403 });
   }
 
-  const { outTradeNo, transactionId } = JSON.parse(rawBody);
+  const { outTradeNo, transactionId, timestamp } = JSON.parse(rawBody);
+
+  // 时间戳防重放：拒绝 ±5 分钟之外的请求
+  if (timestamp) {
+    const age = Math.abs(Date.now() - timestamp);
+    if (age > REPLAY_TOLERANCE_MS) {
+      return NextResponse.json({ error: '请求已过期' }, { status: 403 });
+    }
+  }
 
   const order = await prisma.order.findUnique({
     where: { outTradeNo },

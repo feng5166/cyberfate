@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { signIn } from 'next-auth/react';
 
@@ -33,20 +33,26 @@ type Tab = 'check' | 'fix-vip' | 'create-sub';
 export default function AdminPage() {
   const { data: session, status } = useSession();
   const [tab, setTab] = useState<Tab>('check');
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
-  // 管理员邮箱白名单
-  const ADMIN_EMAILS = ['feng5166@gmail.com', 'feng.5166@163.com'];
+  useEffect(() => {
+    if (session?.user?.email) {
+      fetch('/api/admin/verify')
+        .then(res => res.json())
+        .then(data => setIsAdmin(data.isAdmin === true))
+        .catch(() => setIsAdmin(false));
+    }
+  }, [session?.user?.email]);
 
-  if (status === 'loading') return <LoadingSpinner />;
+  if (status === 'loading' || (session && isAdmin === null)) return <LoadingSpinner />;
   if (!session) return <LoginPrompt />;
-  // 前端二次校验：非管理员邮箱禁止访问
-  if (!session.user?.email || !ADMIN_EMAILS.includes(session.user.email)) {
+  if (!isAdmin) {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="text-center p-8 rounded-2xl bg-white border border-gray-200 shadow-sm max-w-md">
           <div className="text-4xl mb-4">🚫</div>
           <h2 className="text-xl font-semibold text-gray-900 mb-2">无权访问</h2>
-          <p className="text-gray-500 text-sm">当前账号 ({session.user?.email}) 不在管理员列表中</p>
+          <p className="text-gray-500 text-sm">当前账号无管理员权限</p>
         </div>
       </div>
     );

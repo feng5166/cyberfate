@@ -26,7 +26,6 @@ interface ProfileClientProps {
   expireAt: string | null
   baziAiCount: number
   limit: number | null
-  stripeCustomerId: string | null
   subscriptionStart: string | null
 }
 
@@ -38,7 +37,7 @@ const periodMap: Record<string, string> = {
 
 export default function ProfileClient({
   email, image, vip, subscriptionPlan, subscriptionDetail, expireAt, baziAiCount, limit,
-  stripeCustomerId, subscriptionStart,
+  subscriptionStart,
 }: ProfileClientProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -120,12 +119,6 @@ export default function ProfileClient({
               <div>
                 <p className="text-xs text-gray-400 mb-0.5">邮箱</p>
                 <p className="text-sm font-medium text-gray-900 truncate">{email}</p>
-              </div>
-              <div className="col-span-2">
-                <p className="text-xs text-gray-400 mb-0.5">STRIPE 客户 ID</p>
-                <p className="text-sm font-medium text-gray-900 font-mono">
-                  {stripeCustomerId || '无'}
-                </p>
               </div>
             </div>
           </div>

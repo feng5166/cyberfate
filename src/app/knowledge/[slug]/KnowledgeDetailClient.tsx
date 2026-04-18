@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import DOMPurify from 'dompurify';
 import { knowledgeData } from '@/data/knowledge';
 import { Container } from '@/components/ui/Container';
 
@@ -99,7 +100,7 @@ export function KnowledgeDetailClient({
                     </h2>
                     {section.content && (
                       <p
-                        dangerouslySetInnerHTML={{ __html: section.content }}
+                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(section.content) }}
                         className="mb-4"
                       />
                     )}
@@ -110,7 +111,7 @@ export function KnowledgeDetailClient({
                             key={idx}
                             className="flex gap-3 text-[#1C1A16]/80"
                             dangerouslySetInnerHTML={{
-                              __html: `<span class="mt-2 min-w-[6px] h-[6px] rounded-full bg-[#1C1A16]/30 flex-shrink-0"></span><div>${item}</div>`,
+                              __html: DOMPurify.sanitize(`<span class="mt-2 min-w-[6px] h-[6px] rounded-full bg-[#1C1A16]/30 flex-shrink-0"></span><div>${item}</div>`),
                             }}
                           />
                         ))}
