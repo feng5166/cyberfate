@@ -19,7 +19,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
   const isSubscribed = (session?.user as { isSubscribed?: boolean } | undefined)?.isSubscribed;
   const shouldShow = isOpen && !isSubscribed;
 
-  const [selectedPlan, setSelectedPlan] = useState(PRICING_CONFIG[getDefaultPlanId()].name);
+  const [selectedPlan, setSelectedPlan] = useState<string>(getDefaultPlanId());
   const [visible, setVisible] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [pendingPlan, setPendingPlan] = useState<{ planName: string; price: string } | null>(null);

@@ -36,7 +36,7 @@ export default function PricingClient({ currentPlan }: PricingClientProps) {
   const [pendingPlan, setPendingPlan] = useState<{ planName: string; price: string } | null>(null);
 
   const isSubscribed = session?.user?.isSubscribed ?? false;
-  const [selectedPlan, setSelectedPlan] = useState(isSubscribed ? '' : defaultPlanConfig.name);
+  const [selectedPlan, setSelectedPlan] = useState(isSubscribed ? '' : defaultPlanId);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   const redirectToCheckout = useCallback(async (planName: string) => {
