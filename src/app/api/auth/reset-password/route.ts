@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { validateResetToken, resetPassword } from '@/lib/password-reset'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 const ERROR_MESSAGES: Record<string, string> = {
   MISSING_FIELDS: '缺少必要参数',
@@ -15,6 +16,15 @@ const ERROR_MESSAGES: Record<string, string> = {
 // 支持 query param (?token=xxx) 和 hash fragment (#token=xxx) 两种方式
 export async function GET(request: NextRequest) {
   try {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+    const { allowed } = await checkRateLimit('reset_token_check', ip, 10, 60)
+    if (!allowed) {
+      return Response.json(
+        { valid: false, error: 'RATE_LIMITED', message: '请求过于频繁，请稍后再试' },
+        { status: 429 }
+      )
+    }
+
     // 优先从 query 获取，如果没有则返回提示前端从 hash 读取
     const token = request.nextUrl.searchParams.get('token')
 

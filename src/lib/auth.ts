@@ -127,6 +127,11 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { passwordChangedAt: true },
+        })
+        token.passwordChangedAt = dbUser?.passwordChangedAt?.getTime() ?? null
       }
       return token
     },
@@ -136,7 +141,9 @@ export const authOptions: NextAuthOptions = {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },
           select: {
+            nickname: true,
             avatar: true,
+            passwordChangedAt: true,
             subscriptions: {
               where: { status: 'active', expireAt: { gt: new Date() } },
               select: { id: true },
@@ -144,6 +151,12 @@ export const authOptions: NextAuthOptions = {
             },
           },
         })
+        // Invalidate token if password was changed after token was issued
+        const dbChangedAt = dbUser?.passwordChangedAt?.getTime() ?? null
+        if (dbChangedAt !== null && token.passwordChangedAt !== dbChangedAt) {
+          return null as never
+        }
+        session.user.name = dbUser?.nickname ?? session.user.name
         session.user.image = dbUser?.avatar ?? null
         session.user.isSubscribed = (dbUser?.subscriptions?.length ?? 0) > 0
       }

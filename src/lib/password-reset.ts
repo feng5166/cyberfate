@@ -87,10 +87,10 @@ export async function resetPassword(
         data: { used: true },
       })
 
-      // 2. 再更新密码
+      // 2. 再更新密码，同步记录变更时间以使旧 JWT 失效
       await tx.user.update({
         where: { email: result.email },
-        data: { passwordHash },
+        data: { passwordHash, passwordChangedAt: new Date() },
       })
     })
   } catch (err: unknown) {

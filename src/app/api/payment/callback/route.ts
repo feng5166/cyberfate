@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { prisma } from '@/lib/db';
 import { addDays } from 'date-fns';
+import { LIFETIME_DURATION } from '@/lib/pricing-config';
 
 const REPLAY_TOLERANCE_MS = 5 * 60 * 1000; // ±5分钟
 
@@ -75,7 +76,7 @@ export async function POST(req: NextRequest) {
     const duration = {
       daily: 1,
       yearly: 365,
-      lifetime: 36500,
+      lifetime: LIFETIME_DURATION,
     }[order.plan];
 
     const expireAt = addDays(new Date(), duration);

@@ -133,7 +133,7 @@ export function PaymentModal({ planName, price, onClose, onSuccess }: PaymentMod
         {!qrCode ? (
           <>
             <div className="mb-6">
-              <div className="text-3xl font-bold text-primary mb-2">{price}</div>
+              <div className="text-3xl font-bold text-primary mb-2">${price.startsWith('$') ? price : `$${price}`}</div>
               <div className="text-sm text-muted">选择支付方式</div>
             </div>
 
@@ -215,7 +215,7 @@ export function PaymentModal({ planName, price, onClose, onSuccess }: PaymentMod
           <>
             <div className="text-center mb-6">
               <div className="text-lg font-medium text-gray-700 mb-2">请扫码支付</div>
-              <div className="text-2xl font-bold text-primary mb-4">{price}</div>
+              <div className="text-2xl font-bold text-primary mb-4">${price.startsWith('$') ? price : `$${price}`}</div>
               <img src={qrCode} alt="支付二维码" className="mx-auto w-48 h-48 border-2 border-gray-200 rounded-lg" />
               <div className="mt-4 text-sm text-gray-500">
                 使用{payMethod === 'wechat' ? '微信' : '支付宝'}扫码完成支付

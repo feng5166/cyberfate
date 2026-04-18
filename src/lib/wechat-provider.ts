@@ -28,7 +28,7 @@ export default function WechatProvider<P extends WechatProfile>(
         id: profile.openid,
         name: profile.nickname,
         image: profile.headimgurl,
-        email: null,
+        email: `wechat_${profile.openid}@wechat.placeholder`,
       }
     },
     style: {

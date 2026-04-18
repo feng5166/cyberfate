@@ -1,4 +1,5 @@
 import NextAuth, { DefaultSession } from "next-auth";
+import { JWT } from "next-auth/jwt";
 
 declare module "next-auth" {
   interface Session {
@@ -6,5 +7,12 @@ declare module "next-auth" {
       id: string;
       isSubscribed: boolean;
     } & DefaultSession["user"];
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    id?: string;
+    passwordChangedAt?: number | null;
   }
 }

@@ -17,6 +17,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '缺少参数' }, { status: 400 });
     }
 
+    const sanitizedQuestion = String(question).replace(/[\x00-\x1F\x7F]/g, '').trim();
+    if (!sanitizedQuestion) {
+      return NextResponse.json({ error: '问题内容无效' }, { status: 400 });
+    }
+    if (sanitizedQuestion.length > 200) {
+      return NextResponse.json({ error: '问题不能超过200字' }, { status: 400 });
+    }
+
     const huangli = calculateHuangli(date);
 
     const prompt = `你是"赛博命理师"的 AI老黄历助手，擅长结合传统黄历数据给出现代生活建议。
@@ -33,7 +41,7 @@ export async function POST(req: NextRequest) {
 - 吉神：${huangli.jiShen.join('、')}
 - 凶神：${huangli.xiongSha.join('、')}
 
-用户问题：${question}
+用户问题：${sanitizedQuestion}
 
 【回复规则】
 1. 开头直接回答用户的问题（适合/不适合/需注意等）

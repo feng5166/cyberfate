@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
       userId: user.id,
       plan,
       amount,
+      currency: planConfig.currency,
       payMethod,
       outTradeNo,
       status: 'pending',

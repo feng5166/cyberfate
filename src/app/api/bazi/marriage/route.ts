@@ -113,7 +113,7 @@ function calculateScore(male: BaziInfo, female: BaziInfo) {
   details.push(`神煞参考：${shenshaScore.desc} (+${shenshaScore.score}分)`);
 
   let total = wuxingScore.score + ganScore.score + zodiacScore.score + balanceScore.score + shenshaScore.score;
-  total = Math.max(35, Math.min(100, total));
+  total = Math.max(10, Math.min(100, total));
 
   let hearts = '', level = '';
   if (total >= 90)      { hearts = '❤️❤️❤️❤️❤️'; level = '天作之合'; }

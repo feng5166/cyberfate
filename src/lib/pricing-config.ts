@@ -73,7 +73,7 @@ export const PRICING_CONFIG: Record<PlanId, PlanConfig> = {
     currency: 'usd',
     period: '终身',
     periodLabel: '',
-    duration: 36500,     // ~100 年，实际视为永久
+    duration: LIFETIME_DURATION,
     recommended: false,
     periodCard: '终身卡',
     adminLabel: '终身',
