@@ -312,7 +312,7 @@ export async function POST(req: NextRequest) {
             data: {
               userId,
               plan,
-              amount: 0,
+              amount: PRICING_CONFIG[plan as PlanId]?.amount ?? 0,
               status: 'paid',
               transactionId: checkoutSession.id,
               paidAt: new Date(),
