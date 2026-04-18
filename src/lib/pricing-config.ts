@@ -25,8 +25,8 @@ export const PRICING_CONFIG: Record<PlanId, PlanConfig> = {
   daily: {
     id: 'daily',
     name: '基础版',
-    displayPrice: '1',
-    amount: 100,         // $1 USD
+    displayPrice: '9.99',
+    amount: 999,         // $9.99 USD
     currency: 'usd',
     period: '天',
     periodLabel: '/ 天',
@@ -45,8 +45,8 @@ export const PRICING_CONFIG: Record<PlanId, PlanConfig> = {
   yearly: {
     id: 'yearly',
     name: '专业版',
-    displayPrice: '2',
-    amount: 200,        // $2 USD
+    displayPrice: '49',
+    amount: 4900,        // $49 USD
     currency: 'usd',
     period: '年',
     periodLabel: '/ 年',
@@ -68,8 +68,8 @@ export const PRICING_CONFIG: Record<PlanId, PlanConfig> = {
   lifetime: {
     id: 'lifetime',
     name: '尊享版',
-    displayPrice: '3',
-    amount: 300,       // $3 USD
+    displayPrice: '199',
+    amount: 19900,       // $199 USD
     currency: 'usd',
     period: '终身',
     periodLabel: '',
