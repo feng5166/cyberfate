@@ -124,6 +124,7 @@ interface StripeEvent {
 }
 
 export async function POST(req: NextRequest) {
+  try {
   const body = await req.text();
   const sig = req.headers.get('stripe-signature');
 
@@ -360,4 +361,8 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json({ received: true });
+  } catch (error) {
+    console.error('[Webhook] 顶层异常:', error instanceof Error ? error.message : error, error instanceof Error ? error.stack : '');
+    return NextResponse.json({ error: 'Internal webhook error' }, { status: 500 });
+  }
 }

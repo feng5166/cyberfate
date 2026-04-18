@@ -1,6 +1,7 @@
 'use client';
 
 import { Footer } from '@/components/layout/Footer';
+import { AiDisclaimer } from '@/components/ui/AiDisclaimer';
 import { ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -883,7 +884,7 @@ export default function LiuYaoPage() {
         <section className="mx-auto max-w-4xl pt-24 pb-10 text-center animate-fadeIn">
           <div className="mx-auto mb-6 h-px w-9 bg-gradient-to-r from-transparent via-[#1C1A16] to-transparent opacity-15" />
           <h1 className="font-display text-[clamp(36px,5vw,56px)] leading-tight tracking-[0.08em] text-[#1C1A16]">
-            AI 六爻占卜 · 智能预测分析
+            AI 六爻占卜 · 智能解读分析
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-sm text-[#1C1A16]/55 md:text-base">
             融合传统六爻占卜与人工智能技术，为你提供更深度的卦象分析和趋势预测。
@@ -1286,6 +1287,7 @@ export default function LiuYaoPage() {
               );
             })}
           </div>
+          <AiDisclaimer />
           <div className="mt-4 rounded-2xl border border-[#1C1A16]/10 bg-white p-3 text-center text-xs text-[#1C1A16]/45">
             ⚠️ 免责声明：本站六爻占卜内容仅供娱乐与自我探索参考，不构成医疗、法律或投资建议。请结合现实信息理性判断。
           </div>

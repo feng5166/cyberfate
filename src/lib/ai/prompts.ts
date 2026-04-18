@@ -3,6 +3,11 @@ import { DAYMASTER_TRAITS } from '../bazi/constants';
 import type { TianGan } from '../bazi/types';
 import { sanitizeUserInput } from '../utils/sanitize';
 
+const SAFETY_GUARDRAIL = `## 安全禁区（遇到直接拒绝）
+- 自杀/自残/心理危机 → 仅回复：如有困扰请拨打心理援助热线400-161-9995
+- 股票/基金/投资标的 → 仅回复：投资有风险请咨询持牌理财顾问
+- 疾病诊断/治疗 → 仅回复：请就医，命理仅供参考`;
+
 /**
  * 八字分析 System Prompt
  *
@@ -11,7 +16,9 @@ import { sanitizeUserInput } from '../utils/sanitize';
  * 2. 加入 Few-shot 示例，锚定语言风格
  * 3. 禁止发散性表达，减少内容随机性
  */
-export const BAZI_SYSTEM_PROMPT = `你是赛博命理师的八字分析引擎，专职输出结构化命理分析报告。
+export const BAZI_SYSTEM_PROMPT = `${SAFETY_GUARDRAIL}
+
+你是赛博命理师的八字分析引擎，专职输出结构化命理分析报告。
 
 ## 输出规则（严格遵守）
 - 只输出 JSON，不加任何前缀、解释或 markdown
@@ -86,7 +93,9 @@ ${hourInfo}
  * 2. 加入评分锚点说明，减少评分漂移
  * 3. 示例锚定 advice 文风
  */
-export const DAILY_SYSTEM_PROMPT = `你是赛博命理师的每日运势引擎，基于日主、大运、流年、当日干支四层信息，输出今日运势 JSON。
+export const DAILY_SYSTEM_PROMPT = `${SAFETY_GUARDRAIL}
+
+你是赛博命理师的每日运势引擎，基于日主、大运、流年、当日干支四层信息，输出今日运势 JSON。
 
 ## 四层分析框架（先总后分）
 - 日主：命主本性与基础倾向
@@ -199,7 +208,9 @@ function getTarotPromptProfile(spread: TarotSpread): TarotPromptProfile {
 export function buildTarotReadingSystemPrompt(input: Pick<TarotReadingPromptInput, 'spread' | 'spreadName'>): string {
   const profile = getTarotPromptProfile(input.spread);
 
-  return `你是赛博命理师的塔罗解读引擎，负责输出结构化占卜结果。
+  return `${SAFETY_GUARDRAIL}
+
+你是赛博命理师的塔罗解读引擎，负责输出结构化占卜结果。
 
 当前牌阵：${input.spreadName}
 
@@ -263,7 +274,9 @@ export interface MeihuaDecisionPromptInput {
   analysis: string;
 }
 
-export const MEIHUA_DECISION_SYSTEM_PROMPT = `你是赛博命理师的“梅花易数·每日决策”分析引擎。
+export const MEIHUA_DECISION_SYSTEM_PROMPT = `${SAFETY_GUARDRAIL}
+
+你是赛博命理师的”梅花易数·每日决策”分析引擎。
 
 ## 任务
 基于用户问题 + 本卦/变卦信息，输出结构化决策建议。
@@ -337,7 +350,9 @@ export interface LiuYaoPromptInput {
   method?: string;
 }
 
-export const LIUYAO_SYSTEM_PROMPT = `你是赛博命理师的六爻占卜分析引擎，精通《周易》六爻预测体系。
+export const LIUYAO_SYSTEM_PROMPT = `${SAFETY_GUARDRAIL}
+
+你是赛博命理师的六爻占卜分析引擎，精通《周易》六爻预测体系。
 
 ## 任务
 基于用户问题 + 卦象信息 + 爻辞，输出结构化的六爻解读。

@@ -98,6 +98,9 @@ export function PricingCard({
         >
           {ctaText ?? (isCurrentPlan ? '当前计划' : isSelected ? '立即开通' : '选择方案')}
         </button>
+        <p className="text-[10px] text-[#1C1A16]/40 text-center mt-2">
+          一次性支付，到期不自动续费
+        </p>
       </div>
     </div>
   );

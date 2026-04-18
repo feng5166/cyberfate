@@ -81,11 +81,11 @@ export async function generateBaziAnalysis(
 ): Promise<BaziAnalysis & { _source: 'deepseek' | 'fallback' | 'cache' }> {
   
   // 1. 构建缓存 key（hash摘要，避免明文PII写入Redis）
-  let cacheKey = 'v3:bazi:default';
+  let cacheKey = 'v4:bazi:default';
   if (birthInfo) {
     const { birthDate, birthHour } = birthInfo;
     const hash = crypto.createHash('sha256').update(JSON.stringify({ birthDate, birthHour, gender: undefined })).digest('hex').slice(0, 16);
-    cacheKey = `v3:bazi:${hash}`;
+    cacheKey = `v4:bazi:${hash}`;
   }
   
   // 2. 尝试从 Redis 读取

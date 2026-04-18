@@ -1,6 +1,7 @@
 'use client';
 
 import { Footer } from '@/components/layout/Footer';
+import { AiDisclaimer } from '@/components/ui/AiDisclaimer';
 import { CardDrawAnimation } from '@/components/tarot/CardDrawAnimation';
 import { ChevronDown, ChevronUp, Share2, Sparkles, X } from 'lucide-react';
 import Image from 'next/image';
@@ -674,6 +675,7 @@ export default function TarotPage() {
               );
             })}
           </div>
+          <AiDisclaimer />
           <div className="mt-4 rounded-2xl border border-[#1C1A16]/10 bg-white p-3 text-center text-xs text-[#1C1A16]/45">
             ⚠️ 免责声明：本站塔罗占卜内容仅供娱乐与自我探索参考，不构成医疗、法律或投资建议。请结合现实信息理性判断。
           </div>

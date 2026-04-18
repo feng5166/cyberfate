@@ -8,6 +8,7 @@ import { SegmentControl } from '@/components/ui/SegmentControl';
 import { Tag } from '@/components/ui/Tag';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Container } from '@/components/ui/Container';
+import { AiDisclaimer } from '@/components/ui/AiDisclaimer';
 import { Footer } from '@/components/layout/Footer';
 import { saveBirthInfo, loadBirthInfo, clearBirthInfo } from '@/lib/utils/storage';
 import { Sun, Cloud, Droplets, Heart, Briefcase, Activity, Sparkles, ArrowRight, ChevronRight } from 'lucide-react';
@@ -385,6 +386,7 @@ export default function DailyPage() {
             </Card>
 
             {/* 免责声明 */}
+            <AiDisclaimer />
             <div className="text-center text-xs text-brand-light py-3 bg-brand-bg rounded-lg">
               ⚠️ 免责声明：运势分析仅供娱乐参考，不构成任何决策建议。请理性对待。
             </div>

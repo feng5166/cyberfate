@@ -96,7 +96,7 @@ export async function resetPassword(
   } catch (err: unknown) {
     const prismaError = err as { code?: string; message?: string }
     console.error('resetPassword transaction failed:', {
-      email: result.email,
+      email: result.email.replace(/(.{2}).*(@.*)/, '$1***$2'),
       code: prismaError.code,
       message: prismaError.message,
     })
@@ -133,7 +133,7 @@ export async function sendResetEmail(
 
   if (!process.env.RESEND_API_KEY) {
     console.log('=== 密码重置邮件（开发模式，未配置 RESEND_API_KEY） ===')
-    console.log(`收件人: ${email}`)
+    console.log(`收件人: ${email.replace(/(.{2}).*(@.*)/, '$1***$2')}`)
     console.log(`链接: ${resetUrl}`)
     console.log('=== 邮件结束 ===')
     return

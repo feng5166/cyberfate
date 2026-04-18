@@ -31,6 +31,13 @@ const requestSchema = z.object({
   birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '日期格式应为 YYYY-MM-DD').refine(
     (d) => { const y = parseInt(d.slice(0, 4), 10); return y >= 1900 && y <= 2030; },
     '出生年份须在 1900 至 2030 之间'
+  ).refine(
+    (d) => {
+      const [y, m, day] = d.split('-').map(Number);
+      const date = new Date(y, m - 1, day);
+      return date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === day;
+    },
+    '日期不合法（如 2月30日）'
   ),
   birthHour: z.number().int().min(0).max(11),
   birthPlace: z.string().optional(),

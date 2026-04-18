@@ -41,13 +41,13 @@ export async function POST(request: NextRequest) {
       // 静默成功：不透露该邮箱是否已注册
       // 等价耗时，防止时序枚举
       await bcrypt.hash('dummy', 10)
-      console.log(`[Security] forgot-password attempt for unregistered email: ${normalizedEmail}`)
+      console.log(`[Security] forgot-password attempt for unregistered email: ${normalizedEmail.replace(/(.{2}).*(@.*)/, '$1***$2')}`)
       return Response.json({ success: true })
     }
 
     // 过滤内部合成邮箱（微信用户不支持邮件重置）
     if (normalizedEmail.endsWith('@cyberfate.internal')) {
-      console.log(`[Security] forgot-password attempt for synthetic email: ${normalizedEmail}`)
+      console.log(`[Security] forgot-password attempt for synthetic email: ${normalizedEmail.replace(/(.{2}).*(@.*)/, '$1***$2')}`)
       return Response.json({ success: true }) // 同样静默
     }
 

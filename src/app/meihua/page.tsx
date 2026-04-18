@@ -1,6 +1,7 @@
 'use client';
 
 import { Footer } from '@/components/layout/Footer';
+import { AiDisclaimer } from '@/components/ui/AiDisclaimer';
 import {
   Brain,
   ChevronDown,
@@ -501,6 +502,7 @@ export default function MeihuaPage() {
             })}
           </div>
 
+          <AiDisclaimer />
           <div className="mt-4 rounded-2xl border border-[#1C1A16]/10 bg-white p-3 text-center text-xs text-[#6B7280]">
             ⚠️ 免责声明：本站所有命理分析仅供娱乐参考，不构成任何决策建议。命运掌握在自己手中，请理性对待。
           </div>

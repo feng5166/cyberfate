@@ -36,6 +36,7 @@ import { Container } from '@/components/ui/Container';
 import { CitySearch } from '@/components/ui/CitySearch';
 import { Tag } from '@/components/ui/Tag';
 import { Footer } from '@/components/layout/Footer';
+import { AiDisclaimer } from '@/components/ui/AiDisclaimer';
 import {
   DAYMASTER_TRAITS,
   DIZHI_LIST,
@@ -1090,6 +1091,7 @@ function BaziPageContent() {
                   />
                 </Card>
 
+                <AiDisclaimer />
                 <div className="text-center text-xs text-[#6B7280] p-3 bg-white rounded-2xl border border-[#1C1A16]/10">
                   ⚠️ 免责声明：本站所有命理分析仅供娱乐参考，不构成任何决策建议。命运掌握在自己手中，请理性对待。
                 </div>

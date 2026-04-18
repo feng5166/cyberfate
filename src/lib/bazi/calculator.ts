@@ -299,7 +299,7 @@ export function getDayunTimeline(birthDate: string, gender: Gender): DayunTimeli
       const ageEnd = ageStart + 9;
       const isCurrent = currentAge >= ageStart && currentAge <= ageEnd;
 
-      const step = forward ? i : -i;
+      const step = forward ? (i + 1) : -(i + 1);
       const gan = TIANGAN_LIST[(monthGanIndex + step + 10 * 100) % 10];
       const zhi = DIZHI_LIST[(monthZhiIndex + step + 12 * 100) % 12];
 
