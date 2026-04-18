@@ -133,8 +133,8 @@ export function SubscriptionManagePanel({ subscription, onBack }: SubscriptionMa
         <InvoiceHistory />
       </div>
 
-      {/* 取消续订（终身版无需取消） */}
-      {!isLifetime && !subscription.cancel_at_period_end && (
+      {/* 取消续订（仅年费版有自动续订） */}
+      {subscription.plan === 'yearly' && !subscription.cancel_at_period_end && (
         <CancelSection
           expireDate={expireDate}
           onCancelled={() => router.refresh()}
