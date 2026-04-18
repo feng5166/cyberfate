@@ -195,33 +195,42 @@ export async function POST(req: NextRequest) {
       const duration = { daily: 1, yearly: 365, lifetime: 36500 }[plan];
       const expireAt = addDays(new Date(), duration);
 
-      await prisma.$transaction(async (tx) => {
-        await tx.order.create({
-          data: {
-            userId,
-            plan,
-            amount: 0,
-            status: 'paid',
-            transactionId: checkoutSession.id,
-            paidAt: new Date(),
-            outTradeNo: `WH-${checkoutSession.id}`,
-          },
-        });
+      try {
+        await prisma.$transaction(async (tx) => {
+          await tx.order.create({
+            data: {
+              userId,
+              plan,
+              amount: 0,
+              status: 'paid',
+              transactionId: checkoutSession.id,
+              paidAt: new Date(),
+              outTradeNo: `WH-${checkoutSession.id}`,
+            },
+          });
 
-        await tx.subscription.updateMany({
-          where: { userId, status: 'active' },
-          data: { status: 'expired' },
-        });
+          await tx.subscription.updateMany({
+            where: { userId, status: 'active' },
+            data: { status: 'expired' },
+          });
 
-        await tx.subscription.create({
-          data: {
-            userId,
-            plan,
-            status: 'active',
-            expireAt,
-          },
+          await tx.subscription.create({
+            data: {
+              userId,
+              plan,
+              status: 'active',
+              expireAt,
+            },
+          });
         });
-      });
+      } catch (err: unknown) {
+        // P2002: unique constraint violation — 并发重复写入时安全忽略
+        if ((err as { code?: string })?.code === 'P2002') {
+          console.warn('[Webhook] Duplicate transactionId, already processed:', checkoutSession.id);
+          return NextResponse.json({ message: 'Already processed' });
+        }
+        throw err;
+      }
     } else {
       console.error('[Webhook] No orderId or userId/plan in metadata');
       return NextResponse.json({ error: 'No orderId or userId/plan in metadata' }, { status: 400 });

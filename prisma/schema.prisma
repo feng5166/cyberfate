@@ -149,7 +149,7 @@ model Order {
   payMethod     PayMethod?
   status        OrderStatus @default(pending)
   outTradeNo    String      @unique // 商户订单号
-  transactionId String?     // 支付平台交易号
+  transactionId String?     @unique // 支付平台交易号（唯一约束防重复写入）
   paidAt        DateTime?
   
   createdAt     DateTime    @default(now())

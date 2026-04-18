@@ -310,7 +310,7 @@ export async function POST(req: NextRequest) {
     return s
       .replace(/[\x00-\x1f\x7f]/g, '')   // 去除控制字符
       .replace(/<!--[\s\S]*?-->/g, '')   // 去除 HTML 注释
-      .replace(/[{}[\]()]/g, ' ')        // 去除可能被用于注入的特殊字符（JSON/模板标记）
+      .replace(/[{}[\]()`]/g, ' ')        // 去除可能被用于注入的特殊字符（JSON/模板/反引号）
       .trim()
       .slice(0, 50);                      // 长度限制
   };

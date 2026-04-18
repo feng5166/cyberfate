@@ -21,10 +21,11 @@ export async function GET() {
       message: 'Database connected successfully',
       result 
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    console.error('[init-db] Database error:', error);
     return NextResponse.json({ 
       success: false, 
-      error: error.message 
+      error: 'Database connection failed' 
     }, { status: 500 });
   }
 }

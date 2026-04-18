@@ -100,7 +100,7 @@ export function KnowledgeDetailClient({
                     </h2>
                     {section.content && (
                       <p
-                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(section.content) }}
+                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(section.content, { ALLOWED_TAGS: ['p','br','strong','em','b','i','u','a','ul','ol','li','h3','h4','span','div'], ALLOWED_ATTR: ['class','href','target','rel'] }) }}
                         className="mb-4"
                       />
                     )}
@@ -111,7 +111,7 @@ export function KnowledgeDetailClient({
                             key={idx}
                             className="flex gap-3 text-[#1C1A16]/80"
                             dangerouslySetInnerHTML={{
-                              __html: DOMPurify.sanitize(`<span class="mt-2 min-w-[6px] h-[6px] rounded-full bg-[#1C1A16]/30 flex-shrink-0"></span><div>${item}</div>`),
+                              __html: DOMPurify.sanitize(`<span class="mt-2 min-w-[6px] h-[6px] rounded-full bg-[#1C1A16]/30 flex-shrink-0"></span><div>${item}</div>`, { ALLOWED_TAGS: ['p','br','strong','em','b','i','u','a','ul','ol','li','h3','h4','span','div'], ALLOWED_ATTR: ['class','href','target','rel'] }),
                             }}
                           />
                         ))}

@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
 
     const result = calculateZiwei(input);
 
-    const response = {
+    const response: Record<string, unknown> = {
       palaces: result.palaces,
       wuxingju: result.wuxingJu,
       mingzhu: result.mingzhu,
@@ -94,7 +94,10 @@ export async function POST(req: NextRequest) {
       },
       name: name || '缘主',
       birthHourName: SHICHEN_NAMES[birthHour],
-      debug: {
+    };
+
+    if (process.env.NODE_ENV !== 'production') {
+      response.debug = {
         sizhu: [
           result.debug.yearGanZhi,
           result.debug.monthGanZhi,
@@ -102,13 +105,13 @@ export async function POST(req: NextRequest) {
           result.debug.hourGanZhi,
         ],
         trueSolarOffset: result.debug.trueSolarOffset,
-        algorithm: '三合派' as const,
+        algorithm: '三合派',
         mingGongBranch: result.debug.mingGongBranch,
         shenGongBranch: result.debug.shenGongBranch,
         wuxingJuNumber: result.debug.wuxingJuNumber,
         ziweiStarBranch: result.debug.ziweiStarBranch,
-      },
-    };
+      };
+    }
 
     return NextResponse.json(response);
   } catch (err: unknown) {

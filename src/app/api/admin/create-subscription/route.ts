@@ -58,21 +58,22 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: `不支持的套餐: ${plan}` }, { status: 400 });
     }
 
-    // 将该用户已有的 active 订阅更新为 expired
-    await prisma.subscription.updateMany({
-      where: { userId: user.id, status: 'active' },
-      data: { status: 'expired' },
-    });
+    // 将旧订阅过期 + 创建新订阅 包裹在事务中，保证原子性
+    const subscription = await prisma.$transaction(async (tx) => {
+      await tx.subscription.updateMany({
+        where: { userId: user.id, status: 'active' },
+        data: { status: 'expired' },
+      });
 
-    // 创建订阅记录
-    const subscription = await prisma.subscription.create({
-      data: {
-        userId: user.id,
-        plan,
-        status: 'active',
-        startAt: now,
-        expireAt,
-      },
+      return tx.subscription.create({
+        data: {
+          userId: user.id,
+          plan,
+          status: 'active',
+          startAt: now,
+          expireAt,
+        },
+      });
     });
 
     return NextResponse.json({

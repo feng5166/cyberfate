@@ -29,12 +29,15 @@ export async function POST(req: NextRequest) {
 
   const { outTradeNo, transactionId, timestamp } = JSON.parse(rawBody);
 
+  // timestamp 必填：缺少时拒绝请求
+  if (!timestamp) {
+    return NextResponse.json({ error: '缺少时间戳' }, { status: 400 });
+  }
+
   // 时间戳防重放：拒绝 ±5 分钟之外的请求
-  if (timestamp) {
-    const age = Math.abs(Date.now() - timestamp);
-    if (age > REPLAY_TOLERANCE_MS) {
-      return NextResponse.json({ error: '请求已过期' }, { status: 403 });
-    }
+  const age = Math.abs(Date.now() - timestamp);
+  if (age > REPLAY_TOLERANCE_MS) {
+    return NextResponse.json({ error: '请求已过期' }, { status: 403 });
   }
 
   const order = await prisma.order.findUnique({
@@ -47,6 +50,16 @@ export async function POST(req: NextRequest) {
 
   if (order.status === 'paid') {
     return NextResponse.json({ message: '订单已支付' });
+  }
+
+  // transactionId 去重：防止相同 transactionId 被重复处理
+  if (transactionId) {
+    const existing = await prisma.order.findFirst({
+      where: { transactionId },
+    });
+    if (existing && existing.id !== order.id) {
+      return NextResponse.json({ message: '交易已处理' });
+    }
   }
 
   await prisma.$transaction(async (tx) => {

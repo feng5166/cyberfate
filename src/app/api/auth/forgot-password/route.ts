@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server'
+import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/db'
 import {
   isRateLimited,
@@ -38,6 +39,8 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       // 静默成功：不透露该邮箱是否已注册
+      // 等价耗时，防止时序枚举
+      await bcrypt.hash('dummy', 10)
       console.log(`[Security] forgot-password attempt for unregistered email: ${normalizedEmail}`)
       return Response.json({ success: true })
     }
