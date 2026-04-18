@@ -9,7 +9,8 @@ const securityHeaders = [
   { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
   { key: "X-XSS-Protection", value: "1; mode=block" },
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
-  { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
+  // COEP require-corp 已移除：会阻止加载无 CORP 头的跨域资源（如 Google 头像）
+  // { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
   {
     key: "Content-Security-Policy",
     value: [
