@@ -28,6 +28,10 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: '密码至少6位' }, { status: 400 })
   }
 
+  if (!/\d/.test(password)) {
+    return Response.json({ error: '密码至少包含1个数字' }, { status: 400 })
+  }
+
   // Email 格式校验
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {

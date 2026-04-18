@@ -19,55 +19,69 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '无效的套餐类型' }, { status: 400 });
     }
 
-    // 获取用户当前有效订阅
-    const subscription = await prisma.subscription.findFirst({
-      where: {
-        userId: session.user.id,
-        status: 'active',
-        expireAt: { gt: new Date() }
-      },
-      orderBy: { createdAt: 'desc' }
-    });
-
-    if (!subscription) {
-      return NextResponse.json({ error: '没有有效订阅' }, { status: 404 });
-    }
-
-    const currentPlan = subscription.plan as PlanId;
-    const currentPrice = PRICING_CONFIG[currentPlan].amount;
-    const newPrice = PRICING_CONFIG[new_plan as PlanId].amount;
-
-    // 判断是升级还是降级
-    const isUpgrade = newPrice > currentPrice;
-
-    if (isUpgrade) {
-      // 升级：计算补差价
-      const now = new Date();
-      const expireAt = new Date(subscription.expireAt);
-      const totalDays = PRICING_CONFIG[currentPlan].duration;
-      const remainingDays = Math.ceil((expireAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-      
-      // 补差价 = 新套餐价 - 旧套餐剩余价值
-      const remainingValue = Math.round(currentPrice * (remainingDays / totalDays));
-      const proratedAmount = Math.max(0, newPrice - remainingValue);
-
-      const outTradeNo = `CF${Date.now()}${Math.random().toString(36).slice(2, 9)}`;
-      const newPlanConfig = PRICING_CONFIG[new_plan as PlanId];
-
-      const order = await prisma.order.create({
-        data: {
+    // 在事务中查询当前订阅并执行变更，防止并发重复操作
+    const txResult = await prisma.$transaction(async (tx) => {
+      const subscription = await tx.subscription.findFirst({
+        where: {
           userId: session.user.id,
-          plan: new_plan,
-          amount: proratedAmount,
-          payMethod: 'stripe',
-          outTradeNo,
-          status: 'pending',
+          status: 'active',
+          expireAt: { gt: new Date() }
         },
+        orderBy: { createdAt: 'desc' }
       });
 
+      if (!subscription) {
+        return { error: '没有有效订阅' as const };
+      }
+
+      const currentPlan = subscription.plan as PlanId;
+      const currentPrice = PRICING_CONFIG[currentPlan].amount;
+      const newPrice = PRICING_CONFIG[new_plan as PlanId].amount;
+      const isUpgrade = newPrice > currentPrice;
+
+      if (isUpgrade) {
+        const now = new Date();
+        const expireAt = new Date(subscription.expireAt);
+        const totalDays = PRICING_CONFIG[currentPlan].duration;
+        const remainingDays = Math.ceil((expireAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        const remainingValue = Math.round(currentPrice * (remainingDays / totalDays));
+        const proratedAmount = Math.max(0, newPrice - remainingValue);
+        const outTradeNo = `CF${Date.now()}${Math.random().toString(36).slice(2, 9)}`;
+
+        const order = await tx.order.create({
+          data: {
+            userId: session.user.id,
+            plan: new_plan,
+            amount: proratedAmount,
+            payMethod: 'stripe',
+            outTradeNo,
+            status: 'pending',
+          },
+        });
+
+        return { action: 'upgrade' as const, subscription, currentPlan, proratedAmount, order, now };
+      } else {
+        await tx.subscription.update({
+          where: { id: subscription.id },
+          data: {
+            pendingPlan: new_plan as PlanId,
+            pendingPlanDate: subscription.expireAt
+          }
+        });
+
+        return { action: 'downgrade' as const, subscription };
+      }
+    });
+
+    if ('error' in txResult) {
+      return NextResponse.json({ error: txResult.error }, { status: 404 });
+    }
+
+    if (txResult.action === 'upgrade') {
+      const { currentPlan, proratedAmount, order, now } = txResult;
+      const newPlanConfig = PRICING_CONFIG[new_plan as PlanId];
       const baseUrl = 'https://www.cyberfate.me';
-      
-      // 使用 stripe-direct 创建 checkout session
+
       const result = await createCheckoutSession({
         priceData: {
           currency: newPlanConfig.currency,
@@ -108,17 +122,8 @@ export async function POST(req: NextRequest) {
         orderId: order.id,
         message: `需补差价 $${(proratedAmount / 100).toFixed(2)}，支付后立即生效`
       });
-      
     } else {
-      // 降级：预约到期后生效
-      await prisma.subscription.update({
-        where: { id: subscription.id },
-        data: {
-          pendingPlan: new_plan as PlanId,
-          pendingPlanDate: subscription.expireAt
-        }
-      });
-      
+      const { subscription } = txResult;
       return NextResponse.json({
         ok: true,
         action: 'downgrade',

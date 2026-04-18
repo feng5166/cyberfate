@@ -5,13 +5,25 @@
 
 import { redis } from '../cache/redis';
 
+function sortedStringify(value: unknown): string {
+  return JSON.stringify(value, (_, v) => {
+    if (v && typeof v === 'object' && !Array.isArray(v)) {
+      return Object.keys(v as object).sort().reduce<Record<string, unknown>>((acc, k) => {
+        acc[k] = (v as Record<string, unknown>)[k];
+        return acc;
+      }, {});
+    }
+    return v;
+  });
+}
+
 /**
  * 生成缓存 key（基于输入参数）
  */
 export function generateCacheKey(prefix: string, params: Record<string, any>): string {
   const sorted = Object.keys(params)
     .sort()
-    .map((k) => `${k}:${JSON.stringify(params[k])}`)
+    .map((k) => `${k}:${sortedStringify(params[k])}`)
     .join('|');
   return `${prefix}:${sorted}`;
 }

@@ -158,11 +158,18 @@ export async function POST(req: NextRequest) {
     if (orderId) {
       const order = await prisma.order.findUnique({ where: { id: orderId } });
       if (order) {
-        await prisma.subscription.updateMany({
-          where: { userId: order.userId, status: 'active' },
+        // BUG-R2-033: only expire subscriptions started at/before this order's paidAt,
+        // to avoid cancelling a newer subscription the user purchased after the refunded one.
+        const refundCutoff = order.paidAt ?? order.createdAt;
+        const result = await prisma.subscription.updateMany({
+          where: {
+            userId: order.userId,
+            status: 'active',
+            startAt: { lte: refundCutoff },
+          },
           data: { status: 'expired' },
         });
-        console.log(`[Webhook] charge.refunded: expired subscriptions for orderId=${orderId}, userId=${order.userId}`);
+        console.log(`[Webhook] charge.refunded: expired ${result.count} subscription(s) for orderId=${orderId}, userId=${order.userId}`);
       }
     } else if (userId) {
       await prisma.subscription.updateMany({
@@ -287,38 +294,39 @@ export async function POST(req: NextRequest) {
       }
       const resolvedPlan = resolvedPlanId;
 
-      // 幂等查重：检查是否已有相同 transactionId 的订单
-      const existingOrder = await prisma.order.findFirst({
-        where: { transactionId: checkoutSession.id },
-      });
-      if (existingOrder) {
-        return NextResponse.json({ message: 'Already processed' });
-      }
-
-      // 验证 userId 存在性，防止 metadata 被篡改
-      const user = await prisma.user.findUnique({ where: { id: userId } });
-      if (!user) {
-        console.error('[Webhook] User not found:', userId);
-        return NextResponse.json({ error: 'User not found' }, { status: 400 });
-      }
-
-      const duration = isLifetimePlan(resolvedPlan) ? LIFETIME_DURATION : PRICING_CONFIG[resolvedPlan]?.duration ?? 1;
-      // BUG-007: 续费从 max(旧expireAt, now) 开始计算，保留剩余天数
-      const existingSubForUser = await prisma.subscription.findFirst({
-        where: { userId, status: 'active', expireAt: { gt: new Date() } },
-        orderBy: { expireAt: 'desc' },
-      });
-      const baseDateForUser = existingSubForUser && existingSubForUser.expireAt > new Date() ? existingSubForUser.expireAt : new Date();
-      const expireAt = addDays(baseDateForUser, duration);
-
       try {
         await prisma.$transaction(async (tx) => {
+          // 幂等查重：在事务内检查，防并发重复
+          const existingOrder = await tx.order.findFirst({
+            where: { transactionId: checkoutSession.id },
+          });
+          if (existingOrder) {
+            return;
+          }
+
+          // 验证 userId 存在性，防止 metadata 被篡改
+          const user = await tx.user.findUnique({ where: { id: userId } });
+          if (!user) {
+            console.error('[Webhook] User not found:', userId);
+            throw new Error('User not found');
+          }
+
+          const duration = isLifetimePlan(resolvedPlan) ? LIFETIME_DURATION : PRICING_CONFIG[resolvedPlan]?.duration ?? 1;
+          // BUG-007: 续费从 max(旧expireAt, now) 开始计算，保留剩余天数
+          const existingSubForUser = await tx.subscription.findFirst({
+            where: { userId, status: 'active', expireAt: { gt: new Date() } },
+            orderBy: { expireAt: 'desc' },
+          });
+          const baseDateForUser = existingSubForUser && existingSubForUser.expireAt > new Date() ? existingSubForUser.expireAt : new Date();
+          const expireAt = addDays(baseDateForUser, duration);
+
           await tx.order.create({
             data: {
               userId,
               plan: resolvedPlan,
               amount: PRICING_CONFIG[resolvedPlan]?.amount ?? 0,
               status: 'paid',
+              payMethod: 'stripe',
               transactionId: checkoutSession.id,
               paidAt: new Date(),
               outTradeNo: `WH-${checkoutSession.id}`,
@@ -340,6 +348,9 @@ export async function POST(req: NextRequest) {
           });
         });
       } catch (err: unknown) {
+        if ((err as Error)?.message === 'User not found') {
+          return NextResponse.json({ error: 'User not found' }, { status: 400 });
+        }
         // P2002: unique constraint violation — 并发重复写入时安全忽略
         if ((err as { code?: string })?.code === 'P2002') {
           console.warn('[Webhook] Duplicate transactionId, already processed:', checkoutSession.id);

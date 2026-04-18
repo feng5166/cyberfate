@@ -29,6 +29,10 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const { name, birthDate, birthHour, gender } = body;
 
+  if (birthDate !== undefined && birthDate !== null && !/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) {
+    return NextResponse.json({ error: '日期格式不正确，应为 YYYY-MM-DD' }, { status: 400 });
+  }
+
   const oldUser = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: { birthDate: true, birthHour: true, nickname: true },

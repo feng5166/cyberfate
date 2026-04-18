@@ -39,6 +39,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '用户不存在' }, { status: 404 });
     }
 
+    // BUG-R2-018: 检查用户已有active订阅则拒绝
+    const existingActive = await prisma.subscription.findFirst({
+      where: { userId: user.id, status: 'active', expireAt: { gt: new Date() } },
+    });
+    if (existingActive) {
+      return NextResponse.json(
+        { error: `用户已有活跃订阅 (plan=${existingActive.plan}, expireAt=${existingActive.expireAt.toISOString()})，请先取消或等待到期` },
+        { status: 409 }
+      );
+    }
+
     // 计算到期时间
     const now = new Date();
     let expireAt = new Date(now);

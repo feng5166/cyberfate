@@ -86,6 +86,36 @@ export const authOptions: NextAuthOptions = {
 
         // 将数据库 ID 存到 user 对象
         user.id = existingUser.id
+
+        // BUG-R2-001: 写入 Account 记录，关联 Google provider
+        if (account) {
+          await prisma.account.upsert({
+            where: {
+              provider_providerAccountId: {
+                provider: 'google',
+                providerAccountId: (profile as { sub?: string })?.sub ?? account.providerAccountId,
+              },
+            },
+            update: {
+              access_token: account.access_token,
+              expires_at: account.expires_at,
+              id_token: account.id_token,
+              scope: account.scope,
+              token_type: account.token_type,
+            },
+            create: {
+              userId: existingUser.id,
+              type: account.type,
+              provider: 'google',
+              providerAccountId: (profile as { sub?: string })?.sub ?? account.providerAccountId,
+              access_token: account.access_token,
+              expires_at: account.expires_at,
+              id_token: account.id_token,
+              scope: account.scope,
+              token_type: account.token_type,
+            },
+          })
+        }
       }
       
       if (account?.provider === 'wechat') {

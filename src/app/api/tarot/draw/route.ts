@@ -177,6 +177,10 @@ export async function POST(req: NextRequest) {
   const config = spreadConfig[spread];
   const cards = drawRandomCards(config.count);
 
+  if (cards.length !== config.count) {
+    return NextResponse.json({ error: '抽牌失败，请重试' }, { status: 500 });
+  }
+
   const cardsWithImages = cards.map((card, idx) => ({
     ...card,
     image_url: getCardImageUrl(card),
