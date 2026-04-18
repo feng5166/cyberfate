@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Share2, Download, Check } from 'lucide-react';
+import QRCode from 'qrcode';
 import type { PillarRecord } from '@/lib/bazi/types';
 import { cn } from '@/lib/utils/cn';
 
@@ -24,7 +25,7 @@ function wrapText(ctx: CanvasRenderingContext2D, text: string, maxChars: number)
   return lines;
 }
 
-function buildCanvas(baziText: string, dayMaster: string, zodiac: string, summary: string): HTMLCanvasElement {
+async function buildCanvas(baziText: string, dayMaster: string, zodiac: string, summary: string): Promise<HTMLCanvasElement> {
   const canvas = document.createElement('canvas');
   canvas.width = CARD_W;
   canvas.height = CARD_H;
@@ -89,28 +90,22 @@ function buildCanvas(baziText: string, dayMaster: string, zodiac: string, summar
     ctx.fillText(line, CARD_W / 2, cardY + 40 + i * lineH);
   });
 
-  // Bottom CTA box
-  const ctaY = CARD_H - 260;
-  const ctaW = 320;
-  const ctaH = 140;
-  const ctaX = (CARD_W - ctaW) / 2;
+  // Bottom CTA: QR code + label
+  const qrSize = 150;
+  const qrX = (CARD_W - qrSize) / 2;
+  const qrY = CARD_H - 280;
 
-  ctx.fillStyle = '#1C1A16';
-  ctx.beginPath();
-  ctx.roundRect(ctaX, ctaY, ctaW, ctaH, 20);
-  ctx.fill();
+  const qrCanvas = document.createElement('canvas');
+  await QRCode.toCanvas(qrCanvas, 'https://www.cyberfate.me/bazi', {
+    width: qrSize,
+    margin: 1,
+    color: { dark: '#1C1A16', light: '#FAFAF8' },
+  });
+  ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
 
-  ctx.font = '22px sans-serif';
-  ctx.fillStyle = 'rgba(255,255,255,0.6)';
-  ctx.fillText('访问 CyberFate.me 查看你的命盘', CARD_W / 2, ctaY + 46);
-
-  ctx.font = 'bold 32px sans-serif';
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillText('CyberFate.me', CARD_W / 2, ctaY + 92);
-
-  ctx.font = '22px sans-serif';
-  ctx.fillStyle = 'rgba(255,255,255,0.7)';
-  ctx.fillText('查看你的命盘', CARD_W / 2, ctaY + 126);
+  ctx.font = '24px sans-serif';
+  ctx.fillStyle = 'rgba(28,26,22,0.55)';
+  ctx.fillText('CyberFate.me', CARD_W / 2, qrY + qrSize + 36);
 
   return canvas;
 }
@@ -118,6 +113,15 @@ function buildCanvas(baziText: string, dayMaster: string, zodiac: string, summar
 export function ShareCard({ pillars, dayMaster, zodiac, summary, className }: ShareCardProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState<string>('');
+
+  useEffect(() => {
+    QRCode.toDataURL('https://www.cyberfate.me/bazi', {
+      width: 120,
+      margin: 1,
+      color: { dark: '#1C1A16', light: '#FAFAF8' },
+    }).then(setQrDataUrl).catch(() => {});
+  }, []);
 
   const baziText = `${pillars.year.gan}${pillars.year.zhi} ${pillars.month.gan}${pillars.month.zhi} ${pillars.day.gan}${pillars.day.zhi} ${pillars.hour.gan}${pillars.hour.zhi}`;
 
@@ -143,7 +147,7 @@ export function ShareCard({ pillars, dayMaster, zodiac, summary, className }: Sh
     if (isGenerating) return;
     setIsGenerating(true);
     try {
-      const canvas = buildCanvas(baziText, dayMaster, zodiac, summary);
+      const canvas = await buildCanvas(baziText, dayMaster, zodiac, summary);
       canvas.toBlob((blob) => {
         if (!blob) { fallbackCopyText(); setIsGenerating(false); return; }
         downloadBlob(blob);
@@ -160,7 +164,7 @@ export function ShareCard({ pillars, dayMaster, zodiac, summary, className }: Sh
     if (isGenerating) return;
     setIsGenerating(true);
     try {
-      const canvas = buildCanvas(baziText, dayMaster, zodiac, summary);
+      const canvas = await buildCanvas(baziText, dayMaster, zodiac, summary);
       canvas.toBlob(async (blob) => {
         if (!blob) { fallbackCopyText(); setIsGenerating(false); return; }
         try {
@@ -241,12 +245,16 @@ export function ShareCard({ pillars, dayMaster, zodiac, summary, className }: Sh
           </div>
 
           {/* 底部 CTA */}
-          <div className="absolute bottom-16 left-0 right-0 text-center px-8">
-            <div className="rounded-xl bg-[#1C1A16] text-white px-6 py-4 inline-block">
-              <p className="text-xs text-white/60 mb-1">访问以下网址</p>
-              <p className="text-base font-bold tracking-wide">CyberFate.me</p>
-              <p className="text-xs text-white/70 mt-1">查看你的命盘</p>
-            </div>
+          <div className="absolute bottom-10 left-0 right-0 text-center px-8">
+            {qrDataUrl && (
+              <img
+                src={qrDataUrl}
+                alt="QR Code"
+                className="mx-auto w-[60px] h-[60px]"
+                style={{ imageRendering: 'pixelated' }}
+              />
+            )}
+            <p className="mt-1.5 text-xs text-[#1C1A16]/50">CyberFate.me</p>
           </div>
 
           {/* 装饰元素 */}
