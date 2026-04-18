@@ -26,8 +26,11 @@ async function callDeepSeek(systemPrompt: string, userPrompt: string, maxTokens 
   const apiKey = getEnvVar('DEEPSEEK_API_KEY');
   if (!apiKey) throw new Error('DEEPSEEK_API_KEY 未配置');
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
   const response = await fetch(`${DEEPSEEK_BASE_URL}/chat/completions`, {
     method: 'POST',
+    signal: controller.signal,
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${apiKey}`,
@@ -43,6 +46,7 @@ async function callDeepSeek(systemPrompt: string, userPrompt: string, maxTokens 
     }),
   });
 
+  clearTimeout(timeoutId);
   if (!response.ok) {
     const err = await response.text();
     throw new Error(`DeepSeek API error ${response.status}: ${err}`);

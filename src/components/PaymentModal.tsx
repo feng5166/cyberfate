@@ -34,15 +34,30 @@ export function PaymentModal({ planName, price, onClose, onSuccess }: PaymentMod
     }
   }, []);
 
+  const resetState = useCallback(() => {
+    setLoading(false);
+    setPayMethod('stripe');
+    setQrCode(null);
+    setError(null);
+    setOrderId(null);
+    setPaymentSuccess(false);
+  }, []);
+
+  const handleClose = useCallback(() => {
+    stopPolling();
+    resetState();
+    onClose();
+  }, [stopPolling, resetState, onClose]);
+
   const handlePaymentSuccess = useCallback(() => {
     stopPolling();
     setPaymentSuccess(true);
     if (onSuccess) {
       onSuccess();
     } else {
-      setTimeout(onClose, 1500);
+      setTimeout(handleClose, 1500);
     }
-  }, [stopPolling, onSuccess, onClose]);
+  }, [stopPolling, onSuccess, handleClose]);
 
   const startPolling = useCallback((targetOrderId: string) => {
     stopPolling();
@@ -124,7 +139,7 @@ export function PaymentModal({ planName, price, onClose, onSuccess }: PaymentMod
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[99999] p-4" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[99999] p-4" onClick={handleClose}>
       <div className="bg-white rounded-lg p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
         <h2 className="font-heading text-xl font-bold text-primary mb-4">
           开通 {planName}
@@ -187,7 +202,7 @@ export function PaymentModal({ planName, price, onClose, onSuccess }: PaymentMod
 
             <div className="flex gap-3">
               <button
-                onClick={onClose}
+                onClick={handleClose}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 取消
@@ -225,7 +240,7 @@ export function PaymentModal({ planName, price, onClose, onSuccess }: PaymentMod
               </div>
             </div>
             <button
-              onClick={() => { stopPolling(); onClose(); }}
+              onClick={handleClose}
               className="w-full px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50 transition-colors"
             >
               取消支付

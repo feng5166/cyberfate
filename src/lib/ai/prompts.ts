@@ -1,6 +1,7 @@
 import type { BaziResult } from '../bazi/types';
 import { DAYMASTER_TRAITS } from '../bazi/constants';
 import type { TianGan } from '../bazi/types';
+import { sanitizeUserInput } from '../utils/sanitize';
 
 /**
  * 八字分析 System Prompt
@@ -37,7 +38,8 @@ export function buildBaziPrompt(result: BaziResult, name?: string): string {
   const dayGan = chart.day.gan as TianGan;
   const dayMasterTrait = DAYMASTER_TRAITS[dayGan];
 
-  const greeting = name ? `命主姓名：${name}` : '命主：匿名';
+  const safeName = name ? sanitizeUserInput(name.replace(/[【】\[\]「」『』〔〕《》〈〉]/g, ''), 50) : '';
+  const greeting = safeName ? `命主姓名：${safeName}` : '命主：匿名';
 
   const hourInfo = chart.hour
     ? `时柱：${chart.hour.gan}${chart.hour.zhi}（${chart.hour.ganWuxing}${chart.hour.zhiWuxing}）`

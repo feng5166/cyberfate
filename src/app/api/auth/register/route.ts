@@ -36,14 +36,19 @@ export async function POST(request: NextRequest) {
 
   const normalizedEmail = email.toLowerCase().trim();
 
-  // nickname 长度限制
-  const safeNickname = (nickname || normalizedEmail.split('@')[0]).trim().slice(0, 30);
+  // nickname 长度限制，剥离零宽字符后再截断
+  const rawNickname = (nickname || normalizedEmail.split('@')[0]).trim();
+  // eslint-disable-next-line no-control-regex
+  const safeNickname = rawNickname.replace(/[\u200B-\u200D\uFEFF\u00AD\u034F\u2060-\u2064\u206A-\u206F]/g, '').trim().slice(0, 30);
   if (!safeNickname || safeNickname.length < 1) {
     return Response.json({ error: '昵称不能为空' }, { status: 400 })
   }
 
-  // nickname 禁止特殊字符
+  // nickname 禁止特殊字符及 javascript: 协议
   if (/[<>\"'\\]/.test(safeNickname)) {
+    return Response.json({ error: '昵称包含非法字符' }, { status: 400 })
+  }
+  if (/javascript\s*:/i.test(safeNickname)) {
     return Response.json({ error: '昵称包含非法字符' }, { status: 400 })
   }
 

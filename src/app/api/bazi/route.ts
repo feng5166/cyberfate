@@ -32,7 +32,7 @@ const requestSchema = z.object({
     (d) => { const y = parseInt(d.slice(0, 4), 10); return y >= 1900 && y <= 2030; },
     '出生年份须在 1900 至 2030 之间'
   ),
-  birthHour: z.number().int().min(-1).max(11),
+  birthHour: z.number().int().min(0).max(11),
   birthPlace: z.string().optional(),
 });
 
@@ -59,8 +59,7 @@ export async function POST(req: NextRequest) {
       input.name = sanitizeUserInput(input.name, 50);
     }
 
-    // 转换时辰（-1 表示不知道，默认午时）
-    const shichen = input.birthHour === -1 ? '午时' : (HOUR_TO_SHICHEN[input.birthHour] || '午时');
+    const shichen = HOUR_TO_SHICHEN[input.birthHour] || '午时';
     
     // 1. 计算八字
     const baziResult = calculateBazi({

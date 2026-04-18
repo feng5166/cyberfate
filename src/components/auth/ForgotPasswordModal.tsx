@@ -76,6 +76,7 @@ export function ForgotPasswordModal({ isOpen, onClose, initialEmail = '' }: Forg
       }
 
       setSuccess(true)
+      setCountdown(60)
       setLoading(false)
     } catch {
       setError('网络异常，请稍后重试')
