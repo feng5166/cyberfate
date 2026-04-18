@@ -353,7 +353,7 @@ function FixVipTab() {
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                {p === 'daily' ? '📅 天付 +1天' : p === 'yearly' ? '📅 年付 +365天' : '📅 年付 +365天'}
+                {p === 'daily' ? '📅 天付 +1天' : p === 'yearly' ? '📅 年付 +365天' : '📅 终身'}
               </button>
             ))}
           </div>
@@ -445,7 +445,7 @@ function CreateSubTab() {
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                {p === 'daily' ? '天付' : p === 'yearly' ? '年付' : '年付'}
+                {p === 'daily' ? '天付' : p === 'yearly' ? '年付' : '终身'}
               </button>
             ))}
           </div>
