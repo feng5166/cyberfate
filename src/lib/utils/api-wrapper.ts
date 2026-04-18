@@ -46,7 +46,7 @@ export async function callExternalAPI<T>(
     return { success: true, data, fromFallback: false };
   } catch (error) {
     const { code, userMessage } = classifyError(error);
-    console.warn(`[${options.serviceName}] API 调用失败: ${code}`);
+    console.warn(`[${options.serviceName}] API 调用失败: ${code}`, error instanceof Error ? error.message : error);
 
     if (options.fallback !== undefined) {
       return { success: true, data: options.fallback, fromFallback: true };
