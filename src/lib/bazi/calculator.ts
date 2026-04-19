@@ -117,8 +117,12 @@ export function calculateBazi(input: BaziInput): BaziResult {
   // 日主（日干 + 五行）
   const dayMaster = `${dayPillar.gan}${dayPillar.ganWuxing}`;
   
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const zodiac: string = (lunar as any).getAnimal?.() || '未知';
+  // 生肖必须从年柱地支推导（八字以立春换年，不能用农历年的 getAnimal）
+  const ZHI_SHENGXIAO: Record<string, string> = {
+    '子': '鼠', '丑': '牛', '寅': '虎', '卯': '兔', '辰': '龙', '巳': '蛇',
+    '午': '马', '未': '羊', '申': '猴', '酉': '鸡', '戌': '狗', '亥': '猪',
+  };
+  const zodiac = ZHI_SHENGXIAO[yearPillar.zhi] || '未知';
 
   return {
     chart,
