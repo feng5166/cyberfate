@@ -27,9 +27,12 @@ export function QuotaLimitModal({ onClose }: QuotaLimitModalProps) {
         <h3 className="font-heading text-xl font-bold text-primary mb-2">
           今日免费次数已用完
         </h3>
-        <p className="text-secondary text-sm mb-6">
+        <p className="text-secondary text-sm mb-2">
           免费用户每天可使用 1 次 AI 解读。<br />
-          升级 VIP 享受无限次数解读，以及更多专属功能。
+          配额将在次日 <span className="font-medium text-primary">00:00</span> 自动重置。
+        </p>
+        <p className="text-secondary text-sm mb-6">
+          升级会员即可享受 <span className="font-medium text-primary">无限次数</span> 解读及更多专属功能。
         </p>
 
         <button
@@ -39,12 +42,22 @@ export function QuotaLimitModal({ onClose }: QuotaLimitModalProps) {
           }}
           className="w-full bg-gradient-to-r from-cyber-gold-dark to-cyber-gold text-cyber-bg font-semibold py-3 rounded-lg hover:shadow-glow transition-all duration-200 mb-3"
         >
-          升级 VIP
+          解锁全部功能
+        </button>
+
+        <button
+          onClick={() => {
+            onClose();
+            router.push('/pricing');
+          }}
+          className="w-full text-[#1C1A16]/60 text-sm py-2 hover:text-[#1C1A16] transition-colors underline"
+        >
+          了解会员权益 →
         </button>
 
         <button
           onClick={onClose}
-          className="w-full text-muted text-sm py-2 hover:text-secondary transition-colors"
+          className="w-full text-muted text-xs py-1.5 hover:text-secondary transition-colors mt-1"
         >
           明天再来
         </button>

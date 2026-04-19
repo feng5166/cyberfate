@@ -101,6 +101,13 @@ export default function PricingClient({ currentPlan }: PricingClientProps) {
           <p className="text-[15px] text-[#1C1A16]/55 mt-3">
             一次付费，无需续费
           </p>
+          <div className="flex flex-wrap items-center justify-center gap-6 mt-5 text-[13px] text-[#1C1A16]/55">
+            <span className="flex items-center gap-1.5">✅ 即时生效</span>
+            <span className="text-[#1C1A16]/20">|</span>
+            <span className="flex items-center gap-1.5">🔒 安全加密支付</span>
+            <span className="text-[#1C1A16]/20">|</span>
+            <span className="flex items-center gap-1.5">⭐ 5万+ 用户选择</span>
+          </div>
           {isSubscribed && (
             <div className="mt-6 inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 text-sm font-medium px-5 py-2.5 rounded-full border border-emerald-200">
               <span>您已是会员 ✨ 感谢支持</span>

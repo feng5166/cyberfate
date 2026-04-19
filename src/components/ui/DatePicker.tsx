@@ -254,9 +254,9 @@ export function DatePicker({
                       setShowYearPicker(false)
                     }}
                     className={`
-                      w-full py-2 text-center rounded
-                      ${year === viewYear 
-                        ? 'bg-[#1C1A16] text-white font-medium' 
+                      w-full py-3 text-center rounded
+                      ${year === viewYear
+                        ? 'bg-[#1C1A16] text-white font-medium'
                         : 'hover:bg-[#FAF9F6] text-[#1C1A16]/70'}
                     `}
                   >
@@ -292,9 +292,9 @@ export function DatePicker({
                       setShowMonthPicker(false)
                     }}
                     className={`
-                      w-full py-2 text-center rounded
-                      ${month === viewMonth 
-                        ? 'bg-[#1C1A16] text-white font-medium' 
+                      w-full py-3 text-center rounded
+                      ${month === viewMonth
+                        ? 'bg-[#1C1A16] text-white font-medium'
                         : 'hover:bg-[#FAF9F6] text-[#1C1A16]/70'}
                     `}
                   >

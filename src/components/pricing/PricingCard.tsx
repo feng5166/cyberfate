@@ -13,6 +13,7 @@ export interface PricingCardProps {
   isSubscribed?: boolean;
   ctaText?: string;
   currencySymbol?: string;  // 新增：货币符号
+  anchor?: string;          // 价值锚点文案（如终身版性价比提示）
   onClick: () => void;
   onCTAClick: () => void;
 }
@@ -28,6 +29,7 @@ export function PricingCard({
   isSubscribed = false,
   ctaText,
   currencySymbol = '$',
+  anchor,
   onClick,
   onCTAClick,
 }: PricingCardProps) {
@@ -69,6 +71,9 @@ export function PricingCard({
             <span className="text-[40px] font-semibold leading-none text-[#1C1A16]">{price}</span>
           </div>
           <span className="text-sm text-[#1C1A16]/55 ml-1">{period}</span>
+          {anchor && (
+            <p className="mt-2 text-xs text-amber-700 font-medium bg-amber-50 rounded-lg px-3 py-1.5">{anchor}</p>
+          )}
         </div>
 
         <ul className="space-y-3 flex-1 mb-8">

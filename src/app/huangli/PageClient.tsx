@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { CalendarPicker } from '@/components/huangli/CalendarPicker';
 import { MobileDateBar } from '@/components/huangli/MobileDateBar';
 import { DayDetailCard } from '@/components/huangli/DayDetailCard';
@@ -19,6 +19,21 @@ export default function HuangliPage() {
   const [data, setData] = useState<HuangliData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const touchStartX = useRef(0);
+
+  function addDays(dateStr: string, delta: number): string {
+    const d = new Date(dateStr);
+    d.setDate(d.getDate() + delta);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  const handleSwipe = (deltaX: number) => {
+    if (Math.abs(deltaX) < 50) return;
+    setSelectedDate(prev => addDays(prev, deltaX < 0 ? 1 : -1));
+  };
 
   const loadDate = useCallback(async (date: string) => {
     setLoading(true);
@@ -32,7 +47,7 @@ export default function HuangliPage() {
       const result = await res.json();
       setData(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '数据加载失败，请稍后重试');
+      setError(err instanceof Error ? err.message : '网络连接不稳定，请稍后重试');
     } finally {
       setLoading(false);
     }
@@ -47,7 +62,10 @@ export default function HuangliPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6]">
+    <div className="min-h-screen bg-[#FAF9F6]"
+      onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
+      onTouchEnd={(e) => { handleSwipe(e.changedTouches[0].clientX - touchStartX.current); }}
+    >
       {/* 标题区 */}
       <div className="text-center py-8 md:py-10 px-4">
         <h1 className="font-display text-2xl md:text-3xl font-semibold text-[#1C1A16]">

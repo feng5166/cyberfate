@@ -92,10 +92,10 @@ export function LoginForm({ googleEnabled }: LoginFormProps) {
         {/* 标题区 */}
         <div className="text-center mb-6">
           <h1 className="text-[#1C1A16] text-2xl max-sm:text-xl font-semibold">
-            登录 / 注册
+            免费开始
           </h1>
           <p className="text-[#9B9590] text-sm text-center mt-2">
-            登录或创建账号以继续使用
+            登录或创建账号，立即体验 AI 命理解读
           </p>
         </div>
 

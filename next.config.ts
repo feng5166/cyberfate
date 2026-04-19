@@ -1,5 +1,17 @@
 import type { NextConfig } from "next";
 
+// Bundle analyzer: enable with `ANALYZE=true npm run build`
+// Requires: npm install -D @next/bundle-analyzer
+let withBundleAnalyzer: (config: NextConfig) => NextConfig | Promise<NextConfig> = (c) => c;
+try {
+  const mod = require("@next/bundle-analyzer");
+  if (mod?.default) {
+    withBundleAnalyzer = mod.default({ enabled: true, openAnalyzer: false });
+  }
+} catch {
+  // @next/bundle-analyzer not installed, skip
+}
+
 const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -27,6 +39,12 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  images: {
+    formats: ['image/avif', 'image/webp'],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256],
+    minimumCacheTTL: 60,
+  },
   async headers() {
     return [
       {
@@ -37,4 +55,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withBundleAnalyzer(nextConfig);

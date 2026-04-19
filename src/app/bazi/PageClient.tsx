@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
@@ -320,6 +320,7 @@ function BaziPageContent() {
   const { status } = useSession();
   const searchParams = useSearchParams();
   const recordId = searchParams.get('record');
+  const resultRef = useRef<HTMLDivElement>(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -329,6 +330,7 @@ function BaziPageContent() {
     birthPlace: '',
   });
   const [loading, setLoading] = useState(false);
+  const [loadingLong, setLoadingLong] = useState(false);
   const [showQuotaModal, setShowQuotaModal] = useState(false);
   const [activeTab, setActiveTab] = useState<ResultTab>('性格特质');
   const [tabExpanded, setTabExpanded] = useState<Record<ResultTab, boolean>>({
@@ -479,6 +481,25 @@ function BaziPageContent() {
   }, [dayunTimeline]);
 
   const selectedDayun = dayunTimeline[selectedDayunIndex] ?? null;
+
+  useEffect(() => {
+    if (result && resultRef.current) {
+      setTimeout(() => {
+        resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  }, [result]);
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    if (loading) {
+      setLoadingLong(false);
+      timer = setTimeout(() => setLoadingLong(true), 8000);
+    } else {
+      setLoadingLong(false);
+    }
+    return () => clearTimeout(timer);
+  }, [loading]);
 
   const dayunDetail = useMemo(() => {
     return buildDayunDetail(selectedDayun, aiSections, formData.birthDate);
@@ -834,7 +855,7 @@ function BaziPageContent() {
                 loading={loading}
                 className="w-full text-[13px] px-[38px] py-[12px] rounded-xl border border-[#1C1A16]/30 text-[#1C1A16] bg-transparent hover:bg-[#1C1A16]/5"
               >
-                {loading ? '正在计算...' : '开始分析'}
+                {loading ? '正在计算...' : '开始解读'}
               </Button>
             </form>
           </div>
@@ -844,7 +865,9 @@ function BaziPageContent() {
               <Card className={`flex flex-col items-center justify-center py-16 ${cardClass}`}>
                 <BaguaSpinner size={64} />
                 <p className="mt-4 text-[#1C1A16] font-medium">正在计算您的命盘...</p>
-                <p className="text-sm text-[#6B7280] mt-2">AI 正在解读中，请稍候</p>
+                <p className="text-sm text-[#6B7280] mt-2">
+                  {loadingLong ? 'AI 解读耗时较长，正在为您准备基础解读...' : 'AI 正在解读中，请稍候'}
+                </p>
               </Card>
             )}
 
@@ -853,13 +876,35 @@ function BaziPageContent() {
                 <div className="w-16 h-16 rounded-full bg-[#F2EEE6] flex items-center justify-center mb-4">
                   <Sparkles className="w-8 h-8 text-[#6B7280]" />
                 </div>
-                <p className="text-[#1C1A16] font-medium text-lg">填写信息后点击开始分析</p>
-                <p className="text-sm text-[#6B7280] mt-2">AI 将为您生成专属命盘解读</p>
+                <p className="text-[#1C1A16] font-medium text-lg">开始您的命盘解读</p>
+                <p className="text-sm text-[#6B7280] mt-2 max-w-[260px]">填写左侧出生信息，AI 将生成专属八字解读</p>
+                <div className="mt-6 text-left bg-[#FAF9F6] rounded-xl p-4 max-w-[300px] w-full">
+                  <p className="text-xs font-medium text-[#1C1A16]/60 mb-2">填写提示</p>
+                  <ul className="space-y-1.5 text-xs text-[#1C1A16]/55">
+                    <li>• 出生日期：如 1990-01-15</li>
+                    <li>• 时辰不确定可选"不知道"</li>
+                    <li>• 出生地影响真太阳时计算</li>
+                  </ul>
+                </div>
               </Card>
             )}
 
             {result && !loading && basicInfoData && dayMasterInsight && (
-              <div className="space-y-6 animate-fadeIn" aria-live="polite">
+              <div ref={resultRef} className="space-y-6 animate-fadeIn" aria-live="polite">
+                {result._source !== 'history' && (
+                  <div className="flex items-center justify-between gap-3 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 px-4 py-3">
+                    <p className="text-sm text-amber-800">✨ 解读已生成！升级会员解锁完整 AI 深度报告</p>
+                    <Link href="/pricing" className="shrink-0 text-xs font-medium text-amber-700 border border-amber-300 rounded-lg px-3 py-1.5 hover:bg-amber-100 transition-colors">
+                      了解会员
+                    </Link>
+                  </div>
+                )}
+                {result._source === 'fallback' && (
+                  <div className="flex items-center gap-2 rounded-xl bg-blue-50 border border-blue-200/60 px-4 py-3">
+                    <span className="text-blue-500 text-lg">ℹ️</span>
+                    <p className="text-sm text-blue-700">AI 解读耗时较长，已为您准备基础解读（简化版解读，完整版需会员）</p>
+                  </div>
+                )}
                 <Card className={`${cardClass} p-0`}>
                   <BasicInfoCard
                     baziText={basicInfoData.baziText}

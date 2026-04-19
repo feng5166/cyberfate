@@ -1,9 +1,11 @@
 'use client';
 
-import { Footer } from '@/components/layout/Footer';
-import { AiDisclaimer } from '@/components/ui/AiDisclaimer';
+import dynamic from 'next/dynamic';
 import { ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+const Footer = dynamic(() => import('@/components/layout/Footer').then(m => m.Footer), { ssr: false });
+const AiDisclaimer = dynamic(() => import('@/components/ui/AiDisclaimer').then(m => m.AiDisclaimer), { ssr: false });
 
 // ─── 八卦数据 ─────────────────────────────────────
 

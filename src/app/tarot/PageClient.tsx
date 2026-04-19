@@ -251,11 +251,11 @@ export default function TarotPage() {
       if (!res.ok) {
         const data = await res.json();
         if (data.error === 'VIP_REQUIRED') {
-          setError('凯尔特十字牌阵为 VIP 专属功能。');
+          setError('凯尔特十字牌阵为会员专属功能，升级后即可使用。');
         } else if (data.error === 'QUOTA_EXCEEDED') {
-          setError(data.message || '今日次数已用完，请明日再试。');
+          setError('今日免费次数已用完，明日 00:00 自动重置，或升级会员继续使用。');
         } else {
-          setError(data.error || '请求失败，请稍后重试。');
+          setError('网络连接不稳定，请稍后重试。');
         }
         setStep('question');
         return;

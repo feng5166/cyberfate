@@ -1,7 +1,6 @@
 'use client';
 
-import { Footer } from '@/components/layout/Footer';
-import { AiDisclaimer } from '@/components/ui/AiDisclaimer';
+import dynamic from 'next/dynamic';
 import {
   Brain,
   ChevronDown,
@@ -12,6 +11,9 @@ import {
   Target,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+
+const Footer = dynamic(() => import('@/components/layout/Footer').then(m => m.Footer), { ssr: false });
+const AiDisclaimer = dynamic(() => import('@/components/ui/AiDisclaimer').then(m => m.AiDisclaimer), { ssr: false });
 
 type Method = 'time' | 'number' | 'manual';
 

@@ -24,6 +24,7 @@ export function PricingCardList({
     <div className="flex flex-col lg:flex-row gap-5 lg:gap-6">
       {PRICING_PLANS_LIST.map((plan) => {
         const isCurrent = isSubscribed && currentPlan === plan.name;
+        const anchor = plan.id === 'lifetime' ? '≈ 4 年专业版价格，永久使用' : undefined;
         return (
           <PricingCard
             key={plan.id}
@@ -37,6 +38,7 @@ export function PricingCardList({
             isSubscribed={isSubscribed}
             ctaText={isCurrent ? '当前计划' : isSubscribed ? '管理订阅 →' : undefined}
             currencySymbol={CURRENCY_SYMBOLS[plan.currency] || '$'}
+            anchor={anchor}
             onClick={() => onSelectPlan(plan.id)}
             onCTAClick={() => onCTAClick(plan.id, plan.displayPrice)}
           />
