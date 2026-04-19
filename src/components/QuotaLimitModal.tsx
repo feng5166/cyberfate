@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 interface QuotaLimitModalProps {
   onClose: () => void;
@@ -8,12 +9,13 @@ interface QuotaLimitModalProps {
 
 export function QuotaLimitModal({ onClose }: QuotaLimitModalProps) {
   const router = useRouter();
+  const focusTrapRef = useFocusTrap(true);
 
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative bg-white border border-primary/30 rounded-2xl p-8 max-w-sm w-full shadow-glow text-center">
+      <div ref={focusTrapRef} className="relative bg-white border border-primary/30 rounded-2xl p-8 max-w-sm w-full shadow-glow text-center">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-muted hover:text-primary transition-colors"

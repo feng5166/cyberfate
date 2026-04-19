@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { PLAN_NAME_TO_ID } from '@/lib/pricing-config';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 interface PaymentModalProps {
   planName: string;
@@ -26,6 +27,7 @@ export function PaymentModal({ planName, price, onClose, onSuccess }: PaymentMod
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const pollTimerRef = useRef<NodeJS.Timeout | null>(null);
   const pollStartRef = useRef<number>(0);
+  const modalRef = useFocusTrap(!!qrCode || loading || paymentSuccess);
 
   const stopPolling = useCallback(() => {
     if (pollTimerRef.current) {
@@ -140,7 +142,7 @@ export function PaymentModal({ planName, price, onClose, onSuccess }: PaymentMod
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[99999] p-4" onClick={handleClose}>
-      <div className="bg-white rounded-lg p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+      <div ref={modalRef} className="bg-white rounded-lg p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
         <h2 className="font-heading text-xl font-bold text-primary mb-4">
           开通 {planName}
         </h2>

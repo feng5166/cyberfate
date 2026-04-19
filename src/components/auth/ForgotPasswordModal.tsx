@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
+import { useFocusTrap } from '@/hooks/useFocusTrap'
 
 interface ForgotPasswordModalProps {
   isOpen: boolean
@@ -10,6 +11,7 @@ interface ForgotPasswordModalProps {
 }
 
 export function ForgotPasswordModal({ isOpen, onClose, initialEmail = '' }: ForgotPasswordModalProps) {
+  const focusTrapRef = useFocusTrap(isOpen)
   const [email, setEmail] = useState(initialEmail)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -89,6 +91,7 @@ export function ForgotPasswordModal({ isOpen, onClose, initialEmail = '' }: Forg
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50" onClick={onClose}>
       <div
+        ref={focusTrapRef}
         className="w-[480px] max-w-[90vw] bg-white rounded-2xl shadow-2xl p-8 relative"
         onClick={(e) => e.stopPropagation()}
       >

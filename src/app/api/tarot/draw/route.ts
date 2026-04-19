@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { generateCacheKey, getCache, setCache } from '@/lib/ai/cache';
-import { generateTarotReading } from '@/lib/ai/client';
+import { generateTarotReading, type TarotReadingResult } from '@/lib/ai/client';
 import type { TarotReadingPromptInput } from '@/lib/ai/prompts';
 
 import { getServerSession } from 'next-auth';
@@ -222,29 +222,47 @@ export async function POST(req: NextRequest) {
     })),
   };
 
-  const reading = await withCircuitBreaker('deepseek-tarot', () =>
-    withAiTimeout(() => generateTarotReading(promptInput), 15_000)
-  );
-  const readingPayload: CachedTarotReading = {
-    cardMeanings: reading.cardMeanings,
-    overallNarrative: reading.overallNarrative,
-    detailedReading: reading.detailedReading,
-    advice: reading.advice,
-    caution: reading.caution,
-  };
+  let reading: TarotReadingResult & { _source: 'deepseek' | 'fallback' };
+  try {
+    reading = await withCircuitBreaker('deepseek-tarot', () =>
+      withAiTimeout(() => generateTarotReading(promptInput), 15_000)
+    );
+  } catch (aiErr) {
+    console.warn('[Tarot] AI unavailable, using card-based fallback:', aiErr instanceof Error ? aiErr.message : String(aiErr));
+    reading = {
+      cardMeanings: cardsWithImages.map((card) =>
+        card.orientation === 'upright' ? card.upright : card.reversed
+      ),
+      overallNarrative: '当前 AI 服务暂时不可用，以下为基础牌义参考，建议稍后重新占卜。',
+      detailedReading: cardsWithImages
+        .map((card) => `${card.name_zh}（${card.orientation === 'upright' ? '正位' : '逆位'}）：${card.orientation === 'upright' ? card.upright : card.reversed}`)
+        .join('\n\n'),
+      advice: '稍后重试可获取完整 AI 解读。',
+      caution: 'AI 服务暂时不可用，以上为基础牌义参考。',
+      _source: 'fallback',
+    };
+  }
 
-  await setCache(cacheKey, readingPayload, 12 * 60 * 60);
+  if (reading._source !== 'fallback') {
+    await setCache(cacheKey, {
+      cardMeanings: reading.cardMeanings,
+      overallNarrative: reading.overallNarrative,
+      detailedReading: reading.detailedReading,
+      advice: reading.advice,
+      caution: reading.caution,
+    }, 12 * 60 * 60);
+  }
 
   return NextResponse.json({
     spread,
     cards: cardsWithImages.map((card, index) => ({
       ...card,
-      meaning: readingPayload.cardMeanings[index] || (card.orientation === 'upright' ? card.upright : card.reversed),
+      meaning: reading.cardMeanings[index] || (card.orientation === 'upright' ? card.upright : card.reversed),
     })),
-    overallNarrative: readingPayload.overallNarrative,
-    detailedReading: readingPayload.detailedReading,
-    advice: readingPayload.advice,
-    caution: readingPayload.caution,
+    overallNarrative: reading.overallNarrative,
+    detailedReading: reading.detailedReading,
+    advice: reading.advice,
+    caution: reading.caution,
     _source: reading._source,
   });
 }

@@ -171,10 +171,10 @@ export async function POST(req: NextRequest) {
           },
           data: { status: 'expired' },
         });
-        console.log(`[Webhook] charge.refunded: expired ${result.count} subscription(s) for orderId=${orderId}, userId=${order.userId}`);
+        console.log(JSON.stringify({ event: 'webhook.charge.refunded', orderId, userId: order.userId, expiredCount: result.count, ts: Date.now() }));
       }
     } else {
-      console.warn('[Webhook] charge.refunded: no orderId or userId in charge metadata', charge.id);
+      console.warn(JSON.stringify({ event: 'webhook.charge.refunded.no_order', chargeId: charge.id, ts: Date.now() }));
     }
     return NextResponse.json({ received: true });
   }
@@ -189,9 +189,9 @@ export async function POST(req: NextRequest) {
         where: { userId, status: 'active' },
         data: { status: 'expired' },
       });
-      console.log(`[Webhook] customer.subscription.deleted: expired ${result.count} subscription(s) for userId=${userId}`);
+      console.log(JSON.stringify({ event: 'webhook.subscription.deleted', userId, expiredCount: result.count, ts: Date.now() }));
     } else {
-      console.warn('[Webhook] customer.subscription.deleted: no userId in subscription metadata', stripeSub.id);
+      console.warn(JSON.stringify({ event: 'webhook.subscription.deleted.no_user', subscriptionId: stripeSub.id, ts: Date.now() }));
     }
     return NextResponse.json({ received: true });
   }
@@ -204,7 +204,7 @@ export async function POST(req: NextRequest) {
 
     if (invoiceOrderId) {
       // 有 orderId 说明走了 checkout 流程，checkout.session.completed 已处理，跳过
-      console.log(`[Webhook] invoice.paid skipped (orderId=${invoiceOrderId}, handled by checkout.session.completed)`);
+      console.log(JSON.stringify({ event: 'webhook.invoice.paid.skipped', reason: 'handled_by_checkout', orderId: invoiceOrderId, ts: Date.now() }));
       return NextResponse.json({ received: true });
     }
 
@@ -213,10 +213,10 @@ export async function POST(req: NextRequest) {
       const invoiceId = (event.data.object as { id: string }).id;
       const existing = await prisma.order.findFirst({ where: { transactionId: invoiceId } });
       if (existing) {
-        console.log(`[Webhook] invoice.paid already processed: ${invoiceId}`);
+        console.log(JSON.stringify({ event: 'webhook.invoice.paid.duplicate', invoiceId, ts: Date.now() }));
         return NextResponse.json({ received: true });
       }
-      console.log(`[Webhook] invoice.paid: no orderId, userId=${invoiceUserId} — consider handling separately`);
+      console.log(JSON.stringify({ event: 'webhook.invoice.paid.no_order', userId: invoiceUserId, ts: Date.now() }));
     }
 
     return NextResponse.json({ received: true });
@@ -272,7 +272,7 @@ export async function POST(req: NextRequest) {
       } catch (err: unknown) {
         // P2002: transactionId unique constraint — duplicate event, already processed
         if ((err as { code?: string })?.code === 'P2002') {
-          console.warn('[Webhook] Duplicate transactionId for orderId:', orderId);
+          console.warn(JSON.stringify({ event: 'webhook.checkout.duplicate_tx', orderId, ts: Date.now() }));
           return NextResponse.json({ message: 'Already processed' });
         }
         throw err;
@@ -349,7 +349,7 @@ export async function POST(req: NextRequest) {
         }
         // P2002: unique constraint violation — 并发重复写入时安全忽略
         if ((err as { code?: string })?.code === 'P2002') {
-          console.warn('[Webhook] Duplicate transactionId, already processed:', checkoutSession.id);
+          console.warn(JSON.stringify({ event: 'webhook.checkout.duplicate_tx', sessionId: checkoutSession.id, ts: Date.now() }));
           return NextResponse.json({ message: 'Already processed' });
         }
         throw err;
@@ -362,7 +362,7 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ received: true });
   } catch (error) {
-    console.error('[Webhook] 顶层异常:', error instanceof Error ? error.message : error, error instanceof Error ? error.stack : '');
+    console.error(JSON.stringify({ event: 'webhook.error', message: error instanceof Error ? error.message : String(error), ts: Date.now() }));
     return NextResponse.json({ error: 'Internal webhook error' }, { status: 500 });
   }
 }

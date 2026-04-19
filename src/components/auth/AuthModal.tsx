@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { signIn } from 'next-auth/react'
+import { useFocusTrap } from '@/hooks/useFocusTrap'
 import { useRouter } from 'next/navigation'
 import { X } from 'lucide-react'
 import { GoogleLoginButton } from './GoogleLoginButton'
@@ -15,6 +16,7 @@ interface AuthModalProps {
 }
 
 export function AuthModal({ isOpen, onClose, callbackUrl = '/bazi' }: AuthModalProps) {
+  const focusTrapRef = useFocusTrap(isOpen)
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
@@ -133,6 +135,7 @@ export function AuthModal({ isOpen, onClose, callbackUrl = '/bazi' }: AuthModalP
 
       {/* 弹窗 */}
       <div
+        ref={focusTrapRef}
         className={`relative w-full max-w-[420px] max-h-[90vh] overflow-y-auto bg-white rounded-2xl p-8 shadow-2xl transition-all duration-200 ease-out
           max-sm:w-[90%] max-sm:max-w-[360px] max-sm:p-6
           ${visible ? 'opacity-100 scale-100' : 'opacity-0 scale-[0.95]'}
