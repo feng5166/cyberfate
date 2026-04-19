@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkRateLimit } from '@/lib/rate-limit';
 import { generateCacheKey, getCache, setCache } from '@/lib/ai/cache';
 import { generateLiuYaoReading } from '@/lib/ai/client';
 import type { LiuYaoPromptInput } from '@/lib/ai/prompts';
+import { withAiTimeout } from '@/lib/ai/withTimeout';
+import { withCircuitBreaker } from '@/lib/ai/circuitBreaker';
+import { applyChaos } from '@/lib/chaos-middleware';
 import {
   identifyTrigrams,
   getHexagramName,
@@ -106,6 +110,8 @@ export async function POST(req: NextRequest) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: '请先登录' }, { status: 401 });
   }
+  const rl = await checkRateLimit('ai_liuyao', session.user.id, 10, 60);
+  if (!rl.allowed) return NextResponse.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
 
   const body = await req.json().catch(() => ({}));
   const validation = validateRequest(body);

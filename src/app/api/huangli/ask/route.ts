@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkRateLimit } from '@/lib/rate-limit';
 import { calculateHuangli } from '@/lib/huangli/calculator';
 import { sanitizeUserInput } from '@/lib/utils/sanitize';
+import { withAiTimeout } from '@/lib/ai/withTimeout';
+import { withCircuitBreaker } from '@/lib/ai/circuitBreaker';
+import { applyChaos } from '@/lib/chaos-middleware';
 
 export async function POST(req: NextRequest) {
   // Security Fix: SEC-012 — 添加登录检查
@@ -10,6 +14,8 @@ export async function POST(req: NextRequest) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: '请先登录' }, { status: 401 });
   }
+  const rl = await checkRateLimit('ai_huangli', session.user.id, 10, 60);
+  if (!rl.allowed) return NextResponse.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
 
   try {
     const { question, date } = await req.json();

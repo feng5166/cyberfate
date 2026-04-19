@@ -122,19 +122,19 @@ export function ForgotPasswordModal({ isOpen, onClose, initialEmail = '' }: Forg
             }
           }}
           placeholder="example@example.com"
-          className="w-full px-4 py-3 rounded-xl border border-[#D5D0CA] bg-white text-[#1C1A16] placeholder:text-[#B8B4AE] text-sm focus:outline-none focus:ring-2 focus:ring-[#1C1A16]/10 focus:border-[#1C1A16]"
+          className="w-full px-4 py-3 rounded-xl border border-[#D1D5DB] bg-white text-[#1C1A16] placeholder:text-[#6B7280] text-sm focus:outline-none focus:ring-2 focus:ring-[#1C1A16]/10 focus:border-[#1C1A16]"
         />
         {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
 
         {/* 提示 */}
-        <p className="text-[#B8B4AE] text-xs mt-3 mb-6">我们将向此邮箱发送重置密码的链接</p>
+        <p className="text-[#6B7280] text-xs mt-3 mb-6">我们将向此邮箱发送重置密码的链接</p>
 
         {/* 按钮区 */}
         <div className="flex justify-end gap-3 mt-2">
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2.5 rounded-xl border border-[#D5D0CA] text-[#1C1A16] text-sm font-medium hover:bg-[#F5F3EF] transition-colors"
+            className="px-5 py-2.5 rounded-xl border border-[#D1D5DB] text-[#1C1A16] text-sm font-medium hover:bg-[#F5F3EF] transition-colors"
           >
             取消
           </button>

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkRateLimit } from '@/lib/rate-limit';
 import { generateCacheKey, getCache, setCache } from '@/lib/ai/cache';
 import { generateTarotReading } from '@/lib/ai/client';
 import type { TarotReadingPromptInput } from '@/lib/ai/prompts';
@@ -7,6 +8,9 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { drawRandomCards, getCardImageUrl } from '@/data/tarot';
+import { withAiTimeout } from '@/lib/ai/withTimeout';
+import { withCircuitBreaker } from '@/lib/ai/circuitBreaker';
+import { applyChaos } from '@/lib/chaos-middleware';
 
 type TarotSpread = 'single' | 'three' | 'celtic' | 'moonlight' | 'mirror';
 
@@ -128,6 +132,15 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const spread = resolveSpread(body?.spread);
   const question = safeQuestion(body?.question);
+
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  if (session?.user?.id) {
+    const rl = await checkRateLimit('ai_tarot', session.user.id, 10, 60);
+    if (!rl.allowed) return NextResponse.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
+  } else {
+    const rl = await checkRateLimit('ai_tarot_guest', ip, 3, 3600);
+    if (!rl.allowed) return NextResponse.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
+  }
 
   // 凯尔特十字需要 VIP
   if (spread === 'celtic') {

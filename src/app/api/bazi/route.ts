@@ -5,8 +5,12 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { calculateBazi, WUXING_KEYS, analyzeMingGe } from '@/lib/bazi';
 import { generateBaziAnalysis } from '@/lib/ai';
-import { peekBaziQuota, deductBaziQuota } from '@/lib/quota';
+import { peekBaziQuota, deductBaziQuota, isUserVip } from '@/lib/quota';
+import { checkRateLimit } from '@/lib/rate-limit';
 import type { BaziAnalysis, FiveDimensions, MingGeInfo, PillarRecord, WuxingCount } from '@/lib/bazi/types';
+import { withAiTimeout } from '@/lib/ai/withTimeout';
+import { withCircuitBreaker } from '@/lib/ai/circuitBreaker';
+import { applyChaos } from '@/lib/chaos-middleware';
 
 // 时辰映射：数字 -> 时辰名称（不含 -1，单独处理）
 const HOUR_TO_SHICHEN: Record<number, string> = {
@@ -44,13 +48,28 @@ const requestSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  const chaosRes = await applyChaos(req);
+  if (chaosRes) return chaosRes;
+
   try {
     // 检查登录状态和配额（游客可以试用）
     const session = await getServerSession(authOptions);
-    
-    // BUG-012: 先仅检查配额（不扣减），AI fallback 不扣配额
+
+    // B-6: Rate limiting
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
     if (session?.user?.id) {
-      const { hasQuota } = await peekBaziQuota(session.user.id);
+      const rl = await checkRateLimit('ai_bazi', session.user.id, 10, 60);
+      if (!rl.allowed) return Response.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
+    } else {
+      const rl = await checkRateLimit('ai_bazi_guest', ip, 3, 3600);
+      if (!rl.allowed) return Response.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
+    }
+
+    // B-4 + BUG-012: 查一次 isVip，传给 peekBaziQuota 避免重复查库
+    let cachedIsVip = false;
+    if (session?.user?.id) {
+      cachedIsVip = await isUserVip(session.user.id);
+      const { hasQuota } = await peekBaziQuota(session.user.id, cachedIsVip);
 
       if (!hasQuota) {
         return Response.json({
@@ -79,10 +98,15 @@ export async function POST(req: NextRequest) {
     // 2. AI 解读（可能失败，优雅降级）
     let analysisObj: BaziAnalysis;
     try {
-      analysisObj = await generateBaziAnalysis(baziResult, input.name, {
-        birthDate: input.birthDate,
-        birthHour: input.birthHour,
-      });
+      analysisObj = await withCircuitBreaker('deepseek-bazi', () =>
+        withAiTimeout(
+          () => generateBaziAnalysis(baziResult, input.name, {
+            birthDate: input.birthDate,
+            birthHour: input.birthHour,
+          }),
+          25_000
+        )
+      );
     } catch (aiError) {
       console.error('AI analysis failed:', aiError);
       analysisObj = generateFallbackAnalysis(baziResult);
@@ -92,12 +116,9 @@ export async function POST(req: NextRequest) {
     const aiAnalysis = formatAnalysis(analysisObj);
     const _aiSource = (analysisObj as any)._source ?? 'unknown';
 
-    // BUG-012: 仅在非 fallback 时扣减配额
-    if (session?.user?.id && _aiSource !== 'fallback') {
-      const { isVip } = await peekBaziQuota(session.user.id);
-      if (!isVip) {
-        await deductBaziQuota(session.user.id);
-      }
+    // BUG-012: 仅在非 fallback 时扣减配额（B-4: 用已缓存的 isVip）
+    if (session?.user?.id && _aiSource !== 'fallback' && !cachedIsVip) {
+      await deductBaziQuota(session.user.id);
     }
     
     // 处理时柱（可能为 null）

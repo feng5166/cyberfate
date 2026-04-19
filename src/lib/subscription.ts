@@ -2,7 +2,11 @@ import { prisma } from '@/lib/db'
 
 const FREE_BAZI_AI_LIMIT = 1
 
+const vipCache = new Map<string, { value: boolean; expires: number }>()
+
 export async function isVip(userId: string): Promise<boolean> {
+  const cached = vipCache.get(userId)
+  if (cached && cached.expires > Date.now()) return cached.value
   const sub = await prisma.subscription.findFirst({
     where: {
       userId,
@@ -10,7 +14,9 @@ export async function isVip(userId: string): Promise<boolean> {
       expireAt: { gt: new Date() },
     },
   })
-  return sub !== null
+  const result = sub !== null
+  vipCache.set(userId, { value: result, expires: Date.now() + 30000 })
+  return result
 }
 
 export async function getSubscription(userId: string) {

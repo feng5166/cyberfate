@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkRateLimit } from '@/lib/rate-limit';
 import { calculateZiwei } from '@/lib/ziwei';
 import type { ZiweiInput } from '@/lib/ziwei';
+import { withCircuitBreaker } from '@/lib/ai/circuitBreaker';
+import { applyChaos } from '@/lib/chaos-middleware';
 
 const SHICHEN_MAP: Record<string, number> = {
   '子时': 0, '丑时': 1, '寅时': 2, '卯时': 3,
@@ -52,6 +55,8 @@ export async function POST(req: NextRequest) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: '请先登录' }, { status: 401 });
   }
+  const rl = await checkRateLimit('ai_ziwei', session.user.id, 10, 60);
+  if (!rl.allowed) return NextResponse.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
 
   try {
     const body = await req.json();

@@ -156,6 +156,7 @@ model Order {
   outTradeNo    String           @unique // 商户订单号
   transactionId String?          @unique // 支付平台交易号（唯一约束防重复写入）
   paidAt        DateTime?
+  deletedAt     DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -206,7 +207,8 @@ model TarotReading {
   cards     Json // 抽到的牌
   aiReading String  @db.Text
 
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
 
   @@index([userId, createdAt])
   @@map("tarot_readings")

@@ -80,7 +80,7 @@ export function EmailLoginForm({
   }
 
   const inputBaseClass =
-    'w-full border rounded-lg px-4 py-3 text-sm placeholder:text-[#C4C0BA] focus:outline-none focus:ring-2 focus:ring-[#1C1A16]/10 focus:border-[#1C1A16] transition-colors'
+    'w-full border rounded-lg px-4 py-3 text-sm placeholder:text-[#6B7280] focus:outline-none focus:ring-2 focus:ring-[#1C1A16]/10 focus:border-[#1C1A16] transition-colors'
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -144,7 +144,7 @@ export function EmailLoginForm({
           </button>
         </div>
         <div className="flex items-center justify-between mt-1">
-          <p className={`text-xs ${errors.password ? 'text-red-500' : 'text-[#C4C0BA]'}`}>
+          <p className={`text-xs ${errors.password ? 'text-red-500' : 'text-[#6B7280]'}`}>
             {errors.password || '至少8个字符'}
           </p>
           <button
@@ -167,7 +167,7 @@ export function EmailLoginForm({
             setAgreed(e.target.checked)
             if (errors.agreement) setErrors((prev) => ({ ...prev, agreement: undefined }))
           }}
-          className={`mt-0.5 w-4 h-4 rounded border-[#D5D0CA] text-[#1C1A16] focus:ring-[#1C1A16]/10 ${
+          className={`mt-0.5 w-4 h-4 rounded border-[#D1D5DB] text-[#1C1A16] focus:ring-[#1C1A16]/10 ${
             errors.agreement ? 'border-red-500' : ''
           }`}
         />

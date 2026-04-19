@@ -126,7 +126,7 @@ export default function FeedbackSection() {
     ? 'text-red-500'
     : isNearLimit
     ? 'text-orange-500'
-    : 'text-[#B8B4AE]';
+    : 'text-[#6B7280]';
 
   return (
     <section className="bg-[#FAF9F6] border-t border-[rgba(28,26,22,0.06)] py-8 px-4 md:py-12 md:px-6">
@@ -150,7 +150,7 @@ export default function FeedbackSection() {
                   handleSubmit();
                 }
               }}
-              className="w-full px-4 py-3 rounded-xl border border-[#D5D0CA] bg-white text-sm text-[#1C1A16] placeholder:text-[#B8B4AE] outline-none focus:ring-2 focus:ring-[#1C1A16]/10 transition-all disabled:opacity-60"
+              className="w-full px-4 py-3 rounded-xl border border-[#D1D5DB] bg-white text-sm text-[#1C1A16] placeholder:text-[#6B7280] outline-none focus:ring-2 focus:ring-[#1C1A16]/10 transition-all disabled:opacity-60"
             />
             <div
               className={`mt-1.5 flex justify-end text-xs ${counterColor} transition-colors`}
@@ -187,7 +187,7 @@ export default function FeedbackSection() {
                 className={`px-3 py-1.5 rounded-full border text-xs cursor-pointer transition-all ${
                   active
                     ? 'bg-[#1C1A16] text-white border-[#1C1A16]'
-                    : 'border-[#D5D0CA] text-[#6B6560] hover:bg-[#1C1A16] hover:text-white hover:border-[#1C1A16]'
+                    : 'border-[#D1D5DB] text-[#6B6560] hover:bg-[#1C1A16] hover:text-white hover:border-[#1C1A16]'
                 }`}
               >
                 {tag.label}
@@ -197,7 +197,7 @@ export default function FeedbackSection() {
         </div>
 
         {!session && (
-          <p className="mt-3 text-center text-xs text-[#B8B4AE]">
+          <p className="mt-3 text-center text-xs text-[#6B7280]">
             无需登录也可提交反馈
           </p>
         )}

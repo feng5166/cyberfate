@@ -57,8 +57,8 @@ export async function useBaziQuota(userId: string): Promise<boolean> {
 /**
  * 仅检查八字配额（不扣减），用于 fallback 场景的预检
  */
-export async function peekBaziQuota(userId: string): Promise<{ hasQuota: boolean; isVip: boolean }> {
-  const vip = await isUserVip(userId)
+export async function peekBaziQuota(userId: string, vipStatus?: boolean): Promise<{ hasQuota: boolean; isVip: boolean }> {
+  const vip = vipStatus !== undefined ? vipStatus : await isUserVip(userId)
 
   if (vip) {
     return { hasQuota: true, isVip: true }
