@@ -3,6 +3,9 @@ import { prisma } from '@/lib/db';
 import crypto from 'crypto';
 import { addDays } from 'date-fns';
 import { isLifetimePlan, LIFETIME_DURATION, PRICING_CONFIG, type PlanId } from '@/lib/pricing-config';
+import { logger } from '@/lib/logger';
+
+const SERVICE = 'api/payment/webhook';
 
 // Stripe 签名验证（参考官方 SDK 实现）
 function verifyStripeWebhook(
@@ -12,11 +15,11 @@ function verifyStripeWebhook(
   tolerance: number = 300
 ): { valid: boolean; event?: StripeEvent; error?: string } {
   const details = parseSignatureHeader(header);
-  
+
   if (!details || details.timestamp === -1) {
     return { valid: false, error: 'Unable to extract timestamp and signatures from header' };
   }
-  
+
   if (details.signatures.length === 0) {
     return { valid: false, error: 'No signatures found with expected scheme v1' };
   }
@@ -57,7 +60,7 @@ function parseSignatureHeader(header: string): { timestamp: number; signatures: 
     .map((item) => item.split('='))
     .filter(([key]) => key === 't')
     .map(([, value]) => parseInt(value, 10))[0] ?? -1;
-    
+
   const signatures = items
     .map((item) => item.split('='))
     .filter(([key]) => key === 'v1')
@@ -77,7 +80,7 @@ function secureCompare(a: string, b: string): boolean {
   if (a.length !== b.length) {
     return false;
   }
-  
+
   const bufA = Buffer.from(a);
   const bufB = Buffer.from(b);
   return crypto.timingSafeEqual(bufA, bufB);
@@ -134,14 +137,14 @@ export async function POST(req: NextRequest) {
 
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!webhookSecret) {
-    console.error('[Webhook] STRIPE_WEBHOOK_SECRET not configured');
+    logger.error(SERVICE, 'STRIPE_WEBHOOK_SECRET not configured');
     return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
   }
 
   // 验证签名
   const verification = verifyStripeWebhook(body, sig, webhookSecret);
   if (!verification.valid || !verification.event) {
-    console.error('[Webhook] Signature verification failed:', verification.error);
+    logger.error(SERVICE, 'Signature verification failed', undefined, { error: verification.error });
     return NextResponse.json(
       { error: 'Webhook verification failed' },
       { status: 400 }
@@ -171,10 +174,10 @@ export async function POST(req: NextRequest) {
           },
           data: { status: 'expired' },
         });
-        console.log(JSON.stringify({ event: 'webhook.charge.refunded', orderId, userId: order.userId, expiredCount: result.count, ts: Date.now() }));
+        logger.info(SERVICE, 'charge.refunded processed', { orderId, userId: order.userId, expiredCount: result.count });
       }
     } else {
-      console.warn(JSON.stringify({ event: 'webhook.charge.refunded.no_order', chargeId: charge.id, ts: Date.now() }));
+      logger.warn(SERVICE, 'charge.refunded missing orderId', { chargeId: charge.id });
     }
     return NextResponse.json({ received: true });
   }
@@ -189,9 +192,9 @@ export async function POST(req: NextRequest) {
         where: { userId, status: 'active' },
         data: { status: 'expired' },
       });
-      console.log(JSON.stringify({ event: 'webhook.subscription.deleted', userId, expiredCount: result.count, ts: Date.now() }));
+      logger.info(SERVICE, 'subscription.deleted processed', { userId, expiredCount: result.count });
     } else {
-      console.warn(JSON.stringify({ event: 'webhook.subscription.deleted.no_user', subscriptionId: stripeSub.id, ts: Date.now() }));
+      logger.warn(SERVICE, 'subscription.deleted missing userId', { subscriptionId: stripeSub.id });
     }
     return NextResponse.json({ received: true });
   }
@@ -204,7 +207,7 @@ export async function POST(req: NextRequest) {
 
     if (invoiceOrderId) {
       // 有 orderId 说明走了 checkout 流程，checkout.session.completed 已处理，跳过
-      console.log(JSON.stringify({ event: 'webhook.invoice.paid.skipped', reason: 'handled_by_checkout', orderId: invoiceOrderId, ts: Date.now() }));
+      logger.info(SERVICE, 'invoice.paid skipped (handled by checkout)', { orderId: invoiceOrderId });
       return NextResponse.json({ received: true });
     }
 
@@ -213,10 +216,10 @@ export async function POST(req: NextRequest) {
       const invoiceId = (event.data.object as { id: string }).id;
       const existing = await prisma.order.findFirst({ where: { transactionId: invoiceId } });
       if (existing) {
-        console.log(JSON.stringify({ event: 'webhook.invoice.paid.duplicate', invoiceId, ts: Date.now() }));
+        logger.info(SERVICE, 'invoice.paid duplicate skipped', { invoiceId });
         return NextResponse.json({ received: true });
       }
-      console.log(JSON.stringify({ event: 'webhook.invoice.paid.no_order', userId: invoiceUserId, ts: Date.now() }));
+      logger.info(SERVICE, 'invoice.paid no matching order', { userId: invoiceUserId });
     }
 
     return NextResponse.json({ received: true });
@@ -272,7 +275,7 @@ export async function POST(req: NextRequest) {
       } catch (err: unknown) {
         // P2002: transactionId unique constraint — duplicate event, already processed
         if ((err as { code?: string })?.code === 'P2002') {
-          console.warn(JSON.stringify({ event: 'webhook.checkout.duplicate_tx', orderId, ts: Date.now() }));
+          logger.warn(SERVICE, 'checkout.session.completed duplicate transaction', { orderId });
           return NextResponse.json({ message: 'Already processed' });
         }
         throw err;
@@ -285,7 +288,7 @@ export async function POST(req: NextRequest) {
         ? (Object.keys(PRICING_CONFIG) as PlanId[]).find((id) => PRICING_CONFIG[id].amount === amountTotal)
         : undefined;
       if (!resolvedPlanId) {
-        console.error('[Webhook] Cannot resolve plan from amount_total:', amountTotal);
+        logger.error(SERVICE, 'Cannot resolve plan from amount_total', undefined, { amountTotal });
         return NextResponse.json({ error: 'Cannot resolve plan from amount' }, { status: 400 });
       }
       const resolvedPlan = resolvedPlanId;
@@ -303,7 +306,7 @@ export async function POST(req: NextRequest) {
           // 验证 userId 存在性，防止 metadata 被篡改
           const user = await tx.user.findUnique({ where: { id: userId } });
           if (!user) {
-            console.error('[Webhook] User not found:', userId);
+            logger.error(SERVICE, 'User not found in webhook metadata', undefined, { userId });
             throw new Error('User not found');
           }
 
@@ -349,20 +352,22 @@ export async function POST(req: NextRequest) {
         }
         // P2002: unique constraint violation — 并发重复写入时安全忽略
         if ((err as { code?: string })?.code === 'P2002') {
-          console.warn(JSON.stringify({ event: 'webhook.checkout.duplicate_tx', sessionId: checkoutSession.id, ts: Date.now() }));
+          logger.warn(SERVICE, 'checkout.session.completed duplicate transaction (direct pay)', { sessionId: checkoutSession.id });
           return NextResponse.json({ message: 'Already processed' });
         }
         throw err;
       }
     } else {
-      console.error('[Webhook] No orderId or userId in metadata');
+      logger.error(SERVICE, 'checkout.session.completed missing orderId and userId in metadata');
       return NextResponse.json({ error: 'No orderId or userId in metadata' }, { status: 400 });
     }
   }
 
   return NextResponse.json({ received: true });
   } catch (error) {
-    console.error(JSON.stringify({ event: 'webhook.error', message: error instanceof Error ? error.message : String(error), ts: Date.now() }));
+    logger.error(SERVICE, 'Unhandled webhook error', error instanceof Error ? error : undefined, {
+      message: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.json({ error: 'Internal webhook error' }, { status: 500 });
   }
 }

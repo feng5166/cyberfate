@@ -453,6 +453,7 @@ export default function MeihuaPage() {
               <h3 className="text-base font-semibold text-[#1C1A16]">
                 {isQuestionMode ? '基础卦象解读' : '卦象解读'}
               </h3>
+              <p className="mt-1 text-xs text-[#1C1A16]/45 mb-3">AI 综合分析 · 仅供参考</p>
               <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-[#1C1A16]/75">{result.analysis}</p>
             </div>
           </section>

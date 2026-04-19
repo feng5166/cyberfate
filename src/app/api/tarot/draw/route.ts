@@ -11,6 +11,9 @@ import { drawRandomCards, getCardImageUrl } from '@/data/tarot';
 import { withAiTimeout } from '@/lib/ai/withTimeout';
 import { withCircuitBreaker } from '@/lib/ai/circuitBreaker';
 import { applyChaos } from '@/lib/chaos-middleware';
+import { logger } from '@/lib/logger';
+
+const SERVICE = 'api/tarot/draw';
 
 type TarotSpread = 'single' | 'three' | 'celtic' | 'moonlight' | 'mirror';
 
@@ -228,7 +231,7 @@ export async function POST(req: NextRequest) {
       withAiTimeout(() => generateTarotReading(promptInput), 15_000)
     );
   } catch (aiErr) {
-    console.warn('[Tarot] AI unavailable, using card-based fallback:', aiErr instanceof Error ? aiErr.message : String(aiErr));
+    logger.warn(SERVICE, 'AI unavailable, using card-based fallback', { reason: aiErr instanceof Error ? aiErr.message : String(aiErr) });
     reading = {
       cardMeanings: cardsWithImages.map((card) =>
         card.orientation === 'upright' ? card.upright : card.reversed

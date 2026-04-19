@@ -94,7 +94,7 @@ export function Footer() {
 
         <div className="mt-10 pt-6 border-t border-brand-border-light flex flex-col md:flex-row items-center justify-between gap-4 text-[14px] text-[#1C1A16]/60">
           <p>© 2026 CyberFate. All rights reserved.</p>
-          
+          <p className="text-[12px] text-[#1C1A16]/40">本站内容由 AI 辅助生成，仅供参考娱乐</p>
         </div>
       </div>
       </footer>

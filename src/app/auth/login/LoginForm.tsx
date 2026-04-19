@@ -22,7 +22,7 @@ export function LoginForm({ googleEnabled }: LoginFormProps) {
 
   const handleGoogle = async () => {
     if (!agreed) {
-      setServerError('请先阅读并同意用户协议和隐私政策')
+      setServerError('请确认您已年满 18 岁并同意服务条款和隐私政策')
       return
     }
     setGoogleLoading(true)

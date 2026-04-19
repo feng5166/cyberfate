@@ -78,14 +78,15 @@ async function callDeepSeek(systemPrompt: string, userPrompt: string, maxTokens 
 export async function generateBaziAnalysis(
   result: BaziResult,
   name?: string,
-  birthInfo?: { birthDate: string; birthHour: number }
+  birthInfo?: { birthDate: string; birthHour: number; gender?: string }
 ): Promise<BaziAnalysis & { _source: 'deepseek' | 'fallback' | 'cache' }> {
-  
+
   // 1. 构建缓存 key（hash摘要，避免明文PII写入Redis）
+  // gender 纳入 key：阳男阴女/阴男阳女大运方向不同，AI 解读角度有别
   let cacheKey = 'v4:bazi:default';
   if (birthInfo) {
-    const { birthDate, birthHour } = birthInfo;
-    const hash = crypto.createHash('sha256').update(JSON.stringify({ birthDate, birthHour, gender: undefined })).digest('hex').slice(0, 16);
+    const { birthDate, birthHour, gender } = birthInfo;
+    const hash = crypto.createHash('sha256').update(JSON.stringify({ birthDate, birthHour, gender: gender ?? 'unknown' })).digest('hex').slice(0, 16);
     cacheKey = `v4:bazi:${hash}`;
   }
   
@@ -106,7 +107,7 @@ export async function generateBaziAnalysis(
     return { ...generateFallbackBaziAnalysis(result), _source: 'fallback' };
   }
 
-  const prompt = buildBaziPrompt(result, name);
+  const prompt = buildBaziPrompt(result, name, birthInfo?.gender);
 
   const apiResult = await callExternalAPI(
     async () => {

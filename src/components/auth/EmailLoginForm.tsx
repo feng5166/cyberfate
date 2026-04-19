@@ -52,7 +52,7 @@ export function EmailLoginForm({
 
     const emailError = validateEmail(email)
     const passwordError = validatePassword(password)
-    const agreementError = !agreed ? '请先阅读并同意用户协议和隐私政策' : undefined
+    const agreementError = !agreed ? '请确认您已年满 18 岁并同意服务条款和隐私政策' : undefined
 
     const newErrors: FormErrors = {}
     if (emailError) newErrors.email = emailError
@@ -172,13 +172,13 @@ export function EmailLoginForm({
           }`}
         />
         <label htmlFor="auth-agree" className="text-[#6B6560] text-xs leading-relaxed">
-          我已阅读并同意{' '}
+          我已年满 18 岁，并已阅读并同意{' '}
           <a
             href="/terms"
             target="_blank"
             className="text-[#1C1A16] underline hover:no-underline cursor-pointer"
           >
-            用户协议
+            服务条款
           </a>{' '}
           和{' '}
           <a

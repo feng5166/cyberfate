@@ -11,6 +11,9 @@ import type { BaziAnalysis, FiveDimensions, MingGeInfo, PillarRecord, WuxingCoun
 import { withAiTimeout } from '@/lib/ai/withTimeout';
 import { withCircuitBreaker } from '@/lib/ai/circuitBreaker';
 import { applyChaos } from '@/lib/chaos-middleware';
+import { logger } from '@/lib/logger';
+
+const SERVICE = 'api/bazi';
 
 // 时辰映射：数字 -> 时辰名称（不含 -1，单独处理）
 const HOUR_TO_SHICHEN: Record<number, string> = {
@@ -103,13 +106,14 @@ export async function POST(req: NextRequest) {
           () => generateBaziAnalysis(baziResult, input.name, {
             birthDate: input.birthDate,
             birthHour: input.birthHour,
+            gender: input.gender ?? 'unknown',
           }),
           25_000,
           () => ({ ...generateFallbackAnalysis(baziResult), _source: 'fallback' as const })
         )
       );
     } catch (aiError) {
-      console.error('AI analysis failed:', aiError);
+      logger.error(SERVICE, 'AI analysis failed', aiError instanceof Error ? aiError : undefined);
       analysisObj = generateFallbackAnalysis(baziResult);
     }
     
@@ -178,7 +182,7 @@ export async function POST(req: NextRequest) {
       _source: _aiSource,
     });
   } catch (error) {
-    console.error('Bazi API error:', error);
+    logger.error(SERVICE, 'Bazi API error', error instanceof Error ? error : undefined);
     
     if (error instanceof z.ZodError) {
       return Response.json(

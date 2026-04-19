@@ -1220,7 +1220,8 @@ export default function LiuYaoPage() {
               </div>
 
               <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 transition-shadow duration-300 hover:shadow-card-hover">
-                <h3 className="text-base font-semibold text-[#1C1A16] mb-3">综合分析</h3>
+                <h3 className="text-base font-semibold text-[#1C1A16] mb-1">综合分析</h3>
+                <p className="text-xs text-[#1C1A16]/45 mb-3">AI 综合分析 · 仅供参考</p>
                 <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#1C1A16]/75">
                   {result.overallNarrative}
                 </p>

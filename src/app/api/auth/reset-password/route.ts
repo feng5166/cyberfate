@@ -1,6 +1,9 @@
 import { NextRequest } from 'next/server'
 import { validateResetToken, resetPassword } from '@/lib/password-reset'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { logger } from '@/lib/logger'
+
+const SERVICE = 'api/auth/reset-password'
 
 const ERROR_MESSAGES: Record<string, string> = {
   MISSING_FIELDS: '缺少必要参数',
@@ -50,7 +53,7 @@ export async function GET(request: NextRequest) {
       message: '重置链接有效',
     })
   } catch (error) {
-    console.error('validate-token error:', error)
+    logger.error(SERVICE, 'validate-token error', error instanceof Error ? error : undefined)
     return Response.json(
       { valid: false, error: 'INTERNAL_ERROR', message: '服务器异常，请稍后重试' },
       { status: 500 }
@@ -113,7 +116,7 @@ export async function POST(request: NextRequest) {
     if (!result.success) {
       const message = ERROR_MESSAGES[result.error] || ERROR_MESSAGES.INTERNAL_ERROR
       const status = result.error === 'USER_NOT_FOUND' ? 400 : 500
-      console.error('resetPassword failed:', { error: result.error, detail: result.detail })
+      logger.error(SERVICE, 'resetPassword failed', undefined, { error: result.error, detail: result.detail })
       return Response.json(
         { success: false, error: result.error, message },
         { status }
@@ -123,10 +126,8 @@ export async function POST(request: NextRequest) {
     return Response.json({ success: true, message: '密码重置成功' })
   } catch (error: unknown) {
     const prismaError = error as { code?: string; message?: string };
-    console.error('reset-password unhandled error:', {
+    logger.error(SERVICE, 'reset-password unhandled error', error instanceof Error ? error : undefined, {
       code: prismaError.code,
-      message: prismaError.message,
-      stack: error instanceof Error ? error.stack : undefined,
     })
 
     if (prismaError.code?.startsWith('P')) {

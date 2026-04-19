@@ -6,6 +6,9 @@ import {
   createAndSaveResetToken,
   sendResetEmail,
 } from '@/lib/password-reset'
+import { logger } from '@/lib/logger'
+
+const SERVICE = 'api/auth/forgot-password'
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -41,13 +44,13 @@ export async function POST(request: NextRequest) {
       // 静默成功：不透露该邮箱是否已注册
       // 等价耗时，防止时序枚举
       await bcrypt.hash('dummy', 10)
-      console.log(`[Security] forgot-password attempt for unregistered email: ${normalizedEmail.replace(/(.{2}).*(@.*)/, '$1***$2')}`)
+      logger.info(SERVICE, 'forgot-password attempt for unregistered email', { email: normalizedEmail.replace(/(.{2}).*(@.*)/, '$1***$2') })
       return Response.json({ success: true })
     }
 
     // 过滤内部合成邮箱（微信用户不支持邮件重置）
     if (normalizedEmail.endsWith('@cyberfate.internal')) {
-      console.log(`[Security] forgot-password attempt for synthetic email: ${normalizedEmail.replace(/(.{2}).*(@.*)/, '$1***$2')}`)
+      logger.info(SERVICE, 'forgot-password attempt for synthetic email', { email: normalizedEmail.replace(/(.{2}).*(@.*)/, '$1***$2') })
       return Response.json({ success: true }) // 同样静默
     }
 
@@ -60,7 +63,7 @@ export async function POST(request: NextRequest) {
 
     return Response.json({ success: true })
   } catch (error) {
-    console.error('forgot-password error:', error)
+    logger.error(SERVICE, 'forgot-password unhandled error', error instanceof Error ? error : undefined)
     return Response.json(
       { success: false, error: 'INTERNAL_ERROR' },
       { status: 500 }

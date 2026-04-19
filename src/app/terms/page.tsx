@@ -73,6 +73,17 @@ export default function TermsPage() {
                   <li>因网络故障、系统维护等导致的服务中断</li>
                   <li>第三方服务（如支付平台）的问题</li>
                 </ul>
+                <div className="mt-5 p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-3 text-sm">
+                  <p className="font-semibold text-[#1C1A16]">重要声明（请仔细阅读）</p>
+                  <ul className="list-disc list-inside space-y-2 ml-2 text-[#1C1A16]/80 leading-relaxed">
+                    <li>本站所有命理内容（八字、塔罗、梅花易数、六爻等）<strong>仅供娱乐参考</strong>，不构成任何专业建议，包括但不限于医疗、法律、金融、心理健康方面的建议。</li>
+                    <li>本站<strong>不承诺任何具体的人生结果</strong>，命理分析结果不代表用户未来的真实状况，用户应自行对自己的决策负责。</li>
+                    <li>本站内容由 AI 生成，<strong>AI 生成内容可能存在不准确、不完整或误导性信息</strong>，请结合现实情况理性对待。</li>
+                    <li><strong>付费服务不保证特定结果</strong>，付费仅代表对服务使用权的购买，不代表命理预测的准确性保证。</li>
+                    <li>本站服务<strong>禁止未满 18 周岁的未成年人单独使用</strong>；未成年人如需使用，须在监护人陪同下进行，并由监护人对使用行为负责。</li>
+                    <li>本站<strong>不涉及任何医疗诊断、法律咨询或金融投资建议</strong>，如有相关需求请咨询持牌专业人士。</li>
+                  </ul>
+                </div>
               </section>
 
               <section>

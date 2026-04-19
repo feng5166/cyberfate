@@ -895,7 +895,8 @@ function BaziPageContent() {
                 </Card>
 
                 <Card className={cardClass}>
-                  <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em] mb-5">AI 解读</h2>
+                  <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em] mb-1">AI 解读</h2>
+                  <p className="text-xs text-[#1C1A16]/45 mb-4">AI 命理解读 · 仅供参考</p>
                   <SegmentControl
                     options={resultTabs.map(tab => ({
                       value: tab,

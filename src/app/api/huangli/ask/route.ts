@@ -5,6 +5,9 @@ import { sanitizeUserInput } from '@/lib/utils/sanitize';
 import { withAiTimeout } from '@/lib/ai/withTimeout';
 import { withCircuitBreaker } from '@/lib/ai/circuitBreaker';
 import { applyChaos } from '@/lib/chaos-middleware';
+import { logger } from '@/lib/logger';
+
+const SERVICE = 'api/huangli/ask';
 
 export async function POST(req: NextRequest) {
   const chaosRes = await applyChaos(req);
@@ -87,7 +90,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ answer });
   } catch (err) {
-    console.error('[Huangli Ask API Error]', err);
+    logger.error(SERVICE, 'Huangli ask error', err instanceof Error ? err : undefined);
     return NextResponse.json(
       { answer: '抱歉，AI 暂时无法回答。请检查网络连接后重试。' },
       { status: 500 }

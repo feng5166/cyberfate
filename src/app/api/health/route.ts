@@ -1,7 +1,9 @@
 import { prisma } from '@/lib/db';
 import { getRedis } from '@/lib/cache/redis';
+import { logger } from '@/lib/logger';
 
-const VERSION = process.env.npm_package_version ?? '1.0.0';
+const SERVICE = 'api/health';
+const VERSION = process.env.npm_package_version ?? '0.1.0';
 
 export async function GET() {
   const checks: Record<string, 'ok' | 'degraded' | 'missing'> = {
@@ -14,7 +16,7 @@ export async function GET() {
     checks.database = 'ok';
   } catch (e) {
     checks.database = 'degraded';
-    console.error('[Health] DB check failed:', e instanceof Error ? e.message : e);
+    logger.error(SERVICE, 'DB health check failed', e instanceof Error ? e : undefined);
   }
 
   const redisClient = getRedis();
@@ -26,7 +28,7 @@ export async function GET() {
       checks.redis = 'ok';
     } catch (e) {
       checks.redis = 'degraded';
-      console.error('[Health] Redis check failed:', e instanceof Error ? e.message : e);
+      logger.error(SERVICE, 'Redis health check failed', e instanceof Error ? e : undefined);
     }
   }
 

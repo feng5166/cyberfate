@@ -370,9 +370,10 @@ export default function DailyPage() {
 
             {/* AI 运势建议 */}
             <Card hover={false} className="bg-yellow-50 border-yellow-200">
-              <h4 className="text-sm font-medium text-yellow-700 mb-2 flex items-center gap-1.5">
+              <h4 className="text-sm font-medium text-yellow-700 mb-1 flex items-center gap-1.5">
                 💡 AI {currentDayText.short}建议
               </h4>
+              <p className="text-xs text-yellow-600/70 mb-2">AI 综合分析 · 仅供参考</p>
               <p className="text-sm leading-relaxed text-gray-700">{result.advice}</p>
             </Card>
 

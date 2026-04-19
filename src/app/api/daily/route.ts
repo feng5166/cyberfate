@@ -7,6 +7,9 @@ import { calculateBazi, getCurrentDayun, getDayGanzhi, getLunarDate, getYearGanz
 import { generateDailyFortune } from '@/lib/ai';
 import { withAiTimeout } from '@/lib/ai/withTimeout';
 import { withCircuitBreaker } from '@/lib/ai/circuitBreaker';
+import { logger } from '@/lib/logger';
+
+const SERVICE = 'api/daily';
 
 // 返回北京时间 (UTC+8) 的 YYYY-MM-DD 日期字符串
 function getBeijingDateString(): string {
@@ -106,7 +109,7 @@ export async function POST(req: NextRequest) {
         )
       );
     } catch (aiError) {
-      console.error('AI fortune failed:', aiError);
+      logger.error(SERVICE, 'AI fortune generation failed', aiError instanceof Error ? aiError : undefined);
       fortune = generateFallbackFortune(baziResult.dayMaster, dayGanzhi, targetDate);
     }
     
@@ -125,7 +128,7 @@ export async function POST(req: NextRequest) {
       _source: (fortune as any)._source ?? 'unknown',
     });
   } catch (error) {
-    console.error('Daily API error:', error);
+    logger.error(SERVICE, 'Daily API error', error instanceof Error ? error : undefined);
     
     if (error instanceof z.ZodError) {
       return Response.json(
