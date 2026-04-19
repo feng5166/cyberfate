@@ -117,10 +117,14 @@ export function calculateBazi(input: BaziInput): BaziResult {
   // 日主（日干 + 五行）
   const dayMaster = `${dayPillar.gan}${dayPillar.ganWuxing}`;
   
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const zodiac: string = (lunar as any).getAnimal?.() || '未知';
+
   return {
     chart,
     wuxing,
     dayMaster,
+    zodiac,
   };
 }
 

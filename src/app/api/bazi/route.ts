@@ -180,6 +180,7 @@ export async function POST(req: NextRequest) {
       mingGe,
       birthPlace: input.birthPlace,
       _source: _aiSource,
+      zodiac: baziResult.zodiac,
     });
   } catch (error) {
     logger.error(SERVICE, 'Bazi API error', error instanceof Error ? error : undefined);

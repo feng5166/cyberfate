@@ -68,6 +68,7 @@ export interface BaziResult {
   chart: BaziChart;
   wuxing: WuxingCount;
   dayMaster: string;  // 日主，如 "丙火"
+  zodiac: string;     // 生肖，如 "猪"
 }
 
 // 大运结果
