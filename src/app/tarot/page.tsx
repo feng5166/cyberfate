@@ -1,12 +1,21 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { Footer } from '@/components/layout/Footer';
 import { AiDisclaimer } from '@/components/ui/AiDisclaimer';
-import { CardDrawAnimation } from '@/components/tarot/CardDrawAnimation';
 import { ChevronDown, ChevronUp, Share2, Sparkles, X } from 'lucide-react';
 import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { useEffect, useRef, useState } from 'react';
+
+const CardDrawAnimation = dynamic(() => import('@/components/tarot/CardDrawAnimation').then(m => m.CardDrawAnimation), {
+  ssr: false,
+  loading: () => (
+    <div className="flex justify-center py-8">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+    </div>
+  ),
+});
 
 const SAMPLE_PROMPTS = [
   '我的感情走向如何？',

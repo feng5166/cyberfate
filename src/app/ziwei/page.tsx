@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { ChevronRight, AlertTriangle, RefreshCw } from 'lucide-react';
 import { getLunarDate } from '@/lib/bazi/calculator';
@@ -12,21 +13,28 @@ import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
 import { BaguaSpinner } from '@/components/ui/BaguaSpinner';
 import {
-  PalaceGrid,
-  PalaceMobileList,
-  PalaceDetailPanel,
-  CenterInfoCard,
-  ZiweiAiOverview,
   ZiweiFeatures,
   ZiweiGuide,
   ZiweiFaq,
-  ChartShareButton,
-  SihuaAnimation,
-  DayunSwitcher,
-  DualChartCompare,
   SHICHEN_OPTIONS,
 } from '@/components/ziwei';
 import type { PalaceData, CenterUserInfo } from '@/components/ziwei';
+
+const _loadingSpinner = () => (
+  <div className="flex justify-center py-8">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+  </div>
+);
+
+const PalaceGrid = dynamic(() => import('@/components/ziwei/PalaceGrid').then(m => m.PalaceGrid), { ssr: false, loading: _loadingSpinner });
+const PalaceMobileList = dynamic(() => import('@/components/ziwei/PalaceMobileList').then(m => m.PalaceMobileList), { ssr: false, loading: _loadingSpinner });
+const PalaceDetailPanel = dynamic(() => import('@/components/ziwei/PalaceDetailPanel').then(m => m.PalaceDetailPanel), { ssr: false, loading: _loadingSpinner });
+const CenterInfoCard = dynamic(() => import('@/components/ziwei/CenterInfoCard').then(m => m.CenterInfoCard), { ssr: false, loading: _loadingSpinner });
+const ZiweiAiOverview = dynamic(() => import('@/components/ziwei/ZiweiAiOverview').then(m => m.ZiweiAiOverview), { ssr: false, loading: _loadingSpinner });
+const ChartShareButton = dynamic(() => import('@/components/ziwei/ChartShareButton').then(m => m.ChartShareButton), { ssr: false, loading: _loadingSpinner });
+const SihuaAnimation = dynamic(() => import('@/components/ziwei/SihuaAnimation').then(m => m.SihuaAnimation), { ssr: false, loading: _loadingSpinner });
+const DayunSwitcher = dynamic(() => import('@/components/ziwei/DayunSwitcher').then(m => m.DayunSwitcher), { ssr: false, loading: _loadingSpinner });
+const DualChartCompare = dynamic(() => import('@/components/ziwei/DualChartCompare').then(m => m.DualChartCompare), { ssr: false, loading: _loadingSpinner });
 
 interface ApiPalace {
   name: string;

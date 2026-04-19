@@ -7,10 +7,17 @@ import { PRICING_CONFIG, type PlanId } from '@/lib/pricing-config';
 export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const { searchParams } = req.nextUrl;
+    const pageParam = searchParams.get('page');
+    const pageSizeParam = searchParams.get('pageSize');
+
+    const page = pageParam ? Math.max(1, parseInt(pageParam, 10) || 1) : null;
+    const pageSize = Math.min(50, Math.max(1, parseInt(pageSizeParam || '20', 10) || 20));
 
     const getPlanDisplayName = (plan: string): string => {
       const config = PRICING_CONFIG[plan as PlanId];
@@ -24,7 +31,6 @@ export async function GET(req: NextRequest) {
         status: 'paid'
       },
       orderBy: { createdAt: 'desc' },
-      take: 50,
     });
 
     const orderInvoices = orders.map(order => ({
@@ -46,7 +52,6 @@ export async function GET(req: NextRequest) {
         status: { in: ['active', 'expired'] }
       },
       orderBy: { createdAt: 'desc' },
-      take: 50,
     });
 
     // 过滤掉已经有对应 Order 的订阅（避免重复）
@@ -79,8 +84,34 @@ export async function GET(req: NextRequest) {
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
       .map(({ createdAt, source, ...rest }) => rest);
 
-    return NextResponse.json({ invoices: allInvoices });
-    
+    const total = allInvoices.length;
+
+    // 不传 page 时返回全部（最多 50 条），保持向后兼容
+    if (page === null) {
+      return NextResponse.json({
+        invoices: allInvoices.slice(0, 50),
+        pagination: {
+          page: 1,
+          pageSize: Math.min(50, total),
+          total,
+          totalPages: Math.ceil(total / Math.min(50, Math.max(1, total))),
+        }
+      });
+    }
+
+    const totalPages = Math.ceil(total / pageSize);
+    const skip = (page - 1) * pageSize;
+
+    return NextResponse.json({
+      invoices: allInvoices.slice(skip, skip + pageSize),
+      pagination: {
+        page,
+        pageSize,
+        total,
+        totalPages,
+      }
+    });
+
   } catch (error: unknown) {
     console.error('Get invoices error:', error);
     return NextResponse.json(

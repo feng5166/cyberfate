@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense, useEffect, useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
@@ -22,15 +23,6 @@ import { SegmentControl } from '@/components/ui/SegmentControl';
 import { Select } from '@/components/ui/Select';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { BaguaSpinner } from '@/components/ui/BaguaSpinner';
-import {
-  BasicInfoCard,
-  BaziChart,
-  DayMasterSummaryCard,
-  ShareCard,
-  ShishenDetailTab,
-  WuxingChart,
-  WuxingDonutChart,
-} from '@/components/bazi';
 import { QuotaLimitModal } from '@/components/QuotaLimitModal';
 import { Container } from '@/components/ui/Container';
 import { CitySearch } from '@/components/ui/CitySearch';
@@ -57,6 +49,19 @@ import type {
   WuxingCount,
   WuXing,
 } from '@/lib/bazi/types';
+
+const _loadingSpinner = () => (
+  <div className="flex justify-center py-8">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+  </div>
+);
+
+const BasicInfoCard = dynamic(() => import('@/components/bazi/BasicInfoCard').then(m => m.BasicInfoCard), { ssr: false, loading: _loadingSpinner });
+const BaziChart = dynamic(() => import('@/components/bazi/BaziChart').then(m => m.BaziChart), { ssr: false, loading: _loadingSpinner });
+const DayMasterSummaryCard = dynamic(() => import('@/components/bazi/DayMasterSummaryCard').then(m => m.DayMasterSummaryCard), { ssr: false, loading: _loadingSpinner });
+const ShareCard = dynamic(() => import('@/components/bazi/ShareCard').then(m => m.ShareCard), { ssr: false, loading: _loadingSpinner });
+const ShishenDetailTab = dynamic(() => import('@/components/bazi/ShishenDetailTab').then(m => m.ShishenDetailTab), { ssr: false, loading: _loadingSpinner });
+const WuxingChart = dynamic(() => import('@/components/bazi/WuxingChart').then(m => m.WuxingChart), { ssr: false, loading: _loadingSpinner });
 
 type ResultTab = '性格特质' | '事业财运' | '婚姻健康' | '十神详解' | '大运流年';
 type AiSectionKey = 'dayMaster' | 'personality' | 'career' | 'wealth' | 'relationship' | 'health' | 'dayun';

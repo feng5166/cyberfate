@@ -104,7 +104,8 @@ export async function POST(req: NextRequest) {
             birthDate: input.birthDate,
             birthHour: input.birthHour,
           }),
-          25_000
+          25_000,
+          () => ({ ...generateFallbackAnalysis(baziResult), _source: 'fallback' as const })
         )
       );
     } catch (aiError) {
