@@ -58,7 +58,7 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999 }}>
         <Header />
       </div>
-      <main className="flex-1 pb-20 lg:pb-0" style={{ paddingTop: '80px' }}>
+      <main id="main-content" className="flex-1 pb-20 lg:pb-0" style={{ paddingTop: '80px' }}>
         <Suspense fallback={null}>
           <PaymentSuccessHandler />
           {showSidebar ? (

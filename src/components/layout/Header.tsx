@@ -80,7 +80,7 @@ export function Header() {
 
             {/* Logo - 衬线体 */}
             <Link href="/" className="flex items-center gap-2 font-display text-lg md:text-xl text-[#1C1A16] tracking-widest hover:opacity-70 transition-opacity">
-              <img src="/favicon.svg" alt="" className="w-7 h-7" />
+              <img src="/favicon.svg" alt="CyberFate 赛博命理师" className="w-7 h-7" />
               CYBERFATE
             </Link>
           </div>
@@ -150,7 +150,7 @@ export function Header() {
               >
                 <button className="flex items-center gap-2 text-sm text-brand-gray hover:text-[#1C1A16] cursor-pointer transition-colors duration-200">
                   {session.user?.image ? (
-                    <img src={session.user.image} alt="" className="w-6 h-6 rounded-full" />
+                    <img src={session.user.image} alt="用户头像" className="w-6 h-6 rounded-full" />
                   ) : (
                     <span className="w-6 h-6 rounded-full bg-brand-bg flex items-center justify-center text-xs font-medium text-[#1C1A16]">
                       {session.user?.name?.[0] || '我'}

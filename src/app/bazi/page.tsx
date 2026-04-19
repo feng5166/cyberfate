@@ -763,8 +763,9 @@ function BaziPageContent() {
                 <legend className="font-display text-base text-[#1C1A16]/85 px-2 tracking-wide">📋 基本信息</legend>
 
                 <div className="space-y-1.5">
-                  <label className="block text-sm font-medium text-[#1C1A16]/70">姓名</label>
+                  <label htmlFor="bazi-name" className="block text-sm font-medium text-[#1C1A16]/70">姓名</label>
                   <input
+                    id="bazi-name"
                     type="text"
                     placeholder="请输入姓名"
                     value={formData.name}
@@ -801,8 +802,9 @@ function BaziPageContent() {
                 <legend className="font-display text-base text-[#1C1A16]/85 px-2 tracking-wide">🕐 时辰信息</legend>
 
                 <div className="space-y-1.5">
-                  <label className="block text-sm font-medium text-[#1C1A16]/70">出生时辰</label>
+                  <label htmlFor="bazi-birth-hour" className="block text-sm font-medium text-[#1C1A16]/70">出生时辰</label>
                   <Select
+                    id="bazi-birth-hour"
                     options={shichenOptions}
                     value={formData.birthHour}
                     onChange={(e) => setFormData({ ...formData, birthHour: e.target.value })}
@@ -852,7 +854,7 @@ function BaziPageContent() {
             )}
 
             {result && !loading && basicInfoData && dayMasterInsight && (
-              <div className="space-y-6 animate-fadeIn">
+              <div className="space-y-6 animate-fadeIn" aria-live="polite">
                 <Card className={`${cardClass} p-0`}>
                   <BasicInfoCard
                     baziText={basicInfoData.baziText}

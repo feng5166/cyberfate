@@ -374,8 +374,8 @@ export default function ZiweiPage() {
             </div>
 
             {/* 性别 */}
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-[#1C1A16] mb-2">性别</label>
+            <div className="flex-1" role="group" aria-labelledby="ziwei-gender-label">
+              <label id="ziwei-gender-label" className="block text-sm font-medium text-[#1C1A16] mb-2">性别</label>
               <SegmentControl
                 options={GENDER_OPTIONS}
                 value={gender}

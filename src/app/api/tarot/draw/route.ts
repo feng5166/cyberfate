@@ -54,43 +54,27 @@ interface CachedTarotReading {
   caution: string;
 }
 
-async function checkQuota(userId: string, spread: TarotSpread): Promise<{ allowed: boolean; remaining: number }> {
-  const now = new Date();
-  const today = new Date(now.getTime() + 8 * 60 * 60 * 1000).toISOString().split('T')[0];
+async function atomicCheckAndUseQuota(userId: string, spread: TarotSpread): Promise<boolean> {
+  const today = new Date(new Date().getTime() + 8 * 60 * 60 * 1000).toISOString().split('T')[0];
+  const limit = DAILY_LIMITS[spread];
 
-  let quota = await prisma.usageQuota.findUnique({
+  await prisma.usageQuota.upsert({
     where: { userId_date: { userId, date: today } },
+    update: {},
+    create: { userId, date: today },
   });
 
-  if (!quota) {
-    quota = await prisma.usageQuota.create({
-      data: { userId, date: today },
-    });
-  }
+  const result = spread === 'single'
+    ? await prisma.usageQuota.updateMany({
+        where: { userId, date: today, tarotSingleCount: { lt: limit } },
+        data: { tarotSingleCount: { increment: 1 } },
+      })
+    : await prisma.usageQuota.updateMany({
+        where: { userId, date: today, tarotThreeCount: { lt: limit } },
+        data: { tarotThreeCount: { increment: 1 } },
+      });
 
-  const limit = DAILY_LIMITS[spread];
-  const used = spread === 'single' ? quota.tarotSingleCount : quota.tarotThreeCount;
-
-  return { allowed: used < limit, remaining: Math.max(0, limit - used) };
-}
-
-async function useQuota(userId: string, spread: TarotSpread) {
-  const now = new Date();
-  const today = new Date(now.getTime() + 8 * 60 * 60 * 1000).toISOString().split('T')[0];
-
-  if (spread === 'single') {
-    await prisma.usageQuota.upsert({
-      where: { userId_date: { userId, date: today } },
-      update: { tarotSingleCount: { increment: 1 } },
-      create: { userId, date: today, tarotSingleCount: 1 },
-    });
-  } else {
-    await prisma.usageQuota.upsert({
-      where: { userId_date: { userId, date: today } },
-      update: { tarotThreeCount: { increment: 1 } },
-      create: { userId, date: today, tarotThreeCount: 1 },
-    });
-  }
+  return result.count > 0;
 }
 
 async function isVip(userId: string): Promise<boolean> {
@@ -156,11 +140,11 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // 检查配额（登录用户）
+  // 检查配额（登录用户，原子递增防竞态）
   if (session?.user?.id && spread !== 'celtic') {
     const vip = await isVip(session.user.id);
     if (!vip) {
-      const { allowed } = await checkQuota(session.user.id, spread);
+      const allowed = await atomicCheckAndUseQuota(session.user.id, spread);
       if (!allowed) {
         return NextResponse.json(
           {
@@ -232,14 +216,6 @@ export async function POST(req: NextRequest) {
   };
 
   await setCache(cacheKey, readingPayload, 12 * 60 * 60);
-
-  // 扣除配额（非 VIP 登录用户）
-  if (session?.user?.id) {
-    const vip = await isVip(session.user.id);
-    if (!vip && spread !== 'celtic') {
-      await useQuota(session.user.id, spread);
-    }
-  }
 
   return NextResponse.json({
     spread,

@@ -4,6 +4,7 @@ import "./globals.css";
 import { SessionProvider } from "@/components/providers/SessionProvider";
 import { AuthProvider } from "@/stores/authStore";
 import { LayoutWrapper } from "@/components/layout/LayoutWrapper";
+import { JsonLd } from "@/components/seo/JsonLd";
 
 const notoSerifSC = Noto_Serif_SC({
   weight: ["400", "600", "700"],
@@ -67,6 +68,13 @@ export default function RootLayout({
   return (
     <html lang="zh-CN" className={`${notoSerifSC.variable} ${cormorantGaramond.variable}`}>
       <body className="min-h-screen flex flex-col">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[99999] focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:rounded-lg focus:shadow-lg focus:text-[#1C1A16] focus:border focus:border-[#1C1A16]/20"
+        >
+          跳到主要内容
+        </a>
+        <JsonLd />
         <SessionProvider>
           <AuthProvider>
             <LayoutWrapper>

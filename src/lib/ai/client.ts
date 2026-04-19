@@ -23,11 +23,12 @@ const DEEPSEEK_BASE_URL = 'https://api.modelverse.cn/v1';
 const DEEPSEEK_MODEL = 'deepseek-ai/DeepSeek-V3.2';
 
 const TIMEOUT_CONFIG: Record<string, number> = {
-  bazi: 30000,
+  bazi: 55000,
   daily: 15000,
   marriage: 30000,
   tarot: 15000,
   huangli: 10000,
+  huangli_ask: 10000,
   default: 15000,
 };
 

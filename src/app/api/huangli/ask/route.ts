@@ -49,8 +49,11 @@ export async function POST(req: NextRequest) {
 5. 字数控制在 100-250 字
 6. 纯文本回复，不要用 markdown 格式`;
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
     const apiResponse = await fetch('https://api.modelverse.cn/v1/chat/completions', {
       method: 'POST',
+      signal: controller.signal,
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`,
@@ -62,6 +65,7 @@ export async function POST(req: NextRequest) {
         messages: [{ role: 'user', content: prompt }],
       }),
     });
+    clearTimeout(timeoutId);
 
     if (!apiResponse.ok) {
       throw new Error(`AI API responded with ${apiResponse.status}`);

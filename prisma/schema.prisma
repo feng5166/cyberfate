@@ -124,6 +124,8 @@ model Subscription {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId, status, expireAt])
+  @@index([userId, createdAt])
   @@map("subscriptions")
 }
 
@@ -160,6 +162,7 @@ model Order {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId, status, createdAt])
   @@map("orders")
 }
 
@@ -205,5 +208,6 @@ model TarotReading {
 
   createdAt DateTime @default(now())
 
+  @@index([userId, createdAt])
   @@map("tarot_readings")
 }

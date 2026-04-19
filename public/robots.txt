@@ -1,3 +1,7 @@
 User-agent: *
 Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /auth/
+Disallow: /profile/
 Sitemap: https://www.cyberfate.me/sitemap.xml

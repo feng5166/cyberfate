@@ -25,6 +25,7 @@ export async function GET() {
   const orders = await prisma.order.findMany({
     where: { userId: session.user.id },
     orderBy: { createdAt: 'desc' },
+    take: 50,
   })
 
   const invoices = orders.map((order) => ({

@@ -19,11 +19,12 @@ export async function GET(req: NextRequest) {
 
     // 1. 获取支付成功的订单
     const orders = await prisma.order.findMany({
-      where: { 
+      where: {
         userId: session.user.id,
         status: 'paid'
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
+      take: 50,
     });
 
     const orderInvoices = orders.map(order => ({
@@ -40,11 +41,12 @@ export async function GET(req: NextRequest) {
 
     // 2. 获取订阅记录（Stripe 直接支付流程创建的）
     const subscriptions = await prisma.subscription.findMany({
-      where: { 
+      where: {
         userId: session.user.id,
         status: { in: ['active', 'expired'] }
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
+      take: 50,
     });
 
     // 过滤掉已经有对应 Order 的订阅（避免重复）

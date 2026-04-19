@@ -237,8 +237,9 @@ export default function DailyPage() {
             <form onSubmit={handleSubmit} className="space-y-5">
               <p className="text-sm text-brand-gray text-center mb-4">输入出生信息获取专属运势</p>
               <div>
-                <label className="block text-sm font-medium text-brand-black mb-1.5">出生日期</label>
+                <label htmlFor="daily-birth-date" className="block text-sm font-medium text-brand-black mb-1.5">出生日期</label>
                 <input
+                  id="daily-birth-date"
                   type="date"
                   required
                   value={formData.birthDate}

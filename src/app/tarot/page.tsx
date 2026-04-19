@@ -534,7 +534,7 @@ export default function TarotPage() {
           )}
 
           {step === 'result' && result && (
-            <div className="space-y-4">
+            <div className="space-y-4" aria-live="polite">
               <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-3 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
                 <h3 className="font-display text-2xl tracking-[0.08em] text-[#1C1A16]">{spreadTitle}</h3>
                 <div className="mt-4">

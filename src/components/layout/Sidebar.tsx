@@ -346,7 +346,7 @@ export function Sidebar({
           href="/"
           className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-start gap-2'}`}
         >
-          <img src="/favicon.svg" alt="" className="w-7 h-7 shrink-0" />
+          <img src="/favicon.svg" alt="CyberFate" className="w-7 h-7 shrink-0" />
           {!isCollapsed && (
             <span className="font-display text-lg tracking-widest text-brand-black">CYBERFATE</span>
           )}

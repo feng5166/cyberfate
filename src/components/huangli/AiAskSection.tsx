@@ -82,7 +82,7 @@ export function AiAskSection({ date }: AiAskSectionProps) {
 
       {/* 对话区域 */}
       {messages.length > 0 && (
-        <div className="space-y-3 mb-4 max-h-80 overflow-y-auto">
+        <div className="space-y-3 mb-4 max-h-80 overflow-y-auto" aria-live="polite">
           {messages.map((msg, i) => (
             <div
               key={i}

@@ -454,8 +454,9 @@ function TimePanel({ onComplete }: { onComplete: (lines: (0 | 1)[], movingLine: 
         </div>
       ) : (
         <div className="space-y-3">
-          <label className="block text-xs text-[#1C1A16]/60">选择占卜时间</label>
+          <label htmlFor="time-divination-datetime" className="block text-xs text-[#1C1A16]/60">选择占卜时间</label>
           <input
+            id="time-divination-datetime"
             type="datetime-local"
             value={timeValue}
             max={getNowLocalString()}
@@ -586,8 +587,9 @@ function NumberPanel({ onComplete }: { onComplete: (lines: (0 | 1)[], movingLine
 
       <div className="grid grid-cols-2 gap-3 mb-4">
         <div>
-          <label className="mb-1 block text-xs text-[#1C1A16]/60">上卦数字 *</label>
+          <label htmlFor="number-upper" className="mb-1 block text-xs text-[#1C1A16]/60">上卦数字 *</label>
           <input
+            id="number-upper"
             type="number"
             min={1}
             max={9999}
@@ -599,8 +601,9 @@ function NumberPanel({ onComplete }: { onComplete: (lines: (0 | 1)[], movingLine
           {numberErrors.upper && <p className="text-xs text-red-500 mt-1">{numberErrors.upper}</p>}
         </div>
         <div>
-          <label className="mb-1 block text-xs text-[#1C1A16]/60">下卦数字 *</label>
+          <label htmlFor="number-lower" className="mb-1 block text-xs text-[#1C1A16]/60">下卦数字 *</label>
           <input
+            id="number-lower"
             type="number"
             min={1}
             max={9999}
@@ -612,8 +615,9 @@ function NumberPanel({ onComplete }: { onComplete: (lines: (0 | 1)[], movingLine
           {numberErrors.lower && <p className="text-xs text-red-500 mt-1">{numberErrors.lower}</p>}
         </div>
         <div>
-          <label className="mb-1 block text-xs text-[#1C1A16]/60">动爻位置</label>
+          <label htmlFor="number-moving" className="mb-1 block text-xs text-[#1C1A16]/60">动爻位置</label>
           <input
+            id="number-moving"
             type="number"
             min={0}
             max={6}
@@ -629,8 +633,9 @@ function NumberPanel({ onComplete }: { onComplete: (lines: (0 | 1)[], movingLine
           )}
         </div>
         <div>
-          <label className="mb-1 block text-xs text-[#1C1A16]/60">参考数字</label>
+          <label htmlFor="number-ref" className="mb-1 block text-xs text-[#1C1A16]/60">参考数字</label>
           <input
+            id="number-ref"
             type="number"
             min={1}
             max={9999}
@@ -894,9 +899,10 @@ export default function LiuYaoPage() {
         <section className="mx-auto max-w-4xl space-y-4 animate-fadeIn">
           {/* ② 问题输入区 */}
           <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-4 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
-            <label className="mb-2 block text-sm text-[#1C1A16]/75">你的问题</label>
+            <label htmlFor="liuyao-question" className="mb-2 block text-sm text-[#1C1A16]/75">你的问题</label>
             <div className="relative">
               <textarea
+                id="liuyao-question"
                 value={question}
                 onChange={(e) => setQuestion(e.target.value.slice(0, 200))}
                 placeholder="最想咨询的问题或主题..."
@@ -1066,8 +1072,9 @@ export default function LiuYaoPage() {
             <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-4 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
               {method !== 'time' && (
                 <div className="mb-4">
-                  <label className="mb-1 block text-sm text-[#1C1A16]/75">占卜时间</label>
+                  <label htmlFor="liuyao-divination-time" className="mb-1 block text-sm text-[#1C1A16]/75">占卜时间</label>
                   <input
+                    id="liuyao-divination-time"
                     type="datetime-local"
                     value={divinationTime}
                     onChange={(e) => setDivinationTime(e.target.value)}
