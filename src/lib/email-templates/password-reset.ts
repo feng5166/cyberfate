@@ -64,7 +64,7 @@ export function getPasswordResetEmailHtml({ resetUrl }: PasswordResetEmailParams
                   </td>
                 </tr>
               </table>
-              <p style="margin: 28px 0 0; font-size: 13px; line-height: 1.5; color: #B8B4AE; text-align: center;">
+              <p style="margin: 28px 0 0; font-size: 13px; line-height: 1.5; color: #6B7280; text-align: center;">
                 此链接将在 <strong style="color: #9B9590;">15 分钟</strong> 后过期。<br />
                 如果您没有请求重置密码，请忽略此邮件。
               </p>
@@ -73,7 +73,7 @@ export function getPasswordResetEmailHtml({ resetUrl }: PasswordResetEmailParams
           <!-- Footer -->
           <tr>
             <td align="center" style="padding-top: 24px;">
-              <p style="margin: 0; font-size: 12px; color: #B8B4AE;">
+              <p style="margin: 0; font-size: 12px; color: #6B7280;">
                 &copy; ${new Date().getFullYear()} CyberFate 赛博命理师
               </p>
             </td>

@@ -103,6 +103,9 @@ function validateRequest(body: unknown): { valid: true; data: LiuYaoRequestBody 
 }
 
 export async function POST(req: NextRequest) {
+  const chaosRes = await applyChaos(req);
+  if (chaosRes) return chaosRes;
+
   // Security Fix: SEC-012 — 添加登录检查
   const { getServerSession } = await import('next-auth');
   const { authOptions } = await import('@/lib/auth');
@@ -197,7 +200,9 @@ export async function POST(req: NextRequest) {
     method: data.method,
   };
 
-  const reading = await generateLiuYaoReading(promptInput);
+  const reading = await withCircuitBreaker('deepseek-liuyao', () =>
+    withAiTimeout(() => generateLiuYaoReading(promptInput), 15_000)
+  );
 
   const enrichedLines = linesData.map((l, i) => ({
     ...l,

@@ -4,4 +4,6 @@ Disallow: /api/
 Disallow: /admin/
 Disallow: /auth/
 Disallow: /profile/
+Crawl-delay: 1
+
 Sitemap: https://www.cyberfate.me/sitemap.xml

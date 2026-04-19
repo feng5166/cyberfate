@@ -7,6 +7,9 @@ import { withCircuitBreaker } from '@/lib/ai/circuitBreaker';
 import { applyChaos } from '@/lib/chaos-middleware';
 
 export async function POST(req: NextRequest) {
+  const chaosRes = await applyChaos(req);
+  if (chaosRes) return chaosRes;
+
   // Security Fix: SEC-012 — 添加登录检查
   const { getServerSession } = await import('next-auth');
   const { authOptions } = await import('@/lib/auth');
@@ -55,23 +58,25 @@ export async function POST(req: NextRequest) {
 5. 字数控制在 100-250 字
 6. 纯文本回复，不要用 markdown 格式`;
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
-    const apiResponse = await fetch('https://api.modelverse.cn/v1/chat/completions', {
-      method: 'POST',
-      signal: controller.signal,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'deepseek-ai/DeepSeek-V3.2',
-        max_tokens: 500,
-        temperature: 0.6,
-        messages: [{ role: 'user', content: prompt }],
-      }),
-    });
-    clearTimeout(timeoutId);
+    const apiResponse = await withCircuitBreaker('deepseek-huangli', () =>
+      withAiTimeout(
+        (signal) => fetch('https://api.modelverse.cn/v1/chat/completions', {
+          method: 'POST',
+          signal,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+          },
+          body: JSON.stringify({
+            model: 'deepseek-ai/DeepSeek-V3.2',
+            max_tokens: 500,
+            temperature: 0.6,
+            messages: [{ role: 'user', content: prompt }],
+          }),
+        }),
+        15_000
+      )
+    );
 
     if (!apiResponse.ok) {
       throw new Error(`AI API responded with ${apiResponse.status}`);

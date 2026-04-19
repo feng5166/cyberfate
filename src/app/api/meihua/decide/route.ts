@@ -56,6 +56,9 @@ function buildInput(question: string, draw: DrawPayload): MeihuaDecisionPromptIn
 }
 
 export async function POST(req: NextRequest) {
+  const chaosRes = await applyChaos(req);
+  if (chaosRes) return chaosRes;
+
   // Security Fix: SEC-012 — 添加登录检查
   const { getServerSession } = await import('next-auth');
   const { authOptions } = await import('@/lib/auth');
@@ -88,7 +91,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ...cached, _source: 'cache' });
     }
 
-    const decision = await generateMeihuaDecision(input);
+    const decision = await withCircuitBreaker('deepseek-meihua', () =>
+      withAiTimeout(() => generateMeihuaDecision(input), 15_000)
+    );
     await setCache(cacheKey, decision, 12 * 60 * 60);
 
     return NextResponse.json(decision);

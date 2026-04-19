@@ -1,18 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  /* 品牌色系 */
-  --brand-black: #1C1A16;
-  --brand-gray: #6B7280;
-  --brand-light: #9CA3AF;
-  --brand-border: #E5E7EB;
-  --brand-border-light: #F3F4F6;
+  /* 品牌色系 — WCAG 2.1 AA 对比度标注（对白色背景 #FFFFFF）*/
+  --brand-black: #1C1A16;    /* 对比度 ~17.5:1 — AAA ✅ 主文字 */
+  --brand-gray: #6B7280;     /* 对比度 ~4.83:1 — AA ✅ 次要文字/placeholder */
+  --brand-light: #9CA3AF;    /* 对比度 ~2.54:1 — 仅限大文字(≥18px)或图标用途 ⚠️ */
+  --brand-border: #E5E7EB;   /* 对比度 ~1.24:1 — 装饰性边框（非交互边界） ⚠️ */
+  --brand-border-light: #F3F4F6; /* 装饰性分隔用途 */
   --brand-bg: #FAFAFA;
 
   /* 兼容旧色 */
-  --primary: #1C1A16;
-  --secondary: #666666;
-  --muted: #999999;
+  --primary: #1C1A16;        /* 对比度 ~17.5:1 — AAA ✅ */
+  --secondary: #666666;      /* 对比度 ~5.74:1 — AA ✅ */
+  --muted: #999999;          /* 对比度 ~2.85:1 — 仅限大文字 ⚠️ */
   --border: #e0e0e0;
   --background: #ffffff;
   --background-alt: #f8f8f8;

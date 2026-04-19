@@ -128,6 +128,9 @@ function isCachedTarotReading(value: unknown): value is CachedTarotReading {
 }
 
 export async function POST(req: NextRequest) {
+  const chaosRes = await applyChaos(req);
+  if (chaosRes) return chaosRes;
+
   const session = await getServerSession(authOptions);
   const body = await req.json().catch(() => ({}));
   const spread = resolveSpread(body?.spread);
@@ -219,7 +222,9 @@ export async function POST(req: NextRequest) {
     })),
   };
 
-  const reading = await generateTarotReading(promptInput);
+  const reading = await withCircuitBreaker('deepseek-tarot', () =>
+    withAiTimeout(() => generateTarotReading(promptInput), 15_000)
+  );
   const readingPayload: CachedTarotReading = {
     cardMeanings: reading.cardMeanings,
     overallNarrative: reading.overallNarrative,

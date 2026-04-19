@@ -98,12 +98,11 @@ export async function POST(req: NextRequest) {
     // 3. 生成运势（可能失败，优雅降级）
     let fortune;
     try {
-      fortune = await generateDailyFortune(
-        baziResult.dayMaster,
-        targetDate,
-        dayGanzhi,
-        dayun,
-        liunian
+      fortune = await withCircuitBreaker('deepseek-daily', () =>
+        withAiTimeout(
+          () => generateDailyFortune(baziResult.dayMaster, targetDate, dayGanzhi, dayun, liunian),
+          15_000
+        )
       );
     } catch (aiError) {
       console.error('AI fortune failed:', aiError);

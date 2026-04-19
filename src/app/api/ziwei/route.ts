@@ -48,6 +48,9 @@ function parseGender(body: Record<string, unknown>): 'male' | 'female' {
 }
 
 export async function POST(req: NextRequest) {
+  const chaosRes = await applyChaos(req);
+  if (chaosRes) return chaosRes;
+
   // Security Fix: SEC-012 — 添加登录检查
   const { getServerSession } = await import('next-auth');
   const { authOptions } = await import('@/lib/auth');
@@ -101,7 +104,7 @@ export async function POST(req: NextRequest) {
       birthPlace: longitude !== undefined ? { longitude, latitude: 0 } : undefined,
     };
 
-    const result = calculateZiwei(input);
+    const result = await withCircuitBreaker('ziwei-calc', async () => calculateZiwei(input));
 
     const response: Record<string, unknown> = {
       palaces: result.palaces,

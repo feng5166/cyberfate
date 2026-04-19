@@ -119,7 +119,7 @@ export function AiAskSection({ date }: AiAskSectionProps) {
           onChange={(e) => setInput(e.target.value)}
           placeholder="今天适合搬家吗？"
           disabled={loading}
-          className="flex-1 bg-white rounded-xl px-4 py-3 text-sm text-[#1C1A16] border border-[#D4C9B8] focus:ring-2 focus:ring-[#1C1A16]/10 focus:border-[#1C1A16] focus:outline-none transition-colors placeholder:text-[#1C1A16]/40 disabled:opacity-50"
+          className="flex-1 bg-white rounded-xl px-4 py-3 text-sm text-[#1C1A16] border border-[#D1D5DB] focus:ring-2 focus:ring-[#1C1A16]/10 focus:border-[#1C1A16] focus:outline-none transition-colors placeholder:text-[#1C1A16]/40 disabled:opacity-50"
         />
         <button
           type="submit"

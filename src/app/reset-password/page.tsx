@@ -102,7 +102,7 @@ function ResetPasswordContent() {
   }
 
   const inputBaseClass =
-    'w-full border border-[#D5D0CA] rounded-xl px-4 py-3 text-sm text-[#1C1A16] placeholder:text-[#B8B4AE] focus:outline-none focus:ring-2 focus:ring-[#1C1A16]/10 focus:border-[#1C1A16] transition-colors pr-11'
+    'w-full border border-[#D1D5DB] rounded-xl px-4 py-3 text-sm text-[#1C1A16] placeholder:text-[#6B7280] focus:outline-none focus:ring-2 focus:ring-[#1C1A16]/10 focus:border-[#1C1A16] transition-colors pr-11'
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#FAF9F6] px-4">
@@ -181,7 +181,7 @@ function ResetPasswordContent() {
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
-                <p className={`text-xs mt-1 ${errors.password ? 'text-red-500' : 'text-[#B8B4AE]'}`}>
+                <p className={`text-xs mt-1 ${errors.password ? 'text-red-500' : 'text-[#6B7280]'}`}>
                   {errors.password || '至少8个字符'}
                 </p>
               </div>

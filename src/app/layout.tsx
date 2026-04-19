@@ -22,6 +22,9 @@ const cormorantGaramond = Cormorant_Garamond({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.cyberfate.me"),
+  alternates: {
+    canonical: "https://www.cyberfate.me",
+  },
   title: {
     default: "赛博命理师 CyberFate - AI 驱动的东方智慧",
     template: "%s | 赛博命理师",
@@ -39,7 +42,7 @@ export const metadata: Metadata = {
     description: "融合传统命理与现代 AI 技术，为你提供科学、理性的命理分析参考。",
     images: [
       {
-        url: "/og-image.svg",
+        url: "/opengraph-image",
         width: 1200,
         height: 630,
         alt: "赛博命理师 CyberFate",
@@ -50,7 +53,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "赛博命理师 CyberFate - AI 驱动的东方智慧",
     description: "融合传统命理与现代 AI 技术，为你提供科学、理性的命理分析参考。",
-    images: ["/og-image.svg"],
+    images: ["/opengraph-image"],
   },
   icons: {
     apple: [
