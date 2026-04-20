@@ -113,18 +113,18 @@ const wuxingItems = [
 
 // 日期切换
 const dateOptions = [
-  { value: '0', label: '昨天' },
-  { value: '1', label: '今天' },
-  { value: '2', label: '明天' },
-  { value: '3', label: '后天' },
+  { value: '-1', label: '昨天' },
+  { value: '0', label: '今天' },
+  { value: '1', label: '明天' },
+  { value: '2', label: '后天' },
 ];
 const dayOffsetTexts: Record<string, { short: string; loading: string }> = {
-  '0': { short: '昨日', loading: '正在推算昨日运势...' },
-  '1': { short: '今日', loading: '正在推算今日运势...' },
-  '2': { short: '明日', loading: '正在推算明日运势...' },
-  '3': { short: '后日', loading: '正在推算后日运势...' },
+  '-1': { short: '昨日', loading: '正在推算昨日运势...' },
+  '0': { short: '今日', loading: '正在推算今日运势...' },
+  '1': { short: '明日', loading: '正在推算明日运势...' },
+  '2': { short: '后日', loading: '正在推算后日运势...' },
 };
-const getDayOffsetText = (offset: string) => dayOffsetTexts[offset] ?? dayOffsetTexts['1'];
+const getDayOffsetText = (offset: string) => dayOffsetTexts[offset] ?? dayOffsetTexts['0'];
 
 export default function DailyPage() {
   const [formData, setFormData] = useState({ birthDate: '', birthHour: '', gender: '' });
@@ -206,7 +206,7 @@ export default function DailyPage() {
     }
   };
 
-  const [dayOffset, setDayOffset] = useState('1');
+  const [dayOffset, setDayOffset] = useState('0');
   const currentDayText = getDayOffsetText(dayOffset);
 
   const handleDateChange = (offset: string) => {
