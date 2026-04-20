@@ -150,7 +150,7 @@ export default function DailyPage() {
           setHasSavedData(false);
           setError('请填写出生日期和时辰后再查看运势');
         } else {
-          throw new Error(data.message || '获取运势失败');
+          throw new Error(data.error || data.message || '获取运势失败');
         }
         return;
       }

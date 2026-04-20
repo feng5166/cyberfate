@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: '请先登录' }, { status: 401 });
   }
-  const rl = await checkRateLimit('ai_daily', session.user.id, 10, 60);
+  const rl = await checkRateLimit('ai_daily', session.user.id, 20, 60);
   if (!rl.allowed) return NextResponse.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
   try {
     const body = await req.json();
