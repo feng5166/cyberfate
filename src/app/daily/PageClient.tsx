@@ -11,6 +11,7 @@ import { Container } from '@/components/ui/Container';
 import { AiDisclaimer } from '@/components/ui/AiDisclaimer';
 import { Footer } from '@/components/layout/Footer';
 import { saveBirthInfo, loadBirthInfo, clearBirthInfo } from '@/lib/utils/storage';
+import { DatePicker } from '@/components/ui/DatePicker';
 import { Sun, Cloud, Droplets, Heart, Briefcase, Activity, Sparkles, ArrowRight, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 
@@ -236,17 +237,13 @@ export default function DailyPage() {
           <Card hover={false} className="max-w-[500px] mx-auto mb-8">
             <form onSubmit={handleSubmit} className="space-y-5">
               <p className="text-sm text-brand-gray text-center mb-4">输入出生信息获取专属运势</p>
-              <div>
-                <label htmlFor="daily-birth-date" className="block text-sm font-medium text-brand-black mb-1.5">出生日期</label>
-                <input
-                  id="daily-birth-date"
-                  type="date"
-                  required
-                  value={formData.birthDate}
-                  onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-black"
-                />
-              </div>
+              <DatePicker
+                label="出生日期"
+                value={formData.birthDate}
+                onChange={(value) => setFormData({ ...formData, birthDate: value })}
+                className="space-y-1.5"
+                triggerClassName="h-10 rounded-lg"
+              />
               <Select label="出生时辰" options={shichenOptions} value={formData.birthHour} onChange={(e) => setFormData({ ...formData, birthHour: e.target.value })} required />
               {error && <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">{error}</div>}
               <Button type="submit" variant="primary" loading={loading} className="w-full">查看{currentDayText.short}运势</Button>
