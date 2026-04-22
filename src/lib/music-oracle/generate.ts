@@ -1,0 +1,156 @@
+/**
+ * 音乐运势签 AI 生成逻辑
+ * 调用 Claude API 生成歌曲推荐 + 签文
+ */
+
+import { MUSIC_ORACLE_SYSTEM_PROMPT, buildDailyMusicPrompt } from './prompts';
+import { getTodayTiangan, getWuxingMusicProfile } from './wuxing-music-map';
+import { getEnvVar } from '../utils/api-wrapper';
+
+export interface DailyMusicItem {
+  songName: string;
+  artist: string;
+  lyricsQuote: string;
+  oracleText: string;
+  oracleSummary: string;
+  musicTags: string[];
+  wuxingNote: string;
+}
+
+export interface DailyMusicResult {
+  main: DailyMusicItem;
+  alternates: DailyMusicItem[];
+  ganzhi: string;
+  wuxing: string;
+  date: string;
+}
+
+/**
+ * 调用 Claude API 生成今日音乐运势
+ * 返回 null 表示失败（不抛异常）
+ */
+export async function generateDailyMusic(): Promise<DailyMusicResult | null> {
+  try {
+    const todayInfo = getTodayTiangan();
+    const profile = getWuxingMusicProfile(todayInfo.tiangan);
+
+    const userPrompt = buildDailyMusicPrompt({
+      ganzhi: todayInfo.ganzhi,
+      wuxingDescription: todayInfo.description,
+      emotionDirection: `${profile.emotion}（${profile.musicStyles.join('、')}）`,
+    });
+
+    const rawResponse = await callClaudeAPI(MUSIC_ORACLE_SYSTEM_PROMPT, userPrompt);
+    if (!rawResponse) return null;
+
+    const items = parseAIResponse(rawResponse);
+    if (!items || items.length === 0) return null;
+
+    const today = new Date();
+    const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+    return {
+      main: items[0],
+      alternates: items.slice(1),
+      ganzhi: todayInfo.ganzhi,
+      wuxing: profile.wuxing,
+      date: dateStr,
+    };
+  } catch (err) {
+    console.error('[MusicOracle] generateDailyMusic 失败:', err);
+    return null;
+  }
+}
+
+/**
+ * 调用 Claude Messages API
+ */
+async function callClaudeAPI(systemPrompt: string, userPrompt: string): Promise<string | null> {
+  // 优先使用 Anthropic 配置（与项目其他模块一致）
+  const apiKey = getEnvVar('ANTHROPIC_API_KEY');
+  const baseUrl = getEnvVar('ANTHROPIC_BASE_URL') || 'https://api.anthropic.com';
+
+  if (!apiKey) {
+    console.error('[MusicOracle] ANTHROPIC_API_KEY 未配置');
+    return null;
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+  try {
+    const response = await fetch(`${baseUrl}/v1/messages`, {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 800,
+        temperature: 0.85,
+        system: systemPrompt,
+        messages: [
+          { role: 'user', content: userPrompt },
+        ],
+      }),
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error(`[MusicOracle] Claude API error ${response.status}: ${errText}`);
+      return null;
+    }
+
+    const data = await response.json();
+    const content = data?.content?.[0]?.text;
+    return content || null;
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      console.error('[MusicOracle] Claude API 超时 (30s)');
+    } else {
+      console.error('[MusicOracle] Claude API 调用失败:', err.message);
+    }
+    return null;
+  }
+}
+
+/**
+ * 解析 AI 响应 JSON
+ */
+function parseAIResponse(raw: string): DailyMusicItem[] | null {
+  try {
+    // 提取 JSON 部分（可能被包裹在 markdown code blocks 中）
+    let jsonStr = raw.trim();
+    const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (jsonMatch) {
+      jsonStr = jsonMatch[1].trim();
+    }
+    // 也尝试直接找数组
+    const arrayMatch = jsonStr.match(/\[[\s\S]*\]/);
+    if (arrayMatch) {
+      jsonStr = arrayMatch[0];
+    }
+
+    const parsed = JSON.parse(jsonStr);
+    if (!Array.isArray(parsed) || parsed.length === 0) return null;
+
+    return parsed.map((item: any) => ({
+      songName: String(item.song_name || '').replace(/[《》]/g, ''),
+      artist: String(item.artist || ''),
+      lyricsQuote: String(item.lyrics_quote || ''),
+      oracleText: String(item.oracle_text || ''),
+      oracleSummary: String(item.oracle_summary || ''),
+      musicTags: Array.isArray(item.music_tags) ? item.music_tags.map(String) : [],
+      wuxingNote: String(item.wuxing_note || ''),
+    }));
+  } catch (err) {
+    console.error('[MusicOracle] JSON 解析失败:', err, '\n原始响应:', raw.substring(0, 200));
+    return null;
+  }
+}

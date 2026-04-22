@@ -14,6 +14,7 @@ import { saveBirthInfo, loadBirthInfo, clearBirthInfo } from '@/lib/utils/storag
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Sun, Cloud, Droplets, Heart, Briefcase, Activity, Sparkles, ArrowRight, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
+import DailyMusicCard from '@/components/music-oracle/DailyMusicCard';
 
 // 十二时辰选项
 const shichenOptions = [
@@ -373,6 +374,9 @@ export default function DailyPage() {
               <p className="text-xs text-yellow-600/70 mb-2">AI 综合分析 · 仅供参考</p>
               <p className="text-sm leading-relaxed text-gray-700">{result.advice}</p>
             </Card>
+
+            {/* 🎵 今日之歌 */}
+            <DailyMusicCard />
 
             {/* 引导到八字分析 */}
             <Card hover={false} className="text-center py-5">
