@@ -92,10 +92,11 @@ export function getTodayTiangan(): { tiangan: string; ganzhi: string; wuxing: st
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { Solar } = require('lunar-javascript');
   const today = new Date();
-  const solar = Solar.fromDate(today);
+  const solar = Solar.fromYmd(today.getFullYear(), today.getMonth() + 1, today.getDate());
   const lunar = solar.getLunar();
-  const dayGan = lunar.getDayGan();   // 天干：甲/乙/丙/丁...
-  const dayZhi = lunar.getDayZhi();   // 地支：子/丑/寅/卯...
+  const eightChar = lunar.getEightChar();
+  const dayGan = eightChar.getDayGan();   // 天干：甲/乙/丙/丁...
+  const dayZhi = eightChar.getDayZhi();   // 地支：子/丑/寅/卯...
   const ganzhi = `${dayGan}${dayZhi}`;
   const wuxing = TIANGAN_TO_WUXING[dayGan] || '木';
 

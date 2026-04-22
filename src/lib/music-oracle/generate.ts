@@ -31,8 +31,11 @@ export interface DailyMusicResult {
  */
 export async function generateDailyMusic(): Promise<DailyMusicResult | null> {
   try {
+    console.log('[MusicOracle] 开始生成今日音乐运势...');
     const todayInfo = getTodayTiangan();
+    console.log('[MusicOracle] 今日天干:', todayInfo.tiangan, '干支:', todayInfo.ganzhi);
     const profile = getWuxingMusicProfile(todayInfo.tiangan);
+    console.log('[MusicOracle] 五行:', profile.wuxing, '情绪:', profile.emotion);
 
     const userPrompt = buildDailyMusicPrompt({
       ganzhi: todayInfo.ganzhi,
@@ -40,11 +43,20 @@ export async function generateDailyMusic(): Promise<DailyMusicResult | null> {
       emotionDirection: `${profile.emotion}（${profile.musicStyles.join('、')}）`,
     });
 
+    console.log('[MusicOracle] 调用 AI API...');
     const rawResponse = await callClaudeAPI(MUSIC_ORACLE_SYSTEM_PROMPT, userPrompt);
-    if (!rawResponse) return null;
+    if (!rawResponse) {
+      console.error('[MusicOracle] AI API 返回空');
+      return null;
+    }
+    console.log('[MusicOracle] AI 响应长度:', rawResponse.length);
 
     const items = parseAIResponse(rawResponse);
-    if (!items || items.length === 0) return null;
+    if (!items || items.length === 0) {
+      console.error('[MusicOracle] JSON 解析失败或无结果');
+      return null;
+    }
+    console.log('[MusicOracle] 解析成功，歌曲数:', items.length);
 
     const today = new Date();
     const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
