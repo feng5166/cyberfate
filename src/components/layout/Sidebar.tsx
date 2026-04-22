@@ -60,7 +60,6 @@ const MENU_GROUPS: MenuGroupConfig[] = [
     items: [
       { label: '八字分析', href: '/bazi', icon: BarChart3 },
       { label: '每日运势', href: '/daily', icon: Sun },
-      { label: '音乐运势签', href: '/music-oracle', icon: Music },
       { label: '合婚分析', href: '/bazi/marriage', icon: BookHeart, paidOnly: true },
     ],
   },
@@ -76,6 +75,7 @@ const MENU_GROUPS: MenuGroupConfig[] = [
     title: '更多工具',
     items: [
       { label: '紫微斗数', href: '/ziwei', icon: Star, paidOnly: true },
+      { label: '音乐运势签', href: '/music-oracle', icon: Music },
       { label: 'AI老黄历', href: '/huangli', icon: Calendar, paidOnly: true },
     ],
   },
