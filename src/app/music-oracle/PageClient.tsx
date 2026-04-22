@@ -220,19 +220,18 @@ export default function MusicOraclePageClient() {
               出生年份（可选，提升准确度）
             </label>
             <input
-              type="number"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               value={birthYear}
               onChange={(e) => {
-                const val = e.target.value;
-                if (val === '' || (parseInt(val) >= 1900 && parseInt(val) <= 2010)) {
-                  setBirthYear(val);
-                }
+                const val = e.target.value.replace(/\D/g, '').slice(0, 4);
+                setBirthYear(val);
               }}
               disabled={loading}
-              placeholder="1990"
-              min={1920}
-              max={2010}
-              className="w-32 h-10 bg-white border border-[#E5E0D8] rounded-xl px-4 text-[15px] text-[#1C1A16] placeholder-[#B5B0A8] focus:border-[#1C1A16] focus:ring-2 focus:ring-[#1C1A16]/10 outline-none transition-all disabled:opacity-50"
+              placeholder="例如 1990"
+              maxLength={4}
+              className="w-36 h-10 bg-white border border-[#E5E0D8] rounded-xl px-4 text-[15px] text-[#1C1A16] placeholder-[#B5B0A8] focus:border-[#1C1A16] focus:ring-2 focus:ring-[#1C1A16]/10 outline-none transition-all disabled:opacity-50"
             />
             <p className="text-xs text-[#9CA3AF] mt-1 flex items-center gap-1">
               🔒 用于计算你的日主五行，不填仅用当日天干推算
