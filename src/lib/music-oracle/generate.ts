@@ -63,15 +63,16 @@ export async function generateDailyMusic(): Promise<DailyMusicResult | null> {
 }
 
 /**
- * 调用 Claude Messages API
+ * 调用 DeepSeek API（与项目其他模块一致，使用 ModelVerse 中转）
  */
+const DEEPSEEK_BASE_URL = 'https://api.modelverse.cn/v1';
+const DEEPSEEK_MODEL = 'deepseek-ai/DeepSeek-V3.2';
+
 async function callClaudeAPI(systemPrompt: string, userPrompt: string): Promise<string | null> {
-  // 优先使用 Anthropic 配置（与项目其他模块一致）
-  const apiKey = getEnvVar('ANTHROPIC_API_KEY');
-  const baseUrl = getEnvVar('ANTHROPIC_BASE_URL') || 'https://api.anthropic.com';
+  const apiKey = getEnvVar('DEEPSEEK_API_KEY');
 
   if (!apiKey) {
-    console.error('[MusicOracle] ANTHROPIC_API_KEY 未配置');
+    console.error('[MusicOracle] DEEPSEEK_API_KEY 未配置');
     return null;
   }
 
@@ -79,20 +80,19 @@ async function callClaudeAPI(systemPrompt: string, userPrompt: string): Promise<
   const timeoutId = setTimeout(() => controller.abort(), 30000);
 
   try {
-    const response = await fetch(`${baseUrl}/v1/messages`, {
+    const response = await fetch(`${DEEPSEEK_BASE_URL}/chat/completions`, {
       method: 'POST',
       signal: controller.signal,
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
+        'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: DEEPSEEK_MODEL,
         max_tokens: 800,
         temperature: 0.85,
-        system: systemPrompt,
         messages: [
+          { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
       }),
@@ -102,19 +102,19 @@ async function callClaudeAPI(systemPrompt: string, userPrompt: string): Promise<
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error(`[MusicOracle] Claude API error ${response.status}: ${errText}`);
+      console.error(`[MusicOracle] DeepSeek API error ${response.status}: ${errText}`);
       return null;
     }
 
     const data = await response.json();
-    const content = data?.content?.[0]?.text;
+    const content = data?.choices?.[0]?.message?.content;
     return content || null;
   } catch (err: any) {
     clearTimeout(timeoutId);
     if (err.name === 'AbortError') {
-      console.error('[MusicOracle] Claude API 超时 (30s)');
+      console.error('[MusicOracle] DeepSeek API 超时 (30s)');
     } else {
-      console.error('[MusicOracle] Claude API 调用失败:', err.message);
+      console.error('[MusicOracle] DeepSeek API 调用失败:', err.message);
     }
     return null;
   }
