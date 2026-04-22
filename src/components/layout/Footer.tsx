@@ -11,6 +11,7 @@ const FOOTER_GROUPS = [
       { label: '紫微斗数', href: '/ziwei' },
       { label: '梅花易数', href: '/meihua' },
       { label: '塔罗占卜', href: '/tarot' },
+      { label: '音乐运势签', href: '/music-oracle' },
       { label: 'AI老黄历', href: '/huangli' },
     ],
   },

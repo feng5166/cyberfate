@@ -18,6 +18,7 @@ const mainNavItems = [
 
 // "更多"下拉菜单项
 const moreMenuItems = [
+  { label: '音乐运势签', href: '/music-oracle' },
   { label: '合婚配对', href: '/bazi/marriage' },
   { label: '黄历查询', href: '/huangli' },
   { label: '知识库', href: '/knowledge' },

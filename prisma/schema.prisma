@@ -213,3 +213,28 @@ model TarotReading {
   @@index([userId, createdAt])
   @@map("tarot_readings")
 }
+
+// 音乐运势签记录
+model MusicOracleRecord {
+  id          String   @id @default(cuid())
+  userId      String?  // 登录用户ID，游客为null
+  sessionId   String?  // 会话ID（游客追踪用）
+  question    String   // 用户输入的问题
+  birthYear   Int?     // 出生年份（可选）
+  ganzhi      String   // 求签时的今日干支
+  wuxing      String   // 今日天干五行
+  userWuxing  String?  // 用户日主五行
+  songName    String   // 推荐歌名
+  artist      String   // 歌手
+  lyricsQuote String   // 歌词金句
+  oracleText  String   @db.Text // AI签文全文
+  musicTags   Json     @default("[]") // 音乐风格标签
+  wuxingNote  String?  // 五行简析
+  shareCount  Int      @default(0)  // 分享次数
+
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([sessionId, createdAt])
+  @@map("music_oracle_records")
+}

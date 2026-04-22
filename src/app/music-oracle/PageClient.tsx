@@ -70,6 +70,7 @@ export default function MusicOraclePageClient() {
   const [result, setResult] = useState<OracleResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const resultRef = useRef<HTMLDivElement>(null);
@@ -366,8 +367,23 @@ export default function MusicOraclePageClient() {
                 className="w-full sm:w-auto bg-[#1C1A16] text-white rounded-xl px-6 py-2.5 text-sm font-medium hover:bg-[#2D2B26] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 <Share2 className="w-4 h-4" />
-                {sharing ? '生成中...' : '分享这支签'}
+                {sharing ? '生成中...' : '下载分享图'}
               </button>
+              {result.recordId && (
+                <button
+                  onClick={async () => {
+                    const url = `${window.location.origin}/api/og/music-oracle/${result.recordId}`;
+                    try {
+                      await navigator.clipboard.writeText(url);
+                      setLinkCopied(true);
+                      setTimeout(() => setLinkCopied(false), 2000);
+                    } catch {}
+                  }}
+                  className="w-full sm:w-auto border border-[#E5E0D8] text-[#6B7280] rounded-xl px-6 py-2.5 text-sm font-medium hover:border-[#1C1A16] hover:text-[#1C1A16] transition-colors flex items-center justify-center gap-2"
+                >
+                  {linkCopied ? '✅ 已复制' : '🔗 复制分享链接'}
+                </button>
+              )}
               <button
                 onClick={handleReset}
                 className="w-full sm:w-auto border border-[#E5E0D8] text-[#6B7280] rounded-xl px-6 py-2.5 text-sm font-medium hover:border-[#1C1A16] hover:text-[#1C1A16] transition-colors flex items-center justify-center gap-2"

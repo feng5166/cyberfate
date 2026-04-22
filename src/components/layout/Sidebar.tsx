@@ -13,6 +13,7 @@ import {
   Layers,
   Compass,
   Star,
+  Music,
   Calendar,
   BookOpen,
   Clock,
@@ -59,6 +60,7 @@ const MENU_GROUPS: MenuGroupConfig[] = [
     items: [
       { label: '八字分析', href: '/bazi', icon: BarChart3 },
       { label: '每日运势', href: '/daily', icon: Sun },
+      { label: '音乐运势签', href: '/music-oracle', icon: Music },
       { label: '合婚分析', href: '/bazi/marriage', icon: BookHeart, paidOnly: true },
     ],
   },

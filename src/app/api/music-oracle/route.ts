@@ -13,6 +13,7 @@ import { getRedis } from '@/lib/cache/redis';
 import { getEnvVar } from '@/lib/utils/api-wrapper';
 import { getTodayTiangan, getWuxingMusicProfile } from '@/lib/music-oracle/wuxing-music-map';
 import { MUSIC_ORACLE_SYSTEM_PROMPT } from '@/lib/music-oracle/prompts';
+import { PrismaClient } from '@prisma/client';
 
 const DEEPSEEK_BASE_URL = 'https://api.modelverse.cn/v1';
 const DEEPSEEK_MODEL = 'deepseek-ai/DeepSeek-V3.2';
@@ -210,6 +211,32 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // 保存到数据库
+    let recordId: string | undefined;
+    try {
+      const prisma = new PrismaClient();
+      const record = await prisma.musicOracleRecord.create({
+        data: {
+          question: question.trim(),
+          birthYear: birthYear ? Number(birthYear) : null,
+          ganzhi: todayInfo.ganzhi,
+          wuxing: todayProfile.wuxing,
+          userWuxing: birthYear ? userWuxing : null,
+          songName: String(parsed.song_name || '').replace(/[《》]/g, ''),
+          artist: String(parsed.artist || ''),
+          lyricsQuote: String(parsed.lyrics_quote || ''),
+          oracleText: String(parsed.oracle_text || ''),
+          musicTags: Array.isArray(parsed.music_tags) ? parsed.music_tags : [],
+          wuxingNote: String(parsed.wuxing_note || ''),
+          sessionId: clientIp,
+        },
+      });
+      recordId = record.id;
+      await prisma.$disconnect();
+    } catch (dbErr) {
+      console.warn('[music-oracle] 数据库保存失败（不影响返回）:', dbErr);
+    }
+
     // 返回结果
     return NextResponse.json({
       success: true,
@@ -222,6 +249,7 @@ export async function POST(request: NextRequest) {
         wuxingNote: String(parsed.wuxing_note || ''),
         todayGanzhi: todayInfo.ganzhi,
         wuxing: todayProfile.wuxing,
+        recordId,
       },
     });
   } catch (err: any) {
