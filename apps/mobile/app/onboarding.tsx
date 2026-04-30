@@ -11,7 +11,7 @@ import {
   NativeScrollEvent,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router } from "expo-router";
+import { Redirect } from "expo-router";
 import { useAppStore } from "../stores/useAppStore";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -41,8 +41,11 @@ const PAGES = [
 
 export default function OnboardingScreen() {
   const [currentPage, setCurrentPage] = useState(0);
+  const [done, setDone] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const setOnboarded = useAppStore((s) => s.setOnboarded);
+
+  if (done) return <Redirect href="/(tabs)" />;
 
   function handleScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
     const page = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
@@ -51,7 +54,7 @@ export default function OnboardingScreen() {
 
   function handleStart() {
     setOnboarded(true);
-    router.replace("/(tabs)");
+    setDone(true);
   }
 
   return (
