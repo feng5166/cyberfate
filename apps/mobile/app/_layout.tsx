@@ -1,6 +1,5 @@
 import "../global.css";
-import { useEffect } from "react";
-import { Stack, router } from "expo-router";
+import { Stack, Redirect } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
@@ -19,11 +18,9 @@ const queryClient = new QueryClient({
 function AppNavigator() {
   const isOnboarded = useAppStore((s) => s.isOnboarded);
 
-  useEffect(() => {
-    if (!isOnboarded) {
-      router.replace("/onboarding");
-    }
-  }, [isOnboarded]);
+  if (!isOnboarded) {
+    return <Redirect href="/onboarding" />;
+  }
 
   return <Stack screenOptions={{ headerShown: false }} />;
 }
