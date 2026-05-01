@@ -37,12 +37,8 @@ export default function BirthInputScreen() {
   if (done) return <Redirect href="/(tabs)" />;
 
   const handleSubmit = async () => {
-    if (!name.trim()) {
-      Alert.alert('提示', '请输入姓名');
-      return;
-    }
     const birthDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    const birthHour = SHICHEN_HOURS[shichen];
+    const birthHour = shichen;
     setLoading(true);
     try {
       const result = await postBazi({ birthDate, birthHour, gender, name: name.trim() });
