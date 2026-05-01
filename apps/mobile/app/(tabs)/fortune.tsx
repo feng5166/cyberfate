@@ -10,6 +10,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { mockDailyFortune } from "../../lib/mockData";
+import { getDailyFortune } from "../../lib/api";
+import type { FortuneResult } from "../../lib/types";
 import { useAppStore } from "../../stores/useAppStore";
 
 const COLORS = {
@@ -43,6 +45,40 @@ function isSameDay(a: Date, b: Date): boolean {
     a.getMonth() === b.getMonth() &&
     a.getDate() === b.getDate()
   );
+}
+
+function seededRand(seed: string) {
+  // FNV-1a hash → xorshift32 PRNG for deterministic per-day variation
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  h = h >>> 0;
+  return () => {
+    h ^= h << 13;
+    h ^= h >> 17;
+    h ^= h << 5;
+    return (h >>> 0) / 0xffffffff;
+  };
+}
+
+function scoreLevel(score: number): string {
+  if (score >= 9) return "大吉";
+  if (score >= 7.5) return "旺";
+  if (score >= 5.5) return "平";
+  return "慎";
+}
+
+function applyDailySeed(base: FortuneResult, seed: string): FortuneResult {
+  const rand = seededRand(seed);
+  const clamp = (v: number) => Math.min(10, Math.max(1, v));
+  const newScore = clamp(parseFloat((base.score + (rand() - 0.5) * 3).toFixed(1)));
+  const dimensions = base.dimensions.map((d) => ({
+    ...d,
+    score: clamp(parseFloat((d.score + (rand() - 0.5) * 3).toFixed(1))),
+  }));
+  return { ...base, score: newScore, level: scoreLevel(newScore), dimensions };
 }
 
 function getBarColor(score: number): string {
@@ -83,10 +119,22 @@ export default function FortuneScreen() {
   today.setHours(0, 0, 0, 0);
   const [selectedDate, setSelectedDate] = useState<Date>(today);
   const [displayScore, setDisplayScore] = useState(0);
-  const { checkedInToday, consecutiveDays, checkIn } = useAppStore();
+  const { checkedInToday, consecutiveDays, checkIn, birthDate } = useAppStore();
+  const [fortune, setFortune] = useState<FortuneResult>(mockDailyFortune);
 
-  const fortune = mockDailyFortune;
   const dateRange = useMemo(() => buildDateRange(selectedDate), [selectedDate]);
+
+  useEffect(() => {
+    const dateStr = [
+      selectedDate.getFullYear(),
+      String(selectedDate.getMonth() + 1).padStart(2, "0"),
+      String(selectedDate.getDate()).padStart(2, "0"),
+    ].join("-");
+    getDailyFortune(dateStr).then((base) => {
+      const seed = `${birthDate}|${dateStr}`;
+      setFortune(applyDailySeed(base, seed));
+    });
+  }, [selectedDate, birthDate]);
 
   useEffect(() => {
     const target = fortune.score;
@@ -105,7 +153,7 @@ export default function FortuneScreen() {
       }
     }, stepTime);
     return () => clearInterval(timer);
-  }, [selectedDate]);
+  }, [fortune.score]);
 
   function prevDay() {
     setSelectedDate((d) => {

@@ -45,7 +45,7 @@ export default function OnboardingScreen() {
   const scrollRef = useRef<ScrollView>(null);
   const setOnboarded = useAppStore((s) => s.setOnboarded);
 
-  if (done) return <Redirect href="/(tabs)" />;
+  if (done) return <Redirect href="/birth-input" />;
 
   function handleScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
     const page = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);

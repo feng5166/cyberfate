@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -9,11 +9,14 @@ import {
   Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 import {
-  mockDailyFortune,
   mockWeeklyTips,
   getCurrentSolarTerm,
+  mockDailyFortune,
 } from "../../lib/mockData";
+import { getDailyFortune } from "../../lib/api";
+import type { FortuneResult } from "../../lib/types";
 import { useAppStore } from "../../stores/useAppStore";
 
 const COLORS = {
@@ -40,21 +43,54 @@ function getDateLabel(): string {
   return `${month}月${day}日 · ${solarTerm}`;
 }
 
+function seededRand(seed: string) {
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  h = h >>> 0;
+  return () => {
+    h ^= h << 13;
+    h ^= h >> 17;
+    h ^= h << 5;
+    return (h >>> 0) / 0xffffffff;
+  };
+}
+
+function scoreLevel(score: number): string {
+  if (score >= 9) return "大吉";
+  if (score >= 7.5) return "旺";
+  if (score >= 5.5) return "平";
+  return "慎";
+}
+
+function applyDailySeed(base: FortuneResult, seed: string): FortuneResult {
+  const rand = seededRand(seed);
+  const clamp = (v: number) => Math.min(10, Math.max(1, v));
+  const newScore = clamp(parseFloat((base.score + (rand() - 0.5) * 3).toFixed(1)));
+  const dimensions = base.dimensions.map((d) => ({
+    ...d,
+    score: clamp(parseFloat((d.score + (rand() - 0.5) * 3).toFixed(1))),
+  }));
+  return { ...base, score: newScore, level: scoreLevel(newScore), dimensions };
+}
+
 const NAV_ITEMS = [
-  { emoji: "🎴", label: "八字" },
-  { emoji: "⭐", label: "紫微" },
-  { emoji: "🃏", label: "塔罗" },
-  { emoji: "☯️", label: "六爻" },
-  { emoji: "🌸", label: "梅花" },
-  { emoji: "💑", label: "合婚" },
-  { emoji: "📅", label: "黄历" },
-  { emoji: "🧭", label: "排盘" },
-  { emoji: "⋯", label: "更多" },
+  { emoji: "🎴", label: "八字", route: "/(tabs)/chart" },
+  { emoji: "⭐", label: "紫微", route: null },
+  { emoji: "🃏", label: "塔罗", route: null },
+  { emoji: "☯️", label: "六爻", route: null },
+  { emoji: "🌸", label: "梅花", route: null },
+  { emoji: "💑", label: "合婚", route: null },
+  { emoji: "📅", label: "黄历", route: null },
+  { emoji: "🧭", label: "排盘", route: null },
+  { emoji: "⋯", label: "更多", route: null },
 ];
 
 export default function HomeScreen() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const { checkedInToday, consecutiveDays, checkIn } = useAppStore();
+  const { checkedInToday, consecutiveDays, checkIn, userName, baziResult } = useAppStore();
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -74,8 +110,10 @@ export default function HomeScreen() {
         {/* 顶部问候区 */}
         <View style={styles.greetingRow}>
           <View>
-            <Text style={styles.greeting}>{getGreeting()}，用户</Text>
-            <Text style={styles.dateLabel}>{getDateLabel()}</Text>
+            <Text style={styles.greeting}>{getGreeting()}，{userName || "用户"}</Text>
+            <Text style={styles.dateLabel}>
+              {getDateLabel()}{baziResult?.zodiac ? ` · ${baziResult.zodiac}年` : ""}
+            </Text>
           </View>
           <Text style={styles.bell}>🔔</Text>
         </View>

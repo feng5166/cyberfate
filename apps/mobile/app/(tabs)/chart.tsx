@@ -11,7 +11,8 @@ import {
   Animated,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { mockBaziChart } from "../../lib/mockData";
+import { useRouter } from "expo-router";
+import { useAppStore } from "../../stores/useAppStore";
 
 const COLORS = {
   bg: "#FAF6EE",
@@ -61,7 +62,25 @@ export default function ChartScreen() {
   const [showModal, setShowModal] = useState(false);
   const [partnerName, setPartnerName] = useState("");
   const [partnerGender, setPartnerGender] = useState<"male" | "female">("male");
-  const chart = mockBaziChart;
+  const router = useRouter();
+  const baziResult = useAppStore((s) => s.baziResult);
+
+  if (baziResult === null) {
+    return (
+      <SafeAreaView style={[styles.safeArea, { justifyContent: "center", alignItems: "center" }]}>
+        <Text style={{ fontSize: 16, color: COLORS.secondary, marginBottom: 20 }}>还未测算命盘</Text>
+        <TouchableOpacity
+          style={[styles.combineBtn, { paddingHorizontal: 32 }]}
+          activeOpacity={0.8}
+          onPress={() => router.push("/birth-input")}
+        >
+          <Text style={styles.combineBtnText}>去测算</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
+
+  const chart = baziResult;
 
   return (
     <SafeAreaView style={styles.safeArea}>
