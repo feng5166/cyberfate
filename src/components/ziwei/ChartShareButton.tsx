@@ -124,7 +124,7 @@ export function ChartShareButton({ palaces, birthInfo }: ChartShareButtonProps) 
         // Major stars
         ctx.textAlign = 'center';
         let starY = y + 50;
-        for (const star of palace.majorStars) {
+        for (const star of palace.majorStars ?? []) {
           const color = STAR_COLORS[star.name] || '#1C1A16';
           // Color dot
           ctx.beginPath();
@@ -145,7 +145,7 @@ export function ChartShareButton({ palaces, birthInfo }: ChartShareButtonProps) 
           starY += 22;
         }
 
-        if (palace.majorStars.length === 0) {
+        if ((palace.majorStars?.length ?? 0) === 0) {
           ctx.fillStyle = 'rgba(28,26,22,0.15)';
           ctx.font = '12px sans-serif';
           ctx.textAlign = 'center';
@@ -153,7 +153,7 @@ export function ChartShareButton({ palaces, birthInfo }: ChartShareButtonProps) 
         }
 
         // Separator
-        if (palace.minorStars.length > 0) {
+        if ((palace.minorStars?.length ?? 0) > 0) {
           const sepY = Math.max(starY + 4, y + cellH - 45);
           ctx.strokeStyle = 'rgba(232,228,221,0.8)';
           ctx.lineWidth = 0.5;
@@ -165,8 +165,8 @@ export function ChartShareButton({ palaces, birthInfo }: ChartShareButtonProps) 
           // Minor stars
           ctx.font = '10px sans-serif';
           ctx.textAlign = 'center';
-          const minorText = palace.minorStars.map((s) => s.name).join(' ');
-          ctx.fillStyle = palace.minorStars.some((s) => s.type === 'evil')
+          const minorText = (palace.minorStars ?? []).map((s) => s.name).join(' ');
+          ctx.fillStyle = palace.minorStars?.some((s) => s.type === 'evil')
             ? 'rgba(220,38,38,0.5)'
             : 'rgba(28,26,22,0.35)';
           ctx.fillText(

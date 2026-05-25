@@ -69,13 +69,13 @@ function convertApiPalaces(apiPalaces: ApiPalace[]): PalaceData[] {
     name: p.name,
     branch: p.branch,
     stem: p.stem,
-    majorStars: p.majorStars.map((s) => ({
+    majorStars: (p.majorStars || []).map((s) => ({
       name: s.name,
       type: s.type as PalaceData['majorStars'][number]['type'],
       brightness: s.brightness as PalaceData['majorStars'][number]['brightness'],
     })),
     minorStars: [
-      ...p.minorStars,
+      ...(p.minorStars || []),
       ...(p.auxiliaryStars || []),
     ].map((s) => ({
       name: s.name,
@@ -131,6 +131,16 @@ function loadCachedResult(): CachedResult | null {
     }
 
     if (Date.now() - data.timestamp > 7 * 24 * 3600 * 1000) return null;
+
+    // null-safe: 修正 palaces 中可能缺失的 majorStars/minorStars 数组
+    if (Array.isArray(data.palaces)) {
+      data.palaces = data.palaces.map((p) => ({
+        ...p,
+        majorStars: Array.isArray(p?.majorStars) ? p.majorStars : [],
+        minorStars: Array.isArray(p?.minorStars) ? p.minorStars : [],
+      }));
+    }
+
     return data;
   } catch {
     return null;

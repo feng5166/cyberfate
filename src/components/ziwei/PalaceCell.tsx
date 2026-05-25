@@ -48,7 +48,7 @@ export function PalaceCell({ palace, selected = false, onClick, className }: Pal
 
       {/* 主星区域 — 居中大字 */}
       <div className="flex-1 flex flex-col items-center justify-center gap-1 my-1">
-        {palace.majorStars.map((star) => (
+        {palace.majorStars?.map((star) => (
           <div key={star.name} className="flex items-center gap-1.5">
             <StarIcon starName={star.name} size={8} />
             <span
@@ -62,17 +62,17 @@ export function PalaceCell({ palace, selected = false, onClick, className }: Pal
             )}
           </div>
         ))}
-        {palace.majorStars.length === 0 && (
+        {(palace.majorStars?.length ?? 0) === 0 && (
           <span className="text-xs text-[#1C1A16]/15">—</span>
         )}
       </div>
 
       {/* 分隔线 + 辅星/煞星 */}
-      {palace.minorStars.length > 0 && (
+      {(palace.minorStars?.length ?? 0) > 0 && (
         <div className="mt-auto">
           <div className="border-t border-[#E8EDE5] my-1.5" />
           <div className="flex flex-wrap gap-x-1.5 gap-y-0.5 justify-center">
-            {palace.minorStars.map((star) => (
+            {palace.minorStars?.map((star) => (
               <span
                 key={star.name}
                 className={cn(

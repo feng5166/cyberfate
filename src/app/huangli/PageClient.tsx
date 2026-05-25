@@ -15,7 +15,7 @@ function getTodayStr(): string {
 }
 
 export default function HuangliPage() {
-  const [selectedDate, setSelectedDate] = useState(getTodayStr);
+  const [selectedDate, setSelectedDate] = useState<string>(getTodayStr);
   const [data, setData] = useState<HuangliData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -32,10 +32,11 @@ export default function HuangliPage() {
 
   const handleSwipe = (deltaX: number) => {
     if (Math.abs(deltaX) < 50) return;
-    setSelectedDate(prev => addDays(prev, deltaX < 0 ? 1 : -1));
+    setSelectedDate(prev => addDays(prev || getTodayStr(), deltaX < 0 ? 1 : -1));
   };
 
   const loadDate = useCallback(async (date: string) => {
+    if (!date) return;
     setLoading(true);
     setError('');
     try {
@@ -53,8 +54,11 @@ export default function HuangliPage() {
     }
   }, []);
 
+  // 挂载即拉取今天的数据；后续 selectedDate 改变也会重新拉取
   useEffect(() => {
-    loadDate(selectedDate);
+    const date = selectedDate || getTodayStr();
+    if (!selectedDate) setSelectedDate(date);
+    loadDate(date);
   }, [selectedDate, loadDate]);
 
   const handleDateSelect = (date: string) => {

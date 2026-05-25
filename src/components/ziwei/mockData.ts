@@ -7,7 +7,7 @@ export const MOCK_PALACES = [
   { name: '福德宫', star: '天府', brightness: 90, body: '福德宫主星' },
   { name: '田宅宫', star: '太阴', brightness: 70, body: '田宅宫主星' },
   { name: '官禄宫', star: '天梁', brightness: 85, body: '官禄宫主星' },
-  { name: '仆役宫',星: '天同', brightness: 75, body: '仆役宫主星' },
+  { name: '仆役宫', star: '天同', brightness: 75, body: '仆役宫主星' },
   { name: '迁移宫', star: '贪狼', brightness: 95, body: '迁移宫主星' },
   { name: '疾厄宫', star: '巨门', brightness: 60, body: '疾厄宫主星' },
   { name: '财帛宫', star: '武曲', brightness: 88, body: '财帛宫主星' },

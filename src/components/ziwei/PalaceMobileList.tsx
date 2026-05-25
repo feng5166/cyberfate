@@ -58,7 +58,7 @@ export function PalaceMobileList({ palaces, selectedIndex, onSelect }: PalaceMob
 
             {/* 第二行：主星 */}
             <div className="flex items-center gap-4 mb-3">
-              {palace.majorStars.map((star) => (
+              {palace.majorStars?.map((star) => (
                 <div key={star.name} className="flex items-center gap-1.5">
                   <StarIcon starName={star.name} size={10} />
                   <span
@@ -74,17 +74,17 @@ export function PalaceMobileList({ palaces, selectedIndex, onSelect }: PalaceMob
                   )}
                 </div>
               ))}
-              {palace.majorStars.length === 0 && (
+              {(palace.majorStars?.length ?? 0) === 0 && (
                 <span className="text-xs text-[#1C1A16]/20 italic">无主星</span>
               )}
             </div>
 
             {/* 第三行：分隔线 + 辅星/煞星 */}
-            {palace.minorStars.length > 0 && (
+            {(palace.minorStars?.length ?? 0) > 0 && (
               <>
                 <div className="border-t border-[#E8EDE5] mb-3" />
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-                  {palace.minorStars.map((star) => (
+                  {palace.minorStars?.map((star) => (
                     <span
                       key={star.name}
                       className={cn(

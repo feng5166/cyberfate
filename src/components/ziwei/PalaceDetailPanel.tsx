@@ -81,8 +81,8 @@ const PALACE_AI_READINGS: Record<string, { reading: string; score: number }> = {
 
 export function PalaceDetailPanel({ palace, onClose, className }: PalaceDetailPanelProps) {
   const allStars = [
-    ...palace.majorStars.map((s) => ({ ...s, typeLabel: TYPE_LABELS[s.type] || s.type })),
-    ...palace.minorStars.map((s) => ({ ...s, typeLabel: TYPE_LABELS[s.type] || s.type })),
+    ...(palace.majorStars || []).map((s) => ({ ...s, typeLabel: TYPE_LABELS[s.type] || s.type })),
+    ...(palace.minorStars || []).map((s) => ({ ...s, typeLabel: TYPE_LABELS[s.type] || s.type })),
   ];
 
   const aiData = PALACE_AI_READINGS[palace.name] || {
