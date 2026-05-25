@@ -12,14 +12,23 @@ interface DualChartCompareProps {
   className?: string;
 }
 
-const MOCK_CHART_B: PalaceData[] = (MOCK_PALACES as any).map((p: any, i: number) => ({
-  ...p,
-  stem: ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸', '甲', '乙'][i],
-  majorStars: p.majorStars.length > 0
-    ? [{ ...p.majorStars[0], brightness: (['庙', '旺', '得', '利', '平'] as const)[Math.floor(Math.random() * 5)] }]
-    : [],
-  minorStars: p.minorStars.slice(0, 1),
-}));
+const STEMS_B = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸', '甲', '乙'];
+const BRANCHES_B = ['寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥', '子', '丑'];
+const BRIGHTNESS_B = ['庙', '旺', '得', '利', '平'] as const;
+
+const MOCK_CHART_B: PalaceData[] = MOCK_PALACES.map((p: Record<string, unknown>, i: number) => {
+  const starName = typeof p.star === 'string' ? p.star : '';
+  return {
+    name: typeof p.name === 'string' ? p.name : `宫${i + 1}`,
+    branch: BRANCHES_B[i] ?? '子',
+    stem: STEMS_B[i] ?? '甲',
+    majorStars: starName
+      ? [{ name: starName, type: 'major' as const, brightness: BRIGHTNESS_B[i % BRIGHTNESS_B.length] }]
+      : [],
+    minorStars: [],
+    isLife: i === 0,
+  };
+});
 
 export function DualChartCompare({ chartA, className }: DualChartCompareProps) {
   const [showCompare, setShowCompare] = useState(false);
