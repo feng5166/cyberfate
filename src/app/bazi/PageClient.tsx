@@ -16,7 +16,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { saveBirthInfo, loadBirthInfo } from '@/lib/utils/storage';
-import { deleteRecord, getRecordById, saveRecord } from '@/lib/utils/history';
+import { deleteRecord, getRecordById, loadRecords, saveRecord } from '@/lib/utils/history';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { SegmentControl } from '@/components/ui/SegmentControl';
@@ -346,6 +346,7 @@ function BaziPageContent() {
   const [result, setResult] = useState<BaziPageResult | null>(null);
   const [actionMessage, setActionMessage] = useState('');
   const [isMember, setIsMember] = useState(false);
+  const autoLoadAttemptedRef = useRef(false);
 
   useEffect(() => {
     if (status !== 'authenticated') {
@@ -358,7 +359,49 @@ function BaziPageContent() {
         const res = await fetch('/api/user/quota');
         if (!res.ok) return;
         const data = (await res.json()) as { isMember?: boolean };
-        if (!cancelled) setIsMember(Boolean(data?.isMember));
+        if (cancelled) return;
+        const member = Boolean(data?.isMember);
+        setIsMember(member);
+
+        if (
+          member &&
+          !recordId &&
+          !result &&
+          !autoLoadAttemptedRef.current
+        ) {
+          autoLoadAttemptedRef.current = true;
+          const records = loadRecords();
+          const latest = records[0];
+          if (!latest) return;
+
+          setFormData(prev => ({
+            ...prev,
+            name: latest.name || '',
+            gender: latest.gender || '',
+            birthDate: latest.birthDate,
+            birthHour: latest.birthHour,
+            birthPlace: latest.birthPlace || '',
+          }));
+
+          setResult({
+            pillars: latest.pillars,
+            wuxing: latest.wuxing,
+            aiAnalysis: latest.aiAnalysis,
+            fiveDimensions: latest.fiveDimensions,
+            birthPlace: latest.birthPlace,
+            dayMasterElement: latest.dayMasterElement,
+            lunarDate: latest.lunarDate,
+            zodiac: latest.zodiac,
+            trueSolarOffsetMinutes: latest.trueSolarOffsetMinutes,
+            dayunStartDescription: latest.dayunStartDescription,
+            dayunStartAt: latest.dayunStartAt,
+            _source: 'history',
+          });
+
+          setActiveTab('性格特质');
+          setError('');
+          setActionMessage('已为您显示上次的命盘解读');
+        }
       } catch (quotaError) {
         console.error('Failed to load user quota:', quotaError);
       }
