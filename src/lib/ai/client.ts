@@ -20,7 +20,7 @@ import { callExternalAPI, getEnvVar } from '../utils/api-wrapper';
 import { redis } from '../cache/redis';
 
 const DEEPSEEK_BASE_URL = 'https://api.modelverse.cn/v1';
-const DEEPSEEK_MODEL = 'deepseek-v4-pro';
+const DEEPSEEK_MODEL = 'deepseek-v4-flash';
 
 const TIMEOUT_CONFIG: Record<string, number> = {
   bazi: 55000,
