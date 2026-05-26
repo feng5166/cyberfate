@@ -1009,6 +1009,23 @@ function BaziPageContent() {
                   />
                 </Card>
 
+                {result?.traits && result.traits.length > 0 && (
+                  <Card className={cardClass}>
+                    <h3 className="text-base font-semibold text-[#1C1A16] mb-4">命理特质</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {result.traits.map((trait: BaziTrait, index: number) => (
+                        <div
+                          key={`${trait.label}_${index}`}
+                          className="rounded-xl border border-amber-300/60 bg-[#FFFBF5] px-4 py-3"
+                        >
+                          <p className="text-sm font-semibold text-[#1C1A16]/90">{trait.label}</p>
+                          <p className="text-xs text-[#1C1A16]/45 mt-1.5 leading-relaxed">{trait.desc}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                )}
+
                 <Card className={cardClass}>
                   <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em] mb-1">AI 解读</h2>
                   <p className="text-xs text-[#1C1A16]/45 mb-4">AI 命理解读 · 仅供参考</p>
@@ -1064,23 +1081,6 @@ function BaziPageContent() {
 
                     {activeTab !== '十神详解' && (
                       <>
-                        {result?.traits && result.traits.length > 0 && (
-                          <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-5">
-                            <p className="text-sm font-medium text-[#1C1A16] mb-3">命理特质</p>
-                            <div className="flex flex-wrap gap-3">
-                              {result.traits.map((trait: BaziTrait, index: number) => (
-                                <div
-                                  key={`${trait.label}_${index}`}
-                                  className="rounded-xl border border-amber-300/60 bg-[#FFFBF5] px-4 py-3 min-w-0 w-full sm:w-auto sm:max-w-[calc(50%-0.375rem)]"
-                                >
-                                  <p className="text-sm font-semibold text-[#1C1A16]/90">{trait.label}</p>
-                                  <p className="text-xs text-[#1C1A16]/60 mt-1 leading-relaxed">{trait.desc}</p>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
                       <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-5">
                         <p className="text-sm font-medium text-[#1C1A16] mb-3">AI 要点</p>
                         <ul className="space-y-2">
