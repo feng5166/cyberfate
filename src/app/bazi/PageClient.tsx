@@ -1168,6 +1168,35 @@ function BaziPageContent() {
                   </button>
                 </div>
 
+                {/* 模块C: AI每日运势引流 */}
+                <div className="rounded-2xl border-l-4 border-[#C2762B] bg-white p-6 md:p-8">
+                  <h3 className="text-lg font-semibold text-[#1C1A16]">✨ AI 每日运势分析</h3>
+                  <p className="text-sm text-[#1C1A16]/60 mt-1">基于你的八字命盘，AI 为你解读今日运势</p>
+                  <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <ul className="space-y-2">
+                      <li className="text-sm text-[#1C1A16]/75 flex items-start gap-2">
+                        <span className="text-[#C2762B] mt-0.5">•</span>
+                        专属日签生成与宜忌建议
+                      </li>
+                      <li className="text-sm text-[#1C1A16]/75 flex items-start gap-2">
+                        <span className="text-[#C2762B] mt-0.5">•</span>
+                        实时 AI 流式解读过程
+                      </li>
+                      <li className="text-sm text-[#1C1A16]/75 flex items-start gap-2">
+                        <span className="text-[#C2762B] mt-0.5">•</span>
+                        免费功能 · 每日更新
+                      </li>
+                    </ul>
+                    <button
+                      type="button"
+                      onClick={() => { window.location.href = '/daily'; }}
+                      className="w-full sm:w-auto px-8 py-3 rounded-xl bg-[#C2762B] hover:bg-[#A86425] text-white font-medium text-sm transition-colors whitespace-nowrap"
+                    >
+                      查看今日 AI 运势 →
+                    </button>
+                  </div>
+                </div>
+
                 <Card className={cardClass}>
                   <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em] mb-5">常见问题</h2>
                   <div className="space-y-3">
