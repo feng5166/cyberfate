@@ -63,6 +63,7 @@ const DayMasterSummaryCard = dynamic(() => import('@/components/bazi/DayMasterSu
 const ShareCard = dynamic(() => import('@/components/bazi/ShareCard').then(m => m.ShareCard), { ssr: false, loading: _loadingSpinner });
 const ShishenDetailTab = dynamic(() => import('@/components/bazi/ShishenDetailTab').then(m => m.ShishenDetailTab), { ssr: false, loading: _loadingSpinner });
 const WuxingChart = dynamic(() => import('@/components/bazi/WuxingChart').then(m => m.WuxingChart), { ssr: false, loading: _loadingSpinner });
+const BaziChatSection = dynamic(() => import('@/components/bazi/BaziChatSection').then(m => m.BaziChatSection), { ssr: false, loading: _loadingSpinner });
 
 type ResultTab = '性格特质' | '事业财运' | '婚姻健康' | '十神详解' | '大运流年';
 type AiSectionKey = 'dayMaster' | 'personality' | 'career' | 'wealth' | 'relationship' | 'health' | 'dayun';
@@ -1121,6 +1122,51 @@ function BaziPageContent() {
                     )}
                   </div>
                 </Card>
+
+                <BaziChatSection
+                  baziData={{
+                    pillars: result.pillars,
+                    wuxing: result.wuxing,
+                    aiAnalysis: result.aiAnalysis,
+                    mingGe: result.mingGe,
+                    traits: result.traits,
+                  }}
+                  isLoggedIn={status === 'authenticated'}
+                  isVip={isMember}
+                />
+
+                <div className="rounded-2xl bg-[#FDF6F0] p-6 md:p-8">
+                  <h3 className="text-lg font-semibold text-[#1C1A16]">情侣缘分测算</h3>
+                  <p className="text-sm text-[#1C1A16]/60 mt-1">AI 智能正缘匹配系统</p>
+                  <div className="mt-4 space-y-2">
+                    <p className="text-sm text-[#1C1A16]/75">你们的五行相合还是相克？</p>
+                    <p className="text-sm text-[#1C1A16]/75">两人性格是互补还是冲突？</p>
+                    <p className="text-sm text-[#1C1A16]/75">感情和谐指数究竟有多高？</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (result?.pillars) {
+                        try {
+                          sessionStorage.setItem(
+                            'selfBaziData',
+                            JSON.stringify({
+                              name: formData.name,
+                              gender: formData.gender,
+                              birthDate: formData.birthDate,
+                              birthHour: formData.birthHour,
+                              pillars: result.pillars,
+                            })
+                          );
+                        } catch {}
+                      }
+                      window.location.href = '/bazi/marriage';
+                    }}
+                    className="mt-6 w-full sm:w-auto px-8 py-3 rounded-xl bg-[#C2762B] hover:bg-[#A86425] text-white font-medium text-sm transition-colors"
+                  >
+                    输入对方生辰，立即测算 →
+                  </button>
+                </div>
 
                 <Card className={cardClass}>
                   <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em] mb-5">常见问题</h2>
