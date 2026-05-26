@@ -47,6 +47,11 @@ export interface WuxingCount {
   earth: number;   // 土
 }
 
+export interface BaziTrait {
+  label: string;
+  desc: string;
+}
+
 export interface FiveDimensions {
   career: number;
   wealth: number;
@@ -99,6 +104,7 @@ export interface BaziAnalysis {
   wealth: string;
   relationship: string;
   health: string;
+  traits?: BaziTrait[];
 }
 
 export interface MingGeInfo {
@@ -113,6 +119,7 @@ export interface BaziApiResult {
   wuxing: WuxingCount;
   aiAnalysis: string;
   fiveDimensions?: FiveDimensions;
+  traits?: BaziTrait[];
   mingGe?: MingGeInfo;
   birthPlace?: string;
   _source?: string;
@@ -137,6 +144,7 @@ export interface BaziHistoryRecord {
   pillars: PillarRecord;
   wuxing: WuxingCount;
   fiveDimensions?: FiveDimensions;
+  traits?: BaziTrait[];
   lunarDate?: string;
   zodiac?: string;
   trueSolarOffsetMinutes?: number | null;

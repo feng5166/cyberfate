@@ -43,6 +43,7 @@ import {
 import type {
   BaziApiResult,
   BaziHistoryRecord,
+  BaziTrait,
   DayunTimelineItem,
   Gender,
   MingGeInfo,
@@ -388,6 +389,7 @@ function BaziPageContent() {
             wuxing: latest.wuxing,
             aiAnalysis: latest.aiAnalysis,
             fiveDimensions: latest.fiveDimensions,
+            traits: latest.traits,
             birthPlace: latest.birthPlace,
             dayMasterElement: latest.dayMasterElement,
             lunarDate: latest.lunarDate,
@@ -476,6 +478,7 @@ function BaziPageContent() {
       wuxing: record.wuxing,
       aiAnalysis: record.aiAnalysis,
       fiveDimensions: record.fiveDimensions,
+      traits: record.traits,
       birthPlace: record.birthPlace,
       dayMasterElement: record.dayMasterElement,
       lunarDate: record.lunarDate,
@@ -735,6 +738,7 @@ function BaziPageContent() {
           pillars: data.pillars,
           wuxing: data.wuxing,
           fiveDimensions: data.fiveDimensions,
+          traits: data.traits,
           dayMasterElement: data.pillars?.day?.ganWuxing,
           lunarDate: data.lunarDate,
           zodiac: data.zodiac,
@@ -775,6 +779,7 @@ function BaziPageContent() {
       pillars: result.pillars,
       wuxing: result.wuxing,
       fiveDimensions: result.fiveDimensions,
+      traits: result.traits,
       dayMasterElement: result.pillars.day.ganWuxing,
       lunarDate: basicInfoData.lunarDate,
       zodiac: basicInfoData.zodiac,
@@ -1059,29 +1064,22 @@ function BaziPageContent() {
 
                     {activeTab !== '十神详解' && (
                       <>
-                        <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-5">
-                          <p className="text-sm font-medium text-[#1C1A16] mb-3">评分概览</p>
-                        {activeTabContent.scores.length > 0 ? (
-                        <div className="space-y-3">
-                          {activeTabContent.scores.map((score) => {
-                            const style = getScoreStyle(score.value);
-                            return (
-                              <div key={score.label} className="rounded-xl border border-[#1C1A16]/10 p-3">
-                                <div className="flex items-center justify-between">
-                                  <p className="text-xs text-[#1C1A16]/72">{score.label}</p>
-                                  <p className={`text-sm font-semibold ${style.textClass}`}>{score.value}</p>
+                        {result?.traits && result.traits.length > 0 && (
+                          <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-5">
+                            <p className="text-sm font-medium text-[#1C1A16] mb-3">命理特质</p>
+                            <div className="flex flex-wrap gap-3">
+                              {result.traits.map((trait: BaziTrait, index: number) => (
+                                <div
+                                  key={`${trait.label}_${index}`}
+                                  className="rounded-xl border border-amber-300/60 bg-[#FFFBF5] px-4 py-3 min-w-0 w-full sm:w-auto sm:max-w-[calc(50%-0.375rem)]"
+                                >
+                                  <p className="text-sm font-semibold text-[#1C1A16]/90">{trait.label}</p>
+                                  <p className="text-xs text-[#1C1A16]/60 mt-1 leading-relaxed">{trait.desc}</p>
                                 </div>
-                                <div className="mt-2 h-2 rounded-full bg-[#1C1A16]/10 overflow-hidden">
-                                  <div className={`h-full rounded-full transition-all duration-500 ${style.barClass}`} style={{ width: `${score.value}%` }} />
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                        ) : (
-                          <p className="text-sm text-[#6B7280]">当前数据暂无可量化分数。</p>
+                              ))}
+                            </div>
+                          </div>
                         )}
-                      </div>
 
                       <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-5">
                         <p className="text-sm font-medium text-[#1C1A16] mb-3">AI 要点</p>

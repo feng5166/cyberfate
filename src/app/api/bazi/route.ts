@@ -177,6 +177,7 @@ export async function POST(req: NextRequest) {
       wuxing: baziResult.wuxing,
       aiAnalysis,
       fiveDimensions,
+      traits: (analysisObj as any).traits || [],
       mingGe,
       birthPlace: input.birthPlace,
       _source: _aiSource,
