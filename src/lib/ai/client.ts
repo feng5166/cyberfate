@@ -111,7 +111,7 @@ export async function generateBaziAnalysis(
 
   const apiResult = await callExternalAPI(
     async () => {
-      const text = await callDeepSeek(BAZI_SYSTEM_PROMPT, prompt, 2000, 'bazi');
+      const text = await callDeepSeek(BAZI_SYSTEM_PROMPT, prompt, 4000, 'bazi');
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error('No JSON found in response');
