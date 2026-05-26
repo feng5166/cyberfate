@@ -313,13 +313,6 @@ const BAZI_TERMS_LIST = [
 ];
 const BAZI_TERMS_REGEX = new RegExp(`(${BAZI_TERMS_LIST.join('|')})`, 'g');
 const SUBTITLE_REGEX = /([^：，。；、\s①②③④⑤⑥⑦⑧⑨⑩]{1,8})：/g;
-const DAYUN_NUMBER_EMOJI: Record<string, string> = {
-  '①': '💼',
-  '②': '💰',
-  '③': '🏥',
-  '④': '🧠',
-  '⑤': '❤️',
-};
 
 function renderHighlightedLine(line: string): ReactNode {
   if (!line) return line;
@@ -366,8 +359,18 @@ function renderHighlightedLine(line: string): ReactNode {
   return <>{parts}</>;
 }
 
-function renderSectionContent(content: string, isDayun: boolean): ReactNode {
-  const normalizedContent = content.replace(/(?<!\n)\s*([①②③④⑤⑥⑦⑧⑨⑩])/g, '\n\n$1');
+function renderSectionContent(content: string): ReactNode {
+  let normalizedContent = content;
+
+  // 1. 数字+点+空格 (如 "1. 内容" "2. 内容") 前加换行
+  normalizedContent = normalizedContent.replace(/(?<!\n)(\d+\.\s)/g, '\n\n$1');
+
+  // 2. 短语(≤10字)+冒号 前加换行 (避免段首已有换行的情况)
+  normalizedContent = normalizedContent.replace(/(?<=[^\n\s])\s*([^\n：:，。；、\s]{1,10}[：:])/g, '\n\n$1');
+
+  // 3. 清理多余空行
+  normalizedContent = normalizedContent.replace(/\n{3,}/g, '\n\n').trim();
+
   const paragraphs = normalizedContent.split(/\n\n+/);
 
   return (
@@ -379,21 +382,12 @@ function renderSectionContent(content: string, isDayun: boolean): ReactNode {
 
         return (
           <p key={i} className={isNumbered ? 'pl-5 -indent-5' : ''}>
-            {lines.map((line, j) => {
-              let displayLine = line;
-              if (isDayun) {
-                const head = displayLine.match(/^([①②③④⑤⑥⑦⑧⑨⑩])/);
-                if (head && DAYUN_NUMBER_EMOJI[head[1]]) {
-                  displayLine = `${head[1]}${DAYUN_NUMBER_EMOJI[head[1]]} ${displayLine.slice(1)}`;
-                }
-              }
-              return (
-                <Fragment key={j}>
-                  {j > 0 && <br />}
-                  {renderHighlightedLine(displayLine)}
-                </Fragment>
-              );
-            })}
+            {lines.map((line, j) => (
+              <Fragment key={j}>
+                {j > 0 && <br />}
+                {renderHighlightedLine(line)}
+              </Fragment>
+            ))}
           </p>
         );
       })}
@@ -1198,7 +1192,7 @@ function BaziPageContent() {
                           >
                             {section.title}
                           </h4>
-                          {renderSectionContent(section.content, isDayunSection)}
+                          {renderSectionContent(section.content)}
                           {isDayunSection && dayunTimeline.length > 0 && (
                             <div className="mt-4 rounded-2xl border border-[#1C1A16]/10 bg-[#FAF9F6] p-4 sm:p-5">
                               <p className="text-sm font-medium text-[#1C1A16] mb-3">大运时间轴</p>
