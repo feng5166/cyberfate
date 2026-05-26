@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, type ReactNode, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
@@ -305,6 +305,99 @@ function buildDayunDetail(
 function scoreValue(score?: number): number {
   if (typeof score !== 'number' || Number.isNaN(score)) return 0;
   return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+const BAZI_TERMS_LIST = [
+  '印星', '比肩', '劫财', '食神', '伤官', '正财', '偏财', '正官', '七杀',
+  '正印', '偏印', '羊刃', '用神', '忌神', '日主', '大运', '流年', '格局',
+];
+const BAZI_TERMS_REGEX = new RegExp(`(${BAZI_TERMS_LIST.join('|')})`, 'g');
+const SUBTITLE_REGEX = /([^：，。；、\s①②③④⑤⑥⑦⑧⑨⑩]{1,8})：/g;
+const DAYUN_NUMBER_EMOJI: Record<string, string> = {
+  '①': '💼',
+  '②': '💰',
+  '③': '🏥',
+  '④': '🧠',
+  '⑤': '❤️',
+};
+
+function renderHighlightedLine(line: string): ReactNode {
+  if (!line) return line;
+
+  const subtitleMatches: Array<{ start: number; end: number; text: string }> = [];
+  let sm: RegExpExecArray | null;
+  const subtitleRegex = new RegExp(SUBTITLE_REGEX.source, 'g');
+  while ((sm = subtitleRegex.exec(line)) !== null) {
+    subtitleMatches.push({ start: sm.index, end: sm.index + sm[1].length, text: sm[1] });
+  }
+
+  const parts: ReactNode[] = [];
+  let cursor = 0;
+  let keyCounter = 0;
+
+  const pushTermHighlighted = (segment: string, baseKey: string) => {
+    if (!segment) return;
+    const splitParts = segment.split(BAZI_TERMS_REGEX);
+    splitParts.forEach((piece, idx) => {
+      if (!piece) return;
+      if (BAZI_TERMS_LIST.includes(piece)) {
+        parts.push(
+          <span key={`${baseKey}-t${idx}`} className="text-[#C2762B] font-medium">{piece}</span>
+        );
+      } else {
+        parts.push(<Fragment key={`${baseKey}-x${idx}`}>{piece}</Fragment>);
+      }
+    });
+  };
+
+  for (const sub of subtitleMatches) {
+    if (sub.start > cursor) {
+      pushTermHighlighted(line.slice(cursor, sub.start), `seg${keyCounter++}`);
+    }
+    parts.push(
+      <span key={`sub${keyCounter++}`} className="font-semibold text-[#1C1A16]">{sub.text}</span>
+    );
+    cursor = sub.end;
+  }
+  if (cursor < line.length) {
+    pushTermHighlighted(line.slice(cursor), `seg${keyCounter++}`);
+  }
+
+  return <>{parts}</>;
+}
+
+function renderSectionContent(content: string, isDayun: boolean): ReactNode {
+  const paragraphs = content.split(/\n\n+/);
+
+  return (
+    <div className="text-sm leading-loose text-[#1C1A16]/75 space-y-3">
+      {paragraphs.map((para, i) => {
+        const trimmed = para.trim();
+        const isNumbered = /^[①②③④⑤⑥⑦⑧⑨⑩]/.test(trimmed);
+        const lines = para.split('\n');
+
+        return (
+          <p key={i} className={isNumbered ? 'pl-5 -indent-5' : ''}>
+            {lines.map((line, j) => {
+              let displayLine = line;
+              if (isDayun) {
+                const head = displayLine.match(/^([①②③④⑤⑥⑦⑧⑨⑩])/);
+                if (head && DAYUN_NUMBER_EMOJI[head[1]]) {
+                  displayLine = `${head[1]}${DAYUN_NUMBER_EMOJI[head[1]]} ${displayLine.slice(1)}`;
+                }
+              }
+              return (
+                <Fragment key={j}>
+                  {j > 0 && <br />}
+                  {renderHighlightedLine(displayLine)}
+                </Fragment>
+              );
+            })}
+          </p>
+        );
+      })}
+    </div>
+  );
 }
 
 function BaziPageContent() {
@@ -1090,26 +1183,22 @@ function BaziPageContent() {
                     }`}
                   >
                     <div>
-                      {fullReadSections.map((section, index) => (
+                      {fullReadSections.map((section, index) => {
+                        const isDayunSection = section.title.includes('运势重点');
+                        return (
                         <div key={section.title}>
                           {index > 0 && <hr className="border-[#1C1A16]/8 my-8" />}
-                          <h4 className="text-base font-semibold text-[#1C1A16] mb-3">{section.title}</h4>
-                          <div className="text-sm leading-loose text-[#1C1A16]/75 space-y-3">
-                            {section.content.split(/\n\n+/).map((para, i) => (
-                              <p
-                                key={i}
-                                className={/^[①②③④⑤⑥⑦⑧⑨⑩]/.test(para.trim()) ? 'pl-5 -indent-5' : ''}
-                              >
-                                {para.split('\n').map((line, j) => (
-                                  <Fragment key={j}>
-                                    {j > 0 && <br />}
-                                    {line}
-                                  </Fragment>
-                                ))}
-                              </p>
-                            ))}
-                          </div>
-                          {section.title.includes('运势重点') && dayunTimeline.length > 0 && (
+                          <h4
+                            className={`border-l-4 border-[#C2762B] pl-3 font-semibold mb-3 text-[#8B3A2A] ${
+                              isDayunSection
+                                ? 'text-lg pb-2 border-b border-[#C2762B]/30'
+                                : 'text-base'
+                            }`}
+                          >
+                            {section.title}
+                          </h4>
+                          {renderSectionContent(section.content, isDayunSection)}
+                          {isDayunSection && dayunTimeline.length > 0 && (
                             <div className="mt-4 rounded-2xl border border-[#1C1A16]/10 bg-[#FAF9F6] p-4 sm:p-5">
                               <p className="text-sm font-medium text-[#1C1A16] mb-3">大运时间轴</p>
                               <div className="overflow-x-auto">
@@ -1142,11 +1231,12 @@ function BaziPageContent() {
                             </div>
                           )}
                         </div>
-                      ))}
+                        );
+                      })}
 
                       <hr className="border-[#1C1A16]/8 my-8" />
                       <div>
-                        <h4 className="text-base font-semibold text-[#1C1A16] mb-3">八、十神详解</h4>
+                        <h4 className="border-l-4 border-[#C2762B] pl-3 text-base font-semibold text-[#8B3A2A] mb-3">八、十神详解</h4>
                         <ShishenDetailTab pillars={result.pillars} dayGan={result.pillars.day.gan} />
                       </div>
                     </div>
