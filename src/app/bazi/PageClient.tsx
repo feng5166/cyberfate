@@ -1026,6 +1026,38 @@ function BaziPageContent() {
                   <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em] mb-1">AI 解读</h2>
                   <p className="text-xs text-[#1C1A16]/45 mb-4">AI 命理解读 · 仅供参考</p>
 
+                  {/* AI解读引言区块 */}
+                  <div className="mb-4 rounded-lg bg-[#FAF9F6] px-4 py-3">
+                    <p className="text-xs italic text-[#1C1A16]/50 mb-2">
+                      以专业八字分析师的身份，为您进行深度分析。所有分析均严格基于您提供的八字信息。
+                    </p>
+                    <p className="text-sm text-[#1C1A16]/70 leading-relaxed">
+                      <span className="font-semibold text-[#1C1A16]">命主八字排盘分析</span>
+                      <br />
+                      <span className="text-[#1C1A16]/50">八字：</span>
+                      <span className="font-medium text-[#1C1A16]">
+                        {result.pillars.year.gan}{result.pillars.year.zhi}{' '}
+                        {result.pillars.month.gan}{result.pillars.month.zhi}{' '}
+                        {result.pillars.day.gan}{result.pillars.day.zhi}{' '}
+                        {result.pillars.hour.gan}{result.pillars.hour.zhi}
+                      </span>
+                      {'　'}
+                      <span className="text-[#1C1A16]/50">性别：</span>
+                      <span className="font-medium text-[#1C1A16]">{formData.gender === 'male' ? '男' : formData.gender === 'female' ? '女' : '未知'}</span>
+                      {'　'}
+                      <span className="text-[#1C1A16]/50">出生公历：</span>
+                      <span className="font-medium text-[#1C1A16]">
+                        {formData.birthDate ? new Date(formData.birthDate).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }) : ''}
+                        {formData.birthHour !== undefined ? ` ${formData.birthHour}:00` : ''}
+                      </span>
+                      {'　'}
+                      <span className="text-[#1C1A16]/50">当前时间：</span>
+                      <span className="font-medium text-[#1C1A16]">
+                        {new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      </span>
+                    </p>
+                  </div>
+
                   {summaryPoints.length > 0 && (
                     <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-5">
                       <p className="text-sm font-medium text-[#1C1A16] mb-3">AI 要点</p>
