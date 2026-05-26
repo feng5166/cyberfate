@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
@@ -1092,11 +1092,23 @@ function BaziPageContent() {
                     <div>
                       {fullReadSections.map((section, index) => (
                         <div key={section.title}>
-                          {index > 0 && <hr className="border-[#1C1A16]/8 my-5" />}
-                          <h4 className="text-base font-semibold text-[#1C1A16] mb-2">{section.title}</h4>
-                          <p className="text-sm leading-relaxed text-[#1C1A16]/75 whitespace-pre-wrap">
-                            {section.content}
-                          </p>
+                          {index > 0 && <hr className="border-[#1C1A16]/8 my-8" />}
+                          <h4 className="text-base font-semibold text-[#1C1A16] mb-3">{section.title}</h4>
+                          <div className="text-sm leading-loose text-[#1C1A16]/75 space-y-3">
+                            {section.content.split(/\n\n+/).map((para, i) => (
+                              <p
+                                key={i}
+                                className={/^[①②③④⑤⑥⑦⑧⑨⑩]/.test(para.trim()) ? 'pl-5 -indent-5' : ''}
+                              >
+                                {para.split('\n').map((line, j) => (
+                                  <Fragment key={j}>
+                                    {j > 0 && <br />}
+                                    {line}
+                                  </Fragment>
+                                ))}
+                              </p>
+                            ))}
+                          </div>
                           {section.title.includes('运势重点') && dayunTimeline.length > 0 && (
                             <div className="mt-4 rounded-2xl border border-[#1C1A16]/10 bg-[#FAF9F6] p-4 sm:p-5">
                               <p className="text-sm font-medium text-[#1C1A16] mb-3">大运时间轴</p>
@@ -1123,7 +1135,7 @@ function BaziPageContent() {
                                 </div>
                               </div>
                               {dayunDetail && (
-                                <p className="mt-3 text-sm leading-relaxed text-[#1C1A16]/75 whitespace-pre-wrap">
+                                <p className="mt-3 text-sm leading-loose text-[#1C1A16]/75 whitespace-pre-wrap">
                                   {dayunDetail}
                                 </p>
                               )}
@@ -1132,7 +1144,7 @@ function BaziPageContent() {
                         </div>
                       ))}
 
-                      <hr className="border-[#1C1A16]/8 my-5" />
+                      <hr className="border-[#1C1A16]/8 my-8" />
                       <div>
                         <h4 className="text-base font-semibold text-[#1C1A16] mb-3">八、十神详解</h4>
                         <ShishenDetailTab pillars={result.pillars} dayGan={result.pillars.day.gan} />
