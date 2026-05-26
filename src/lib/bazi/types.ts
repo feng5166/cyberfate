@@ -104,6 +104,7 @@ export interface BaziAnalysis {
   wealth: string;
   relationship: string;
   health: string;
+  dayunAnalysis?: string;
   traits?: BaziTrait[];
 }
 

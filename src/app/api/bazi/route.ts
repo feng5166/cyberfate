@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { sanitizeUserInput } from '@/lib/utils/sanitize';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { calculateBazi, WUXING_KEYS, analyzeMingGe } from '@/lib/bazi';
+import { calculateBazi, WUXING_KEYS, analyzeMingGe, getCurrentDayun } from '@/lib/bazi';
 import { generateBaziAnalysis } from '@/lib/ai';
 import { peekBaziQuota, deductBaziQuota, isUserVip } from '@/lib/quota';
 import { checkRateLimit } from '@/lib/rate-limit';
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
     }
 
     const shichen = HOUR_TO_SHICHEN[input.birthHour] || '午时';
-    
+
     // 1. 计算八字
     const baziResult = calculateBazi({
       name: input.name,
@@ -97,13 +97,22 @@ export async function POST(req: NextRequest) {
       birthDate: input.birthDate,
       birthHour: shichen as '子时' | '丑时' | '寅时' | '卯时' | '辰时' | '巳时' | '午时' | '未时' | '申时' | '酉时' | '戌时' | '亥时' | '不知道',
     });
-    
+
+    // 获取当前大运
+    const gender = input.gender === 'unknown' ? 'male' : (input.gender || 'male');
+    const currentDayun = getCurrentDayun(input.birthDate, gender as 'male' | 'female');
+    const baziResultWithDayun = Object.assign(baziResult, {
+      dayun: {
+        current: currentDayun ? `${currentDayun.gan}${currentDayun.zhi}` : undefined,
+      }
+    });
+
     // 2. AI 解读（可能失败，优雅降级）
     let analysisObj: BaziAnalysis;
     try {
       analysisObj = await withCircuitBreaker('deepseek-bazi', () =>
         withAiTimeout(
-          () => generateBaziAnalysis(baziResult, input.name, {
+          () => generateBaziAnalysis(baziResultWithDayun, input.name, {
             birthDate: input.birthDate,
             birthHour: input.birthHour,
             gender: input.gender ?? 'unknown',
@@ -218,7 +227,7 @@ ${analysis.wealth}
 ${analysis.relationship}
 
 【健康提示】
-${analysis.health}`;
+${analysis.health}${analysis.dayunAnalysis ? `\n\n【大运流年】\n${analysis.dayunAnalysis}` : ''}`;
 }
 
 // 降级分析（当 AI 不可用时）
