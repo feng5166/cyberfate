@@ -847,7 +847,7 @@ function BaziPageContent() {
         <h1 className="font-display text-h1 md:text-[44px] text-[#1C1A16]" style={{ letterSpacing: '10px' }}>
           八字分析
         </h1>
-        <p className="text-body-sm text-[#1C1A16]/70 mt-3">输入您的出生信息，AI 将为您解读命盘</p>
+        <p className="text-body-sm text-[#1C1A16]/70 mt-3">精准解析生辰八字，揭示命盘奥秘</p>
       </div>
 
       <Container>
