@@ -345,6 +345,28 @@ function BaziPageContent() {
   const [error, setError] = useState('');
   const [result, setResult] = useState<BaziPageResult | null>(null);
   const [actionMessage, setActionMessage] = useState('');
+  const [isMember, setIsMember] = useState(false);
+
+  useEffect(() => {
+    if (status !== 'authenticated') {
+      setIsMember(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/user/quota');
+        if (!res.ok) return;
+        const data = (await res.json()) as { isMember?: boolean };
+        if (!cancelled) setIsMember(Boolean(data?.isMember));
+      } catch (quotaError) {
+        console.error('Failed to load user quota:', quotaError);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [status]);
 
   useEffect(() => {
     async function loadUserBirthInfo() {
@@ -891,7 +913,7 @@ function BaziPageContent() {
 
             {result && !loading && basicInfoData && dayMasterInsight && (
               <div ref={resultRef} className="space-y-6 animate-fadeIn" aria-live="polite">
-                {result._source !== 'history' && (
+                {result._source !== 'history' && !isMember && (
                   <div className="flex items-center justify-between gap-3 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 px-4 py-3">
                     <p className="text-sm text-amber-800">✨ 解读已生成！升级会员解锁完整 AI 深度报告</p>
                     <Link href="/pricing" className="shrink-0 text-xs font-medium text-amber-700 border border-amber-300 rounded-lg px-3 py-1.5 hover:bg-amber-100 transition-colors">
