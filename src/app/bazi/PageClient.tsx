@@ -109,17 +109,6 @@ const shichenOptions = [
   { value: '-1', label: '不知道（默认午时）' },
 ];
 
-const resultTabs: ResultTab[] = ['性格特质', '事业财运', '婚姻健康', '十神详解', '大运流年'];
-
-// 移动端简短标签映射
-const mobileTabLabels: Record<ResultTab, string> = {
-  '性格特质': '性格',
-  '事业财运': '事业',
-  '婚姻健康': '婚姻',
-  '十神详解': '十神',
-  '大运流年': '大运',
-};
-
 const aiSectionTitleMap: Record<AiSectionKey, string[]> = {
   dayMaster: ['日主分析'],
   personality: ['性格特点', '性格特质'],
@@ -334,14 +323,7 @@ function BaziPageContent() {
   const [loading, setLoading] = useState(false);
   const [loadingLong, setLoadingLong] = useState(false);
   const [showQuotaModal, setShowQuotaModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<ResultTab>('性格特质');
-  const [tabExpanded, setTabExpanded] = useState<Record<ResultTab, boolean>>({
-    性格特质: true,
-    事业财运: true,
-    婚姻健康: true,
-    十神详解: true,
-    大运流年: true,
-  });
+  const [fullReadExpanded, setFullReadExpanded] = useState(false);
   const [expandedFaqIndex, setExpandedFaqIndex] = useState<number | null>(0);
   const [selectedDayunIndex, setSelectedDayunIndex] = useState(2);
   const [error, setError] = useState('');
@@ -401,7 +383,6 @@ function BaziPageContent() {
             _source: 'history',
           });
 
-          setActiveTab('性格特质');
           setError('');
           setActionMessage('已为您显示上次的命盘解读');
         }
@@ -490,7 +471,6 @@ function BaziPageContent() {
       _source: 'history',
     });
 
-    setActiveTab('性格特质');
     setError('');
     setActionMessage('已加载历史命盘记录');
   }, [recordId]);
@@ -651,7 +631,36 @@ function BaziPageContent() {
     };
   }, [aiSections, dayunDetail, result]);
 
-  const activeTabContent = tabContent[activeTab];
+  const summaryPoints = useMemo(() => {
+    const sections = [
+      aiSections.dayMaster,
+      aiSections.personality,
+      aiSections.career,
+      aiSections.wealth,
+      aiSections.relationship,
+      aiSections.health,
+    ].filter(Boolean);
+    return sections
+      .map(s => {
+        const first = s.split(/[。！？\n]/)[0]?.trim();
+        return first ? `${first}。` : '';
+      })
+      .filter(Boolean)
+      .slice(0, 6);
+  }, [aiSections]);
+
+  const fullReadSections = useMemo(() => {
+    const sections = [
+      { title: '一、日主强弱判断', content: aiSections.dayMaster },
+      { title: '二、性格特征分析', content: aiSections.personality },
+      { title: '三、事业发展方向', content: aiSections.career },
+      { title: '四、财运分析', content: aiSections.wealth },
+      { title: '五、感情婚姻分析', content: aiSections.relationship },
+      { title: '六、健康提示', content: aiSections.health },
+      { title: '七、当前运势重点', content: aiSections.dayun || '' },
+    ];
+    return sections.filter(s => s.content.trim());
+  }, [aiSections]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -750,14 +759,7 @@ function BaziPageContent() {
         saveRecord(autoSave);
       } catch(e) { console.error('auto save failed', e); }
 
-      setActiveTab('性格特质');
-      setTabExpanded({
-        性格特质: false,
-        事业财运: false,
-        婚姻健康: false,
-        十神详解: false,
-        大运流年: false,
-      });
+      setFullReadExpanded(false);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : '未知错误');
     } finally {
@@ -801,14 +803,7 @@ function BaziPageContent() {
     setResult(null);
     setError('');
     setActionMessage(message);
-    setActiveTab('性格特质');
-    setTabExpanded({
-      性格特质: false,
-      事业财运: false,
-      婚姻健康: false,
-      十神详解: false,
-      大运流年: false,
-    });
+    setFullReadExpanded(false);
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
       url.searchParams.delete('record');
@@ -1030,96 +1025,87 @@ function BaziPageContent() {
                 <Card className={cardClass}>
                   <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em] mb-1">AI 解读</h2>
                   <p className="text-xs text-[#1C1A16]/45 mb-4">AI 命理解读 · 仅供参考</p>
-                  <SegmentControl
-                    options={resultTabs.map(tab => ({
-                      value: tab,
-                      label: tab
-                    }))}
-                    value={activeTab}
-                    onChange={(value) => setActiveTab(value as ResultTab)}
-                    className="w-full h-11 border border-[#1C1A16]/15"
-                    optionClassName="text-[11px] md:text-[13px]"
-                  />
 
-                  <div className="mt-5 space-y-5">
-                    {activeTab === '十神详解' && (
-                      <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-5">
+                  {summaryPoints.length > 0 && (
+                    <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-5">
+                      <p className="text-sm font-medium text-[#1C1A16] mb-3">AI 要点</p>
+                      <ul className="space-y-2">
+                        {summaryPoints.map((point, index) => (
+                          <li key={`${point}_${index}`} className="text-sm text-[#1C1A16]/85 leading-relaxed flex items-start gap-2">
+                            <span className="text-[#C2762B] mt-0.5">✓</span>
+                            <span>{point}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => setFullReadExpanded(prev => !prev)}
+                    className="w-full flex items-center justify-center gap-1.5 py-2.5 mt-3 text-sm font-medium text-[#C2762B] hover:text-[#A86425] transition-colors"
+                  >
+                    {fullReadExpanded ? (
+                      <>收起 <ChevronUp className="w-4 h-4" /></>
+                    ) : (
+                      <>查看完整解读 <ChevronDown className="w-4 h-4" /></>
+                    )}
+                  </button>
+
+                  <div
+                    className={`overflow-hidden transition-all duration-500 ease-in-out ${
+                      fullReadExpanded ? 'max-h-[8000px] opacity-100 mt-5' : 'max-h-0 opacity-0'
+                    }`}
+                  >
+                    <div>
+                      {fullReadSections.map((section, index) => (
+                        <div key={section.title}>
+                          {index > 0 && <hr className="border-[#1C1A16]/8 my-5" />}
+                          <h4 className="text-base font-semibold text-[#1C1A16] mb-2">{section.title}</h4>
+                          <p className="text-sm leading-relaxed text-[#1C1A16]/75 whitespace-pre-wrap">
+                            {section.content}
+                          </p>
+                          {section.title.includes('运势重点') && dayunTimeline.length > 0 && (
+                            <div className="mt-4 rounded-2xl border border-[#1C1A16]/10 bg-[#FAF9F6] p-4 sm:p-5">
+                              <p className="text-sm font-medium text-[#1C1A16] mb-3">大运时间轴</p>
+                              <div className="overflow-x-auto">
+                                <div className="flex gap-3 snap-x snap-mandatory pb-1">
+                                  {dayunTimeline.map((item, idx) => (
+                                    <button
+                                      key={item.key}
+                                      type="button"
+                                      onClick={() => setSelectedDayunIndex(idx)}
+                                      className={`min-w-[160px] snap-start rounded-xl border p-3 text-left transition-colors ${
+                                        idx === selectedDayunIndex
+                                          ? 'border-[#1C1A16] bg-[#1C1A16] text-white'
+                                          : item.isCurrent
+                                            ? 'border-[#1C1A16]/40 bg-[#FFF6E8] text-[#1C1A16]'
+                                            : 'border-[#1C1A16]/12 bg-white text-[#1C1A16]'
+                                      }`}
+                                    >
+                                      <p className="text-lg font-semibold tracking-[0.08em]">{item.gan}{item.zhi}</p>
+                                      <p className="text-xs mt-1 opacity-80">{item.ageStart}-{item.ageEnd} 岁</p>
+                                      {item.isCurrent && <p className="text-[11px] mt-1">当前大运</p>}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                              {dayunDetail && (
+                                <p className="mt-3 text-sm leading-relaxed text-[#1C1A16]/75 whitespace-pre-wrap">
+                                  {dayunDetail}
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+
+                      <hr className="border-[#1C1A16]/8 my-5" />
+                      <div>
+                        <h4 className="text-base font-semibold text-[#1C1A16] mb-3">八、十神详解</h4>
                         <ShishenDetailTab pillars={result.pillars} dayGan={result.pillars.day.gan} />
                       </div>
-                    )}
-
-                    {activeTab === '大运流年' && (
-                      <div className="rounded-2xl border border-[#1C1A16]/10 bg-[#FAF9F6] p-4 sm:p-5">
-                        <p className="text-sm font-medium text-[#1C1A16] mb-3">大运时间轴</p>
-                        {dayunTimeline.length ? (
-                          <div className="overflow-x-auto">
-                            <div className="flex gap-3 snap-x snap-mandatory pb-1">
-                              {dayunTimeline.map((item, index) => (
-                                <button
-                                  key={item.key}
-                                  type="button"
-                                  onClick={() => setSelectedDayunIndex(index)}
-                                  className={`min-w-[160px] snap-start rounded-xl border p-3 text-left transition-colors ${
-                                    index === selectedDayunIndex
-                                      ? 'border-[#1C1A16] bg-[#1C1A16] text-white'
-                                      : item.isCurrent
-                                        ? 'border-[#1C1A16]/40 bg-[#FFF6E8] text-[#1C1A16]'
-                                        : 'border-[#1C1A16]/12 bg-white text-[#1C1A16]'
-                                  }`}
-                                >
-                                  <p className="text-lg font-semibold tracking-[0.08em]">{item.gan}{item.zhi}</p>
-                                  <p className="text-xs mt-1 opacity-80">{item.ageStart}-{item.ageEnd} 岁</p>
-                                  {item.isCurrent && <p className="text-[11px] mt-1">当前大运</p>}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        ) : (
-                          <p className="text-sm text-[#6B7280]">缺少出生信息，暂时无法生成大运时间轴。</p>
-                        )}
-                      </div>
-                    )}
-
-                    {activeTab !== '十神详解' && (
-                      <>
-                      <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-5">
-                        <p className="text-sm font-medium text-[#1C1A16] mb-3">AI 要点</p>
-                        <ul className="space-y-2">
-                          {activeTabContent.points.map((point, index) => (
-                            <li key={`${point}_${index}`} className="text-sm text-[#1C1A16]/85 leading-relaxed">
-                              {point}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-
-                      <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-5">
-                        <button
-                          type="button"
-                          className="w-full flex items-center justify-between text-left"
-                          onClick={() =>
-                            setTabExpanded(prev => ({
-                              ...prev,
-                              [activeTab]: !prev[activeTab],
-                            }))
-                          }
-                        >
-                          <span className="text-sm font-medium text-[#1C1A16]">详细解读</span>
-                          {tabExpanded[activeTab] ? (
-                            <ChevronUp className="w-4 h-4 text-[#6B7280]" />
-                          ) : (
-                            <ChevronDown className="w-4 h-4 text-[#6B7280]" />
-                          )}
-                        </button>
-
-                        {tabExpanded[activeTab] && (
-                          <p className="mt-3 text-sm leading-relaxed text-[#1C1A16]/80 whitespace-pre-wrap">
-                            {activeTabContent.detail}
-                          </p>
-                        )}
-                      </div>
-                      </>
-                    )}
+                    </div>
                   </div>
                 </Card>
 
