@@ -367,7 +367,8 @@ function renderHighlightedLine(line: string): ReactNode {
 }
 
 function renderSectionContent(content: string, isDayun: boolean): ReactNode {
-  const paragraphs = content.split(/\n\n+/);
+  const normalizedContent = content.replace(/(?<!\n)\s*([①②③④⑤⑥⑦⑧⑨⑩])/g, '\n\n$1');
+  const paragraphs = normalizedContent.split(/\n\n+/);
 
   return (
     <div className="text-sm leading-loose text-[#1C1A16]/75 space-y-3">
