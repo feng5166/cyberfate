@@ -136,7 +136,7 @@ export function AuthModal({ isOpen, onClose, callbackUrl = '/bazi' }: AuthModalP
       {/* 弹窗 */}
       <div
         ref={focusTrapRef}
-        className={`relative w-full max-w-[420px] max-h-[90vh] overflow-y-auto bg-white rounded-2xl p-8 shadow-2xl transition-all duration-200 ease-out
+        className={`relative w-full max-w-[420px] max-h-[90vh] overflow-y-auto bg-[#FAF9F6] rounded-2xl p-8 shadow-2xl transition-all duration-200 ease-out
           max-sm:w-[90%] max-sm:max-w-[360px] max-sm:p-6
           ${visible ? 'opacity-100 scale-100' : 'opacity-0 scale-[0.95]'}
         `}

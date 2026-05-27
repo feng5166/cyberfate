@@ -144,9 +144,8 @@ export function EmailLoginForm({
           </button>
         </div>
         <div className="flex items-center justify-between mt-1">
-          <p className={`text-xs ${errors.password ? 'text-red-500' : 'text-[#6B7280]'}`}>
-            {errors.password || '至少8个字符'}
-          </p>
+          {errors.password && <p className="text-xs text-red-500">{errors.password}</p>}
+          {!errors.password && <span />}
           <button
             type="button"
             onClick={handleForgotPassword}
@@ -158,7 +157,10 @@ export function EmailLoginForm({
       </div>
 
       {/* 协议 */}
-      <div className={`flex items-start gap-2 mt-5 ${agreementShake ? 'animate-shake' : ''}`}>
+      <label
+        htmlFor="auth-agree"
+        className={`flex items-start gap-2 mt-5 cursor-pointer select-none ${agreementShake ? 'animate-shake' : ''}`}
+      >
         <input
           type="checkbox"
           id="auth-agree"
@@ -167,11 +169,11 @@ export function EmailLoginForm({
             setAgreed(e.target.checked)
             if (errors.agreement) setErrors((prev) => ({ ...prev, agreement: undefined }))
           }}
-          className={`mt-0.5 w-4 h-4 rounded border-[#D1D5DB] text-[#1C1A16] focus:ring-[#1C1A16]/10 ${
+          className={`mt-0.5 w-4 h-4 flex-shrink-0 rounded border-[#D1D5DB] text-[#1C1A16] focus:ring-[#1C1A16]/10 ${
             errors.agreement ? 'border-red-500' : ''
           }`}
         />
-        <label htmlFor="auth-agree" className="text-[#6B6560] text-xs leading-relaxed">
+        <span className="text-[#6B6560] text-xs leading-relaxed">
           我已年满 18 岁，并已阅读并同意{' '}
           <a
             href="/terms"
@@ -188,8 +190,8 @@ export function EmailLoginForm({
           >
             隐私政策
           </a>
-        </label>
-      </div>
+        </span>
+      </label>
       {errors.agreement && (
         <p className="text-red-500 text-xs -mt-2">{errors.agreement}</p>
       )}
@@ -203,7 +205,7 @@ export function EmailLoginForm({
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-[#1C1A16] text-white rounded-lg py-3.5 px-4 font-medium text-sm hover:bg-[#1C1A16]/90 transition-colors disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"
+        className="w-full bg-[#C2762B] text-white rounded-lg py-3.5 px-4 font-medium text-sm hover:bg-[#A86425] transition-colors disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"
       >
         {loading && (
           <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">

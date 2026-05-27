@@ -11,7 +11,7 @@ export function GoogleLoginButton({ onClick, loading }: GoogleLoginButtonProps) 
       type="button"
       onClick={onClick}
       disabled={loading}
-      className="w-full border border-[#E5E2DD] rounded-lg py-3 px-4 flex items-center justify-center gap-3 hover:bg-[#FAF9F6] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+      className="w-full border border-[#E5E2DD] bg-[#F5F5F5] rounded-lg py-3 px-4 flex items-center justify-center gap-3 hover:bg-[#FAF9F6] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
     >
       <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
         <path
