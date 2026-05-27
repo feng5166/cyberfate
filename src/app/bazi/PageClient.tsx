@@ -24,6 +24,8 @@ import { Select } from '@/components/ui/Select';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { BaguaSpinner } from '@/components/ui/BaguaSpinner';
 import { QuotaLimitModal } from '@/components/QuotaLimitModal';
+import { AuthModal } from '@/components/auth/AuthModal';
+import { UpgradeModal } from '@/components/pricing/UpgradeModal';
 import { Container } from '@/components/ui/Container';
 import { CitySearch } from '@/components/ui/CitySearch';
 import { Tag } from '@/components/ui/Tag';
@@ -108,6 +110,11 @@ const shichenOptions = [
   { value: '11', label: '亥时 (21:00-22:59)' },
   { value: '-1', label: '不知道（默认午时）' },
 ];
+
+const SHICHEN_START_HOUR: Record<string, number> = {
+  '0': 23, '1': 1, '2': 3, '3': 5, '4': 7, '5': 9,
+  '6': 11, '7': 13, '8': 15, '9': 17, '10': 19, '11': 21,
+};
 
 const aiSectionTitleMap: Record<AiSectionKey, string[]> = {
   dayMaster: ['日主分析'],
@@ -411,6 +418,8 @@ function BaziPageContent() {
   const [loading, setLoading] = useState(false);
   const [loadingLong, setLoadingLong] = useState(false);
   const [showQuotaModal, setShowQuotaModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [fullReadExpanded, setFullReadExpanded] = useState(false);
   const [expandedFaqIndex, setExpandedFaqIndex] = useState<number | null>(0);
   const [selectedDayunIndex, setSelectedDayunIndex] = useState(2);
@@ -1136,7 +1145,7 @@ function BaziPageContent() {
                       <span className="text-[#1C1A16]/50">出生公历：</span>
                       <span className="font-medium text-[#1C1A16]">
                         {formData.birthDate ? new Date(formData.birthDate).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }) : ''}
-                        {formData.birthHour !== undefined ? ` ${formData.birthHour}:00` : ''}
+                        {formData.birthHour !== undefined && formData.birthHour !== '' ? ` ${SHICHEN_START_HOUR[formData.birthHour] ?? ''}:00` : ''}
                       </span>
                       {'　'}
                       <span className="text-[#1C1A16]/50">当前时间：</span>
@@ -1162,7 +1171,21 @@ function BaziPageContent() {
 
                   <button
                     type="button"
-                    onClick={() => setFullReadExpanded(prev => !prev)}
+                    onClick={() => {
+                      if (fullReadExpanded) {
+                        setFullReadExpanded(false);
+                        return;
+                      }
+                      if (status !== 'authenticated') {
+                        setShowAuthModal(true);
+                        return;
+                      }
+                      if (!isMember) {
+                        setShowUpgradeModal(true);
+                        return;
+                      }
+                      setFullReadExpanded(true);
+                    }}
                     className="w-full flex items-center justify-center gap-1.5 py-2.5 mt-3 text-sm font-medium text-[#C2762B] hover:text-[#A86425] transition-colors"
                   >
                     {fullReadExpanded ? (
@@ -1408,6 +1431,9 @@ function BaziPageContent() {
       </Container>
 
       {showQuotaModal && <QuotaLimitModal onClose={() => setShowQuotaModal(false)} />}
+
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+      <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />
 
       <Footer />
 
