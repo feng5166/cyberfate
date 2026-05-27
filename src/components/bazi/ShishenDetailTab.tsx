@@ -93,12 +93,8 @@ export function ShishenDetailTab({ pillars, dayGan }: ShishenDetailTabProps) {
     }
   });
 
-  // 添加日主
-  presentShishen.add('日主');
-
   // 所有十神列表（按重要性排序）
   const allShishen: TenGod[] = [
-    '日主',
     '正财', '偏财',
     '正官', '七杀',
     '正印', '偏印',
