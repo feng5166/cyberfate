@@ -606,7 +606,7 @@ function BaziPageContent() {
     return {
       title: `${dayPillar.gan}${dayPillar.ganWuxing}`,
       ganZhi: `${dayPillar.gan}${dayPillar.zhi}`,
-      personality: `${corePersonality} 日主${level}（${dayValue.toFixed(1)} vs 均值 ${average.toFixed(1)}）。`,
+      personality: `${corePersonality} 日主${level}。`,
       favorableGods,
       avoidGods,
     };
