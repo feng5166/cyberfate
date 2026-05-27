@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import type { PillarRecord, TianGan } from '@/lib/bazi/types';
 import { getTenGod, type TenGod } from '@/lib/bazi/helpers';
 import { cn } from '@/lib/utils/cn';
@@ -79,6 +80,8 @@ const SHISHEN_DATA: Record<TenGod, { meaning: string; positiveInfluence: string;
 };
 
 export function ShishenDetailTab({ pillars, dayGan }: ShishenDetailTabProps) {
+  const [openTooltip, setOpenTooltip] = useState<TenGod | null>(null);
+
   // 提取命盘中的十神
   const presentShishen = new Set<TenGod>();
   const pillarGans = [pillars.year.gan, pillars.month.gan, pillars.hour.gan];
@@ -131,8 +134,32 @@ export function ShishenDetailTab({ pillars, dayGan }: ShishenDetailTabProps) {
           <div className="flex items-center justify-between mb-2">
             <h4 className="text-base font-semibold text-[#1C1A16]">{item.name}</h4>
             {item.isPresent && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-600 text-white">
-                ✓ 命盘出现
+              <span
+                className="relative inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-emerald-600 text-white cursor-pointer"
+                onMouseEnter={() => setOpenTooltip(item.name)}
+                onMouseLeave={() => setOpenTooltip(null)}
+                onClick={() =>
+                  setOpenTooltip(prev => (prev === item.name ? null : item.name))
+                }
+              >
+                ✓ 已透出
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 16 16"
+                  fill="currentColor"
+                  className="w-3 h-3 opacity-90"
+                  aria-hidden="true"
+                >
+                  <path d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zm.75 9.75a.75.75 0 0 1-1.5 0V7.5a.75.75 0 0 1 1.5 0v3.75zM8 6a.9.9 0 1 1 0-1.8A.9.9 0 0 1 8 6z" />
+                </svg>
+                {openTooltip === item.name && (
+                  <span
+                    role="tooltip"
+                    className="absolute left-1/2 top-full z-10 mt-1.5 -translate-x-1/2 whitespace-nowrap rounded-lg bg-[#FAF9F6] px-2.5 py-1.5 text-xs font-normal text-[#1C1A16] shadow-lg ring-1 ring-black/5"
+                  >
+                    透出：该十神出现在你的天干中，影响力较强
+                  </span>
+                )}
               </span>
             )}
           </div>
