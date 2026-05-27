@@ -60,12 +60,7 @@ interface DailyResult {
 function RingProgress({ score, size = 120 }: { score: number; size?: number }) {
   const strokeDasharray = 2 * Math.PI * 45; // r=90, circumference for 90%
   const offset = strokeDasharray - (score / 100) * strokeDasharray;
-  const getColor = (s: number) => {
-    if (s >= 80) return '#059669'; // green/wood
-    if (s >= 60) return '#D97706'; // orange/earth
-    if (s >= 40) return '#DC2626'; // red/fire
-    return '#6B7280'; // gray
-  };
+  const getColor = () => '#C2762B';
 
   return (
     <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
@@ -73,7 +68,7 @@ function RingProgress({ score, size = 120 }: { score: number; size?: number }) {
         <circle cx="50" cy="50" r="45" fill="none" stroke="#F3F4F6" strokeWidth="8" />
         <circle
           cx="50" cy="50" r="45" fill="none"
-          stroke={getColor(score)}
+          stroke={getColor()}
           strokeWidth="8"
           strokeLinecap="round"
           strokeDasharray={strokeDasharray}
@@ -223,7 +218,7 @@ export default function DailyPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#FAF9F6]">
       {/* 页面标题 */}
       <PageHeader title="每日运势" subtitle="基于八字的个性化每日运势分析" />
 
@@ -299,7 +294,7 @@ export default function DailyPage() {
             {/* 五行小卡片 */}
             <div className="flex gap-3 overflow-x-auto pb-2">
               {wuxingItems.map((item) => (
-                <div key={item.key} className="flex-shrink-0 bg-brand-bg rounded-xl p-4 min-w-[100px] text-center">
+                <div key={item.key} className="flex-shrink-0 rounded-xl border border-[#1C1A16]/[0.08] bg-[#FAF9F6] p-4 min-w-[100px] text-center shadow-sm">
                   <span className="text-xl">{item.icon}</span>
                   <span className="block text-xs font-medium text-brand-black mt-1">{item.label}</span>
                   <span className="block text-[10px] text-brand-light">{item.desc}</span>
@@ -309,26 +304,26 @@ export default function DailyPage() {
 
             {/* 宜忌 Tag 行 */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Card hover={false}>
+              <div className="rounded-2xl border border-[#D4EDDA] bg-[#F0F7F0] p-5">
                 <h4 className="text-sm font-medium text-brand-black mb-3 flex items-center gap-1.5">
-                  <span className="text-green-500">宜</span> 做
+                  <span className="text-green-600">宜</span> 做
                 </h4>
                 <div className="flex flex-wrap gap-2">
                   {result.suitable.map((item, i) => (
                     <Tag key={i} variant="wood">{item}</Tag>
                   ))}
                 </div>
-              </Card>
-              <Card hover={false}>
+              </div>
+              <div className="rounded-2xl border border-[#F5C6CB] bg-[#FDF0F0] p-5">
                 <h4 className="text-sm font-medium text-brand-black mb-3 flex items-center gap-1.5">
-                  <span className="text-red-500">忌</span> 做
+                  <span className="text-red-600">忌</span> 做
                 </h4>
                 <div className="flex flex-wrap gap-2">
                   {result.avoid.map((item, i) => (
                     <Tag key={i} variant="fire">{item}</Tag>
                   ))}
                 </div>
-              </Card>
+              </div>
             </div>
 
             {/* 幸运指南 */}
@@ -358,11 +353,11 @@ export default function DailyPage() {
             <Card hover={false}>
               <h4 className="text-sm font-medium text-brand-black mb-4">📊 五维运势</h4>
               <div className="space-y-4">
-                <ProgressBar label="事业运" value={result.ratings.career * 20} color="bg-[#DC2626]" />
-                <ProgressBar label="财富运" value={result.ratings.wealth * 20} color="bg-[#7C3AED]" />
-                <ProgressBar label="感情运" value={result.ratings.love * 20} color="bg-[#D97706]" />
-                <ProgressBar label="健康运" value={result.ratings.health * 20} color="bg-[#2563EB]" />
-                <ProgressBar label="学业运" value={result.ratings.studies * 20} color="bg-[#059669]" />
+                <ProgressBar label="事业运" value={result.ratings.career * 20} color="bg-[#C2762B]" />
+                <ProgressBar label="财富运" value={result.ratings.wealth * 20} color="bg-[#C2762B]/85" />
+                <ProgressBar label="感情运" value={result.ratings.love * 20} color="bg-[#C2762B]/70" />
+                <ProgressBar label="健康运" value={result.ratings.health * 20} color="bg-[#C2762B]/85" />
+                <ProgressBar label="学业运" value={result.ratings.studies * 20} color="bg-[#C2762B]/70" />
               </div>
             </Card>
 

@@ -191,13 +191,13 @@ export default function DailyMusicCard() {
         </div>
 
         <div className="flex-1 min-w-0">
-          <h3 className="text-base font-semibold text-[#1C1A16] truncate">
+          <h3 className="text-lg font-bold text-[#1C1A16] truncate">
             《{data.songName}》
           </h3>
           <p className="text-[13px] text-[#9CA3AF] mt-0.5">
             {data.artist}
           </p>
-          <p className="text-sm italic text-[#6B7280] leading-relaxed mt-2">
+          <p className="text-xs italic text-[#9CA3AF] leading-relaxed mt-2">
             &ldquo;{data.lyricsQuote}&rdquo;
           </p>
         </div>
@@ -214,7 +214,7 @@ export default function DailyMusicCard() {
       {/* 查看完整解读 */}
       <Link
         href="/music-oracle"
-        className="inline-flex items-center gap-0.5 text-[13px] font-medium text-[#1C1A16] hover:underline mt-2"
+        className="inline-flex items-center gap-0.5 text-xs text-[#C2762B] hover:text-[#A86425] mt-2 transition-colors"
       >
         查看完整解读
         <ChevronRight className="w-3.5 h-3.5" />
