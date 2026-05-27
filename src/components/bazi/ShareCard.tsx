@@ -66,9 +66,9 @@ async function buildCanvas(baziText: string, dayMaster: string, zodiac: string, 
   ctx.fillText(`日主：${dayMaster}   |   生肖：${zodiac}`, CARD_W / 2, 460);
 
   // Summary card background
-  const cardX = 60;
-  const cardY = 520;
-  const cardW = CARD_W - 120;
+  const cardX = 48;
+  const cardY = 480;
+  const cardW = CARD_W - 96;
   const summaryLines = wrapText(ctx, summary || '命理特质生成中...', 18);
   const lineH = 44;
   const cardH = 48 + summaryLines.length * lineH;
@@ -93,7 +93,7 @@ async function buildCanvas(baziText: string, dayMaster: string, zodiac: string, 
   // Bottom CTA: QR code + label
   const qrSize = 150;
   const qrX = (CARD_W - qrSize) / 2;
-  const qrY = CARD_H - 280;
+  const qrY = CARD_H - 260;
 
   const qrCanvas = document.createElement('canvas');
   await QRCode.toCanvas(qrCanvas, 'https://www.cyberfate.me/bazi', {
@@ -236,7 +236,7 @@ export function ShareCard({ pillars, dayMaster, zodiac, summary, className }: Sh
           </div>
 
           {/* 一句话命运总结 */}
-          <div className="absolute top-64 left-0 right-0 px-10">
+          <div className="absolute top-56 left-0 right-0 px-6">
             <div className="rounded-2xl bg-white/80 backdrop-blur-sm border border-[#1C1A16]/10 p-6 shadow-sm">
               <p className="text-base leading-relaxed text-[#1C1A16] text-center">
                 {summary || '命理特质生成中...'}
@@ -245,7 +245,7 @@ export function ShareCard({ pillars, dayMaster, zodiac, summary, className }: Sh
           </div>
 
           {/* 底部 CTA */}
-          <div className="absolute bottom-10 left-0 right-0 text-center px-8">
+          <div className="absolute bottom-8 left-0 right-0 text-center px-8">
             {qrDataUrl && (
               <img
                 src={qrDataUrl}
