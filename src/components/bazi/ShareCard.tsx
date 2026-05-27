@@ -54,20 +54,20 @@ async function buildCanvas(baziText: string, dayMaster: string, zodiac: string, 
   // Section title
   ctx.font = 'bold 40px sans-serif';
   ctx.fillStyle = '#1C1A16';
-  ctx.fillText('我的八字命盘', CARD_W / 2, 340);
+  ctx.fillText('我的八字命盘', CARD_W / 2, 380);
 
   // Bazi text
   ctx.font = 'bold 36px monospace';
-  ctx.fillText(baziText, CARD_W / 2, 410);
+  ctx.fillText(baziText, CARD_W / 2, 460);
 
   // Day master / zodiac
   ctx.font = '28px sans-serif';
   ctx.fillStyle = 'rgba(28,26,22,0.6)';
-  ctx.fillText(`日主：${dayMaster}   |   生肖：${zodiac}`, CARD_W / 2, 460);
+  ctx.fillText(`日主：${dayMaster}   |   生肖：${zodiac}`, CARD_W / 2, 520);
 
   // Summary card background
   const cardX = 36;
-  const cardY = 480;
+  const cardY = 580;
   const cardW = CARD_W - 72;
   const summaryLines = wrapText(ctx, summary || '命理特质生成中...', 18);
   const lineH = 44;
@@ -93,7 +93,7 @@ async function buildCanvas(baziText: string, dayMaster: string, zodiac: string, 
   // Bottom CTA: QR code + label
   const qrSize = 150;
   const qrX = (CARD_W - qrSize) / 2;
-  const qrY = CARD_H - 260;
+  const qrY = CARD_H - 220;
 
   const qrCanvas = document.createElement('canvas');
   await QRCode.toCanvas(qrCanvas, 'https://www.cyberfate.me/bazi', {
@@ -211,32 +211,28 @@ export function ShareCard({ pillars, dayMaster, zodiac, summary, className }: Sh
       {/* 分享卡片预览 */}
       <div className="mx-auto overflow-hidden rounded-2xl border border-[#1C1A16]/10" style={{ width: '375px' }}>
         <div
-          className="relative bg-gradient-to-br from-[#FAF9F6] via-[#FFFCF5] to-[#FEF9E7]"
+          className="flex flex-col items-center justify-between bg-gradient-to-br from-[#FAF9F6] via-[#FFFCF5] to-[#FEF9E7] py-12 px-6"
           style={{ width: '375px', height: '667px' }}
         >
           {/* 顶部品牌区 */}
-          <div className="absolute top-0 left-0 right-0 pt-12 pb-8 text-center">
+          <div className="text-center">
             <h1 className="text-2xl font-bold text-[#1C1A16] font-display">
               赛博命理师
             </h1>
             <p className="mt-1 text-xs text-[#1C1A16]/50">CyberFate.me</p>
           </div>
 
-          {/* 主标题 */}
-          <div className="absolute top-32 left-0 right-0 text-center px-8">
-            <h2 className="text-xl font-semibold text-[#1C1A16] mb-3">
+          {/* 中间内容区 */}
+          <div className="text-center w-full space-y-4">
+            <h2 className="text-xl font-semibold text-[#1C1A16]">
               我的八字命盘
             </h2>
-            <p className="font-mono text-lg font-semibold tracking-[0.12em] text-[#1C1A16] mb-2">
+            <p className="font-mono text-lg font-semibold tracking-[0.12em] text-[#1C1A16]">
               {baziText}
             </p>
             <p className="text-sm text-[#1C1A16]/60">
               日主：{dayMaster} <span className="mx-2 text-[#1C1A16]/20">|</span> 生肖：{zodiac}
             </p>
-          </div>
-
-          {/* 一句话命运总结 */}
-          <div className="absolute top-56 inset-x-0 px-6">
             <div className="w-full rounded-2xl bg-white/80 backdrop-blur-sm border border-[#1C1A16]/10 p-6 shadow-sm">
               <p className="text-base leading-relaxed text-[#1C1A16] text-center">
                 {summary || '命理特质生成中...'}
@@ -244,8 +240,8 @@ export function ShareCard({ pillars, dayMaster, zodiac, summary, className }: Sh
             </div>
           </div>
 
-          {/* 底部 CTA */}
-          <div className="absolute bottom-8 inset-x-0 text-center px-8">
+          {/* 底部二维码 */}
+          <div className="text-center">
             <img
               src={qrDataUrl}
               alt="QR Code"
@@ -254,10 +250,6 @@ export function ShareCard({ pillars, dayMaster, zodiac, summary, className }: Sh
             />
             <p className="mt-1.5 text-xs text-[#1C1A16]/50">CyberFate.me</p>
           </div>
-
-          {/* 装饰元素 */}
-          <div className="absolute top-24 right-8 w-16 h-16 rounded-full bg-gradient-to-br from-[#F59E0B]/20 to-[#EF4444]/20 blur-2xl" />
-          <div className="absolute bottom-32 left-8 w-20 h-20 rounded-full bg-gradient-to-br from-[#22C55E]/20 to-[#3B82F6]/20 blur-2xl" />
         </div>
       </div>
 
