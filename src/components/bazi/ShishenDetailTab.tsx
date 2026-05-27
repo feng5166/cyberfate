@@ -130,13 +130,9 @@ export function ShishenDetailTab({ pillars, dayGan }: ShishenDetailTabProps) {
           {/* 十神名 + 出现状态 */}
           <div className="flex items-center justify-between mb-2">
             <h4 className="text-base font-semibold text-[#1C1A16]">{item.name}</h4>
-            {item.isPresent ? (
+            {item.isPresent && (
               <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-600 text-white">
                 ✓ 命盘出现
-              </span>
-            ) : (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-gray-200 text-gray-600">
-                — 未透出
               </span>
             )}
           </div>
