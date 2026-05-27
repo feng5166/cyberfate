@@ -66,9 +66,9 @@ async function buildCanvas(baziText: string, dayMaster: string, zodiac: string, 
   ctx.fillText(`日主：${dayMaster}   |   生肖：${zodiac}`, CARD_W / 2, 460);
 
   // Summary card background
-  const cardX = 48;
+  const cardX = 36;
   const cardY = 480;
-  const cardW = CARD_W - 96;
+  const cardW = CARD_W - 72;
   const summaryLines = wrapText(ctx, summary || '命理特质生成中...', 18);
   const lineH = 44;
   const cardH = 48 + summaryLines.length * lineH;
@@ -209,7 +209,7 @@ export function ShareCard({ pillars, dayMaster, zodiac, summary, className }: Sh
       </div>
 
       {/* 分享卡片预览 */}
-      <div className="overflow-hidden rounded-2xl border border-[#1C1A16]/10">
+      <div className="mx-auto overflow-hidden rounded-2xl border border-[#1C1A16]/10" style={{ width: '375px' }}>
         <div
           className="relative bg-gradient-to-br from-[#FAF9F6] via-[#FFFCF5] to-[#FEF9E7]"
           style={{ width: '375px', height: '667px' }}
@@ -236,8 +236,8 @@ export function ShareCard({ pillars, dayMaster, zodiac, summary, className }: Sh
           </div>
 
           {/* 一句话命运总结 */}
-          <div className="absolute top-56 left-0 right-0 px-6">
-            <div className="rounded-2xl bg-white/80 backdrop-blur-sm border border-[#1C1A16]/10 p-6 shadow-sm">
+          <div className="absolute top-56 inset-x-0 px-6">
+            <div className="w-full rounded-2xl bg-white/80 backdrop-blur-sm border border-[#1C1A16]/10 p-6 shadow-sm">
               <p className="text-base leading-relaxed text-[#1C1A16] text-center">
                 {summary || '命理特质生成中...'}
               </p>
@@ -245,15 +245,13 @@ export function ShareCard({ pillars, dayMaster, zodiac, summary, className }: Sh
           </div>
 
           {/* 底部 CTA */}
-          <div className="absolute bottom-8 left-0 right-0 text-center px-8">
-            {qrDataUrl && (
-              <img
-                src={qrDataUrl}
-                alt="QR Code"
-                className="mx-auto w-[60px] h-[60px]"
-                style={{ imageRendering: 'pixelated' }}
-              />
-            )}
+          <div className="absolute bottom-8 inset-x-0 text-center px-8">
+            <img
+              src={qrDataUrl}
+              alt="QR Code"
+              className="mx-auto w-[60px] h-[60px]"
+              style={{ imageRendering: 'pixelated' }}
+            />
             <p className="mt-1.5 text-xs text-[#1C1A16]/50">CyberFate.me</p>
           </div>
 
