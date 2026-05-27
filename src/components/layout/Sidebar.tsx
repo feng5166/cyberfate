@@ -200,7 +200,7 @@ export function Sidebar({
   );
 
   const renderGuestBottom = (isCollapsed: boolean) => (
-    <div className="border-t border-brand-border-light px-4 py-4">
+    <div className="border-t border-[#1C1A16]/[0.06] px-4 py-4">
       {isCollapsed ? (
         <div className="flex flex-col items-center gap-2">
           <button
@@ -237,7 +237,7 @@ export function Sidebar({
   );
 
   const renderFreeBottom = (isCollapsed: boolean) => (
-    <div className="border-t border-brand-border-light px-4 py-4">
+    <div className="border-t border-[#1C1A16]/[0.06] px-4 py-4">
       {isCollapsed ? (
         <div className="flex flex-col items-center gap-2">
           <button
@@ -287,7 +287,7 @@ export function Sidebar({
   );
 
   const renderPaidBottom = (isCollapsed: boolean) => (
-    <div className="border-t border-brand-border-light px-5 py-4">
+    <div className="border-t border-[#1C1A16]/[0.06] px-5 py-4">
       {isCollapsed ? (
         <div className="flex justify-center">{renderAvatar('sm')}</div>
       ) : (
@@ -342,7 +342,7 @@ export function Sidebar({
   };
 
   const SidebarContent = (isCollapsed: boolean) => (
-    <div className="relative flex h-full flex-col bg-white">
+    <div className="relative flex h-full flex-col bg-[#FAF9F6]">
       <div className="px-5 py-5">
         <Link
           href="/"
@@ -368,7 +368,7 @@ export function Sidebar({
       )}
 
       {isCollapsed && (
-        <div className="hidden border-t border-b border-brand-border-light py-3 px-2 lg:block">
+        <div className="hidden border-t border-b border-[#1C1A16]/[0.06] py-3 px-2 lg:block">
           <button
             type="button"
             onClick={handleCollapseToggle}
@@ -410,7 +410,7 @@ export function Sidebar({
   );
 
   const desktopAsideClasses = clsx(
-    'hidden lg:block fixed left-0 top-16 h-[calc(100vh-64px)] z-30 border-r border-brand-border-light bg-white shadow-sm transition-all duration-300 ease',
+    'hidden lg:block fixed left-0 top-16 h-[calc(100vh-64px)] z-30 border-r border-brand-border-light bg-[#FAF9F6] shadow-sm transition-all duration-300 ease',
     collapsed ? 'w-16' : 'w-[260px]'
   );
 

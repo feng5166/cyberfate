@@ -21,10 +21,10 @@ export function SidebarGroup({
   return (
     <div className={clsx('w-full', className)}>
       {showDivider && (
-        <div className="mx-5 mt-6 mb-3 border-t border-brand-border-light" aria-hidden />
+        <div className="mx-5 mt-4 mb-2 border-t border-[#1C1A16]/[0.06]" aria-hidden />
       )}
       {title && !collapsed && (
-        <div className="px-5 mt-5 mb-2 text-[13px] font-semibold tracking-wider text-[#9CA3AF] uppercase">
+        <div className="px-5 mt-4 mb-1 text-[13px] font-semibold tracking-wider text-[#9CA3AF] uppercase">
           {title}
         </div>
       )}
