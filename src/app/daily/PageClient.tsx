@@ -160,7 +160,8 @@ export default function DailyPage() {
   };
 
   useEffect(() => {
-    const dateStr = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     setToday(dateStr);
     const saved = loadBirthInfo();
     if (saved?.birthDate && saved?.birthHour) {
@@ -210,7 +211,7 @@ export default function DailyPage() {
     setDayOffset(offset);
     const d = new Date();
     d.setDate(d.getDate() + parseInt(offset));
-    const dateStr = d.toISOString().split('T')[0];
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     if (formData.birthDate && formData.birthHour) {
       setResult(null);
       fetchFortune(formData.birthDate, formData.birthHour, dateStr, formData.gender || undefined);
@@ -279,7 +280,6 @@ export default function DailyPage() {
                 {/* 右：信息 */}
                 <div className="flex-1 text-center sm:text-left">
                   <h3 className="text-h3 font-semibold text-brand-black mb-1">综合运势</h3>
-                  <p className="text-2xl font-bold text-brand-black mt-1">{result.overall}/5 分</p>
                   <div className="mt-3 space-y-1 text-sm text-brand-gray">
                     <p>公历：{result.date}</p>
                     <p>农历：{result.lunarDate} · {result.dayGanzhi}日</p>
