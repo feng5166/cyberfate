@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Select } from '@/components/ui/Select';
-import { SegmentControl } from '@/components/ui/SegmentControl';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Container } from '@/components/ui/Container';
 import { AiDisclaimer } from '@/components/ui/AiDisclaimer';
@@ -92,19 +91,111 @@ const wuxingItems = [
 ];
 
 // 日期切换
-const dateOptions = [
-  { value: '-1', label: '昨天' },
-  { value: '0', label: '今天' },
-  { value: '1', label: '明天' },
-  { value: '2', label: '后天' },
-];
 const dayOffsetTexts: Record<string, { short: string; loading: string }> = {
   '-1': { short: '昨日', loading: '正在推算昨日运势...' },
   '0': { short: '今日', loading: '正在推算今日运势...' },
   '1': { short: '明日', loading: '正在推算明日运势...' },
   '2': { short: '后日', loading: '正在推算后日运势...' },
 };
-const getDayOffsetText = (offset: string) => dayOffsetTexts[offset] ?? dayOffsetTexts['0'];
+const getDayOffsetText = (offset: string) => dayOffsetTexts[offset] ?? { short: '该日', loading: '正在推算运势...' };
+
+// 周视图日历组件
+function WeekCalendar({
+  selectedDate,
+  onSelect,
+}: {
+  selectedDate: string;
+  onSelect: (date: string) => void;
+}) {
+  const [showMonthPicker, setShowMonthPicker] = useState(false);
+
+  const getWeekDays = (base: string) => {
+    const d = new Date(base + 'T00:00:00');
+    const day = d.getDay();
+    const monday = new Date(d);
+    monday.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
+    return Array.from({ length: 7 }, (_, i) => {
+      const date = new Date(monday);
+      date.setDate(monday.getDate() + i);
+      const yyyy = date.getFullYear();
+      const mm = String(date.getMonth() + 1).padStart(2, '0');
+      const dd = String(date.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    });
+  };
+
+  const weekDays = getWeekDays(selectedDate);
+  const weekLabels = ['一', '二', '三', '四', '五', '六', '日'];
+
+  const todayStr = (() => {
+    const t = new Date();
+    return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
+  })();
+
+  return (
+    <div className="relative">
+      <div className="flex items-stretch bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        {/* 7天横向列表 */}
+        <div className="flex flex-1">
+          {weekDays.map((date, i) => {
+            const isSelected = date === selectedDate;
+            const isToday = date === todayStr;
+            const dayNum = date.split('-')[2].replace(/^0/, '');
+            return (
+              <button
+                key={date}
+                onClick={() => onSelect(date)}
+                className={`flex-1 flex flex-col items-center py-3 gap-1 transition-colors ${
+                  isSelected ? 'bg-brand-black' : 'hover:bg-gray-50'
+                }`}
+              >
+                <span className={`text-xs ${isSelected ? 'text-white/70' : 'text-brand-gray'}`}>
+                  周{weekLabels[i]}
+                </span>
+                <span
+                  className={`text-sm font-medium w-7 h-7 flex items-center justify-center rounded-full ${
+                    isSelected
+                      ? 'text-white'
+                      : isToday
+                      ? 'bg-brand-black text-white'
+                      : 'text-brand-black'
+                  }`}
+                >
+                  {dayNum}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* 分割线 */}
+        <div className="w-px bg-gray-200 self-stretch" />
+
+        {/* 月历按钮 */}
+        <button
+          onClick={() => setShowMonthPicker(!showMonthPicker)}
+          className="flex flex-col items-center justify-center px-4 gap-1 hover:bg-gray-50 transition-colors"
+        >
+          <span className="text-xs text-brand-gray">月历</span>
+          <span className="text-base">📅</span>
+        </button>
+      </div>
+
+      {/* 月历下拉 */}
+      {showMonthPicker && (
+        <div className="absolute top-full left-0 right-0 z-50 mt-1">
+          <DatePicker
+            value={selectedDate}
+            onChange={(date) => {
+              onSelect(date);
+              setShowMonthPicker(false);
+            }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function DailyPage() {
   const [formData, setFormData] = useState({ birthDate: '', birthHour: '', gender: '' });
@@ -207,9 +298,30 @@ export default function DailyPage() {
       <PageHeader title="每日运势" subtitle="基于八字的个性化每日运势分析" />
 
       <Container>
-        {/* 日期切换器 */}
-        <div className="flex justify-center mb-8">
-          <SegmentControl options={dateOptions} value={dayOffset} onChange={handleDateChange} className="w-auto" />
+        {/* 周视图日期选择器 */}
+        <div className="mb-8">
+          <WeekCalendar
+            selectedDate={today && dayOffset !== undefined
+              ? (() => {
+                  const d = new Date(today + 'T00:00:00');
+                  d.setDate(d.getDate() + Number(dayOffset));
+                  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                })()
+              : today
+            }
+            onSelect={(date) => {
+              if (!today) return;
+              const base = new Date(today + 'T00:00:00');
+              const sel = new Date(date + 'T00:00:00');
+              const diff = Math.round((sel.getTime() - base.getTime()) / 86400000);
+              setDayOffset(String(diff));
+              const dateStr = date;
+              if (formData.birthDate && formData.birthHour) {
+                setResult(null);
+                fetchFortune(formData.birthDate, formData.birthHour, dateStr, formData.gender || undefined);
+              }
+            }}
+          />
         </div>
 
         {/* 输入表单（紧凑版） */}
