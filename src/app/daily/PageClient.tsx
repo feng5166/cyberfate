@@ -135,8 +135,8 @@ function WeekCalendar({
   return (
     <div className="relative">
       <div className="flex items-stretch bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        {/* 7天横向列表 */}
-        <div className="flex flex-1">
+        {/* 7天横向列表 — 固定宽度不压缩 */}
+        <div className="flex flex-1 overflow-x-auto">
           {weekDays.map((date, i) => {
             const isSelected = date === selectedDate;
             const isToday = date === todayStr;
@@ -145,11 +145,11 @@ function WeekCalendar({
               <button
                 key={date}
                 onClick={() => onSelect(date)}
-                className={`flex-1 flex flex-col items-center py-3 gap-1 transition-colors ${
+                className={`flex-shrink-0 flex flex-col items-center py-2.5 gap-0.5 transition-colors w-[calc((100vw-100px)/7)] min-w-[40px] ${
                   isSelected ? 'bg-brand-black' : 'hover:bg-gray-50'
                 }`}
               >
-                <span className={`text-xs ${isSelected ? 'text-white/70' : 'text-brand-gray'}`}>
+                <span className={`text-[10px] ${isSelected ? 'text-white/70' : 'text-brand-gray'}`}>
                   周{weekLabels[i]}
                 </span>
                 <span
@@ -169,7 +169,7 @@ function WeekCalendar({
         </div>
 
         {/* 分割线 */}
-        <div className="w-px bg-gray-200 self-stretch" />
+        <div className="w-px bg-gray-200 flex-shrink-0 self-stretch" />
 
         {/* 月历按钮 */}
         <button
