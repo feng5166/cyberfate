@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Select } from '@/components/ui/Select';
 import { SegmentControl } from '@/components/ui/SegmentControl';
-import { Tag } from '@/components/ui/Tag';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Container } from '@/components/ui/Container';
 import { AiDisclaimer } from '@/components/ui/AiDisclaimer';
@@ -54,33 +53,10 @@ interface DailyResult {
     direction: string;
   };
   advice: string;
-}
-
-// 环形进度组件
-function RingProgress({ score, size = 120 }: { score: number; size?: number }) {
-  const strokeDasharray = 2 * Math.PI * 45; // r=90, circumference for 90%
-  const offset = strokeDasharray - (score / 100) * strokeDasharray;
-  const getColor = () => '#C2762B';
-
-  return (
-    <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
-      <svg width={size} height={size} viewBox="0 0 100 100" className="-rotate-90">
-        <circle cx="50" cy="50" r="45" fill="none" stroke="#F3F4F6" strokeWidth="8" />
-        <circle
-          cx="50" cy="50" r="45" fill="none"
-          stroke={getColor()}
-          strokeWidth="8"
-          strokeLinecap="round"
-          strokeDasharray={strokeDasharray}
-          strokeDashoffset={offset}
-          style={{ transition: 'stroke-dashoffset 0.6s ease-out' }}
-        />
-      </svg>
-      <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-[28px] font-semibold text-brand-black">{score}</span>
-      </div>
-    </div>
-  );
+  verse?: string;
+  imageUrl?: string;
+  overallLabel?: string;
+  luckyHour?: string;
 }
 
 // 五维进度条
@@ -272,24 +248,71 @@ export default function DailyPage() {
             </div>
             {/* 运势概览大卡片 */}
             <Card hover={false}>
-              <div className="flex flex-col sm:flex-row items-center gap-8">
-                {/* 左：环形图 + 分数 */}
-                <div className="flex-shrink-0">
-                  <RingProgress score={Math.round((result.overall / 5) * 100)} size={130} />
+              <div className="flex flex-col items-center text-center">
+                <div
+                  className="text-5xl font-bold"
+                  style={{
+                    color:
+                      result.overallLabel === '高'
+                        ? '#C2762B'
+                        : result.overallLabel === '低'
+                        ? '#9CA3AF'
+                        : '#6B7280',
+                  }}
+                >
+                  {result.overallLabel || (result.overall >= 4 ? '高' : result.overall >= 3 ? '平' : '低')}
                 </div>
-                {/* 右：信息 */}
-                <div className="flex-1 text-center sm:text-left">
-                  <h3 className="text-h3 font-semibold text-brand-black mb-1">综合运势</h3>
-                  <div className="mt-3 space-y-1 text-sm text-brand-gray">
-                    <p>公历：{result.date}</p>
-                    <p>农历：{result.lunarDate} · {result.dayGanzhi}日</p>
-                  </div>
-                  <div className="mt-3 inline-block px-3 py-1.5 rounded-full text-sm font-medium bg-brand-bg">
-                    {currentDayText.short}总评：<span className="text-brand-black font-medium">{result.overall >= 4 ? '吉' : result.overall >= 3 ? '平' : '需谨慎'}</span>
-                  </div>
+                <p className="text-sm text-brand-gray mt-1">今日运势</p>
+                <div className="flex gap-2 mt-3">
+                  {result.dayGanzhi.split('').map((char: string, i: number) => (
+                    <div
+                      key={i}
+                      className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg"
+                      style={{ backgroundColor: '#C2762B' }}
+                    >
+                      {char}
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 space-y-1 text-sm text-brand-gray">
+                  <p>公历：{result.date}</p>
+                  <p>农历：{result.lunarDate} · {result.dayGanzhi}日</p>
+                  {result.luckyHour && <p>吉时：{result.luckyHour}</p>}
                 </div>
               </div>
             </Card>
+
+            {/* 今日古诗/格言 */}
+            {result.verse && (
+              <div className="text-center my-4">
+                {result.verse.split('\n').map((line, i) => (
+                  <p
+                    key={i}
+                    className="text-xl text-brand-black"
+                    style={{ fontFamily: "'Noto Serif SC', serif" }}
+                  >
+                    {line}
+                  </p>
+                ))}
+              </div>
+            )}
+
+            {/* 今日意象插画 */}
+            {result.imageUrl && (
+              <div className="flex justify-center my-6">
+                <div className="w-[240px] h-[240px]">
+                  <img
+                    src={result.imageUrl}
+                    alt="今日意象"
+                    className="w-full h-full object-cover"
+                    style={{
+                      clipPath:
+                        'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
+                    }}
+                  />
+                </div>
+              </div>
+            )}
 
             {/* 五行小卡片 */}
             <div className="flex gap-3 overflow-x-auto pb-2">
@@ -302,27 +325,27 @@ export default function DailyPage() {
               ))}
             </div>
 
-            {/* 宜忌 Tag 行 */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="rounded-2xl border border-[#D4EDDA] bg-[#F0F7F0] p-5">
-                <h4 className="text-sm font-medium text-brand-black mb-3 flex items-center gap-1.5">
-                  <span className="text-green-600">宜</span> 做
+            {/* 宜忌（纯文字两列） */}
+            <div className="grid grid-cols-2 gap-6 my-2">
+              <div>
+                <h4 className="text-lg font-semibold mb-2 pb-2 border-b border-[#E5E0D8]" style={{ color: '#2D6A4F' }}>
+                  宜
                 </h4>
-                <div className="flex flex-wrap gap-2">
+                <ul className="space-y-1">
                   {result.suitable.map((item, i) => (
-                    <Tag key={i} variant="wood">{item}</Tag>
+                    <li key={i} className="text-sm text-brand-gray leading-[1.8]">{item}</li>
                   ))}
-                </div>
+                </ul>
               </div>
-              <div className="rounded-2xl border border-[#F5C6CB] bg-[#FDF0F0] p-5">
-                <h4 className="text-sm font-medium text-brand-black mb-3 flex items-center gap-1.5">
-                  <span className="text-red-600">忌</span> 做
+              <div>
+                <h4 className="text-lg font-semibold mb-2 pb-2 border-b border-[#E5E0D8]" style={{ color: '#9B2335' }}>
+                  忌
                 </h4>
-                <div className="flex flex-wrap gap-2">
+                <ul className="space-y-1">
                   {result.avoid.map((item, i) => (
-                    <Tag key={i} variant="fire">{item}</Tag>
+                    <li key={i} className="text-sm text-brand-gray leading-[1.8]">{item}</li>
                   ))}
-                </div>
+                </ul>
               </div>
             </div>
 
@@ -364,10 +387,25 @@ export default function DailyPage() {
             {/* AI 运势建议 */}
             <Card hover={false} className="bg-yellow-50 border-yellow-200">
               <h4 className="text-sm font-medium text-yellow-700 mb-1 flex items-center gap-1.5">
-                💡 AI {currentDayText.short}建议
+                💡 今日指引
               </h4>
               <p className="text-xs text-yellow-600/70 mb-2">AI 综合分析 · 仅供参考</p>
               <p className="text-sm leading-relaxed text-gray-700">{result.advice}</p>
+            </Card>
+
+            {/* 今日卦象入口 */}
+            <Card hover={false} className="bg-[#F5F0E8] border-[#E5D9C0]">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h4 className="text-sm font-medium text-brand-black mb-1">今日卦象</h4>
+                  <p className="text-xs text-brand-gray mb-3">
+                    仅为今天占卜，
+                    <Link href="/liuyao" className="text-brand-black underline">点此开始</Link>
+                    {' '}生成卦象
+                  </p>
+                </div>
+                <div className="text-3xl opacity-40">🪙</div>
+              </div>
             </Card>
 
             {/* 🎵 今日之歌 */}
@@ -394,7 +432,7 @@ export default function DailyPage() {
 
       <Footer />
 
-      <div className="hidden" data-version="20260402-v2"></div>
+      <div className="hidden" data-version="20260528-v3"></div>
     </div>
   );
 }

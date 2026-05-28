@@ -176,6 +176,9 @@ export async function generateDailyFortune(
   avoid: string[];
   lucky: { color: string; numbers: number[]; direction: string };
   advice: string;
+  verse?: string;
+  overallLabel?: string;
+  luckyHour?: string;
   _source: 'deepseek' | 'fallback' | 'cache';
 }> {
   
@@ -235,10 +238,13 @@ export async function generateDailyFortune(
 function generateFallbackDailyFortune() {
   return {
     overall: 3,
+    overallLabel: '平',
     ratings: { career: 3, wealth: 3, love: 3, health: 4, studies: 3 },
     suitable: ['日常工作', '学习提升', '与朋友交流'],
     avoid: ['重大决策', '冒险投资'],
     lucky: { color: '蓝色', numbers: [3, 6], direction: '东方' },
+    luckyHour: '午时（11-13时）',
+    verse: '行到水穷处\n坐看云起时',
     advice: '今日运势平稳，宜保持平常心，稳步前进。',
   };
 }

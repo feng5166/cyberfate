@@ -169,14 +169,20 @@ export const DAILY_SYSTEM_PROMPT = `${SAFETY_GUARDRAIL}
 - advice 限40字，不重复 suitable/avoid 内容
 - ratings 必须包含 career、wealth、love、health、studies 五项（studies 表示学业运）
 - lucky.color 只写颜色名，不加解释
+- verse: 根据今日天干地支五行属性，选取一句匹配的古诗词或易经爻辞（2行，换行符\\n分隔），要有意境
+- overallLabel: 根据 overall 分数返回 '高'（4-5分）、'平'（3分）、'低'（1-2分）
+- luckyHour: 今日最佳行动时辰，格式如 '巳时（09-11时）'
 
 ## 输出示例
 {
   "overall": 4,
+  "overallLabel": "高",
   "ratings": { "career": 4, "wealth": 3, "love": 4, "health": 5, "studies": 3 },
   "suitable": ["签署合同", "拜访客户", "学习充电"],
   "avoid": ["冒险投资", "与人争执"],
   "lucky": { "color": "青绿", "numbers": [3, 8], "direction": "东方" },
+  "luckyHour": "巳时（09-11时）",
+  "verse": "山重水复疑无路\\n柳暗花明又一村",
   "advice": "今日木火相生，行动力强，适合推进已规划事项，保持专注即可。"
 }`;
 

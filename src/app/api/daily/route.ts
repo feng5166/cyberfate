@@ -11,6 +11,22 @@ import { logger } from '@/lib/logger';
 
 const SERVICE = 'api/daily';
 
+// 12地支 -> 意象插画 URL
+const DIZHI_IMAGES: Record<string, string> = {
+  '子': '/images/daily/zi.jpg',
+  '丑': '/images/daily/chou.jpg',
+  '寅': '/images/daily/yin.jpg',
+  '卯': '/images/daily/mao.jpg',
+  '辰': '/images/daily/chen.jpg',
+  '巳': '/images/daily/si.jpg',
+  '午': '/images/daily/wu.jpg',
+  '未': '/images/daily/wei.jpg',
+  '申': '/images/daily/shen.jpg',
+  '酉': '/images/daily/you.jpg',
+  '戌': '/images/daily/xu.jpg',
+  '亥': '/images/daily/hai.jpg',
+};
+
 // 返回北京时间 (UTC+8) 的 YYYY-MM-DD 日期字符串
 function getBeijingDateString(): string {
   const now = new Date();
@@ -114,16 +130,25 @@ export async function POST(req: NextRequest) {
     }
     
     const normalizedRatings = normalizeRatings(fortune.ratings, fortune.overall);
+    const dayZhi = dayGanzhi[1];
+    const imageUrl = DIZHI_IMAGES[dayZhi] || null;
+    const overallLabel =
+      (fortune as any).overallLabel ||
+      (fortune.overall >= 4 ? '高' : fortune.overall >= 3 ? '平' : '低');
 
     return Response.json({
       date: targetDate,
       lunarDate,
       dayGanzhi,
       overall: fortune.overall,
+      overallLabel,
       ratings: normalizedRatings,
       suitable: fortune.suitable,
       avoid: fortune.avoid,
       lucky: fortune.lucky,
+      luckyHour: (fortune as any).luckyHour || null,
+      verse: (fortune as any).verse || null,
+      imageUrl,
       advice: fortune.advice,
       _source: (fortune as any)._source ?? 'unknown',
     });
@@ -218,6 +243,7 @@ function generateFallbackFortune(dayMaster: string, dayGanzhi: string, targetDat
   
   return {
     overall,
+    overallLabel: overall >= 4 ? '高' : overall >= 3 ? '平' : '低',
     ratings: {
       career: Math.min(5, Math.max(1, overall + Math.floor(seededRandom(seed, 1) * 2) - 1)),
       wealth: Math.min(5, Math.max(1, overall + Math.floor(seededRandom(seed, 2) * 2) - 1)),
@@ -235,6 +261,8 @@ function generateFallbackFortune(dayMaster: string, dayGanzhi: string, targetDat
       ],
       direction: directions[Math.floor(seededRandom(seed, 9) * directions.length)],
     },
+    luckyHour: '午时（11-13时）',
+    verse: '行到水穷处\n坐看云起时',
     advice,
   };
 }
