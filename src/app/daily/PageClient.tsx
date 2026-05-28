@@ -149,13 +149,15 @@ function WeekCalendar({
                   isSelected ? 'bg-brand-black' : 'hover:bg-gray-50'
                 }`}
               >
-                <span className={`text-[10px] ${isSelected ? 'text-white/70' : 'text-brand-gray'}`}>
+                <span className={`text-[10px] font-medium ${
+                  isSelected ? 'text-white/70' : isToday ? 'text-brand-black' : 'text-brand-gray'
+                }`}>
                   周{weekLabels[i]}
                 </span>
                 <span
-                  className={`text-sm font-medium w-7 h-7 flex items-center justify-center rounded-full ${
+                  className={`text-sm font-semibold w-7 h-7 flex items-center justify-center rounded-full ${
                     isSelected
-                      ? 'text-white'
+                      ? 'bg-white/20 text-white'
                       : isToday
                       ? 'bg-brand-black text-white'
                       : 'text-brand-black'
