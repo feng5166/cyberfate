@@ -202,7 +202,10 @@ export default function DailyPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<DailyResult | null>(null);
-  const [today, setToday] = useState('');
+  const [today, setToday] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  });
   const [hasSavedData, setHasSavedData] = useState(false);
   const autoSubmittedRef = useRef(false);
 
@@ -301,14 +304,11 @@ export default function DailyPage() {
         {/* 周视图日期选择器 */}
         <div className="mb-8">
           <WeekCalendar
-            selectedDate={today && dayOffset !== undefined
-              ? (() => {
-                  const d = new Date(today + 'T00:00:00');
-                  d.setDate(d.getDate() + Number(dayOffset));
-                  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                })()
-              : today
-            }
+            selectedDate={(() => {
+              const d = new Date(today + 'T00:00:00');
+              d.setDate(d.getDate() + Number(dayOffset));
+              return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            })()}
             onSelect={(date) => {
               if (!today) return;
               const base = new Date(today + 'T00:00:00');
