@@ -146,7 +146,7 @@ export async function POST(req: NextRequest) {
       suitable: fortune.suitable,
       avoid: fortune.avoid,
       lucky: fortune.lucky,
-      luckyHour: (fortune as any).luckyHour || null,
+      luckyHour: (fortune as any).luckyHour || '午时（11-13时）',
       verse: (fortune as any).verse || null,
       imageUrl,
       advice: fortune.advice,

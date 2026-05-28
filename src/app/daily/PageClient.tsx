@@ -242,7 +242,7 @@ export default function DailyPage() {
 
         {/* ===== 结果展示 ===== */}
         {result && !loading && (
-          <div className="space-y-6 pb-20 md:pb-26 animate-fadeIn">
+          <div className="space-y-5 pb-20 md:pb-26 animate-fadeIn">
             <div className="text-center text-sm text-brand-gray">
               当前查询日期：<span className="text-brand-black font-medium">{result.date}</span>
             </div>
@@ -252,7 +252,7 @@ export default function DailyPage() {
                 {/* 左：运势等级 */}
                 <div className="flex-shrink-0 text-center">
                   <div
-                    className="text-6xl font-bold"
+                    className="text-7xl font-black"
                     style={{
                       color:
                         result.overallLabel === '高'
@@ -272,7 +272,7 @@ export default function DailyPage() {
                     {result.dayGanzhi.split('').map((char: string, i: number) => (
                       <div
                         key={i}
-                        className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg"
+                        className="w-12 h-12 rounded-lg flex items-center justify-center text-white font-black text-xl"
                         style={{ backgroundColor: '#C2762B' }}
                       >
                         {char}
@@ -288,11 +288,11 @@ export default function DailyPage() {
               </div>
             </Card>
 
-            {/* 今日意象 + 古诗/格言 */}
+            {/* 今日意象 + 古诗（合并暖色卡片） */}
             {(result.imageUrl || result.verse) && (
-              <Card hover={false} className="bg-[#F5F0E8] border-[#E5D9C0]">
+              <Card hover={false} className="bg-[#F5F0E8] border-[#E5D9C0] mt-2">
                 {result.imageUrl && (
-                  <div className="flex justify-center py-2">
+                  <div className="flex justify-center py-4">
                     <div className="w-[200px] h-[200px]">
                       <img
                         src={result.imageUrl}
@@ -307,11 +307,11 @@ export default function DailyPage() {
                   </div>
                 )}
                 {result.verse && (
-                  <div className="text-center mt-4">
-                    {result.verse.split('\n').map((line, i) => (
+                  <div className="text-center mt-2 pb-2">
+                    {result.verse.split('\n').map((line: string, i: number) => (
                       <p
                         key={i}
-                        className="text-lg text-brand-black"
+                        className="text-lg text-brand-black leading-relaxed"
                         style={{ fontFamily: "'Noto Serif SC', serif" }}
                       >
                         {line}
@@ -333,12 +333,12 @@ export default function DailyPage() {
               ))}
             </div>
 
-            {/* 宜忌（左色条+项目符号） */}
-            <div className="grid grid-cols-2 gap-6 my-2">
+            {/* 宜忌（纯文字两列） */}
+            <div className="grid grid-cols-2 gap-6 px-1">
               <div className="pl-3 border-l-[3px] border-[#2D6A4F]">
                 <h4 className="text-base font-semibold mb-2" style={{ color: '#2D6A4F' }}>宜</h4>
                 <ul className="space-y-1">
-                  {result.suitable.map((item, i) => (
+                  {result.suitable.map((item: string, i: number) => (
                     <li key={i} className="text-sm text-brand-gray leading-[1.8]">· {item}</li>
                   ))}
                 </ul>
@@ -346,7 +346,7 @@ export default function DailyPage() {
               <div className="pl-3 border-l-[3px] border-[#9B2335]">
                 <h4 className="text-base font-semibold mb-2" style={{ color: '#9B2335' }}>忌</h4>
                 <ul className="space-y-1">
-                  {result.avoid.map((item, i) => (
+                  {result.avoid.map((item: string, i: number) => (
                     <li key={i} className="text-sm text-brand-gray leading-[1.8]">· {item}</li>
                   ))}
                 </ul>
@@ -399,16 +399,16 @@ export default function DailyPage() {
 
             {/* 今日卦象入口 */}
             <Card hover={false} className="bg-[#F5F0E8] border-[#E5D9C0]">
-              <div className="flex items-start justify-between">
+              <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="text-sm font-medium text-brand-black mb-1">今日卦象</h4>
-                  <p className="text-xs text-brand-gray mb-3">
+                  <h4 className="text-base font-semibold text-brand-black mb-1">🔮 今日卦象</h4>
+                  <p className="text-sm text-brand-gray">
                     仅为今天占卜，
-                    <Link href="/liuyao" className="text-brand-black underline">点此开始</Link>
+                    <Link href="/liuyao" className="text-brand-black font-medium underline underline-offset-2">点此开始</Link>
                     {' '}生成卦象
                   </p>
                 </div>
-                <div className="text-3xl opacity-40">🪙</div>
+                <div className="text-4xl opacity-30">🪙</div>
               </div>
             </Card>
 
