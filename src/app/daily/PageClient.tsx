@@ -57,6 +57,13 @@ interface DailyResult {
   imageUrl?: string;
   overallLabel?: string;
   luckyHour?: string;
+  ratingComments?: {
+    career?: string;
+    wealth?: string;
+    love?: string;
+    health?: string;
+    studies?: string;
+  };
 }
 
 // 五维进度条
@@ -378,15 +385,38 @@ export default function DailyPage() {
               </div>
             </Card>
 
-            {/* 五维运势进度条 */}
+            {/* 五维运势 */}
             <Card hover={false}>
               <h4 className="text-sm font-medium text-brand-black mb-4">📊 五维运势</h4>
               <div className="space-y-4">
-                <ProgressBar label="事业运" value={result.ratings.career * 20} color="bg-[#C2762B]" />
-                <ProgressBar label="财富运" value={result.ratings.wealth * 20} color="bg-[#C2762B]/85" />
-                <ProgressBar label="感情运" value={result.ratings.love * 20} color="bg-[#C2762B]/70" />
-                <ProgressBar label="健康运" value={result.ratings.health * 20} color="bg-[#C2762B]/85" />
-                <ProgressBar label="学业运" value={result.ratings.studies * 20} color="bg-[#C2762B]/70" />
+                {([
+                  { key: 'career' as const, label: '事业运', value: result.ratings.career },
+                  { key: 'wealth' as const, label: '财富运', value: result.ratings.wealth },
+                  { key: 'love' as const,   label: '感情运', value: result.ratings.love },
+                  { key: 'health' as const, label: '健康运', value: result.ratings.health },
+                  { key: 'studies' as const, label: '学业运', value: result.ratings.studies },
+                ]).map(({ key, label, value }) => {
+                  const levelText = value >= 5 ? '极佳' : value >= 4 ? '良好' : value >= 3 ? '一般' : '偏弱';
+                  const levelColor = value >= 5 ? '#2D6A4F' : value >= 4 ? '#C2762B' : value >= 3 ? '#6B7280' : '#9B2335';
+                  const comment = result.ratingComments?.[key] || '';
+                  return (
+                    <div key={key}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium text-brand-black">{label}</span>
+                        <span className="text-sm font-semibold" style={{ color: levelColor }}>{levelText}</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden mb-1">
+                        <div
+                          className="h-full rounded-full transition-all"
+                          style={{ width: `${value * 20}%`, backgroundColor: levelColor }}
+                        />
+                      </div>
+                      {comment && (
+                        <p className="text-xs text-brand-gray leading-relaxed">{comment}</p>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </Card>
 

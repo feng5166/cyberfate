@@ -143,6 +143,13 @@ export async function POST(req: NextRequest) {
       overall: fortune.overall,
       overallLabel,
       ratings: normalizedRatings,
+      ratingComments: (fortune as any).ratingComments || {
+        career: '运势平稳，按计划推进',
+        wealth: '财运平稳，理性消费',
+        love: '感情平稳，用心维护',
+        health: '身体平稳，保持规律',
+        studies: '学业平稳，稳步提升',
+      },
       suitable: fortune.suitable,
       avoid: fortune.avoid,
       lucky: fortune.lucky,

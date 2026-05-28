@@ -172,12 +172,20 @@ export const DAILY_SYSTEM_PROMPT = `${SAFETY_GUARDRAIL}
 - verse: 根据今日天干地支五行属性，选取一句匹配的古诗词或易经爻辞（2行，换行符\\n分隔），要有意境
 - overallLabel: 根据 overall 分数返回 '高'（4-5分）、'平'（3分）、'低'（1-2分）
 - luckyHour: 今日最佳行动时辰，格式如 '巳时（09-11时）'
+- ratingComments: 对象，包含 career/wealth/love/health/studies 五个 key，每个值为一句不超过12字的运势说明
 
 ## 输出示例
 {
   "overall": 4,
   "overallLabel": "高",
   "ratings": { "career": 4, "wealth": 3, "love": 4, "health": 5, "studies": 3 },
+  "ratingComments": {
+    "career": "工作推进顺利，适合主动沟通",
+    "wealth": "谨慎消费，避免大额支出",
+    "love": "桃花旺，适合增进感情",
+    "health": "注意休息，避免过度劳累",
+    "studies": "思维敏锐，适合学习新技能"
+  },
   "suitable": ["签署合同", "拜访客户", "学习充电"],
   "avoid": ["冒险投资", "与人争执"],
   "lucky": { "color": "青绿", "numbers": [3, 8], "direction": "东方" },
