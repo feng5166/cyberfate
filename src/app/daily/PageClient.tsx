@@ -248,70 +248,78 @@ export default function DailyPage() {
             </div>
             {/* 运势概览大卡片 */}
             <Card hover={false}>
-              <div className="flex flex-col items-center text-center">
-                <div
-                  className="text-5xl font-bold"
-                  style={{
-                    color:
-                      result.overallLabel === '高'
-                        ? '#C2762B'
-                        : result.overallLabel === '低'
-                        ? '#9CA3AF'
-                        : '#6B7280',
-                  }}
-                >
-                  {result.overallLabel || (result.overall >= 4 ? '高' : result.overall >= 3 ? '平' : '低')}
+              <div className="flex items-center gap-8">
+                {/* 左：运势等级 */}
+                <div className="flex-shrink-0 text-center">
+                  <div
+                    className="text-6xl font-bold"
+                    style={{
+                      color:
+                        result.overallLabel === '高'
+                          ? '#C2762B'
+                          : result.overallLabel === '低'
+                          ? '#9CA3AF'
+                          : '#6B7280',
+                    }}
+                  >
+                    {result.overallLabel || (result.overall >= 4 ? '高' : result.overall >= 3 ? '平' : '低')}
+                  </div>
+                  <p className="text-sm text-brand-gray mt-1">今日运势</p>
                 </div>
-                <p className="text-sm text-brand-gray mt-1">今日运势</p>
-                <div className="flex gap-2 mt-3">
-                  {result.dayGanzhi.split('').map((char: string, i: number) => (
-                    <div
-                      key={i}
-                      className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg"
-                      style={{ backgroundColor: '#C2762B' }}
-                    >
-                      {char}
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-3 space-y-1 text-sm text-brand-gray">
-                  <p>公历：{result.date}</p>
-                  <p>农历：{result.lunarDate} · {result.dayGanzhi}日</p>
-                  {result.luckyHour && <p>吉时：{result.luckyHour}</p>}
+                {/* 右：干支+日期 */}
+                <div className="flex-1">
+                  <div className="flex gap-2 mb-3">
+                    {result.dayGanzhi.split('').map((char: string, i: number) => (
+                      <div
+                        key={i}
+                        className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg"
+                        style={{ backgroundColor: '#C2762B' }}
+                      >
+                        {char}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="space-y-1 text-sm text-brand-gray">
+                    <p>公历：{result.date}</p>
+                    <p>农历：{result.lunarDate} · {result.dayGanzhi}日</p>
+                    {result.luckyHour && <p>吉时：{result.luckyHour}</p>}
+                  </div>
                 </div>
               </div>
             </Card>
 
-            {/* 今日古诗/格言 */}
-            {result.verse && (
-              <div className="text-center my-4">
-                {result.verse.split('\n').map((line, i) => (
-                  <p
-                    key={i}
-                    className="text-xl text-brand-black"
-                    style={{ fontFamily: "'Noto Serif SC', serif" }}
-                  >
-                    {line}
-                  </p>
-                ))}
-              </div>
-            )}
-
-            {/* 今日意象插画 */}
-            {result.imageUrl && (
-              <div className="flex justify-center my-6">
-                <div className="w-[240px] h-[240px]">
-                  <img
-                    src={result.imageUrl}
-                    alt="今日意象"
-                    className="w-full h-full object-cover"
-                    style={{
-                      clipPath:
-                        'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
-                    }}
-                  />
-                </div>
-              </div>
+            {/* 今日意象 + 古诗/格言 */}
+            {(result.imageUrl || result.verse) && (
+              <Card hover={false} className="bg-[#F5F0E8] border-[#E5D9C0]">
+                {result.imageUrl && (
+                  <div className="flex justify-center py-2">
+                    <div className="w-[200px] h-[200px]">
+                      <img
+                        src={result.imageUrl}
+                        alt="今日意象"
+                        className="w-full h-full object-cover"
+                        style={{
+                          clipPath:
+                            'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+                {result.verse && (
+                  <div className="text-center mt-4">
+                    {result.verse.split('\n').map((line, i) => (
+                      <p
+                        key={i}
+                        className="text-lg text-brand-black"
+                        style={{ fontFamily: "'Noto Serif SC', serif" }}
+                      >
+                        {line}
+                      </p>
+                    ))}
+                  </div>
+                )}
+              </Card>
             )}
 
             {/* 五行小卡片 */}
@@ -325,25 +333,21 @@ export default function DailyPage() {
               ))}
             </div>
 
-            {/* 宜忌（纯文字两列） */}
+            {/* 宜忌（左色条+项目符号） */}
             <div className="grid grid-cols-2 gap-6 my-2">
-              <div>
-                <h4 className="text-lg font-semibold mb-2 pb-2 border-b border-[#E5E0D8]" style={{ color: '#2D6A4F' }}>
-                  宜
-                </h4>
+              <div className="pl-3 border-l-[3px] border-[#2D6A4F]">
+                <h4 className="text-base font-semibold mb-2" style={{ color: '#2D6A4F' }}>宜</h4>
                 <ul className="space-y-1">
                   {result.suitable.map((item, i) => (
-                    <li key={i} className="text-sm text-brand-gray leading-[1.8]">{item}</li>
+                    <li key={i} className="text-sm text-brand-gray leading-[1.8]">· {item}</li>
                   ))}
                 </ul>
               </div>
-              <div>
-                <h4 className="text-lg font-semibold mb-2 pb-2 border-b border-[#E5E0D8]" style={{ color: '#9B2335' }}>
-                  忌
-                </h4>
+              <div className="pl-3 border-l-[3px] border-[#9B2335]">
+                <h4 className="text-base font-semibold mb-2" style={{ color: '#9B2335' }}>忌</h4>
                 <ul className="space-y-1">
                   {result.avoid.map((item, i) => (
-                    <li key={i} className="text-sm text-brand-gray leading-[1.8]">{item}</li>
+                    <li key={i} className="text-sm text-brand-gray leading-[1.8]">· {item}</li>
                   ))}
                 </ul>
               </div>
@@ -366,8 +370,8 @@ export default function DailyPage() {
                   <p className="text-sm font-medium text-brand-black">{result.lucky.direction}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-brand-light mb-1">贵人星座</p>
-                  <p className="text-sm font-medium text-brand-black">-</p>
+                  <p className="text-xs text-brand-light mb-1">吉时</p>
+                  <p className="text-sm font-medium text-brand-black">{result.luckyHour || '-'}</p>
                 </div>
               </div>
             </Card>
