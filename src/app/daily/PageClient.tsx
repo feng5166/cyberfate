@@ -252,8 +252,10 @@ export default function DailyPage() {
                 {/* 左：运势等级 */}
                 <div className="flex-shrink-0 text-center">
                   <div
-                    className="text-7xl font-black"
+                    className="font-black"
                     style={{
+                      fontSize: '80px',
+                      lineHeight: 1,
                       color:
                         result.overallLabel === '高'
                           ? '#C2762B'
@@ -290,7 +292,7 @@ export default function DailyPage() {
 
             {/* 今日意象 + 古诗（合并暖色卡片） */}
             {(result.imageUrl || result.verse) && (
-              <Card hover={false} className="bg-[#F5F0E8] border-[#E5D9C0] mt-2">
+              <div className="rounded-card border border-[#E5D9C0] p-7 mt-2" style={{ backgroundColor: '#F5F0E8' }}>
                 {result.imageUrl && (
                   <div className="flex justify-center py-4">
                     <div className="w-[200px] h-[200px]">
@@ -319,7 +321,7 @@ export default function DailyPage() {
                     ))}
                   </div>
                 )}
-              </Card>
+              </div>
             )}
 
             {/* 五行小卡片 */}
@@ -398,7 +400,7 @@ export default function DailyPage() {
             </Card>
 
             {/* 今日卦象入口 */}
-            <Card hover={false} className="bg-[#F5F0E8] border-[#E5D9C0]">
+            <div className="rounded-card border border-[#E5D9C0] p-7" style={{ backgroundColor: '#F5F0E8' }}>
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="text-base font-semibold text-brand-black mb-1">🔮 今日卦象</h4>
@@ -410,7 +412,7 @@ export default function DailyPage() {
                 </div>
                 <div className="text-4xl opacity-30">🪙</div>
               </div>
-            </Card>
+            </div>
 
             {/* 🎵 今日之歌 */}
             <DailyMusicCard />
