@@ -517,7 +517,7 @@ export default function DailyPage() {
             {/* 分享今日运势 - 醒目按钮 */}
             <button
               onClick={handleShare}
-              style={{ width: '100%', padding: '14px 20px', borderRadius: 12, background: 'linear-gradient(135deg, #2D6A4F 0%, #1B4332 100%)', color: 'white', fontSize: 14, fontWeight: 500, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+              style={{ width: '100%', padding: '14px 20px', borderRadius: 12, background: 'linear-gradient(135deg, #1a1040 0%, #2d1b69 50%, #1a2a5c 100%)', color: 'white', fontSize: 14, fontWeight: 500, border: '1px solid rgba(212, 175, 55, 0.3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 4px 16px rgba(45, 27, 105, 0.3)' }}
             >
               📤 分享今日运势
             </button>
@@ -775,11 +775,11 @@ export default function DailyPage() {
             </Card>
 
             {/* 今日卦象 - 主动引导 */}
-            <div style={{ background: 'linear-gradient(135deg, #f5f0e8 0%, #ede4d4 100%)', borderRadius: 16, padding: 24, border: '1px solid #E5D9C0' }}>
-              <h4 style={{ fontSize: 18, fontWeight: 600, marginBottom: 6, color: '#1C1A16' }}>🔮 今日卦象</h4>
-              <p style={{ fontSize: 13, color: '#6B7280', marginBottom: 16 }}>专为今日运势定制，AI 即时解卦</p>
+            <div style={{ background: 'linear-gradient(135deg, #1a1040 0%, #2d1b69 50%, #1a2a5c 100%)', borderRadius: 16, padding: 24, border: '1px solid rgba(212, 175, 55, 0.2)', boxShadow: '0 4px 20px rgba(45, 27, 105, 0.2)' }}>
+              <h4 style={{ fontSize: 18, fontWeight: 600, marginBottom: 6, color: '#F5E6B8' }}>🔮 今日卦象</h4>
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', marginBottom: 16 }}>专为今日运势定制，AI 即时解卦</p>
               <Link href='/liuyao'>
-                <button style={{ background: 'linear-gradient(135deg, #2D6A4F 0%, #1B4332 100%)', color: 'white', padding: '14px 32px', borderRadius: 12, fontSize: 15, fontWeight: 600, border: 'none', cursor: 'pointer', width: '100%' }}>
+                <button style={{ background: 'linear-gradient(135deg, #D4AF37 0%, #C49B2C 100%)', color: '#1a1040', padding: '14px 32px', borderRadius: 12, fontSize: 15, fontWeight: 600, border: 'none', cursor: 'pointer', width: '100%', boxShadow: '0 2px 8px rgba(212, 175, 55, 0.3)' }}>
                   开始占卜 →
                 </button>
               </Link>
@@ -802,7 +802,7 @@ export default function DailyPage() {
             <Card hover={false} className="text-center py-5">
               <p className="text-sm text-brand-gray mb-2">想深入了解自己的命盘？</p>
               <Link href="/bazi">
-                <button style={{ background: 'linear-gradient(135deg, #2D6A4F 0%, #1B4332 100%)', color: 'white', padding: '12px 32px', borderRadius: 8, fontSize: 14, fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 6, border: 'none', cursor: 'pointer' }}>
+                <button style={{ background: 'linear-gradient(135deg, #1a1040 0%, #2d1b69 50%, #1a2a5c 100%)', color: '#F5E6B8', padding: '12px 32px', borderRadius: 8, fontSize: 14, fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid rgba(212, 175, 55, 0.3)', cursor: 'pointer' }}>
                   八字全面分析 <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </Link>
