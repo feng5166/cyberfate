@@ -517,30 +517,43 @@ export default function DailyPage() {
                 </div>
               </div>
               {/* 综合分大圆 */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
                 <div style={{ width: 80, height: 80, borderRadius: '50%', border: '3px solid #C8622A', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                   <div style={{ fontSize: 28, fontWeight: 800, color: '#C8622A', lineHeight: 1 }}>{result.overall * 20}</div>
                   <div style={{ fontSize: 10, color: 'rgba(28,26,22,0.55)', marginTop: 2 }}>综合</div>
                 </div>
+                <div style={{ fontSize: 11, color: 'rgba(28,26,22,0.55)', marginTop: 6, textAlign: 'center' }}>
+                  {(result.advice || '').slice(0, 20)}
+                </div>
               </div>
-              {/* 6维进度条 */}
-              <div style={{ display: 'grid', gap: 10 }}>
+              {/* 6维进度条 + 命理依据 */}
+              <div style={{ display: 'grid', gap: 12 }}>
                 {([
-                  { label: '事业', value: result.ratings.career },
-                  { label: '财运', value: result.ratings.wealth },
-                  { label: '情感', value: result.ratings.love },
-                  { label: '健康', value: result.ratings.health },
-                  { label: '学业', value: result.ratings.studies },
-                  { label: '人缘', value: result.ratings.social || 3 },
-                ]).map(({ label, value }) => (
-                  <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: 12, color: 'rgba(28,26,22,0.55)', width: 32, flexShrink: 0 }}>{label}</span>
-                    <div style={{ flex: 1, height: 6, backgroundColor: 'rgba(28,26,22,0.06)', borderRadius: 3, overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${value * 20}%`, backgroundColor: '#C8622A', borderRadius: 3 }} />
+                  { key: 'career' as const, label: '事业', value: result.ratings.career },
+                  { key: 'wealth' as const, label: '财运', value: result.ratings.wealth },
+                  { key: 'love' as const, label: '情感', value: result.ratings.love },
+                  { key: 'health' as const, label: '健康', value: result.ratings.health },
+                  { key: 'studies' as const, label: '学业', value: result.ratings.studies },
+                  { key: 'social' as const, label: '人缘', value: result.ratings.social || 3 },
+                ]).map(({ key, label, value }) => {
+                  const comment = result.ratingComments?.[key] || '';
+                  return (
+                    <div key={key}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: 12, color: 'rgba(28,26,22,0.55)', width: 32, flexShrink: 0 }}>{label}</span>
+                        <div style={{ flex: 1, height: 6, backgroundColor: 'rgba(28,26,22,0.06)', borderRadius: 3, overflow: 'hidden' }}>
+                          <div style={{ height: '100%', width: `${value * 20}%`, backgroundColor: '#C8622A', borderRadius: 3 }} />
+                        </div>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: '#C8622A', width: 24, textAlign: 'right' }}>{value * 20}</span>
+                      </div>
+                      {comment && (
+                        <div style={{ fontSize: 12, color: 'rgba(28,26,22,0.55)', marginTop: 3, paddingLeft: 40, lineHeight: 1.5 }}>
+                          ↳ {comment}
+                        </div>
+                      )}
                     </div>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: '#C8622A', width: 24, textAlign: 'right' }}>{value * 20}</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               {/* 吉时 + 幸运三件套 */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(28,26,22,0.06)' }}>

@@ -172,19 +172,23 @@ export const DAILY_SYSTEM_PROMPT = `${SAFETY_GUARDRAIL}
 - verse: 根据今日天干地支五行属性，选取一句匹配的古诗词或易经爻辞（2行，换行符\\n分隔），要有意境
 - overallLabel: 根据 overall 分数返回 '高'（4-5分）、'平'（3分）、'低'（1-2分）
 - luckyHour: 今日最佳行动时辰，格式如 '巳时（09-11时）'
-- ratingComments: 对象，包含 career/wealth/love/health/studies 五个 key，每个值为一句不超过12字的运势说明
+- headline: 4字判词，有“决断感”的关键词（如：韬光养晦、乘势而为、静观其变、主动出击、守正待机）
+- ratings 必须包含 career、wealth、love、health、studies、social 六项（social 表示人缘运）
+- ratingComments: 对象，包含 career/wealth/love/health/studies/social 六个 key，每个值为一句不超过15字的命理化解释（必须包含至少一个命理术语：日主/受克/相生/印星/食伤/财星/官星/比劫/得令/失令等）
 
 ## 输出示例
 {
   "overall": 4,
+  "headline": "乘势而为",
   "overallLabel": "高",
-  "ratings": { "career": 4, "wealth": 3, "love": 4, "health": 5, "studies": 3 },
+  "ratings": { "career": 4, "wealth": 3, "love": 4, "health": 5, "studies": 3, "social": 4 },
   "ratingComments": {
-    "career": "工作推进顺利，适合主动沟通",
-    "wealth": "谨慎消费，避免大额支出",
-    "love": "桃花旺，适合增进感情",
-    "health": "注意休息，避免过度劳累",
-    "studies": "思维敏锐，适合学习新技能"
+    "career": "印星得力，贵人助推进",
+    "wealth": "财星临平，守财为上",
+    "love": "食伤生财，桃花小旺",
+    "health": "日主得生，精力充沛",
+    "studies": "印星化祙，文思敏捷",
+    "social": "比劫帮身，人缘和顺"
   },
   "suitable": ["签署合同", "拜访客户", "学习充电"],
   "avoid": ["冒险投资", "与人争执"],
