@@ -238,7 +238,7 @@ function WeekCalendar({
                 <span
                   className={`relative text-sm font-semibold w-7 h-7 flex items-center justify-center rounded-full`}
                   style={isSelected
-                    ? { backgroundColor: '#2D6A4F', color: 'white' }
+                    ? { backgroundColor: '#1C1A16', color: 'white' }
                     : { color: '#1C1A16' }
                   }
                 >
