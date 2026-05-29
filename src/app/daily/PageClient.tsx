@@ -564,48 +564,6 @@ export default function DailyPage() {
             </div>
 
 
-            {/* 六维运势 */}
-            <Card hover={false}>
-              <h4 className="text-sm font-medium text-brand-black mb-4">📊 六维运势</h4>
-              <div className="space-y-3">
-                {([
-                  { key: 'career' as const, label: '事业', value: result.ratings.career },
-                  { key: 'wealth' as const, label: '财运', value: result.ratings.wealth },
-                  { key: 'love' as const,   label: '情感', value: result.ratings.love },
-                  { key: 'health' as const, label: '健康', value: result.ratings.health },
-                  { key: 'studies' as const, label: '学业', value: result.ratings.studies },
-                  { key: 'social' as const, label: '人缘', value: result.ratings.social || 3 },
-                ]).map(({ key, label, value }) => {
-                  const score = value * 20;
-                  const comment = result.ratingComments?.[key] || '';
-                  const isExpanded = expandedRating === key;
-                  return (
-                    <div
-                      key={key}
-                      onClick={() => setExpandedRating(isExpanded ? null : key)}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ fontSize: 13, color: 'rgba(28,26,22,0.7)', width: 32, flexShrink: 0 }}>{label}</span>
-                        <div style={{ flex: 1, height: 6, backgroundColor: 'rgba(28,26,22,0.06)', borderRadius: 3, overflow: 'hidden' }}>
-                          <div style={{ height: '100%', width: `${score}%`, backgroundColor: '#C8622A', borderRadius: 3, transition: 'width 0.3s' }} />
-                        </div>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: '#C8622A', width: 28, textAlign: 'right' }}>{score}</span>
-                      </div>
-                      {isExpanded && comment && (
-                        <p style={{ fontSize: 12, color: '#6B7280', marginTop: 4, paddingLeft: 40 }}>{comment}</p>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(28,26,22,0.06)' }}>
-                <span style={{ fontSize: 13, color: 'rgba(28,26,22,0.55)' }}>综合</span>
-                <span style={{ fontSize: 20, fontWeight: 700, color: '#C8622A', marginLeft: 8 }}>{result.overall * 20}</span>
-                <span style={{ fontSize: 12, color: 'rgba(28,26,22,0.4)', marginLeft: 2 }}>/100</span>
-              </div>
-            </Card>
-
             {/* 宜忌（纯文字两列） */}
             <div className="grid grid-cols-2 gap-6 px-1">
               <div className="pl-3 border-l-[3px] border-[#2D6A4F]">
@@ -717,20 +675,6 @@ export default function DailyPage() {
               <p className="text-gray-700" style={{ fontSize: 15, lineHeight: 1.8 }}>{result.advice}</p>
             </Card>
 
-            {/* 今日卦象 - 米白底+赭橙描边 */}
-            <div style={{ background: '#FAFAF8', borderRadius: 16, padding: 24, border: '1.5px solid rgba(200,98,42,0.25)' }}>
-              <h4 style={{ fontSize: 18, fontWeight: 600, marginBottom: 6, color: '#1C1A16' }}>✦ 今日卦象</h4>
-              <p style={{ fontSize: 13, color: 'rgba(28, 26, 22, 0.55)', marginBottom: 16 }}>专为今日运势定制，AI 即时解卦</p>
-              <Link href='/liuyao'>
-                <span style={{ fontSize: 14, fontWeight: 500, color: '#C8622A', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                  展开详解 →
-                </span>
-              </Link>
-            </div>
-
-            {/* 🎵 今日之歌 */}
-            <DailyMusicCard />
-
             {/* 命理脉络（默认展开） */}
             {hasSavedData && (
               <div style={{ marginTop: 8 }}>
@@ -755,6 +699,22 @@ export default function DailyPage() {
                 )}
               </div>
             )}
+
+            {/* 今日卦象 - 米白底+赭橙描边 */}
+            <div style={{ background: '#FAFAF8', borderRadius: 16, padding: 24, border: '1.5px solid rgba(200,98,42,0.25)' }}>
+              <h4 style={{ fontSize: 18, fontWeight: 600, marginBottom: 6, color: '#1C1A16' }}>✦ 今日卦象</h4>
+              <p style={{ fontSize: 13, color: 'rgba(28, 26, 22, 0.55)', marginBottom: 16 }}>专为今日运势定制，AI 即时解卦</p>
+              <Link href='/liuyao'>
+                <span style={{ fontSize: 14, fontWeight: 500, color: '#C8622A', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  展开详解 →
+                </span>
+              </Link>
+            </div>
+
+            {/* 🎵 今日之歌 */}
+            <DailyMusicCard />
+
+
 
             {/* 八字深度分析卡片 */}
             <Link href="/bazi">
