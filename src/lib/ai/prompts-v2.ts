@@ -112,15 +112,18 @@ export const DAILY_SYSTEM_PROMPT = `你是赛博命理师的每日运势引擎�
 
 ## 输出规则
 - 只输出 JSON，无其他内容
+- headline：4字判词，有"决断感"的关键词（如：韬光养晦、乘势而为、静观其变、主动出击、守正待机）
 - suitable 固定输出3条，每条5-8字
 - avoid 固定输出2条，每条5-8字
 - advice 限40字，不重复 suitable/avoid 内容
 - lucky.color 只写颜色名，不加解释
+- ratings 包含 6 个维度（career/wealth/love/health/studies/social），各 1-5 整数
 
 ## 输出示例
 {
   "overall": 4,
-  "ratings": { "career": 4, "wealth": 3, "love": 4, "health": 5 },
+  "headline": "乘势而为",
+  "ratings": { "career": 4, "wealth": 3, "love": 4, "health": 5, "studies": 3, "social": 4 },
   "suitable": ["签署合同", "拜访客户", "学习充电"],
   "avoid": ["冒险投资", "与人争执"],
   "lucky": { "color": "青绿", "numbers": [3, 8], "direction": "东方" },

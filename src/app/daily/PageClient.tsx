@@ -41,12 +41,14 @@ interface DailyResult {
   lunarDate: string;
   dayGanzhi: string;
   overall: number;
+  headline?: string;
   ratings: {
     career: number;
     wealth: number;
     love: number;
     health: number;
     studies: number;
+    social?: number;
   };
   suitable: string[];
   avoid: string[];
@@ -66,6 +68,7 @@ interface DailyResult {
     love?: string;
     health?: string;
     studies?: string;
+    social?: string;
   };
 }
 
@@ -500,52 +503,80 @@ export default function DailyPage() {
           <div className="space-y-5 pb-20 md:pb-26 animate-fadeIn">
 
             {/* 今日核心速览 */}
-            <div style={{ backgroundColor: 'white', borderRadius: 16, border: '1px solid #E5E7EB', padding: 24, textAlign: 'center' }}>
-              <div style={{ fontSize: 14, color: '#9CA3AF', marginBottom: 8 }}>今日运势</div>
-              <div style={{ fontSize: 48, fontWeight: 800, color: result.overallLabel === '吉' ? '#2D6A4F' : result.overallLabel === '凶' ? '#DC2626' : '#1C1A16', lineHeight: 1.2, marginBottom: 8 }}>
-                {result.overallLabel || '平'}
-              </div>
-              <div style={{ fontSize: 14, color: '#6B7280', marginBottom: 4 }}>
-                {result.dayGanzhi} · {result.date}
-              </div>
-              <div style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 16 }}>
-                {result.lunarDate} · {result.dayGanzhi}日
-              </div>
-              {result.luckyHour && (
-                <div style={{ display: 'inline-block', backgroundColor: '#FEF3C7', color: '#92400E', padding: '6px 16px', borderRadius: 20, fontSize: 13, fontWeight: 500, marginBottom: 16 }}>
-                  ⏰ 吉时：{result.luckyHour}
+            <div style={{ backgroundColor: 'white', borderRadius: 16, border: '1px solid #E5E7EB', padding: 24 }}>
+              {/* 判词 + 日期 */}
+              <div style={{ textAlign: 'center', marginBottom: 20 }}>
+                <div style={{ fontSize: 24, fontWeight: 700, color: '#1C1A16', marginBottom: 4 }}>
+                  {result.headline || (result.overall >= 4 ? '乘势而为' : result.overall >= 3 ? '守正待机' : '韬光养晦')}
                 </div>
-              )}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 12 }}>
-                <div style={{ backgroundColor: '#F9FAFB', padding: '10px 8px', borderRadius: 8 }}>
-                  <div style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 4 }}>🎨 幸运色</div>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: '#1C1A16' }}>{result.lucky.color}</div>
+                <div style={{ fontSize: 13, color: 'rgba(28,26,22,0.55)', lineHeight: 1.6 }}>
+                  {result.advice}
                 </div>
-                <div style={{ backgroundColor: '#F9FAFB', padding: '10px 8px', borderRadius: 8 }}>
-                  <div style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 4 }}>🔢 幸运数</div>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: '#1C1A16' }}>{result.lucky.numbers.join(', ')}</div>
+                <div style={{ fontSize: 12, color: '#9CA3AF', marginTop: 8 }}>
+                  {result.dayGanzhi} · {result.date} · {result.lunarDate}
                 </div>
-                <div style={{ backgroundColor: '#F9FAFB', padding: '10px 8px', borderRadius: 8 }}>
-                  <div style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 4 }}>🧭 方位</div>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: '#1C1A16' }}>{result.lucky.direction}</div>
+              </div>
+              {/* 综合分大圆 */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
+                <div style={{ width: 80, height: 80, borderRadius: '50%', border: '3px solid #C8622A', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ fontSize: 28, fontWeight: 800, color: '#C8622A', lineHeight: 1 }}>{result.overall * 20}</div>
+                  <div style={{ fontSize: 10, color: 'rgba(28,26,22,0.55)', marginTop: 2 }}>综合</div>
+                </div>
+              </div>
+              {/* 6维进度条 */}
+              <div style={{ display: 'grid', gap: 10 }}>
+                {([
+                  { label: '事业', value: result.ratings.career },
+                  { label: '财运', value: result.ratings.wealth },
+                  { label: '情感', value: result.ratings.love },
+                  { label: '健康', value: result.ratings.health },
+                  { label: '学业', value: result.ratings.studies },
+                  { label: '人缘', value: result.ratings.social || 3 },
+                ]).map(({ label, value }) => (
+                  <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 12, color: 'rgba(28,26,22,0.55)', width: 32, flexShrink: 0 }}>{label}</span>
+                    <div style={{ flex: 1, height: 6, backgroundColor: 'rgba(28,26,22,0.06)', borderRadius: 3, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${value * 20}%`, backgroundColor: '#C8622A', borderRadius: 3 }} />
+                    </div>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: '#C8622A', width: 24, textAlign: 'right' }}>{value * 20}</span>
+                  </div>
+                ))}
+              </div>
+              {/* 吉时 + 幸运三件套 */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(28,26,22,0.06)' }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 2 }}>吉时</div>
+                  <div style={{ fontSize: 12, fontWeight: 500, color: '#1C1A16' }}>{result.luckyHour || '-'}</div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 2 }}>幸运色</div>
+                  <div style={{ fontSize: 12, fontWeight: 500, color: '#1C1A16' }}>{result.lucky.color}</div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 2 }}>幸运数</div>
+                  <div style={{ fontSize: 12, fontWeight: 500, color: '#1C1A16' }}>{result.lucky.numbers.join(',')}</div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 2 }}>方位</div>
+                  <div style={{ fontSize: 12, fontWeight: 500, color: '#1C1A16' }}>{result.lucky.direction}</div>
                 </div>
               </div>
             </div>
 
 
-            {/* 五维运势 */}
+            {/* 六维运势 */}
             <Card hover={false}>
-              <h4 className="text-sm font-medium text-brand-black mb-4">📊 五维运势</h4>
-              <div className="space-y-4">
+              <h4 className="text-sm font-medium text-brand-black mb-4">📊 六维运势</h4>
+              <div className="space-y-3">
                 {([
-                  { key: 'career' as const, label: '事业运', value: result.ratings.career, barColor: '#2A5C8B' },
-                  { key: 'wealth' as const, label: '财富运', value: result.ratings.wealth, barColor: '#C8A22A' },
-                  { key: 'love' as const,   label: '感情运', value: result.ratings.love, barColor: '#C85A7A' },
-                  { key: 'health' as const, label: '健康运', value: result.ratings.health, barColor: '#4A7A35' },
-                  { key: 'studies' as const, label: '学业运', value: result.ratings.studies, barColor: '#6B4A8B' },
-                ]).map(({ key, label, value, barColor }) => {
-                  const levelText = value >= 5 ? '优秀' : value >= 4 ? '良好' : value >= 3 ? '一般' : value >= 2 ? '偏弱' : '较差';
-                  const levelColor = value >= 5 ? '#2D6A4F' : value >= 4 ? '#2563EB' : value >= 3 ? '#6B7280' : value >= 2 ? '#D97706' : '#DC2626';
+                  { key: 'career' as const, label: '事业', value: result.ratings.career },
+                  { key: 'wealth' as const, label: '财运', value: result.ratings.wealth },
+                  { key: 'love' as const,   label: '情感', value: result.ratings.love },
+                  { key: 'health' as const, label: '健康', value: result.ratings.health },
+                  { key: 'studies' as const, label: '学业', value: result.ratings.studies },
+                  { key: 'social' as const, label: '人缘', value: result.ratings.social || 3 },
+                ]).map(({ key, label, value }) => {
+                  const score = value * 20;
                   const comment = result.ratingComments?.[key] || '';
                   const isExpanded = expandedRating === key;
                   return (
@@ -554,40 +585,24 @@ export default function DailyPage() {
                       onClick={() => setExpandedRating(isExpanded ? null : key)}
                       style={{ cursor: 'pointer' }}
                     >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium text-brand-black">{label}</span>
-                        <span className="text-sm font-semibold flex items-center gap-1" style={{ color: levelColor }}>
-                          {levelText}
-                          <span
-                            style={{
-                              display: 'inline-block',
-                              fontSize: 10,
-                              transition: 'transform 0.2s',
-                              transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-                            }}
-                          >
-                            ▾
-                          </span>
-                        </span>
-                      </div>
-                      <div className="w-full h-1.5 rounded overflow-hidden mb-1" style={{ backgroundColor: 'rgba(28, 26, 22, 0.06)' }}>
-                        <div
-                          className="h-full rounded transition-all"
-                          style={{ width: `${value * 20}%`, backgroundColor: barColor }}
-                        />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: 13, color: 'rgba(28,26,22,0.7)', width: 32, flexShrink: 0 }}>{label}</span>
+                        <div style={{ flex: 1, height: 6, backgroundColor: 'rgba(28,26,22,0.06)', borderRadius: 3, overflow: 'hidden' }}>
+                          <div style={{ height: '100%', width: `${score}%`, backgroundColor: '#C8622A', borderRadius: 3, transition: 'width 0.3s' }} />
+                        </div>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: '#C8622A', width: 28, textAlign: 'right' }}>{score}</span>
                       </div>
                       {isExpanded && comment && (
-                        <p className="leading-relaxed" style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>{comment}</p>
+                        <p style={{ fontSize: 12, color: '#6B7280', marginTop: 4, paddingLeft: 40 }}>{comment}</p>
                       )}
                     </div>
                   );
                 })}
               </div>
-              <div style={{ backgroundColor: '#FEF3C7', padding: '14px 16px', borderRadius: 10, marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <p style={{ fontSize: 13, fontWeight: 500, color: '#92400E', lineHeight: 1.5 }}>✦ 想了解本月完整运势走势？</p>
-                <Link href='/bazi'>
-                  <button style={{ backgroundColor: '#D97706', color: 'white', padding: '7px 16px', borderRadius: 6, fontSize: 12, fontWeight: 500, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}>查看完整命盘 →</button>
-                </Link>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(28,26,22,0.06)' }}>
+                <span style={{ fontSize: 13, color: 'rgba(28,26,22,0.55)' }}>综合</span>
+                <span style={{ fontSize: 20, fontWeight: 700, color: '#C8622A', marginLeft: 8 }}>{result.overall * 20}</span>
+                <span style={{ fontSize: 12, color: 'rgba(28,26,22,0.4)', marginLeft: 2 }}>/100</span>
               </div>
             </Card>
 
@@ -659,47 +674,34 @@ export default function DailyPage() {
                     opacity = 1;
                     border = '1px solid rgba(28, 26, 22, 0.06)';
                   }
+                  // 五行等级计算：日主同行=旺，生我=相，我生=休，克我=囚，我克=死
+                  const wuxingOrder = ['wood', 'fire', 'earth', 'metal', 'water'];
+                  const masterWuxingKey = wangWuxing; // 日主五行
+                  let levelLabel = '平';
+                  if (masterWuxingKey) {
+                    const mIdx = wuxingOrder.indexOf(masterWuxingKey);
+                    const iIdx = wuxingOrder.indexOf(item.key);
+                    if (item.key === masterWuxingKey) levelLabel = '旺';
+                    else if (wuxingOrder[(mIdx + 4) % 5] === item.key) levelLabel = '相'; // 生我
+                    else if (wuxingOrder[(mIdx + 1) % 5] === item.key) levelLabel = '休'; // 我生
+                    else if (wuxingOrder[(mIdx + 2) % 5] === item.key) levelLabel = '囚'; // 克我
+                    else if (wuxingOrder[(mIdx + 3) % 5] === item.key) levelLabel = '死'; // 我克
+                  }
                   return (
                     <div
                       key={item.key}
                       className="rounded-xl text-center"
-                      style={{ backgroundColor: bgColor, opacity, border, minHeight: 80, padding: '12px 8px' }}
+                      style={{ backgroundColor: bgColor, opacity, border, minHeight: 88, padding: '10px 6px' }}
                     >
-                      <span style={{ fontSize: 24 }}>{item.icon}</span>
-                      <span className="block mt-1" style={{ fontSize: 16, fontWeight: 600, color: textColor }}>{item.label}</span>
-                      {isWang ? (
-                        <span className="block mt-0.5" style={{ fontSize: 10, fontWeight: 600, color: textColor }}>旺</span>
-                      ) : (
-                        <span className="block" style={{ fontSize: 10, color: textColor }}>{item.desc}</span>
-                      )}
+                      <span style={{ fontSize: 22 }}>{item.icon}</span>
+                      <span className="block mt-0.5" style={{ fontSize: 15, fontWeight: 600, color: textColor }}>{item.label}</span>
+                      <span className="block mt-0.5" style={{ fontSize: 11, fontWeight: 500, color: textColor, opacity: 0.8 }}>{levelLabel}</span>
                     </div>
                   );
                 });
               })()}
             </div>
 
-            {/* 幸运指南 */}
-            <Card hover={false}>
-              <h4 className="text-sm font-medium text-brand-black mb-4">🍀 幸运指南</h4>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div>
-                  <p className="text-xs text-brand-light mb-1">幸运颜色</p>
-                  <p className="text-sm font-medium text-brand-black">{result.lucky.color}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-brand-light mb-1">幸运数字</p>
-                  <p className="text-sm font-medium text-brand-black">{result.lucky.numbers.join(', ')}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-brand-light mb-1">幸运方位</p>
-                  <p className="text-sm font-medium text-brand-black">{result.lucky.direction}</p>
-                </div>
-                <div style={{ backgroundColor: 'rgba(200, 162, 42, 0.08)', borderRadius: 6, padding: '8px' }}>
-                  <p className="text-xs mb-1" style={{ color: '#8B6914' }}>吉时</p>
-                  <p className="text-sm font-medium text-brand-black">{result.luckyHour || '-'}</p>
-                </div>
-              </div>
-            </Card>
 
             {/* AI 运势建议 */}
             <Card hover={false} className="bg-yellow-50 border-yellow-200">
@@ -715,14 +717,14 @@ export default function DailyPage() {
               <p className="text-gray-700" style={{ fontSize: 15, lineHeight: 1.8 }}>{result.advice}</p>
             </Card>
 
-            {/* 今日卦象 - 主动引导 */}
-            <div style={{ background: '#F5EFE2', borderRadius: 16, padding: 24, border: '1px solid rgba(28, 26, 22, 0.08)' }}>
+            {/* 今日卦象 - 米白底+赭橙描边 */}
+            <div style={{ background: '#FAFAF8', borderRadius: 16, padding: 24, border: '1.5px solid rgba(200,98,42,0.25)' }}>
               <h4 style={{ fontSize: 18, fontWeight: 600, marginBottom: 6, color: '#1C1A16' }}>✦ 今日卦象</h4>
               <p style={{ fontSize: 13, color: 'rgba(28, 26, 22, 0.55)', marginBottom: 16 }}>专为今日运势定制，AI 即时解卦</p>
               <Link href='/liuyao'>
-                <button className="hover:bg-[rgba(28,26,22,0.04)] hover:border-[rgba(28,26,22,0.35)] transition-colors" style={{ background: 'transparent', color: '#1C1A16', padding: '14px 32px', borderRadius: 12, fontSize: 15, fontWeight: 600, border: '1.5px solid rgba(28, 26, 22, 0.20)', cursor: 'pointer', width: '100%' }}>
-                  ✨ 开始占卜 →
-                </button>
+                <span style={{ fontSize: 14, fontWeight: 500, color: '#C8622A', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  展开详解 →
+                </span>
               </Link>
             </div>
 
@@ -754,15 +756,17 @@ export default function DailyPage() {
               </div>
             )}
 
-            {/* 引导到八字分析 */}
-            <Card hover={false} className="text-center py-5">
-              <p className="text-sm text-brand-gray mb-2">想深入了解自己的命盘？</p>
-              <Link href="/bazi">
-                <button className="hover:bg-[rgba(28,26,22,0.04)] hover:border-[rgba(28,26,22,0.35)] transition-colors" style={{ background: 'transparent', color: '#1C1A16', padding: '12px 32px', borderRadius: 8, fontSize: 14, fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 6, border: '1.5px solid rgba(28, 26, 22, 0.20)', cursor: 'pointer' }}>
-                  八字全面分析 <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </Link>
-            </Card>
+            {/* 八字深度分析卡片 */}
+            <Link href="/bazi">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', backgroundColor: 'white', borderRadius: 12, border: '1px solid #E5E7EB', cursor: 'pointer' }}>
+                <span style={{ fontSize: 24, flexShrink: 0 }}>☰</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 500, color: '#1C1A16' }}>八字深度分析</div>
+                  <div style={{ fontSize: 12, color: 'rgba(28,26,22,0.55)', marginTop: 2 }}>解读完整命盘与流年大运</div>
+                </div>
+                <button style={{ backgroundColor: '#C8622A', color: 'white', padding: '6px 12px', borderRadius: 6, fontSize: 12, fontWeight: 500, border: 'none', cursor: 'pointer', flexShrink: 0 }}>查看</button>
+              </div>
+            </Link>
 
             {/* 分享今日运势 */}
             <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #F3F4F6' }}>

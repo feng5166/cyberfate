@@ -67,6 +67,7 @@ function normalizeRatings(ratings: any, overall: number) {
     love: ratings?.love ?? 3,
     health: ratings?.health ?? 3,
     studies: ratings?.studies ?? 3,
+    social: ratings?.social ?? 3,
   };
 }
 
@@ -157,6 +158,7 @@ export async function POST(req: NextRequest) {
       verse: (fortune as any).verse || null,
       imageUrl,
       advice: fortune.advice,
+      headline: (fortune as any).headline || null,
       _source: (fortune as any)._source ?? 'unknown',
     });
   } catch (error) {
@@ -251,12 +253,14 @@ function generateFallbackFortune(dayMaster: string, dayGanzhi: string, targetDat
   return {
     overall,
     overallLabel: overall >= 4 ? '高' : overall >= 3 ? '平' : '低',
+    headline: overall >= 4 ? '乘势而为' : overall >= 3 ? '守正待机' : '韬光养晦',
     ratings: {
       career: Math.min(5, Math.max(1, overall + Math.floor(seededRandom(seed, 1) * 2) - 1)),
       wealth: Math.min(5, Math.max(1, overall + Math.floor(seededRandom(seed, 2) * 2) - 1)),
       love: Math.min(5, Math.max(1, overall + Math.floor(seededRandom(seed, 3) * 2) - 1)),
       health: Math.min(5, Math.max(1, overall + Math.floor(seededRandom(seed, 4) * 2))),
       studies: Math.min(5, Math.max(1, overall + Math.floor(seededRandom(seed, 6) * 2) - 1)),
+      social: Math.min(5, Math.max(1, overall + Math.floor(seededRandom(seed, 10) * 2) - 1)),
     },
     suitable,
     avoid,
