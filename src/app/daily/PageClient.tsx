@@ -442,7 +442,13 @@ export default function DailyPage() {
       </div>
 
       {/* 页面标题 */}
-      <PageHeader title="每日运势" subtitle="每日运势分析，是东方智慧的凝练，更是你掌握当下、规划未来的参照。" />
+      {/* 页面标题 */}
+      <div className="text-center pt-16 md:pt-20 pb-8">
+        <h1 style={{ fontSize: 36, fontWeight: 700, color: '#1C1A16' }} className="md:text-[48px]">每日运势</h1>
+        <p style={{ fontSize: 15, color: '#6B7280', marginTop: 12, lineHeight: 1.6 }}>
+          每日运势分析，是东方智慧的凝练，更是你掌握当下、规划未来的参照。
+        </p>
+      </div>
 
       <Container>
         {/* 大运 / 流年 / 流月 命理脉络 */}
