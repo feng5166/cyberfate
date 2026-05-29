@@ -238,7 +238,7 @@ function WeekCalendar({
                 <span
                   className={`relative text-sm font-semibold w-7 h-7 flex items-center justify-center rounded-full`}
                   style={isSelected
-                    ? { backgroundColor: '#0F0F0F', color: 'white' }
+                    ? { backgroundColor: '#2D6A4F', color: 'white' }
                     : { color: '#1C1A16' }
                   }
                 >
@@ -517,7 +517,7 @@ export default function DailyPage() {
             {/* 分享今日运势 - 醒目按钮 */}
             <button
               onClick={handleShare}
-              style={{ width: '100%', padding: '14px 20px', borderRadius: 12, backgroundColor: '#1C1A16', color: 'white', fontSize: 14, fontWeight: 500, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+              style={{ width: '100%', padding: '14px 20px', borderRadius: 12, background: 'linear-gradient(135deg, #2D6A4F 0%, #1B4332 100%)', color: 'white', fontSize: 14, fontWeight: 500, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
             >
               📤 分享今日运势
             </button>
@@ -775,7 +775,7 @@ export default function DailyPage() {
             </Card>
 
             {/* 今日卦象 - 主动引导 */}
-            <div style={{ backgroundColor: '#1C1A16', borderRadius: 16, padding: 24, color: 'white' }}>
+            <div style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #0f2744 100%)', borderRadius: 16, padding: 24, color: 'white' }}>
               <h4 style={{ fontSize: 18, fontWeight: 600, marginBottom: 6 }}>🔮 今日卦象</h4>
               <p style={{ fontSize: 13, color: '#9CA3AF', marginBottom: 16 }}>专为今日运势定制，AI 即时解卦</p>
               <Link href='/liuyao'>
@@ -802,7 +802,7 @@ export default function DailyPage() {
             <Card hover={false} className="text-center py-5">
               <p className="text-sm text-brand-gray mb-2">想深入了解自己的命盘？</p>
               <Link href="/bazi">
-                <button style={{ backgroundColor: '#1C1A16', color: 'white', padding: '12px 32px', borderRadius: 8, fontSize: 14, fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 6, border: 'none', cursor: 'pointer' }}>
+                <button style={{ background: 'linear-gradient(135deg, #2D6A4F 0%, #1B4332 100%)', color: 'white', padding: '12px 32px', borderRadius: 8, fontSize: 14, fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 6, border: 'none', cursor: 'pointer' }}>
                   八字全面分析 <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </Link>
