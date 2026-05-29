@@ -10,7 +10,7 @@ import { AiDisclaimer } from '@/components/ui/AiDisclaimer';
 import { Footer } from '@/components/layout/Footer';
 import { saveBirthInfo, loadBirthInfo, clearBirthInfo } from '@/lib/utils/storage';
 import { DatePicker } from '@/components/ui/DatePicker';
-import { Sun, Cloud, Droplets, Heart, Briefcase, Activity, Sparkles, ArrowRight, ChevronRight } from 'lucide-react';
+import { Sun, Cloud, Droplets, Heart, Briefcase, Activity, Sparkles, ArrowRight, ChevronRight, X } from 'lucide-react';
 import Link from 'next/link';
 import DailyMusicCard from '@/components/music-oracle/DailyMusicCard';
 import TimelineSection from '@/components/daily/TimelineSection';
@@ -134,7 +134,7 @@ function WeekCalendar({
   })();
 
   return (
-    <div className="relative">
+    <>
       <div className="flex items-stretch bg-white rounded-xl border border-gray-200 shadow-sm">
         {/* 7天横向列表 */}
         <div className="flex flex-1 justify-around">
@@ -156,15 +156,18 @@ function WeekCalendar({
                   周{weekLabels[i]}
                 </span>
                 <span
-                  className={`text-sm font-semibold w-7 h-7 flex items-center justify-center rounded-full`}
+                  className={`relative text-sm font-semibold w-7 h-7 flex items-center justify-center rounded-full`}
                   style={isSelected
                     ? { backgroundColor: '#0F0F0F', color: 'white' }
-                    : isToday
-                    ? { border: '2px solid #0F0F0F', color: '#0F0F0F' }
                     : { color: '#1C1A16' }
                   }
                 >
                   {dayNum}
+                  {isToday && (
+                    <span
+                      className={`absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-amber-500'}`}
+                    />
+                  )}
                 </span>
               </button>
             );
@@ -176,7 +179,7 @@ function WeekCalendar({
 
         {/* 月历按钮 */}
         <button
-          onClick={() => setShowMonthPicker(!showMonthPicker)}
+          onClick={() => setShowMonthPicker(true)}
           className="flex flex-col items-center justify-center px-4 gap-1 hover:bg-gray-50 transition-colors"
         >
           <span className="text-xs text-brand-gray">月历</span>
@@ -184,19 +187,34 @@ function WeekCalendar({
         </button>
       </div>
 
-      {/* 月历下拉 */}
+      {/* 月历弹窗 */}
       {showMonthPicker && (
-        <div className="absolute top-full left-0 right-0 z-50 mt-1">
-          <DatePicker
-            value={selectedDate}
-            onChange={(date) => {
-              onSelect(date);
-              setShowMonthPicker(false);
-            }}
+        <div className="fixed inset-0 z-50 flex items-end justify-center">
+          <div
+            className="absolute inset-0 bg-black/30"
+            onClick={() => setShowMonthPicker(false)}
           />
+          <div className="relative w-full max-w-md bg-[#FAF9F6] rounded-t-3xl p-4 pb-8 animate-slide-up">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-display text-lg font-semibold text-[#1C1A16]">选择日期</h3>
+              <button
+                onClick={() => setShowMonthPicker(false)}
+                className="p-1 text-[#1C1A16]/40 hover:text-[#1C1A16]"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <DatePicker
+              value={selectedDate}
+              onChange={(date) => {
+                onSelect(date);
+                setShowMonthPicker(false);
+              }}
+            />
+          </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 
@@ -300,13 +318,9 @@ export default function DailyPage() {
 
   return (
     <div className="min-h-screen bg-[#FAF9F6]">
-      {/* 页面标题 */}
-      <PageHeader title="每日运势" subtitle="基于八字的个性化每日运势分析" />
-
-      <Container>
-        {/* 周视图日期选择器 — 放在最前面 */}
-        <div className="mb-8">
-          <WeekCalendar
+      {/* 周视图日期选择器 — 放在最前面 */}
+      <div className="px-4 pt-4 max-w-7xl mx-auto">
+        <WeekCalendar
             selectedDate={(() => {
               const d = new Date(today + 'T00:00:00');
               d.setDate(d.getDate() + Number(dayOffset));
@@ -325,8 +339,12 @@ export default function DailyPage() {
               }
             }}
           />
-        </div>
+      </div>
 
+      {/* 页面标题 */}
+      <PageHeader title="每日运势" subtitle="基于八字的个性化每日运势分析" />
+
+      <Container>
         {/* 大运 / 流年 / 流月 命理脉络 */}
         {hasSavedData && (
           <TimelineSection
