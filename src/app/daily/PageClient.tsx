@@ -562,46 +562,23 @@ export default function DailyPage() {
               </div>
             </div>
 
-            {/* 运势概览大卡片 */}
+            {/* 日柱信息条 */}
             <Card hover={false}>
-              <div className="flex items-center gap-8">
-                {/* 左：运势等级 */}
-                <div className="flex-shrink-0 text-center">
-                  <div
-                    className="font-black"
-                    style={{
-                      fontSize: '80px',
-                      lineHeight: 1,
-                      color:
-                        result.overallLabel === '高'
-                          ? '#C2762B'
-                          : result.overallLabel === '低'
-                          ? '#9CA3AF'
-                          : '#6B7280',
-                    }}
-                  >
-                    {result.overallLabel || (result.overall >= 4 ? '高' : result.overall >= 3 ? '平' : '低')}
-                  </div>
-                  <p className="text-sm text-brand-gray mt-1">今日运势</p>
+              <div className="flex items-center gap-4">
+                <div className="flex gap-2">
+                  {result.dayGanzhi.split('').map((char: string, i: number) => (
+                    <div
+                      key={i}
+                      className="w-12 h-12 rounded-lg flex items-center justify-center text-white font-black text-xl"
+                      style={{ backgroundColor: '#C2762B' }}
+                    >
+                      {char}
+                    </div>
+                  ))}
                 </div>
-                {/* 右：干支+日期 */}
-                <div className="flex-1">
-                  <div className="flex gap-2 mb-3">
-                    {result.dayGanzhi.split('').map((char: string, i: number) => (
-                      <div
-                        key={i}
-                        className="w-12 h-12 rounded-lg flex items-center justify-center text-white font-black text-xl"
-                        style={{ backgroundColor: '#C2762B' }}
-                      >
-                        {char}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="space-y-1 text-sm text-brand-gray">
-                    <p>公历：{result.date}</p>
-                    <p>农历：{result.lunarDate} · {result.dayGanzhi}日</p>
-                    {result.luckyHour && <p>吉时：{result.luckyHour}</p>}
-                  </div>
+                <div className="space-y-1 text-sm text-brand-gray">
+                  <p>公历：{result.date}</p>
+                  <p>农历：{result.lunarDate} · {result.dayGanzhi}日</p>
                 </div>
               </div>
             </Card>
