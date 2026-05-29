@@ -192,7 +192,7 @@ export default function TimelineSection({
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    if (!birthDate || !birthHour || !gender) return;
+    if (!birthDate || !birthHour) return;
 
     const controller = new AbortController();
     let cancelled = false;
@@ -204,7 +204,7 @@ export default function TimelineSection({
         const params = new URLSearchParams({
           birthDate,
           birthHour,
-          gender,
+          ...(gender ? { gender } : {}),
           ...(targetDate ? { targetDate } : {}),
         });
         const res = await fetch(`/api/bazi/timeline?${params.toString()}`, {
@@ -230,7 +230,7 @@ export default function TimelineSection({
   }, [birthDate, birthHour, gender, targetDate]);
 
   // 无出生信息
-  if (!birthDate || !birthHour || !gender) {
+  if (!birthDate || !birthHour) {
     return (
       <div className="mb-8">
         <div

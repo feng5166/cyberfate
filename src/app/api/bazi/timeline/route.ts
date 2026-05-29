@@ -70,13 +70,14 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const birthDate = searchParams.get('birthDate');
     const birthHourStr = searchParams.get('birthHour');
-    const gender = searchParams.get('gender');
+    const genderRaw = searchParams.get('gender');
+    const gender = (genderRaw === 'male' || genderRaw === 'female') ? genderRaw : 'male';
     const targetDate = searchParams.get('targetDate');
 
     // Validate params
-    if (!birthDate || !birthHourStr || !gender) {
+    if (!birthDate || !birthHourStr) {
       return NextResponse.json(
-        { error: '缺少必要参数: birthDate, birthHour, gender' },
+        { error: '缺少必要参数: birthDate, birthHour' },
         { status: 400 }
       );
     }
@@ -84,10 +85,6 @@ export async function GET(request: NextRequest) {
     const birthHour = parseInt(birthHourStr);
     if (isNaN(birthHour) || birthHour < -1 || birthHour > 11) {
       return NextResponse.json({ error: '无效的 birthHour' }, { status: 400 });
-    }
-
-    if (gender !== 'male' && gender !== 'female') {
-      return NextResponse.json({ error: '无效的 gender' }, { status: 400 });
     }
 
     // Parse dates
