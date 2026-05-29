@@ -145,23 +145,23 @@ function WeekCalendar({
               <button
                 key={date}
                 onClick={() => onSelect(date)}
-                className={`flex-shrink-0 flex flex-col items-center py-2.5 gap-0.5 transition-colors w-10 ${
-                  isSelected ? 'bg-brand-black' : 'hover:bg-gray-50'
-                }`}
+                className={`flex-shrink-0 flex flex-col items-center py-2.5 gap-0.5 transition-colors w-10 ${isSelected ? 'rounded-lg' : 'hover:bg-gray-50'}`}
+                style={isSelected ? { backgroundColor: '#0F0F0F' } : undefined}
               >
-                <span className={`text-[10px] font-medium ${
-                  isSelected ? 'text-white/70' : isToday ? 'text-brand-black' : 'text-brand-gray'
-                }`}>
+                <span
+                  className={`text-[10px] font-medium`}
+                  style={{ color: isSelected ? 'rgba(255,255,255,0.7)' : isToday ? '#1C1A16' : '#6B7280' }}
+                >
                   周{weekLabels[i]}
                 </span>
                 <span
-                  className={`text-sm font-semibold w-7 h-7 flex items-center justify-center rounded-full ${
-                    isSelected
-                      ? 'bg-white/20 text-white'
-                      : isToday
-                      ? 'bg-brand-black text-white'
-                      : 'text-brand-black'
-                  }`}
+                  className={`text-sm font-semibold w-7 h-7 flex items-center justify-center rounded-full`}
+                  style={isSelected
+                    ? { backgroundColor: 'rgba(255,255,255,0.2)', color: 'white' }
+                    : isToday
+                    ? { backgroundColor: '#1C1A16', color: 'white' }
+                    : { color: '#1C1A16' }
+                  }
                 >
                   {dayNum}
                 </span>
