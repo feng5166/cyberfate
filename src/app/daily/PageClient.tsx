@@ -576,101 +576,82 @@ export default function DailyPage() {
         {result && !loading && (
           <div className="space-y-5 pb-20 md:pb-26 animate-fadeIn">
 
-            {/* 今日核心速览 */}
-            <div style={{ backgroundColor: 'white', borderRadius: 16, border: '1px solid #E5E7EB', padding: 24 }}>
-              {/* 判词 + 日期 */}
+            {/* 今日核心速览 - 极简风 */}
+            <div style={{ backgroundColor: '#FFFFFF', borderRadius: 16, border: '1px solid rgba(28,26,22,0.06)', padding: '32px 24px' }}>
+              {/* 月份年份行 */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 16, borderBottom: '1px solid rgba(28,26,22,0.06)', marginBottom: 24 }}>
+                <span style={{ fontSize: 14, color: 'rgba(28,26,22,0.45)', letterSpacing: 2, fontFamily: 'Inter, sans-serif' }}>
+                  {(() => { const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC']; const d = new Date(today + 'T00:00:00'); d.setDate(d.getDate() + Number(dayOffset)); return months[d.getMonth()]; })()}
+                </span>
+                <span style={{ fontSize: 14, color: 'rgba(28,26,22,0.45)', letterSpacing: 2, fontFamily: 'Inter, sans-serif' }}>
+                  {(() => { const d = new Date(today + 'T00:00:00'); d.setDate(d.getDate() + Number(dayOffset)); return d.getFullYear(); })()}
+                </span>
+              </div>
+
+              {/* 大日期 */}
               <div style={{ textAlign: 'center', marginBottom: 20 }}>
-                <div style={{ fontSize: 24, fontWeight: 700, color: '#1C1A16', marginBottom: 4 }}>
+                <div style={{ fontSize: 80, fontWeight: 300, color: '#1C1A16', lineHeight: 1, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>
+                  {(() => { const d = new Date(today + 'T00:00:00'); d.setDate(d.getDate() + Number(dayOffset)); return d.getDate(); })()}
+                </div>
+                <div style={{ fontSize: 13, color: 'rgba(28,26,22,0.55)', marginTop: 8 }}>
+                  {(() => { const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']; const d = new Date(today + 'T00:00:00'); d.setDate(d.getDate() + Number(dayOffset)); return days[d.getDay()]; })()} · {result.dayGanzhi}日 · {result.lunarDate}
+                </div>
+              </div>
+
+              {/* 判词区 */}
+              <div style={{ textAlign: 'center', marginBottom: 16 }}>
+                <span style={{ fontSize: 28, fontWeight: 600, color: '#1C1A16', letterSpacing: 4, fontFamily: 'Noto Serif SC, serif' }}>
                   {result.headline || (result.overall >= 4 ? '乘势而为' : result.overall >= 3 ? '守正待机' : '韬光养晦')}
-                </div>
-                <div style={{ fontSize: 13, color: 'rgba(28,26,22,0.55)', lineHeight: 1.6 }}>
-                  {result.advice}
-                </div>
-                <div style={{ fontSize: 12, color: '#9CA3AF', marginTop: 8 }}>
-                  {result.dayGanzhi} · {result.date} · {result.lunarDate}
-                </div>
+                </span>
+                <span style={{ fontSize: 28, color: 'rgba(28,26,22,0.35)', marginLeft: 8, letterSpacing: 6 }}>····</span>
               </div>
-              {/* 综合分大圆 */}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
-                <div style={{ width: 80, height: 80, borderRadius: '50%', border: '3px solid #C8622A', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                  <div style={{ fontSize: 26, fontWeight: 800, color: LEVEL_COLORS[scoreToLevel(result.overall * 20)]?.text || '#C8622A', lineHeight: 1 }}>{scoreToLevel(result.overall * 20)}</div>
-                  <div style={{ fontSize: 10, color: 'rgba(28,26,22,0.55)', marginTop: 2 }}>综合</div>
-                </div>
-                <div style={{ fontSize: 11, color: 'rgba(28,26,22,0.55)', marginTop: 6, textAlign: 'center' }}>
-                  {(result.advice || '').slice(0, 20)}
-                </div>
+
+              {/* 一句话解读 */}
+              <div style={{ textAlign: 'center', marginBottom: 24 }}>
+                <p style={{ fontSize: 14, color: 'rgba(28,26,22,0.65)', lineHeight: 1.7, maxWidth: 320, margin: '0 auto' }}>
+                  {(result.advice || '').slice(0, 50)}
+                </p>
               </div>
-              {/* 6维进度条 + 命理依据 */}
-              <div style={{ display: 'grid', gap: 12 }}>
-                {([
-                  { key: 'career' as const, label: '事业', value: result.ratings.career },
-                  { key: 'wealth' as const, label: '财运', value: result.ratings.wealth },
-                  { key: 'love' as const, label: '情感', value: result.ratings.love },
-                  { key: 'health' as const, label: '健康', value: result.ratings.health },
-                  { key: 'studies' as const, label: '学业', value: result.ratings.studies },
-                  { key: 'social' as const, label: '人缘', value: result.ratings.social || 3 },
-                ]).map(({ key, label, value }) => {
-                  const score = value * 20;
-                  const level = scoreToLevel(score);
-                  const aiComment = result.ratingComments?.[key] || '';
-                  const comment = (aiComment && hasMingliTerm(aiComment)) ? aiComment : (RATING_TEMPLATES[key]?.[level] || aiComment);
-                  return (
-                    <div key={key}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ fontSize: 12, color: 'rgba(28,26,22,0.55)', width: 32, flexShrink: 0 }}>{label}</span>
-                        <div style={{ flex: 1, height: 6, backgroundColor: 'rgba(28,26,22,0.06)', borderRadius: 3, overflow: 'hidden' }}>
-                          <div style={{ height: '100%', width: `${score}%`, backgroundColor: '#C8622A', borderRadius: 3 }} />
-                        </div>
-                        <span style={{ fontSize: 12, fontWeight: 600, color: LEVEL_COLORS[level]?.text || '#6B7280', width: 20, textAlign: 'right' }}>{level}</span>
-                      </div>
-                      {comment && (
-                        <div style={{ fontSize: 12, color: 'rgba(28,26,22,0.55)', marginTop: 3, paddingLeft: 40, lineHeight: 1.5 }}>
-                          ↳ {comment}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-              {/* 吉时 + 幸运三件套 */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(28,26,22,0.06)' }}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 2 }}>吉时</div>
-                  <div style={{ fontSize: 12, fontWeight: 500, color: '#1C1A16' }}>{result.luckyHour || '-'}</div>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 2 }}>幸运色</div>
-                  <div style={{ fontSize: 12, fontWeight: 500, color: '#1C1A16' }}>{result.lucky.color}</div>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 2 }}>幸运数</div>
-                  <div style={{ fontSize: 12, fontWeight: 500, color: '#1C1A16' }}>{result.lucky.numbers.join(',')}</div>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 2 }}>方位</div>
-                  <div style={{ fontSize: 12, fontWeight: 500, color: '#1C1A16' }}>{result.lucky.direction}</div>
-                </div>
+
+              {/* 底部幸运信息 */}
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, paddingTop: 20, borderTop: '1px solid rgba(28,26,22,0.06)' }}>
+                <span style={{ fontSize: 12, color: 'rgba(28,26,22,0.55)' }}>幸运颜色 <span style={{ fontWeight: 500, color: '#1C1A16' }}>{result.lucky.color}</span></span>
+                <span style={{ fontSize: 12, color: 'rgba(28,26,22,0.55)' }}>幸运数字 <span style={{ fontWeight: 500, color: '#1C1A16' }}>{result.lucky.numbers.join('·')}</span></span>
+                <span style={{ fontSize: 12, color: 'rgba(28,26,22,0.55)' }}>方位 <span style={{ fontWeight: 500, color: '#1C1A16' }}>{result.lucky.direction}</span></span>
               </div>
             </div>
 
-
-            {/* 宜忌（纯文字两列） */}
-            <div className="grid grid-cols-2 gap-6 px-1">
-              <div className="pl-3 border-l-[3px] border-[#2D6A4F]">
-                <h4 className="text-base font-semibold mb-2" style={{ color: '#2D6A4F' }}>宜</h4>
-                <ul className="space-y-1">
-                  {result.suitable.map((item: string, i: number) => (
-                    <li key={i} className="text-sm text-brand-gray leading-[1.8]">· {item}</li>
+            {/* 宜忌 - 极简双栏 */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1px 1fr', gap: 0, padding: '0 8px' }}>
+              {/* 宜 */}
+              <div style={{ paddingRight: 20 }}>
+                <div style={{ fontSize: 13, color: 'rgba(28,26,22,0.45)', letterSpacing: 2, marginBottom: 12 }}>宜 · DO</div>
+                <div style={{ fontSize: 14, color: '#1C1A16', lineHeight: 2.0 }}>
+                  {result.suitable.reduce((acc: string[][], item: string, i: number) => {
+                    const pairIdx = Math.floor(i / 2);
+                    if (!acc[pairIdx]) acc[pairIdx] = [];
+                    acc[pairIdx].push(item);
+                    return acc;
+                  }, [] as string[][]).map((pair: string[], i: number) => (
+                    <div key={i}>{pair.join(' · ')}</div>
                   ))}
-                </ul>
+                </div>
               </div>
-              <div className="pl-3 border-l-[3px] border-[#9B2335]">
-                <h4 className="text-base font-semibold mb-2" style={{ color: '#9B2335' }}>忌</h4>
-                <ul className="space-y-1">
-                  {result.avoid.map((item: string, i: number) => (
-                    <li key={i} className="text-sm text-brand-gray leading-[1.8]">· {item}</li>
+              {/* 分隔线 */}
+              <div style={{ backgroundColor: 'rgba(28,26,22,0.08)' }} />
+              {/* 忌 */}
+              <div style={{ paddingLeft: 20 }}>
+                <div style={{ fontSize: 13, color: 'rgba(28,26,22,0.45)', letterSpacing: 2, marginBottom: 12 }}>忌 · DON&apos;T</div>
+                <div style={{ fontSize: 14, color: '#1C1A16', lineHeight: 2.0 }}>
+                  {result.avoid.reduce((acc: string[][], item: string, i: number) => {
+                    const pairIdx = Math.floor(i / 2);
+                    if (!acc[pairIdx]) acc[pairIdx] = [];
+                    acc[pairIdx].push(item);
+                    return acc;
+                  }, [] as string[][]).map((pair: string[], i: number) => (
+                    <div key={i}>{pair.join(' · ')}</div>
                   ))}
-                </ul>
+                </div>
               </div>
             </div>
 
