@@ -442,7 +442,7 @@ export default function DailyPage() {
       </div>
 
       {/* 页面标题 */}
-      <PageHeader title="每日运势" subtitle="基于八字的个性化每日运势分析" />
+      <PageHeader title="每日运势" subtitle="每日运势分析，是东方智慧的凝练，更是你掌握当下、规划未来的参照。" />
 
       <Container>
         {/* 大运 / 流年 / 流月 命理脉络 */}

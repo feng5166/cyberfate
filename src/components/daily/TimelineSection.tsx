@@ -208,6 +208,7 @@ function ScrollRow({
         style={{
           scrollSnapType: 'x mandatory',
           paddingBottom: 4,
+          paddingLeft: 4,
           minWidth: 0,
         }}
       >
