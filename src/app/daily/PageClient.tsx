@@ -788,11 +788,11 @@ export default function DailyPage() {
             </Card>
 
             {/* 今日卦象 - 主动引导 */}
-            <div style={{ background: '#1C1208', borderRadius: 16, padding: 24, border: '1px solid rgba(200, 162, 42, 0.2)' }}>
-              <h4 style={{ fontSize: 18, fontWeight: 600, marginBottom: 6, color: '#F5E6B8' }}>☰ 今日卦象</h4>
-              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', marginBottom: 16 }}>专为今日运势定制，AI 即时解卦</p>
+            <div style={{ background: '#F5EFE2', borderRadius: 16, padding: 24, border: '1px solid rgba(28, 26, 22, 0.08)' }}>
+              <h4 style={{ fontSize: 18, fontWeight: 600, marginBottom: 6, color: '#1C1A16' }}>☰ 今日卦象</h4>
+              <p style={{ fontSize: 13, color: 'rgba(28, 26, 22, 0.55)', marginBottom: 16 }}>专为今日运势定制，AI 即时解卦</p>
               <Link href='/liuyao'>
-                <button style={{ background: '#C8A22A', color: '#1C1A16', padding: '14px 32px', borderRadius: 12, fontSize: 15, fontWeight: 600, border: 'none', cursor: 'pointer', width: '100%', boxShadow: '0 2px 8px rgba(200, 162, 42, 0.3)' }}>
+                <button style={{ background: '#1C1A16', color: '#FFFFFF', padding: '14px 32px', borderRadius: 12, fontSize: 15, fontWeight: 600, border: 'none', cursor: 'pointer', width: '100%' }}>
                   开始占卜 →
                 </button>
               </Link>
