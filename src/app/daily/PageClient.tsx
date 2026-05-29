@@ -775,11 +775,11 @@ export default function DailyPage() {
             </Card>
 
             {/* 今日卦象 - 主动引导 */}
-            <div style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #0f2744 100%)', borderRadius: 16, padding: 24, color: 'white' }}>
-              <h4 style={{ fontSize: 18, fontWeight: 600, marginBottom: 6 }}>🔮 今日卦象</h4>
-              <p style={{ fontSize: 13, color: '#9CA3AF', marginBottom: 16 }}>专为今日运势定制，AI 即时解卦</p>
+            <div style={{ background: 'linear-gradient(135deg, #f5f0e8 0%, #ede4d4 100%)', borderRadius: 16, padding: 24, border: '1px solid #E5D9C0' }}>
+              <h4 style={{ fontSize: 18, fontWeight: 600, marginBottom: 6, color: '#1C1A16' }}>🔮 今日卦象</h4>
+              <p style={{ fontSize: 13, color: '#6B7280', marginBottom: 16 }}>专为今日运势定制，AI 即时解卦</p>
               <Link href='/liuyao'>
-                <button style={{ backgroundColor: 'white', color: '#1C1A16', padding: '14px 32px', borderRadius: 12, fontSize: 15, fontWeight: 600, border: 'none', cursor: 'pointer', width: '100%' }}>
+                <button style={{ background: 'linear-gradient(135deg, #2D6A4F 0%, #1B4332 100%)', color: 'white', padding: '14px 32px', borderRadius: 12, fontSize: 15, fontWeight: 600, border: 'none', cursor: 'pointer', width: '100%' }}>
                   开始占卜 →
                 </button>
               </Link>
