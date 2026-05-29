@@ -159,7 +159,7 @@ function WeekCalendar({
                   style={isSelected
                     ? { backgroundColor: '#0F0F0F', color: 'white' }
                     : isToday
-                    ? { backgroundColor: '#1C1A16', color: 'white' }
+                    ? { border: '2px solid #0F0F0F', color: '#0F0F0F' }
                     : { color: '#1C1A16' }
                   }
                 >
