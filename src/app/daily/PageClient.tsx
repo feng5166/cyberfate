@@ -776,7 +776,7 @@ export default function DailyPage() {
 
             {/* 今日卦象 - 主动引导 */}
             <div style={{ background: 'linear-gradient(135deg, #1a1040 0%, #2d1b69 50%, #1a2a5c 100%)', borderRadius: 16, padding: 24, border: '1px solid rgba(212, 175, 55, 0.2)', boxShadow: '0 4px 20px rgba(45, 27, 105, 0.2)' }}>
-              <h4 style={{ fontSize: 18, fontWeight: 600, marginBottom: 6, color: '#F5E6B8' }}>🔮 今日卦象</h4>
+              <h4 style={{ fontSize: 18, fontWeight: 600, marginBottom: 6, color: '#F5E6B8' }}>☰ 今日卦象</h4>
               <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', marginBottom: 16 }}>专为今日运势定制，AI 即时解卦</p>
               <Link href='/liuyao'>
                 <button style={{ background: 'linear-gradient(135deg, #D4AF37 0%, #C49B2C 100%)', color: '#1a1040', padding: '14px 32px', borderRadius: 12, fontSize: 15, fontWeight: 600, border: 'none', cursor: 'pointer', width: '100%', boxShadow: '0 2px 8px rgba(212, 175, 55, 0.3)' }}>
