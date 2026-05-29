@@ -119,6 +119,16 @@ const RATING_TEMPLATES: Record<string, Record<string, string>> = {
   }
 };
 
+
+// 等级配色（语义色）
+const LEVEL_COLORS: Record<string, { bg: string; text: string }> = {
+  '旺': { bg: '#F3E8FF', text: '#9333EA' },
+  '强': { bg: '#DBEAFE', text: '#2563EB' },
+  '平': { bg: '#F3F4F6', text: '#6B7280' },
+  '弱': { bg: '#FEF3C7', text: '#D97706' },
+  '衰': { bg: '#FEE2E2', text: '#DC2626' },
+};
+
 // 分数→等级映射
 function scoreToLevel(score: number): string {
   if (score >= 90) return '旺';
@@ -583,7 +593,7 @@ export default function DailyPage() {
               {/* 综合分大圆 */}
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
                 <div style={{ width: 80, height: 80, borderRadius: '50%', border: '3px solid #C8622A', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                  <div style={{ fontSize: 26, fontWeight: 800, color: '#C8622A', lineHeight: 1 }}>{scoreToLevel(result.overall * 20)}</div>
+                  <div style={{ fontSize: 26, fontWeight: 800, color: LEVEL_COLORS[scoreToLevel(result.overall * 20)]?.text || '#C8622A', lineHeight: 1 }}>{scoreToLevel(result.overall * 20)}</div>
                   <div style={{ fontSize: 10, color: 'rgba(28,26,22,0.55)', marginTop: 2 }}>综合</div>
                 </div>
                 <div style={{ fontSize: 11, color: 'rgba(28,26,22,0.55)', marginTop: 6, textAlign: 'center' }}>
@@ -611,7 +621,7 @@ export default function DailyPage() {
                         <div style={{ flex: 1, height: 6, backgroundColor: 'rgba(28,26,22,0.06)', borderRadius: 3, overflow: 'hidden' }}>
                           <div style={{ height: '100%', width: `${score}%`, backgroundColor: '#C8622A', borderRadius: 3 }} />
                         </div>
-                        <span style={{ fontSize: 12, fontWeight: 600, color: '#1C1A16', width: 20, textAlign: 'right' }}>{level}</span>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: LEVEL_COLORS[level]?.text || '#6B7280', width: 20, textAlign: 'right' }}>{level}</span>
                       </div>
                       {comment && (
                         <div style={{ fontSize: 12, color: 'rgba(28,26,22,0.55)', marginTop: 3, paddingLeft: 40, lineHeight: 1.5 }}>
@@ -678,11 +688,11 @@ export default function DailyPage() {
                   wood: 'fire', fire: 'earth', earth: 'metal', metal: 'water', water: 'wood',
                 };
                 const wuxingColors: Record<string, { text: string; bg: string; border: string }> = {
-                  wood: { text: '#4A7A35', bg: '#EEF4E8', border: 'rgba(74,122,53,0.20)' },
-                  fire: { text: '#C8622A', bg: '#FDF0E8', border: 'rgba(200,98,42,0.20)' },
-                  earth: { text: '#8B6914', bg: '#F5F0E0', border: 'rgba(139,105,20,0.20)' },
-                  metal: { text: '#8B7340', bg: '#F5F0E8', border: 'rgba(139,115,64,0.20)' },
-                  water: { text: '#2A5C8B', bg: '#E8EEF5', border: 'rgba(42,92,139,0.20)' },
+                  wood: { text: '#10B981', bg: '#D1FAE5', border: 'rgba(16,185,129,0.25)' },
+                  fire: { text: '#EF4444', bg: '#FEE2E2', border: 'rgba(239,68,68,0.25)' },
+                  earth: { text: '#D97706', bg: '#FEF0CD', border: 'rgba(217,119,6,0.25)' },
+                  metal: { text: '#F59E0B', bg: '#FEF3C7', border: 'rgba(245,158,11,0.25)' },
+                  water: { text: '#3B82F6', bg: '#DBEAFE', border: 'rgba(59,130,246,0.25)' },
                 };
                 const dayGan = result.dayGanzhi?.[0] || '';
                 const wangWuxing = ganToWuxing[dayGan] || null;
@@ -733,7 +743,7 @@ export default function DailyPage() {
                     >
                       <span style={{ fontSize: 22 }}>{item.icon}</span>
                       <span className="block mt-0.5" style={{ fontSize: 15, fontWeight: 600, color: textColor }}>{item.label}</span>
-                      <span className="block mt-0.5" style={{ fontSize: 11, fontWeight: 500, color: textColor, opacity: 0.8 }}>{levelLabel}</span>
+                      <span className="block mt-1" style={{ fontSize: 11, fontWeight: 500, color: LEVEL_COLORS[levelLabel]?.text || '#6B7280', backgroundColor: LEVEL_COLORS[levelLabel]?.bg || '#F3F4F6', borderRadius: 999, padding: '2px 8px', display: 'inline-block' }}>{levelLabel}</span>
                     </div>
                   );
                 });
