@@ -116,11 +116,19 @@ function ScrollRow({
   cardWidth,
   children,
   currentIndex,
+  tooltipId,
+  tooltipText,
+  activeTooltip,
+  onTooltipToggle,
 }: {
   label: string;
   cardWidth: number;
   children: React.ReactNode;
   currentIndex: number;
+  tooltipId?: string;
+  tooltipText?: string;
+  activeTooltip?: string | null;
+  onTooltipToggle?: (id: string | null) => void;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -137,16 +145,62 @@ function ScrollRow({
   return (
     <div className="flex items-stretch gap-3">
       <div
-        className="flex-shrink-0 flex items-center justify-center"
-        style={{
-          width: 32,
-          fontSize: 12,
-          color: '#6B7280',
-          writingMode: 'vertical-rl',
-          letterSpacing: '0.15em',
-        }}
+        className="flex-shrink-0 flex flex-col items-center justify-center"
+        style={{ width: 32 }}
       >
-        {label}
+        <div
+          style={{
+            fontSize: 12,
+            color: '#6B7280',
+            writingMode: 'vertical-rl',
+            letterSpacing: '0.15em',
+          }}
+        >
+          {label}
+        </div>
+        {tooltipId && tooltipText && (
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onTooltipToggle?.(activeTooltip === tooltipId ? null : tooltipId);
+              }}
+              style={{
+                marginTop: 4,
+                fontSize: 11,
+                color: '#9CA3AF',
+                border: 'none',
+                background: 'none',
+                cursor: 'pointer',
+                padding: 0,
+              }}
+            >
+              ⓘ
+            </button>
+            {activeTooltip === tooltipId && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: -8,
+                  zIndex: 50,
+                  backgroundColor: '#1C1A16',
+                  color: 'white',
+                  padding: '8px 12px',
+                  borderRadius: 8,
+                  fontSize: 12,
+                  lineHeight: 1.6,
+                  width: 200,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                  whiteSpace: 'normal',
+                  writingMode: 'horizontal-tb',
+                }}
+              >
+                {tooltipText}
+              </div>
+            )}
+          </div>
+        )}
       </div>
       <div
         ref={scrollRef}
@@ -190,6 +244,7 @@ export default function TimelineSection({
   const [data, setData] = useState<TimelineData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
 
   useEffect(() => {
     if (!birthDate || !birthHour) return;
@@ -291,7 +346,15 @@ export default function TimelineSection({
 
         <div className="flex flex-col gap-4">
           {/* 大运 */}
-          <ScrollRow label="大运" cardWidth={120} currentIndex={dayunIdx}>
+          <ScrollRow
+            label="大运"
+            cardWidth={120}
+            currentIndex={dayunIdx}
+            tooltipId="dayun"
+            tooltipText="大运每10年换一柱，代表你人生各阶段的整体运势底色"
+            activeTooltip={activeTooltip}
+            onTooltipToggle={setActiveTooltip}
+          >
             {data.dayun.list.map((item, idx) => (
               <div
                 key={`dayun-${item.index}-${item.ganzhi}`}
@@ -320,7 +383,15 @@ export default function TimelineSection({
           </ScrollRow>
 
           {/* 流年 */}
-          <ScrollRow label="流年" cardWidth={90} currentIndex={liunianIdx}>
+          <ScrollRow
+            label="流年"
+            cardWidth={90}
+            currentIndex={liunianIdx}
+            tooltipId="liunian"
+            tooltipText="流年即当年太岁，影响该年整体运势格局"
+            activeTooltip={activeTooltip}
+            onTooltipToggle={setActiveTooltip}
+          >
             {data.liunian.list.map((item, idx) => (
               <div
                 key={`liunian-${item.year}`}
@@ -348,7 +419,15 @@ export default function TimelineSection({
 
           {/* 流月 */}
           {data.liuyue.list.length > 0 && (
-            <ScrollRow label="流月" cardWidth={110} currentIndex={liuyueIdx}>
+            <ScrollRow
+              label="流月"
+              cardWidth={110}
+              currentIndex={liuyueIdx}
+              tooltipId="liuyue"
+              tooltipText="流月以节气为界，影响当月运势的细节走向"
+              activeTooltip={activeTooltip}
+              onTooltipToggle={setActiveTooltip}
+            >
               {data.liuyue.list.map((item, idx) => (
                 <div
                   key={`liuyue-${idx}-${item.ganzhi}`}

@@ -382,6 +382,7 @@ export default function DailyPage() {
   };
 
   const [dayOffset, setDayOffset] = useState('0');
+  const [expandedRating, setExpandedRating] = useState<string | null>(null);
   const currentDayText = getDayOffsetText(dayOffset);
 
   const handleDateChange = (offset: string) => {
@@ -476,9 +477,6 @@ export default function DailyPage() {
         {/* ===== 结果展示 ===== */}
         {result && !loading && (
           <div className="space-y-5 pb-20 md:pb-26 animate-fadeIn">
-            <div className="text-center text-sm text-brand-gray">
-              当前查询日期：<span className="text-brand-black font-medium">{result.date}</span>
-            </div>
             {/* 运势概览大卡片 */}
             <Card hover={false}>
               <div className="flex items-center gap-8">
@@ -523,49 +521,67 @@ export default function DailyPage() {
               </div>
             </Card>
 
-            {/* 今日意象 + 古诗（合并暖色卡片） */}
-            {(result.imageUrl || result.verse) && (
-              <div className="rounded-card border border-[#E5D9C0] p-7 mt-2" style={{ backgroundColor: '#F5F0E8' }}>
-                {result.imageUrl && (
-                  <div className="flex justify-center py-4">
-                    <div className="w-[200px] h-[200px]">
-                      <img
-                        src={result.imageUrl}
-                        alt="今日意象"
-                        className="w-full h-full object-cover"
-                        style={{
-                          clipPath:
-                            'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
-                        }}
-                      />
-                    </div>
-                  </div>
-                )}
-                {result.verse && (
-                  <div className="text-center mt-2 pb-2">
-                    {result.verse.split('\n').map((line: string, i: number) => (
-                      <p
-                        key={i}
-                        className="text-lg text-brand-black leading-relaxed"
-                        style={{ fontFamily: "'Noto Serif SC', serif" }}
-                      >
-                        {line}
-                      </p>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* 五行小卡片 */}
+            {/* 今日五行强弱 */}
             <div className="flex gap-3 overflow-x-auto pb-2">
-              {wuxingItems.map((item) => (
-                <div key={item.key} className="flex-shrink-0 rounded-xl border border-[#1C1A16]/[0.08] bg-[#FAF9F6] p-4 min-w-[100px] text-center shadow-sm">
-                  <span className="text-xl">{item.icon}</span>
-                  <span className="block text-xs font-medium text-brand-black mt-1">{item.label}</span>
-                  <span className="block text-[10px] text-brand-light">{item.desc}</span>
-                </div>
-              ))}
+              {(() => {
+                const ganToWuxing: Record<string, string> = {
+                  甲: 'wood', 乙: 'wood',
+                  丙: 'fire', 丁: 'fire',
+                  戊: 'earth', 己: 'earth',
+                  庚: 'metal', 辛: 'metal',
+                  壬: 'water', 癸: 'water',
+                };
+                const wuxingGenerates: Record<string, string> = {
+                  wood: 'fire', fire: 'earth', earth: 'metal', metal: 'water', water: 'wood',
+                };
+                const wuxingColors: Record<string, { text: string; bg: string }> = {
+                  wood: { text: '#059669', bg: '#D1FAE5' },
+                  fire: { text: '#DC2626', bg: '#FEE2E2' },
+                  earth: { text: '#D97706', bg: '#FEF3C7' },
+                  metal: { text: '#7C3AED', bg: '#F3E8FF' },
+                  water: { text: '#2563EB', bg: '#DBEAFE' },
+                };
+                const dayGan = result.dayGanzhi?.[0] || '';
+                const wangWuxing = ganToWuxing[dayGan] || null;
+                const secondaryWuxing = wangWuxing ? wuxingGenerates[wangWuxing] : null;
+
+                return wuxingItems.map((item) => {
+                  const isWang = item.key === wangWuxing;
+                  const isSecondary = item.key === secondaryWuxing;
+                  const colors = wuxingColors[item.key];
+                  let bgColor: string;
+                  let textColor: string;
+                  let opacity: number;
+                  if (isWang) {
+                    bgColor = colors.bg;
+                    textColor = colors.text;
+                    opacity = 1;
+                  } else if (isSecondary) {
+                    bgColor = colors.bg;
+                    textColor = colors.text;
+                    opacity = 0.65;
+                  } else {
+                    bgColor = '#F9FAFB';
+                    textColor = '#D1D5DB';
+                    opacity = 0.5;
+                  }
+                  return (
+                    <div
+                      key={item.key}
+                      className="flex-shrink-0 rounded-xl p-4 min-w-[100px] text-center shadow-sm"
+                      style={{ backgroundColor: bgColor, opacity, border: '1px solid rgba(28, 26, 22, 0.08)' }}
+                    >
+                      <span className="text-xl">{item.icon}</span>
+                      <span className="block text-xs font-medium mt-1" style={{ color: textColor }}>{item.label}</span>
+                      {isWang ? (
+                        <span className="block mt-0.5" style={{ fontSize: 10, fontWeight: 600, color: textColor }}>旺</span>
+                      ) : (
+                        <span className="block" style={{ fontSize: 10, color: textColor }}>{item.desc}</span>
+                      )}
+                    </div>
+                  );
+                });
+              })()}
             </div>
 
             {/* 宜忌（纯文字两列） */}
@@ -622,14 +638,31 @@ export default function DailyPage() {
                   { key: 'health' as const, label: '健康运', value: result.ratings.health },
                   { key: 'studies' as const, label: '学业运', value: result.ratings.studies },
                 ]).map(({ key, label, value }) => {
-                  const levelText = value >= 5 ? '极佳' : value >= 4 ? '良好' : value >= 3 ? '一般' : '偏弱';
-                  const levelColor = value >= 5 ? '#2D6A4F' : value >= 4 ? '#C2762B' : value >= 3 ? '#6B7280' : '#9B2335';
+                  const levelText = value >= 5 ? '优秀' : value >= 4 ? '良好' : value >= 3 ? '一般' : value >= 2 ? '偏弱' : '较差';
+                  const levelColor = value >= 5 ? '#2D6A4F' : value >= 4 ? '#2563EB' : value >= 3 ? '#6B7280' : value >= 2 ? '#D97706' : '#DC2626';
                   const comment = result.ratingComments?.[key] || '';
+                  const isExpanded = expandedRating === key;
                   return (
-                    <div key={key}>
+                    <div
+                      key={key}
+                      onClick={() => setExpandedRating(isExpanded ? null : key)}
+                      style={{ cursor: 'pointer' }}
+                    >
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-sm font-medium text-brand-black">{label}</span>
-                        <span className="text-sm font-semibold" style={{ color: levelColor }}>{levelText}</span>
+                        <span className="text-sm font-semibold flex items-center gap-1" style={{ color: levelColor }}>
+                          {levelText}
+                          <span
+                            style={{
+                              display: 'inline-block',
+                              fontSize: 10,
+                              transition: 'transform 0.2s',
+                              transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                            }}
+                          >
+                            ▾
+                          </span>
+                        </span>
                       </div>
                       <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden mb-1">
                         <div
@@ -637,12 +670,18 @@ export default function DailyPage() {
                           style={{ width: `${value * 20}%`, backgroundColor: levelColor }}
                         />
                       </div>
-                      {comment && (
-                        <p className="text-xs text-brand-gray leading-relaxed">{comment}</p>
+                      {isExpanded && comment && (
+                        <p className="leading-relaxed" style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>{comment}</p>
                       )}
                     </div>
                   );
                 })}
+              </div>
+              <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid #F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <p style={{ fontSize: 12, color: '#6B7280', lineHeight: 1.5 }}>想了解本月完整运势走势？</p>
+                <Link href='/bazi'>
+                  <button style={{ backgroundColor: '#1C1A16', color: 'white', padding: '7px 16px', borderRadius: 6, fontSize: 12, fontWeight: 500, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}>查看完整命盘 →</button>
+                </Link>
               </div>
             </Card>
 
@@ -652,6 +691,11 @@ export default function DailyPage() {
                 💡 今日指引
               </h4>
               <p className="text-xs text-yellow-600/70 mb-2">AI 综合分析 · 仅供参考</p>
+              {result.verse && (
+                <p style={{ fontSize: 12, color: '#92400E', fontStyle: 'italic', marginBottom: 8 }}>
+                  「{result.verse}」
+                </p>
+              )}
               <p className="text-sm leading-relaxed text-gray-700">{result.advice}</p>
             </Card>
 
@@ -677,9 +721,9 @@ export default function DailyPage() {
             <Card hover={false} className="text-center py-5">
               <p className="text-sm text-brand-gray mb-2">想深入了解自己的命盘？</p>
               <Link href="/bazi">
-                <Button variant="secondary" size="sm">
-                  八字全面分析 <ArrowRight className="w-3.5 h-3.5 ml-1" />
-                </Button>
+                <button style={{ backgroundColor: '#1C1A16', color: 'white', padding: '12px 32px', borderRadius: 8, fontSize: 14, fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 6, border: 'none', cursor: 'pointer' }}>
+                  八字全面分析 <ArrowRight className="w-3.5 h-3.5" />
+                </button>
               </Link>
             </Card>
 
