@@ -767,7 +767,7 @@ export default function DailyPage() {
                 })}
               </div>
               <div style={{ backgroundColor: '#FEF3C7', padding: '14px 16px', borderRadius: 10, marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <p style={{ fontSize: 13, fontWeight: 500, color: '#92400E', lineHeight: 1.5 }}>🔮 想了解本月完整运势走势？</p>
+                <p style={{ fontSize: 13, fontWeight: 500, color: '#92400E', lineHeight: 1.5 }}>✦ 想了解本月完整运势走势？</p>
                 <Link href='/bazi'>
                   <button style={{ backgroundColor: '#D97706', color: 'white', padding: '7px 16px', borderRadius: 6, fontSize: 12, fontWeight: 500, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}>查看完整命盘 →</button>
                 </Link>
