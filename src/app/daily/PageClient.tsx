@@ -645,18 +645,17 @@ export default function DailyPage() {
                     opacity = 1;
                     border = '1px solid rgba(28, 26, 22, 0.06)';
                   }
-                  // 五行等级计算：日主同行=旺，生我=相，我生=休，克我=囚，我克=死
+                  // 五行等级计算：日主同行=旺，生我=强，克我=平，我克=弱，我生=衰
                   const wuxingOrder = ['wood', 'fire', 'earth', 'metal', 'water'];
                   const masterWuxingKey = wangWuxing; // 日主五行
                   let levelLabel = '平';
                   if (masterWuxingKey) {
                     const mIdx = wuxingOrder.indexOf(masterWuxingKey);
-                    const iIdx = wuxingOrder.indexOf(item.key);
                     if (item.key === masterWuxingKey) levelLabel = '旺';
-                    else if (wuxingOrder[(mIdx + 4) % 5] === item.key) levelLabel = '相'; // 生我
-                    else if (wuxingOrder[(mIdx + 1) % 5] === item.key) levelLabel = '休'; // 我生
-                    else if (wuxingOrder[(mIdx + 2) % 5] === item.key) levelLabel = '囚'; // 克我
-                    else if (wuxingOrder[(mIdx + 3) % 5] === item.key) levelLabel = '死'; // 我克
+                    else if (wuxingOrder[(mIdx + 4) % 5] === item.key) levelLabel = '强'; // 生我
+                    else if (wuxingOrder[(mIdx + 1) % 5] === item.key) levelLabel = '衰'; // 我生
+                    else if (wuxingOrder[(mIdx + 2) % 5] === item.key) levelLabel = '平'; // 克我
+                    else if (wuxingOrder[(mIdx + 3) % 5] === item.key) levelLabel = '弱'; // 我克
                   }
                   return (
                     <div
