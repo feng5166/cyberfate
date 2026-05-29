@@ -526,7 +526,7 @@ export default function DailyPage() {
             {/* 分享今日运势 - 醒目按钮 */}
             <button
               onClick={handleShare}
-              style={{ width: '100%', padding: '14px 20px', borderRadius: 12, background: 'linear-gradient(135deg, #1a1040 0%, #2d1b69 50%, #1a2a5c 100%)', color: 'white', fontSize: 14, fontWeight: 500, border: '1px solid rgba(212, 175, 55, 0.3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 4px 16px rgba(45, 27, 105, 0.3)' }}
+              style={{ width: '100%', padding: '14px 20px', borderRadius: 12, background: '#1C1A16', color: 'white', fontSize: 14, fontWeight: 500, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
             >
               📤 分享今日运势
             </button>
@@ -618,12 +618,12 @@ export default function DailyPage() {
                 const wuxingGenerates: Record<string, string> = {
                   wood: 'fire', fire: 'earth', earth: 'metal', metal: 'water', water: 'wood',
                 };
-                const wuxingColors: Record<string, { text: string; bg: string }> = {
-                  wood: { text: '#059669', bg: '#D1FAE5' },
-                  fire: { text: '#DC2626', bg: '#FEE2E2' },
-                  earth: { text: '#D97706', bg: '#FEF3C7' },
-                  metal: { text: '#7C3AED', bg: '#F3E8FF' },
-                  water: { text: '#2563EB', bg: '#DBEAFE' },
+                const wuxingColors: Record<string, { text: string; bg: string; border: string }> = {
+                  wood: { text: '#4A7A35', bg: '#EEF4E8', border: 'rgba(74,122,53,0.20)' },
+                  fire: { text: '#C8622A', bg: '#FDF0E8', border: 'rgba(200,98,42,0.20)' },
+                  earth: { text: '#8B6914', bg: '#F5F0E0', border: 'rgba(139,105,20,0.20)' },
+                  metal: { text: '#8B7340', bg: '#F5F0E8', border: 'rgba(139,115,64,0.20)' },
+                  water: { text: '#2A5C8B', bg: '#E8EEF5', border: 'rgba(42,92,139,0.20)' },
                 };
                 const dayGan = result.dayGanzhi?.[0] || '';
                 const wangWuxing = ganToWuxing[dayGan] || null;
@@ -636,24 +636,28 @@ export default function DailyPage() {
                   let bgColor: string;
                   let textColor: string;
                   let opacity: number;
+                  let border: string;
                   if (isWang) {
                     bgColor = colors.bg;
                     textColor = colors.text;
                     opacity = 1;
+                    border = `2px solid ${colors.border}`;
                   } else if (isSecondary) {
                     bgColor = colors.bg;
                     textColor = colors.text;
                     opacity = 0.65;
+                    border = `1px solid ${colors.border}`;
                   } else {
-                    bgColor = '#F9FAFB';
-                    textColor = '#D1D5DB';
-                    opacity = 0.5;
+                    bgColor = 'rgba(28, 26, 22, 0.03)';
+                    textColor = 'rgba(28, 26, 22, 0.25)';
+                    opacity = 1;
+                    border = '1px solid rgba(28, 26, 22, 0.06)';
                   }
                   return (
                     <div
                       key={item.key}
-                      className="rounded-xl text-center shadow-sm"
-                      style={{ backgroundColor: bgColor, opacity, border: '1px solid rgba(28, 26, 22, 0.08)', minHeight: 80, padding: '12px 8px', ...(isWang ? { boxShadow: `0 0 0 2px ${colors.text}` } : {}) }}
+                      className="rounded-xl text-center"
+                      style={{ backgroundColor: bgColor, opacity, border, minHeight: 80, padding: '12px 8px' }}
                     >
                       <span style={{ fontSize: 24 }}>{item.icon}</span>
                       <span className="block mt-1" style={{ fontSize: 16, fontWeight: 600, color: textColor }}>{item.label}</span>
@@ -704,8 +708,8 @@ export default function DailyPage() {
                   <p className="text-xs text-brand-light mb-1">幸运方位</p>
                   <p className="text-sm font-medium text-brand-black">{result.lucky.direction}</p>
                 </div>
-                <div>
-                  <p className="text-xs text-brand-light mb-1">吉时</p>
+                <div style={{ backgroundColor: 'rgba(200, 162, 42, 0.08)', borderRadius: 6, padding: '8px' }}>
+                  <p className="text-xs mb-1" style={{ color: '#8B6914' }}>吉时</p>
                   <p className="text-sm font-medium text-brand-black">{result.luckyHour || '-'}</p>
                 </div>
               </div>
@@ -716,12 +720,12 @@ export default function DailyPage() {
               <h4 className="text-sm font-medium text-brand-black mb-4">📊 五维运势</h4>
               <div className="space-y-4">
                 {([
-                  { key: 'career' as const, label: '事业运', value: result.ratings.career },
-                  { key: 'wealth' as const, label: '财富运', value: result.ratings.wealth },
-                  { key: 'love' as const,   label: '感情运', value: result.ratings.love },
-                  { key: 'health' as const, label: '健康运', value: result.ratings.health },
-                  { key: 'studies' as const, label: '学业运', value: result.ratings.studies },
-                ]).map(({ key, label, value }) => {
+                  { key: 'career' as const, label: '事业运', value: result.ratings.career, barColor: '#2A5C8B' },
+                  { key: 'wealth' as const, label: '财富运', value: result.ratings.wealth, barColor: '#C8A22A' },
+                  { key: 'love' as const,   label: '感情运', value: result.ratings.love, barColor: '#C85A7A' },
+                  { key: 'health' as const, label: '健康运', value: result.ratings.health, barColor: '#4A7A35' },
+                  { key: 'studies' as const, label: '学业运', value: result.ratings.studies, barColor: '#6B4A8B' },
+                ]).map(({ key, label, value, barColor }) => {
                   const levelText = value >= 5 ? '优秀' : value >= 4 ? '良好' : value >= 3 ? '一般' : value >= 2 ? '偏弱' : '较差';
                   const levelColor = value >= 5 ? '#2D6A4F' : value >= 4 ? '#2563EB' : value >= 3 ? '#6B7280' : value >= 2 ? '#D97706' : '#DC2626';
                   const comment = result.ratingComments?.[key] || '';
@@ -748,10 +752,10 @@ export default function DailyPage() {
                           </span>
                         </span>
                       </div>
-                      <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden mb-1">
+                      <div className="w-full h-1.5 rounded overflow-hidden mb-1" style={{ backgroundColor: 'rgba(28, 26, 22, 0.06)' }}>
                         <div
-                          className="h-full rounded-full transition-all"
-                          style={{ width: `${value * 20}%`, backgroundColor: levelColor }}
+                          className="h-full rounded transition-all"
+                          style={{ width: `${value * 20}%`, backgroundColor: barColor }}
                         />
                       </div>
                       {isExpanded && comment && (
@@ -784,11 +788,11 @@ export default function DailyPage() {
             </Card>
 
             {/* 今日卦象 - 主动引导 */}
-            <div style={{ background: 'linear-gradient(135deg, #1a1040 0%, #2d1b69 50%, #1a2a5c 100%)', borderRadius: 16, padding: 24, border: '1px solid rgba(212, 175, 55, 0.2)', boxShadow: '0 4px 20px rgba(45, 27, 105, 0.2)' }}>
+            <div style={{ background: '#1C1208', borderRadius: 16, padding: 24, border: '1px solid rgba(200, 162, 42, 0.2)' }}>
               <h4 style={{ fontSize: 18, fontWeight: 600, marginBottom: 6, color: '#F5E6B8' }}>☰ 今日卦象</h4>
               <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', marginBottom: 16 }}>专为今日运势定制，AI 即时解卦</p>
               <Link href='/liuyao'>
-                <button style={{ background: 'linear-gradient(135deg, #D4AF37 0%, #C49B2C 100%)', color: '#1a1040', padding: '14px 32px', borderRadius: 12, fontSize: 15, fontWeight: 600, border: 'none', cursor: 'pointer', width: '100%', boxShadow: '0 2px 8px rgba(212, 175, 55, 0.3)' }}>
+                <button style={{ background: '#C8A22A', color: '#1C1A16', padding: '14px 32px', borderRadius: 12, fontSize: 15, fontWeight: 600, border: 'none', cursor: 'pointer', width: '100%', boxShadow: '0 2px 8px rgba(200, 162, 42, 0.3)' }}>
                   开始占卜 →
                 </button>
               </Link>
@@ -801,7 +805,7 @@ export default function DailyPage() {
             <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #F3F4F6' }}>
               <button
                 onClick={handleShare}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', border: '1px solid #E5E7EB', borderRadius: 8, backgroundColor: 'white', fontSize: 13, color: '#1C1A16', cursor: 'pointer', width: '100%', justifyContent: 'center' }}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', border: 'none', borderRadius: 8, backgroundColor: '#1C1A16', fontSize: 13, color: 'white', cursor: 'pointer', width: '100%', justifyContent: 'center' }}
               >
                 📤 分享今日运势
               </button>
@@ -811,7 +815,7 @@ export default function DailyPage() {
             <Card hover={false} className="text-center py-5">
               <p className="text-sm text-brand-gray mb-2">想深入了解自己的命盘？</p>
               <Link href="/bazi">
-                <button style={{ background: 'linear-gradient(135deg, #1a1040 0%, #2d1b69 50%, #1a2a5c 100%)', color: '#F5E6B8', padding: '12px 32px', borderRadius: 8, fontSize: 14, fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid rgba(212, 175, 55, 0.3)', cursor: 'pointer' }}>
+                <button style={{ background: '#1C1A16', color: 'white', padding: '12px 32px', borderRadius: 8, fontSize: 14, fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 6, border: 'none', cursor: 'pointer' }}>
                   八字全面分析 <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </Link>
