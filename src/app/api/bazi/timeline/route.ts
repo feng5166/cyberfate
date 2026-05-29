@@ -256,12 +256,11 @@ export async function GET(request: NextRequest) {
       try {
         const lyArr = currentLnObj.getLiuYue();
         
-        // Determine current month: use target date's lunar month
+        // Determine current month: use target date's ganZhi month (节气月)
         const targetSolar = Solar.fromYmd(tYear, tMonth, tDay);
         const targetLunar = targetSolar.getLunar();
-        const currentLunarMonth = targetLunar.getMonth(); // 1-12
-        // The LiuYue index is 0-based (0=正月, 1=二月, ...)
-        const currentMonthIndex = currentLunarMonth - 1;
+        const targetEightChar = targetLunar.getEightChar();
+        const targetMonthGanZhi = targetEightChar.getMonthGan() + targetEightChar.getMonthZhi();
 
         for (let i = 0; i < lyArr.length; i++) {
           const ly = lyArr[i];
@@ -270,7 +269,8 @@ export async function GET(request: NextRequest) {
           const dizhi = ganzhi[1];
           const { shishen, shishenDesc } = getShiShen(dayGan, tiangan);
           const monthChinese = ly.getMonthInChinese() + '月';
-          const isCurrent = i === currentMonthIndex;
+          // Match by ganZhi instead of index
+          const isCurrent = ganzhi === targetMonthGanZhi;
 
           const item: LiuyueItem = {
             monthChinese,
