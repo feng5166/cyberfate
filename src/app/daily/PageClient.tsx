@@ -187,7 +187,7 @@ function WeekCalendar({
   selectedDate: string;
   onSelect: (date: string) => void;
 }) {
-  const [showMonthPicker, setShowMonthPicker] = useState(true);
+  const [showMonthPicker, setShowMonthPicker] = useState(false);
 
   const getWeekDays = (base: string) => {
     const d = new Date(base + 'T00:00:00');
@@ -258,16 +258,41 @@ function WeekCalendar({
 
         {/* 月历按钮 */}
         <button
-          onClick={() => setShowMonthPicker(!showMonthPicker)}
-          className={`flex flex-col items-center justify-center px-4 gap-1 hover:bg-gray-50 transition-colors ${showMonthPicker ? 'bg-gray-50' : ''}`}
+          onClick={() => setShowMonthPicker(true)}
+          className="flex flex-col items-center justify-center px-4 gap-1 hover:bg-gray-50 transition-colors"
         >
-          <span className="text-xs text-brand-gray">{showMonthPicker ? '收起' : '月历'}</span>
+          <span className="text-xs text-brand-gray">月历</span>
           <span className="text-base">📅</span>
         </button>
       </div>
 
-      {/* 月历内联展开 */}
-      {showMonthPicker && <InlineCalendar selectedDate={selectedDate} onSelect={onSelect} />}
+      {/* 月历弹窗 */}
+      {showMonthPicker && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/30"
+            onClick={() => setShowMonthPicker(false)}
+          />
+          <div className="relative w-[90%] max-w-sm bg-white rounded-2xl p-4 shadow-xl">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-base font-semibold text-[#1C1A16]">选择日期</h3>
+              <button
+                onClick={() => setShowMonthPicker(false)}
+                className="p-1 text-[#1C1A16]/40 hover:text-[#1C1A16]"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <InlineCalendar
+              selectedDate={selectedDate}
+              onSelect={(date) => {
+                onSelect(date);
+                setShowMonthPicker(false);
+              }}
+            />
+          </div>
+        </div>
+      )}
     </>
   );
 }
