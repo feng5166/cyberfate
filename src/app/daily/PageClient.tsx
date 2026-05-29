@@ -304,21 +304,7 @@ export default function DailyPage() {
       <PageHeader title="每日运势" subtitle="基于八字的个性化每日运势分析" />
 
       <Container>
-        {/* 大运 / 流年 / 流月 命理脉络 */}
-        {hasSavedData && (
-          <TimelineSection
-            birthDate={formData.birthDate}
-            birthHour={formData.birthHour}
-            gender={formData.gender}
-            targetDate={(() => {
-              const d = new Date(today + 'T00:00:00');
-              d.setDate(d.getDate() + Number(dayOffset));
-              return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-            })()}
-          />
-        )}
-
-        {/* 周视图日期选择器 */}
+        {/* 周视图日期选择器 — 放在最前面 */}
         <div className="mb-8">
           <WeekCalendar
             selectedDate={(() => {
@@ -340,6 +326,20 @@ export default function DailyPage() {
             }}
           />
         </div>
+
+        {/* 大运 / 流年 / 流月 命理脉络 */}
+        {hasSavedData && (
+          <TimelineSection
+            birthDate={formData.birthDate}
+            birthHour={formData.birthHour}
+            gender={formData.gender}
+            targetDate={(() => {
+              const d = new Date(today + 'T00:00:00');
+              d.setDate(d.getDate() + Number(dayOffset));
+              return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+            })()}
+          />
+        )}
 
         {/* 输入表单（紧凑版） */}
         {!hasSavedData && !result && (

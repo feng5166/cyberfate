@@ -70,8 +70,16 @@ export default function HuangliPage() {
       onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
       onTouchEnd={(e) => { handleSwipe(e.changedTouches[0].clientX - touchStartX.current); }}
     >
+      {/* 移动端日期快捷条 - 置顶 */}
+      <div className="lg:hidden px-4 pt-4">
+        <MobileDateBar
+          selectedDate={selectedDate}
+          onDateSelect={handleDateSelect}
+        />
+      </div>
+
       {/* 标题区 */}
-      <div className="text-center py-8 md:py-10 px-4">
+      <div className="text-center py-6 md:py-10 px-4">
         <h1 className="font-display text-2xl md:text-3xl font-semibold text-[#1C1A16]">
           AI 老黄历
         </h1>
@@ -81,14 +89,6 @@ export default function HuangliPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 pb-16">
-        {/* 移动端日期快捷条 */}
-        <div className="lg:hidden mb-5">
-          <MobileDateBar
-            selectedDate={selectedDate}
-            onDateSelect={handleDateSelect}
-          />
-        </div>
-
         <div className="flex gap-6">
           {/* 左侧日历 - 桌面端 */}
           <div className="hidden lg:block w-[280px] flex-shrink-0 sticky top-[100px] self-start">

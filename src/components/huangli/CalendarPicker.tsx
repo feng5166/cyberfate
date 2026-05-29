@@ -188,10 +188,10 @@ export function CalendarPicker({ selectedDate, onDateSelect }: CalendarPickerPro
                 transition-all duration-150 group
                 ${isToday && isSelected
                   ? 'bg-amber-200 text-[#1C1A16] border-2 border-amber-400'
-                  : isToday
-                    ? 'bg-amber-100 text-[#1C1A16] border border-amber-300'
-                    : isSelected
-                      ? 'border-2 border-[#1C1A16] bg-[rgba(28,26,22,0.03)]'
+                  : isSelected
+                    ? 'border-2 border-[#1C1A16] bg-[rgba(28,26,22,0.03)]'
+                    : isToday
+                      ? 'bg-amber-50 hover:bg-amber-100'
                       : 'hover:bg-[#1C1A16]/5'
                 }
               `}
@@ -208,6 +208,9 @@ export function CalendarPicker({ selectedDate, onDateSelect }: CalendarPickerPro
               }`}>
                 {cell.lunarDay}
               </span>
+              {isToday && !isSelected && (
+                <div className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-amber-500" />
+              )}
               {cell.hasJieqi && !isToday && (
                 <div className="absolute top-0.5 right-0.5 w-1 h-1 rounded-full bg-[#4A7C9B]" />
               )}
