@@ -72,6 +72,70 @@ interface DailyResult {
   };
 }
 
+
+// 命理化评分模板库（6维度×5等级=30条）
+const RATING_TEMPLATES: Record<string, Record<string, string>> = {
+  career: {
+    旺: "官星得力，日主乘势而上",
+    强: "官印相生，事业稳步向前",
+    平: "日主中和，新事缓推为宜",
+    弱: "日主受克，推进多阻",
+    衰: "官星受冲，宜守不宜攻"
+  },
+  wealth: {
+    旺: "财星当令，正财偏财皆旺",
+    强: "财源稳固，可适度进取",
+    平: "财星临平，无横财保稳",
+    弱: "财气消耗，不宜投机",
+    衰: "比劫夺财，谨防破财"
+  },
+  love: {
+    旺: "桃花得地，姻缘可期",
+    强: "夫妻宫顺，旧爱新缘皆宜",
+    平: "桃花一般，旧情可续",
+    弱: "桃花浮动，多沟通少决断",
+    衰: "桃花受克，慎防口舌"
+  },
+  health: {
+    旺: "日元充沛，精力旺盛",
+    强: "五行调和，身心皆顺",
+    平: "气血平稳，注意作息",
+    弱: "日元偏弱，宜静养",
+    衰: "五行失衡，注意脾胃心血管"
+  },
+  studies: {
+    旺: "印星临身，文思如泉",
+    强: "印星得力，宜读宜写",
+    平: "学习平稳，需主动用功",
+    弱: "印星受克，专注力下降",
+    衰: "心神浮动，宜整理思路"
+  },
+  social: {
+    旺: "食伤当令，贵人相助",
+    强: "人缘和顺，多得助力",
+    平: "食伤平和，社交克制",
+    弱: "言多有失，少争为佳",
+    衰: "食伤受冲，慎防口舌是非"
+  }
+};
+
+// 分数→等级映射
+function scoreToLevel(score: number): string {
+  if (score >= 90) return '旺';
+  if (score >= 70) return '强';
+  if (score >= 50) return '平';
+  if (score >= 30) return '弱';
+  return '衰';
+}
+
+// 命理术语关键词
+const MINGLI_KEYWORDS = ['日主', '官星', '印星', '财星', '比劫', '食伤', '桃花', '夫妻宫', '文昌', '日元', '五行', '贵人', '得令', '失令', '当令', '受克', '相生', '受冲', '临平', '得力', '得地', '临身'];
+
+// 判断文本是否包含命理术语
+function hasMingliTerm(text: string): boolean {
+  return MINGLI_KEYWORDS.some(kw => text.includes(kw));
+}
+
 // 五维进度条
 function ProgressBar({ label, value, max = 100, color = 'bg-brand-black' }: { label: string; value: number; max?: number; color?: string }) {
   const pct = Math.min(Math.round((value / max) * 100), 100);
@@ -519,7 +583,7 @@ export default function DailyPage() {
               {/* 综合分大圆 */}
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
                 <div style={{ width: 80, height: 80, borderRadius: '50%', border: '3px solid #C8622A', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                  <div style={{ fontSize: 28, fontWeight: 800, color: '#C8622A', lineHeight: 1 }}>{result.overall * 20}</div>
+                  <div style={{ fontSize: 26, fontWeight: 800, color: '#C8622A', lineHeight: 1 }}>{scoreToLevel(result.overall * 20)}</div>
                   <div style={{ fontSize: 10, color: 'rgba(28,26,22,0.55)', marginTop: 2 }}>综合</div>
                 </div>
                 <div style={{ fontSize: 11, color: 'rgba(28,26,22,0.55)', marginTop: 6, textAlign: 'center' }}>
@@ -536,15 +600,18 @@ export default function DailyPage() {
                   { key: 'studies' as const, label: '学业', value: result.ratings.studies },
                   { key: 'social' as const, label: '人缘', value: result.ratings.social || 3 },
                 ]).map(({ key, label, value }) => {
-                  const comment = result.ratingComments?.[key] || '';
+                  const score = value * 20;
+                  const level = scoreToLevel(score);
+                  const aiComment = result.ratingComments?.[key] || '';
+                  const comment = (aiComment && hasMingliTerm(aiComment)) ? aiComment : (RATING_TEMPLATES[key]?.[level] || aiComment);
                   return (
                     <div key={key}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <span style={{ fontSize: 12, color: 'rgba(28,26,22,0.55)', width: 32, flexShrink: 0 }}>{label}</span>
                         <div style={{ flex: 1, height: 6, backgroundColor: 'rgba(28,26,22,0.06)', borderRadius: 3, overflow: 'hidden' }}>
-                          <div style={{ height: '100%', width: `${value * 20}%`, backgroundColor: '#C8622A', borderRadius: 3 }} />
+                          <div style={{ height: '100%', width: `${score}%`, backgroundColor: '#C8622A', borderRadius: 3 }} />
                         </div>
-                        <span style={{ fontSize: 12, fontWeight: 600, color: '#C8622A', width: 24, textAlign: 'right' }}>{value * 20}</span>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: '#1C1A16', width: 20, textAlign: 'right' }}>{level}</span>
                       </div>
                       {comment && (
                         <div style={{ fontSize: 12, color: 'rgba(28,26,22,0.55)', marginTop: 3, paddingLeft: 40, lineHeight: 1.5 }}>
