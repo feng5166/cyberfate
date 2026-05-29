@@ -100,6 +100,85 @@ const dayOffsetTexts: Record<string, { short: string; loading: string }> = {
 };
 const getDayOffsetText = (offset: string) => dayOffsetTexts[offset] ?? { short: '该日', loading: '正在推算运势...' };
 
+// 内联月历组件
+function InlineCalendar({ selectedDate, onSelect }: { selectedDate: string; onSelect: (date: string) => void }) {
+  const { year: selY, month: selM } = (() => {
+    const [y, m] = selectedDate.split('-').map(Number);
+    return { year: y, month: m };
+  })();
+  const [viewYear, setViewYear] = useState(selY);
+  const [viewMonth, setViewMonth] = useState(selM);
+
+  const todayStr = (() => {
+    const t = new Date();
+    return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
+  })();
+
+  const prevMonth = () => {
+    if (viewMonth === 1) { setViewYear(viewYear - 1); setViewMonth(12); }
+    else setViewMonth(viewMonth - 1);
+  };
+  const nextMonth = () => {
+    if (viewMonth === 12) { setViewYear(viewYear + 1); setViewMonth(1); }
+    else setViewMonth(viewMonth + 1);
+  };
+
+  const daysInMonth = new Date(viewYear, viewMonth, 0).getDate();
+  const firstDay = new Date(viewYear, viewMonth - 1, 1).getDay();
+  const days: (number | null)[] = [];
+  for (let i = 0; i < firstDay; i++) days.push(null);
+  for (let i = 1; i <= daysInMonth; i++) days.push(i);
+
+  const weekDayHeaders = ['日', '一', '二', '三', '四', '五', '六'];
+
+  return (
+    <div className="mt-2 bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+      {/* 月份切换 */}
+      <div className="flex items-center justify-between mb-3">
+        <button onClick={prevMonth} className="p-1 hover:bg-gray-100 rounded">
+          <ChevronRight className="w-4 h-4 rotate-180" />
+        </button>
+        <span className="text-sm font-semibold text-[#1C1A16]">{viewYear}年{viewMonth}月</span>
+        <button onClick={nextMonth} className="p-1 hover:bg-gray-100 rounded">
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* 星期头 */}
+      <div className="grid grid-cols-7 mb-1">
+        {weekDayHeaders.map((w, i) => (
+          <div key={w} className={`text-center text-xs py-1 ${i === 0 || i === 6 ? 'text-red-400' : 'text-gray-400'}`}>{w}</div>
+        ))}
+      </div>
+
+      {/* 日期网格 */}
+      <div className="grid grid-cols-7 gap-0.5">
+        {days.map((day, idx) => {
+          if (day === null) return <div key={idx} />;
+          const dateStr = `${viewYear}-${String(viewMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+          const isSelected = dateStr === selectedDate;
+          const isToday = dateStr === todayStr;
+          return (
+            <button
+              key={idx}
+              onClick={() => onSelect(dateStr)}
+              className={`
+                aspect-square flex items-center justify-center rounded-lg text-sm font-medium relative
+                ${isSelected ? 'bg-[#0F0F0F] text-white' : isToday ? 'bg-amber-50 text-[#1C1A16]' : 'hover:bg-gray-50 text-[#1C1A16]'}
+              `}
+            >
+              {day}
+              {isToday && !isSelected && (
+                <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-amber-500" />
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // 周视图日历组件
 function WeekCalendar({
   selectedDate,
@@ -108,7 +187,7 @@ function WeekCalendar({
   selectedDate: string;
   onSelect: (date: string) => void;
 }) {
-  const [showMonthPicker, setShowMonthPicker] = useState(false);
+  const [showMonthPicker, setShowMonthPicker] = useState(true);
 
   const getWeekDays = (base: string) => {
     const d = new Date(base + 'T00:00:00');
@@ -179,41 +258,16 @@ function WeekCalendar({
 
         {/* 月历按钮 */}
         <button
-          onClick={() => setShowMonthPicker(true)}
-          className="flex flex-col items-center justify-center px-4 gap-1 hover:bg-gray-50 transition-colors"
+          onClick={() => setShowMonthPicker(!showMonthPicker)}
+          className={`flex flex-col items-center justify-center px-4 gap-1 hover:bg-gray-50 transition-colors ${showMonthPicker ? 'bg-gray-50' : ''}`}
         >
-          <span className="text-xs text-brand-gray">月历</span>
+          <span className="text-xs text-brand-gray">{showMonthPicker ? '收起' : '月历'}</span>
           <span className="text-base">📅</span>
         </button>
       </div>
 
-      {/* 月历弹窗 */}
-      {showMonthPicker && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div
-            className="absolute inset-0 bg-black/30"
-            onClick={() => setShowMonthPicker(false)}
-          />
-          <div className="relative w-[90%] max-w-md bg-[#FAF9F6] rounded-2xl p-4 shadow-xl">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-display text-lg font-semibold text-[#1C1A16]">选择日期</h3>
-              <button
-                onClick={() => setShowMonthPicker(false)}
-                className="p-1 text-[#1C1A16]/40 hover:text-[#1C1A16]"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <DatePicker
-              value={selectedDate}
-              onChange={(date) => {
-                onSelect(date);
-                setShowMonthPicker(false);
-              }}
-            />
-          </div>
-        </div>
-      )}
+      {/* 月历内联展开 */}
+      {showMonthPicker && <InlineCalendar selectedDate={selectedDate} onSelect={onSelect} />}
     </>
   );
 }
