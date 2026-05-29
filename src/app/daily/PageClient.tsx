@@ -403,6 +403,7 @@ export default function DailyPage() {
 
   const [dayOffset, setDayOffset] = useState('0');
   const [expandedRating, setExpandedRating] = useState<string | null>(null);
+  const [showTimeline, setShowTimeline] = useState(false);
   const currentDayText = getDayOffsetText(dayOffset);
 
   const handleDateChange = (offset: string) => {
@@ -450,18 +451,29 @@ export default function DailyPage() {
       </div>
 
       <Container>
-        {/* 大运 / 流年 / 流月 命理脉络 */}
+        {/* 命理脉络（默认折叠） */}
         {hasSavedData && (
-          <TimelineSection
-            birthDate={formData.birthDate}
-            birthHour={formData.birthHour}
-            gender={formData.gender}
-            targetDate={(() => {
-              const d = new Date(today + 'T00:00:00');
-              d.setDate(d.getDate() + Number(dayOffset));
-              return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-            })()}
-          />
+          <div style={{ marginBottom: 24 }}>
+            <button
+              onClick={() => setShowTimeline(!showTimeline)}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', backgroundColor: 'white', border: '1px solid #E5E7EB', borderRadius: 12, cursor: 'pointer', marginBottom: showTimeline ? 12 : 0 }}
+            >
+              <span style={{ fontSize: 14, fontWeight: 500, color: '#1C1A16' }}>📊 命理脉络（大运·流年·流月）</span>
+              <span style={{ fontSize: 12, color: '#9CA3AF', transform: showTimeline ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', display: 'inline-block' }}>▾</span>
+            </button>
+            {showTimeline && (
+              <TimelineSection
+                birthDate={formData.birthDate}
+                birthHour={formData.birthHour}
+                gender={formData.gender}
+                targetDate={(() => {
+                  const d = new Date(today + 'T00:00:00');
+                  d.setDate(d.getDate() + Number(dayOffset));
+                  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+                })()}
+              />
+            )}
+          </div>
         )}
 
         {/* 输入表单（紧凑版） */}
@@ -502,6 +514,44 @@ export default function DailyPage() {
         {/* ===== 结果展示 ===== */}
         {result && !loading && (
           <div className="space-y-5 pb-20 md:pb-26 animate-fadeIn">
+            {/* 分享今日运势 - 醒目按钮 */}
+            <button
+              onClick={handleShare}
+              style={{ width: '100%', padding: '14px 20px', borderRadius: 12, backgroundColor: '#1C1A16', color: 'white', fontSize: 14, fontWeight: 500, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+            >
+              📤 分享今日运势
+            </button>
+
+            {/* 今日核心速览 */}
+            <div style={{ backgroundColor: 'white', borderRadius: 16, border: '1px solid #E5E7EB', padding: 24, textAlign: 'center' }}>
+              <div style={{ fontSize: 14, color: '#9CA3AF', marginBottom: 8 }}>今日运势</div>
+              <div style={{ fontSize: 48, fontWeight: 800, color: result.overallLabel === '吉' ? '#2D6A4F' : result.overallLabel === '凶' ? '#DC2626' : '#1C1A16', lineHeight: 1.2, marginBottom: 8 }}>
+                {result.overallLabel || '平'}
+              </div>
+              <div style={{ fontSize: 14, color: '#6B7280', marginBottom: 16 }}>
+                {result.dayGanzhi} · {result.date}
+              </div>
+              {result.luckyHour && (
+                <div style={{ display: 'inline-block', backgroundColor: '#FEF3C7', color: '#92400E', padding: '6px 16px', borderRadius: 20, fontSize: 13, fontWeight: 500, marginBottom: 16 }}>
+                  ⏰ 吉时：{result.luckyHour}
+                </div>
+              )}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 12 }}>
+                <div style={{ backgroundColor: '#F9FAFB', padding: '10px 8px', borderRadius: 8 }}>
+                  <div style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 4 }}>🎨 幸运色</div>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: '#1C1A16' }}>{result.lucky.color}</div>
+                </div>
+                <div style={{ backgroundColor: '#F9FAFB', padding: '10px 8px', borderRadius: 8 }}>
+                  <div style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 4 }}>🔢 幸运数</div>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: '#1C1A16' }}>{result.lucky.numbers.join(', ')}</div>
+                </div>
+                <div style={{ backgroundColor: '#F9FAFB', padding: '10px 8px', borderRadius: 8 }}>
+                  <div style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 4 }}>🧭 方位</div>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: '#1C1A16' }}>{result.lucky.direction}</div>
+                </div>
+              </div>
+            </div>
+
             {/* 运势概览大卡片 */}
             <Card hover={false}>
               <div className="flex items-center gap-8">
@@ -547,7 +597,7 @@ export default function DailyPage() {
             </Card>
 
             {/* 今日五行强弱 */}
-            <div className="flex gap-3 overflow-x-auto pb-2">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
               {(() => {
                 const ganToWuxing: Record<string, string> = {
                   甲: 'wood', 乙: 'wood',
@@ -593,11 +643,11 @@ export default function DailyPage() {
                   return (
                     <div
                       key={item.key}
-                      className="flex-shrink-0 rounded-xl p-4 min-w-[100px] text-center shadow-sm"
-                      style={{ backgroundColor: bgColor, opacity, border: '1px solid rgba(28, 26, 22, 0.08)' }}
+                      className="rounded-xl text-center shadow-sm"
+                      style={{ backgroundColor: bgColor, opacity, border: '1px solid rgba(28, 26, 22, 0.08)', minHeight: 80, padding: '12px 8px', ...(isWang ? { boxShadow: `0 0 0 2px ${colors.text}` } : {}) }}
                     >
-                      <span className="text-xl">{item.icon}</span>
-                      <span className="block text-xs font-medium mt-1" style={{ color: textColor }}>{item.label}</span>
+                      <span style={{ fontSize: 24 }}>{item.icon}</span>
+                      <span className="block mt-1" style={{ fontSize: 16, fontWeight: 600, color: textColor }}>{item.label}</span>
                       {isWang ? (
                         <span className="block mt-0.5" style={{ fontSize: 10, fontWeight: 600, color: textColor }}>旺</span>
                       ) : (
@@ -702,41 +752,37 @@ export default function DailyPage() {
                   );
                 })}
               </div>
-              <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid #F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <p style={{ fontSize: 12, color: '#6B7280', lineHeight: 1.5 }}>想了解本月完整运势走势？</p>
+              <div style={{ backgroundColor: '#FEF3C7', padding: '14px 16px', borderRadius: 10, marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <p style={{ fontSize: 13, fontWeight: 500, color: '#92400E', lineHeight: 1.5 }}>🔮 想了解本月完整运势走势？</p>
                 <Link href='/bazi'>
-                  <button style={{ backgroundColor: '#1C1A16', color: 'white', padding: '7px 16px', borderRadius: 6, fontSize: 12, fontWeight: 500, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}>查看完整命盘 →</button>
+                  <button style={{ backgroundColor: '#D97706', color: 'white', padding: '7px 16px', borderRadius: 6, fontSize: 12, fontWeight: 500, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}>查看完整命盘 →</button>
                 </Link>
               </div>
             </Card>
 
             {/* AI 运势建议 */}
             <Card hover={false} className="bg-yellow-50 border-yellow-200">
-              <h4 className="text-sm font-medium text-yellow-700 mb-1 flex items-center gap-1.5">
+              <h4 className="font-medium text-yellow-700 mb-1 flex items-center gap-1.5" style={{ fontSize: 16 }}>
                 💡 今日指引
               </h4>
-              <p className="text-xs text-yellow-600/70 mb-2">AI 综合分析 · 仅供参考</p>
+              <p className="text-yellow-600/70 mb-2" style={{ fontSize: 13 }}>AI 综合分析 · 仅供参考</p>
               {result.verse && (
-                <p style={{ fontSize: 12, color: '#92400E', fontStyle: 'italic', marginBottom: 8 }}>
+                <p style={{ fontSize: 14, color: '#92400E', fontStyle: 'italic', marginBottom: 8, lineHeight: 1.8 }}>
                   「{result.verse}」
                 </p>
               )}
-              <p className="text-sm leading-relaxed text-gray-700">{result.advice}</p>
+              <p className="text-gray-700" style={{ fontSize: 15, lineHeight: 1.8 }}>{result.advice}</p>
             </Card>
 
-            {/* 今日卦象入口 */}
-            <div className="rounded-card border border-[#E5D9C0] p-7" style={{ backgroundColor: '#F5F0E8' }}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="text-base font-semibold text-brand-black mb-1">🔮 今日卦象</h4>
-                  <p className="text-sm text-brand-gray">
-                    仅为今天占卜，
-                    <Link href="/liuyao" className="text-brand-black font-medium underline underline-offset-2">点此开始</Link>
-                    {' '}生成卦象
-                  </p>
-                </div>
-                <div className="text-4xl opacity-30">🪙</div>
-              </div>
+            {/* 今日卦象 - 主动引导 */}
+            <div style={{ backgroundColor: '#1C1A16', borderRadius: 16, padding: 24, color: 'white' }}>
+              <h4 style={{ fontSize: 18, fontWeight: 600, marginBottom: 6 }}>🔮 今日卦象</h4>
+              <p style={{ fontSize: 13, color: '#9CA3AF', marginBottom: 16 }}>专为今日运势定制，AI 即时解卦</p>
+              <Link href='/liuyao'>
+                <button style={{ backgroundColor: 'white', color: '#1C1A16', padding: '14px 32px', borderRadius: 12, fontSize: 15, fontWeight: 600, border: 'none', cursor: 'pointer', width: '100%' }}>
+                  开始占卜 →
+                </button>
+              </Link>
             </div>
 
             {/* 🎵 今日之歌 */}
