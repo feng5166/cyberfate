@@ -189,12 +189,12 @@ function WeekCalendar({
 
       {/* 月历弹窗 */}
       {showMonthPicker && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
             className="absolute inset-0 bg-black/30"
             onClick={() => setShowMonthPicker(false)}
           />
-          <div className="relative w-full max-w-md bg-[#FAF9F6] rounded-t-3xl p-4 pb-8 animate-slide-up">
+          <div className="relative w-[90%] max-w-md bg-[#FAF9F6] rounded-2xl p-4 shadow-xl">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-display text-lg font-semibold text-[#1C1A16]">选择日期</h3>
               <button
