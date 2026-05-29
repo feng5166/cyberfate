@@ -523,14 +523,6 @@ export default function DailyPage() {
         {/* ===== 结果展示 ===== */}
         {result && !loading && (
           <div className="space-y-5 pb-20 md:pb-26 animate-fadeIn">
-            {/* 分享今日运势 - 醒目按钮 */}
-            <button
-              onClick={handleShare}
-              className="hover:bg-[rgba(28,26,22,0.04)] hover:border-[rgba(28,26,22,0.35)] transition-colors"
-              style={{ width: '100%', padding: '14px 20px', borderRadius: 12, background: 'transparent', color: '#1C1A16', fontSize: 14, fontWeight: 500, border: '1.5px solid rgba(28, 26, 22, 0.20)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
-            >
-              📤 分享今日运势
-            </button>
 
             {/* 今日核心速览 */}
             <div style={{ backgroundColor: 'white', borderRadius: 16, border: '1px solid #E5E7EB', padding: 24, textAlign: 'center' }}>
@@ -538,8 +530,11 @@ export default function DailyPage() {
               <div style={{ fontSize: 48, fontWeight: 800, color: result.overallLabel === '吉' ? '#2D6A4F' : result.overallLabel === '凶' ? '#DC2626' : '#1C1A16', lineHeight: 1.2, marginBottom: 8 }}>
                 {result.overallLabel || '平'}
               </div>
-              <div style={{ fontSize: 14, color: '#6B7280', marginBottom: 16 }}>
+              <div style={{ fontSize: 14, color: '#6B7280', marginBottom: 4 }}>
                 {result.dayGanzhi} · {result.date}
+              </div>
+              <div style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 16 }}>
+                {result.lunarDate} · {result.dayGanzhi}日
               </div>
               {result.luckyHour && (
                 <div style={{ display: 'inline-block', backgroundColor: '#FEF3C7', color: '#92400E', padding: '6px 16px', borderRadius: 20, fontSize: 13, fontWeight: 500, marginBottom: 16 }}>
@@ -562,26 +557,6 @@ export default function DailyPage() {
               </div>
             </div>
 
-            {/* 日柱信息条 */}
-            <Card hover={false}>
-              <div className="flex items-center gap-4">
-                <div className="flex gap-2">
-                  {result.dayGanzhi.split('').map((char: string, i: number) => (
-                    <div
-                      key={i}
-                      className="w-12 h-12 rounded-lg flex items-center justify-center text-white font-black text-xl"
-                      style={{ backgroundColor: '#C2762B' }}
-                    >
-                      {char}
-                    </div>
-                  ))}
-                </div>
-                <div className="space-y-1 text-sm text-brand-gray">
-                  <p>公历：{result.date}</p>
-                  <p>农历：{result.lunarDate} · {result.dayGanzhi}日</p>
-                </div>
-              </div>
-            </Card>
 
             {/* 今日五行强弱 */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
