@@ -145,19 +145,19 @@ function WeekCalendar({
               <button
                 key={date}
                 onClick={() => onSelect(date)}
-                className={`flex-shrink-0 flex flex-col items-center py-2.5 gap-0.5 transition-colors w-10 ${isSelected ? 'rounded-lg' : 'hover:bg-gray-50'}`}
-                style={isSelected ? { backgroundColor: '#0F0F0F' } : undefined}
+                className={`flex-shrink-0 flex flex-col items-center py-2.5 gap-0.5 transition-colors w-10 ${isSelected ? '' : 'hover:bg-gray-50'}`}
+                style={isSelected ? { borderBottom: '2px solid #0F0F0F' } : undefined}
               >
                 <span
                   className={`text-[10px] font-medium`}
-                  style={{ color: isSelected ? 'rgba(255,255,255,0.7)' : isToday ? '#1C1A16' : '#6B7280' }}
+                  style={{ color: isSelected ? '#0F0F0F' : isToday ? '#1C1A16' : '#6B7280' }}
                 >
                   周{weekLabels[i]}
                 </span>
                 <span
                   className={`text-sm font-semibold w-7 h-7 flex items-center justify-center rounded-full`}
                   style={isSelected
-                    ? { backgroundColor: 'rgba(255,255,255,0.2)', color: 'white' }
+                    ? { backgroundColor: '#0F0F0F', color: 'white' }
                     : isToday
                     ? { backgroundColor: '#1C1A16', color: 'white' }
                     : { color: '#1C1A16' }
