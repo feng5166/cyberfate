@@ -14,6 +14,7 @@ import { Sun, Cloud, Droplets, Heart, Briefcase, Activity, Sparkles, ArrowRight,
 import Link from 'next/link';
 import DailyMusicCard from '@/components/music-oracle/DailyMusicCard';
 import TimelineSection from '@/components/daily/TimelineSection';
+import html2canvas from 'html2canvas';
 
 // 十二时辰选项
 const shichenOptions = [
@@ -308,6 +309,25 @@ export default function DailyPage() {
   });
   const [hasSavedData, setHasSavedData] = useState(false);
   const autoSubmittedRef = useRef(false);
+  const shareCardRef = useRef<HTMLDivElement>(null);
+
+  const handleShare = async () => {
+    if (!shareCardRef.current || !result) return;
+    try {
+      const canvas = await html2canvas(shareCardRef.current, { scale: 2, backgroundColor: '#FAF9F6' });
+      const blob = await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b!), 'image/png'));
+      const file = new File([blob], 'cyberfate-daily.png', { type: 'image/png' });
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: '今日运势 - CyberFate' });
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'cyberfate-daily.png';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    } catch (e) { console.error('Share failed:', e); }
+  };
 
   const fetchFortune = async (birthDate: string, birthHour: string, targetDate: string, gender?: string) => {
     setError('');
@@ -717,6 +737,16 @@ export default function DailyPage() {
             {/* 🎵 今日之歌 */}
             <DailyMusicCard />
 
+            {/* 分享今日运势 */}
+            <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #F3F4F6' }}>
+              <button
+                onClick={handleShare}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', border: '1px solid #E5E7EB', borderRadius: 8, backgroundColor: 'white', fontSize: 13, color: '#1C1A16', cursor: 'pointer', width: '100%', justifyContent: 'center' }}
+              >
+                📤 分享今日运势
+              </button>
+            </div>
+
             {/* 引导到八字分析 */}
             <Card hover={false} className="text-center py-5">
               <p className="text-sm text-brand-gray mb-2">想深入了解自己的命盘？</p>
@@ -737,6 +767,35 @@ export default function DailyPage() {
       </Container>
 
       <Footer />
+
+      {/* 隐藏的分享卡片 */}
+      <div ref={shareCardRef} style={{ position: 'absolute', left: '-9999px', top: 0, width: 375, padding: 24, backgroundColor: '#FAF9F6' }}>
+        {result && (
+          <div>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#1C1A16', marginBottom: 8 }}>
+              {result.date} · {result.overallLabel || '平'}
+            </h2>
+            <p style={{ fontSize: 14, color: '#6B7280', marginBottom: 12 }}>
+              今日干支：{result.dayGanzhi}
+            </p>
+            {result.suitable && result.suitable.length > 0 && (
+              <div style={{ marginBottom: 12 }}>
+                <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>宜</p>
+                <p style={{ fontSize: 14, color: '#1C1A16' }}>{result.suitable.slice(0, 3).join(' · ')}</p>
+              </div>
+            )}
+            {result.verse && (
+              <p style={{ fontSize: 12, color: '#92400E', fontStyle: 'italic', marginBottom: 12 }}>
+                「{result.verse}」
+              </p>
+            )}
+            <div style={{ marginTop: 20, paddingTop: 12, borderTop: '1px solid #E5E7EB' }}>
+              <p style={{ fontSize: 11, color: '#9CA3AF' }}>CyberFate · 赛博命理师</p>
+              <p style={{ fontSize: 10, color: '#D1D5DB' }}>www.cyberfate.me</p>
+            </div>
+          </div>
+        )}
+      </div>
 
       <div className="hidden" data-version="20260528-v3"></div>
     </div>

@@ -208,6 +208,7 @@ function ScrollRow({
         style={{
           scrollSnapType: 'x mandatory',
           paddingBottom: 4,
+          minWidth: 0,
         }}
       >
         {children}
@@ -328,6 +329,7 @@ export default function TimelineSection({
   const dayunIdx = data.dayun.list.findIndex(d => d.isCurrent);
   const liunianIdx = data.liunian.list.findIndex(l => l.isCurrent);
   const liuyueIdx = data.liuyue.list.findIndex(l => l.isCurrent);
+  const targetYear = targetDate ? parseInt(targetDate.split('-')[0]) : new Date().getFullYear();
 
   return (
     <div className="mb-8">
@@ -378,6 +380,19 @@ export default function TimelineSection({
                     )}
                   </>
                 )}
+                {item.isCurrent && (() => {
+                  const totalYears = item.yearEnd - item.yearStart + 1;
+                  const elapsed = targetYear - item.yearStart;
+                  const progress = Math.min(Math.round(elapsed / totalYears * 100), 100);
+                  return (
+                    <div style={{ marginTop: 6, width: '100%' }}>
+                      <div style={{ height: 2, backgroundColor: '#E5E7EB', borderRadius: 2 }}>
+                        <div style={{ height: '100%', width: progress + '%', backgroundColor: '#1C1A16', borderRadius: 2, transition: 'width 0.6s ease' }} />
+                      </div>
+                      <p style={{ fontSize: 10, color: '#9CA3AF', marginTop: 2, textAlign: 'center' }}>已走 {progress}%</p>
+                    </div>
+                  );
+                })()}
               </div>
             ))}
           </ScrollRow>
