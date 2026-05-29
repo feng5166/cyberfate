@@ -418,8 +418,16 @@ export default function DailyPage() {
 
   return (
     <div className="min-h-screen bg-[#FAF9F6]">
-      {/* 周视图日期选择器 — 放在最前面 */}
-      <div className="px-4 pt-4 max-w-7xl mx-auto">
+      {/* 页面标题 */}
+      <div className="text-center pt-6 md:pt-12 pb-6">
+        <h1 className="font-display text-h1 md:text-[44px] text-[#1C1A16]" style={{ letterSpacing: '10px' }}>每日运势</h1>
+        <p className="text-body-sm text-[#1C1A16]/70 mt-3">
+          每日运势分析，是东方智慧的凝练，更是你掌握当下、规划未来的参照。
+        </p>
+      </div>
+
+      {/* 周视图日期选择器 */}
+      <div className="px-4 max-w-7xl mx-auto mb-6">
         <WeekCalendar
             selectedDate={(() => {
               const d = new Date(today + 'T00:00:00');
@@ -439,15 +447,6 @@ export default function DailyPage() {
               }
             }}
           />
-      </div>
-
-      {/* 页面标题 */}
-      {/* 页面标题 */}
-      <div className="text-center pt-6 md:pt-12 pb-8">
-        <h1 className="font-display text-h1 md:text-[44px] text-[#1C1A16]" style={{ letterSpacing: '10px' }}>每日运势</h1>
-        <p className="text-body-sm text-[#1C1A16]/70 mt-3">
-          每日运势分析，是东方智慧的凝练，更是你掌握当下、规划未来的参照。
-        </p>
       </div>
 
       <Container>
