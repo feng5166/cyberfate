@@ -412,7 +412,7 @@ export default function DailyPage() {
 
   const [dayOffset, setDayOffset] = useState('0');
   const [expandedRating, setExpandedRating] = useState<string | null>(null);
-  const [showTimeline, setShowTimeline] = useState(false);
+  const [showTimeline, setShowTimeline] = useState(true);
   const currentDayText = getDayOffsetText(dayOffset);
 
   const handleDateChange = (offset: string) => {
@@ -460,31 +460,6 @@ export default function DailyPage() {
       </div>
 
       <Container>
-        {/* 命理脉络（默认折叠） */}
-        {hasSavedData && (
-          <div style={{ marginBottom: 24 }}>
-            <button
-              onClick={() => setShowTimeline(!showTimeline)}
-              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', backgroundColor: 'white', border: '1px solid #E5E7EB', borderRadius: 12, cursor: 'pointer', marginBottom: showTimeline ? 12 : 0 }}
-            >
-              <span style={{ fontSize: 14, fontWeight: 500, color: '#1C1A16' }}>📊 命理脉络（大运·流年·流月）</span>
-              <span style={{ fontSize: 12, color: '#9CA3AF', transform: showTimeline ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', display: 'inline-block' }}>▾</span>
-            </button>
-            {showTimeline && (
-              <TimelineSection
-                birthDate={formData.birthDate}
-                birthHour={formData.birthHour}
-                gender={formData.gender}
-                targetDate={(() => {
-                  const d = new Date(today + 'T00:00:00');
-                  d.setDate(d.getDate() + Number(dayOffset));
-                  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-                })()}
-              />
-            )}
-          </div>
-        )}
-
         {/* 输入表单（紧凑版） */}
         {!hasSavedData && !result && (
           <Card hover={false} className="max-w-[500px] mx-auto mb-8">
@@ -558,6 +533,84 @@ export default function DailyPage() {
             </div>
 
 
+            {/* 五维运势 */}
+            <Card hover={false}>
+              <h4 className="text-sm font-medium text-brand-black mb-4">📊 五维运势</h4>
+              <div className="space-y-4">
+                {([
+                  { key: 'career' as const, label: '事业运', value: result.ratings.career, barColor: '#2A5C8B' },
+                  { key: 'wealth' as const, label: '财富运', value: result.ratings.wealth, barColor: '#C8A22A' },
+                  { key: 'love' as const,   label: '感情运', value: result.ratings.love, barColor: '#C85A7A' },
+                  { key: 'health' as const, label: '健康运', value: result.ratings.health, barColor: '#4A7A35' },
+                  { key: 'studies' as const, label: '学业运', value: result.ratings.studies, barColor: '#6B4A8B' },
+                ]).map(({ key, label, value, barColor }) => {
+                  const levelText = value >= 5 ? '优秀' : value >= 4 ? '良好' : value >= 3 ? '一般' : value >= 2 ? '偏弱' : '较差';
+                  const levelColor = value >= 5 ? '#2D6A4F' : value >= 4 ? '#2563EB' : value >= 3 ? '#6B7280' : value >= 2 ? '#D97706' : '#DC2626';
+                  const comment = result.ratingComments?.[key] || '';
+                  const isExpanded = expandedRating === key;
+                  return (
+                    <div
+                      key={key}
+                      onClick={() => setExpandedRating(isExpanded ? null : key)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium text-brand-black">{label}</span>
+                        <span className="text-sm font-semibold flex items-center gap-1" style={{ color: levelColor }}>
+                          {levelText}
+                          <span
+                            style={{
+                              display: 'inline-block',
+                              fontSize: 10,
+                              transition: 'transform 0.2s',
+                              transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                            }}
+                          >
+                            ▾
+                          </span>
+                        </span>
+                      </div>
+                      <div className="w-full h-1.5 rounded overflow-hidden mb-1" style={{ backgroundColor: 'rgba(28, 26, 22, 0.06)' }}>
+                        <div
+                          className="h-full rounded transition-all"
+                          style={{ width: `${value * 20}%`, backgroundColor: barColor }}
+                        />
+                      </div>
+                      {isExpanded && comment && (
+                        <p className="leading-relaxed" style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>{comment}</p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <div style={{ backgroundColor: '#FEF3C7', padding: '14px 16px', borderRadius: 10, marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <p style={{ fontSize: 13, fontWeight: 500, color: '#92400E', lineHeight: 1.5 }}>✦ 想了解本月完整运势走势？</p>
+                <Link href='/bazi'>
+                  <button style={{ backgroundColor: '#D97706', color: 'white', padding: '7px 16px', borderRadius: 6, fontSize: 12, fontWeight: 500, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}>查看完整命盘 →</button>
+                </Link>
+              </div>
+            </Card>
+
+            {/* 宜忌（纯文字两列） */}
+            <div className="grid grid-cols-2 gap-6 px-1">
+              <div className="pl-3 border-l-[3px] border-[#2D6A4F]">
+                <h4 className="text-base font-semibold mb-2" style={{ color: '#2D6A4F' }}>宜</h4>
+                <ul className="space-y-1">
+                  {result.suitable.map((item: string, i: number) => (
+                    <li key={i} className="text-sm text-brand-gray leading-[1.8]">· {item}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className="pl-3 border-l-[3px] border-[#9B2335]">
+                <h4 className="text-base font-semibold mb-2" style={{ color: '#9B2335' }}>忌</h4>
+                <ul className="space-y-1">
+                  {result.avoid.map((item: string, i: number) => (
+                    <li key={i} className="text-sm text-brand-gray leading-[1.8]">· {item}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
             {/* 今日五行强弱 */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
               {(() => {
@@ -625,26 +678,6 @@ export default function DailyPage() {
               })()}
             </div>
 
-            {/* 宜忌（纯文字两列） */}
-            <div className="grid grid-cols-2 gap-6 px-1">
-              <div className="pl-3 border-l-[3px] border-[#2D6A4F]">
-                <h4 className="text-base font-semibold mb-2" style={{ color: '#2D6A4F' }}>宜</h4>
-                <ul className="space-y-1">
-                  {result.suitable.map((item: string, i: number) => (
-                    <li key={i} className="text-sm text-brand-gray leading-[1.8]">· {item}</li>
-                  ))}
-                </ul>
-              </div>
-              <div className="pl-3 border-l-[3px] border-[#9B2335]">
-                <h4 className="text-base font-semibold mb-2" style={{ color: '#9B2335' }}>忌</h4>
-                <ul className="space-y-1">
-                  {result.avoid.map((item: string, i: number) => (
-                    <li key={i} className="text-sm text-brand-gray leading-[1.8]">· {item}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-
             {/* 幸运指南 */}
             <Card hover={false}>
               <h4 className="text-sm font-medium text-brand-black mb-4">🍀 幸运指南</h4>
@@ -665,64 +698,6 @@ export default function DailyPage() {
                   <p className="text-xs mb-1" style={{ color: '#8B6914' }}>吉时</p>
                   <p className="text-sm font-medium text-brand-black">{result.luckyHour || '-'}</p>
                 </div>
-              </div>
-            </Card>
-
-            {/* 五维运势 */}
-            <Card hover={false}>
-              <h4 className="text-sm font-medium text-brand-black mb-4">📊 五维运势</h4>
-              <div className="space-y-4">
-                {([
-                  { key: 'career' as const, label: '事业运', value: result.ratings.career, barColor: '#2A5C8B' },
-                  { key: 'wealth' as const, label: '财富运', value: result.ratings.wealth, barColor: '#C8A22A' },
-                  { key: 'love' as const,   label: '感情运', value: result.ratings.love, barColor: '#C85A7A' },
-                  { key: 'health' as const, label: '健康运', value: result.ratings.health, barColor: '#4A7A35' },
-                  { key: 'studies' as const, label: '学业运', value: result.ratings.studies, barColor: '#6B4A8B' },
-                ]).map(({ key, label, value, barColor }) => {
-                  const levelText = value >= 5 ? '优秀' : value >= 4 ? '良好' : value >= 3 ? '一般' : value >= 2 ? '偏弱' : '较差';
-                  const levelColor = value >= 5 ? '#2D6A4F' : value >= 4 ? '#2563EB' : value >= 3 ? '#6B7280' : value >= 2 ? '#D97706' : '#DC2626';
-                  const comment = result.ratingComments?.[key] || '';
-                  const isExpanded = expandedRating === key;
-                  return (
-                    <div
-                      key={key}
-                      onClick={() => setExpandedRating(isExpanded ? null : key)}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium text-brand-black">{label}</span>
-                        <span className="text-sm font-semibold flex items-center gap-1" style={{ color: levelColor }}>
-                          {levelText}
-                          <span
-                            style={{
-                              display: 'inline-block',
-                              fontSize: 10,
-                              transition: 'transform 0.2s',
-                              transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-                            }}
-                          >
-                            ▾
-                          </span>
-                        </span>
-                      </div>
-                      <div className="w-full h-1.5 rounded overflow-hidden mb-1" style={{ backgroundColor: 'rgba(28, 26, 22, 0.06)' }}>
-                        <div
-                          className="h-full rounded transition-all"
-                          style={{ width: `${value * 20}%`, backgroundColor: barColor }}
-                        />
-                      </div>
-                      {isExpanded && comment && (
-                        <p className="leading-relaxed" style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>{comment}</p>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-              <div style={{ backgroundColor: '#FEF3C7', padding: '14px 16px', borderRadius: 10, marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <p style={{ fontSize: 13, fontWeight: 500, color: '#92400E', lineHeight: 1.5 }}>✦ 想了解本月完整运势走势？</p>
-                <Link href='/bazi'>
-                  <button style={{ backgroundColor: '#D97706', color: 'white', padding: '7px 16px', borderRadius: 6, fontSize: 12, fontWeight: 500, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}>查看完整命盘 →</button>
-                </Link>
               </div>
             </Card>
 
@@ -754,16 +729,30 @@ export default function DailyPage() {
             {/* 🎵 今日之歌 */}
             <DailyMusicCard />
 
-            {/* 分享今日运势 */}
-            <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #F3F4F6' }}>
-              <button
-                onClick={handleShare}
-                className="hover:bg-[rgba(28,26,22,0.04)] hover:border-[rgba(28,26,22,0.35)] transition-colors"
-                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', border: '1.5px solid rgba(28, 26, 22, 0.20)', borderRadius: 8, backgroundColor: 'transparent', fontSize: 13, color: '#1C1A16', cursor: 'pointer', width: '100%', justifyContent: 'center' }}
-              >
-                📤 分享今日运势
-              </button>
-            </div>
+            {/* 命理脉络（默认展开） */}
+            {hasSavedData && (
+              <div style={{ marginTop: 8 }}>
+                <button
+                  onClick={() => setShowTimeline(!showTimeline)}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', backgroundColor: 'white', border: '1px solid #E5E7EB', borderRadius: 12, cursor: 'pointer', marginBottom: showTimeline ? 12 : 0 }}
+                >
+                  <span style={{ fontSize: 14, fontWeight: 500, color: '#1C1A16' }}>📊 命理脉络（大运·流年·流月）</span>
+                  <span style={{ fontSize: 12, color: '#9CA3AF', transform: showTimeline ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', display: 'inline-block' }}>▾</span>
+                </button>
+                {showTimeline && (
+                  <TimelineSection
+                    birthDate={formData.birthDate}
+                    birthHour={formData.birthHour}
+                    gender={formData.gender}
+                    targetDate={(() => {
+                      const d = new Date(today + 'T00:00:00');
+                      d.setDate(d.getDate() + Number(dayOffset));
+                      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+                    })()}
+                  />
+                )}
+              </div>
+            )}
 
             {/* 引导到八字分析 */}
             <Card hover={false} className="text-center py-5">
@@ -774,6 +763,17 @@ export default function DailyPage() {
                 </button>
               </Link>
             </Card>
+
+            {/* 分享今日运势 */}
+            <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #F3F4F6' }}>
+              <button
+                onClick={handleShare}
+                className="hover:bg-[rgba(28,26,22,0.04)] hover:border-[rgba(28,26,22,0.35)] transition-colors"
+                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', border: '1.5px solid rgba(28, 26, 22, 0.20)', borderRadius: 8, backgroundColor: 'transparent', fontSize: 13, color: '#1C1A16', cursor: 'pointer', width: '100%', justifyContent: 'center' }}
+              >
+                📤 分享今日运势
+              </button>
+            </div>
 
             {/* 免责声明 */}
             <AiDisclaimer />
