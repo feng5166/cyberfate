@@ -526,7 +526,8 @@ export default function DailyPage() {
             {/* 分享今日运势 - 醒目按钮 */}
             <button
               onClick={handleShare}
-              style={{ width: '100%', padding: '14px 20px', borderRadius: 12, background: '#1C1A16', color: 'white', fontSize: 14, fontWeight: 500, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+              className="hover:bg-[rgba(28,26,22,0.04)] hover:border-[rgba(28,26,22,0.35)] transition-colors"
+              style={{ width: '100%', padding: '14px 20px', borderRadius: 12, background: 'transparent', color: '#1C1A16', fontSize: 14, fontWeight: 500, border: '1.5px solid rgba(28, 26, 22, 0.20)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
             >
               📤 分享今日运势
             </button>
@@ -789,11 +790,11 @@ export default function DailyPage() {
 
             {/* 今日卦象 - 主动引导 */}
             <div style={{ background: '#F5EFE2', borderRadius: 16, padding: 24, border: '1px solid rgba(28, 26, 22, 0.08)' }}>
-              <h4 style={{ fontSize: 18, fontWeight: 600, marginBottom: 6, color: '#1C1A16' }}>☰ 今日卦象</h4>
+              <h4 style={{ fontSize: 18, fontWeight: 600, marginBottom: 6, color: '#1C1A16' }}>✦ 今日卦象</h4>
               <p style={{ fontSize: 13, color: 'rgba(28, 26, 22, 0.55)', marginBottom: 16 }}>专为今日运势定制，AI 即时解卦</p>
               <Link href='/liuyao'>
-                <button style={{ background: '#1C1A16', color: '#FFFFFF', padding: '14px 32px', borderRadius: 12, fontSize: 15, fontWeight: 600, border: 'none', cursor: 'pointer', width: '100%' }}>
-                  开始占卜 →
+                <button className="hover:bg-[rgba(28,26,22,0.04)] hover:border-[rgba(28,26,22,0.35)] transition-colors" style={{ background: 'transparent', color: '#1C1A16', padding: '14px 32px', borderRadius: 12, fontSize: 15, fontWeight: 600, border: '1.5px solid rgba(28, 26, 22, 0.20)', cursor: 'pointer', width: '100%' }}>
+                  ✨ 开始占卜 →
                 </button>
               </Link>
             </div>
@@ -805,7 +806,8 @@ export default function DailyPage() {
             <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #F3F4F6' }}>
               <button
                 onClick={handleShare}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', border: 'none', borderRadius: 8, backgroundColor: '#1C1A16', fontSize: 13, color: 'white', cursor: 'pointer', width: '100%', justifyContent: 'center' }}
+                className="hover:bg-[rgba(28,26,22,0.04)] hover:border-[rgba(28,26,22,0.35)] transition-colors"
+                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', border: '1.5px solid rgba(28, 26, 22, 0.20)', borderRadius: 8, backgroundColor: 'transparent', fontSize: 13, color: '#1C1A16', cursor: 'pointer', width: '100%', justifyContent: 'center' }}
               >
                 📤 分享今日运势
               </button>
@@ -815,7 +817,7 @@ export default function DailyPage() {
             <Card hover={false} className="text-center py-5">
               <p className="text-sm text-brand-gray mb-2">想深入了解自己的命盘？</p>
               <Link href="/bazi">
-                <button style={{ background: '#1C1A16', color: 'white', padding: '12px 32px', borderRadius: 8, fontSize: 14, fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 6, border: 'none', cursor: 'pointer' }}>
+                <button className="hover:bg-[rgba(28,26,22,0.04)] hover:border-[rgba(28,26,22,0.35)] transition-colors" style={{ background: 'transparent', color: '#1C1A16', padding: '12px 32px', borderRadius: 8, fontSize: 14, fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 6, border: '1.5px solid rgba(28, 26, 22, 0.20)', cursor: 'pointer' }}>
                   八字全面分析 <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </Link>
