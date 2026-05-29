@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useSession } from 'next-auth/react';
+import { AuthModal } from '@/components/auth/AuthModal';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Select } from '@/components/ui/Select';
@@ -299,6 +301,8 @@ function WeekCalendar({
 }
 
 export default function DailyPage() {
+  const { data: session } = useSession();
+  const [authOpen, setAuthOpen] = useState(false);
   const [formData, setFormData] = useState({ birthDate: '', birthHour: '', gender: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -382,6 +386,11 @@ export default function DailyPage() {
     e.preventDefault();
     setError('');
     setResult(null);
+    // 未登录拦截
+    if (!session) {
+      setAuthOpen(true);
+      return;
+    }
     if (!formData.birthDate) { setError('请选择出生日期'); return; }
     if (!formData.birthHour) { setError('请选择出生时辰'); return; }
     setLoading(true);
@@ -849,6 +858,9 @@ export default function DailyPage() {
       </div>
 
       <div className="hidden" data-version="20260528-v3"></div>
+
+      {/* 登录弹窗 */}
+      <AuthModal isOpen={authOpen} onClose={() => setAuthOpen(false)} callbackUrl="/daily" />
     </div>
   );
 }
