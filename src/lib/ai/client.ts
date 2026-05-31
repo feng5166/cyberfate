@@ -54,6 +54,7 @@ async function callDeepSeek(systemPrompt: string, userPrompt: string, maxTokens 
       model: DEEPSEEK_MODEL,
       max_tokens: maxTokens,
       temperature: 0.3,
+      reasoning_effort: 'low',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
@@ -68,7 +69,14 @@ async function callDeepSeek(systemPrompt: string, userPrompt: string, maxTokens 
   }
 
   const data = await response.json();
-  return data.choices?.[0]?.message?.content ?? '';
+  const content = data.choices?.[0]?.message?.content || '';
+  if (content.length < 10) {
+    const reasoningContent = data.choices?.[0]?.message?.reasoning_content || '';
+    if (reasoningContent && /\{[\s\S]*\}/.test(reasoningContent)) {
+      return reasoningContent;
+    }
+  }
+  return content;
 }
 
 /**
@@ -206,12 +214,25 @@ export async function generateDailyFortune(
 
   const apiResult = await callExternalAPI(
     async () => {
-      const text = await callDeepSeek(DAILY_SYSTEM_PROMPT, prompt, 600, 'daily');
+      const text = await callDeepSeek(DAILY_SYSTEM_PROMPT, prompt, 1500, 'daily');
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error('No JSON found in response');
       }
-      return JSON.parse(jsonMatch[0]);
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (parsed && parsed.ratings && typeof parsed.ratings === 'object') {
+        const keys = ['career', 'wealth', 'love', 'health', 'studies'] as const;
+        for (const key of keys) {
+          const value = parsed.ratings[key];
+          if (typeof value === 'number' && value > 5) {
+            parsed.ratings[key] = Math.round(value / 20);
+          }
+        }
+      }
+      if (typeof parsed?.overall === 'number' && parsed.overall > 5) {
+        parsed.overall = Math.round(parsed.overall / 20);
+      }
+      return parsed;
     },
     {
       serviceName: 'AI 每日运势',
