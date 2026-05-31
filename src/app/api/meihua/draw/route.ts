@@ -189,7 +189,7 @@ export async function POST(req: NextRequest) {
         Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'deepseek-ai/DeepSeek-V3.2',
+        model: 'deepseek-v4-0324-pro',
         max_tokens: 420,
         temperature: 0.3,
         messages: [{ role: 'user', content: prompt }],

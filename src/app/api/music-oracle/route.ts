@@ -16,7 +16,7 @@ import { MUSIC_ORACLE_SYSTEM_PROMPT } from '@/lib/music-oracle/prompts';
 import { PrismaClient } from '@prisma/client';
 
 const DEEPSEEK_BASE_URL = 'https://api.modelverse.cn/v1';
-const DEEPSEEK_MODEL = 'deepseek-ai/DeepSeek-V3.2';
+const DEEPSEEK_MODEL = 'deepseek-v4-0324-pro';
 
 /* ─── 天干按年份(简化) ─── */
 const TIANGAN_LIST = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];

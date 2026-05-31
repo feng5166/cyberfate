@@ -177,11 +177,22 @@ CREATE INDEX idx_daily_detail_user_date ON daily_detail_history(user_id, date DE
 ```
 
 ### 6.3 LLM 配置（已锁定）
-- **首选模型**：**DeepSeek-V4 Pro**（Frank 5/30 拍板）
+- **首选模型**：**DeepSeek-V4 Pro**（Frank 5/30 拍板、**5/31 23:07 重新锁定**）
+- **模型 ID**：`deepseek-v4-0324-pro`（modelverse.cn 别名）
 - **Fallback**：Claude Sonnet 3.7（DeepSeek 不可用时降级）
+- **锁定位置**：
+  - `src/lib/ai/client.ts:23` (daily 主接口 / 顶部判词)
+  - `src/app/api/daily/detail-analysis/route.ts:92` (本模块)
+- **断路器 key**：`deepseek-daily-v4pro`（避开旧 `deepseek-daily` 可能的 OPEN 状态）
 - **预估 token**：输入 ~800 + 输出 ~600 = 1400 tokens/次
 - **预估成本**：~$0.0015/次（DeepSeek-V4 Pro）
 - **月成本预估**（1000 DAU、50% 使用率）：~$22/月
+
+**事故复盘（防后续再被绕）**：
+- 5/31 早：原本用 `deepseek-v4-flash`，但 flash 是推理模型→ 所有用户每天运势结果固定重复
+- 5/31 中午：代码虾切到 `DeepSeek-V3.2` 曂避（commit cfb1f1a）— 但 V3.2 不是 Frank 原始拍板的选型
+- 5/31 23:07：Frank 重新拍板“锁定 V4 Pro”→ 代码虾 commit 4b6759c 备同步切回
+- **锁死原则**：本 PRD 决策 = `deepseek-v4-0324-pro`。未来如果 V4 Pro 响应/成本/质量出问题需要绕路，**必须走 PRD/派单流程**，不允许代码虾自行切换后留下隐性偏离
 
 **模型对接要求**：
 - 必须支持 SSE 流式输出（DeepSeek-V4 Pro 已支持）

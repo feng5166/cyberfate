@@ -227,7 +227,7 @@ export async function POST(req: NextRequest) {
 
   let reading: TarotReadingResult & { _source: 'deepseek' | 'fallback' };
   try {
-    reading = await withCircuitBreaker('deepseek-tarot', () =>
+    reading = await withCircuitBreaker('deepseek-tarot-v4pro', () =>
       withAiTimeout(() => generateTarotReading(promptInput), 15_000)
     );
   } catch (aiErr) {

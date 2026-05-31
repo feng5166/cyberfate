@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
     // 2. AI 解读（可能失败，优雅降级）
     let analysisObj: BaziAnalysis;
     try {
-      analysisObj = await withCircuitBreaker('deepseek-bazi', () =>
+      analysisObj = await withCircuitBreaker('deepseek-bazi-v4pro', () =>
         withAiTimeout(
           () => generateBaziAnalysis(baziResultWithDayun, input.name, {
             birthDate: input.birthDate,

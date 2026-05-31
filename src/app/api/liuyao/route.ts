@@ -200,7 +200,7 @@ export async function POST(req: NextRequest) {
     method: data.method,
   };
 
-  const reading = await withCircuitBreaker('deepseek-liuyao', () =>
+  const reading = await withCircuitBreaker('deepseek-liuyao-v4pro', () =>
     withAiTimeout(() => generateLiuYaoReading(promptInput), 15_000)
   );
 

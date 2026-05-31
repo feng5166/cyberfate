@@ -78,7 +78,7 @@ export async function generateDailyMusic(): Promise<DailyMusicResult | null> {
  * 调用 DeepSeek API（与项目其他模块一致，使用 ModelVerse 中转）
  */
 const DEEPSEEK_BASE_URL = 'https://api.modelverse.cn/v1';
-const DEEPSEEK_MODEL = 'deepseek-ai/DeepSeek-V3.2';
+const DEEPSEEK_MODEL = 'deepseek-v4-0324-pro';
 
 async function callClaudeAPI(systemPrompt: string, userPrompt: string): Promise<string | null> {
   const apiKey = getEnvVar('DEEPSEEK_API_KEY');

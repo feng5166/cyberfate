@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ...cached, _source: 'cache' });
     }
 
-    const decision = await withCircuitBreaker('deepseek-meihua', () =>
+    const decision = await withCircuitBreaker('deepseek-meihua-v4pro', () =>
       withAiTimeout(() => generateMeihuaDecision(input), 15_000)
     );
     await setCache(cacheKey, decision, 12 * 60 * 60);
