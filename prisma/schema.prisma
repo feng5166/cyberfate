@@ -238,3 +238,18 @@ model MusicOracleRecord {
   @@index([sessionId, createdAt])
   @@map("music_oracle_records")
 }
+
+// 每日运势详细分析记录
+model DailyDetailHistory {
+  id          String   @id @default(cuid())
+  userId      String
+  date        String   // YYYY-MM-DD
+  summary     String?  @db.Text  // 综述段（用于历史列表展示）
+  fullContent String?  @db.Text  // 完整 4 段内容（Markdown）
+  llmModel    String?  // 使用的模型名
+  generatedAt DateTime @default(now())
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@map("daily_detail_history")
+}

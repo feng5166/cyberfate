@@ -16,6 +16,7 @@ import { Sun, Cloud, Droplets, Heart, Briefcase, Activity, Sparkles, ArrowRight,
 import Link from 'next/link';
 import DailyMusicCard from '@/components/music-oracle/DailyMusicCard';
 import TimelineSection from '@/components/daily/TimelineSection';
+import DailyDetailAnalysis from '@/components/daily/DailyDetailAnalysis';
 import html2canvas from 'html2canvas';
 
 // 十二时辰选项
@@ -380,6 +381,18 @@ function WeekCalendar({
 export default function DailyPage() {
   const { data: session } = useSession();
   const [authOpen, setAuthOpen] = useState(false);
+  const [isVip, setIsVip] = useState(false);
+  useEffect(() => {
+    if (!session) { setIsVip(false); return; }
+    (async () => {
+      try {
+        const res = await fetch('/api/user/quota');
+        if (!res.ok) return;
+        const data = await res.json();
+        setIsVip(Boolean(data?.isMember));
+      } catch {}
+    })();
+  }, [session]);
   const [formData, setFormData] = useState({ birthDate: '', birthHour: '', gender: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -771,16 +784,18 @@ export default function DailyPage() {
               </div>
             )}
 
-            {/* 今日卦象 - 米白底+赭橙描边 */}
-            <div style={{ background: '#FAFAF8', borderRadius: 16, padding: 24, border: '1.5px solid rgba(200,98,42,0.25)' }}>
-              <h4 style={{ fontSize: 18, fontWeight: 600, marginBottom: 6, color: '#1C1A16' }}>✦ 今日卦象</h4>
-              <p style={{ fontSize: 13, color: 'rgba(28, 26, 22, 0.55)', marginBottom: 16 }}>专为今日运势定制，AI 即时解卦</p>
-              <Link href='/liuyao'>
-                <span style={{ fontSize: 14, fontWeight: 500, color: '#C8622A', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                  展开详解 →
-                </span>
-              </Link>
-            </div>
+            {/* 每日运势详细分析 - v2 黑白极简卡 */}
+            <DailyDetailAnalysis
+              isLoggedIn={!!session}
+              isVip={isVip}
+              onLoginRequired={() => setAuthOpen(true)}
+              targetDate={(() => {
+                const d = new Date(today + 'T00:00:00');
+                d.setDate(d.getDate() + Number(dayOffset));
+                return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+              })()}
+              hasBirthInfo={!!formData.birthDate}
+            />
 
             {/* 🎵 今日之歌 */}
             <DailyMusicCard />
@@ -796,6 +811,18 @@ export default function DailyPage() {
                   <div style={{ fontSize: 12, color: 'rgba(28,26,22,0.55)', marginTop: 2 }}>解读完整命盘与流年大运</div>
                 </div>
                 <button style={{ backgroundColor: '#C8622A', color: 'white', padding: '6px 12px', borderRadius: 6, fontSize: 12, fontWeight: 500, border: 'none', cursor: 'pointer', flexShrink: 0 }}>查看</button>
+              </div>
+            </Link>
+
+            {/* 六爻起卦入口 - 保留 /liuyao 通道 */}
+            <Link href='/liuyao'>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', backgroundColor: 'white', borderRadius: 12, border: '1px solid #E5E7EB', cursor: 'pointer' }}>
+                <span style={{ fontSize: 24, flexShrink: 0 }}>☷</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 500, color: '#1C1A16' }}>六爻起卦</div>
+                  <div style={{ fontSize: 12, color: 'rgba(28,26,22,0.55)', marginTop: 2 }}>AI 即时解卦，针对具体事项</div>
+                </div>
+                <button style={{ backgroundColor: '#1F2937', color: 'white', padding: '6px 12px', borderRadius: 6, fontSize: 12, fontWeight: 500, border: 'none', cursor: 'pointer', flexShrink: 0 }}>起卦</button>
               </div>
             </Link>
 

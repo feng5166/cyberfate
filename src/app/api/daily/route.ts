@@ -71,6 +71,48 @@ function normalizeRatings(ratings: any, overall: number) {
   };
 }
 
+export async function GET() {
+  const { getEnvVar } = await import('@/lib/utils/api-wrapper');
+  const apiKey = getEnvVar('DEEPSEEK_API_KEY');
+
+  if (!apiKey) {
+    return Response.json({ status: 'error', reason: 'DEEPSEEK_API_KEY not found or invalid', keyLength: 0 });
+  }
+
+  // 尝试一个最小 API 调用
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const response = await fetch('https://api.modelverse.cn/v1/chat/completions', {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'deepseek-v4-flash',
+        max_tokens: 50,
+        reasoning_effort: 'low',
+        temperature: 0.3,
+        messages: [{ role: 'user', content: '回复OK' }],
+      }),
+    });
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const err = await response.text();
+      return Response.json({ status: 'error', reason: 'API returned non-200', httpStatus: response.status, error: err.slice(0, 200), keyLength: apiKey.length, keyPrefix: apiKey.slice(0, 4), keySuffix: apiKey.slice(-4) });
+    }
+
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content || '';
+    return Response.json({ status: 'ok', content, keyLength: apiKey.length, model: data.model });
+  } catch (e: any) {
+    return Response.json({ status: 'error', reason: 'fetch failed', message: e.message, keyLength: apiKey.length });
+  }
+}
+
 export async function POST(req: NextRequest) {
   // Security Fix: SEC-012 — AI 端点需要登录
   const session = await getServerSession(authOptions);
