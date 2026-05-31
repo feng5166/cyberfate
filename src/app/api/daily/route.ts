@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
     // 3. 生成运势（可能失败，优雅降级）
     let fortune;
     try {
-      fortune = await withCircuitBreaker('deepseek-daily', () =>
+      fortune = await withCircuitBreaker('deepseek-daily-v4pro', () =>
         withAiTimeout(
           () => generateDailyFortune(baziResult.dayMaster, targetDate, dayGanzhi, dayun, liunian),
           25_000,
