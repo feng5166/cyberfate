@@ -16,7 +16,6 @@ import { Sun, Cloud, Droplets, Heart, Briefcase, Activity, Sparkles, ArrowRight,
 import Link from 'next/link';
 import DailyMusicCard from '@/components/music-oracle/DailyMusicCard';
 import TimelineSection from '@/components/daily/TimelineSection';
-import DailyDetailAnalysis from '@/components/daily/DailyDetailAnalysis';
 import html2canvas from 'html2canvas';
 
 // 十二时辰选项
@@ -783,19 +782,6 @@ export default function DailyPage() {
                 )}
               </div>
             )}
-
-            {/* 每日运势详细分析 - v2 黑白极简卡 */}
-            <DailyDetailAnalysis
-              isLoggedIn={!!session}
-              isVip={isVip}
-              onLoginRequired={() => setAuthOpen(true)}
-              targetDate={(() => {
-                const d = new Date(today + 'T00:00:00');
-                d.setDate(d.getDate() + Number(dayOffset));
-                return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-              })()}
-              hasBirthInfo={!!formData.birthDate}
-            />
 
             {/* 🎵 今日之歌 */}
             <DailyMusicCard />
