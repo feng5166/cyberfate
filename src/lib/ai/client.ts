@@ -24,7 +24,7 @@ const DEEPSEEK_MODEL = 'deepseek-ai/DeepSeek-V3.2';
 
 const TIMEOUT_CONFIG: Record<string, number> = {
   bazi: 55000,
-  daily: 15000,
+  daily: 20000,
   marriage: 30000,
   tarot: 15000,
   huangli: 10000,

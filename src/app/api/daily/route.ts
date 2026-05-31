@@ -121,7 +121,7 @@ export async function POST(req: NextRequest) {
       fortune = await withCircuitBreaker('deepseek-daily', () =>
         withAiTimeout(
           () => generateDailyFortune(baziResult.dayMaster, targetDate, dayGanzhi, dayun, liunian),
-          15_000,
+          25_000,
           () => ({ ...generateFallbackFortune(baziResult.dayMaster, dayGanzhi, targetDate), _source: 'fallback' as const })
         )
       );
