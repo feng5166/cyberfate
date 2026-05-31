@@ -253,3 +253,16 @@ model DailyDetailHistory {
   @@index([userId])
   @@map("daily_detail_history")
 }
+
+// AI 运势问答历史
+model DailyFortuneQaHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  question  String   @db.Text
+  answer    String?  @db.Text
+  llmModel  String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("daily_fortune_qa_history")
+}

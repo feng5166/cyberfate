@@ -17,6 +17,7 @@ import Link from 'next/link';
 import DailyMusicCard from '@/components/music-oracle/DailyMusicCard';
 import TimelineSection from '@/components/daily/TimelineSection';
 import DailyDetailAnalysis from '@/components/daily/DailyDetailAnalysis';
+import DailyFortuneQA from '@/components/daily/DailyFortuneQA';
 import html2canvas from 'html2canvas';
 
 // 十二时辰选项
@@ -804,6 +805,14 @@ export default function DailyPage() {
             />
 
             {/* 🎵 今日之歌 */}
+            {/* AI 运势问答 */}
+            <DailyFortuneQA
+              isLoggedIn={!!session}
+              isVip={isVip}
+              onLoginRequired={() => setAuthOpen(true)}
+              hasBirthInfo={!!formData.birthDate}
+            />
+
             <DailyMusicCard />
 
 

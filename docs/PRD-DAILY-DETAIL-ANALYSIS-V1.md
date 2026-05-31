@@ -178,7 +178,7 @@ CREATE INDEX idx_daily_detail_user_date ON daily_detail_history(user_id, date DE
 
 ### 6.3 LLM 配置（已锁定）
 - **首选模型**：**DeepSeek-V4 Pro**（Frank 5/30 拍板、**5/31 23:07 重新锁定**、**5/31 23:19 拓展为全站统一**）
-- **模型 ID**：`deepseek-v4-0324-pro`（modelverse.cn 别名）
+- **模型 ID**：`deepseek-v4-pro`（modelverse.cn 别名）
 - **Fallback**：Claude Sonnet 3.7（DeepSeek 不可用时降级）
 - **锁定范围：全站统一**— 本模块 + daily 主接口 + 八字主分析 + 八字对话 + 合婚 + 黄历 + 梅花 + 音乐运势签全部走 V4 Pro
 - **断路器 key 命名约定**：所有 deepseek 相关 key 都带 `-v4pro` 后缀（避开旧事故残留的 OPEN 状态）
@@ -200,7 +200,7 @@ CREATE INDEX idx_daily_detail_user_date ON daily_detail_history(user_id, date DE
 - 5/31 中午：代码虾切到 `DeepSeek-V3.2` 曂避（commit cfb1f1a）— V3.2 不是 Frank 原始拍板的选型
 - 5/31 23:07：Frank 拍板“锁定 V4 Pro”→ daily 主线切回 commit 4b6759c
 - 5/31 23:19：Frank 拓展为全站统一 → commit 621f1bb 全站 6 处 + 5 个断路器 key 重置
-- **锁死原则**：本 PRD 决策 = `deepseek-v4-0324-pro` 全站统一。未来如果 V4 Pro 响应/成本/质量出问题需要绕路，**必须走 PRD/派单流程**，不允许代码虾自行切换后留下隐性偏离
+- **锁死原则**：本 PRD 决策 = `deepseek-v4-pro` 全站统一。未来如果 V4 Pro 响应/成本/质量出问题需要绕路，**必须走 PRD/派单流程**，不允许代码虾自行切换后留下隐性偏离
 
 **模型对接要求**：
 - 必须支持 SSE 流式输出（DeepSeek-V4 Pro 已支持）
