@@ -20,7 +20,7 @@ import { callExternalAPI, getEnvVar } from '../utils/api-wrapper';
 import { redis } from '../cache/redis';
 
 const DEEPSEEK_BASE_URL = 'https://api.modelverse.cn/v1';
-const DEEPSEEK_MODEL = 'deepseek-v4-flash';
+const DEEPSEEK_MODEL = 'deepseek-ai/DeepSeek-V3.2';
 
 const TIMEOUT_CONFIG: Record<string, number> = {
   bazi: 55000,
@@ -54,7 +54,6 @@ async function callDeepSeek(systemPrompt: string, userPrompt: string, maxTokens 
       model: DEEPSEEK_MODEL,
       max_tokens: maxTokens,
       temperature: 0.3,
-      reasoning_effort: 'low',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
@@ -214,7 +213,7 @@ export async function generateDailyFortune(
 
   const apiResult = await callExternalAPI(
     async () => {
-      const text = await callDeepSeek(DAILY_SYSTEM_PROMPT, prompt, 1500, 'daily');
+      const text = await callDeepSeek(DAILY_SYSTEM_PROMPT, prompt, 800, 'daily');
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error('No JSON found in response');
