@@ -7,7 +7,7 @@ import { logger } from '@/lib/logger';
 
 const SERVICE = 'api/bazi/chat';
 const DEEPSEEK_BASE_URL = 'https://api.modelverse.cn/v1';
-const DEEPSEEK_MODEL = 'deepseek-v4-0324-pro';
+const DEEPSEEK_MODEL = 'deepseek-v4-pro';
 
 export async function POST(req: NextRequest) {
   try {

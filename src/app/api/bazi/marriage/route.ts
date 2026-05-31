@@ -382,7 +382,7 @@ ${details.join('\n')}
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}` },
       body: JSON.stringify({
-        model: 'deepseek-v4-0324-pro',
+        model: 'deepseek-v4-pro',
         max_tokens: 2000,
         temperature: 0.45,
         messages: [{ role: 'user', content: prompt }],

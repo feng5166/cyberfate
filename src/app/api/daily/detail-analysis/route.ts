@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
             'Authorization': `Bearer ${apiKey}`,
           },
           body: JSON.stringify({
-            model: 'deepseek-v4-0324-pro',
+            model: 'deepseek-v4-pro',
             messages: [
               { role: 'system', content: DAILY_DETAIL_SYSTEM_PROMPT },
               { role: 'user', content: userPrompt },
@@ -139,8 +139,8 @@ export async function POST(req: NextRequest) {
 
         const record = await prisma.dailyDetailHistory.upsert({
           where: { userId_date: { userId, date: targetDate } },
-          update: { summary, fullContent, llmModel: 'deepseek-v4-0324-pro', generatedAt: new Date() },
-          create: { userId, date: targetDate, summary, fullContent, llmModel: 'deepseek-v4-0324-pro' },
+          update: { summary, fullContent, llmModel: 'deepseek-v4-pro', generatedAt: new Date() },
+          create: { userId, date: targetDate, summary, fullContent, llmModel: 'deepseek-v4-pro' },
         });
 
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true, id: record.id })}\n\n`));
