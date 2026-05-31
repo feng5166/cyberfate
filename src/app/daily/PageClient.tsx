@@ -71,6 +71,7 @@ interface DailyResult {
     studies?: string;
     social?: string;
   };
+  _source?: string;
 }
 
 
@@ -757,6 +758,11 @@ export default function DailyPage() {
                 </p>
               )}
               <p className="text-gray-700" style={{ fontSize: 15, lineHeight: 1.8 }}>{result.advice}</p>
+              {result._source && (
+                <p style={{ fontSize: 11, color: '#999', marginTop: 8, textAlign: 'right' }}>
+                  数据来源: {result._source}
+                </p>
+              )}
             </Card>
 
             {/* 命理脉络（默认展开） */}

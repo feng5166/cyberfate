@@ -177,22 +177,30 @@ CREATE INDEX idx_daily_detail_user_date ON daily_detail_history(user_id, date DE
 ```
 
 ### 6.3 LLM 配置（已锁定）
-- **首选模型**：**DeepSeek-V4 Pro**（Frank 5/30 拍板、**5/31 23:07 重新锁定**）
+- **首选模型**：**DeepSeek-V4 Pro**（Frank 5/30 拍板、**5/31 23:07 重新锁定**、**5/31 23:19 拓展为全站统一**）
 - **模型 ID**：`deepseek-v4-0324-pro`（modelverse.cn 别名）
 - **Fallback**：Claude Sonnet 3.7（DeepSeek 不可用时降级）
-- **锁定位置**：
-  - `src/lib/ai/client.ts:23` (daily 主接口 / 顶部判词)
-  - `src/app/api/daily/detail-analysis/route.ts:92` (本模块)
-- **断路器 key**：`deepseek-daily-v4pro`（避开旧 `deepseek-daily` 可能的 OPEN 状态）
+- **锁定范围：全站统一**— 本模块 + daily 主接口 + 八字主分析 + 八字对话 + 合婚 + 黄历 + 梅花 + 音乐运势签全部走 V4 Pro
+- **断路器 key 命名约定**：所有 deepseek 相关 key 都带 `-v4pro` 后缀（避开旧事故残留的 OPEN 状态）
+- **模型 ID 锁定点**（10 处）：
+  - `src/lib/ai/client.ts:23`（daily 主）
+  - `src/app/api/daily/detail-analysis/route.ts:92,142,143`（本模块）
+  - `src/app/api/bazi/chat/route.ts:10`
+  - `src/app/api/bazi/marriage/route.ts:385`
+  - `src/app/api/huangli/ask/route.ts:74`
+  - `src/app/api/meihua/draw/route.ts:192`
+  - `src/app/api/music-oracle/route.ts:19`
+  - `src/lib/music-oracle/generate.ts:81`
 - **预估 token**：输入 ~800 + 输出 ~600 = 1400 tokens/次
-- **预估成本**：~$0.0015/次（DeepSeek-V4 Pro）
-- **月成本预估**（1000 DAU、50% 使用率）：~$22/月
+- **预估成本**：~$0.0015~0.002/次（DeepSeek-V4 Pro）
+- **月成本预估**（1000 DAU、2 次调用/天）：~$80-120/月（较 V3.2准提 2-3x，Frank 已知悉并接受）
 
 **事故复盘（防后续再被绕）**：
-- 5/31 早：原本用 `deepseek-v4-flash`，但 flash 是推理模型→ 所有用户每天运势结果固定重复
-- 5/31 中午：代码虾切到 `DeepSeek-V3.2` 曂避（commit cfb1f1a）— 但 V3.2 不是 Frank 原始拍板的选型
-- 5/31 23:07：Frank 重新拍板“锁定 V4 Pro”→ 代码虾 commit 4b6759c 备同步切回
-- **锁死原则**：本 PRD 决策 = `deepseek-v4-0324-pro`。未来如果 V4 Pro 响应/成本/质量出问题需要绕路，**必须走 PRD/派单流程**，不允许代码虾自行切换后留下隐性偏离
+- 5/31 早：原本用 `deepseek-v4-flash`，但 flash 是推理模型 → 所有用户每天运势结果固定重复
+- 5/31 中午：代码虾切到 `DeepSeek-V3.2` 曂避（commit cfb1f1a）— V3.2 不是 Frank 原始拍板的选型
+- 5/31 23:07：Frank 拍板“锁定 V4 Pro”→ daily 主线切回 commit 4b6759c
+- 5/31 23:19：Frank 拓展为全站统一 → commit 621f1bb 全站 6 处 + 5 个断路器 key 重置
+- **锁死原则**：本 PRD 决策 = `deepseek-v4-0324-pro` 全站统一。未来如果 V4 Pro 响应/成本/质量出问题需要绕路，**必须走 PRD/派单流程**，不允许代码虾自行切换后留下隐性偏离
 
 **模型对接要求**：
 - 必须支持 SSE 流式输出（DeepSeek-V4 Pro 已支持）
