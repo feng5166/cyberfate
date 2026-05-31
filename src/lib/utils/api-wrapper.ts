@@ -66,5 +66,5 @@ export function getEnvVar(name: string): string | null {
   if (!value || value.includes('placeholder') || value.includes('your_')) {
     return null;
   }
-  return value.trim();
+  return value.replace(/\\n$/, '').trim();
 }
