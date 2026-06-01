@@ -381,7 +381,7 @@ export function Sidebar({
         </div>
       )}
 
-      <nav className="flex-1 overflow-y-auto pb-6">
+      <nav className="flex-1 overflow-y-auto pb-6 sidebar-scroll">
         {MENU_GROUPS.map((group) => (
           <SidebarGroup
             key={group.title}
@@ -410,7 +410,7 @@ export function Sidebar({
   );
 
   const desktopAsideClasses = clsx(
-    'hidden lg:block fixed left-0 top-16 h-[calc(100vh-64px)] z-30 border-r border-brand-border-light bg-[#FAF9F6] shadow-sm transition-all duration-300 ease',
+    'hidden lg:block fixed left-0 top-0 h-screen z-30 border-r border-brand-border-light bg-[#FAF9F6] shadow-sm transition-all duration-300 ease',
     collapsed ? 'w-16' : 'w-[260px]'
   );
 
