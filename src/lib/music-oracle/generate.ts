@@ -104,6 +104,7 @@ async function callClaudeAPI(systemPrompt: string, userPrompt: string): Promise<
         model: DEEPSEEK_MODEL,
         max_tokens: 800,
         temperature: 0.85,
+        enable_thinking: false,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },

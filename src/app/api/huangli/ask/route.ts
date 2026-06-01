@@ -75,6 +75,7 @@ export async function POST(req: NextRequest) {
             model: PRIMARY_MODEL,
             max_tokens: 500,
             temperature: 0.6,
+            enable_thinking: false,
             messages: [{ role: 'user', content: prompt }],
           }),
         }),

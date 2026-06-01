@@ -151,6 +151,7 @@ export async function POST(request: NextRequest) {
         model: DEEPSEEK_MODEL,
         max_tokens: 800,
         temperature: 0.85,
+        enable_thinking: false,
         messages: [
           { role: 'system', content: MUSIC_ORACLE_SYSTEM_PROMPT },
           { role: 'user', content: userPrompt },

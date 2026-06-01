@@ -386,6 +386,7 @@ ${details.join('\n')}
         model: PRIMARY_MODEL,
         max_tokens: 2000,
         temperature: 0.45,
+        enable_thinking: false,
         messages: [{ role: 'user', content: prompt }],
       }),
     });

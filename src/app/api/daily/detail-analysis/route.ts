@@ -97,6 +97,7 @@ export async function POST(req: NextRequest) {
             ],
             max_tokens: 1500,
             temperature: 0.7,
+            enable_thinking: false,
             stream: true,
           }),
         });
