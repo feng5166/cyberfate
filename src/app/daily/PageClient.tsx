@@ -572,10 +572,28 @@ export default function DailyPage() {
         )}
 
         {/* 已保存数据提示 */}
-        {hasSavedData && !result && !loading && (
+        {hasSavedData && !result && !loading && !error && (
           <div className="text-center mb-8 py-4">
             <p className="text-sm text-brand-gray">已记住您的出生信息，正在加载运势...</p>
             <button onClick={clearSavedData} className="text-xs text-brand-light hover:text-brand-black mt-2 underline">重新输入</button>
+          </div>
+        )}
+
+        {/* 已保存数据但加载失败 */}
+        {hasSavedData && !result && !loading && error && (
+          <div className="max-w-[500px] mx-auto mb-8 space-y-3">
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">{error}</div>
+            <div className="flex items-center justify-center gap-4">
+              <button
+                onClick={() => fetchFortune(formData.birthDate, formData.birthHour, today, formData.gender || undefined)}
+                className="text-sm text-brand-black hover:text-brand-light underline"
+              >
+                重试
+              </button>
+              <button onClick={clearSavedData} className="text-sm text-brand-light hover:text-brand-black underline">
+                重新输入
+              </button>
+            </div>
           </div>
         )}
 
