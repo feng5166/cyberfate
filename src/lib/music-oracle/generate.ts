@@ -6,6 +6,7 @@
 import { MUSIC_ORACLE_SYSTEM_PROMPT, buildDailyMusicPrompt } from './prompts';
 import { getTodayTiangan, getWuxingMusicProfile } from './wuxing-music-map';
 import { getEnvVar } from '../utils/api-wrapper';
+import { AI_BASE_URL, PRIMARY_MODEL } from '../ai/models';
 
 export interface DailyMusicItem {
   songName: string;
@@ -77,8 +78,8 @@ export async function generateDailyMusic(): Promise<DailyMusicResult | null> {
 /**
  * 调用 DeepSeek API（与项目其他模块一致，使用 ModelVerse 中转）
  */
-const DEEPSEEK_BASE_URL = 'https://api.modelverse.cn/v1';
-const DEEPSEEK_MODEL = 'deepseek-v4-pro';
+const DEEPSEEK_BASE_URL = AI_BASE_URL;
+const DEEPSEEK_MODEL = PRIMARY_MODEL;
 
 async function callClaudeAPI(systemPrompt: string, userPrompt: string): Promise<string | null> {
   const apiKey = getEnvVar('DEEPSEEK_API_KEY');

@@ -14,9 +14,10 @@ import { getEnvVar } from '@/lib/utils/api-wrapper';
 import { getTodayTiangan, getWuxingMusicProfile } from '@/lib/music-oracle/wuxing-music-map';
 import { MUSIC_ORACLE_SYSTEM_PROMPT } from '@/lib/music-oracle/prompts';
 import { PrismaClient } from '@prisma/client';
+import { AI_BASE_URL, PRIMARY_MODEL } from '@/lib/ai/models';
 
-const DEEPSEEK_BASE_URL = 'https://api.modelverse.cn/v1';
-const DEEPSEEK_MODEL = 'deepseek-v4-pro';
+const DEEPSEEK_BASE_URL = AI_BASE_URL;
+const DEEPSEEK_MODEL = PRIMARY_MODEL;
 
 /* ─── 天干按年份(简化) ─── */
 const TIANGAN_LIST = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];

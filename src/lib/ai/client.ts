@@ -18,9 +18,10 @@ import {
 import type { BaziResult, BaziAnalysis } from '../bazi/types';
 import { callExternalAPI, getEnvVar } from '../utils/api-wrapper';
 import { redis } from '../cache/redis';
+import { AI_BASE_URL, PRIMARY_MODEL } from './models';
 
-const DEEPSEEK_BASE_URL = 'https://api.modelverse.cn/v1';
-const DEEPSEEK_MODEL = 'deepseek-v4-pro';
+const DEEPSEEK_BASE_URL = AI_BASE_URL;
+const DEEPSEEK_MODEL = PRIMARY_MODEL;
 
 const TIMEOUT_CONFIG: Record<string, number> = {
   bazi: 55000,

@@ -6,6 +6,7 @@ import { isVip } from '@/lib/subscription';
 import { calculateBazi, getCurrentDayun, getDayGanzhi, getLunarDate, getYearGanzhi } from '@/lib/bazi';
 import { DAILY_DETAIL_SYSTEM_PROMPT, buildDailyDetailUserPrompt } from '@/lib/ai/prompts-daily-detail';
 import { getEnvVar } from '@/lib/utils/api-wrapper';
+import { AI_BASE_URL, PRIMARY_MODEL } from '@/lib/ai/models';
 
 function getBeijingDateString(): string {
   const now = new Date();
@@ -82,14 +83,14 @@ export async function POST(req: NextRequest) {
         const apiKey = getEnvVar('DEEPSEEK_API_KEY');
         if (!apiKey) throw new Error('DEEPSEEK_API_KEY 未配置');
 
-        const response = await fetch('https://api.modelverse.cn/v1/chat/completions', {
+        const response = await fetch(`${AI_BASE_URL}/chat/completions`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${apiKey}`,
           },
           body: JSON.stringify({
-            model: 'deepseek-v4-pro',
+            model: PRIMARY_MODEL,
             messages: [
               { role: 'system', content: DAILY_DETAIL_SYSTEM_PROMPT },
               { role: 'user', content: userPrompt },
@@ -139,8 +140,8 @@ export async function POST(req: NextRequest) {
 
         const record = await prisma.dailyDetailHistory.upsert({
           where: { userId_date: { userId, date: targetDate } },
-          update: { summary, fullContent, llmModel: 'deepseek-v4-pro', generatedAt: new Date() },
-          create: { userId, date: targetDate, summary, fullContent, llmModel: 'deepseek-v4-pro' },
+          update: { summary, fullContent, llmModel: PRIMARY_MODEL, generatedAt: new Date() },
+          create: { userId, date: targetDate, summary, fullContent, llmModel: PRIMARY_MODEL },
         });
 
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true, id: record.id })}\n\n`));

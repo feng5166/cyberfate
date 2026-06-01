@@ -6,10 +6,11 @@ import { checkRateLimit } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 import { prisma } from '@/lib/db';
 import { withCircuitBreaker } from '@/lib/ai/circuitBreaker';
+import { AI_BASE_URL, PRIMARY_MODEL } from '@/lib/ai/models';
 
 const SERVICE = 'api/daily/fortune-qa';
-const DEEPSEEK_BASE_URL = 'https://api.modelverse.cn/v1';
-const DEEPSEEK_MODEL = 'deepseek-v4-pro';
+const DEEPSEEK_BASE_URL = AI_BASE_URL;
+const DEEPSEEK_MODEL = PRIMARY_MODEL;
 
 export async function POST(req: NextRequest) {
   try {

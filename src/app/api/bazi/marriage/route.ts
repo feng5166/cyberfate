@@ -5,6 +5,7 @@ import { sanitizeUserInput } from '@/lib/utils/sanitize';
 
 import { authOptions } from '@/lib/auth';
 import { calculateBazi as realCalculateBazi } from '@/lib/bazi';
+import { AI_BASE_URL, PRIMARY_MODEL } from '@/lib/ai/models';
 
 // ── 八字计算 ───────────────────────────────────────
 
@@ -378,11 +379,11 @@ ${details.join('\n')}
   let analysis = '';
   let aiSource: string = 'fallback';
   try {
-    const aiResponse = await fetch('https://api.modelverse.cn/v1/chat/completions', {
+    const aiResponse = await fetch(`${AI_BASE_URL}/chat/completions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}` },
       body: JSON.stringify({
-        model: 'deepseek-v4-pro',
+        model: PRIMARY_MODEL,
         max_tokens: 2000,
         temperature: 0.45,
         messages: [{ role: 'user', content: prompt }],

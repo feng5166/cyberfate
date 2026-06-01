@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateCacheKey, getCache, setCache } from '@/lib/ai/cache';
+import { AI_BASE_URL, PRIMARY_MODEL } from '@/lib/ai/models';
 
 type DrawMethod = 'time' | 'number' | 'manual';
 
@@ -182,14 +183,14 @@ export async function POST(req: NextRequest) {
   let aiSource = 'fallback';
 
   try {
-    const aiResponse = await fetch('https://api.modelverse.cn/v1/chat/completions', {
+    const aiResponse = await fetch(`${AI_BASE_URL}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'deepseek-v4-pro',
+        model: PRIMARY_MODEL,
         max_tokens: 420,
         temperature: 0.3,
         messages: [{ role: 'user', content: prompt }],

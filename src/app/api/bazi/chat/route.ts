@@ -4,10 +4,11 @@ import { authOptions } from '@/lib/auth';
 import { isUserVip } from '@/lib/quota';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
+import { AI_BASE_URL, PRIMARY_MODEL } from '@/lib/ai/models';
 
 const SERVICE = 'api/bazi/chat';
-const DEEPSEEK_BASE_URL = 'https://api.modelverse.cn/v1';
-const DEEPSEEK_MODEL = 'deepseek-v4-pro';
+const DEEPSEEK_BASE_URL = AI_BASE_URL;
+const DEEPSEEK_MODEL = PRIMARY_MODEL;
 
 export async function POST(req: NextRequest) {
   try {

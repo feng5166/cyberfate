@@ -6,6 +6,7 @@ import { withAiTimeout } from '@/lib/ai/withTimeout';
 import { withCircuitBreaker } from '@/lib/ai/circuitBreaker';
 import { applyChaos } from '@/lib/chaos-middleware';
 import { logger } from '@/lib/logger';
+import { AI_BASE_URL, PRIMARY_MODEL } from '@/lib/ai/models';
 
 const SERVICE = 'api/huangli/ask';
 
@@ -63,7 +64,7 @@ export async function POST(req: NextRequest) {
 
     const apiResponse = await withCircuitBreaker('deepseek-huangli-v4pro', () =>
       withAiTimeout(
-        (signal) => fetch('https://api.modelverse.cn/v1/chat/completions', {
+        (signal) => fetch(`${AI_BASE_URL}/chat/completions`, {
           method: 'POST',
           signal,
           headers: {
@@ -71,7 +72,7 @@ export async function POST(req: NextRequest) {
             'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`,
           },
           body: JSON.stringify({
-            model: 'deepseek-v4-pro',
+            model: PRIMARY_MODEL,
             max_tokens: 500,
             temperature: 0.6,
             messages: [{ role: 'user', content: prompt }],
