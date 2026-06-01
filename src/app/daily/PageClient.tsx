@@ -60,6 +60,7 @@ interface DailyResult {
     direction: string;
   };
   advice: string;
+  briefing?: string;
   verse?: string;
   imageUrl?: string;
   overallLabel?: string;
@@ -173,6 +174,25 @@ const wuxingItems = [
   { key: 'metal', label: '金', icon: '⚙️', variant: 'metal' as const, desc: '坚毅' },
   { key: 'water', label: '水', icon: '💧', variant: 'water' as const, desc: '智慧' },
 ];
+
+// 五行人话解读映射表（key 形如 'fire-旺'）
+const WUXING_HINT: Record<string, string> = {
+  'fire-旺': '今日易急躁',
+  'fire-衰': '注意心血',
+  'fire-弱': '注意心血',
+  'water-旺': '思虑活跃',
+  'water-衰': '注意补水休息',
+  'water-弱': '注意补水休息',
+  'wood-旺': '行动力强',
+  'wood-衰': '易疲惫',
+  'wood-弱': '易疲惫',
+  'earth-旺': '沉稳务实',
+  'earth-衰': '脾胃留意',
+  'earth-弱': '脾胃留意',
+  'metal-旺': '决断力佳',
+  'metal-衰': '少争为宜',
+  'metal-弱': '少争为宜',
+};
 
 // 日期切换
 const dayOffsetTexts: Record<string, { short: string; loading: string }> = {
@@ -642,16 +662,10 @@ export default function DailyPage() {
               {/* 一句话解读 */}
               <div style={{ textAlign: 'center', marginBottom: 24 }}>
                 <p style={{ fontSize: 14, color: 'rgba(28,26,22,0.65)', lineHeight: 1.7, maxWidth: 320, margin: '0 auto' }}>
-                  {(result.advice || '').slice(0, 50)}
+                  {result.briefing || (result.advice || '').slice(0, 50)}
                 </p>
               </div>
 
-              {/* 底部幸运信息 */}
-              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, paddingTop: 20, borderTop: '1px solid rgba(28,26,22,0.06)' }}>
-                <span style={{ fontSize: 12, color: 'rgba(28,26,22,0.55)' }}>幸运颜色 <span style={{ fontWeight: 500, color: '#1C1A16' }}>{result.lucky.color}</span></span>
-                <span style={{ fontSize: 12, color: 'rgba(28,26,22,0.55)' }}>幸运数字 <span style={{ fontWeight: 500, color: '#1C1A16' }}>{result.lucky.numbers.join('·')}</span></span>
-                <span style={{ fontSize: 12, color: 'rgba(28,26,22,0.55)' }}>方位 <span style={{ fontWeight: 500, color: '#1C1A16' }}>{result.lucky.direction}</span></span>
-              </div>
             </div>
 
             {/* 宜忌 - 极简双栏 */}
@@ -660,13 +674,8 @@ export default function DailyPage() {
               <div style={{ paddingRight: 20 }}>
                 <div style={{ fontSize: 13, color: 'rgba(28,26,22,0.45)', letterSpacing: 2, marginBottom: 12 }}>宜 · DO</div>
                 <div style={{ fontSize: 14, color: '#1C1A16', lineHeight: 2.0 }}>
-                  {result.suitable.reduce((acc: string[][], item: string, i: number) => {
-                    const pairIdx = Math.floor(i / 2);
-                    if (!acc[pairIdx]) acc[pairIdx] = [];
-                    acc[pairIdx].push(item);
-                    return acc;
-                  }, [] as string[][]).map((pair: string[], i: number) => (
-                    <div key={i}>{pair.join(' · ')}</div>
+                  {result.suitable.map((item, i) => (
+                    <div key={i}>{item}</div>
                   ))}
                 </div>
               </div>
@@ -676,16 +685,20 @@ export default function DailyPage() {
               <div style={{ paddingLeft: 20 }}>
                 <div style={{ fontSize: 13, color: 'rgba(28,26,22,0.45)', letterSpacing: 2, marginBottom: 12 }}>忌 · DON&apos;T</div>
                 <div style={{ fontSize: 14, color: '#1C1A16', lineHeight: 2.0 }}>
-                  {result.avoid.reduce((acc: string[][], item: string, i: number) => {
-                    const pairIdx = Math.floor(i / 2);
-                    if (!acc[pairIdx]) acc[pairIdx] = [];
-                    acc[pairIdx].push(item);
-                    return acc;
-                  }, [] as string[][]).map((pair: string[], i: number) => (
-                    <div key={i}>{pair.join(' · ')}</div>
+                  {result.avoid.map((item, i) => (
+                    <div key={i}>{item}</div>
                   ))}
                 </div>
               </div>
+            </div>
+
+            {/* 幸运信息极简条 */}
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, padding: '12px 0', textAlign: 'center' }}>
+              <span style={{ fontSize: 12, color: 'rgba(28,26,22,0.55)' }}>幸运颜色 <span style={{ fontWeight: 500, color: '#1C1A16' }}>{result.lucky.color}</span></span>
+              <span style={{ width: 1, height: 12, backgroundColor: 'rgba(28,26,22,0.12)' }} />
+              <span style={{ fontSize: 12, color: 'rgba(28,26,22,0.55)' }}>幸运数字 <span style={{ fontWeight: 500, color: '#1C1A16' }}>{result.lucky.numbers.join('·')}</span></span>
+              <span style={{ width: 1, height: 12, backgroundColor: 'rgba(28,26,22,0.12)' }} />
+              <span style={{ fontSize: 12, color: 'rgba(28,26,22,0.55)' }}>方位 <span style={{ fontWeight: 500, color: '#1C1A16' }}>{result.lucky.direction}</span></span>
             </div>
 
             {/* 今日五行强弱 */}
@@ -749,15 +762,19 @@ export default function DailyPage() {
                     else if (wuxingOrder[(mIdx + 2) % 5] === item.key) levelLabel = '弱'; // 克我(囚)
                     else if (wuxingOrder[(mIdx + 3) % 5] === item.key) levelLabel = '衰'; // 我克(死)
                   }
+                  const hint = WUXING_HINT[item.key + '-' + levelLabel] || (levelLabel === '平' || levelLabel === '强' ? '平稳' : '');
                   return (
                     <div
                       key={item.key}
                       className="rounded-xl text-center"
-                      style={{ backgroundColor: bgColor, opacity, border, minHeight: 88, padding: '10px 6px' }}
+                      style={{ backgroundColor: bgColor, opacity, border, minHeight: 72, padding: '8px 6px' }}
                     >
                       <span style={{ fontSize: 22 }}>{item.icon}</span>
                       <span className="block mt-0.5" style={{ fontSize: 15, fontWeight: 600, color: textColor }}>{item.label}</span>
                       <span className="block mt-1" style={{ fontSize: 11, fontWeight: 500, color: LEVEL_COLORS[levelLabel]?.text || '#6B7280', backgroundColor: LEVEL_COLORS[levelLabel]?.bg || '#F3F4F6', borderRadius: 999, padding: '2px 8px', display: 'inline-block' }}>{levelLabel}</span>
+                      {hint && (
+                        <span className="block" style={{ fontSize: 10, color: 'rgba(28,26,22,0.4)', marginTop: 2, lineHeight: 1.3 }}>{hint}</span>
+                      )}
                     </div>
                   );
                 });
@@ -777,11 +794,6 @@ export default function DailyPage() {
                 </p>
               )}
               <p className="text-gray-700" style={{ fontSize: 15, lineHeight: 1.8 }}>{result.advice}</p>
-              {result._source && (
-                <p style={{ fontSize: 11, color: '#999', marginTop: 8, textAlign: 'right' }}>
-                  数据来源: {result._source}
-                </p>
-              )}
             </Card>
 
             {/* 命理脉络（默认展开） */}

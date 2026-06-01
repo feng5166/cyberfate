@@ -141,9 +141,10 @@ ${liunianInfo}
  * 每日运势 System Prompt
  *
  * 优化点：
- * 1. 固定 suitable/avoid 各输出3条，防止数量随机
+ * 1. 固定 suitable 5条 / avoid 5条，防止数量随机
  * 2. 加入评分锚点说明，减少评分漂移
  * 3. 示例锚定 advice 文风
+ * 4. 新增 briefing 顶部断语字段，与 advice 区分职责
  */
 export const DAILY_SYSTEM_PROMPT = `${SAFETY_GUARDRAIL}
 
@@ -164,9 +165,10 @@ export const DAILY_SYSTEM_PROMPT = `${SAFETY_GUARDRAIL}
 
 ## 输出规则
 - 只输出 JSON，无其他内容
-- suitable 固定输出3条，每条5-8字
-- avoid 固定输出2条，每条5-8字
-- advice 限40字，不重复 suitable/avoid 内容
+- briefing：20-28字，今日定调，前半句给具体利好/风险，后半句给应对基调，可含命理术语，不与 advice 重复
+- suitable 固定输出5条，每条5-8字，动宾具象短语
+- avoid 固定输出5条，每条5-8字
+- advice 放宽到40-70字，纯行动建议，不与 briefing 重复、不重复 suitable/avoid 内容
 - ratings 必须包含 career、wealth、love、health、studies 五项（studies 表示学业运）
 - lucky.color 只写颜色名，不加解释
 - verse: 根据今日天干地支五行属性，选取一句匹配的古诗词或易经爻辞（2行，换行符\\n分隔），要有意境
@@ -181,6 +183,7 @@ export const DAILY_SYSTEM_PROMPT = `${SAFETY_GUARDRAIL}
   "overall": 4,
   "headline": "乘势而为",
   "overallLabel": "高",
+  "briefing": "今日财旺身弱，偏财有机但易疲惫，宜守不宜攻",
   "ratings": { "career": 4, "wealth": 3, "love": 4, "health": 5, "studies": 3, "social": 4 },
   "ratingComments": {
     "career": "印星得力，贵人助推进",
@@ -190,12 +193,12 @@ export const DAILY_SYSTEM_PROMPT = `${SAFETY_GUARDRAIL}
     "studies": "印星化祙，文思敏捷",
     "social": "比劫帮身，人缘和顺"
   },
-  "suitable": ["签署合同", "拜访客户", "学习充电"],
-  "avoid": ["冒险投资", "与人争执"],
+  "suitable": ["签署合同", "拜访客户", "学习充电", "整理复盘", "户外散步"],
+  "avoid": ["冒险投资", "与人争执", "熬夜伤神", "冲动消费", "轻许承诺"],
   "lucky": { "color": "青绿", "numbers": [3, 8], "direction": "东方" },
   "luckyHour": "巳时（09-11时）",
   "verse": "山重水复疑无路\\n柳暗花明又一村",
-  "advice": "今日木火相生，行动力强，适合推进已规划事项，保持专注即可。"
+  "advice": "上午借印星之力推进核心议题，午后转入复盘整理；遇分歧先听后说，傍晚以散步舒缓体力，养精蓄锐以待明日。"
 }`;
 
 /**

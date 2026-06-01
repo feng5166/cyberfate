@@ -159,6 +159,7 @@ export async function POST(req: NextRequest) {
       verse: (fortune as any).verse || null,
       imageUrl,
       advice: fortune.advice,
+      briefing: (fortune as any).briefing || null,
       headline: (fortune as any).headline || null,
       _source: (fortune as any)._source ?? 'unknown',
     });
@@ -235,26 +236,31 @@ function generateFallbackFortune(dayMaster: string, dayGanzhi: string, targetDat
   
   const suitablePool = ['工作', '学习', '运动', '社交', '阅读', '创作', '购物', '旅行', '投资', '谈判'];
   const avoidPool = ['争吵', '冒险', '熬夜', '饮酒', '赌博', '冲动消费', '重大决策', '签约'];
-  
-  // 使用固定种子选择
-  const suitableCount = 2 + overall;
-  const suitable = suitablePool
-    .slice(0, suitableCount)
+
+  // 使用固定种子选择，固定输出 5 条
+  const suitable = [...suitablePool]
     .sort((a, b) => seededRandom(seed + 'suitable', suitablePool.indexOf(a)) - seededRandom(seed + 'suitable', suitablePool.indexOf(b)))
-    .slice(0, 3);
-  
-  const avoid = avoidPool
-    .slice(overall - 1)
+    .slice(0, 5);
+
+  const avoid = [...avoidPool]
     .sort((a, b) => seededRandom(seed + 'avoid', avoidPool.indexOf(a)) - seededRandom(seed + 'avoid', avoidPool.indexOf(b)))
-    .slice(0, 2);
+    .slice(0, 5);
   
   const colors = ['红色', '黄色', '蓝色', '绿色', '紫色', '白色', '金色'];
   const directions = ['东方', '南方', '西方', '北方', '东南', '东北', '西南', '西北'];
-  
+
+  const briefing =
+    overall >= 4
+      ? '今日气场顺遂，宜借势而为，把握贵人助力'
+      : overall === 3
+      ? '今日运势平稳，宜按部就班，守正以待时机'
+      : '今日略有阻滞，宜低调收敛，避免正面冲突';
+
   return {
     overall,
     overallLabel: overall >= 4 ? '高' : overall >= 3 ? '平' : '低',
     headline: overall >= 4 ? '乘势而为' : overall >= 3 ? '守正待机' : '韬光养晦',
+    briefing,
     ratings: {
       career: Math.min(5, Math.max(1, overall + Math.floor(seededRandom(seed, 1) * 2) - 1)),
       wealth: Math.min(5, Math.max(1, overall + Math.floor(seededRandom(seed, 2) * 2) - 1)),
