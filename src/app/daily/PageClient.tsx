@@ -642,7 +642,7 @@ export default function DailyPage() {
               </div>
 
               {/* 大日期 */}
-              <div style={{ textAlign: 'center', marginBottom: 20 }}>
+              <div style={{ marginBottom: 20 }}>
                 <div style={{ fontSize: 80, fontWeight: 300, color: '#1C1A16', lineHeight: 1, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>
                   {(() => { const d = new Date(today + 'T00:00:00'); d.setDate(d.getDate() + Number(dayOffset)); return d.getDate(); })()}
                 </div>
@@ -652,7 +652,7 @@ export default function DailyPage() {
               </div>
 
               {/* 判词区 */}
-              <div style={{ textAlign: 'center', marginBottom: 16 }}>
+              <div style={{ marginBottom: 16 }}>
                 <span style={{ fontSize: 28, fontWeight: 600, color: '#1C1A16', letterSpacing: 4, fontFamily: 'Noto Serif SC, serif' }}>
                   {result.headline || (result.overall >= 4 ? '乘势而为' : result.overall >= 3 ? '守正待机' : '韬光养晦')}
                 </span>
@@ -660,45 +660,59 @@ export default function DailyPage() {
               </div>
 
               {/* 一句话解读 */}
-              <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                <p style={{ fontSize: 14, color: 'rgba(28,26,22,0.65)', lineHeight: 1.7, maxWidth: 320, margin: '0 auto' }}>
+              <div style={{ marginBottom: 24 }}>
+                <p style={{ fontSize: 14, color: 'rgba(28,26,22,0.65)', lineHeight: 1.7, maxWidth: 480, margin: 0 }}>
                   {result.briefing || (result.advice || '').slice(0, 50)}
                 </p>
               </div>
 
-            </div>
-
-            {/* 宜忌 - 极简双栏 */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1px 1fr', gap: 0, padding: '0 8px', maxWidth: 420, margin: '0 auto', width: '100%' }}>
-              {/* 宜 */}
-              <div style={{ paddingRight: 16 }}>
-                <div style={{ fontSize: 13, color: 'rgba(28,26,22,0.45)', letterSpacing: 2, marginBottom: 12 }}>宜 · DO</div>
-                <div style={{ fontSize: 14, color: '#1C1A16', lineHeight: 2.0 }}>
-                  {result.suitable.map((item, i) => (
-                    <div key={i}>{item}</div>
-                  ))}
+              {/* 宜忌 - 极简双栏 */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1px 1fr', gap: 0, padding: 0, width: '100%', marginTop: 24, borderTop: '1px solid rgba(28,26,22,0.06)', paddingTop: 24 }}>
+                {/* 宜 */}
+                <div style={{ paddingRight: 16 }}>
+                  <div style={{ fontSize: 13, color: 'rgba(28,26,22,0.45)', letterSpacing: 2, marginBottom: 12 }}>宜 · DO</div>
+                  <div style={{ fontSize: 14, color: '#1C1A16', lineHeight: 2.0 }}>
+                    {result.suitable.map((item, i) => (
+                      <div key={i}>{item}</div>
+                    ))}
+                  </div>
+                </div>
+                {/* 分隔线 */}
+                <div style={{ backgroundColor: 'rgba(28,26,22,0.08)' }} />
+                {/* 忌 */}
+                <div style={{ paddingLeft: 16 }}>
+                  <div style={{ fontSize: 13, color: 'rgba(28,26,22,0.45)', letterSpacing: 2, marginBottom: 12 }}>忌 · DON&apos;T</div>
+                  <div style={{ fontSize: 14, color: '#1C1A16', lineHeight: 2.0 }}>
+                    {result.avoid.map((item, i) => (
+                      <div key={i}>{item}</div>
+                    ))}
+                  </div>
                 </div>
               </div>
-              {/* 分隔线 */}
-              <div style={{ backgroundColor: 'rgba(28,26,22,0.08)' }} />
-              {/* 忌 */}
-              <div style={{ paddingLeft: 16 }}>
-                <div style={{ fontSize: 13, color: 'rgba(28,26,22,0.45)', letterSpacing: 2, marginBottom: 12 }}>忌 · DON&apos;T</div>
-                <div style={{ fontSize: 14, color: '#1C1A16', lineHeight: 2.0 }}>
-                  {result.avoid.map((item, i) => (
-                    <div key={i}>{item}</div>
-                  ))}
-                </div>
-              </div>
-            </div>
 
-            {/* 幸运信息极简条 */}
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, padding: '12px 0', textAlign: 'center' }}>
-              <span style={{ fontSize: 12, color: 'rgba(28,26,22,0.55)' }}>幸运颜色 <span style={{ fontWeight: 500, color: '#1C1A16' }}>{result.lucky.color}</span></span>
-              <span style={{ width: 1, height: 12, backgroundColor: 'rgba(28,26,22,0.12)' }} />
-              <span style={{ fontSize: 12, color: 'rgba(28,26,22,0.55)' }}>幸运数字 <span style={{ fontWeight: 500, color: '#1C1A16' }}>{result.lucky.numbers.join('·')}</span></span>
-              <span style={{ width: 1, height: 12, backgroundColor: 'rgba(28,26,22,0.12)' }} />
-              <span style={{ fontSize: 12, color: 'rgba(28,26,22,0.55)' }}>方位 <span style={{ fontWeight: 500, color: '#1C1A16' }}>{result.lucky.direction}</span></span>
+              {/* 幸运信息极简条 */}
+              <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: 16, padding: '12px 0', marginTop: 8 }}>
+                <span style={{ fontSize: 12, color: 'rgba(28,26,22,0.55)' }}>幸运颜色 <span style={{ fontWeight: 500, color: '#1C1A16' }}>{result.lucky.color}</span></span>
+                <span style={{ width: 1, height: 12, backgroundColor: 'rgba(28,26,22,0.12)' }} />
+                <span style={{ fontSize: 12, color: 'rgba(28,26,22,0.55)' }}>幸运数字 <span style={{ fontWeight: 500, color: '#1C1A16' }}>{result.lucky.numbers.join('·')}</span></span>
+                <span style={{ width: 1, height: 12, backgroundColor: 'rgba(28,26,22,0.12)' }} />
+                <span style={{ fontSize: 12, color: 'rgba(28,26,22,0.55)' }}>方位 <span style={{ fontWeight: 500, color: '#1C1A16' }}>{result.lucky.direction}</span></span>
+              </div>
+
+              {/* 金句 / 品牌区 */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 24, borderTop: '1px solid rgba(28,26,22,0.06)', paddingTop: 20, marginTop: 24 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  {result.verse && (
+                    <p style={{ fontSize: 13, color: 'rgba(28,26,22,0.55)', fontStyle: 'italic', lineHeight: 1.7, margin: 0, whiteSpace: 'pre-line' }}>
+                      「{result.verse}」
+                    </p>
+                  )}
+                </div>
+                <span style={{ alignSelf: 'flex-end', fontSize: 13, letterSpacing: 2, color: 'rgba(28,26,22,0.35)', fontFamily: 'Inter, sans-serif', whiteSpace: 'nowrap' }}>
+                  CYBERFATE
+                </span>
+              </div>
+
             </div>
 
             {/* 今日五行强弱 */}

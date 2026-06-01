@@ -2,6 +2,7 @@
 
 import { useState, useEffect, ReactNode, Suspense } from 'react';
 import { usePathname, useSearchParams, useRouter } from 'next/navigation';
+import { PanelLeft, PanelLeftClose } from 'lucide-react';
 import { Header } from './Header';
 import { DashboardLayout } from './DashboardLayout';
 import { Footer } from './Footer';
@@ -59,6 +60,21 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999 }}>
           <Header />
         </div>
+      )}
+      {showSidebar && (
+        <button
+          type="button"
+          onClick={() => setSidebarCollapsed((v) => !v)}
+          className="fixed top-3 left-3 z-50 hidden h-9 w-9 items-center justify-center rounded-lg border border-[#1C1A16]/[0.08] bg-[#FAF9F6] transition-colors hover:bg-gray-100 cursor-pointer lg:flex"
+          title={isSidebarCollapsed ? '展开导航' : '收起导航'}
+          aria-label={isSidebarCollapsed ? '展开导航' : '收起导航'}
+        >
+          {isSidebarCollapsed ? (
+            <PanelLeft className="h-4 w-4 text-brand-gray" />
+          ) : (
+            <PanelLeftClose className="h-4 w-4 text-brand-gray" />
+          )}
+        </button>
       )}
       <main id="main-content" className="flex-1 pb-20 lg:pb-0" style={{ paddingTop: showSidebar ? 0 : '80px' }}>
         <Suspense fallback={null}>

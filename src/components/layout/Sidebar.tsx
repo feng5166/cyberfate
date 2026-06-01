@@ -355,32 +355,6 @@ export function Sidebar({
         </Link>
       </div>
 
-      {!isCollapsed && (
-        <button
-          type="button"
-          onClick={handleCollapseToggle}
-          className="absolute right-2 top-3 hidden h-7 w-7 items-center justify-center rounded-md text-brand-gray hover:bg-gray-100/50 hover:text-brand-black lg:flex"
-          title="收起导航"
-          aria-label="收起导航"
-        >
-          <PanelLeftClose className="h-4 w-4" />
-        </button>
-      )}
-
-      {isCollapsed && (
-        <div className="hidden border-t border-b border-[#1C1A16]/[0.06] py-3 px-2 lg:block">
-          <button
-            type="button"
-            onClick={handleCollapseToggle}
-            className="flex h-9 w-full items-center justify-center rounded-lg border border-amber-200 bg-amber-50 text-[#1C1A16] transition-colors hover:bg-amber-100"
-            title="展开导航"
-            aria-label="展开导航"
-          >
-            <PanelLeft className="h-5 w-5" />
-          </button>
-        </div>
-      )}
-
       <nav className="flex-1 overflow-y-auto pb-6 sidebar-scroll">
         {MENU_GROUPS.map((group) => (
           <SidebarGroup
