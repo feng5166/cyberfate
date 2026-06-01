@@ -669,9 +669,9 @@ export default function DailyPage() {
             </div>
 
             {/* 宜忌 - 极简双栏 */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1px 1fr', gap: 0, padding: '0 8px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1px 1fr', gap: 0, padding: '0 8px', maxWidth: 420, margin: '0 auto', width: '100%' }}>
               {/* 宜 */}
-              <div style={{ paddingRight: 20 }}>
+              <div style={{ paddingRight: 16 }}>
                 <div style={{ fontSize: 13, color: 'rgba(28,26,22,0.45)', letterSpacing: 2, marginBottom: 12 }}>宜 · DO</div>
                 <div style={{ fontSize: 14, color: '#1C1A16', lineHeight: 2.0 }}>
                   {result.suitable.map((item, i) => (
@@ -682,7 +682,7 @@ export default function DailyPage() {
               {/* 分隔线 */}
               <div style={{ backgroundColor: 'rgba(28,26,22,0.08)' }} />
               {/* 忌 */}
-              <div style={{ paddingLeft: 20 }}>
+              <div style={{ paddingLeft: 16 }}>
                 <div style={{ fontSize: 13, color: 'rgba(28,26,22,0.45)', letterSpacing: 2, marginBottom: 12 }}>忌 · DON&apos;T</div>
                 <div style={{ fontSize: 14, color: '#1C1A16', lineHeight: 2.0 }}>
                   {result.avoid.map((item, i) => (
