@@ -9,6 +9,8 @@
     "src/app/api/payment/**/*.ts":  { "maxDuration": 30 },
     "src/app/api/bazi/**/*.ts":     { "maxDuration": 60 },
     "src/app/api/daily/**/*.ts":    { "maxDuration": 60 },
+    "src/app/api/daily-music/**/*.ts": { "maxDuration": 60 },
+    "src/app/api/music-oracle/**/*.ts": { "maxDuration": 60 },
     "src/app/api/tarot/**/*.ts":    { "maxDuration": 60 },
     "src/app/api/meihua/**/*.ts":   { "maxDuration": 60 },
     "src/app/api/liuyao/**/*.ts":   { "maxDuration": 60 },

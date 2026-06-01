@@ -90,7 +90,7 @@ async function callClaudeAPI(systemPrompt: string, userPrompt: string): Promise<
   }
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000);
+  const timeoutId = setTimeout(() => controller.abort(), 50000);
 
   try {
     const response = await fetch(`${DEEPSEEK_BASE_URL}/chat/completions`, {
@@ -102,7 +102,7 @@ async function callClaudeAPI(systemPrompt: string, userPrompt: string): Promise<
       },
       body: JSON.stringify({
         model: DEEPSEEK_MODEL,
-        max_tokens: 800,
+        max_tokens: 2000,
         temperature: 0.85,
         enable_thinking: false,
         messages: [
@@ -126,7 +126,7 @@ async function callClaudeAPI(systemPrompt: string, userPrompt: string): Promise<
   } catch (err: any) {
     clearTimeout(timeoutId);
     if (err.name === 'AbortError') {
-      console.error('[MusicOracle] DeepSeek API 超时 (30s)');
+      console.error('[MusicOracle] DeepSeek API 超时 (50s)');
     } else {
       console.error('[MusicOracle] DeepSeek API 调用失败:', err.message);
     }
