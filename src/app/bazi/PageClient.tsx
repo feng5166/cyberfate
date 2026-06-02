@@ -1002,15 +1002,15 @@ function BaziPageContent() {
 
                 <div className="space-y-1.5">
                   <label className="block text-sm font-medium text-[#1C1A16]/70">性别</label>
-                  <SegmentControl
+                  <Select
                     options={[
+                      { value: '', label: '请选择性别', disabled: true },
                       { value: 'male', label: '男' },
                       { value: 'female', label: '女' },
                     ]}
                     value={formData.gender}
-                    onChange={(value) => setFormData({ ...formData, gender: value })}
-                    className="h-10 rounded-lg border border-[#1C1A16]/15 bg-white text-[#1C1A16] overflow-hidden"
-                    optionClassName="px-3 py-0 h-full flex items-center justify-center text-sm"
+                    onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                    className="h-10 rounded-lg border border-[#1C1A16]/15 bg-white px-3 text-sm text-[#1C1A16]"
                   />
                 </div>
 

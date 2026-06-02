@@ -166,7 +166,6 @@ interface SideFormProps {
 
 function SideForm({ sideKey, data, onChange }: SideFormProps) {
   const isMale = sideKey === 'male';
-  const accent = isMale ? '👨' : '👩';
   const sideTitle = isMale ? '男方' : '女方';
 
   const handleHistoryPick = (record: BaziHistoryRecord) => {
@@ -180,51 +179,46 @@ function SideForm({ sideKey, data, onChange }: SideFormProps) {
 
   const inputClass =
     'w-full h-10 rounded-lg border border-[#E5E0D8] bg-white px-4 text-sm text-[#1C1A16] placeholder:text-[#1C1A16]/40 focus:border-[#C2762B] focus:ring-2 focus:ring-[#C2762B]/15 outline-none transition-all';
+  const selectClass =
+    'h-10 rounded-lg border border-[#E5E0D8] bg-white px-3 text-sm text-[#1C1A16]';
 
   return (
-    <Card
-      hover={false}
-      className="rounded-2xl border border-[#E5E0D8] bg-white shadow-none p-6 sm:p-7"
-    >
-      <div className="flex items-center justify-between gap-3 mb-6">
-        <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-[#FAF9F6] flex items-center justify-center text-xl">
-            {accent}
-          </div>
-          <div>
-            <p className="text-xs text-[#1C1A16]/60">{sideTitle}信息</p>
-            <h3 className="text-base font-semibold text-[#1C1A16]">{sideTitle}出生资料</h3>
-          </div>
+    <div className="space-y-5">
+      <div className="flex items-center justify-between gap-3 pb-2 border-b border-[#1C1A16]/8">
+        <div>
+          <p className="text-xs text-[#1C1A16]/55">{sideTitle}信息</p>
+          <h3 className="text-base font-semibold text-[#1C1A16]">{sideTitle}出生资料</h3>
         </div>
         <HistoryFillButton onPick={handleHistoryPick} />
       </div>
 
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-[#1C1A16]/70">
-            姓名 <span className="text-xs text-[#1C1A16]/40">（选填）</span>
-          </label>
-          <input
-            type="text"
-            value={data.name}
-            onChange={(e) => onChange({ name: e.target.value })}
-            placeholder={`请输入${sideTitle}姓名`}
-            className={inputClass}
-          />
-        </div>
+      <div className="space-y-5">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-[#1C1A16]/70">
+              姓名 <span className="text-xs text-[#1C1A16]/40">（选填）</span>
+            </label>
+            <input
+              type="text"
+              value={data.name}
+              onChange={(e) => onChange({ name: e.target.value })}
+              placeholder={`${sideTitle}姓名`}
+              className={inputClass}
+            />
+          </div>
 
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-[#1C1A16]/70">性别</label>
-          <SegmentControl
-            options={[
-              { value: 'male', label: '男' },
-              { value: 'female', label: '女' },
-            ]}
-            value={data.gender}
-            onChange={(value) => onChange({ gender: value as 'male' | 'female' })}
-            className="h-10 rounded-lg overflow-hidden"
-            optionClassName="px-3 py-0 h-full flex items-center justify-center text-sm"
-          />
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-[#1C1A16]/70">性别</label>
+            <Select
+              options={[
+                { value: 'male', label: '男' },
+                { value: 'female', label: '女' },
+              ]}
+              value={data.gender}
+              onChange={(e) => onChange({ gender: e.target.value as 'male' | 'female' })}
+              className={selectClass}
+            />
+          </div>
         </div>
 
         <div className="space-y-2">
@@ -277,40 +271,24 @@ function SideForm({ sideKey, data, onChange }: SideFormProps) {
 
           <div
             className={`overflow-hidden transition-all duration-300 ease-in-out ${
-              data.knowTime ? 'max-h-[260px] opacity-100' : 'max-h-0 opacity-0'
+              data.knowTime ? 'max-h-[160px] opacity-100' : 'max-h-0 opacity-0'
             }`}
           >
-            <div className="space-y-4 pt-1">
-              <div className="grid grid-cols-2 gap-3">
-                <Select
-                  label="时（小时）"
-                  options={hourOptions}
-                  value={String(data.birthHourNum)}
-                  onChange={(e) => onChange({ birthHourNum: Number(e.target.value) })}
-                  className="h-10 rounded-lg border border-[#E5E0D8] bg-white px-3 text-sm text-[#1C1A16]"
-                />
-                <Select
-                  label="分"
-                  options={minuteOptions}
-                  value={String(data.birthMinute)}
-                  onChange={(e) => onChange({ birthMinute: Number(e.target.value) })}
-                  className="h-10 rounded-lg border border-[#E5E0D8] bg-white px-3 text-sm text-[#1C1A16]"
-                />
-              </div>
-              <label className="flex items-start gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={data.lateZiShi}
-                  onChange={(e) => onChange({ lateZiShi: e.target.checked })}
-                  className="mt-1 w-4 h-4 accent-[#C2762B]"
-                />
-                <div>
-                  <p className="text-sm font-medium text-[#1C1A16]">晚子时（23:00 后归次日日柱）</p>
-                  <p className="text-xs text-[#1C1A16]/45 mt-0.5">
-                    专业命理项，仅当出生在 23:00-23:59 时影响日柱。
-                  </p>
-                </div>
-              </label>
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              <Select
+                label="时（小时）"
+                options={hourOptions}
+                value={String(data.birthHourNum)}
+                onChange={(e) => onChange({ birthHourNum: Number(e.target.value) })}
+                className={selectClass}
+              />
+              <Select
+                label="分"
+                options={minuteOptions}
+                value={String(data.birthMinute)}
+                onChange={(e) => onChange({ birthMinute: Number(e.target.value) })}
+                className={selectClass}
+              />
             </div>
           </div>
         </div>
@@ -322,8 +300,33 @@ function SideForm({ sideKey, data, onChange }: SideFormProps) {
           onInputChange={(value) => onChange({ birthPlace: value })}
           onSelect={(city) => onChange({ birthPlace: city.name })}
         />
+
+        <label className="flex items-center justify-between gap-3 cursor-pointer">
+          <div className="flex flex-col">
+            <span className="text-sm font-medium text-[#1C1A16]">晚子时（23:00 后归次日日柱）</span>
+            <span className="text-xs text-[#1C1A16]/45 mt-0.5">
+              专业命理项，仅当出生在 23:00–23:59 影响日柱
+            </span>
+          </div>
+          <span className="relative inline-flex shrink-0">
+            <input
+              type="checkbox"
+              checked={data.lateZiShi}
+              onChange={(e) => onChange({ lateZiShi: e.target.checked })}
+              className="peer sr-only"
+            />
+            <span
+              aria-hidden
+              className="w-11 h-6 rounded-full bg-[#E5E0D8] transition-colors duration-200 peer-checked:bg-[#C2762B]"
+            />
+            <span
+              aria-hidden
+              className="pointer-events-none absolute left-0.5 top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-200 peer-checked:translate-x-5"
+            />
+          </span>
+        </label>
       </div>
-    </Card>
+    </div>
   );
 }
 
@@ -539,7 +542,7 @@ export default function MarriagePage() {
                       { title: '获取完整报告', desc: '查看匹配度、八字与建议' },
                     ].map((step, index) => (
                       <div key={step.title} className="flex flex-1 flex-col items-center text-center">
-                        <div className="w-9 h-9 rounded-full border border-[#C2762B]/40 text-[#C2762B] flex items-center justify-center mb-3 text-sm font-medium">
+                        <div className="w-9 h-9 rounded-full border border-[#D8D2C8] text-[#1C1A16]/40 flex items-center justify-center mb-3 text-sm font-medium">
                           {index + 1}
                         </div>
                         <p className="text-base text-[#1C1A16] font-medium">{step.title}</p>
