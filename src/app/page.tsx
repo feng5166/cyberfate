@@ -181,7 +181,7 @@ export default function HomePage() {
               <Button
                 variant="primary"
                 size="lg"
-                className="px-[38px] py-[14px] text-[13px] tracking-[0.08em] !bg-[#1C1A16] !text-white hover:!bg-[#2A2621]"
+                className="px-[38px] py-[14px] text-[13px] tracking-[0.08em]"
               >
                 免费开始解析 →
               </Button>
