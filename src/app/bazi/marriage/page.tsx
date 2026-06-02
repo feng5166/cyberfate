@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Heart, HeartPulse, Sparkles, ScrollText, Compass, History, ChevronDown, Users, Home, HeartHandshake, Check } from 'lucide-react';
+import { Heart, HeartPulse, Sparkles, ScrollText, Compass, History, ChevronDown } from 'lucide-react';
 import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -12,6 +12,11 @@ import { CitySearch } from '@/components/ui/CitySearch';
 import { Footer } from '@/components/layout/Footer';
 import { loadRecords } from '@/lib/utils/history';
 import type { BaziHistoryRecord } from '@/lib/bazi/types';
+import { PillarTable } from '@/components/marriage/PillarTable';
+import { RadarChart } from '@/components/marriage/RadarChart';
+import { ShishenSection } from '@/components/marriage/ShishenSection';
+import { AIAnalysisSection } from '@/components/marriage/AIAnalysisSection';
+import { AIQASection } from '@/components/marriage/AIQASection';
 
 type SideKey = 'male' | 'female';
 
@@ -360,6 +365,7 @@ export default function MarriagePage() {
   const [femaleData, setFemaleData] = useState<SideData>(() => makeDefaultSide('female'));
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [lastPayload, setLastPayload] = useState<any>(null);
   const [error, setError] = useState('');
 
   const updateMale = (patch: Partial<SideData>) => setMaleData(prev => ({ ...prev, ...patch }));
@@ -422,6 +428,7 @@ export default function MarriagePage() {
 
       const data = await res.json();
       setResult(data);
+      setLastPayload(payload);
     } catch (err) {
       setError(err instanceof Error ? err.message : '未知错误');
     } finally {
@@ -555,7 +562,7 @@ export default function MarriagePage() {
             )}
 
             {result && (
-              <div className="space-y-6">
+              <div className="space-y-8">
                 {/* P1：总分区 - 环形进度环 + 大号分数 + 等级 + 红心辅助行 */}
                 <Card hover={false} className="rounded-2xl border border-[#E5E0D8] bg-white shadow-none p-6 md:p-8">
                   <div className="flex flex-col items-center text-center gap-4">
@@ -566,12 +573,7 @@ export default function MarriagePage() {
 
                     <div className="relative w-44 h-44 md:w-48 md:h-48 mt-2">
                       <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
-                        <circle
-                          cx="60" cy="60" r="52"
-                          fill="none"
-                          stroke="#E5E0D8"
-                          strokeWidth="8"
-                        />
+                        <circle cx="60" cy="60" r="52" fill="none" stroke="#E5E0D8" strokeWidth="8" />
                         <circle
                           cx="60" cy="60" r="52"
                           fill="none"
@@ -601,137 +603,107 @@ export default function MarriagePage() {
                   </div>
                 </Card>
 
-                {/* 双方八字命盘 */}
-                <Card hover={false} className="rounded-2xl border border-[#E5E0D8] bg-white shadow-none p-6">
-                  <h3 className="text-lg font-semibold text-[#1C1A16] mb-4">双方八字命盘</h3>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="rounded-xl border border-[#E5E0D8] bg-[#FAF9F6] p-4">
-                      <p className="text-xs text-[#1C1A16]/55 mb-2 tracking-wider">男方八字</p>
-                      <p className="font-mono text-base md:text-lg text-[#1C1A16] whitespace-pre-wrap leading-relaxed">{result.maleBazi}</p>
-                    </div>
-                    <div className="rounded-xl border border-[#E5E0D8] bg-[#FAF9F6] p-4">
-                      <p className="text-xs text-[#1C1A16]/55 mb-2 tracking-wider">女方八字</p>
-                      <p className="font-mono text-base md:text-lg text-[#1C1A16] whitespace-pre-wrap leading-relaxed">{result.femaleBazi}</p>
-                    </div>
-                  </div>
-                </Card>
-
-                {/* P0：维度结构化卡片 */}
-                {Array.isArray(result.dimensions) && result.dimensions.length > 0 && (
+                {/* 模块 A：八字命盘（双方四柱表格） */}
+                {result.male?.pillars && result.female?.pillars && (
                   <div className="space-y-4">
-                    <div className="flex items-center gap-2 px-1">
-                      <HeartPulse className="w-4 h-4 text-[#C2762B]" />
-                      <h3 className="text-base md:text-lg font-semibold text-[#1C1A16]">合婚维度解读</h3>
+                    <div className="text-center">
+                      <h2
+                        className="text-2xl md:text-3xl font-semibold text-[#1C1A16]"
+                        style={{ fontFamily: 'var(--font-cormorant), Cormorant Garamond, serif' }}
+                      >
+                        八字命盘
+                      </h2>
+                      <p className="text-xs text-[#1C1A16]/55 mt-1">双方四柱天干地支与五行属性</p>
                     </div>
-
                     <div className="grid gap-4 md:grid-cols-2">
-                      {result.dimensions.map((dim: any, idx: number) => {
-                        const iconMap: Record<string, any> = {
-                          basic: Sparkles,
-                          personality: Users,
-                          palace: Home,
-                          family: HeartHandshake,
-                        };
-                        const Icon = iconMap[dim.key] || Sparkles;
-                        const dimScore = Math.max(0, Math.min(100, Number(dim.score) || 0));
-                        const altBg = idx % 2 === 0 ? 'bg-white' : 'bg-[#FAF9F6]';
-                        return (
-                          <div
-                            key={dim.key || idx}
-                            className={`rounded-2xl border border-[#E5E0D8] ${altBg} p-5 md:p-6`}
-                          >
-                            <div className="flex items-center justify-between gap-3 mb-3">
-                              <div className="flex items-center gap-2.5">
-                                <span className="w-9 h-9 rounded-full bg-[#FAF3EC] border border-[#C2762B]/20 flex items-center justify-center">
-                                  <Icon className="w-4 h-4 text-[#C2762B]" />
-                                </span>
-                                <h4
-                                  className="text-base md:text-lg font-medium text-[#1C1A16]"
-                                  style={{ fontFamily: 'var(--font-cormorant), Cormorant Garamond, serif' }}
-                                >
-                                  {dim.title}
-                                </h4>
-                              </div>
-                              <span className="text-sm font-semibold text-[#C2762B] tabular-nums">
-                                {dimScore}<span className="text-xs text-[#1C1A16]/40 font-normal">/100</span>
-                              </span>
-                            </div>
-
-                            <div className="mb-4">
-                              <div className="h-1.5 w-full rounded-full bg-[#E5E0D8] overflow-hidden">
-                                <div
-                                  className="h-full rounded-full bg-[#C2762B] transition-all duration-700 ease-out"
-                                  style={{ width: `${dimScore}%` }}
-                                />
-                              </div>
-                            </div>
-
-                            <p className="text-sm text-[#1C1A16]/80 leading-7 whitespace-pre-wrap">
-                              {dim.content}
-                            </p>
-                          </div>
-                        );
-                      })}
+                      <PillarTable
+                        chart={result.male.pillars}
+                        title={`男方 · ${result.male.name || '男方'}`}
+                        subtitle={`日主 ${result.male.dayMaster || ''} · 生肖${result.male.zodiac || ''}`}
+                      />
+                      <PillarTable
+                        chart={result.female.pillars}
+                        title={`女方 · ${result.female.name || '女方'}`}
+                        subtitle={`日主 ${result.female.dayMaster || ''} · 生肖${result.female.zodiac || ''}`}
+                      />
                     </div>
                   </div>
                 )}
 
-                {/* P2：相处建议 */}
-                {Array.isArray(result.advices) && result.advices.length > 0 && (
-                  <Card hover={false} className="rounded-2xl border border-[#E5E0D8] bg-white shadow-none p-6 md:p-7">
-                    <div className="flex items-center gap-2 mb-5">
-                      <span className="w-8 h-8 rounded-full bg-[#FAF3EC] border border-[#C2762B]/20 flex items-center justify-center">
-                        <Check className="w-4 h-4 text-[#C2762B]" />
-                      </span>
-                      <h3 className="text-base md:text-lg font-semibold text-[#1C1A16]">相处建议</h3>
+                {/* 模块 B：五行分布雷达图 */}
+                {result.male?.wuxing && result.female?.wuxing && (
+                  <div className="space-y-4">
+                    <div className="text-center">
+                      <h2
+                        className="text-2xl md:text-3xl font-semibold text-[#1C1A16]"
+                        style={{ fontFamily: 'var(--font-cormorant), Cormorant Garamond, serif' }}
+                      >
+                        五行分布
+                      </h2>
+                      <p className="text-xs text-[#1C1A16]/55 mt-1">木火土金水五维结构对照</p>
                     </div>
-
-                    <ul className="space-y-3">
-                      {result.advices.map((advice: string, i: number) => (
-                        <li key={i} className="flex items-start gap-3">
-                          <span className="shrink-0 mt-0.5 inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#FAF3EC] border border-[#C2762B]/25 text-xs font-semibold text-[#C2762B]">
-                            {i + 1}
-                          </span>
-                          <p className="text-sm text-[#1C1A16]/85 leading-relaxed">{advice}</p>
-                        </li>
-                      ))}
-                    </ul>
-                  </Card>
-                )}
-
-                {/* P2：亮点总结 */}
-                {result.highlight && (
-                  <div className="rounded-2xl bg-[#FAF3EC] border-l-4 border-[#C2762B] border-y border-r border-y-[#C2762B]/15 border-r-[#C2762B]/15 p-5 md:p-6">
-                    <div className="flex items-start gap-3">
-                      <Sparkles className="w-5 h-5 text-[#C2762B] shrink-0 mt-0.5" />
-                      <div className="flex-1">
-                        <p className="text-xs text-[#C2762B] font-medium tracking-wider mb-1.5">亮点总结</p>
-                        <p className="text-sm md:text-base text-[#1C1A16]/85 leading-7">
-                          {result.highlight}
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="rounded-2xl border border-[#E5E0D8] bg-white p-5 md:p-6 flex flex-col items-center">
+                        <p className="text-sm font-semibold text-[#1C1A16] mb-3">
+                          男方 · {result.male.name || '男方'}
                         </p>
+                        <RadarChart wuxing={result.male.wuxing} size={240} />
+                      </div>
+                      <div className="rounded-2xl border border-[#E5E0D8] bg-white p-5 md:p-6 flex flex-col items-center">
+                        <p className="text-sm font-semibold text-[#1C1A16] mb-3">
+                          女方 · {result.female.name || '女方'}
+                        </p>
+                        <RadarChart wuxing={result.female.wuxing} size={240} />
                       </div>
                     </div>
                   </div>
                 )}
 
-                {/* 兜底：万一服务端 dimensions 缺失，展示原始 analysis 不白屏 */}
-                {(!Array.isArray(result.dimensions) || result.dimensions.length === 0) && result.analysis && (
-                  <Card hover={false} className="rounded-2xl border border-[#E5E0D8] bg-white shadow-none p-6">
-                    <div className="flex items-center gap-2 mb-4">
-                      <HeartPulse className="w-5 h-5 text-[#B7152A]" />
-                      <h3 className="text-lg font-semibold text-[#1C1A16]">AI 合婚分析</h3>
-                    </div>
-                    <p className="text-sm leading-7 text-[#1C1A16]/80 whitespace-pre-wrap">
-                      {result.analysis}
-                    </p>
-                  </Card>
+                {/* 模块 C：男方十神分析 */}
+                {result.male?.shishen && result.male?.shishenSummary && (
+                  <ShishenSection
+                    title="男方十神分析"
+                    subtitle="男方八字中的主要十神关系（按四柱展开）"
+                    side={result.male.shishen}
+                    summary={result.male.shishenSummary}
+                  />
+                )}
+
+                {/* 模块 D：女方十神分析 */}
+                {result.female?.shishen && result.female?.shishenSummary && (
+                  <ShishenSection
+                    title="女方十神分析"
+                    subtitle="女方八字中的主要十神关系（按四柱展开）"
+                    side={result.female.shishen}
+                    summary={result.female.shishenSummary}
+                  />
+                )}
+
+                {/* 模块 E：AI 合婚分析（按需触发） */}
+                {lastPayload && (
+                  <AIAnalysisSection
+                    payload={lastPayload}
+                    totalScore={Number(result.score) || 0}
+                  />
+                )}
+
+                {/* 模块 F：AI 问答 */}
+                {result.maleBazi && result.femaleBazi && (
+                  <AIQASection
+                    maleBazi={result.maleBazi}
+                    femaleBazi={result.femaleBazi}
+                    maleName={result.male?.name || maleData.name || '男方'}
+                    femaleName={result.female?.name || femaleData.name || '女方'}
+                    score={Number(result.score) || 0}
+                    level={String(result.level || '')}
+                  />
                 )}
 
                 <p className="text-xs text-[#1C1A16]/45 leading-relaxed text-center px-2">
                   {result.disclaimer}
                 </p>
 
-                <Button onClick={() => setResult(null)} variant="secondary" className="w-full">
+                <Button onClick={() => { setResult(null); setLastPayload(null); }} variant="secondary" className="w-full">
                   重新测算
                 </Button>
               </div>
