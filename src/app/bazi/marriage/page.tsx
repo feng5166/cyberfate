@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Heart, HeartPulse, Sparkles, ScrollText, Compass, History, ChevronDown } from 'lucide-react';
+import { HeartPulse, Sparkles, ScrollText, Compass, History, ChevronDown, User } from 'lucide-react';
 import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -563,43 +563,85 @@ export default function MarriagePage() {
 
             {result && (
               <div className="space-y-8">
-                {/* P1：总分区 - 环形进度环 + 大号分数 + 等级 + 红心辅助行 */}
+                {/* 双方信息确认卡 */}
                 <Card hover={false} className="rounded-2xl border border-[#E5E0D8] bg-white shadow-none p-6 md:p-8">
-                  <div className="flex flex-col items-center text-center gap-4">
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#1C1A16]/10 bg-[#FAF9F6] text-sm text-[#1C1A16]/70">
-                      <HeartPulse className="w-4 h-4 text-[#B7152A]" />
-                      <span>综合匹配度</span>
-                    </div>
-
-                    <div className="relative w-44 h-44 md:w-48 md:h-48 mt-2">
-                      <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
-                        <circle cx="60" cy="60" r="52" fill="none" stroke="#E5E0D8" strokeWidth="8" />
-                        <circle
-                          cx="60" cy="60" r="52"
-                          fill="none"
-                          stroke="#C2762B"
-                          strokeWidth="8"
-                          strokeLinecap="round"
-                          strokeDasharray={`${(Number(result.score) || 0) / 100 * 2 * Math.PI * 52} ${2 * Math.PI * 52}`}
-                          className="transition-all duration-700 ease-out"
-                        />
-                      </svg>
-                      <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-5xl md:text-[56px] font-semibold text-[#1C1A16] leading-none" style={{ fontFamily: 'var(--font-cormorant), Cormorant Garamond, serif' }}>
-                          {result.score}
-                        </span>
-                        <span className="text-xs text-[#1C1A16]/45 mt-1 tracking-wider">/ 100</span>
+                  <div className="text-center mb-6">
+                    <p className="text-xs text-[#1C1A16]/55 tracking-wide">✓ 已提交分析信息</p>
+                    <h3
+                      className="text-xl md:text-2xl font-semibold text-[#1C1A16] mt-1.5"
+                      style={{ fontFamily: 'var(--font-cormorant), Cormorant Garamond, serif' }}
+                    >
+                      合婚信息确认
+                    </h3>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {[
+                      { side: maleData, sideLabel: '男方' },
+                      { side: femaleData, sideLabel: '女方' },
+                    ].map(({ side, sideLabel }) => (
+                      <div
+                        key={sideLabel}
+                        className="rounded-xl border border-[#E5E0D8] bg-[#FAF9F6]/70 p-5"
+                      >
+                        <div className="flex items-center gap-2 pb-3 mb-3 border-b border-[#1C1A16]/8">
+                          <span className="w-7 h-7 rounded-full bg-white border border-[#E5E0D8] flex items-center justify-center">
+                            <User className="w-3.5 h-3.5 text-[#C2762B]" />
+                          </span>
+                          <span className="text-sm font-semibold text-[#1C1A16] tracking-wide">
+                            {sideLabel}
+                          </span>
+                        </div>
+                        <dl className="space-y-2.5 text-sm">
+                          <div className="flex justify-between gap-3">
+                            <dt className="text-[#1C1A16]/55">姓名</dt>
+                            <dd className="text-[#1C1A16] font-medium text-right">
+                              {side.name || <span className="text-[#1C1A16]/40">未填写</span>}
+                            </dd>
+                          </div>
+                          <div className="flex justify-between gap-3">
+                            <dt className="text-[#1C1A16]/55">性别</dt>
+                            <dd className="text-[#1C1A16] font-medium text-right">
+                              {side.gender === 'male' ? '男' : '女'}
+                            </dd>
+                          </div>
+                          <div className="flex justify-between gap-3">
+                            <dt className="text-[#1C1A16]/55">出生日期</dt>
+                            <dd className="text-[#1C1A16] font-medium text-right">
+                              {side.birthDate || <span className="text-[#1C1A16]/40">未填写</span>}
+                              {side.birthDate && (
+                                <span className="ml-1 text-xs text-[#1C1A16]/45">
+                                  （{side.isLunar ? '农历' : '阳历'}）
+                                </span>
+                              )}
+                            </dd>
+                          </div>
+                          <div className="flex justify-between gap-3">
+                            <dt className="text-[#1C1A16]/55">出生时间</dt>
+                            <dd className="text-[#1C1A16] font-medium text-right">
+                              {side.knowTime ? (
+                                <>
+                                  {String(side.birthHourNum).padStart(2, '0')}:
+                                  {String(side.birthMinute).padStart(2, '0')}
+                                  <span className="ml-1 text-xs text-[#1C1A16]/55">
+                                    （{SHICHEN_BY_HOUR[side.birthHourNum]}）
+                                  </span>
+                                </>
+                              ) : (
+                                <span className="text-[#1C1A16]/40">未知</span>
+                              )}
+                            </dd>
+                          </div>
+                          {side.birthPlace && (
+                            <div className="flex justify-between gap-3">
+                              <dt className="text-[#1C1A16]/55">出生地</dt>
+                              <dd className="text-[#1C1A16] font-medium text-right">
+                                {side.birthPlace}
+                              </dd>
+                            </div>
+                          )}
+                        </dl>
                       </div>
-                    </div>
-
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FAF3EC] border border-[#C2762B]/25 text-sm font-medium text-[#C2762B]">
-                      {result.level}
-                    </div>
-
-                    <div className="flex items-center gap-1.5 text-[#B7152A]/85 mt-1">
-                      <Heart className="w-4 h-4" fill="#B7152A" stroke="#B7152A" />
-                      <span className="text-base font-medium tracking-wide">{result.hearts}</span>
-                    </div>
+                    ))}
                   </div>
                 </Card>
 
