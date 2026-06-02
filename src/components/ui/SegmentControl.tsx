@@ -34,7 +34,7 @@ export function SegmentControl({
   };
 
   return (
-    <div className={cn("inline-flex rounded-2xl overflow-hidden border border-[#1C1A16]/12 w-full", className)}>
+    <div className={cn("inline-flex rounded-2xl overflow-hidden border border-[#E5E0D8] w-full bg-white", className)}>
       {options.map((opt) => (
         <button
           key={opt.value}
@@ -43,8 +43,8 @@ export function SegmentControl({
           className={cn(
             "flex-1 px-2 md:px-6 py-2.5 text-xs md:text-sm transition-all duration-200 cursor-pointer text-center",
             selectedValue === opt.value
-              ? "bg-[#1C1A16] text-white"
-              : "bg-white text-[#1C1A16]/70 hover:bg-[#FAF9F6]",
+              ? "bg-[#FAF3EC] text-[#1C1A16] font-medium shadow-[inset_0_0_0_1.5px_#C2762B]"
+              : "bg-transparent text-[#1C1A16]/55 hover:bg-[#FAF9F6]",
             optionClassName
           )}
         >

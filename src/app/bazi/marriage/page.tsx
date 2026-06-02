@@ -179,12 +179,12 @@ function SideForm({ sideKey, data, onChange }: SideFormProps) {
   };
 
   const inputClass =
-    'w-full h-10 rounded-lg border border-[#1C1A16]/15 bg-white px-4 text-sm text-[#1C1A16] placeholder:text-[#1C1A16]/40 focus:border-[#1C1A16]/40 focus:ring-2 focus:ring-[#1C1A16]/10 outline-none transition-all';
+    'w-full h-10 rounded-lg border border-[#E5E0D8] bg-white px-4 text-sm text-[#1C1A16] placeholder:text-[#1C1A16]/40 focus:border-[#C2762B] focus:ring-2 focus:ring-[#C2762B]/15 outline-none transition-all';
 
   return (
     <Card
       hover={false}
-      className="rounded-2xl border border-[#1C1A16]/10 bg-white shadow-none p-6 sm:p-7"
+      className="rounded-2xl border border-[#E5E0D8] bg-white shadow-none p-6 sm:p-7"
     >
       <div className="flex items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-3">
@@ -199,8 +199,8 @@ function SideForm({ sideKey, data, onChange }: SideFormProps) {
         <HistoryFillButton onPick={handleHistoryPick} />
       </div>
 
-      <div className="space-y-5">
-        <div className="space-y-1.5">
+      <div className="space-y-6">
+        <div className="space-y-2">
           <label className="block text-sm font-medium text-[#1C1A16]/70">
             姓名 <span className="text-xs text-[#1C1A16]/40">（选填）</span>
           </label>
@@ -213,7 +213,7 @@ function SideForm({ sideKey, data, onChange }: SideFormProps) {
           />
         </div>
 
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <label className="block text-sm font-medium text-[#1C1A16]/70">性别</label>
           <SegmentControl
             options={[
@@ -222,12 +222,12 @@ function SideForm({ sideKey, data, onChange }: SideFormProps) {
             ]}
             value={data.gender}
             onChange={(value) => onChange({ gender: value as 'male' | 'female' })}
-            className="h-10 rounded-lg border border-[#1C1A16]/15 bg-white text-[#1C1A16] overflow-hidden"
+            className="h-10 rounded-lg overflow-hidden"
             optionClassName="px-3 py-0 h-full flex items-center justify-center text-sm"
           />
         </div>
 
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <label className="block text-sm font-medium text-[#1C1A16]/70">日期类型</label>
           <SegmentControl
             options={[
@@ -236,7 +236,7 @@ function SideForm({ sideKey, data, onChange }: SideFormProps) {
             ]}
             value={data.isLunar ? 'lunar' : 'solar'}
             onChange={(value) => onChange({ isLunar: value === 'lunar' })}
-            className="h-10 rounded-lg border border-[#1C1A16]/15 bg-white text-[#1C1A16] overflow-hidden"
+            className="h-10 rounded-lg overflow-hidden"
             optionClassName="px-3 py-0 h-full flex items-center justify-center text-sm"
           />
         </div>
@@ -245,42 +245,56 @@ function SideForm({ sideKey, data, onChange }: SideFormProps) {
           label={data.isLunar ? '出生日期（农历）' : '出生日期（阳历）'}
           value={data.birthDate}
           onChange={(value) => onChange({ birthDate: value })}
-          className="space-y-1.5"
+          className="space-y-2"
           triggerClassName="h-10 rounded-lg"
         />
 
-        <div className="rounded-xl border border-[#1C1A16]/10 bg-[#FAF9F6] p-4 space-y-4">
-          <label className="flex items-start gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={data.knowTime}
-              onChange={(e) => onChange({ knowTime: e.target.checked })}
-              className="mt-1 w-4 h-4 accent-[#C2762B]"
-            />
-            <div>
-              <p className="text-sm font-medium text-[#1C1A16]">知道出生时间</p>
-              <p className="text-xs text-[#1C1A16]/55 mt-0.5">
-                精确到分有助于排准时柱；不知道时按无时辰处理，命盘精度会下降。
-              </p>
+        <div className="space-y-3">
+          <label className="flex items-center justify-between gap-3 cursor-pointer">
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-[#1C1A16]">知道精确出生时间</span>
+              <span className="text-xs text-[#1C1A16]/45 mt-0.5">
+                精确到分有助于排准时柱
+              </span>
             </div>
+            <span className="relative inline-flex shrink-0">
+              <input
+                type="checkbox"
+                checked={data.knowTime}
+                onChange={(e) => onChange({ knowTime: e.target.checked })}
+                className="peer sr-only"
+              />
+              <span
+                aria-hidden
+                className="w-11 h-6 rounded-full bg-[#E5E0D8] transition-colors duration-200 peer-checked:bg-[#C2762B]"
+              />
+              <span
+                aria-hidden
+                className="pointer-events-none absolute left-0.5 top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-200 peer-checked:translate-x-5"
+              />
+            </span>
           </label>
 
-          {data.knowTime && (
-            <>
+          <div
+            className={`overflow-hidden transition-all duration-300 ease-in-out ${
+              data.knowTime ? 'max-h-[260px] opacity-100' : 'max-h-0 opacity-0'
+            }`}
+          >
+            <div className="space-y-4 pt-1">
               <div className="grid grid-cols-2 gap-3">
                 <Select
                   label="时（小时）"
                   options={hourOptions}
                   value={String(data.birthHourNum)}
                   onChange={(e) => onChange({ birthHourNum: Number(e.target.value) })}
-                  className="h-10 rounded-lg border border-[#1C1A16]/15 bg-white px-3 text-sm text-[#1C1A16]"
+                  className="h-10 rounded-lg border border-[#E5E0D8] bg-white px-3 text-sm text-[#1C1A16]"
                 />
                 <Select
                   label="分"
                   options={minuteOptions}
                   value={String(data.birthMinute)}
                   onChange={(e) => onChange({ birthMinute: Number(e.target.value) })}
-                  className="h-10 rounded-lg border border-[#1C1A16]/15 bg-white px-3 text-sm text-[#1C1A16]"
+                  className="h-10 rounded-lg border border-[#E5E0D8] bg-white px-3 text-sm text-[#1C1A16]"
                 />
               </div>
               <label className="flex items-start gap-2 cursor-pointer">
@@ -292,19 +306,13 @@ function SideForm({ sideKey, data, onChange }: SideFormProps) {
                 />
                 <div>
                   <p className="text-sm font-medium text-[#1C1A16]">晚子时（23:00 后归次日日柱）</p>
-                  <p className="text-xs text-[#1C1A16]/55 mt-0.5">
+                  <p className="text-xs text-[#1C1A16]/45 mt-0.5">
                     专业命理项，仅当出生在 23:00-23:59 时影响日柱。
                   </p>
                 </div>
               </label>
-            </>
-          )}
-
-          {!data.knowTime && (
-            <p className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">
-              ⚠️ 不知道出生时间将按无时辰排盘，时柱缺失会显著降低分析精度。
-            </p>
-          )}
+            </div>
+          </div>
         </div>
 
         <CitySearch
@@ -435,9 +443,9 @@ export default function MarriagePage() {
         </div>
 
         <Container>
-          <div className="max-w-6xl mx-auto space-y-8 px-4 md:px-0">
+          <div className="max-w-6xl mx-auto space-y-12 px-4 md:px-0">
             {!result && (
-              <form onSubmit={handleSubmit} className="space-y-8">
+              <form onSubmit={handleSubmit} className="space-y-10">
                 <div className="grid gap-6 md:grid-cols-2">
                   <SideForm sideKey="male" data={maleData} onChange={updateMale} />
                   <SideForm sideKey="female" data={femaleData} onChange={updateFemale} />
@@ -449,15 +457,19 @@ export default function MarriagePage() {
                   </div>
                 )}
 
+                <Button type="submit" className="w-full" size="lg" loading={loading}>
+                  {loading ? '正在分析…' : '开始合婚测算'}
+                </Button>
+
                 <div className="grid gap-4 md:grid-cols-3">
                   {valueCards.map(card => {
                     const Icon = card.icon;
                     return (
                       <div
                         key={card.title}
-                        className="rounded-2xl border border-[#1C1A16]/10 bg-white p-5"
+                        className="rounded-2xl border border-[#E5E0D8] bg-white p-6"
                       >
-                        <div className="w-10 h-10 rounded-xl bg-[#FAF9F6] border border-[#1C1A16]/8 flex items-center justify-center mb-3">
+                        <div className="w-10 h-10 rounded-xl bg-[#FAF9F6] border border-[#E5E0D8] flex items-center justify-center mb-3">
                           <Icon className="w-5 h-5 text-[#C2762B]" />
                         </div>
                         <p className="text-base font-semibold text-[#1C1A16]">{card.title}</p>
@@ -469,47 +481,43 @@ export default function MarriagePage() {
                   })}
                 </div>
 
-                <Button type="submit" className="w-full" size="lg" loading={loading}>
-                  {loading ? '正在分析…' : '开始合婚测算'}
-                </Button>
-
                 <div className="grid gap-6 md:grid-cols-2">
-                  <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6">
-                    <h3 className="text-lg font-semibold text-[#1C1A16] text-center mb-4">
+                  <div className="rounded-2xl border border-[#E5E0D8] bg-white p-6 md:p-7">
+                    <h3 className="text-lg font-semibold text-[#1C1A16] text-center mb-5">
                       🔮 AI 智能合婚系统
                     </h3>
-                    <div className="space-y-4 text-sm">
+                    <div className="space-y-5 text-sm">
                       <div>
                         <p className="font-semibold text-[#1C1A16]">传统命理智慧</p>
-                        <p className="text-[#1C1A16]/70">结合八字、五行、十神、神煞等多重信息</p>
+                        <p className="text-[#1C1A16]/70 mt-1">结合八字、五行、十神、神煞等多重信息</p>
                       </div>
                       <div>
                         <p className="font-semibold text-[#1C1A16]">AI 深度分析</p>
-                        <p className="text-[#1C1A16]/70">以语言模型多角度评估双方互动与成长空间</p>
+                        <p className="text-[#1C1A16]/70 mt-1">以语言模型多角度评估双方互动与成长空间</p>
                       </div>
                       <div>
                         <p className="font-semibold text-[#1C1A16]">匹配度评级</p>
-                        <p className="text-[#1C1A16]/70">输出基础契合、性格相容、婚配宫位等维度等级</p>
+                        <p className="text-[#1C1A16]/70 mt-1">输出基础契合、性格相容、婚配宫位等维度等级</p>
                       </div>
                       <div>
                         <p className="font-semibold text-[#1C1A16]">改善建议</p>
-                        <p className="text-[#1C1A16]/70">提供沟通、造势与化解策略</p>
+                        <p className="text-[#1C1A16]/70 mt-1">提供沟通、造势与化解策略</p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6">
-                    <h3 className="text-lg font-semibold text-[#1C1A16] text-center mb-4">
+                  <div className="rounded-2xl border border-[#E5E0D8] bg-[#F7F3EC]/60 p-6 md:p-7">
+                    <h3 className="text-lg font-semibold text-[#1C1A16] text-center mb-5">
                       📊 合婚分析维度
                     </h3>
                     <div className="space-y-3 text-sm">
                       {dimensionList.map(item => (
                         <div
                           key={item.title}
-                          className="rounded-2xl border border-[#1C1A16]/10 bg-[#FAF9F6] p-3"
+                          className="rounded-xl bg-white/70 px-4 py-3"
                         >
                           <p className="font-semibold text-[#1C1A16]">{item.title}</p>
-                          <p className="text-[#1C1A16]/70">{item.desc}</p>
+                          <p className="text-[#1C1A16]/65 mt-1">{item.desc}</p>
                         </div>
                       ))}
                     </div>
@@ -518,12 +526,12 @@ export default function MarriagePage() {
 
                 <Card
                   hover={false}
-                  className="rounded-2xl border border-[#1C1A16]/10 bg-white shadow-none p-6"
+                  className="rounded-2xl border border-[#E5E0D8] bg-white shadow-none p-6 md:p-8"
                 >
-                  <h3 className="text-lg font-semibold text-[#1C1A16] text-center mb-6">
+                  <h3 className="text-lg font-semibold text-[#1C1A16] text-center mb-7">
                     📝 分析流程
                   </h3>
-                  <div className="flex flex-col md:flex-row items-stretch gap-4 text-sm text-[#1C1A16]/70">
+                  <div className="flex flex-col md:flex-row items-stretch gap-5 text-sm text-[#1C1A16]/70">
                     {[
                       { title: '填写出生信息', desc: '录入双方姓名、性别、阳历/农历日期、时分等' },
                       { title: '排盘生成', desc: '系统自动计算双方八字命盘（含真太阳时校正）' },
@@ -531,11 +539,11 @@ export default function MarriagePage() {
                       { title: '获取完整报告', desc: '查看匹配度、八字与建议' },
                     ].map((step, index) => (
                       <div key={step.title} className="flex flex-1 flex-col items-center text-center">
-                        <div className="w-10 h-10 rounded-full bg-[#1C1A16] text-white flex items-center justify-center mb-3 text-sm font-semibold">
+                        <div className="w-9 h-9 rounded-full border border-[#C2762B]/40 text-[#C2762B] flex items-center justify-center mb-3 text-sm font-medium">
                           {index + 1}
                         </div>
                         <p className="text-base text-[#1C1A16] font-medium">{step.title}</p>
-                        <p className="mt-1 text-xs text-[#1C1A16]/70">{step.desc}</p>
+                        <p className="mt-1.5 text-xs text-[#1C1A16]/60 leading-relaxed">{step.desc}</p>
                       </div>
                     ))}
                   </div>
