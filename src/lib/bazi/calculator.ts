@@ -1,4 +1,4 @@
-import { Solar } from 'lunar-javascript';
+import { Solar, Lunar } from 'lunar-javascript';
 import type { BaziInput, BaziResult, BaziChart, Pillar, WuxingCount, WuXing, TianGan, DiZhi, ShiChen, Gender, DayunResult, DayunTimelineItem } from './types';
 import { TIANGAN_WUXING, DIZHI_WUXING, SHICHEN_DIZHI, WUXING_KEYS, TIANGAN_LIST, DIZHI_LIST } from './constants';
 
@@ -86,39 +86,98 @@ function countWuxing(chart: BaziChart): WuxingCount {
  * 计算八字
  * @param input 输入参数（出生日期、时辰等）
  * @returns 八字计算结果
+ *
+ * 兼容性保证: 仅传 birthDate + birthHour 的旧调用结果不变。
+ * 新增字段 (birthHourNum/birthMinute/isLunar/lateZiShi/knowTime) 全部可选。
  */
 export function calculateBazi(input: BaziInput): BaziResult {
-  const { birthDate, birthHour } = input;
+  const {
+    birthDate,
+    birthHour,
+    birthHourNum,
+    birthMinute,
+    isLunar,
+    lateZiShi,
+    knowTime,
+  } = input;
   const [year, month, day] = birthDate.split('-').map(Number);
-  
-  // 使用 lunar-javascript 计算
-  const solar = Solar.fromYmd(year, month, day);
-  const lunar = solar.getLunar();
-  const eightChar = lunar.getEightChar();
-  
-  // 获取年月日柱
-  const yearPillar = buildPillar(eightChar.getYearGan(), eightChar.getYearZhi());
-  const monthPillar = buildPillar(eightChar.getMonthGan(), eightChar.getMonthZhi());
-  const dayPillar = buildPillar(eightChar.getDayGan(), eightChar.getDayZhi());
-  
-  // 获取时柱（如果有时辰）
-  const hourPillar = birthHour ? getHourPillar(dayPillar.gan, birthHour) : null;
-  
+
+  // 1. 解析输入日期: 农历则先转阳历, 阳历直接用
+  const baseSolar: any = isLunar === true
+    ? (Lunar as any).fromYmd(year, month, day).getSolar()
+    : (Solar as any).fromYmd(year, month, day);
+
+  // 阳历 y/m/d (用于后续 fromYmdHms)
+  const solarY: number = baseSolar.getYear();
+  const solarM: number = baseSolar.getMonth();
+  const solarD: number = baseSolar.getDay();
+
+  // 2. 时柱精度分支判定
+  const hasPreciseTime =
+    knowTime !== false && typeof birthHourNum === 'number';
+
+  let yearPillar: Pillar;
+  let monthPillar: Pillar;
+  let dayPillar: Pillar;
+  let hourPillar: Pillar | null = null;
+  let lunarRef: any; // 保留对 lunar 对象的引用, 用于生肖立春分界
+
+  if (hasPreciseTime) {
+    const minute = typeof birthMinute === 'number' ? birthMinute : 0;
+
+    // 通用精确时分: 让库的 getEightChar 全自动排盘
+    // lunar-javascript 默认 sect=2 (早子时流派): 23:00-23:59 仍归当日日柱
+    // 切到 sect=1 即「晚子时归次日」: 23:00 后日柱进位
+    // setSect 仅在 23:xx 边界生效, 其他时刻无副作用
+    const preciseSolar: any = (Solar as any).fromYmdHms(solarY, solarM, solarD, birthHourNum, minute, 0);
+    const preciseLunar: any = preciseSolar.getLunar();
+    const preciseEC: any = preciseLunar.getEightChar();
+    if (lateZiShi === true) {
+      preciseEC.setSect(1);
+    }
+
+    yearPillar = buildPillar(preciseEC.getYearGan(), preciseEC.getYearZhi());
+    monthPillar = buildPillar(preciseEC.getMonthGan(), preciseEC.getMonthZhi());
+    dayPillar = buildPillar(preciseEC.getDayGan(), preciseEC.getDayZhi());
+    hourPillar = buildPillar(preciseEC.getTimeGan(), preciseEC.getTimeZhi());
+
+    lunarRef = preciseLunar;
+  } else {
+    // 无精确时分: 走旧逻辑 (向后兼容老调用)
+    const lunar: any = baseSolar.getLunar();
+    const eightChar: any = lunar.getEightChar();
+
+    yearPillar = buildPillar(eightChar.getYearGan(), eightChar.getYearZhi());
+    monthPillar = buildPillar(eightChar.getMonthGan(), eightChar.getMonthZhi());
+    dayPillar = buildPillar(eightChar.getDayGan(), eightChar.getDayZhi());
+
+    // knowTime===false 强制无时柱; 否则按旧 birthHour (粗时辰) 处理
+    if (knowTime === false) {
+      hourPillar = null;
+    } else if (birthHour) {
+      hourPillar = getHourPillar(dayPillar.gan, birthHour);
+    } else {
+      hourPillar = null;
+    }
+
+    lunarRef = lunar;
+  }
+
   const chart: BaziChart = {
     year: yearPillar,
     month: monthPillar,
     day: dayPillar,
     hour: hourPillar,
   };
-  
+
   // 统计五行
   const wuxing = countWuxing(chart);
-  
+
   // 日主（日干 + 五行）
   const dayMaster = `${dayPillar.gan}${dayPillar.ganWuxing}`;
-  
+
   // 生肖按立春分界（八字命理标准）
-  const zodiac: string = (lunar as any).getYearShengXiaoByLiChun?.() || '未知';
+  const zodiac: string = (lunarRef as any).getYearShengXiaoByLiChun?.() || '未知';
 
   return {
     chart,

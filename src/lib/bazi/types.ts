@@ -64,8 +64,14 @@ export interface FiveDimensions {
 export interface BaziInput {
   name?: string;
   gender: Gender;
-  birthDate: string;  // YYYY-MM-DD
-  birthHour?: ShiChen;
+  birthDate: string;  // YYYY-MM-DD (阳历; 若 isLunar=true 则按农历年月日解释)
+  birthHour?: ShiChen;       // 旧粗时辰入参, 保留向后兼容
+  // —— 新增高精度可选字段 ——
+  birthHourNum?: number;     // 0-23 精确小时; 提供则优先于 birthHour
+  birthMinute?: number;      // 0-59 精确分钟; 配合 birthHourNum
+  isLunar?: boolean;         // true=birthDate 按农历解释, 需转阳历
+  lateZiShi?: boolean;       // 晚子时(23:00-23:59 归次日日柱); true=晚子时, false/undefined=早子时(00:00-00:59 归当日)
+  knowTime?: boolean;        // 是否知道出生时间; false 时按无时辰(不知道)处理
 }
 
 // 八字计算结果

@@ -116,6 +116,31 @@ const SHICHEN_START_HOUR: Record<string, number> = {
   '6': 11, '7': 13, '8': 15, '9': 17, '10': 19, '11': 21,
 };
 
+function hourToShichenCode(hour: number): string {
+  if (hour >= 23 || hour < 1) return '0';
+  if (hour < 3) return '1';
+  if (hour < 5) return '2';
+  if (hour < 7) return '3';
+  if (hour < 9) return '4';
+  if (hour < 11) return '5';
+  if (hour < 13) return '6';
+  if (hour < 15) return '7';
+  if (hour < 17) return '8';
+  if (hour < 19) return '9';
+  if (hour < 21) return '10';
+  return '11';
+}
+
+const hourNumOptions = Array.from({ length: 24 }, (_, i) => ({
+  value: String(i),
+  label: `${String(i).padStart(2, '0')} 时`,
+}));
+
+const minuteOptions = Array.from({ length: 12 }, (_, i) => {
+  const m = i * 5;
+  return { value: String(m), label: `${String(m).padStart(2, '0')} 分` };
+});
+
 const aiSectionTitleMap: Record<AiSectionKey, string[]> = {
   dayMaster: ['日主分析'],
   personality: ['性格特点', '性格特质'],
@@ -414,6 +439,11 @@ function BaziPageContent() {
     birthDate: '',
     birthHour: '-1',
     birthPlace: '',
+    isLunar: false,
+    knowTime: false,
+    birthHourNum: 12,
+    birthMinute: 0,
+    lateZiShi: false,
   });
   const [loading, setLoading] = useState(false);
   const [loadingLong, setLoadingLong] = useState(false);
@@ -773,7 +803,9 @@ function BaziPageContent() {
       setError('请选择出生日期');
       return;
     }
-    if (!formData.birthHour) {
+    if (formData.knowTime) {
+      // 知道时间, 走精确分支, 不再要求 birthHour
+    } else if (!formData.birthHour) {
       setError('请选择出生时辰');
       return;
     }
@@ -813,6 +845,11 @@ function BaziPageContent() {
           birthDate: formData.birthDate,
           birthHour: parseInt(formData.birthHour, 10),
           birthPlace: formData.birthPlace,
+          isLunar: formData.isLunar,
+          knowTime: formData.knowTime,
+          birthHourNum: formData.knowTime ? formData.birthHourNum : undefined,
+          birthMinute: formData.knowTime ? formData.birthMinute : undefined,
+          lateZiShi: formData.knowTime ? formData.lateZiShi : undefined,
         }),
       });
 
@@ -977,8 +1014,22 @@ function BaziPageContent() {
                   />
                 </div>
 
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-medium text-[#1C1A16]/70">日期类型</label>
+                  <SegmentControl
+                    options={[
+                      { value: 'solar', label: '阳历' },
+                      { value: 'lunar', label: '农历' },
+                    ]}
+                    value={formData.isLunar ? 'lunar' : 'solar'}
+                    onChange={(value) => setFormData({ ...formData, isLunar: value === 'lunar' })}
+                    className="h-10 rounded-lg border border-[#1C1A16]/15 bg-white text-[#1C1A16] overflow-hidden"
+                    optionClassName="px-3 py-0 h-full flex items-center justify-center text-sm"
+                  />
+                </div>
+
                 <DatePicker
-                  label="出生日期"
+                  label={formData.isLunar ? '出生日期（农历）' : '出生日期（阳历）'}
                   value={formData.birthDate}
                   onChange={(value) => setFormData({ ...formData, birthDate: value })}
                   className="space-y-1.5"
@@ -990,16 +1041,91 @@ function BaziPageContent() {
               <fieldset className="space-y-5 rounded-xl bg-[#FAF9F6] p-5 border border-[#1C1A16]/6">
                 <legend className="font-display text-base text-[#1C1A16]/85 px-2 tracking-wide">🕐 时辰信息</legend>
 
-                <div className="space-y-1.5">
-                  <label htmlFor="bazi-birth-hour" className="block text-sm font-medium text-[#1C1A16]/70">出生时辰</label>
-                  <Select
-                    id="bazi-birth-hour"
-                    options={shichenOptions}
-                    value={formData.birthHour}
-                    onChange={(e) => setFormData({ ...formData, birthHour: e.target.value })}
-                    className="h-10 rounded-lg border border-[#1C1A16]/15 bg-white px-4 text-sm text-[#1C1A16]"
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.knowTime}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setFormData(prev => ({
+                        ...prev,
+                        knowTime: checked,
+                        birthHour: checked ? hourToShichenCode(prev.birthHourNum) : prev.birthHour,
+                      }));
+                    }}
+                    className="mt-1 w-4 h-4 accent-[#C2762B]"
                   />
-                </div>
+                  <div>
+                    <p className="text-sm font-medium text-[#1C1A16]">知道出生时间</p>
+                    <p className="text-xs text-[#1C1A16]/55 mt-0.5">
+                      精确到分有助于排准时柱；不知道时按无时辰处理，命盘精度会下降。
+                    </p>
+                  </div>
+                </label>
+
+                {formData.knowTime ? (
+                  <>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <label className="block text-sm font-medium text-[#1C1A16]/70">时（小时）</label>
+                        <Select
+                          options={hourNumOptions}
+                          value={String(formData.birthHourNum)}
+                          onChange={(e) => {
+                            const hour = Number(e.target.value);
+                            setFormData(prev => ({
+                              ...prev,
+                              birthHourNum: hour,
+                              birthHour: hourToShichenCode(hour),
+                            }));
+                          }}
+                          className="h-10 rounded-lg border border-[#1C1A16]/15 bg-white px-3 text-sm text-[#1C1A16]"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="block text-sm font-medium text-[#1C1A16]/70">分</label>
+                        <Select
+                          options={minuteOptions}
+                          value={String(formData.birthMinute)}
+                          onChange={(e) => setFormData({ ...formData, birthMinute: Number(e.target.value) })}
+                          className="h-10 rounded-lg border border-[#1C1A16]/15 bg-white px-3 text-sm text-[#1C1A16]"
+                        />
+                      </div>
+                    </div>
+                    <label className="flex items-start gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.lateZiShi}
+                        onChange={(e) => setFormData({ ...formData, lateZiShi: e.target.checked })}
+                        className="mt-1 w-4 h-4 accent-[#C2762B]"
+                      />
+                      <div>
+                        <p className="text-sm font-medium text-[#1C1A16]">晚子时（23:00 后归次日日柱）</p>
+                        <p className="text-xs text-[#1C1A16]/55 mt-0.5">
+                          专业命理项，仅当出生在 23:00-23:59 时影响日柱。
+                        </p>
+                      </div>
+                    </label>
+                  </>
+                ) : (
+                  <>
+                    <div className="space-y-1.5">
+                      <label htmlFor="bazi-birth-hour" className="block text-sm font-medium text-[#1C1A16]/70">出生时辰（粗略）</label>
+                      <Select
+                        id="bazi-birth-hour"
+                        options={shichenOptions}
+                        value={formData.birthHour}
+                        onChange={(e) => setFormData({ ...formData, birthHour: e.target.value })}
+                        className="h-10 rounded-lg border border-[#1C1A16]/15 bg-white px-4 text-sm text-[#1C1A16]"
+                      />
+                    </div>
+                    {formData.birthHour === '-1' && (
+                      <p className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">
+                        ⚠️ 未提供出生时间将按无时辰排盘，时柱缺失会显著降低分析精度。
+                      </p>
+                    )}
+                  </>
+                )}
 
                 <CitySearch
                   label="出生地"

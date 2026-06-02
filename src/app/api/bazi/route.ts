@@ -46,8 +46,14 @@ const requestSchema = z.object({
     },
     '日期不合法（如 2月30日）'
   ),
-  birthHour: z.number().int().min(0).max(11),
+  birthHour: z.number().int().min(-1).max(11),
   birthPlace: z.string().optional(),
+  // 新增高精度字段（全部可选, 向后兼容）
+  isLunar: z.boolean().optional(),
+  knowTime: z.boolean().optional(),
+  birthHourNum: z.number().int().min(0).max(23).optional(),
+  birthMinute: z.number().int().min(0).max(59).optional(),
+  lateZiShi: z.boolean().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -90,13 +96,32 @@ export async function POST(req: NextRequest) {
 
     const shichen = HOUR_TO_SHICHEN[input.birthHour] || '午时';
 
-    // 1. 计算八字
-    const baziResult = calculateBazi({
+    // 高精度优先: knowTime + birthHourNum 提供时, 走 calculator 精确分支
+    const hasPrecise = input.knowTime !== false && typeof input.birthHourNum === 'number';
+    const noTime = input.knowTime === false || input.birthHour === -1;
+
+    const calcInput: any = {
       name: input.name,
       gender: input.gender === 'unknown' ? 'male' : (input.gender || 'male'),
       birthDate: input.birthDate,
-      birthHour: shichen as '子时' | '丑时' | '寅时' | '卯时' | '辰时' | '巳时' | '午时' | '未时' | '申时' | '酉时' | '戌时' | '亥时' | '不知道',
-    });
+    };
+
+    if (input.isLunar === true) calcInput.isLunar = true;
+
+    if (noTime) {
+      calcInput.knowTime = false;
+      calcInput.birthHour = '不知道';
+    } else if (hasPrecise) {
+      calcInput.knowTime = true;
+      calcInput.birthHourNum = input.birthHourNum;
+      calcInput.birthMinute = typeof input.birthMinute === 'number' ? input.birthMinute : 0;
+      if (input.lateZiShi === true) calcInput.lateZiShi = true;
+    } else {
+      calcInput.birthHour = shichen;
+    }
+
+    // 1. 计算八字
+    const baziResult = calculateBazi(calcInput);
 
     // 获取当前大运
     const gender = input.gender === 'unknown' ? 'male' : (input.gender || 'male');
