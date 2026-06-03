@@ -88,7 +88,7 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
           } catch { /* ignore */ }
         }
       }
-
+      console.log('[deepReport] stream done, accumulated:', accumulated.length, 'buffer left:', buffer.slice(0, 100));
       if (accumulated && parsedRef.current) {
         const next: AIAnalysisData = { ...parsedRef.current, deepReport: accumulated };
         parsedRef.current = next;
