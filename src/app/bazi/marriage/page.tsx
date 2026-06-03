@@ -85,7 +85,7 @@ function makeDefaultSide(gender: 'male' | 'female'): SideData {
     gender,
     isLunar: false,
     birthDate: '',
-    knowTime: false,
+    knowTime: true,
     birthHourNum: 12,
     birthMinute: 0,
     lateZiShi: false,
