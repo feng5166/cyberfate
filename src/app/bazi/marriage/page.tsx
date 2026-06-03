@@ -198,7 +198,7 @@ function SideForm({ sideKey, data, onChange }: SideFormProps) {
   const handleHistoryPick = (record: BaziHistoryRecord) => {
     onChange({
       name: record.name || data.name,
-      gender: record.gender === 'female' ? 'female' : record.gender === 'male' ? 'male' : data.gender,
+      gender: isMale ? 'male' : 'female',  // 强制用本侧性别，忽略历史记录的性别
       birthDate: record.birthDate || data.birthDate,
       birthPlace: record.birthPlace || data.birthPlace,
     });
