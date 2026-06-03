@@ -36,7 +36,7 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
     return { ...initialData, _source: initialData._source ?? 'local-cache' };
   });
   const prevPayloadRef = useRef<string>('');
-  const parsedRef = useRef<AIAnalysisData | null>(null);
+  const parsedRef = useRef<AIAnalysisData | null>(initialData ?? null);
 
   useEffect(() => {
     const key = JSON.stringify(payload);
@@ -106,6 +106,32 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
     } finally {
       setDeepReportLoading(false);
       setLoading(false);
+    }
+  };
+
+  const handleDeepReport = async () => {
+    if (deepReportLoading || !parsedRef.current) return;
+    setDeepReportLoading(true);
+    try {
+      const res2 = await fetch('/api/bazi/marriage?ai=deep', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (res2.ok) {
+        const j2 = await res2.json();
+        const deepReport = typeof j2.deepReport === 'string' ? j2.deepReport : '';
+        if (deepReport && parsedRef.current) {
+          const next: AIAnalysisData = { ...parsedRef.current, deepReport };
+          parsedRef.current = next;
+          setData(next);
+          onAnalysisDone?.(next);
+        }
+      }
+    } catch {
+      // 静默处理
+    } finally {
+      setDeepReportLoading(false);
     }
   };
 
@@ -274,10 +300,27 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
             </div>
           )}
 
-          {data && !data.deepReport && deepReportLoading && (
+          {!data.deepReport && deepReportLoading && (
             <div className="rounded-2xl border border-[#E5E0D8] bg-white p-6 flex items-center justify-center gap-2 text-sm text-[#1C1A16]/55">
               <Loader2 className="w-4 h-4 animate-spin text-[#C2762B]" />
               深度命理报告生成中…
+            </div>
+          )}
+
+          {!data.deepReport && !deepReportLoading && (
+            <div className="rounded-2xl border border-[#E5E0D8] bg-white p-5 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-sm text-[#1C1A16]/60">
+                <ScrollText className="w-4 h-4 text-[#1C1A16]/30" />
+                深度命理报告尚未生成
+              </div>
+              <button
+                type="button"
+                onClick={handleDeepReport}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-[#FAF3EC] border border-[#C2762B]/20 px-3 py-1.5 text-xs text-[#C2762B] hover:bg-[#F5EAD8] transition-colors"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                生成报告
+              </button>
             </div>
           )}
 
