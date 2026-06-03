@@ -31,6 +31,7 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
   const [loading, setLoading] = useState(false);
   const [deepReportLoading, setDeepReportLoading] = useState(false);
   const [deepReportError, setDeepReportError] = useState('');
+  const [deepReportDebug, setDeepReportDebug] = useState('');
   const [error, setError] = useState('');
   const [data, setData] = useState<AIAnalysisData | null>(() => {
     if (!initialData) return null;
@@ -92,7 +93,9 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
           } catch { /* ignore */ }
         }
       }
-      console.log('[deepReport] stream done, accumulated:', accumulated.length, 'first200:', accumulated.slice(0, 200), 'buffer left:', buffer.slice(0, 200));
+      const dbg = `chunks:${chunkCount} acc:${accumulated.length} buf:${buffer.length} first50:${accumulated.slice(0,50)}`;
+      setDeepReportDebug(dbg);
+      console.log('[deepReport] stream done', dbg);
       if (accumulated && parsedRef.current) {
         const next: AIAnalysisData = { ...parsedRef.current, deepReport: accumulated };
         parsedRef.current = next;
@@ -321,7 +324,9 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
           )}
 
           {/* temp debug */}
-          <div className="text-[10px] text-[#1C1A16]/30 px-1">dr_len={data.deepReport?.length ?? 0} drLoading={String(deepReportLoading)}</div>
+          <div className="text-[10px] text-[#1C1A16]/30 bg-[#FAF9F6] border border-dashed border-[#1C1A16]/10 rounded px-2 py-1">
+            dr_len={data.deepReport?.length ?? 0} | drLoading={String(deepReportLoading)} | {deepReportDebug || 'no debug yet'}
+          </div>
 
           {!data.deepReport && deepReportLoading && (
             <div className="rounded-2xl border border-[#E5E0D8] bg-white p-6 flex items-center justify-center gap-2 text-sm text-[#1C1A16]/55">
