@@ -799,6 +799,7 @@ export default function MarriagePage() {
                     totalScore={Number(result.score) || 0}
                     initialData={aiAnalysis}
                     onAnalysisDone={handleAIAnalysisDone}
+                    autoStart={!aiAnalysis}
                   />
                 )}
 
