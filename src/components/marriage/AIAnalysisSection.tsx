@@ -68,11 +68,15 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
       const decoder = new TextDecoder();
       let accumulated = '';
       let buffer = '';
+      let chunkCount = 0;
 
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
+        if (done) { console.log('[deepReport] reader done at chunk', chunkCount); break; }
+        chunkCount++;
+        const chunkStr = decoder.decode(value, { stream: true });
+        if (chunkCount <= 3) console.log('[deepReport] chunk', chunkCount, 'len:', chunkStr.length, 'preview:', chunkStr.slice(0, 80));
+        buffer += chunkStr;
         const lines = buffer.split('\n');
         buffer = lines.pop() || '';
         for (const line of lines) {
@@ -88,7 +92,7 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
           } catch { /* ignore */ }
         }
       }
-      console.log('[deepReport] stream done, accumulated:', accumulated.length, 'buffer left:', buffer.slice(0, 100));
+      console.log('[deepReport] stream done, accumulated:', accumulated.length, 'first200:', accumulated.slice(0, 200), 'buffer left:', buffer.slice(0, 200));
       if (accumulated && parsedRef.current) {
         const next: AIAnalysisData = { ...parsedRef.current, deepReport: accumulated };
         parsedRef.current = next;
