@@ -1,8 +1,9 @@
 import type { NextConfig } from "next";
+import withPWAInit from "@ducanh2912/next-pwa";
 
 // Bundle analyzer: enable with `ANALYZE=true npm run build`
 // Requires: npm install -D @next/bundle-analyzer
-let withBundleAnalyzer: (config: NextConfig) => NextConfig | Promise<NextConfig> = (c) => c;
+let withBundleAnalyzer: (config: NextConfig) => NextConfig = (c) => c;
 try {
   const mod = require("@next/bundle-analyzer");
   if (mod?.default) {
@@ -11,6 +12,47 @@ try {
 } catch {
   // @next/bundle-analyzer not installed, skip
 }
+
+const withPWA = withPWAInit({
+  dest: "public",
+  cacheOnFrontEndNav: true,
+  aggressiveFrontEndNavCaching: true,
+  reloadOnOnline: true,
+  disable: process.env.NODE_ENV === "development",
+  fallbacks: {
+    document: "/offline.html",
+  },
+  workboxOptions: {
+    disableDevLogs: true,
+    runtimeCaching: [
+      {
+        urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/i,
+        handler: "CacheFirst",
+        options: {
+          cacheName: "google-fonts",
+          expiration: { maxEntries: 4, maxAgeSeconds: 365 * 24 * 60 * 60 },
+        },
+      },
+      {
+        urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico|woff2?)$/i,
+        handler: "StaleWhileRevalidate",
+        options: {
+          cacheName: "static-assets",
+          expiration: { maxEntries: 64, maxAgeSeconds: 7 * 24 * 60 * 60 },
+        },
+      },
+      {
+        urlPattern: /^https:\/\/www\.cyberfate\.me\/(?:bazi|daily|tarot|ziwei|meihua|huangli|pricing|knowledge)?(?:\/.*)?$/,
+        handler: "NetworkFirst",
+        options: {
+          cacheName: "pages",
+          expiration: { maxEntries: 16, maxAgeSeconds: 24 * 60 * 60 },
+          networkTimeoutSeconds: 10,
+        },
+      },
+    ],
+  },
+});
 
 const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
@@ -55,4 +97,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withBundleAnalyzer(nextConfig);
+export default withPWA(withBundleAnalyzer(nextConfig));

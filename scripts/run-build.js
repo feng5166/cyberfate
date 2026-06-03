@@ -41,4 +41,4 @@ if (shouldRunDbPush) {
 }
 
 run('npx prisma generate');
-run('next build');
+run('next build --webpack');

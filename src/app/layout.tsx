@@ -5,11 +5,13 @@ import { SessionProvider } from "@/components/providers/SessionProvider";
 import { AuthProvider } from "@/stores/authStore";
 import { LayoutWrapper } from "@/components/layout/LayoutWrapper";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 
 const notoSerifSC = Noto_Serif_SC({
   weight: ["400", "600", "700"],
   variable: "--font-heading",
   display: "swap",
+  preload: false,
   // 不指定 subsets，让 next/font 自动加载所需字符（包括中文）
 });
 
@@ -61,6 +63,29 @@ export const metadata: Metadata = {
     ],
   },
   manifest: "/site.webmanifest",
+  applicationName: "CyberFate",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "CyberFate",
+    startupImage: [
+      {
+        url: "/splash/apple-splash-1290-2796.png",
+        media: "(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)",
+      },
+      {
+        url: "/splash/apple-splash-1170-2532.png",
+        media: "(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)",
+      },
+      {
+        url: "/splash/apple-splash-750-1334.png",
+        media: "(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)",
+      },
+    ],
+  },
+  formatDetection: {
+    telephone: false,
+  },
 };
 
 export default function RootLayout({
@@ -85,6 +110,7 @@ export default function RootLayout({
             </LayoutWrapper>
           </AuthProvider>
         </SessionProvider>
+        <InstallPrompt />
       </body>
     </html>
   );
