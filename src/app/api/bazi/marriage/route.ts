@@ -560,7 +560,7 @@ async function runDeepReport(params: {
     effectiveMaleDate, effectiveFemaleDate, maleBazi, femaleBazi, score, level,
   } = params;
 
-  const cacheKey = generateCacheKey('marriage:ai:deep:v3', { male: maleBazi, female: femaleBazi });
+  const cacheKey = generateCacheKey('marriage:ai:deep:v4', { male: maleBazi, female: femaleBazi });
   const cached = await getCache(cacheKey);
   if (cached && typeof cached.deepReport === 'string' && cached.deepReport.length > 0) {
     return { deepReport: cached.deepReport, aiSource: 'cache' };
@@ -569,41 +569,78 @@ async function runDeepReport(params: {
   const maleDateLine = maleSide.isLunar ? `${effectiveMaleDate}（农历）` : effectiveMaleDate;
   const femaleDateLine = femaleSide.isLunar ? `${effectiveFemaleDate}（农历）` : effectiveFemaleDate;
 
-  const deepReportPrompt = `请为以下这对男女出具深度八字合婚命理报告，总字数600-800字：
+  const deepReportPrompt = `你是一位精通子平命理的专业命理师，请为以下这对男女出具一份专业、深度的八字合婚分析报告。
 
+【双方信息】
 男方：${safeMaleName}，生于${maleDateLine}，八字：${maleBazi}
 女方：${safeFemaleName}，生于${femaleDateLine}，八字：${femaleBazi}
-综合匹配度：${score}分（${level}）
+系统初步评分：${score}分（${level}）
 
-报告结构：
-一、双方命局独立分析
-1. ${safeMaleName}（乾造）
-· 日主强弱：分析日主五行强弱，喜忌神
-· 婚姻宫与配偶星：分析日支、财星或官星
-· 刑冲关系：地支刑冲对婚姻的影响
+【报告格式要求】
+- 严格按照以下五个章节结构输出，纯文本，不使用Markdown符号（不要##、**、*）
+- 章节标题用「一、二、三、四、五、」开头，子标题用「1.」「2.」「3.」开头，要点用「·」开头
+- 总字数1200-1800字，内容专业、论据充分，不要笼统的套话
+- 必须结合双方具体八字信息来分析，不得用模板化语言敷衍
 
-2. ${safeFemaleName}（坤造）
-· 日主强弱：分析日主五行强弱，喜忌神
-· 婚姻宫与配偶星：分析日支、官星或财星
-· 刑冲关系：地支刑冲对婚姻的影响
+【报告结构】
 
-二、双方合盘互动解析
-1. 日柱配合分析（婚姻核心，约80字）
-2. 十神互补分析（约60字）
-3. 潜在矛盾点（1-2个命理隐患，约60字）
+一、 双方命局基础分析
+（在分析婚姻互动之前，先明确双方命局的强弱与喜忌，这是判断互补或冲突的根本。）
 
-三、大运流年对婚姻的影响
-当前大运互动（${new Date().getFullYear()}年，约80字）
-流年契机（${new Date().getFullYear()}年，约60字）
-未来关键节点（未来2-3年，约60字）
+- 男方：${safeMaleName}（日主：八字中的日柱天干）
+  · 日主强弱：结合月令、得地、得助三个维度判断，给出明确的强/偏强/中和/偏弱/弱结论
+  · 论据：详细说明月令（是否得令）、地支根气、天干帮扶克泄的情况，以及综合判断依据
+  · 喜忌神：明确列出喜用神和忌神
+  · 妻星（财星）定位：指出正财偏财是哪个五行/天干，妻星在命局中的位置和状态
 
-四、结论与建议
-总结（约60字）
-具体建议：
-1. 建议一（约30字）
-2. 建议二（约30字）
-3. 建议三（约30字）
-4. 建议四（约30字）`;
+- 女方：${safeFemaleName}（日主：八字中的日柱天干）
+  · 日主强弱：同上维度判断
+  · 论据：详细说明
+  · 喜忌神：明确列出
+  · 夫星（官杀星）定位：指出正官七杀是哪个五行/天干，夫星在命局中的位置和状态
+
+二、 婚姻关系核心互动分析
+
+1. 日柱配合：天干相生相克关系？地支是否有合、冲、刑？对婚姻根基意味着什么？
+（约200-250字，要有具体分析，不能只说「还可以」或「有问题」）
+
+2. 十神与五行：深层互补还是相克？
+· 五行互补分析：男方喜用神是否是女方命局所旺之气？女方喜用神是否能从男方命局中得到？
+· 角色定位：基于十神关系，描述双方在关系中的自然角色和互动模式
+（约200字）
+
+3. 潜在问题：宫位刑冲与命理隐患
+· 男方夫妻宫（日支）是否受到命局中其他地支的冲、刑、害？代表什么含义？
+· 女方夫妻宫（日支）是否受到命局中其他地支的冲、刑、害？代表什么含义？
+· 其他十神层面的潜在冲突信号（如多财、多杀等）
+（约150字）
+
+三、 大运流年同步性分析
+
+- 男方当前大运：推算男方当前所走的大运（天干地支），分析对婚姻的影响
+- 女方当前大运：推算女方当前所走的大运（天干地支），分析对婚姻的影响
+- 大运配合：两人大运之间是否形成有利或不利的互动？
+
+流年关键节点（${new Date().getFullYear()}年及未来2-3年）：
+· ${new Date().getFullYear()}年（${new Date().getFullYear() - 2024 + 4}岁）：流年天干地支，对双方关系各自意味着什么？是否有重要合冲？
+· ${new Date().getFullYear() + 1}年：流年天干地支，婚姻宫是否有动？
+· ${new Date().getFullYear() + 2}年：流年天干地支，是否有需要特别注意的关键节点？
+（约200字）
+
+四、 总结与建议
+
+- 关系评价：基于以上分析，给出综合评价（关系的优势和根基）
+- 潜在风险：主要风险点（1-2个最核心的）
+- 实用建议（4条，每条有具体可操作性）：
+  a. 建议一：针对命局和大运特点的具体建议
+  b. 建议二：化解夫妻宫冲刑的方法
+  c. 建议三：针对流年关键节点的预警与应对
+  d. 建议四：长期经营婚姻关系的核心心法（结合双方日主五行特性）
+
+【重要提示】
+- 所有分析必须基于双方实际八字，不能用套话
+- 大运推算要符合男女顺逆（男阳女阴顺行，男阴女阳逆行）规则
+- 如某项信息无法从八字中确定，请如实说明，不要杜撰`;
 
   try {
     const deepReportRes = await fetch(`${AI_BASE_URL}/chat/completions`, {
@@ -611,11 +648,11 @@ async function runDeepReport(params: {
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}` },
       body: JSON.stringify({
         model: PRIMARY_MODEL,
-        max_tokens: 2000,
+        max_tokens: 5000,
         temperature: 0.5,
         enable_thinking: false,
         messages: [
-          { role: 'system', content: '你是赛博命理师，请输出深度八字合婚命理报告，纯文本格式，不要任何Markdown符号（不要##、**、*、-）。章节标题用中文数字如「一、」开头，子标题用「1.」「2.」开头，要点用「·」开头。' },
+          { role: 'system', content: '你是一位精通子平命理、擅长婚姻关系分析的专业命理师。请按照用户要求的报告格式，输出专业、有深度、有论据的八字合婚分析报告。纯文本输出，不使用任何Markdown符号（不要##、**、*、-等），章节标题用「一、二、三」开头，子标题用「1.2.3.」开头，要点用「·」开头。字数要充实，分析要有具体论据。' },
           { role: 'user', content: deepReportPrompt },
         ],
       }),
@@ -754,7 +791,7 @@ export async function POST(req: NextRequest) {
     const maleDateLine = maleSide.isLunar ? `${effectiveMaleDate}（农历）` : effectiveMaleDate;
     const femaleDateLine = femaleSide.isLunar ? `${effectiveFemaleDate}（农历）` : effectiveFemaleDate;
 
-    const cacheKey = generateCacheKey('marriage:ai:deep:v3', { male: maleBazi, female: femaleBazi });
+    const cacheKey = generateCacheKey('marriage:ai:deep:v4', { male: maleBazi, female: femaleBazi });
     const encoder = new TextEncoder();
 
     // 缓存命中：以 SSE 格式一次性推送，前端逻辑统一
@@ -776,41 +813,78 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const deepReportPrompt = `请为以下这对男女出具深度八字合婚命理报告，总字数600-800字：
+    const deepReportPrompt = `你是一位精通子平命理的专业命理师，请为以下这对男女出具一份专业、深度的八字合婚分析报告。
 
+【双方信息】
 男方：${safeMaleName}，生于${maleDateLine}，八字：${maleBazi}
 女方：${safeFemaleName}，生于${femaleDateLine}，八字：${femaleBazi}
-综合匹配度：${score}分（${level}）
+系统初步评分：${score}分（${level}）
 
-报告结构：
-一、双方命局独立分析
-1. ${safeMaleName}（乾造）
-· 日主强弱：分析日主五行强弱，喜忌神
-· 婚姻宫与配偶星：分析日支、财星或官星
-· 刑冲关系：地支刑冲对婚姻的影响
+【报告格式要求】
+- 严格按照以下五个章节结构输出，纯文本，不使用Markdown符号（不要##、**、*）
+- 章节标题用「一、二、三、四、五、」开头，子标题用「1.」「2.」「3.」开头，要点用「·」开头
+- 总字数1200-1800字，内容专业、论据充分，不要笼统的套话
+- 必须结合双方具体八字信息来分析，不得用模板化语言敷衍
 
-2. ${safeFemaleName}（坤造）
-· 日主强弱：分析日主五行强弱，喜忌神
-· 婚姻宫与配偶星：分析日支、官星或财星
-· 刑冲关系：地支刑冲对婚姻的影响
+【报告结构】
 
-二、双方合盘互动解析
-1. 日柱配合分析（婚姻核心，约80字）
-2. 十神互补分析（约60字）
-3. 潜在矛盾点（1-2个命理隐患，约60字）
+一、 双方命局基础分析
+（在分析婚姻互动之前，先明确双方命局的强弱与喜忌，这是判断互补或冲突的根本。）
 
-三、大运流年对婚姻的影响
-当前大运互动（${new Date().getFullYear()}年，约80字）
-流年契机（${new Date().getFullYear()}年，约60字）
-未来关键节点（未来2-3年，约60字）
+- 男方：${safeMaleName}（日主：八字中的日柱天干）
+  · 日主强弱：结合月令、得地、得助三个维度判断，给出明确的强/偏强/中和/偏弱/弱结论
+  · 论据：详细说明月令（是否得令）、地支根气、天干帮扶克泄的情况，以及综合判断依据
+  · 喜忌神：明确列出喜用神和忌神
+  · 妻星（财星）定位：指出正财偏财是哪个五行/天干，妻星在命局中的位置和状态
 
-四、结论与建议
-总结（约60字）
-具体建议：
-1. 建议一（约30字）
-2. 建议二（约30字）
-3. 建议三（约30字）
-4. 建议四（约30字）`;
+- 女方：${safeFemaleName}（日主：八字中的日柱天干）
+  · 日主强弱：同上维度判断
+  · 论据：详细说明
+  · 喜忌神：明确列出
+  · 夫星（官杀星）定位：指出正官七杀是哪个五行/天干，夫星在命局中的位置和状态
+
+二、 婚姻关系核心互动分析
+
+1. 日柱配合：天干相生相克关系？地支是否有合、冲、刑？对婚姻根基意味着什么？
+（约200-250字，要有具体分析，不能只说「还可以」或「有问题」）
+
+2. 十神与五行：深层互补还是相克？
+· 五行互补分析：男方喜用神是否是女方命局所旺之气？女方喜用神是否能从男方命局中得到？
+· 角色定位：基于十神关系，描述双方在关系中的自然角色和互动模式
+（约200字）
+
+3. 潜在问题：宫位刑冲与命理隐患
+· 男方夫妻宫（日支）是否受到命局中其他地支的冲、刑、害？代表什么含义？
+· 女方夫妻宫（日支）是否受到命局中其他地支的冲、刑、害？代表什么含义？
+· 其他十神层面的潜在冲突信号（如多财、多杀等）
+（约150字）
+
+三、 大运流年同步性分析
+
+- 男方当前大运：推算男方当前所走的大运（天干地支），分析对婚姻的影响
+- 女方当前大运：推算女方当前所走的大运（天干地支），分析对婚姻的影响
+- 大运配合：两人大运之间是否形成有利或不利的互动？
+
+流年关键节点（${new Date().getFullYear()}年及未来2-3年）：
+· ${new Date().getFullYear()}年（${new Date().getFullYear() - 2024 + 4}岁）：流年天干地支，对双方关系各自意味着什么？是否有重要合冲？
+· ${new Date().getFullYear() + 1}年：流年天干地支，婚姻宫是否有动？
+· ${new Date().getFullYear() + 2}年：流年天干地支，是否有需要特别注意的关键节点？
+（约200字）
+
+四、 总结与建议
+
+- 关系评价：基于以上分析，给出综合评价（关系的优势和根基）
+- 潜在风险：主要风险点（1-2个最核心的）
+- 实用建议（4条，每条有具体可操作性）：
+  a. 建议一：针对命局和大运特点的具体建议
+  b. 建议二：化解夫妻宫冲刑的方法
+  c. 建议三：针对流年关键节点的预警与应对
+  d. 建议四：长期经营婚姻关系的核心心法（结合双方日主五行特性）
+
+【重要提示】
+- 所有分析必须基于双方实际八字，不能用套话
+- 大运推算要符合男女顺逆（男阳女阴顺行，男阴女阳逆行）规则
+- 如某项信息无法从八字中确定，请如实说明，不要杜撰`;
 
     const aiRes = await fetch(`${AI_BASE_URL}/chat/completions`, {
       method: 'POST',
@@ -820,12 +894,12 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         model: PRIMARY_MODEL,
-        max_tokens: 2000,
+        max_tokens: 5000,
         temperature: 0.5,
         enable_thinking: false,
         stream: true,
         messages: [
-          { role: 'system', content: '你是赛博命理师，请输出深度八字合婚命理报告，纯文本格式，不要任何Markdown符号（不要##、**、*、-）。章节标题用中文数字如「一、」开头，子标题用「1.」「2.」开头，要点用「·」开头。' },
+          { role: 'system', content: '你是一位精通子平命理、擅长婚姻关系分析的专业命理师。请按照用户要求的报告格式，输出专业、有深度、有论据的八字合婚分析报告。纯文本输出，不使用任何Markdown符号（不要##、**、*、-等），章节标题用「一、二、三」开头，子标题用「1.2.3.」开头，要点用「·」开头。字数要充实，分析要有具体论据。' },
           { role: 'user', content: deepReportPrompt },
         ],
       }),
