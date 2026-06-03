@@ -489,6 +489,7 @@ export default function MarriagePage() {
           femaleData,
           result: data,
           payload,
+          aiAnalysis: undefined,  // 新查询时不保留旧 AI 分析
           savedAt: new Date().toISOString(),
         };
         window.localStorage.setItem(MARRIAGE_CACHE_KEY, JSON.stringify(cache));
@@ -796,6 +797,7 @@ export default function MarriagePage() {
                 {/* 模块 E：AI 合婚分析（按需触发） */}
                 {lastPayload && (
                   <AIAnalysisSection
+                    key={JSON.stringify(lastPayload)}
                     payload={lastPayload}
                     totalScore={Number(result.score) || 0}
                     initialData={aiAnalysis}
