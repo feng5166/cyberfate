@@ -416,7 +416,7 @@ async function runAIAnalysis(params: {
     maleSide, femaleSide, maleBazi, femaleBazi, score, level, details,
   } = params;
 
-  const cacheKey = generateCacheKey('marriage:ai:v4', { male: maleBazi, female: femaleBazi });
+  const cacheKey = generateCacheKey('marriage:ai:v5', { male: maleBazi, female: femaleBazi });
   const cached = await getCache(cacheKey);
   if (cached && cached.dimensions && Array.isArray(cached.dimensions)) {
     return {
