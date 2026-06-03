@@ -703,6 +703,7 @@ export async function POST(req: NextRequest) {
       maleSide, femaleSide, maleBazi, femaleBazi, score, level, details,
     });
 
+    console.log('[marriage:ai] deepReport length:', structured.deepReport?.length ?? 0, '| source:', aiSource);
     return NextResponse.json({
       score,
       dimensions: structured.dimensions,
@@ -711,6 +712,7 @@ export async function POST(req: NextRequest) {
       deepReport: structured.deepReport || '',
       analysis: rawText,
       _source: aiSource,
+      _debug: { deepReportLen: structured.deepReport?.length ?? 0 },
     });
   }
 

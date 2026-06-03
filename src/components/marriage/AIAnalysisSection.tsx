@@ -61,6 +61,7 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
         throw new Error(j.error || j.message || `AI 分析失败 (${res.status})`);
       }
       const j = await res.json();
+      console.log('[AIAnalysis] deepReport length:', (j.deepReport || '').length, '| _debug:', j._debug);
       const parsed: AIAnalysisData = {
         score: j.score,
         dimensions: Array.isArray(j.dimensions) ? j.dimensions : [],
