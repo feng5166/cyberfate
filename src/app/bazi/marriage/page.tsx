@@ -557,7 +557,7 @@ export default function MarriagePage() {
                 <div className="grid gap-6 md:grid-cols-2">
                   <div className="rounded-2xl border border-[#E5E0D8] bg-white p-6 md:p-7">
                     <h3 className="text-lg font-semibold text-[#1C1A16] text-center mb-5">
-                      🔮 AI 智能合婚系统
+                      ✨ AI 智能合婚系统
                     </h3>
                     <div className="space-y-5 text-sm">
                       <div>
@@ -820,19 +820,6 @@ export default function MarriagePage() {
                 <p className="text-xs text-[#1C1A16]/45 leading-relaxed text-center px-2">
                   {result.disclaimer}
                 </p>
-
-                <Button onClick={() => {
-                  setResult(null);
-                  setLastPayload(null);
-                  setAiAnalysis(null);
-                  try {
-                    window.localStorage.removeItem(MARRIAGE_CACHE_KEY);
-                  } catch {
-                    // 忽略
-                  }
-                }} variant="secondary" className="w-full">
-                  重新测算
-                </Button>
               </div>
             )}
           </div>

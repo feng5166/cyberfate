@@ -168,10 +168,7 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
   return (
     <div className="rounded-2xl border border-[#E5E0D8] bg-white p-6 md:p-8">
       <div className="text-center mb-6">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#1C1A16]/10 bg-[#FAF9F6] text-xs text-[#1C1A16]/70 mb-3">
-          <Sparkles className="w-3.5 h-3.5 text-[#C2762B]" />
-          <span>AI 深度解读</span>
-        </div>
+
         <h3
           className="text-2xl md:text-3xl font-semibold text-[#1C1A16]"
           style={{ fontFamily: 'var(--font-cormorant), Cormorant Garamond, serif' }}
