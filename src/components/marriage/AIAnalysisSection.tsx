@@ -373,23 +373,23 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
                   if (!trimmed) return <div key={i} className="h-3" />;
                   if (/^[一二三四五六七八九十]、/.test(trimmed)) {
                     return (
-                      <h4 key={i} className="text-base font-bold text-[#1C1A16] mt-6 mb-3 first:mt-0 pb-2 border-b border-[#E5E0D8]">
+                      <h4 key={i} className="text-base font-semibold text-[#C2762B] mt-6 mb-3 first:mt-0">
                         {trimmed}
                       </h4>
                     );
                   }
                   if (/^[0-9]+\.\s/.test(trimmed)) {
                     return (
-                      <h5 key={i} className="text-sm font-semibold text-[#1C1A16] mt-4 mb-2">
+                      <p key={i} className="text-sm text-[#1C1A16]/80 leading-7 mb-2">
                         {trimmed}
-                      </h5>
+                      </p>
                     );
                   }
                   if (/^(当前|流年|未来|具体建议)/.test(trimmed)) {
                     return (
-                      <h5 key={i} className="text-sm font-semibold text-[#1C1A16] mt-4 mb-2">
+                      <p key={i} className="text-sm text-[#1C1A16]/80 leading-7 mb-2">
                         {trimmed}
-                      </h5>
+                      </p>
                     );
                   }
                   if (trimmed.startsWith('·')) {
