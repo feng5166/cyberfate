@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Sparkles, Users, Home, HeartHandshake, Check, HeartPulse, Loader2, ScrollText, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
@@ -30,6 +30,17 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [data, setData] = useState<AIAnalysisData | null>(initialData ?? null);
+  const prevPayloadRef = useRef<string>('');
+
+  useEffect(() => {
+    const key = JSON.stringify(payload);
+    if (prevPayloadRef.current && prevPayloadRef.current !== key) {
+      // payload 变了（用户重新提交了新数据），清空旧 AI 结果
+      setData(null);
+      setError('');
+    }
+    prevPayloadRef.current = key;
+  }, [payload]);
 
   const handleStart = async () => {
     if (loading) return;
