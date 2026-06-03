@@ -48,6 +48,53 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
     prevPayloadRef.current = key;
   }, [payload]);
 
+  const fetchDeepReport = async () => {
+    setDeepReportLoading(true);
+    try {
+      const res = await fetch('/api/bazi/marriage?ai=deep', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok || !res.body) return;
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let accumulated = '';
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6).trim();
+          try {
+            const json = JSON.parse(data);
+            const delta = json.delta || '';
+            if (delta) {
+              accumulated += delta;
+              setData(prev => prev ? { ...prev, deepReport: accumulated } : prev);
+            }
+          } catch { /* ignore */ }
+        }
+      }
+
+      if (accumulated && parsedRef.current) {
+        const next: AIAnalysisData = { ...parsedRef.current, deepReport: accumulated };
+        parsedRef.current = next;
+        onAnalysisDone?.(next);
+      }
+    } catch {
+      // 静默处理
+    } finally {
+      setDeepReportLoading(false);
+    }
+  };
+
   const handleStart = async () => {
     if (loading) return;
     setLoading(true);
@@ -83,56 +130,14 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
       return;
     }
 
-    // 第二步：深度命理报告（约 46s）— 失败静默，不影响主分析
-    setDeepReportLoading(true);
-    try {
-      const res2 = await fetch('/api/bazi/marriage?ai=deep', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (res2.ok) {
-        const j2 = await res2.json();
-        const deepReport = typeof j2.deepReport === 'string' ? j2.deepReport : '';
-        if (deepReport && parsedRef.current) {
-          const next: AIAnalysisData = { ...parsedRef.current, deepReport };
-          parsedRef.current = next;
-          setData(next);
-          onAnalysisDone?.(next);
-        }
-      }
-    } catch {
-      // 深度报告加载失败，静默处理
-    } finally {
-      setDeepReportLoading(false);
-      setLoading(false);
-    }
+    // 第二步：streaming 深度命理报告 — 失败静默，不影响主分析
+    await fetchDeepReport();
+    setLoading(false);
   };
 
   const handleDeepReport = async () => {
     if (deepReportLoading || !parsedRef.current) return;
-    setDeepReportLoading(true);
-    try {
-      const res2 = await fetch('/api/bazi/marriage?ai=deep', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (res2.ok) {
-        const j2 = await res2.json();
-        const deepReport = typeof j2.deepReport === 'string' ? j2.deepReport : '';
-        if (deepReport && parsedRef.current) {
-          const next: AIAnalysisData = { ...parsedRef.current, deepReport };
-          parsedRef.current = next;
-          setData(next);
-          onAnalysisDone?.(next);
-        }
-      }
-    } catch {
-      // 静默处理
-    } finally {
-      setDeepReportLoading(false);
-    }
+    await fetchDeepReport();
   };
 
   const iconMap: Record<string, any> = {

@@ -748,17 +748,137 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // ── ?ai=deep：仅返回深度命理报告（约 46s） ────────────────────
+  // ── ?ai=deep：SSE streaming 深度命理报告 ────────────────────
   if (aiDeep) {
-    const { deepReport, aiSource } = await runDeepReport({
-      safeMaleName, safeFemaleName,
-      maleSide, femaleSide,
-      effectiveMaleDate: effectiveMaleDate as string,
-      effectiveFemaleDate: effectiveFemaleDate as string,
-      maleBazi, femaleBazi, score, level,
+    const maleDateLine = maleSide.isLunar ? `${effectiveMaleDate}（农历）` : effectiveMaleDate;
+    const femaleDateLine = femaleSide.isLunar ? `${effectiveFemaleDate}（农历）` : effectiveFemaleDate;
+
+    const cacheKey = generateCacheKey('marriage:ai:deep:v1', { male: maleBazi, female: femaleBazi });
+    const encoder = new TextEncoder();
+
+    // 缓存命中：以 SSE 格式一次性推送，前端逻辑统一
+    const cached = await getCache(cacheKey);
+    if (cached && typeof cached.deepReport === 'string' && cached.deepReport.length > 0) {
+      const cachedText = cached.deepReport;
+      const cacheStream = new ReadableStream({
+        start(controller) {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ delta: cachedText })}\n\n`));
+          controller.close();
+        },
+      });
+      return new Response(cacheStream, {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+        },
+      });
+    }
+
+    const deepReportPrompt = `请为以下这对男女出具深度八字合婚命理报告，总字数1200-1800字：
+
+男方：${safeMaleName}，生于${maleDateLine}，八字：${maleBazi}
+女方：${safeFemaleName}，生于${femaleDateLine}，八字：${femaleBazi}
+综合匹配度：${score}分（${level}）
+
+报告结构：
+一、双方命局独立分析
+1. ${safeMaleName}（乾造）
+· 日主强弱：分析日主五行强弱，喜忌神
+· 婚姻宫与配偶星：分析日支、财星或官星
+· 刑冲关系：地支刑冲对婚姻的影响
+
+2. ${safeFemaleName}（坤造）
+· 日主强弱：分析日主五行强弱，喜忌神
+· 婚姻宫与配偶星：分析日支、官星或财星
+· 刑冲关系：地支刑冲对婚姻的影响
+
+二、双方合盘互动解析
+1. 日柱配合分析（婚姻核心，约150字）
+2. 十神互补分析（约100字）
+3. 潜在矛盾点（1-2个命理隐患，约100字）
+
+三、大运流年对婚姻的影响
+当前大运互动（${new Date().getFullYear()}年，约150字）
+流年契机（${new Date().getFullYear()}年，约100字）
+未来关键节点（未来2-3年，约100字）
+
+四、结论与建议
+总结（约100字）
+具体建议：
+1. 建议一（约50字）
+2. 建议二（约50字）
+3. 建议三（约50字）
+4. 建议四（约50字）`;
+
+    const aiRes = await fetch(`${AI_BASE_URL}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: PRIMARY_MODEL,
+        max_tokens: 4000,
+        temperature: 0.5,
+        enable_thinking: false,
+        stream: true,
+        messages: [
+          { role: 'system', content: '你是赛博命理师，请输出深度八字合婚命理报告，纯文本格式，不要任何Markdown符号（不要##、**、*、-）。章节标题用中文数字如「一、」开头，子标题用「1.」「2.」开头，要点用「·」开头。' },
+          { role: 'user', content: deepReportPrompt },
+        ],
+      }),
     });
 
-    return NextResponse.json({ deepReport, _source: aiSource });
+    if (!aiRes.ok || !aiRes.body) {
+      return NextResponse.json({ deepReport: '', _source: 'error' });
+    }
+
+    let fullText = '';
+    const stream = new ReadableStream({
+      async start(controller) {
+        const reader = aiRes.body!.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+            for (const line of lines) {
+              if (!line.startsWith('data: ')) continue;
+              const data = line.slice(6).trim();
+              if (data === '[DONE]') continue;
+              try {
+                const json = JSON.parse(data);
+                const delta = json.choices?.[0]?.delta?.content || '';
+                if (delta) {
+                  fullText += delta;
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ delta })}\n\n`));
+                }
+              } catch { /* ignore parse errors */ }
+            }
+          }
+          if (fullText.length > 100) {
+            const cleanText = fullText.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+            await setCache(cacheKey, { deepReport: cleanText }).catch(() => {});
+          }
+        } finally {
+          controller.close();
+          reader.releaseLock();
+        }
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
+    });
   }
 
   // ── 默认：仅返回硬数据（命盘+五行+十神+总分），不调 AI ──
