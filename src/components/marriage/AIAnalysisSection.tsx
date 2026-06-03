@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Sparkles, Users, Home, HeartHandshake, Check, HeartPulse, Loader2 } from 'lucide-react';
+import { Sparkles, Users, Home, HeartHandshake, Check, HeartPulse, Loader2, ScrollText } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
 interface Dimension {
@@ -16,6 +16,7 @@ interface AIAnalysisData {
   dimensions: Dimension[];
   advices: string[];
   highlight: string;
+  deepReport?: string;
 }
 
 interface AIAnalysisSectionProps {
@@ -48,6 +49,7 @@ export function AIAnalysisSection({ payload, totalScore }: AIAnalysisSectionProp
         dimensions: Array.isArray(j.dimensions) ? j.dimensions : [],
         advices: Array.isArray(j.advices) ? j.advices : [],
         highlight: typeof j.highlight === 'string' ? j.highlight : '',
+        deepReport: typeof j.deepReport === 'string' ? j.deepReport : '',
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : '未知错误');
@@ -184,6 +186,65 @@ export function AIAnalysisSection({ payload, totalScore }: AIAnalysisSectionProp
                   <p className="text-xs text-[#C2762B] font-medium tracking-wider mb-1.5">亮点总结</p>
                   <p className="text-sm md:text-base text-[#1C1A16]/85 leading-7">{data.highlight}</p>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {data.deepReport && (
+            <div className="rounded-2xl border border-[#E5E0D8] bg-white overflow-hidden">
+              <div className="flex items-center justify-between px-5 md:px-6 py-4 border-b border-[#E5E0D8] bg-[#FAF9F6]">
+                <div className="flex items-center gap-2">
+                  <span className="w-7 h-7 rounded-full bg-[#FAF3EC] border border-[#C2762B]/20 flex items-center justify-center">
+                    <ScrollText className="w-3.5 h-3.5 text-[#C2762B]" />
+                  </span>
+                  <h4 className="text-base font-semibold text-[#1C1A16]">深度命理报告</h4>
+                </div>
+              </div>
+              <div className="px-5 md:px-8 py-6">
+                {data.deepReport.split('\n').map((line, i) => {
+                  const trimmed = line.trim();
+                  if (!trimmed) return <div key={i} className="h-3" />;
+                  if (/^[一二三四五六七八九十]、/.test(trimmed)) {
+                    return (
+                      <h4 key={i} className="text-base font-bold text-[#1C1A16] mt-6 mb-3 first:mt-0 pb-2 border-b border-[#E5E0D8]">
+                        {trimmed}
+                      </h4>
+                    );
+                  }
+                  if (/^[0-9]+\.\s/.test(trimmed)) {
+                    return (
+                      <h5 key={i} className="text-sm font-semibold text-[#1C1A16] mt-4 mb-2">
+                        {trimmed}
+                      </h5>
+                    );
+                  }
+                  if (/^(当前|流年|未来|具体建议)/.test(trimmed)) {
+                    return (
+                      <h5 key={i} className="text-sm font-semibold text-[#1C1A16] mt-4 mb-2">
+                        {trimmed}
+                      </h5>
+                    );
+                  }
+                  if (trimmed.startsWith('·')) {
+                    return (
+                      <p key={i} className="text-sm text-[#1C1A16]/80 leading-7 pl-4 relative mb-1.5 before:content-['·'] before:absolute before:left-0 before:text-[#C2762B]">
+                        {trimmed.slice(1).trim()}
+                      </p>
+                    );
+                  }
+                  if (/^[1-9]\.\s/.test(trimmed)) {
+                    return (
+                      <p key={i} className="text-sm text-[#1C1A16]/80 leading-7 mb-2">
+                        {trimmed}
+                      </p>
+                    );
+                  }
+                  return (
+                    <p key={i} className="text-sm text-[#1C1A16]/80 leading-7 mb-3">
+                      {trimmed}
+                    </p>
+                  );
+                })}
               </div>
             </div>
           )}
