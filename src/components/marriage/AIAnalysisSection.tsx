@@ -30,6 +30,7 @@ interface AIAnalysisSectionProps {
 export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysisDone }: AIAnalysisSectionProps) {
   const [loading, setLoading] = useState(false);
   const [deepReportLoading, setDeepReportLoading] = useState(false);
+  const [deepReportError, setDeepReportError] = useState('');
   const [error, setError] = useState('');
   const [data, setData] = useState<AIAnalysisData | null>(() => {
     if (!initialData) return null;
@@ -56,7 +57,12 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      if (!res.ok || !res.body) return;
+      if (!res.ok || !res.body) {
+        const errText = await res.text().catch(() => '');
+        console.error('[deepReport] fetch failed:', res.status, errText.slice(0, 200));
+        setDeepReportError(`请求失败 (${res.status}): ${errText.slice(0, 80)}`);
+        return;
+      }
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
@@ -88,8 +94,9 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
         parsedRef.current = next;
         onAnalysisDone?.(next);
       }
-    } catch {
-      // 静默处理
+    } catch (e) {
+      console.error('[deepReport] stream error:', e);
+      setDeepReportError(String(e instanceof Error ? e.message : e));
     } finally {
       setDeepReportLoading(false);
     }
@@ -136,7 +143,11 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
   };
 
   const handleDeepReport = async () => {
-    if (deepReportLoading || !parsedRef.current) return;
+    if (deepReportLoading) return;
+    // 缓存恢复时 parsedRef 可能为 null，用 data 补充
+    if (!parsedRef.current && data) {
+      parsedRef.current = data;
+    }
     await fetchDeepReport();
   };
 
@@ -316,19 +327,24 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
           )}
 
           {!data.deepReport && !deepReportLoading && (
-            <div className="rounded-2xl border border-[#E5E0D8] bg-white p-5 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 text-sm text-[#1C1A16]/60">
-                <ScrollText className="w-4 h-4 text-[#1C1A16]/30" />
-                深度命理报告尚未生成
+            <div className="rounded-2xl border border-[#E5E0D8] bg-white p-5 space-y-2">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-sm text-[#1C1A16]/60">
+                  <ScrollText className="w-4 h-4 text-[#1C1A16]/30" />
+                  深度命理报告尚未生成
+                </div>
+                <button
+                  type="button"
+                  onClick={handleDeepReport}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#FAF3EC] border border-[#C2762B]/20 px-3 py-1.5 text-xs text-[#C2762B] hover:bg-[#F5EAD8] transition-colors"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  生成报告
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={handleDeepReport}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-[#FAF3EC] border border-[#C2762B]/20 px-3 py-1.5 text-xs text-[#C2762B] hover:bg-[#F5EAD8] transition-colors"
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                生成报告
-              </button>
+              {deepReportError && (
+                <p className="text-xs text-[#B42318]">{deepReportError}</p>
+              )}
             </div>
           )}
 
