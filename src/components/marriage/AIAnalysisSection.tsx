@@ -22,12 +22,14 @@ interface AIAnalysisData {
 interface AIAnalysisSectionProps {
   payload: any;
   totalScore: number;
+  initialData?: AIAnalysisData | null;
+  onAnalysisDone?: (data: AIAnalysisData) => void;
 }
 
-export function AIAnalysisSection({ payload, totalScore }: AIAnalysisSectionProps) {
+export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysisDone }: AIAnalysisSectionProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [data, setData] = useState<AIAnalysisData | null>(null);
+  const [data, setData] = useState<AIAnalysisData | null>(initialData ?? null);
 
   const handleStart = async () => {
     if (loading) return;
@@ -44,13 +46,15 @@ export function AIAnalysisSection({ payload, totalScore }: AIAnalysisSectionProp
         throw new Error(j.error || j.message || 'AI 分析失败');
       }
       const j = await res.json();
-      setData({
+      const parsed: AIAnalysisData = {
         score: j.score,
         dimensions: Array.isArray(j.dimensions) ? j.dimensions : [],
         advices: Array.isArray(j.advices) ? j.advices : [],
         highlight: typeof j.highlight === 'string' ? j.highlight : '',
         deepReport: typeof j.deepReport === 'string' ? j.deepReport : '',
-      });
+      };
+      setData(parsed);
+      onAnalysisDone?.(parsed);
     } catch (e) {
       setError(e instanceof Error ? e.message : '未知错误');
     } finally {

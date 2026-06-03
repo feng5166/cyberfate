@@ -39,6 +39,7 @@ interface MarriageCache {
   femaleData: SideData;
   result: any;
   payload: any;
+  aiAnalysis?: any;
   savedAt: string;
 }
 
@@ -399,10 +400,29 @@ export default function MarriagePage() {
     const cache = loadMarriageCache();
     return cache?.payload ?? null;
   });
+  const [aiAnalysis, setAiAnalysis] = useState<any>(() => {
+    const cache = loadMarriageCache();
+    return cache?.aiAnalysis ?? null;
+  });
   const [error, setError] = useState('');
 
   const updateMale = (patch: Partial<SideData>) => setMaleData(prev => ({ ...prev, ...patch }));
   const updateFemale = (patch: Partial<SideData>) => setFemaleData(prev => ({ ...prev, ...patch }));
+
+  const handleAIAnalysisDone = (analysisData: any) => {
+    setAiAnalysis(analysisData);
+    try {
+      const existing = loadMarriageCache();
+      if (existing) {
+        window.localStorage.setItem(MARRIAGE_CACHE_KEY, JSON.stringify({
+          ...existing,
+          aiAnalysis: analysisData,
+        }));
+      }
+    } catch {
+      // 忽略
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -767,6 +787,8 @@ export default function MarriagePage() {
                   <AIAnalysisSection
                     payload={lastPayload}
                     totalScore={Number(result.score) || 0}
+                    initialData={aiAnalysis}
+                    onAnalysisDone={handleAIAnalysisDone}
                   />
                 )}
 
@@ -789,6 +811,7 @@ export default function MarriagePage() {
                 <Button onClick={() => {
                   setResult(null);
                   setLastPayload(null);
+                  setAiAnalysis(null);
                   try {
                     window.localStorage.removeItem(MARRIAGE_CACHE_KEY);
                   } catch {
