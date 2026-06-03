@@ -361,7 +361,7 @@ function buildFallbackFromText(text: string, baseScore: number): Structured {
     '共同建立小仪式（晚餐、周末散步）增强长期联结。',
   ];
 
-  return { dimensions, advices, highlight };
+  return { dimensions, advices, highlight, deepReport: text.length > 100 ? text : undefined };
 }
 
 function tryParseStructured(raw: string, baseScore: number): Structured | null {
@@ -489,7 +489,7 @@ ${details.join('\n')}
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}` },
       body: JSON.stringify({
         model: PRIMARY_MODEL,
-        max_tokens: 4000,
+        max_tokens: 6000,
         temperature: 0.4,
         enable_thinking: false,
         response_format: { type: 'json_object' },
