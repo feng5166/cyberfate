@@ -624,6 +624,16 @@ export default function MarriagePage() {
 
             {result && (
               <div className="space-y-8">
+                {/* 重新填写入口 */}
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => setResult(null)}
+                    className="flex items-center gap-1.5 text-sm text-[#1C1A16]/50 hover:text-[#C2762B] transition-colors"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                    重新填写
+                  </button>
+                </div>
                 {/* 双方信息确认卡 */}
                 <Card hover={false} className="rounded-2xl border border-[#E5E0D8] bg-white shadow-none p-6 md:p-8">
                   <div className="text-center mb-6">
