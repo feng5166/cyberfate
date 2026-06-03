@@ -480,6 +480,7 @@ export default function MarriagePage() {
       }
 
       const data = await res.json();
+      setAiAnalysis(null);  // 新查询，清空上次 AI 分析缓存
       setResult(data);
       setLastPayload(payload);
       try {
