@@ -539,9 +539,10 @@ ${details.join('\n')}
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}` },
         body: JSON.stringify({
-          model: FALLBACK_MODEL,
+          model: PRIMARY_MODEL,
           max_tokens: 4000,
           temperature: 0.5,
+          enable_thinking: false,
           messages: [
             { role: 'system', content: '你是赛博命理师，请输出深度八字合婚命理报告，纯文本格式，不要任何Markdown符号（不要##、**、*、-）。章节标题用中文数字如「一、」开头，子标题用「1.」「2.」开头，要点用「·」开头。' },
             { role: 'user', content: deepReportPrompt },
@@ -576,6 +577,7 @@ ${details.join('\n')}
     }
   } catch (err) {
     console.error('AI call failed:', err);
+    rawText = String(err instanceof Error ? err.message : err);
   }
 
   if (!structured) {
@@ -718,7 +720,7 @@ export async function POST(req: NextRequest) {
       deepReport: structured.deepReport || '',
       analysis: rawText,
       _source: aiSource,
-      _debug: { deepReportLen: structured.deepReport?.length ?? 0 },
+      _debug: { deepReportLen: structured.deepReport?.length ?? 0, rawTextPreview: rawText.slice(0, 100) },
     });
   }
 

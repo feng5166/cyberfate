@@ -18,6 +18,7 @@ interface AIAnalysisData {
   highlight: string;
   deepReport?: string;
   _source?: string;
+  _debug?: { deepReportLen: number; rawTextPreview?: string };
 }
 
 interface AIAnalysisSectionProps {
@@ -69,6 +70,7 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
         highlight: typeof j.highlight === 'string' ? j.highlight : '',
         deepReport: typeof j.deepReport === 'string' ? j.deepReport : '',
         _source: typeof j._source === 'string' ? j._source : undefined,
+        _debug: j._debug,
       };
       setData(parsed);
       onAnalysisDone?.(parsed);
@@ -136,6 +138,7 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
           {/* 临时 debug 信息 */}
           <div className="text-xs text-[#1C1A16]/40 bg-[#FAF9F6] border border-dashed border-[#1C1A16]/15 rounded-lg px-3 py-2">
             deepReport length: {data.deepReport?.length ?? 0} | source: {data._source || 'unknown'}
+            {data._debug?.rawTextPreview && <span> | err: {data._debug.rawTextPreview}</span>}
           </div>
           {data._source && (
             <div className="flex justify-end mb-4">
