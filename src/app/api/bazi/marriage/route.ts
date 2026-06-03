@@ -325,7 +325,7 @@ function calcShenSha(male: BaziInfo, female: BaziInfo): ScoreResult {
 // ═══════════════════════════════════════════════════
 
 type Dimension = { key: string; title: string; score: number; content: string };
-type Structured = { dimensions: Dimension[]; advices: string[]; highlight: string; deepReport?: string };
+type Structured = { dimensions: Dimension[]; advices: string[]; highlight: string };
 
 function clampScore(n: any, fallback: number): number {
   const num = Number(n);
@@ -361,7 +361,7 @@ function buildFallbackFromText(text: string, baseScore: number): Structured {
     '共同建立小仪式（晚餐、周末散步）增强长期联结。',
   ];
 
-  return { dimensions, advices, highlight, deepReport: text.length > 100 ? text : undefined };
+  return { dimensions, advices, highlight };
 }
 
 function tryParseStructured(raw: string, baseScore: number): Structured | null {
@@ -392,7 +392,7 @@ function tryParseStructured(raw: string, baseScore: number): Structured | null {
       ? obj.advices.map((a: any) => String(a || '').trim()).filter((a: string) => a.length > 0).slice(0, 6)
       : [];
     const highlight = String(obj.highlight || '').trim().slice(0, 200);
-    return { dimensions, advices, highlight, deepReport: typeof obj.deepReport === 'string' ? obj.deepReport : undefined };
+    return { dimensions, advices, highlight };
   } catch {
     return null;
   }
@@ -416,7 +416,7 @@ async function runAIAnalysis(params: {
     maleSide, femaleSide, maleBazi, femaleBazi, score, level, details,
   } = params;
 
-  const cacheKey = generateCacheKey('marriage:ai:v6', { male: maleBazi, female: femaleBazi });
+  const cacheKey = generateCacheKey('marriage:ai:struct:v1', { male: maleBazi, female: femaleBazi });
   const cached = await getCache(cacheKey);
   if (cached && cached.dimensions && Array.isArray(cached.dimensions)) {
     return {
@@ -424,7 +424,6 @@ async function runAIAnalysis(params: {
         dimensions: cached.dimensions,
         advices: cached.advices || [],
         highlight: cached.highlight || '',
-        deepReport: cached.deepReport || undefined,
       },
       rawText: cached.analysis || '',
       aiSource: 'cache',
@@ -477,6 +476,99 @@ ${details.join('\n')}
 - advices 给 3-5 条，每条独立成句，不带序号。
 - 直接输出 JSON，不要 \`\`\`json 围栏，不要前言。`;
 
+  let structured: Structured | null = null;
+  let rawText = '';
+  let aiSource = 'fallback';
+
+  try {
+    const structuredRes = await fetch(`${AI_BASE_URL}/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}` },
+      body: JSON.stringify({
+        model: PRIMARY_MODEL,
+        max_tokens: 3000,
+        temperature: 0.4,
+        enable_thinking: false,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: '你是赛博命理师，输出严格 JSON，不带任何额外文字或代码围栏。' },
+          { role: 'user', content: prompt },
+        ],
+      }),
+    });
+
+    if (structuredRes.ok) {
+      const aiData = await structuredRes.json();
+      rawText = aiData.choices?.[0]?.message?.content || '';
+      structured = tryParseStructured(rawText, score);
+      if (structured) {
+        aiSource = 'deepseek';
+      } else {
+        structured = buildFallbackFromText(rawText, score);
+        aiSource = 'deepseek-fallback';
+      }
+    }
+  } catch (err) {
+    console.error('AI call failed:', err);
+    rawText = String(err instanceof Error ? err.message : err);
+  }
+
+  if (!structured) {
+    structured = {
+      dimensions: [
+        { key: 'basic',       title: '基础契合度', score: Math.max(60, Math.min(90, score)), content: '双方八字基础结构有一定互补空间，五行格局上各有所长。日常以理解和包容为主，长期相处会愈发顺畅。' },
+        { key: 'personality', title: '性格相容性', score: Math.max(60, Math.min(90, score - 3)), content: '性格节奏存在差异，但差异本身可以成为关系中的张力与新鲜感。多倾听对方的真实需求，可减少误解。' },
+        { key: 'palace',      title: '婚配宫位',   score: Math.max(60, Math.min(90, score - 5)), content: '婚配宫位整体可调，少数节点需要彼此体谅。在重要决定与生活节奏上多商量，宫位影响会被淡化。' },
+        { key: 'family',      title: '家庭和谐',   score: Math.max(60, Math.min(90, score - 2)), content: '家庭节奏的协同需要时间培养。建立稳定的相处仪式与分担机制，长远家庭氛围会非常温暖。' },
+      ],
+      advices: [
+        '每日抽出 15 分钟专心听对方分享当天的情绪与琐事。',
+        '在涉及双方家庭的事情上，留出足够沟通时间再做决定。',
+        '保持各自的兴趣与朋友圈，给关系留出呼吸空间。',
+        '建立属于你们的小仪式，增强长期的情感联结。',
+      ],
+      highlight: '你们的差异并非阻碍，而是彼此成长的机会，用心经营会愈发稳固。',
+    };
+  }
+
+  if (aiSource !== 'fallback') {
+    await setCache(cacheKey, {
+      dimensions: structured.dimensions,
+      advices: structured.advices,
+      highlight: structured.highlight,
+      analysis: rawText,
+    });
+  }
+
+  return { structured, rawText, aiSource };
+}
+
+async function runDeepReport(params: {
+  safeMaleName: string;
+  safeFemaleName: string;
+  maleSide: SidePayload;
+  femaleSide: SidePayload;
+  effectiveMaleDate: string;
+  effectiveFemaleDate: string;
+  maleBazi: string;
+  femaleBazi: string;
+  score: number;
+  level: string;
+}): Promise<{ deepReport: string; aiSource: string }> {
+  const {
+    safeMaleName, safeFemaleName, maleSide, femaleSide,
+    effectiveMaleDate, effectiveFemaleDate, maleBazi, femaleBazi, score, level,
+  } = params;
+
+  const cacheKey = generateCacheKey('marriage:ai:deep:v1', { male: maleBazi, female: femaleBazi });
+  const cached = await getCache(cacheKey);
+  if (cached && typeof cached.deepReport === 'string' && cached.deepReport.length > 0) {
+    return { deepReport: cached.deepReport, aiSource: 'cache' };
+  }
+
+  const maleDateLine = maleSide.isLunar ? `${effectiveMaleDate}（农历）` : effectiveMaleDate;
+  const femaleDateLine = femaleSide.isLunar ? `${effectiveFemaleDate}（农历）` : effectiveFemaleDate;
+
   const deepReportPrompt = `请为以下这对男女出具深度八字合婚命理报告，总字数1200-1800字：
 
 男方：${safeMaleName}，生于${maleDateLine}，八字：${maleBazi}
@@ -513,42 +605,7 @@ ${details.join('\n')}
 3. 建议三（约50字）
 4. 建议四（约50字）`;
 
-  let structured: Structured | null = null;
-  let rawText = '';
-  let aiSource = 'fallback';
-  let deepReportText = '';  // 提升到 try 块外，确保 fallback 路径也能访问
-
   try {
-    // 第一路：结构化 JSON 分析
-    const structuredRes = await fetch(`${AI_BASE_URL}/chat/completions`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}` },
-      body: JSON.stringify({
-        model: PRIMARY_MODEL,
-        max_tokens: 3000,
-        temperature: 0.4,
-        enable_thinking: false,
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: '你是赛博命理师，输出严格 JSON，不带任何额外文字或代码围栏。' },
-          { role: 'user', content: prompt },
-        ],
-      }),
-    });
-
-    if (structuredRes.ok) {
-      const aiData = await structuredRes.json();
-      rawText = aiData.choices?.[0]?.message?.content || '';
-      structured = tryParseStructured(rawText, score);
-      if (structured) {
-        aiSource = 'deepseek';
-      } else {
-        structured = buildFallbackFromText(rawText, score);
-        aiSource = 'deepseek-fallback';
-      }
-    }
-
-    // 第二路：深度命理报告（串行，避免并发问题）
     const deepReportRes = await fetch(`${AI_BASE_URL}/chat/completions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}` },
@@ -567,51 +624,20 @@ ${details.join('\n')}
     if (deepReportRes.ok) {
       const drData = await deepReportRes.json();
       const raw = drData.choices?.[0]?.message?.content || '';
-      deepReportText = raw.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+      const deepReport = raw.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+      if (deepReport) {
+        await setCache(cacheKey, { deepReport });
+      }
+      return { deepReport, aiSource: 'deepseek' };
     } else {
       const errBody = await deepReportRes.text().catch(() => '');
       console.error('deepReport AI call failed:', deepReportRes.status, errBody.slice(0, 200));
+      return { deepReport: '', aiSource: 'error' };
     }
-
   } catch (err) {
-    console.error('AI call failed:', err);
-    rawText = String(err instanceof Error ? err.message : err);
+    console.error('deepReport AI call exception:', err);
+    return { deepReport: '', aiSource: 'error' };
   }
-
-  if (!structured) {
-    structured = {
-      dimensions: [
-        { key: 'basic',       title: '基础契合度', score: Math.max(60, Math.min(90, score)), content: '双方八字基础结构有一定互补空间，五行格局上各有所长。日常以理解和包容为主，长期相处会愈发顺畅。' },
-        { key: 'personality', title: '性格相容性', score: Math.max(60, Math.min(90, score - 3)), content: '性格节奏存在差异，但差异本身可以成为关系中的张力与新鲜感。多倾听对方的真实需求，可减少误解。' },
-        { key: 'palace',      title: '婚配宫位',   score: Math.max(60, Math.min(90, score - 5)), content: '婚配宫位整体可调，少数节点需要彼此体谅。在重要决定与生活节奏上多商量，宫位影响会被淡化。' },
-        { key: 'family',      title: '家庭和谐',   score: Math.max(60, Math.min(90, score - 2)), content: '家庭节奏的协同需要时间培养。建立稳定的相处仪式与分担机制，长远家庭氛围会非常温暖。' },
-      ],
-      advices: [
-        '每日抽出 15 分钟专心听对方分享当天的情绪与琐事。',
-        '在涉及双方家庭的事情上，留出足够沟通时间再做决定。',
-        '保持各自的兴趣与朋友圈，给关系留出呼吸空间。',
-        '建立属于你们的小仪式，增强长期的情感联结。',
-      ],
-      highlight: '你们的差异并非阻碍，而是彼此成长的机会，用心经营会愈发稳固。',
-    };
-  }
-
-  // 无论哪种路径，只要有 deepReportText 就挂上去
-  if (deepReportText && !structured.deepReport) {
-    structured.deepReport = deepReportText;
-  }
-
-  if (aiSource !== 'fallback') {
-    await setCache(cacheKey, {
-      dimensions: structured.dimensions,
-      advices: structured.advices,
-      highlight: structured.highlight,
-      deepReport: structured.deepReport,
-      analysis: rawText,
-    });
-  }
-
-  return { structured, rawText, aiSource };
 }
 
 // ═══════════════════════════════════════════════════
@@ -625,10 +651,13 @@ export async function POST(req: NextRequest) {
   }
 
   const url = new URL(req.url);
-  const aiOnly = url.searchParams.get('ai') === '1';
+  const aiParam = url.searchParams.get('ai');
+  const aiOnly = aiParam === '1';
+  const aiDeep = aiParam === 'deep';
+  const isAiRequest = aiOnly || aiDeep;
 
   // 仅在硬数据请求时消耗配额，AI 请求复用同一配额（视作同一次合婚的子操作）
-  if (!aiOnly) {
+  if (!isAiRequest) {
     const { useBaziQuota } = await import('@/lib/quota');
     const hasQuota = await useBaziQuota(session.user.id);
     if (!hasQuota) {
@@ -700,7 +729,7 @@ export async function POST(req: NextRequest) {
 
   const { score, hearts, level, details } = calculateScore(maleInfo, femaleInfo);
 
-  // ── ?ai=1：仅返回 AI 结构化分析 ────────────────────
+  // ── ?ai=1：仅返回 AI 结构化分析（约 10s） ────────────────────
   if (aiOnly) {
     const { structured, rawText, aiSource } = await runAIAnalysis({
       safeMaleName, safeFemaleName,
@@ -709,17 +738,27 @@ export async function POST(req: NextRequest) {
       maleSide, femaleSide, maleBazi, femaleBazi, score, level, details,
     });
 
-    console.log('[marriage:ai] deepReport length:', structured.deepReport?.length ?? 0, '| source:', aiSource);
     return NextResponse.json({
       score,
       dimensions: structured.dimensions,
       advices: structured.advices,
       highlight: structured.highlight,
-      deepReport: structured.deepReport || '',
       analysis: rawText,
       _source: aiSource,
-      _debug: { deepReportLen: structured.deepReport?.length ?? 0, rawTextPreview: rawText.slice(0, 100) },
     });
+  }
+
+  // ── ?ai=deep：仅返回深度命理报告（约 46s） ────────────────────
+  if (aiDeep) {
+    const { deepReport, aiSource } = await runDeepReport({
+      safeMaleName, safeFemaleName,
+      maleSide, femaleSide,
+      effectiveMaleDate: effectiveMaleDate as string,
+      effectiveFemaleDate: effectiveFemaleDate as string,
+      maleBazi, femaleBazi, score, level,
+    });
+
+    return NextResponse.json({ deepReport, _source: aiSource });
   }
 
   // ── 默认：仅返回硬数据（命盘+五行+十神+总分），不调 AI ──

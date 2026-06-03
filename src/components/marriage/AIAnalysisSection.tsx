@@ -18,7 +18,6 @@ interface AIAnalysisData {
   highlight: string;
   deepReport?: string;
   _source?: string;
-  _debug?: { deepReportLen: number; rawTextPreview?: string };
 }
 
 interface AIAnalysisSectionProps {
@@ -30,12 +29,14 @@ interface AIAnalysisSectionProps {
 
 export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysisDone }: AIAnalysisSectionProps) {
   const [loading, setLoading] = useState(false);
+  const [deepReportLoading, setDeepReportLoading] = useState(false);
   const [error, setError] = useState('');
   const [data, setData] = useState<AIAnalysisData | null>(() => {
     if (!initialData) return null;
     return { ...initialData, _source: initialData._source ?? 'local-cache' };
   });
   const prevPayloadRef = useRef<string>('');
+  const parsedRef = useRef<AIAnalysisData | null>(null);
 
   useEffect(() => {
     const key = JSON.stringify(payload);
@@ -51,6 +52,9 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
     if (loading) return;
     setLoading(true);
     setError('');
+
+    // 第一步：结构化分析（约 10s）
+    let parsed: AIAnalysisData;
     try {
       const res = await fetch('/api/bazi/marriage?ai=1', {
         method: 'POST',
@@ -62,21 +66,45 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
         throw new Error(j.error || j.message || `AI 分析失败 (${res.status})`);
       }
       const j = await res.json();
-      console.log('[AIAnalysis] deepReport length:', (j.deepReport || '').length, '| _debug:', j._debug);
-      const parsed: AIAnalysisData = {
+      parsed = {
         score: j.score,
         dimensions: Array.isArray(j.dimensions) ? j.dimensions : [],
         advices: Array.isArray(j.advices) ? j.advices : [],
         highlight: typeof j.highlight === 'string' ? j.highlight : '',
-        deepReport: typeof j.deepReport === 'string' ? j.deepReport : '',
+        deepReport: '',
         _source: typeof j._source === 'string' ? j._source : undefined,
-        _debug: j._debug,
       };
+      parsedRef.current = parsed;
       setData(parsed);
       onAnalysisDone?.(parsed);
     } catch (e) {
       setError(e instanceof Error ? e.message : '未知错误');
+      setLoading(false);
+      return;
+    }
+
+    // 第二步：深度命理报告（约 46s）— 失败静默，不影响主分析
+    setDeepReportLoading(true);
+    try {
+      const res2 = await fetch('/api/bazi/marriage?ai=deep', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (res2.ok) {
+        const j2 = await res2.json();
+        const deepReport = typeof j2.deepReport === 'string' ? j2.deepReport : '';
+        if (deepReport && parsedRef.current) {
+          const next: AIAnalysisData = { ...parsedRef.current, deepReport };
+          parsedRef.current = next;
+          setData(next);
+          onAnalysisDone?.(next);
+        }
+      }
+    } catch {
+      // 深度报告加载失败，静默处理
     } finally {
+      setDeepReportLoading(false);
       setLoading(false);
     }
   };
@@ -135,11 +163,6 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
 
       {data && (
         <div className="space-y-5">
-          {/* 临时 debug 信息 */}
-          <div className="text-xs text-[#1C1A16]/40 bg-[#FAF9F6] border border-dashed border-[#1C1A16]/15 rounded-lg px-3 py-2">
-            deepReport length: {data.deepReport?.length ?? 0} | source: {data._source || 'unknown'}
-            {data._debug?.rawTextPreview && <span> | err: {data._debug.rawTextPreview}</span>}
-          </div>
           {data._source && (
             <div className="flex justify-end mb-4">
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[#1C1A16]/10 bg-[#FAF9F6] text-[11px] text-[#1C1A16]/50">
@@ -248,6 +271,13 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
                   <p className="text-sm md:text-base text-[#1C1A16]/85 leading-7">{data.highlight}</p>
                 </div>
               </div>
+            </div>
+          )}
+
+          {data && !data.deepReport && deepReportLoading && (
+            <div className="rounded-2xl border border-[#E5E0D8] bg-white p-6 flex items-center justify-center gap-2 text-sm text-[#1C1A16]/55">
+              <Loader2 className="w-4 h-4 animate-spin text-[#C2762B]" />
+              深度命理报告生成中…
             </div>
           )}
 
