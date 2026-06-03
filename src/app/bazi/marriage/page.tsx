@@ -32,6 +32,27 @@ interface SideData {
   birthPlace: string;
 }
 
+const MARRIAGE_CACHE_KEY = 'marriage_last_query';
+
+interface MarriageCache {
+  maleData: SideData;
+  femaleData: SideData;
+  result: any;
+  payload: any;
+  savedAt: string;
+}
+
+function loadMarriageCache(): MarriageCache | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(MARRIAGE_CACHE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as MarriageCache;
+  } catch {
+    return null;
+  }
+}
+
 const SHICHEN_BY_HOUR: Record<number, string> = {
   0: '子时', 1: '丑时', 2: '丑时',
   3: '寅时', 4: '寅时',
@@ -361,11 +382,23 @@ const dimensionList = [
 ];
 
 export default function MarriagePage() {
-  const [maleData, setMaleData] = useState<SideData>(() => makeDefaultSide('male'));
-  const [femaleData, setFemaleData] = useState<SideData>(() => makeDefaultSide('female'));
+  const [maleData, setMaleData] = useState<SideData>(() => {
+    const cache = loadMarriageCache();
+    return cache?.maleData ?? makeDefaultSide('male');
+  });
+  const [femaleData, setFemaleData] = useState<SideData>(() => {
+    const cache = loadMarriageCache();
+    return cache?.femaleData ?? makeDefaultSide('female');
+  });
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
-  const [lastPayload, setLastPayload] = useState<any>(null);
+  const [result, setResult] = useState<any>(() => {
+    const cache = loadMarriageCache();
+    return cache?.result ?? null;
+  });
+  const [lastPayload, setLastPayload] = useState<any>(() => {
+    const cache = loadMarriageCache();
+    return cache?.payload ?? null;
+  });
   const [error, setError] = useState('');
 
   const updateMale = (patch: Partial<SideData>) => setMaleData(prev => ({ ...prev, ...patch }));
@@ -429,6 +462,18 @@ export default function MarriagePage() {
       const data = await res.json();
       setResult(data);
       setLastPayload(payload);
+      try {
+        const cache: MarriageCache = {
+          maleData,
+          femaleData,
+          result: data,
+          payload,
+          savedAt: new Date().toISOString(),
+        };
+        window.localStorage.setItem(MARRIAGE_CACHE_KEY, JSON.stringify(cache));
+      } catch {
+        // 忽略 localStorage 写入失败（如配额超限或隐身模式）
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : '未知错误');
     } finally {
@@ -741,7 +786,15 @@ export default function MarriagePage() {
                   {result.disclaimer}
                 </p>
 
-                <Button onClick={() => { setResult(null); setLastPayload(null); }} variant="secondary" className="w-full">
+                <Button onClick={() => {
+                  setResult(null);
+                  setLastPayload(null);
+                  try {
+                    window.localStorage.removeItem(MARRIAGE_CACHE_KEY);
+                  } catch {
+                    // 忽略
+                  }
+                }} variant="secondary" className="w-full">
                   重新测算
                 </Button>
               </div>
