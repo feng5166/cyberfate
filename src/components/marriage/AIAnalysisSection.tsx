@@ -58,7 +58,7 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
       });
       if (!res.ok) {
         const j = await res.json().catch(() => ({}));
-        throw new Error(j.error || j.message || 'AI 分析失败');
+        throw new Error(j.error || j.message || `AI 分析失败 (${res.status})`);
       }
       const j = await res.json();
       const parsed: AIAnalysisData = {
