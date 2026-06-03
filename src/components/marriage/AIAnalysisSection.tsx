@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Sparkles, Users, Home, HeartHandshake, Check, HeartPulse, Loader2, ScrollText } from 'lucide-react';
+import { Sparkles, Users, Home, HeartHandshake, Check, HeartPulse, Loader2, ScrollText, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
 interface Dimension {
@@ -116,6 +116,15 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
 
       {data && (
         <div className="space-y-5">
+          <div className="flex justify-end">
+            <button
+              onClick={() => setData(null)}
+              className="flex items-center gap-1.5 text-xs text-[#1C1A16]/40 hover:text-[#C2762B] transition-colors"
+            >
+              <RefreshCw className="w-3 h-3" />
+              重新分析
+            </button>
+          </div>
           {data.dimensions.length > 0 && (
             <div className="grid gap-4 md:grid-cols-2">
               {data.dimensions.map((dim, idx) => {
