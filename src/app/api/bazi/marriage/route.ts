@@ -416,7 +416,7 @@ async function runAIAnalysis(params: {
     maleSide, femaleSide, maleBazi, femaleBazi, score, level, details,
   } = params;
 
-  const cacheKey = generateCacheKey('marriage:ai:v5', { male: maleBazi, female: femaleBazi });
+  const cacheKey = generateCacheKey('marriage:ai:v6', { male: maleBazi, female: femaleBazi });
   const cached = await getCache(cacheKey);
   if (cached && cached.dimensions && Array.isArray(cached.dimensions)) {
     return {
@@ -468,46 +468,104 @@ ${details.join('\n')}
     "<建议4>",
     "<建议5>"
   ],
-  "highlight": "<一句话概括这对组合最大的优势，约30-60字>",
-  "deepReport": "<深度报告正文，严格按以下四章节格式输出，总字数1200-1800字，用\\n分隔行，不要使用Markdown符号（不要##、**、*、-），章节标题用中文数字如「一、」开头，子标题用「1.」「2.」开头，要点用「·」开头：\\n\\n一、双方命局独立分析\\n\\n1. ${safeMaleName}（乾造）\\n· 日主强弱：[基于八字${maleBazi}分析日主五行强弱，喜忌神]\\n· 婚姻宫与配偶星：[分析日支、财星或官星的状态与婚姻信息]\\n· 刑冲关系：[分析地支刑冲对命局与婚姻的影响]\\n\\n2. ${safeFemaleName}（坤造）\\n· 日主强弱：[基于八字${femaleBazi}分析日主五行强弱，喜忌神]\\n· 婚姻宫与配偶星：[分析日支、官星或财星的状态与婚姻信息]\\n· 刑冲关系：[分析地支刑冲对命局与婚姻的影响]\\n\\n二、双方合盘互动解析\\n\\n1. 日柱配合分析（婚姻核心）\\n[分析双方日天干地支的相合相冲，以及对婚姻质量的影响，约150字]\\n\\n2. 十神互补分析\\n[分析双方命局十神结构的互补与碰撞，约100字]\\n\\n3. 潜在矛盾点\\n[指出1-2个需要注意的命理隐患，约100字]\\n\\n三、大运流年对婚姻的影响\\n\\n当前大运互动（${new Date().getFullYear()}年）\\n[分析双方当前大运对婚姻的具体影响，约150字]\\n\\n流年契机（${new Date().getFullYear()}年）\\n[分析当前流年对双方婚姻宫的引动，约100字]\\n\\n未来关键节点\\n[列出未来2-3年需要注意的关键年份与事项，约100字]\\n\\n四、结论与建议\\n\\n[总结这对组合的整体命理特质与婚姻基调，约100字]\\n\\n具体建议：\\n1. [建议一，约50字]\\n2. [建议二，约50字]\\n3. [建议三，约50字]\\n4. [建议四，约50字]>"
+  "highlight": "<一句话概括这对组合最大的优势，约30-60字>"
 }
 
 要求：
 - dimensions 各维度 score 取 0-100 整数，总体分布与综合分 ${score} 相关。
-- deepReport 是纯文本长报告，用\\n换行，禁止任何Markdown语法（##/**/*/-）。
 - 语气专业、温和、有画面感，像资深命理师当面解读。
 - advices 给 3-5 条，每条独立成句，不带序号。
 - 直接输出 JSON，不要 \`\`\`json 围栏，不要前言。`;
+
+  const deepReportPrompt = `请为以下这对男女出具深度八字合婚命理报告，总字数1200-1800字：
+
+男方：${safeMaleName}，生于${maleDateLine}，八字：${maleBazi}
+女方：${safeFemaleName}，生于${femaleDateLine}，八字：${femaleBazi}
+综合匹配度：${score}分（${level}）
+
+报告结构：
+一、双方命局独立分析
+1. ${safeMaleName}（乾造）
+· 日主强弱：分析日主五行强弱，喜忌神
+· 婚姻宫与配偶星：分析日支、财星或官星
+· 刑冲关系：地支刑冲对婚姻的影响
+
+2. ${safeFemaleName}（坤造）
+· 日主强弱：分析日主五行强弱，喜忌神
+· 婚姻宫与配偶星：分析日支、官星或财星
+· 刑冲关系：地支刑冲对婚姻的影响
+
+二、双方合盘互动解析
+1. 日柱配合分析（婚姻核心，约150字）
+2. 十神互补分析（约100字）
+3. 潜在矛盾点（1-2个命理隐患，约100字）
+
+三、大运流年对婚姻的影响
+当前大运互动（${new Date().getFullYear()}年，约150字）
+流年契机（${new Date().getFullYear()}年，约100字）
+未来关键节点（未来2-3年，约100字）
+
+四、结论与建议
+总结（约100字）
+具体建议：
+1. 建议一（约50字）
+2. 建议二（约50字）
+3. 建议三（约50字）
+4. 建议四（约50字）`;
 
   let structured: Structured | null = null;
   let rawText = '';
   let aiSource = 'fallback';
 
   try {
-    const aiResponse = await fetch(`${AI_BASE_URL}/chat/completions`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}` },
-      body: JSON.stringify({
-        model: PRIMARY_MODEL,
-        max_tokens: 6000,
-        temperature: 0.4,
-        enable_thinking: false,
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: '你是赛博命理师，输出严格 JSON，不带任何额外文字或代码围栏。' },
-          { role: 'user', content: prompt },
-        ],
+    const [structuredRes, deepReportRes] = await Promise.all([
+      fetch(`${AI_BASE_URL}/chat/completions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}` },
+        body: JSON.stringify({
+          model: PRIMARY_MODEL,
+          max_tokens: 3000,
+          temperature: 0.4,
+          enable_thinking: false,
+          response_format: { type: 'json_object' },
+          messages: [
+            { role: 'system', content: '你是赛博命理师，输出严格 JSON，不带任何额外文字或代码围栏。' },
+            { role: 'user', content: prompt },
+          ],
+        }),
       }),
-    });
+      fetch(`${AI_BASE_URL}/chat/completions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}` },
+        body: JSON.stringify({
+          model: PRIMARY_MODEL,
+          max_tokens: 4000,
+          temperature: 0.5,
+          enable_thinking: false,
+          messages: [
+            { role: 'system', content: '你是赛博命理师，请输出深度八字合婚命理报告，纯文本格式，不要任何Markdown符号（不要##、**、*、-）。章节标题用中文数字如「一、」开头，子标题用「1.」「2.」开头，要点用「·」开头。' },
+            { role: 'user', content: deepReportPrompt },
+          ],
+        }),
+      }),
+    ]);
 
-    if (aiResponse.ok) {
-      const aiData = await aiResponse.json();
+    let deepReportText = '';
+    if (deepReportRes.ok) {
+      const drData = await deepReportRes.json();
+      deepReportText = drData.choices?.[0]?.message?.content || '';
+    }
+
+    if (structuredRes.ok) {
+      const aiData = await structuredRes.json();
       rawText = aiData.choices?.[0]?.message?.content || '';
       structured = tryParseStructured(rawText, score);
       if (structured) {
+        structured.deepReport = deepReportText || undefined;
         aiSource = 'deepseek';
       } else {
         structured = buildFallbackFromText(rawText, score);
+        structured.deepReport = deepReportText || undefined;
         aiSource = 'deepseek-fallback';
       }
     }
