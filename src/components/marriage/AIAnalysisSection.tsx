@@ -371,11 +371,28 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
                 {data.deepReport.split('\n').map((line, i) => {
                   const trimmed = line.trim();
                   if (!trimmed) return <div key={i} className="h-3" />;
+                  // 章节标题：一、二、三、四、五、
                   if (/^[一二三四五六七八九十]、/.test(trimmed)) {
                     return (
                       <h4 key={i} className="text-base font-semibold text-[#C2762B] mt-6 mb-3 first:mt-0">
                         {trimmed}
                       </h4>
+                    );
+                  }
+                  // 建议格式：去掉 "a. 建议一：" 前缀，第一个句号/冒号前的内容加粗
+                  const adviceMatch = trimmed.match(/^[a-dA-D]\.\s*(?:建议[一二三四])?\s*[：:]\s*(.+)/);
+                  if (adviceMatch) {
+                    const rest = adviceMatch[1];
+                    // 找第一个句号或逗号作为标题结束
+                    const sepIdx = rest.search(/[。，,]/);
+                    const titleEnd = sepIdx > 0 && sepIdx <= 15 ? sepIdx : Math.min(rest.length, 12);
+                    const title = rest.slice(0, titleEnd);
+                    const body = rest.slice(titleEnd).replace(/^[。，,]/, '').trim();
+                    return (
+                      <div key={i} className="mb-4">
+                        <span className="text-sm font-semibold text-[#1C1A16]">{title}</span>
+                        {body && <span className="text-sm text-[#1C1A16]/80 leading-7">。{body}</span>}
+                      </div>
                     );
                   }
                   if (/^[0-9]+\.\s/.test(trimmed)) {
@@ -385,9 +402,9 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
                       </p>
                     );
                   }
-                  if (/^(当前|流年|未来|具体建议)/.test(trimmed)) {
+                  if (/^(当前|流年|未来|具体建议|实用建议)/.test(trimmed)) {
                     return (
-                      <p key={i} className="text-sm text-[#1C1A16]/80 leading-7 mb-2">
+                      <p key={i} className="text-sm font-medium text-[#1C1A16]/70 leading-7 mb-1">
                         {trimmed}
                       </p>
                     );
