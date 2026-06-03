@@ -750,6 +750,7 @@ export async function POST(req: NextRequest) {
 
   // ── ?ai=deep：SSE streaming 深度命理报告 ────────────────────
   if (aiDeep) {
+    try {
     const maleDateLine = maleSide.isLunar ? `${effectiveMaleDate}（农历）` : effectiveMaleDate;
     const femaleDateLine = femaleSide.isLunar ? `${effectiveFemaleDate}（农历）` : effectiveFemaleDate;
 
@@ -879,6 +880,10 @@ export async function POST(req: NextRequest) {
         'Connection': 'keep-alive',
       },
     });
+    } catch (deepErr) {
+      console.error('[aiDeep] error:', deepErr);
+      return NextResponse.json({ error: String(deepErr instanceof Error ? deepErr.message : deepErr), deepReport: '' }, { status: 500 });
+    }
   }
 
   // ── 默认：仅返回硬数据（命盘+五行+十神+总分），不调 AI ──
