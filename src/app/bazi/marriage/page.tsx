@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { HeartPulse, Sparkles, ScrollText, Compass, History, ChevronDown, User } from 'lucide-react';
+import { Sparkles, ScrollText, Compass, History, ChevronDown, User } from 'lucide-react';
 import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -440,15 +440,11 @@ export default function MarriagePage() {
     <div className="min-h-screen bg-[#FAF9F6] flex flex-col">
       <div className="flex-1 pb-20">
         <div className="pt-12 pb-10 text-center px-4">
-          <div className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full border border-[#1C1A16]/10 bg-white/80 text-sm text-[#1C1A16]/70">
-            <HeartPulse className="w-4 h-4 text-[#B7152A]" />
-            <span>AI 八字合婚</span>
-          </div>
-          <h1 className="mt-4 text-3xl md:text-[40px] font-semibold text-[#1C1A16] tracking-wide">
-            八字合婚分析
+          <h1 className="font-display text-h1 md:text-[44px] text-[#1C1A16]" style={{ letterSpacing: '10px' }}>
+            八字合婚
           </h1>
           <p className="mt-3 text-base text-[#1C1A16]/70">
-            输入双方出生信息，了解缘分契合度与婚姻走势
+            智能分析双方八字契合度，提供姻缘参考
           </p>
         </div>
 
