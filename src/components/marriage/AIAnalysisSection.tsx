@@ -17,6 +17,7 @@ interface AIAnalysisData {
   advices: string[];
   highlight: string;
   deepReport?: string;
+  _source?: string;
 }
 
 interface AIAnalysisSectionProps {
@@ -29,7 +30,10 @@ interface AIAnalysisSectionProps {
 export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysisDone }: AIAnalysisSectionProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [data, setData] = useState<AIAnalysisData | null>(initialData ?? null);
+  const [data, setData] = useState<AIAnalysisData | null>(() => {
+    if (!initialData) return null;
+    return { ...initialData, _source: initialData._source ?? 'local-cache' };
+  });
   const prevPayloadRef = useRef<string>('');
 
   useEffect(() => {
@@ -63,6 +67,7 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
         advices: Array.isArray(j.advices) ? j.advices : [],
         highlight: typeof j.highlight === 'string' ? j.highlight : '',
         deepReport: typeof j.deepReport === 'string' ? j.deepReport : '',
+        _source: typeof j._source === 'string' ? j._source : undefined,
       };
       setData(parsed);
       onAnalysisDone?.(parsed);
@@ -127,6 +132,30 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
 
       {data && (
         <div className="space-y-5">
+          {data._source && (
+            <div className="flex justify-end mb-4">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[#1C1A16]/10 bg-[#FAF9F6] text-[11px] text-[#1C1A16]/50">
+                {data._source === 'local-cache' && (
+                  <>
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#1C1A16]/30 shrink-0" />
+                    本地缓存
+                  </>
+                )}
+                {data._source === 'cache' && (
+                  <>
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#22C55E] shrink-0" />
+                    服务端缓存
+                  </>
+                )}
+                {(data._source === 'deepseek' || data._source === 'deepseek-fallback') && (
+                  <>
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#C2762B] shrink-0" />
+                    DeepSeek
+                  </>
+                )}
+              </span>
+            </div>
+          )}
           <div className="flex justify-end">
             <button
               onClick={() => setData(null)}
