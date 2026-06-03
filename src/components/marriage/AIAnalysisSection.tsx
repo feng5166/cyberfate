@@ -256,30 +256,16 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
                     key={dim.key || idx}
                     className={`rounded-2xl border border-[#E5E0D8] ${altBg} p-5 md:p-6`}
                   >
-                    <div className="flex items-center justify-between gap-3 mb-3">
-                      <div className="flex items-center gap-2.5">
-                        <span className="w-9 h-9 rounded-full bg-[#FAF3EC] border border-[#C2762B]/20 flex items-center justify-center">
-                          <Icon className="w-4 h-4 text-[#C2762B]" />
-                        </span>
-                        <h4
-                          className="text-base md:text-lg font-medium text-[#1C1A16]"
-                          style={{ fontFamily: 'var(--font-cormorant), Cormorant Garamond, serif' }}
-                        >
-                          {dim.title}
-                        </h4>
-                      </div>
-                      <span className="text-sm font-semibold text-[#C2762B] tabular-nums">
-                        {dimScore}
-                        <span className="text-xs text-[#1C1A16]/40 font-normal">/100</span>
+                    <div className="flex items-center gap-2.5 mb-4">
+                      <span className="w-9 h-9 rounded-full bg-[#FAF3EC] border border-[#C2762B]/20 flex items-center justify-center">
+                        <Icon className="w-4 h-4 text-[#C2762B]" />
                       </span>
-                    </div>
-                    <div className="mb-4">
-                      <div className="h-1.5 w-full rounded-full bg-[#E5E0D8] overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-[#C2762B] transition-all duration-700 ease-out"
-                          style={{ width: `${dimScore}%` }}
-                        />
-                      </div>
+                      <h4
+                        className="text-base md:text-lg font-medium text-[#1C1A16]"
+                        style={{ fontFamily: 'var(--font-cormorant), Cormorant Garamond, serif' }}
+                      >
+                        {dim.title}
+                      </h4>
                     </div>
                     <p className="text-sm text-[#1C1A16]/80 leading-7 whitespace-pre-wrap">
                       {dim.content}
