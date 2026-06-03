@@ -519,62 +519,60 @@ ${details.join('\n')}
   let deepReportText = '';  // 提升到 try 块外，确保 fallback 路径也能访问
 
   try {
-    const [structuredRes, deepReportRes] = await Promise.all([
-      fetch(`${AI_BASE_URL}/chat/completions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}` },
-        body: JSON.stringify({
-          model: PRIMARY_MODEL,
-          max_tokens: 3000,
-          temperature: 0.4,
-          enable_thinking: false,
-          response_format: { type: 'json_object' },
-          messages: [
-            { role: 'system', content: '你是赛博命理师，输出严格 JSON，不带任何额外文字或代码围栏。' },
-            { role: 'user', content: prompt },
-          ],
-        }),
+    // 第一路：结构化 JSON 分析
+    const structuredRes = await fetch(`${AI_BASE_URL}/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}` },
+      body: JSON.stringify({
+        model: PRIMARY_MODEL,
+        max_tokens: 3000,
+        temperature: 0.4,
+        enable_thinking: false,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: '你是赛博命理师，输出严格 JSON，不带任何额外文字或代码围栏。' },
+          { role: 'user', content: prompt },
+        ],
       }),
-      fetch(`${AI_BASE_URL}/chat/completions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}` },
-        body: JSON.stringify({
-          model: PRIMARY_MODEL,
-          max_tokens: 4000,
-          temperature: 0.5,
-          enable_thinking: false,
-          messages: [
-            { role: 'system', content: '你是赛博命理师，请输出深度八字合婚命理报告，纯文本格式，不要任何Markdown符号（不要##、**、*、-）。章节标题用中文数字如「一、」开头，子标题用「1.」「2.」开头，要点用「·」开头。' },
-            { role: 'user', content: deepReportPrompt },
-          ],
-        }),
-      }),
-    ]);
-
-    // deepReportText 已在 try 块外声明
-    if (deepReportRes.ok) {
-      const drData = await deepReportRes.json();
-      const raw = drData.choices?.[0]?.message?.content || '';
-      // 过滤掉可能混入的 thinking 标签
-      deepReportText = raw.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
-    } else {
-      const errBody = await deepReportRes.text().catch(() => '');
-      console.error('deepReport AI call failed:', deepReportRes.status, errBody.slice(0, 200));
-    }
+    });
 
     if (structuredRes.ok) {
       const aiData = await structuredRes.json();
       rawText = aiData.choices?.[0]?.message?.content || '';
       structured = tryParseStructured(rawText, score);
       if (structured) {
-        structured.deepReport = deepReportText || undefined;
         aiSource = 'deepseek';
       } else {
         structured = buildFallbackFromText(rawText, score);
-        structured.deepReport = deepReportText || undefined;
         aiSource = 'deepseek-fallback';
       }
     }
+
+    // 第二路：深度命理报告（串行，避免并发问题）
+    const deepReportRes = await fetch(`${AI_BASE_URL}/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}` },
+      body: JSON.stringify({
+        model: PRIMARY_MODEL,
+        max_tokens: 4000,
+        temperature: 0.5,
+        enable_thinking: false,
+        messages: [
+          { role: 'system', content: '你是赛博命理师，请输出深度八字合婚命理报告，纯文本格式，不要任何Markdown符号（不要##、**、*、-）。章节标题用中文数字如「一、」开头，子标题用「1.」「2.」开头，要点用「·」开头。' },
+          { role: 'user', content: deepReportPrompt },
+        ],
+      }),
+    });
+
+    if (deepReportRes.ok) {
+      const drData = await deepReportRes.json();
+      const raw = drData.choices?.[0]?.message?.content || '';
+      deepReportText = raw.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+    } else {
+      const errBody = await deepReportRes.text().catch(() => '');
+      console.error('deepReport AI call failed:', deepReportRes.status, errBody.slice(0, 200));
+    }
+
   } catch (err) {
     console.error('AI call failed:', err);
     rawText = String(err instanceof Error ? err.message : err);
