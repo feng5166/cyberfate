@@ -560,7 +560,7 @@ async function runDeepReport(params: {
     effectiveMaleDate, effectiveFemaleDate, maleBazi, femaleBazi, score, level,
   } = params;
 
-  const cacheKey = generateCacheKey('marriage:ai:deep:v1', { male: maleBazi, female: femaleBazi });
+  const cacheKey = generateCacheKey('marriage:ai:deep:v2', { male: maleBazi, female: femaleBazi });
   const cached = await getCache(cacheKey);
   if (cached && typeof cached.deepReport === 'string' && cached.deepReport.length > 0) {
     return { deepReport: cached.deepReport, aiSource: 'cache' };
@@ -753,12 +753,12 @@ export async function POST(req: NextRequest) {
     const maleDateLine = maleSide.isLunar ? `${effectiveMaleDate}（农历）` : effectiveMaleDate;
     const femaleDateLine = femaleSide.isLunar ? `${effectiveFemaleDate}（农历）` : effectiveFemaleDate;
 
-    const cacheKey = generateCacheKey('marriage:ai:deep:v1', { male: maleBazi, female: femaleBazi });
+    const cacheKey = generateCacheKey('marriage:ai:deep:v2', { male: maleBazi, female: femaleBazi });
     const encoder = new TextEncoder();
 
     // 缓存命中：以 SSE 格式一次性推送，前端逻辑统一
     const cached = await getCache(cacheKey);
-    if (cached && typeof cached.deepReport === 'string' && cached.deepReport.length > 0) {
+    if (cached && typeof cached.deepReport === 'string' && cached.deepReport.length > 200) {
       const cachedText = cached.deepReport;
       const cacheStream = new ReadableStream({
         start(controller) {
