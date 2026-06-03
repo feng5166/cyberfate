@@ -516,6 +516,7 @@ ${details.join('\n')}
   let structured: Structured | null = null;
   let rawText = '';
   let aiSource = 'fallback';
+  let deepReportText = '';  // 提升到 try 块外，确保 fallback 路径也能访问
 
   try {
     const [structuredRes, deepReportRes] = await Promise.all([
@@ -549,7 +550,7 @@ ${details.join('\n')}
       }),
     ]);
 
-    let deepReportText = '';
+    // deepReportText 已在 try 块外声明
     if (deepReportRes.ok) {
       const drData = await deepReportRes.json();
       const raw = drData.choices?.[0]?.message?.content || '';
@@ -593,6 +594,11 @@ ${details.join('\n')}
       ],
       highlight: '你们的差异并非阻碍，而是彼此成长的机会，用心经营会愈发稳固。',
     };
+  }
+
+  // 无论哪种路径，只要有 deepReportText 就挂上去
+  if (deepReportText && !structured.deepReport) {
+    structured.deepReport = deepReportText;
   }
 
   if (aiSource !== 'fallback') {
