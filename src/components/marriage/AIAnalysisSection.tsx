@@ -24,15 +24,13 @@ interface AIAnalysisSectionProps {
   totalScore: number;
   initialData?: AIAnalysisData | null;
   onAnalysisDone?: (data: AIAnalysisData) => void;
-  autoStart?: boolean;
 }
 
-export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysisDone, autoStart }: AIAnalysisSectionProps) {
+export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysisDone }: AIAnalysisSectionProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [data, setData] = useState<AIAnalysisData | null>(initialData ?? null);
   const prevPayloadRef = useRef<string>('');
-  const hasAutoStarted = useRef(false);
 
   useEffect(() => {
     const key = JSON.stringify(payload);
@@ -43,42 +41,6 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
     }
     prevPayloadRef.current = key;
   }, [payload]);
-
-  useEffect(() => {
-    if (!autoStart || data || loading) return;
-    if (hasAutoStarted.current) return;
-    hasAutoStarted.current = true;
-    (async () => {
-      setLoading(true);
-      setError('');
-      try {
-        const res = await fetch('/api/bazi/marriage?ai=1', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-        if (!res.ok) {
-          const j = await res.json().catch(() => ({}));
-          throw new Error(j.error || j.message || 'AI 分析失败');
-        }
-        const j = await res.json();
-        const parsed: AIAnalysisData = {
-          score: j.score,
-          dimensions: Array.isArray(j.dimensions) ? j.dimensions : [],
-          advices: Array.isArray(j.advices) ? j.advices : [],
-          highlight: typeof j.highlight === 'string' ? j.highlight : '',
-          deepReport: typeof j.deepReport === 'string' ? j.deepReport : '',
-        };
-        setData(parsed);
-        onAnalysisDone?.(parsed);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : '未知错误');
-      } finally {
-        setLoading(false);
-      }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const handleStart = async () => {
     if (loading) return;
