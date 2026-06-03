@@ -5,7 +5,7 @@ import { sanitizeUserInput } from '@/lib/utils/sanitize';
 
 import { authOptions } from '@/lib/auth';
 import { calculateBazi as realCalculateBazi } from '@/lib/bazi';
-import { AI_BASE_URL, PRIMARY_MODEL } from '@/lib/ai/models';
+import { AI_BASE_URL, PRIMARY_MODEL, FALLBACK_MODEL } from '@/lib/ai/models';
 import {
   calcSideShishen,
   buildShishenSummary,
@@ -538,10 +538,9 @@ ${details.join('\n')}
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}` },
         body: JSON.stringify({
-          model: PRIMARY_MODEL,
+          model: FALLBACK_MODEL,
           max_tokens: 4000,
           temperature: 0.5,
-          enable_thinking: false,
           messages: [
             { role: 'system', content: '你是赛博命理师，请输出深度八字合婚命理报告，纯文本格式，不要任何Markdown符号（不要##、**、*、-）。章节标题用中文数字如「一、」开头，子标题用「1.」「2.」开头，要点用「·」开头。' },
             { role: 'user', content: deepReportPrompt },
@@ -553,7 +552,12 @@ ${details.join('\n')}
     let deepReportText = '';
     if (deepReportRes.ok) {
       const drData = await deepReportRes.json();
-      deepReportText = drData.choices?.[0]?.message?.content || '';
+      const raw = drData.choices?.[0]?.message?.content || '';
+      // 过滤掉可能混入的 thinking 标签
+      deepReportText = raw.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+    } else {
+      const errBody = await deepReportRes.text().catch(() => '');
+      console.error('deepReport AI call failed:', deepReportRes.status, errBody.slice(0, 200));
     }
 
     if (structuredRes.ok) {
