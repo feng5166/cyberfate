@@ -300,6 +300,9 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
             </div>
           )}
 
+          {/* temp debug */}
+          <div className="text-[10px] text-[#1C1A16]/30 px-1">dr_len={data.deepReport?.length ?? 0} drLoading={String(deepReportLoading)}</div>
+
           {!data.deepReport && deepReportLoading && (
             <div className="rounded-2xl border border-[#E5E0D8] bg-white p-6 flex items-center justify-center gap-2 text-sm text-[#1C1A16]/55">
               <Loader2 className="w-4 h-4 animate-spin text-[#C2762B]" />
