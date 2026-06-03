@@ -12,6 +12,7 @@ interface QAMessage {
 const FALLBACK_ANSWER = '当前回答服务繁忙，请稍后再试。从命理总体看，双方仍可通过尊重与坦诚沟通持续磨合，把握好分寸便能携手前行。';
 
 export async function POST(req: NextRequest) {
+  try {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: '请先登录' }, { status: 401 });
@@ -119,4 +120,8 @@ ${typeof score === 'number' ? `综合匹配度：${score}分（${level || ''}）
     answer,
     _source: aiSource,
   });
+  } catch (fatalErr) {
+    console.error('[marriage qa] fatal error:', fatalErr);
+    return NextResponse.json({ error: String(fatalErr instanceof Error ? fatalErr.message : fatalErr) }, { status: 500 });
+  }
 }
