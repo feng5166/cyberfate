@@ -560,7 +560,7 @@ async function runDeepReport(params: {
     effectiveMaleDate, effectiveFemaleDate, maleBazi, femaleBazi, score, level,
   } = params;
 
-  const cacheKey = generateCacheKey('marriage:ai:deep:v2', { male: maleBazi, female: femaleBazi });
+  const cacheKey = generateCacheKey('marriage:ai:deep:v3', { male: maleBazi, female: femaleBazi });
   const cached = await getCache(cacheKey);
   if (cached && typeof cached.deepReport === 'string' && cached.deepReport.length > 0) {
     return { deepReport: cached.deepReport, aiSource: 'cache' };
@@ -569,7 +569,7 @@ async function runDeepReport(params: {
   const maleDateLine = maleSide.isLunar ? `${effectiveMaleDate}（农历）` : effectiveMaleDate;
   const femaleDateLine = femaleSide.isLunar ? `${effectiveFemaleDate}（农历）` : effectiveFemaleDate;
 
-  const deepReportPrompt = `请为以下这对男女出具深度八字合婚命理报告，总字数1200-1800字：
+  const deepReportPrompt = `请为以下这对男女出具深度八字合婚命理报告，总字数600-800字：
 
 男方：${safeMaleName}，生于${maleDateLine}，八字：${maleBazi}
 女方：${safeFemaleName}，生于${femaleDateLine}，八字：${femaleBazi}
@@ -588,22 +588,22 @@ async function runDeepReport(params: {
 · 刑冲关系：地支刑冲对婚姻的影响
 
 二、双方合盘互动解析
-1. 日柱配合分析（婚姻核心，约150字）
-2. 十神互补分析（约100字）
-3. 潜在矛盾点（1-2个命理隐患，约100字）
+1. 日柱配合分析（婚姻核心，约80字）
+2. 十神互补分析（约60字）
+3. 潜在矛盾点（1-2个命理隐患，约60字）
 
 三、大运流年对婚姻的影响
-当前大运互动（${new Date().getFullYear()}年，约150字）
-流年契机（${new Date().getFullYear()}年，约100字）
-未来关键节点（未来2-3年，约100字）
+当前大运互动（${new Date().getFullYear()}年，约80字）
+流年契机（${new Date().getFullYear()}年，约60字）
+未来关键节点（未来2-3年，约60字）
 
 四、结论与建议
-总结（约100字）
+总结（约60字）
 具体建议：
-1. 建议一（约50字）
-2. 建议二（约50字）
-3. 建议三（约50字）
-4. 建议四（约50字）`;
+1. 建议一（约30字）
+2. 建议二（约30字）
+3. 建议三（约30字）
+4. 建议四（约30字）`;
 
   try {
     const deepReportRes = await fetch(`${AI_BASE_URL}/chat/completions`, {
@@ -611,7 +611,7 @@ async function runDeepReport(params: {
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}` },
       body: JSON.stringify({
         model: PRIMARY_MODEL,
-        max_tokens: 4000,
+        max_tokens: 2000,
         temperature: 0.5,
         enable_thinking: false,
         messages: [
@@ -753,7 +753,7 @@ export async function POST(req: NextRequest) {
     const maleDateLine = maleSide.isLunar ? `${effectiveMaleDate}（农历）` : effectiveMaleDate;
     const femaleDateLine = femaleSide.isLunar ? `${effectiveFemaleDate}（农历）` : effectiveFemaleDate;
 
-    const cacheKey = generateCacheKey('marriage:ai:deep:v2', { male: maleBazi, female: femaleBazi });
+    const cacheKey = generateCacheKey('marriage:ai:deep:v3', { male: maleBazi, female: femaleBazi });
     const encoder = new TextEncoder();
 
     // 缓存命中：以 SSE 格式一次性推送，前端逻辑统一
@@ -775,7 +775,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const deepReportPrompt = `请为以下这对男女出具深度八字合婚命理报告，总字数1200-1800字：
+    const deepReportPrompt = `请为以下这对男女出具深度八字合婚命理报告，总字数600-800字：
 
 男方：${safeMaleName}，生于${maleDateLine}，八字：${maleBazi}
 女方：${safeFemaleName}，生于${femaleDateLine}，八字：${femaleBazi}
@@ -794,22 +794,22 @@ export async function POST(req: NextRequest) {
 · 刑冲关系：地支刑冲对婚姻的影响
 
 二、双方合盘互动解析
-1. 日柱配合分析（婚姻核心，约150字）
-2. 十神互补分析（约100字）
-3. 潜在矛盾点（1-2个命理隐患，约100字）
+1. 日柱配合分析（婚姻核心，约80字）
+2. 十神互补分析（约60字）
+3. 潜在矛盾点（1-2个命理隐患，约60字）
 
 三、大运流年对婚姻的影响
-当前大运互动（${new Date().getFullYear()}年，约150字）
-流年契机（${new Date().getFullYear()}年，约100字）
-未来关键节点（未来2-3年，约100字）
+当前大运互动（${new Date().getFullYear()}年，约80字）
+流年契机（${new Date().getFullYear()}年，约60字）
+未来关键节点（未来2-3年，约60字）
 
 四、结论与建议
-总结（约100字）
+总结（约60字）
 具体建议：
-1. 建议一（约50字）
-2. 建议二（约50字）
-3. 建议三（约50字）
-4. 建议四（约50字）`;
+1. 建议一（约30字）
+2. 建议二（约30字）
+3. 建议三（约30字）
+4. 建议四（约30字）`;
 
     const aiRes = await fetch(`${AI_BASE_URL}/chat/completions`, {
       method: 'POST',
@@ -819,7 +819,7 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         model: PRIMARY_MODEL,
-        max_tokens: 4000,
+        max_tokens: 2000,
         temperature: 0.5,
         enable_thinking: false,
         stream: true,
