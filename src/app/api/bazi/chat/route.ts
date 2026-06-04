@@ -18,7 +18,14 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: 'LOGIN_REQUIRED', message: '请登录后使用' }, { status: 401 });
     }
 
-    const isVip = await isUserVip(session.user.id);
+    let isVip = false;
+    try {
+      isVip = await isUserVip(session.user.id);
+    } catch (vipErr) {
+      const msg = vipErr instanceof Error ? vipErr.message : String(vipErr);
+      console.error('[bazi/chat] isUserVip error:', msg);
+      return Response.json({ error: '服务暂时不可用，请稍后重试' }, { status: 503 });
+    }
     if (!isVip) {
       return Response.json({ error: 'SUBSCRIPTION_REQUIRED', message: '此功能需要订阅会员' }, { status: 403 });
     }
@@ -129,7 +136,10 @@ ${JSON.stringify(baziData, null, 2)}
       },
     });
   } catch (error) {
-    logger.error(SERVICE, 'Chat API error', error instanceof Error ? error : undefined);
-    return Response.json({ error: '服务器错误' }, { status: 500 });
+    const errMsg = error instanceof Error ? error.message : String(error);
+    const errStack = error instanceof Error ? error.stack : undefined;
+    logger.error(SERVICE, `Chat API fatal error: ${errMsg}`, error instanceof Error ? error : undefined);
+    console.error('[bazi/chat] Fatal error:', errMsg, errStack);
+    return Response.json({ error: '服务器错误', detail: errMsg }, { status: 500 });
   }
 }
