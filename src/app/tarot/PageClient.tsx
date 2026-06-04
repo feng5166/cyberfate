@@ -3,7 +3,8 @@
 import dynamic from 'next/dynamic';
 import { Footer } from '@/components/layout/Footer';
 import { AiDisclaimer } from '@/components/ui/AiDisclaimer';
-import { ChevronDown, ChevronUp, Share2, Sparkles, X } from 'lucide-react';
+import { OracleLoading } from '@/components/ui/OracleLoading';
+import { ChevronDown, ChevronUp, Share2, X } from 'lucide-react';
 import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { useEffect, useRef, useState } from 'react';
@@ -138,6 +139,7 @@ export default function TarotPage() {
   const [mode, setMode] = useState<ModeId>('classic');
   const [question, setQuestion] = useState('');
   const [loading, setLoading] = useState(false);
+  const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<TarotDrawResult | null>(null);
   const [detailedExpanded, setDetailedExpanded] = useState(true);
@@ -248,8 +250,11 @@ export default function TarotPage() {
         }),
       });
 
-      if (!res.ok) {
-        const data = await res.json();
+      if (!res.ok || !res.body) {
+        let data: { error?: string } = {};
+        try {
+          data = await res.json();
+        } catch {}
         if (data.error === 'VIP_REQUIRED') {
           setError('凯尔特十字牌阵为会员专属功能，升级后即可使用。');
         } else if (data.error === 'QUOTA_EXCEEDED') {
@@ -261,16 +266,60 @@ export default function TarotPage() {
         return;
       }
 
-      const data = (await res.json()) as TarotDrawResult;
-      setResult(data);
-      setDetailedExpanded(false);
-      setStep('result');
-      startFlipSequence(data.cards.length);
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let metaSet = false;
+      let acc = '';
+      let cardCount = 0;
+
+      setStreaming(true);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const linesArr = buffer.split('\n');
+        buffer = linesArr.pop() || '';
+
+        for (const ln of linesArr) {
+          const t = ln.trim();
+          if (!t || !t.startsWith('data:')) continue;
+          const d = t.slice(5).trim();
+          if (d === '[DONE]') continue;
+          try {
+            const json = JSON.parse(d);
+            if (json.meta && !metaSet) {
+              metaSet = true;
+              setLoading(false);
+              const initial: TarotDrawResult = {
+                spread: json.meta.spread,
+                cards: json.meta.cards,
+                overallNarrative: '',
+                detailedReading: json.meta.detailedReading,
+                advice: json.meta.advice,
+                caution: json.meta.caution,
+              };
+              cardCount = json.meta.cards.length;
+              setResult(initial);
+              setDetailedExpanded(false);
+              setStep('result');
+              startFlipSequence(cardCount);
+            } else if (json.content) {
+              acc += json.content;
+              setResult((prev) => (prev ? { ...prev, overallNarrative: acc } : prev));
+            }
+          } catch {}
+        }
+      }
+
+      setStreaming(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : '未知错误');
       setStep('question');
     } finally {
       setLoading(false);
+      setStreaming(false);
     }
   };
 
@@ -517,27 +566,9 @@ export default function TarotPage() {
               {useLegacyDrawAnimation ? (
                 <CardDrawAnimation cardCount={3} onComplete={() => undefined} />
               ) : (
-                <>
-                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#FAF9F6]">
-                    <Sparkles className="h-7 w-7 animate-spin text-[#1C1A16]" />
-                  </div>
-                  <h3 className="font-display text-2xl tracking-[0.08em] text-[#1C1A16]">正在抽牌并解析...</h3>
-                  <p className="mt-3 text-sm text-[#1C1A16]/55">AI 正在生成牌阵结果，请稍候。</p>
-                  <div className="mt-5 flex justify-center gap-1">
-                    <span
-                      className="h-2 w-2 animate-bounce rounded-full bg-[#1C1A16]/70"
-                      style={{ animationDelay: '0ms' }}
-                    />
-                    <span
-                      className="h-2 w-2 animate-bounce rounded-full bg-[#1C1A16]/70"
-                      style={{ animationDelay: '150ms' }}
-                    />
-                    <span
-                      className="h-2 w-2 animate-bounce rounded-full bg-[#1C1A16]/70"
-                      style={{ animationDelay: '300ms' }}
-                    />
-                  </div>
-                </>
+                <div className="flex justify-center">
+                  <OracleLoading />
+                </div>
               )}
             </div>
           )}
@@ -583,7 +614,18 @@ export default function TarotPage() {
                   <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-3 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
                     <h3 className="font-display text-xl tracking-[0.08em] text-[#1C1A16]">综合解读</h3>
                     <p className="mt-1 text-xs text-[#1C1A16]/45">AI 牌意解读 · 仅供参考</p>
-                    <p className="mt-3 text-sm leading-relaxed text-[#1C1A16]/80">{result.overallNarrative}</p>
+                    {streaming && !result.overallNarrative ? (
+                      <div className="mt-3">
+                        <OracleLoading />
+                      </div>
+                    ) : (
+                      <p className="mt-3 text-sm leading-relaxed text-[#1C1A16]/80">
+                        {result.overallNarrative}
+                        {streaming && result.overallNarrative && (
+                          <span className="inline-block w-1.5 h-4 ml-0.5 bg-[#1C1A16]/40 align-middle animate-pulse" />
+                        )}
+                      </p>
+                    )}
                   </div>
 
                   <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-3 transition-shadow duration-300 hover:shadow-card-hover md:p-6">

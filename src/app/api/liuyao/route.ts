@@ -34,7 +34,7 @@ interface LiuYaoLineResult {
   interpretation: string;
 }
 
-interface LiuYaoResponse {
+interface LiuYaoMeta {
   hexagramName: string;
   upperTrigram: string;
   lowerTrigram: string;
@@ -48,7 +48,6 @@ interface LiuYaoResponse {
     cautions: string[];
     actions: string[];
   };
-  overallNarrative: string;
   _source?: string;
 }
 
@@ -102,11 +101,36 @@ function validateRequest(body: unknown): { valid: true; data: LiuYaoRequestBody 
   };
 }
 
+function buildStream(meta: LiuYaoMeta, narrative: string) {
+  const encoder = new TextEncoder();
+  return new ReadableStream({
+    async start(controller) {
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ meta })}\n\n`));
+
+      // Chunk narrative for typewriter effect
+      const chunkSize = 4;
+      for (let i = 0; i < narrative.length; i += chunkSize) {
+        const piece = narrative.slice(i, i + chunkSize);
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: piece })}\n\n`));
+        await new Promise((r) => setTimeout(r, 18));
+      }
+
+      controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+      controller.close();
+    },
+  });
+}
+
+const SSE_HEADERS = {
+  'Content-Type': 'text/event-stream',
+  'Cache-Control': 'no-cache',
+  Connection: 'keep-alive',
+} as const;
+
 export async function POST(req: NextRequest) {
   const chaosRes = await applyChaos(req);
   if (chaosRes) return chaosRes;
 
-  // Security Fix: SEC-012 — 添加登录检查
   const { getServerSession } = await import('next-auth');
   const { authOptions } = await import('@/lib/auth');
   const session = await getServerSession(authOptions);
@@ -157,7 +181,7 @@ export async function POST(req: NextRequest) {
         interpretation: (c.lineInterpretations as string[])[i] || '',
       }));
 
-      const response: LiuYaoResponse = {
+      const meta: LiuYaoMeta = {
         hexagramName,
         upperTrigram: `${upper.name}（${upper.nature}）`,
         lowerTrigram: `${lower.name}（${lower.nature}）`,
@@ -171,11 +195,10 @@ export async function POST(req: NextRequest) {
           cautions: (c.cautions as string[]) || [],
           actions: (c.actions as string[]) || [],
         },
-        overallNarrative: c.overallNarrative as string,
         _source: 'cache',
       };
 
-      return NextResponse.json(response);
+      return new Response(buildStream(meta, c.overallNarrative as string), { headers: SSE_HEADERS });
     }
   }
 
@@ -218,7 +241,7 @@ export async function POST(req: NextRequest) {
     actions: reading.actions,
   }, 12 * 60 * 60);
 
-  const response: LiuYaoResponse = {
+  const meta: LiuYaoMeta = {
     hexagramName,
     upperTrigram: `${upper.name}（${upper.nature}）`,
     lowerTrigram: `${lower.name}（${lower.nature}）`,
@@ -232,9 +255,8 @@ export async function POST(req: NextRequest) {
       cautions: reading.cautions,
       actions: reading.actions,
     },
-    overallNarrative: reading.overallNarrative,
     _source: reading._source,
   };
 
-  return NextResponse.json(response);
+  return new Response(buildStream(meta, reading.overallNarrative), { headers: SSE_HEADERS });
 }

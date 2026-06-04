@@ -8,9 +8,9 @@ import {
   Clock3,
   Loader2,
   Sparkles,
-  Target,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { OracleLoading } from '@/components/ui/OracleLoading';
 
 const Footer = dynamic(() => import('@/components/layout/Footer').then(m => m.Footer), { ssr: false });
 const AiDisclaimer = dynamic(() => import('@/components/ui/AiDisclaimer').then(m => m.AiDisclaimer), { ssr: false });
@@ -157,6 +157,8 @@ export default function MeihuaPage() {
   const [method, setMethod] = useState<Method>('time');
   const [numbers, setNumbers] = useState({ num1: '', num2: '' });
   const [loading, setLoading] = useState(false);
+  const [decisionLoading, setDecisionLoading] = useState(false);
+  const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<MeihuaDrawResult | null>(null);
   const [decision, setDecision] = useState<MeihuaDecisionResult | null>(null);
@@ -194,32 +196,94 @@ export default function MeihuaPage() {
         body: JSON.stringify({ method, numbers }),
       });
 
-      const drawData = (await drawRes.json()) as MeihuaDrawResult;
-      if (!drawRes.ok) {
-        throw new Error(drawData.error || '起卦失败，请稍后重试。');
+      if (!drawRes.ok || !drawRes.body) {
+        let errMsg = '起卦失败，请稍后重试。';
+        try {
+          const data = await drawRes.json();
+          if (data?.error) errMsg = data.error;
+        } catch {}
+        throw new Error(errMsg);
       }
 
-      setResult(drawData);
+      const reader = drawRes.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let metaSet = false;
+      let acc = '';
+      let finalDraw: MeihuaDrawResult | null = null;
+
+      setStreaming(true);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmedLine = line.trim();
+          if (!trimmedLine || !trimmedLine.startsWith('data:')) continue;
+          const data = trimmedLine.slice(5).trim();
+          if (data === '[DONE]') continue;
+          try {
+            const json = JSON.parse(data);
+            if (json.meta && !metaSet) {
+              metaSet = true;
+              setLoading(false);
+              const initial: MeihuaDrawResult = {
+                ...json.meta,
+                analysis: '',
+                guaCi: json.meta.guaCi || '',
+              };
+              finalDraw = initial;
+              setResult(initial);
+            } else if (json.content) {
+              acc += json.content;
+              if (finalDraw) {
+                const current: MeihuaDrawResult = finalDraw;
+                finalDraw = { ...current, analysis: acc };
+              }
+              setResult((prev) => (prev ? { ...prev, analysis: acc } : prev));
+            }
+          } catch {}
+        }
+      }
+
+      setStreaming(false);
+
+      if (!finalDraw) {
+        throw new Error('起卦失败，请稍后重试。');
+      }
+
+      finalDraw.guaCi = finalDraw.guaCi || firstSentence(finalDraw.analysis);
+      setResult(finalDraw);
 
       if (isQuestionMode) {
-        const decideRes = await fetch('/api/meihua/decide', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ question: question.trim(), draw: drawData }),
-        });
+        setDecisionLoading(true);
+        try {
+          const decideRes = await fetch('/api/meihua/decide', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ question: question.trim(), draw: finalDraw }),
+          });
 
-        const decideData = (await decideRes.json()) as MeihuaDecisionResult;
-        if (!decideRes.ok) {
-          setError((decideData as { error?: string }).error || '已完成起卦，AI 决策建议暂不可用。');
-          return;
+          const decideData = (await decideRes.json()) as MeihuaDecisionResult;
+          if (!decideRes.ok) {
+            setError((decideData as { error?: string }).error || '已完成起卦，AI 决策建议暂不可用。');
+            return;
+          }
+
+          setDecision(decideData);
+        } finally {
+          setDecisionLoading(false);
         }
-
-        setDecision(decideData);
       }
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : '起卦失败，请稍后重试。');
     } finally {
       setLoading(false);
+      setStreaming(false);
     }
   };
 
@@ -332,10 +396,10 @@ export default function MeihuaPage() {
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={loading}
+              disabled={loading || streaming || decisionLoading}
               className="mt-5 flex h-[44px] w-full items-center justify-center rounded-xl bg-[#1C1A16] text-sm font-medium text-white transition-all hover:bg-[#2A2621] disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {loading ? (
+              {loading || streaming || decisionLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   正在解卦...
@@ -346,6 +410,12 @@ export default function MeihuaPage() {
             </button>
 
             {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+
+            {loading && !result && (
+              <div className="mt-5 flex justify-center">
+                <OracleLoading />
+              </div>
+            )}
           </div>
         </section>
 
@@ -379,10 +449,18 @@ export default function MeihuaPage() {
                 <span>动爻：第{result.movingLine ?? 0}爻</span>
               </div>
 
-              <p className="mt-4 text-sm leading-relaxed text-[#1C1A16]/75">
-                卦辞：{result.guaCi || firstSentence(result.analysis)}
-              </p>
+              {result.analysis && (
+                <p className="mt-4 text-sm leading-relaxed text-[#1C1A16]/75">
+                  卦辞：{result.guaCi || firstSentence(result.analysis)}
+                </p>
+              )}
             </div>
+
+            {decisionLoading && !decision && (
+              <div className="rounded-2xl bg-white p-6 shadow-none">
+                <OracleLoading />
+              </div>
+            )}
 
             {decision && (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -456,7 +534,16 @@ export default function MeihuaPage() {
                 {isQuestionMode ? '基础卦象解读' : '卦象解读'}
               </h3>
               <p className="mt-1 text-xs text-[#1C1A16]/45 mb-3">AI 综合分析 · 仅供参考</p>
-              <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-[#1C1A16]/75">{result.analysis}</p>
+              {streaming && !result.analysis ? (
+                <OracleLoading />
+              ) : (
+                <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-[#1C1A16]/75">
+                  {result.analysis}
+                  {streaming && result.analysis && (
+                    <span className="inline-block w-1.5 h-4 ml-0.5 bg-[#1C1A16]/40 align-middle animate-pulse" />
+                  )}
+                </p>
+              )}
             </div>
           </section>
         )}

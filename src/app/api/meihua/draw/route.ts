@@ -8,7 +8,6 @@ interface BaguaItem {
   name: string;
   symbol: string;
   meaning: string;
-  // 从下到上：阳爻=1，阴爻=0
   lines: [number, number, number];
 }
 
@@ -106,8 +105,10 @@ function firstSentence(text: string): string {
   return sentence ? `${sentence}。` : normalized;
 }
 
+const FALLBACK_ANALYSIS =
+  '【卦象含义】当下处于变化交替期，宜先看清局势再推进。\n\n【吉凶判断】整体可为，但节奏不宜过急。\n\n【行动建议】先厘清目标，再按轻重缓急分步推进。';
+
 export async function POST(req: NextRequest) {
-  // Security Fix: SEC-012 — 添加登录检查
   const { getServerSession } = await import('next-auth');
   const { authOptions } = await import('@/lib/auth');
   const session = await getServerSession(authOptions);
@@ -138,22 +139,44 @@ export async function POST(req: NextRequest) {
     movingLine,
   });
 
+  const meta = {
+    gua: primary.gua,
+    guaName: primary.guaName,
+    upper: primary.upper.name,
+    lower: primary.lower.name,
+    changedGua: changed.gua,
+    changedGuaName: changed.guaName,
+    movingLine,
+    primary,
+    changed,
+  };
+
+  const encoder = new TextEncoder();
+
   const cached = await getCache(cacheKey);
   if (cached?.analysis) {
     const cachedAnalysis = String(cached.analysis);
-    return NextResponse.json({
-      gua: primary.gua,
-      guaName: primary.guaName,
-      upper: primary.upper.name,
-      lower: primary.lower.name,
-      changedGua: changed.gua,
-      changedGuaName: changed.guaName,
-      movingLine,
-      primary,
-      changed,
-      analysis: cachedAnalysis,
-      guaCi: firstSentence(cachedAnalysis),
-      _source: 'cache',
+    const guaCi = firstSentence(cachedAnalysis);
+    const readable = new ReadableStream({
+      start(controller) {
+        controller.enqueue(
+          encoder.encode(
+            `data: ${JSON.stringify({ meta: { ...meta, guaCi, _source: 'cache' } })}\n\n`
+          )
+        );
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify({ content: cachedAnalysis })}\n\n`)
+        );
+        controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+        controller.close();
+      },
+    });
+    return new Response(readable, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
+      },
     });
   }
 
@@ -179,11 +202,9 @@ export async function POST(req: NextRequest) {
 【行动建议】
 给出 3 条以内可执行建议。`;
 
-  let analysis = '';
-  let aiSource = 'fallback';
-
+  let upstream: Response | null = null;
   try {
-    const aiResponse = await fetch(`${AI_BASE_URL}/chat/completions`, {
+    upstream = await fetch(`${AI_BASE_URL}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -194,36 +215,101 @@ export async function POST(req: NextRequest) {
         max_tokens: 420,
         temperature: 0.3,
         enable_thinking: false,
+        stream: true,
         messages: [{ role: 'user', content: prompt }],
       }),
     });
-
-    if (aiResponse.ok) {
-      const aiData = await aiResponse.json();
-      analysis = aiData.choices?.[0]?.message?.content || '解读生成失败';
-      aiSource = 'deepseek';
-      await setCache(cacheKey, { analysis });
-    }
   } catch (error) {
     console.error('[Meihua Draw] AI call failed:', error);
   }
 
-  if (!analysis) {
-    analysis = '【卦象含义】当下处于变化交替期，宜先看清局势再推进。\n\n【吉凶判断】整体可为，但节奏不宜过急。\n\n【行动建议】先厘清目标，再按轻重缓急分步推进。';
+  if (!upstream || !upstream.ok || !upstream.body) {
+    const guaCi = firstSentence(FALLBACK_ANALYSIS);
+    const readable = new ReadableStream({
+      start(controller) {
+        controller.enqueue(
+          encoder.encode(
+            `data: ${JSON.stringify({ meta: { ...meta, guaCi, _source: 'fallback' } })}\n\n`
+          )
+        );
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify({ content: FALLBACK_ANALYSIS })}\n\n`)
+        );
+        controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+        controller.close();
+      },
+    });
+    return new Response(readable, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
+      },
+    });
   }
 
-  return NextResponse.json({
-    gua: primary.gua,
-    guaName: primary.guaName,
-    upper: primary.upper.name,
-    lower: primary.lower.name,
-    changedGua: changed.gua,
-    changedGuaName: changed.guaName,
-    movingLine,
-    primary,
-    changed,
-    analysis,
-    guaCi: firstSentence(analysis),
-    _source: aiSource,
+  const upstreamBody = upstream.body;
+
+  const readable = new ReadableStream({
+    async start(controller) {
+      controller.enqueue(
+        encoder.encode(`data: ${JSON.stringify({ meta: { ...meta, _source: 'deepseek' } })}\n\n`)
+      );
+
+      const reader = upstreamBody.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let fullText = '';
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed || !trimmed.startsWith('data:')) continue;
+            const data = trimmed.slice(5).trim();
+            if (data === '[DONE]') {
+              continue;
+            }
+            try {
+              const json = JSON.parse(data);
+              const content = json.choices?.[0]?.delta?.content;
+              if (content) {
+                fullText += content;
+                controller.enqueue(
+                  encoder.encode(`data: ${JSON.stringify({ content })}\n\n`)
+                );
+              }
+            } catch {}
+          }
+        }
+        if (fullText) {
+          try {
+            await setCache(cacheKey, { analysis: fullText });
+          } catch (err) {
+            console.warn('[Meihua Draw] cache write failed:', err);
+          }
+        }
+        controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+      } catch (err) {
+        console.error('[Meihua Draw] stream error:', err);
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(readable, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+    },
   });
 }

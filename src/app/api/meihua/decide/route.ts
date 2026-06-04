@@ -1,11 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { generateCacheKey, getCache, setCache } from '@/lib/ai/cache';
-import { generateMeihuaDecision } from '@/lib/ai/client';
+import { generateMeihuaDecision, type MeihuaDecisionResult } from '@/lib/ai/client';
 import type { MeihuaDecisionPromptInput } from '@/lib/ai/prompts';
 import { withAiTimeout } from '@/lib/ai/withTimeout';
 import { withCircuitBreaker } from '@/lib/ai/circuitBreaker';
 import { applyChaos } from '@/lib/chaos-middleware';
+
+const SSE_HEADERS = {
+  'Content-Type': 'text/event-stream',
+  'Cache-Control': 'no-cache',
+  Connection: 'keep-alive',
+} as const;
+
+function buildStream(meta: unknown, narrative: string) {
+  const encoder = new TextEncoder();
+  return new ReadableStream({
+    async start(controller) {
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ meta })}\n\n`));
+
+      const chunkSize = 4;
+      for (let i = 0; i < narrative.length; i += chunkSize) {
+        const piece = narrative.slice(i, i + chunkSize);
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: piece })}\n\n`));
+        await new Promise((r) => setTimeout(r, 18));
+      }
+
+      controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+      controller.close();
+    },
+  });
+}
+
+function splitMeta(decision: MeihuaDecisionResult & { _source?: string }) {
+  const { overallAdvice, ...rest } = decision;
+  return { meta: rest, narrative: overallAdvice };
+}
 
 interface DrawPayload {
   gua?: string;
@@ -88,7 +118,9 @@ export async function POST(req: NextRequest) {
 
     const cached = await getCache(cacheKey);
     if (cached?.overallAdvice) {
-      return NextResponse.json({ ...cached, _source: 'cache' });
+      const cachedDecision = { ...(cached as MeihuaDecisionResult), _source: 'cache' as const };
+      const { meta, narrative } = splitMeta(cachedDecision);
+      return new Response(buildStream(meta, narrative), { headers: SSE_HEADERS });
     }
 
     const decision = await withCircuitBreaker('deepseek-meihua-v4pro', () =>
@@ -96,7 +128,8 @@ export async function POST(req: NextRequest) {
     );
     await setCache(cacheKey, decision, 12 * 60 * 60);
 
-    return NextResponse.json(decision);
+    const { meta, narrative } = splitMeta(decision);
+    return new Response(buildStream(meta, narrative), { headers: SSE_HEADERS });
   } catch (error) {
     console.error('[Meihua Decide] error:', error);
     return NextResponse.json(

@@ -3,6 +3,7 @@
 import dynamic from 'next/dynamic';
 import { ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { OracleLoading } from '@/components/ui/OracleLoading';
 
 const Footer = dynamic(() => import('@/components/layout/Footer').then(m => m.Footer), { ssr: false });
 const AiDisclaimer = dynamic(() => import('@/components/ui/AiDisclaimer').then(m => m.AiDisclaimer), { ssr: false });
@@ -711,6 +712,7 @@ export default function LiuYaoPage() {
   const [lineSelections, setLineSelections] = useState<LineValue[]>([null, null, null, null, null, null]);
   const [divinationTime, setDivinationTime] = useState(getNowLocalString);
   const [loading, setLoading] = useState(false);
+  const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<LiuYaoResult | null>(null);
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
@@ -834,17 +836,70 @@ export default function LiuYaoPage() {
         }),
       });
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || '请求失败，请稍后重试。');
+      if (!res.ok || !res.body) {
+        let errMsg = '请求失败，请稍后重试。';
+        try {
+          const data = await res.json();
+          if (data?.error) errMsg = data.error;
+        } catch {}
+        throw new Error(errMsg);
       }
 
-      const data = (await res.json()) as LiuYaoResult;
-      setResult(data);
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let metaSet = false;
+      let acc = '';
+      let current: LiuYaoResult | null = null;
+
+      setStreaming(true);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const linesArr = buffer.split('\n');
+        buffer = linesArr.pop() || '';
+
+        for (const ln of linesArr) {
+          const t = ln.trim();
+          if (!t || !t.startsWith('data:')) continue;
+          const d = t.slice(5).trim();
+          if (d === '[DONE]') continue;
+          try {
+            const json = JSON.parse(d);
+            if (json.meta && !metaSet) {
+              metaSet = true;
+              setLoading(false);
+              const initial: LiuYaoResult = {
+                hexagramName: json.meta.hexagramName,
+                upperTrigram: json.meta.upperTrigram,
+                lowerTrigram: json.meta.lowerTrigram,
+                upperSymbol: json.meta.upperSymbol,
+                lowerSymbol: json.meta.lowerSymbol,
+                lines: json.meta.lines,
+                judgment: json.meta.judgment,
+                actionAdvice: json.meta.actionAdvice,
+                overallNarrative: '',
+              };
+              current = initial;
+              setResult(initial);
+            } else if (json.content && current) {
+              acc += json.content;
+              const currentValue: LiuYaoResult = current;
+              current = { ...currentValue, overallNarrative: acc };
+              setResult((prev) => (prev ? { ...prev, overallNarrative: acc } : prev));
+            }
+          } catch {}
+        }
+      }
+
+      setStreaming(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : '未知错误');
     } finally {
       setLoading(false);
+      setStreaming(false);
     }
   };
 
@@ -1091,10 +1146,10 @@ export default function LiuYaoPage() {
               <button
                 type="button"
                 onClick={handleSubmit}
-                disabled={loading || !allLinesSelected}
+                disabled={loading || streaming || !allLinesSelected}
                 className="flex h-[44px] w-full items-center justify-center rounded-xl bg-[#1C1A16] text-sm font-medium text-white transition-all hover:bg-[#2A2621] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading ? (
+                {loading || streaming ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     正在解卦...
@@ -1108,6 +1163,11 @@ export default function LiuYaoPage() {
               )}
               {!allLinesSelected && method !== 'manual' && (
                 <p className="mt-2 text-center text-xs text-[#1C1A16]/45">请先完成起卦</p>
+              )}
+              {loading && !result && (
+                <div className="mt-4 flex justify-center">
+                  <OracleLoading />
+                </div>
               )}
             </div>
           )}
@@ -1224,9 +1284,16 @@ export default function LiuYaoPage() {
               <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 transition-shadow duration-300 hover:shadow-card-hover">
                 <h3 className="text-base font-semibold text-[#1C1A16] mb-1">综合分析</h3>
                 <p className="text-xs text-[#1C1A16]/45 mb-3">AI 综合分析 · 仅供参考</p>
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#1C1A16]/75">
-                  {result.overallNarrative}
-                </p>
+                {streaming && !result.overallNarrative ? (
+                  <OracleLoading />
+                ) : (
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#1C1A16]/75">
+                    {result.overallNarrative}
+                    {streaming && result.overallNarrative && (
+                      <span className="inline-block w-1.5 h-4 ml-0.5 bg-[#1C1A16]/40 align-middle animate-pulse" />
+                    )}
+                  </p>
+                )}
               </div>
 
               <div className="flex justify-center">

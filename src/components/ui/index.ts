@@ -4,3 +4,4 @@ export { Input } from './Input';
 export { Select } from './Select';
 export { BaguaSpinner } from './BaguaSpinner';
 export { VipContentMask } from './VipContentMask';
+export { OracleLoading } from './OracleLoading';

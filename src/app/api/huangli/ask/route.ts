@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { calculateHuangli } from '@/lib/huangli/calculator';
 import { sanitizeUserInput } from '@/lib/utils/sanitize';
-import { withAiTimeout } from '@/lib/ai/withTimeout';
-import { withCircuitBreaker } from '@/lib/ai/circuitBreaker';
 import { applyChaos } from '@/lib/chaos-middleware';
 import { logger } from '@/lib/logger';
 import { AI_BASE_URL, PRIMARY_MODEL } from '@/lib/ai/models';
@@ -14,7 +12,6 @@ export async function POST(req: NextRequest) {
   const chaosRes = await applyChaos(req);
   if (chaosRes) return chaosRes;
 
-  // Security Fix: SEC-012 — 添加登录检查
   const { getServerSession } = await import('next-auth');
   const { authOptions } = await import('@/lib/auth');
   const session = await getServerSession(authOptions);
@@ -62,39 +59,88 @@ export async function POST(req: NextRequest) {
 5. 字数控制在 100-250 字
 6. 纯文本回复，不要用 markdown 格式`;
 
-    const apiResponse = await withCircuitBreaker('deepseek-huangli-v4pro', () =>
-      withAiTimeout(
-        (signal) => fetch(`${AI_BASE_URL}/chat/completions`, {
-          method: 'POST',
-          signal,
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`,
-          },
-          body: JSON.stringify({
-            model: PRIMARY_MODEL,
-            max_tokens: 500,
-            temperature: 0.6,
-            enable_thinking: false,
-            messages: [{ role: 'user', content: prompt }],
-          }),
-        }),
-        15_000
-      )
-    );
-
-    if (!apiResponse.ok) {
-      throw new Error(`AI API responded with ${apiResponse.status}`);
+    const apiKey = process.env.DEEPSEEK_API_KEY;
+    if (!apiKey) {
+      logger.error(SERVICE, 'DEEPSEEK_API_KEY not configured');
+      return NextResponse.json({ error: '服务配置异常' }, { status: 500 });
     }
 
-    const apiData = await apiResponse.json();
-    const answer = apiData.choices?.[0]?.message?.content || '抱歉，AI 暂时无法回答，请稍后再试。';
+    const apiResponse = await fetch(`${AI_BASE_URL}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: PRIMARY_MODEL,
+        max_tokens: 500,
+        temperature: 0.6,
+        enable_thinking: false,
+        stream: true,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
 
-    return NextResponse.json({ answer });
+    if (!apiResponse.ok || !apiResponse.body) {
+      logger.error(SERVICE, `AI API responded with ${apiResponse.status}`);
+      return NextResponse.json({ error: '服务暂时不可用' }, { status: 502 });
+    }
+
+    const encoder = new TextEncoder();
+    const upstreamBody = apiResponse.body;
+    const readable = new ReadableStream({
+      async start(controller) {
+        const reader = upstreamBody.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (!trimmed || !trimmed.startsWith('data:')) continue;
+              const data = trimmed.slice(5).trim();
+              if (data === '[DONE]') {
+                controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+                continue;
+              }
+              try {
+                const json = JSON.parse(data);
+                const content = json.choices?.[0]?.delta?.content;
+                if (content) {
+                  controller.enqueue(
+                    encoder.encode(`data: ${JSON.stringify({ content })}\n\n`)
+                  );
+                }
+              } catch {}
+            }
+          }
+        } catch (err) {
+          logger.error(SERVICE, 'Stream error', err instanceof Error ? err : undefined);
+        } finally {
+          controller.close();
+        }
+      },
+    });
+
+    return new Response(readable, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
+      },
+    });
   } catch (err) {
     logger.error(SERVICE, 'Huangli ask error', err instanceof Error ? err : undefined);
     return NextResponse.json(
-      { answer: '抱歉，AI 暂时无法回答。请检查网络连接后重试。' },
+      { error: '抱歉，AI 暂时无法回答。请检查网络连接后重试。' },
       { status: 500 }
     );
   }

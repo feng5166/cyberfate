@@ -46,6 +46,31 @@ function getTodayDateStr(): string {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 }
 
+const SSE_HEADERS = {
+  'Content-Type': 'text/event-stream',
+  'Cache-Control': 'no-cache',
+  Connection: 'keep-alive',
+} as const;
+
+function buildStream(meta: unknown, narrative: string) {
+  const encoder = new TextEncoder();
+  return new ReadableStream({
+    async start(controller) {
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ meta })}\n\n`));
+
+      const chunkSize = 4;
+      for (let i = 0; i < narrative.length; i += chunkSize) {
+        const piece = narrative.slice(i, i + chunkSize);
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: piece })}\n\n`));
+        await new Promise((r) => setTimeout(r, 18));
+      }
+
+      controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+      controller.close();
+    },
+  });
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -239,21 +264,28 @@ export async function POST(request: NextRequest) {
       console.warn('[music-oracle] 数据库保存失败（不影响返回）:', dbErr);
     }
 
-    // 返回结果
-    return NextResponse.json({
+    const songName = String(parsed.song_name || '').replace(/[《》]/g, '');
+    const artist = String(parsed.artist || '');
+    const lyricsQuote = String(parsed.lyrics_quote || '');
+    const oracleText = String(parsed.oracle_text || '');
+    const musicTags = Array.isArray(parsed.music_tags) ? parsed.music_tags.map(String) : [];
+    const wuxingNote = String(parsed.wuxing_note || '');
+
+    const meta = {
       success: true,
       data: {
-        songName: String(parsed.song_name || '').replace(/[《》]/g, ''),
-        artist: String(parsed.artist || ''),
-        lyricsQuote: String(parsed.lyrics_quote || ''),
-        oracleText: String(parsed.oracle_text || ''),
-        musicTags: Array.isArray(parsed.music_tags) ? parsed.music_tags.map(String) : [],
-        wuxingNote: String(parsed.wuxing_note || ''),
+        songName,
+        artist,
+        lyricsQuote,
+        musicTags,
+        wuxingNote,
         todayGanzhi: todayInfo.ganzhi,
         wuxing: todayProfile.wuxing,
         recordId,
       },
-    });
+    };
+
+    return new Response(buildStream(meta, oracleText), { headers: SSE_HEADERS });
   } catch (err: any) {
     if (err.name === 'AbortError') {
       return NextResponse.json(

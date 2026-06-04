@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { Send } from 'lucide-react';
+import { OracleLoading } from '@/components/ui/OracleLoading';
 
 interface AiAskSectionProps {
   date: string;
@@ -10,6 +11,7 @@ interface AiAskSectionProps {
 interface Message {
   role: 'user' | 'ai';
   content: string;
+  streaming?: boolean;
 }
 
 const PRESET_QUESTIONS = [
@@ -35,6 +37,8 @@ export function AiAskSection({ date }: AiAskSectionProps) {
     setInput('');
     setLoading(true);
 
+    let aiIndex = -1;
+
     try {
       const res = await fetch('/api/huangli/ask', {
         method: 'POST',
@@ -42,13 +46,70 @@ export function AiAskSection({ date }: AiAskSectionProps) {
         body: JSON.stringify({ question, date }),
       });
 
-      const data = await res.json();
-      setMessages((prev) => [...prev, { role: 'ai', content: data.answer }]);
+      if (!res.ok || !res.body) {
+        let errMsg = 'AI 思考较久，请稍后再试。';
+        try {
+          const data = await res.json();
+          if (data?.error) errMsg = data.error;
+        } catch {}
+        setMessages((prev) => [...prev, { role: 'ai', content: errMsg }]);
+        return;
+      }
+
+      setMessages((prev) => {
+        aiIndex = prev.length;
+        return [...prev, { role: 'ai', content: '', streaming: true }];
+      });
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let acc = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmedLine = line.trim();
+          if (!trimmedLine || !trimmedLine.startsWith('data:')) continue;
+          const data = trimmedLine.slice(5).trim();
+          if (data === '[DONE]') continue;
+          try {
+            const json = JSON.parse(data);
+            if (json.content) {
+              acc += json.content;
+              setMessages((prev) => {
+                const next = [...prev];
+                if (aiIndex >= 0 && next[aiIndex]) {
+                  next[aiIndex] = { ...next[aiIndex], content: acc };
+                }
+                return next;
+              });
+            }
+          } catch {}
+        }
+      }
+
+      setMessages((prev) => {
+        const next = [...prev];
+        if (aiIndex >= 0 && next[aiIndex]) {
+          next[aiIndex] = { ...next[aiIndex], streaming: false };
+        }
+        return next;
+      });
     } catch {
-      setMessages((prev) => [
-        ...prev,
-        { role: 'ai', content: 'AI 思考较久，请稍后再试。' },
-      ]);
+      setMessages((prev) => {
+        if (aiIndex >= 0 && prev[aiIndex]) {
+          const next = [...prev];
+          next[aiIndex] = { role: 'ai', content: '网络错误，请稍后再试。', streaming: false };
+          return next;
+        }
+        return [...prev, { role: 'ai', content: '网络错误，请稍后再试。' }];
+      });
     } finally {
       setLoading(false);
     }
@@ -65,7 +126,6 @@ export function AiAskSection({ date }: AiAskSectionProps) {
         💡 AI老黄历助手
       </h3>
 
-      {/* 预设快捷问题 */}
       {messages.length === 0 && (
         <div className="flex flex-wrap gap-2 mb-4 md:overflow-visible overflow-x-auto">
           {PRESET_QUESTIONS.map((q) => (
@@ -80,7 +140,6 @@ export function AiAskSection({ date }: AiAskSectionProps) {
         </div>
       )}
 
-      {/* 对话区域 */}
       {messages.length > 0 && (
         <div className="space-y-3 mb-4 max-h-80 overflow-y-auto" aria-live="polite">
           {messages.map((msg, i) => (
@@ -92,25 +151,21 @@ export function AiAskSection({ date }: AiAskSectionProps) {
                   : 'bg-white text-[#1C1A16]/80 mr-8 border border-[#F0EDE8]'
               }`}
             >
-              {msg.content}
+              {msg.role === 'ai' && msg.streaming && !msg.content ? (
+                <OracleLoading />
+              ) : (
+                <span className="whitespace-pre-wrap">
+                  {msg.content}
+                  {msg.streaming && msg.content && (
+                    <span className="inline-block w-1.5 h-4 ml-0.5 bg-[#1C1A16]/40 align-middle animate-pulse" />
+                  )}
+                </span>
+              )}
             </div>
           ))}
-          {loading && (
-            <div className="bg-white rounded-xl px-4 py-3 mr-8 border border-[#F0EDE8]">
-              <div className="flex items-center gap-2">
-                <div className="flex gap-1">
-                  <span className="w-1.5 h-1.5 bg-[#1C1A16]/30 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <span className="w-1.5 h-1.5 bg-[#1C1A16]/30 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <span className="w-1.5 h-1.5 bg-[#1C1A16]/30 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                </div>
-                <span className="text-xs text-[#1C1A16]/40">AI 正在分析...</span>
-              </div>
-            </div>
-          )}
         </div>
       )}
 
-      {/* 输入框 */}
       <form onSubmit={handleSubmit} className="flex gap-2">
         <input
           ref={inputRef}
@@ -130,7 +185,6 @@ export function AiAskSection({ date }: AiAskSectionProps) {
         </button>
       </form>
 
-      {/* 切换日期后显示预设问题 */}
       {messages.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mt-3 overflow-x-auto">
           {PRESET_QUESTIONS.slice(0, 4).map((q) => (

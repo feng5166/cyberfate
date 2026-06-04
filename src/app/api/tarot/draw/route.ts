@@ -48,7 +48,7 @@ const spreadConfig: Record<TarotSpread, { count: number; positions?: string[] }>
 const DAILY_LIMITS: Record<TarotSpread, number> = {
   single: 3,
   three: 1,
-  celtic: 0, // VIP only
+  celtic: 0,
   moonlight: 1,
   mirror: 1,
 };
@@ -130,6 +130,31 @@ function isCachedTarotReading(value: unknown): value is CachedTarotReading {
   );
 }
 
+const SSE_HEADERS = {
+  'Content-Type': 'text/event-stream',
+  'Cache-Control': 'no-cache',
+  Connection: 'keep-alive',
+} as const;
+
+function buildStream(meta: unknown, narrative: string) {
+  const encoder = new TextEncoder();
+  return new ReadableStream({
+    async start(controller) {
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ meta })}\n\n`));
+
+      const chunkSize = 4;
+      for (let i = 0; i < narrative.length; i += chunkSize) {
+        const piece = narrative.slice(i, i + chunkSize);
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: piece })}\n\n`));
+        await new Promise((r) => setTimeout(r, 18));
+      }
+
+      controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+      controller.close();
+    },
+  });
+}
+
 export async function POST(req: NextRequest) {
   const chaosRes = await applyChaos(req);
   if (chaosRes) return chaosRes;
@@ -148,7 +173,6 @@ export async function POST(req: NextRequest) {
     if (!rl.allowed) return NextResponse.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
   }
 
-  // 凯尔特十字需要 VIP
   if (spread === 'celtic') {
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'LOGIN_REQUIRED' }, { status: 401 });
@@ -159,7 +183,6 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // 检查配额（登录用户，原子递增防竞态）
   if (session?.user?.id && spread !== 'celtic') {
     const vip = await isVip(session.user.id);
     if (!vip) {
@@ -198,18 +221,18 @@ export async function POST(req: NextRequest) {
 
   const cached = await getCache(cacheKey);
   if (isCachedTarotReading(cached)) {
-    return NextResponse.json({
+    const meta = {
       spread,
       cards: cardsWithImages.map((card, index) => ({
         ...card,
         meaning: cached.cardMeanings[index] || (card.orientation === 'upright' ? card.upright : card.reversed),
       })),
-      overallNarrative: cached.overallNarrative,
       detailedReading: cached.detailedReading,
       advice: cached.advice,
       caution: cached.caution,
       _source: 'cache',
-    });
+    };
+    return new Response(buildStream(meta, cached.overallNarrative), { headers: SSE_HEADERS });
   }
 
   const promptInput: TarotReadingPromptInput = {
@@ -256,16 +279,17 @@ export async function POST(req: NextRequest) {
     }, 12 * 60 * 60);
   }
 
-  return NextResponse.json({
+  const meta = {
     spread,
     cards: cardsWithImages.map((card, index) => ({
       ...card,
       meaning: reading.cardMeanings[index] || (card.orientation === 'upright' ? card.upright : card.reversed),
     })),
-    overallNarrative: reading.overallNarrative,
     detailedReading: reading.detailedReading,
     advice: reading.advice,
     caution: reading.caution,
     _source: reading._source,
-  });
+  };
+
+  return new Response(buildStream(meta, reading.overallNarrative), { headers: SSE_HEADERS });
 }
