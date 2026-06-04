@@ -202,7 +202,7 @@ export function Sidebar({
   );
 
   const renderGuestBottom = (isCollapsed: boolean) => (
-    <div className="border-t border-[#1C1A16]/[0.06] px-4 py-4">
+    <div className="border-t border-[#1C1A16]/[0.06] px-4 py-3">
       {isCollapsed ? (
         <div className="flex flex-col items-center gap-2">
           <button
@@ -239,7 +239,7 @@ export function Sidebar({
   );
 
   const renderFreeBottom = (isCollapsed: boolean) => (
-    <div className="border-t border-[#1C1A16]/[0.06] px-4 py-4">
+    <div className="border-t border-[#1C1A16]/[0.06] px-4 py-3">
       {isCollapsed ? (
         <div className="flex flex-col items-center gap-2">
           <button
@@ -289,7 +289,7 @@ export function Sidebar({
   );
 
   const renderPaidBottom = (isCollapsed: boolean) => (
-    <div className="border-t border-[#1C1A16]/[0.06] px-5 py-4">
+    <div className="border-t border-[#1C1A16]/[0.06] px-4 py-3">
       {isCollapsed ? (
         <div className="flex justify-center">{renderAvatar('sm')}</div>
       ) : (
@@ -345,7 +345,7 @@ export function Sidebar({
 
   const SidebarContent = (isCollapsed: boolean) => (
     <div className="relative flex h-full flex-col bg-[#FAF9F6]">
-      <div className="px-5 py-5">
+      <div className="px-4 py-4">
         <Link
           href="/"
           className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-start gap-2'}`}
@@ -386,7 +386,7 @@ export function Sidebar({
   );
 
   const desktopAsideClasses = clsx(
-    'hidden lg:block fixed left-0 top-0 h-screen z-30 bg-[#FAF9F6] shadow-sm transition-all duration-300 ease w-[260px]',
+    'hidden lg:block fixed left-0 top-0 h-screen z-30 bg-[#FAF9F6] shadow-sm transition-all duration-300 ease w-[220px]',
     collapsed ? '-translate-x-full border-r-0' : 'translate-x-0 border-r border-brand-border-light'
   );
 

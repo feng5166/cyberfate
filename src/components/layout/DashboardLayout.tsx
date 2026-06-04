@@ -37,7 +37,7 @@ export function DashboardLayout({
     onCollapseToggle?.(nextState);
   };
 
-  const sidebarWidth = collapsed ? 0 : 260;
+  const sidebarWidth = collapsed ? 0 : 220;
 
   return (
     <div className="min-h-[calc(100vh-64px)]">
