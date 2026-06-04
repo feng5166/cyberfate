@@ -40,7 +40,7 @@ export function InstallPrompt() {
 
   if (showAndroidPrompt) return (
     <div className="fixed bottom-20 left-4 right-4 z-50 bg-[#1C1A16] text-white rounded-2xl p-4 shadow-2xl flex items-center gap-3">
-      <span className="text-2xl">🔮</span>
+      <img src="/icons/icon-96x96.png" alt="CyberFate" className="w-10 h-10 rounded-xl" />
       <div className="flex-1">
         <p className="text-sm font-semibold">添加到主屏幕</p>
         <p className="text-xs text-white/60">像 App 一样使用 CyberFate</p>
@@ -60,7 +60,7 @@ export function InstallPrompt() {
         点击底部 <span className="inline-block px-1.5 py-0.5 bg-[#FAF3EC] rounded text-[#C2762B] font-medium">□↑ 分享</span> 按钮，然后选择「添加到主屏幕」
       </p>
       <div className="flex items-center gap-2 text-xs text-[#1C1A16]/50">
-        <span>🔮</span>
+        <img src="/icons/icon-72x72.png" alt="CyberFate" className="w-6 h-6 rounded-lg" />
         <span>像 App 一样启动，无需地址栏</span>
       </div>
     </div>
