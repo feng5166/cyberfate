@@ -26,7 +26,7 @@ export function SidebarMenuItem({
   const content = (
     <span
       className={clsx(
-        'relative flex items-center gap-2.5 rounded-md text-[13px] font-medium transition-colors duration-200 ease-out',
+        'relative flex items-center gap-2.5 rounded-md text-[12px] font-medium transition-colors duration-200 ease-out',
         collapsed ? 'justify-center px-0 py-3' : 'px-4 py-2',
         locked
           ? 'opacity-60 cursor-not-allowed text-[#6B7280]'
