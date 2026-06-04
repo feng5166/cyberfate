@@ -4,7 +4,7 @@ import { useState, useRef } from 'react';
 import { Container } from '@/components/ui/Container';
 import { Footer } from '@/components/layout/Footer';
 import { OracleLoading } from '@/components/ui/OracleLoading';
-import { Share2, RefreshCw, ChevronDown, ChevronUp, Music, Sparkles, ExternalLink } from 'lucide-react';
+import { Share2, RefreshCw, ChevronDown, ChevronUp, Sparkles, ExternalLink } from 'lucide-react';
 import { toPng } from 'html-to-image';
 
 /* ─── 五行渐变色 ─── */
@@ -202,9 +202,6 @@ export default function MusicOraclePageClient() {
       <Container className="pt-10 pb-6 md:pt-16 md:pb-10">
         {/* ① 标题区 */}
         <div className="text-center mb-8 md:mb-12">
-          <div className="flex items-center justify-center mb-3">
-            <Music className="w-10 h-10 md:w-12 md:h-12 text-[#1C1A16]" />
-          </div>
           <h1 className="text-[26px] md:text-[32px] font-serif font-semibold text-[#1C1A16]">
             音乐运势签
           </h1>
