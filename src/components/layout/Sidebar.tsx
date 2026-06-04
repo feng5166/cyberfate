@@ -160,7 +160,7 @@ export function Sidebar({
       : (user?.name?.trim() || '访客');
     const initial = fallbackSource.charAt(0).toUpperCase();
     const imageUrl = user?.avatar;
-    const sizeClass = size === 'sm' ? 'h-10 w-10' : 'h-11 w-11';
+    const sizeClass = size === 'sm' ? 'h-10 w-10' : 'h-12 w-12';
 
     if (imageUrl && !avatarError) {
       return (
@@ -258,28 +258,28 @@ export function Sidebar({
           <div className="flex items-center gap-3">
             {renderAvatar('md')}
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-brand-black">
-                {'免费用户'}
+              <p className="truncate text-[15px] font-semibold text-brand-black">
+                {user?.name || user?.email?.split('@')[0] || '用户'}
               </p>
               <p className="truncate text-xs text-[#9CA3AF]">
                 {user?.email || ''}
               </p>
             </div>
           </div>
-          <div className="flex flex-col gap-1.5 mt-3">
+          <div className="flex flex-col gap-2 mt-3">
             <Link
               href="/profile"
-              className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-[#E5E0D8] px-3 py-1.5 text-xs font-medium text-[#4B5563] transition-colors hover:bg-[#F5F2ED] hover:text-[#1C1A16]"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#E5E0D8] bg-white px-3 py-2.5 text-[13px] font-medium text-[#1C1A16] transition-colors hover:bg-[#F5F2ED]"
             >
-              <User className="h-3.5 w-3.5" strokeWidth={1.5} />
+              <User className="h-4 w-4" strokeWidth={1.5} />
               <span>个人资料</span>
             </Link>
             <button
               type="button"
               onClick={() => logout()}
-              className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-[#E5E0D8] px-3 py-1.5 text-xs font-medium text-[#9CA3AF] transition-colors hover:bg-[#F5F2ED] hover:text-[#1C1A16]"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#E5E0D8] bg-white px-3 py-2.5 text-[13px] font-medium text-[#1C1A16] transition-colors hover:bg-[#F5F2ED]"
             >
-              <LogOut className="h-3.5 w-3.5" strokeWidth={1.5} />
+              <LogOut className="h-4 w-4" strokeWidth={1.5} />
               <span>退出登录</span>
             </button>
           </div>
@@ -298,8 +298,8 @@ export function Sidebar({
             {renderAvatar('md')}
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <p className="truncate text-sm font-semibold text-brand-black">
-                  {user?.email?.split('@')[0] || 'VIP'}
+                <p className="truncate text-[15px] font-semibold text-brand-black">
+                  {user?.name || user?.email?.split('@')[0] || 'VIP'}
                 </p>
                 <span className="shrink-0 rounded bg-[#C2762B]/10 px-1.5 py-0.5 text-[10px] font-semibold text-[#C2762B]">
                   VIP
@@ -310,20 +310,20 @@ export function Sidebar({
               </p>
             </div>
           </div>
-          <div className="flex flex-col gap-1.5 mt-3">
+          <div className="flex flex-col gap-2 mt-3">
             <Link
               href="/profile"
-              className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-[#E5E0D8] px-3 py-1.5 text-xs font-medium text-[#4B5563] transition-colors hover:bg-[#F5F2ED] hover:text-[#1C1A16]"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#E5E0D8] bg-white px-3 py-2.5 text-[13px] font-medium text-[#1C1A16] transition-colors hover:bg-[#F5F2ED]"
             >
-              <User className="h-3.5 w-3.5" strokeWidth={1.5} />
+              <User className="h-4 w-4" strokeWidth={1.5} />
               <span>个人资料</span>
             </Link>
             <button
               type="button"
               onClick={() => logout()}
-              className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-[#E5E0D8] px-3 py-1.5 text-xs font-medium text-[#9CA3AF] transition-colors hover:bg-[#F5F2ED] hover:text-[#1C1A16]"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#E5E0D8] bg-white px-3 py-2.5 text-[13px] font-medium text-[#1C1A16] transition-colors hover:bg-[#F5F2ED]"
             >
-              <LogOut className="h-3.5 w-3.5" strokeWidth={1.5} />
+              <LogOut className="h-4 w-4" strokeWidth={1.5} />
               <span>退出登录</span>
             </button>
           </div>
