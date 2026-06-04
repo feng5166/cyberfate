@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Bookmark, BookmarkCheck, Clock, Send, X } from 'lucide-react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
+import { OracleLoading } from '@/components/ui/OracleLoading';
 import type {
   BaziTrait,
   MingGeInfo,
@@ -288,9 +289,15 @@ export function BaziChatSection({ baziData, isLoggedIn, isVip }: BaziChatSection
                 <div className="flex justify-start">
                   <div className="max-w-[90%] bg-[#FAF9F6] text-[#1C1A16] text-sm rounded-2xl rounded-tl-sm px-4 py-3 leading-relaxed">
                     <div className="whitespace-pre-wrap">
-                      {msg.answer}
-                      {msg.streaming && (
-                        <span className="inline-block w-1.5 h-4 ml-0.5 bg-[#1C1A16]/40 align-middle animate-pulse" />
+                      {msg.streaming && !msg.answer ? (
+                        <OracleLoading />
+                      ) : (
+                        <>
+                          {msg.answer}
+                          {msg.streaming && msg.answer && (
+                            <span className="inline-block w-1.5 h-4 ml-0.5 bg-[#1C1A16]/40 align-middle animate-pulse" />
+                          )}
+                        </>
                       )}
                     </div>
                     {!msg.streaming && msg.answer && (
