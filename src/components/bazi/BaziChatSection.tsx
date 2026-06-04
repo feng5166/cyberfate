@@ -172,7 +172,8 @@ export function BaziChatSection({ baziData, isLoggedIn, isVip }: BaziChatSection
         let errMsg = '服务暂时不可用，请稍后再试';
         try {
           const data = await res.json();
-          if (data?.error) errMsg = data.error;
+          if (data?.detail) errMsg = `${data.error}: ${data.detail}`;
+          else if (data?.error) errMsg = data.error;
         } catch {}
         setMessages(prev =>
           prev.map(m =>

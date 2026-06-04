@@ -12,7 +12,14 @@ const DEEPSEEK_MODEL = PRIMARY_MODEL;
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    let session;
+    try {
+      session = await getServerSession(authOptions);
+    } catch (sessionErr) {
+      const msg = sessionErr instanceof Error ? sessionErr.message : String(sessionErr);
+      console.error('[bazi/chat] getServerSession error:', msg);
+      return Response.json({ error: '认证服务异常，请刷新重试' }, { status: 503 });
+    }
 
     if (!session?.user?.id) {
       return Response.json({ error: 'LOGIN_REQUIRED', message: '请登录后使用' }, { status: 401 });
@@ -30,9 +37,14 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: 'SUBSCRIPTION_REQUIRED', message: '此功能需要订阅会员' }, { status: 403 });
     }
 
-    const rl = await checkRateLimit('bazi_chat', session.user.id, 20, 60);
-    if (!rl.allowed) {
-      return Response.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
+    try {
+      const rl = await checkRateLimit('bazi_chat', session.user.id, 20, 60);
+      if (!rl.allowed) {
+        return Response.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
+      }
+    } catch (rlErr) {
+      const msg = rlErr instanceof Error ? rlErr.message : String(rlErr);
+      console.error('[bazi/chat] checkRateLimit error:', msg);
     }
 
     const { baziData, question } = await req.json();
