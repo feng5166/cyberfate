@@ -3,7 +3,8 @@
 import { useState, useRef } from 'react';
 import { Container } from '@/components/ui/Container';
 import { Footer } from '@/components/layout/Footer';
-import { Share2, RefreshCw, ChevronDown, ChevronUp, Music, Loader2, Sparkles } from 'lucide-react';
+import { OracleLoading } from '@/components/ui/OracleLoading';
+import { Share2, RefreshCw, ChevronDown, ChevronUp, Music, Sparkles } from 'lucide-react';
 import { toPng } from 'html-to-image';
 
 /* ─── 五行渐变色 ─── */
@@ -67,7 +68,9 @@ export default function MusicOraclePageClient() {
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [birthYear, setBirthYear] = useState('');
   const [loading, setLoading] = useState(false);
+  const [streaming, setStreaming] = useState(false);
   const [result, setResult] = useState<OracleResult | null>(null);
+  const [streamingText, setStreamingText] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
@@ -88,10 +91,11 @@ export default function MusicOraclePageClient() {
   };
 
   const handleSubmit = async () => {
-    if (!question.trim() || loading) return;
+    if (!question.trim() || loading || streaming) return;
     setLoading(true);
     setError(null);
     setResult(null);
+    setStreamingText('');
 
     try {
       const body: Record<string, any> = { question: question.trim() };
@@ -103,21 +107,58 @@ export default function MusicOraclePageClient() {
         body: JSON.stringify(body),
       });
 
-      const json = await res.json();
+      if (!res.ok || !res.body) {
+        let errMsg = '求签失败，请稍后重试';
+        try { const d = await res.json(); if (d?.error) errMsg = d.error; } catch {}
+        setError(errMsg);
+        return;
+      }
 
-      if (json.success) {
-        setResult(json.data);
-        // 滚到结果区
-        setTimeout(() => {
-          resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 100);
-      } else {
-        setError(json.error || '求签失败，请稍后重试');
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let metaData: OracleResult | null = null;
+      let acc = '';
+
+      setLoading(false);
+      setStreaming(true);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || !trimmed.startsWith('data:')) continue;
+          const data = trimmed.slice(5).trim();
+          if (data === '[DONE]') continue;
+          try {
+            const json = JSON.parse(data);
+            if (json.meta) {
+              // 收到元数据，先显示歌曲信息（oracleText 留空，等 stream 填充）
+              metaData = { ...json.meta, oracleText: '' };
+              setResult(metaData);
+              setTimeout(() => {
+                resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }, 100);
+            } else if (json.content) {
+              acc += json.content;
+              setStreamingText(acc);
+              if (metaData) {
+                setResult({ ...metaData, oracleText: acc });
+              }
+            }
+          } catch {}
+        }
       }
     } catch {
       setError('网络异常，请稍后重试');
     } finally {
       setLoading(false);
+      setStreaming(false);
     }
   };
 
@@ -251,7 +292,10 @@ export default function MusicOraclePageClient() {
             >
               {loading ? (
                 <span className="flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <svg className="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                  </svg>
                   命运正在思考...
                 </span>
               ) : (
@@ -330,8 +374,17 @@ export default function MusicOraclePageClient() {
             </div>
 
             {/* 签文正文 */}
-            <div className="text-[15px] text-[#1C1A16] leading-[1.9] whitespace-pre-line">
-              {result.oracleText}
+            <div className="text-[15px] text-[#1C1A16] leading-[1.9] whitespace-pre-line min-h-[2rem]">
+              {!result.oracleText && streaming ? (
+                <OracleLoading />
+              ) : (
+                <>
+                  {result.oracleText}
+                  {streaming && result.oracleText && (
+                    <span className="inline-block w-1.5 h-4 ml-0.5 bg-[#1C1A16]/40 align-middle animate-pulse" />
+                  )}
+                </>
+              )}
             </div>
 
             {/* 五行分析 */}
