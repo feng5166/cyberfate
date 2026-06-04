@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import clsx from 'clsx';
 import {
-  Home,
   BarChart3,
   Sun,
   BookHeart,
@@ -16,7 +15,6 @@ import {
   Music,
   Calendar,
   BookOpen,
-  Clock,
   LogOut,
   Lock,
   User,
@@ -53,32 +51,35 @@ const MENU_GROUPS: MenuGroupConfig[] = [
     title: '八字命理',
     items: [
       { label: '八字分析', href: '/bazi', icon: BarChart3 },
+      { label: '八字合婚', href: '/bazi/marriage', icon: BookHeart, paidOnly: true },
       { label: '每日运势', href: '/daily', icon: Sun },
-      { label: '合婚分析', href: '/bazi/marriage', icon: BookHeart, paidOnly: true },
+    ],
+  },
+  {
+    title: '紫微斗数',
+    items: [
+      { label: '紫微排盘', href: '/ziwei', icon: Star, paidOnly: true },
+      { label: '紫微合婚', href: '/ziwei/marriage', icon: Compass, paidOnly: true },
     ],
   },
   {
     title: '周易占卜',
     items: [
       { label: '梅花易数', href: '/meihua', icon: Sparkles, paidOnly: true },
-      { label: '塔罗占卜', href: '/tarot', icon: Layers },
-      { label: '六爻占卜', href: '/liuyao', icon: Compass, paidOnly: true },
+      { label: '六爻占卜', href: '/liuyao', icon: Layers, paidOnly: true },
     ],
   },
   {
-    title: '更多工具',
+    title: '塔罗牌',
     items: [
-      { label: '紫微斗数', href: '/ziwei', icon: Star, paidOnly: true },
+      { label: '塔罗占卜', href: '/tarot', icon: BookOpen },
+    ],
+  },
+  {
+    title: '其他功能',
+    items: [
       { label: '音乐运势签', href: '/music-oracle', icon: Music },
       { label: 'AI老黄历', href: '/huangli', icon: Calendar, paidOnly: true },
-    ],
-  },
-  {
-    title: '个人中心',
-    showDivider: true,
-    items: [
-      { label: '知识库', href: '/knowledge', icon: BookOpen },
-      { label: '历史记录', href: '/history', icon: Clock },
     ],
   },
 ];
