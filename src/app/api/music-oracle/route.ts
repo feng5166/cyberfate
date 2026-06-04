@@ -15,6 +15,8 @@ import { getTodayTiangan, getWuxingMusicProfile } from '@/lib/music-oracle/wuxin
 import { MUSIC_ORACLE_SYSTEM_PROMPT } from '@/lib/music-oracle/prompts';
 import { PrismaClient } from '@prisma/client';
 import { AI_BASE_URL, PRIMARY_MODEL } from '@/lib/ai/models';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 
 const DEEPSEEK_BASE_URL = AI_BASE_URL;
 const DEEPSEEK_MODEL = PRIMARY_MODEL;
@@ -103,12 +105,35 @@ export async function POST(request: NextRequest) {
     const redis = getRedis();
     const dateStr = getTodayDateStr();
     // 简单用 IP 做游客标识
-    const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() 
-      || request.headers.get('x-real-ip') 
+    const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+      || request.headers.get('x-real-ip')
       || 'unknown';
     const rateLimitKey = `music-oracle:rate:${clientIp}:${dateStr}`;
 
-    if (redis) {
+    // 判断 VIP 用户跳过限流（通过有效 Subscription 判定）
+    let isVip = false;
+    try {
+      const session = await getServerSession(authOptions);
+      if (session?.user?.id) {
+        const prisma2 = new PrismaClient();
+        const activeSub = await prisma2.subscription.findFirst({
+          where: {
+            userId: session.user.id,
+            status: 'active',
+            expireAt: { gt: new Date() },
+          },
+          select: { id: true },
+        });
+        await prisma2.$disconnect();
+        if (activeSub) {
+          isVip = true;
+        }
+      }
+    } catch (err) {
+      console.warn('[music-oracle] VIP 检查失败:', err);
+    }
+
+    if (redis && !isVip) {
       try {
         const count = await redis.get(rateLimitKey);
         const used = typeof count === 'number' ? count : (typeof count === 'string' ? parseInt(count, 10) : 0);
@@ -226,7 +251,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 更新限流计数
-    if (redis) {
+    if (redis && !isVip) {
       try {
         const midnight = new Date();
         midnight.setHours(24, 0, 0, 0);

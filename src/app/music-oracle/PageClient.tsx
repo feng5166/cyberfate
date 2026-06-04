@@ -45,7 +45,7 @@ const FAQ_LIST = [
 
 /* ─── 特性卡 ─── */
 const FEATURES = [
-  { icon: '🔮', title: '命理驱动', desc: '基于八字日主五行、当日天干、你的问题三重匹配，有理可说' },
+  { icon: '⭐', title: '命理驱动', desc: '基于八字日主五行、当日天干、你的问题三重匹配，有理可说' },
   { icon: '🤖', title: 'AI 签文', desc: 'AI 为你讲述这首歌与你当下命理的连接，200字内精准解读' },
   { icon: '✍️', title: '版权安全', desc: '只展示歌名+一句歌词摘录，其余均为 AI 原创签文' },
 ];
@@ -143,7 +143,7 @@ export default function MusicOraclePageClient() {
             const json = JSON.parse(data);
             if (json.meta) {
               // 收到元数据，先显示歌曲信息（oracleText 留空，等 stream 填充）
-              metaData = { ...json.meta, oracleText: '' };
+              metaData = { ...json.meta.data, oracleText: '' };
               setResult(metaData);
               setTimeout(() => {
                 resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
