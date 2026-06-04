@@ -60,10 +60,10 @@ const CELTIC_DESKTOP_LAYOUT: { col: number; row: number }[] = [
 ];
 
 const MODES = [
-  { id: 'classic' as const, icon: '⚫', name: '经典', desc: '传统三张牌阵', tooltip: '3张牌过去/现在/未来，新手首选' },
-  { id: 'celtic' as const, icon: '✝︎', name: '凯尔特十字', desc: '10张深度牌阵', tooltip: '10张牌深度解读，全面分析人生各维度' },
-  { id: 'moonlight' as const, icon: '🌙', name: '月光', desc: '柔和内省', tooltip: '温柔内省风格，适合情感/睡前探索' },
-  { id: 'mirror' as const, icon: '✧', name: '镜像', desc: '多角度透视', tooltip: '5张多角度深度分析，复杂决策专用' },
+  { id: 'classic' as const, icon: '⚫', name: '经典', desc: '3张牌·过去/现在/未来，新手首选', tooltip: '3张牌过去/现在/未来，新手首选' },
+  { id: 'celtic' as const, icon: '✝︎', name: '凯尔特十字', desc: '10张牌·全面深度分析，会员专属', tooltip: '10张牌深度解读，全面分析人生各维度' },
+  { id: 'moonlight' as const, icon: '🌙', name: '月光', desc: '3张牌·柔和内省，适合情感探索', tooltip: '温柔内省风格，适合情感/睡前探索' },
+  { id: 'mirror' as const, icon: '✧', name: '镜像', desc: '5张牌·多角度透视，复杂决策专用', tooltip: '5张多角度深度分析，复杂决策专用' },
 ];
 
 const FAQ_ITEMS = [
@@ -138,6 +138,7 @@ export default function TarotPage() {
   const [step, setStep] = useState<Step>('question');
   const [mode, setMode] = useState<ModeId>('classic');
   const [question, setQuestion] = useState('');
+  const [activePrompt, setActivePrompt] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState('');
@@ -486,6 +487,61 @@ export default function TarotPage() {
         </section>
 
         <section className="mx-auto max-w-5xl space-y-4 animate-fadeIn">
+          {step !== 'loading' && step !== 'result' && (
+            <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-3 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
+              <label className="mb-2 block text-sm text-[#1C1A16]/75">你的问题</label>
+              <div className="relative">
+                <textarea
+                  value={question}
+                  onChange={(e) => {
+                    setQuestion(e.target.value.slice(0, 200));
+                    setActivePrompt(null);
+                  }}
+                  placeholder="请输入一个你想通过塔罗牌探索的问题或主题..."
+                  maxLength={200}
+                  className="min-h-[100px] max-h-[200px] w-full resize-y rounded-xl border border-gray-300 p-4 pb-7 text-sm text-[#1C1A16] outline-none transition-all placeholder:text-[#1C1A16]/35 focus:border-[#1C1A16]/30 focus:ring-2 focus:ring-[#1C1A16]/10"
+                />
+                <span className="pointer-events-none absolute right-3 bottom-2 text-xs text-[#1C1A16]/45">
+                  {question.length}/200
+                </span>
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                {SAMPLE_PROMPTS.map((item) => {
+                  const isActive = activePrompt === item;
+                  return (
+                    <button
+                      key={item}
+                      type="button"
+                      onClick={() => {
+                        setActivePrompt(item);
+                        setQuestion(item);
+                      }}
+                      className={`cursor-pointer rounded-full px-3 py-1 text-xs transition-colors ${
+                        isActive
+                          ? 'bg-[#1C1A16] text-white border border-[#1C1A16]'
+                          : 'bg-gray-50 text-[#1C1A16]/70 border border-transparent hover:bg-gray-100'
+                      }`}
+                    >
+                      {item}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+
+              <button
+                type="button"
+                onClick={handleDraw}
+                disabled={loading}
+                className="mt-5 h-[44px] w-full rounded-xl bg-[#1C1A16] text-sm font-medium text-white transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                🃏 开始解读
+              </button>
+            </div>
+          )}
+
           <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-3 md:p-6">
             <h2 className="font-display text-lg tracking-[0.08em] text-[#1C1A16]">模式选择</h2>
             <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -518,48 +574,6 @@ export default function TarotPage() {
               })}
             </div>
           </div>
-
-          {step === 'question' && (
-            <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-3 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
-              <label className="mb-2 block text-sm text-[#1C1A16]/75">你的问题</label>
-              <div className="relative">
-                <textarea
-                  value={question}
-                  onChange={(e) => setQuestion(e.target.value.slice(0, 200))}
-                  placeholder="请输入一个你想通过塔罗牌探索的问题或主题..."
-                  maxLength={200}
-                  className="min-h-[100px] max-h-[200px] w-full resize-y rounded-xl border border-gray-300 p-4 pb-7 text-sm text-[#1C1A16] outline-none transition-all placeholder:text-[#1C1A16]/35 focus:border-[#1C1A16]/30 focus:ring-2 focus:ring-[#1C1A16]/10"
-                />
-                <span className="pointer-events-none absolute right-3 bottom-2 text-xs text-[#1C1A16]/45">
-                  {question.length}/200
-                </span>
-              </div>
-
-              <div className="mt-4 flex flex-wrap gap-2">
-                {SAMPLE_PROMPTS.map((item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    onClick={() => setQuestion(item)}
-                    className="cursor-pointer rounded-full bg-gray-50 px-3 py-1 text-xs text-[#1C1A16]/70 transition-colors hover:bg-gray-100"
-                  >
-                    {item}
-                  </button>
-                ))}
-              </div>
-
-              {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
-
-              <button
-                type="button"
-                onClick={handleDraw}
-                disabled={loading}
-                className="mt-5 h-[44px] w-full rounded-xl bg-[#1C1A16] text-sm font-medium text-white transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                🃏 开始解读
-              </button>
-            </div>
-          )}
 
           {step === 'loading' && (
             <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 text-center transition-shadow duration-300 hover:shadow-card-hover md:p-10">
@@ -749,11 +763,11 @@ export default function TarotPage() {
             <button
               type="button"
               onClick={() => {
-                window.location.href = '/';
+                window.location.href = '/bazi';
               }}
               className="rounded-xl border border-[#1C1A16]/15 bg-transparent px-8 py-3 text-sm font-medium text-[#1C1A16] transition-all hover:-translate-y-1 hover:shadow-card-hover"
             >
-              了解更多 ↑
+              试试八字分析 →
             </button>
           </div>
         </section>
