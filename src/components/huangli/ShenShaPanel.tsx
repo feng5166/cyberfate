@@ -9,7 +9,7 @@ interface ShenShaPanelProps {
 }
 
 export function ShenShaPanel({ data }: ShenShaPanelProps) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
 
   const rows = [
     { label: '胎神', value: data.taishen },
