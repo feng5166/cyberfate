@@ -50,12 +50,6 @@ interface MenuGroupConfig {
 
 const MENU_GROUPS: MenuGroupConfig[] = [
   {
-    title: '首页',
-    items: [
-      { label: '首页', href: '/', icon: Home },
-    ],
-  },
-  {
     title: '八字命理',
     items: [
       { label: '八字分析', href: '/bazi', icon: BarChart3 },
