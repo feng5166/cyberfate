@@ -4,7 +4,7 @@ import { useState, useRef } from 'react';
 import { Container } from '@/components/ui/Container';
 import { Footer } from '@/components/layout/Footer';
 import { OracleLoading } from '@/components/ui/OracleLoading';
-import { Share2, RefreshCw, ChevronDown, ChevronUp, Music, Sparkles } from 'lucide-react';
+import { Share2, RefreshCw, ChevronDown, ChevronUp, Music, Sparkles, ExternalLink } from 'lucide-react';
 import { toPng } from 'html-to-image';
 
 /* ─── 五行渐变色 ─── */
@@ -75,6 +75,7 @@ export default function MusicOraclePageClient() {
   const [sharing, setSharing] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [showExample, setShowExample] = useState(false);
 
   const resultRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -88,6 +89,9 @@ export default function MusicOraclePageClient() {
       : tag === '财运' ? '最近财运怎么样？'
       : tag === '人际' ? '人际关系方面有什么建议？'
       : '健康方面需要注意什么？');
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 50);
   };
 
   const handleSubmit = async () => {
@@ -255,6 +259,96 @@ export default function MusicOraclePageClient() {
             ))}
           </div>
 
+          {/* 示例结果折叠区 */}
+          <button
+            type="button"
+            onClick={() => setShowExample((v) => !v)}
+            className="text-sm text-[#9CA3AF] underline cursor-pointer mt-3 inline-block bg-transparent border-0 p-0"
+          >
+            {showExample ? '收起示例 ↑' : '查看示例结果 ↓'}
+          </button>
+          {showExample && (
+            <div className="mt-3 bg-white border border-[#F0EDE8] rounded-2xl p-6 shadow-md">
+              <p className="text-xs text-[#9CA3AF] mb-3 text-center">
+                ✨ 示例效果，非真实推算
+              </p>
+              <p className="text-[13px] font-medium text-[#9CA3AF] mb-5 text-center">
+                ✨ 命运为你选择了这首歌
+              </p>
+
+              {/* 歌曲信息 */}
+              <div className="flex gap-4">
+                <div
+                  className="w-[120px] h-[120px] rounded-2xl flex-shrink-0 flex items-center justify-center shadow-sm"
+                  style={{
+                    background: `linear-gradient(135deg, ${WUXING_GRADIENTS['水'].from}, ${WUXING_GRADIENTS['水'].to})`,
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+                  }}
+                >
+                  <span className="text-5xl">{WUXING_GRADIENTS['水'].icon}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-[22px] font-serif font-semibold text-[#1C1A16]">
+                    《后来》
+                  </h2>
+                  <p className="text-sm text-[#6B7280] mt-0.5">
+                    刘若英
+                  </p>
+                  <div className="flex flex-wrap gap-1.5 mt-1.5">
+                    {['怀念', '放下', '温柔'].map((tag, i) => (
+                      <span
+                        key={i}
+                        className="text-xs px-2 py-0.5 rounded-full bg-[#F5F2ED] text-[#6B7280]"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="text-base italic font-serif text-[#1C1A16] leading-relaxed mt-3">
+                    ❝ 后来，我总算学会了如何去爱 ❞
+                  </p>
+                </div>
+              </div>
+
+              {/* 分割线 + 命运签文 */}
+              <div className="relative my-5">
+                <div className="border-t border-[#F0EDE8]" />
+                <span className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-3 text-xs font-medium text-[#9CA3AF] tracking-[0.2em]">
+                  命运签文
+                </span>
+              </div>
+
+              {/* 签文正文 */}
+              <div className="text-[15px] text-[#1C1A16] leading-[1.9] whitespace-pre-line min-h-[2rem]">
+                今日壬水当令，适合回望与整理。命运为你选了这首歌，不是要你沉溺，而是提醒你：曾经的重量，已经成了你的底色。
+              </div>
+
+              {/* 五行分析 */}
+              <div className="bg-[#FAF9F6] rounded-xl p-4 mt-5">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div>
+                    <span className="text-xs text-[#9CA3AF]">你的问题</span>
+                    <p className="text-[13px] text-[#4B5563] font-medium mt-0.5">
+                      感情 · 示例问题
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-xs text-[#9CA3AF]">今日天干</span>
+                    <p className="text-[13px] text-[#4B5563] font-medium mt-0.5">
+                      壬水（壬水）
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-xs text-[#9CA3AF]">情绪色彩</span>
+                    <p className="text-[13px] text-[#4B5563] font-medium mt-0.5">
+                      怀念 · 放下 · 温柔
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* 出生年份 */}
           <div className="mt-5">
             <label className="block text-[13px] text-[#6B7280] mb-1.5">
@@ -299,9 +393,12 @@ export default function MusicOraclePageClient() {
                   命运正在思考...
                 </span>
               ) : (
-                <span>🎲 开始求签</span>
+                <span>{!question.trim() ? '↑ 先告诉命运你的问题' : '🎲 开始求签'}</span>
               )}
             </button>
+            <p className="text-xs text-[#9CA3AF] mt-2 text-center">
+              免费用户每天 3 次 · <span className="underline cursor-pointer">登录后使用</span>
+            </p>
           </div>
         </div>
 
@@ -421,6 +518,15 @@ export default function MusicOraclePageClient() {
                 <Share2 className="w-4 h-4" />
                 {sharing ? '生成中...' : '下载分享图'}
               </button>
+              <a
+                href={`https://music.163.com/#/search/m/?s=${encodeURIComponent(result.songName + ' ' + result.artist)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full sm:w-auto border border-[#E5E0D8] text-[#6B7280] rounded-xl px-6 py-2.5 text-sm font-medium hover:border-[#1C1A16] hover:text-[#1C1A16] transition-colors flex items-center justify-center gap-2"
+              >
+                <ExternalLink className="w-4 h-4" />
+                去听这首歌
+              </a>
               {result.recordId && (
                 <button
                   onClick={async () => {
@@ -443,6 +549,13 @@ export default function MusicOraclePageClient() {
                 <RefreshCw className="w-4 h-4" />
                 重新求签
               </button>
+            </div>
+
+            {/* 历史记录入口 */}
+            <div className="text-center mt-4">
+              <a href="/bazi" className="text-xs text-[#9CA3AF] hover:text-[#6B7280] underline transition-colors">
+                查看我的命理历史记录 →
+              </a>
             </div>
           </div>
         )}
