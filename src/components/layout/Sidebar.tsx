@@ -266,10 +266,10 @@ export function Sidebar({
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-4 mt-3">
+          <div className="flex flex-col gap-1.5 mt-3">
             <Link
               href="/profile"
-              className="inline-flex items-center gap-1.5 text-xs text-[#9CA3AF] transition-colors hover:text-[#1C1A16]"
+              className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-[#E5E0D8] px-3 py-1.5 text-xs font-medium text-[#4B5563] transition-colors hover:bg-[#F5F2ED] hover:text-[#1C1A16]"
             >
               <User className="h-3.5 w-3.5" strokeWidth={1.5} />
               <span>个人资料</span>
@@ -277,7 +277,7 @@ export function Sidebar({
             <button
               type="button"
               onClick={() => logout()}
-              className="inline-flex items-center gap-1.5 text-xs text-[#9CA3AF] transition-colors hover:text-[#1C1A16]"
+              className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-[#E5E0D8] px-3 py-1.5 text-xs font-medium text-[#9CA3AF] transition-colors hover:bg-[#F5F2ED] hover:text-[#1C1A16]"
             >
               <LogOut className="h-3.5 w-3.5" strokeWidth={1.5} />
               <span>退出登录</span>
@@ -310,10 +310,10 @@ export function Sidebar({
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-4 mt-3">
+          <div className="flex flex-col gap-1.5 mt-3">
             <Link
               href="/profile"
-              className="inline-flex items-center gap-1.5 text-xs text-[#9CA3AF] transition-colors hover:text-[#1C1A16]"
+              className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-[#E5E0D8] px-3 py-1.5 text-xs font-medium text-[#4B5563] transition-colors hover:bg-[#F5F2ED] hover:text-[#1C1A16]"
             >
               <User className="h-3.5 w-3.5" strokeWidth={1.5} />
               <span>个人资料</span>
@@ -321,7 +321,7 @@ export function Sidebar({
             <button
               type="button"
               onClick={() => logout()}
-              className="inline-flex items-center gap-1.5 text-xs text-[#9CA3AF] transition-colors hover:text-[#1C1A16]"
+              className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-[#E5E0D8] px-3 py-1.5 text-xs font-medium text-[#9CA3AF] transition-colors hover:bg-[#F5F2ED] hover:text-[#1C1A16]"
             >
               <LogOut className="h-3.5 w-3.5" strokeWidth={1.5} />
               <span>退出登录</span>
@@ -364,7 +364,7 @@ export function Sidebar({
             title={group.title}
             collapsed={isCollapsed}
             showDivider={group.showDivider}
-            className="mb-1"
+            className="mb-2"
           >
             {group.items.map((item) => (
               <SidebarMenuItem

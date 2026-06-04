@@ -32,7 +32,7 @@ export function SidebarMenuItem({
           ? 'opacity-60 cursor-not-allowed text-[#6B7280]'
           : active
             ? 'text-black bg-[#F5F2ED]'
-            : 'text-[#6B7280] hover:text-black hover:bg-[#F0EDE8]'
+            : 'text-[#374151] hover:text-black hover:bg-[#F0EDE8]'
       )}
     >
       {active && !locked && (
