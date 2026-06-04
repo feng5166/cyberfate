@@ -264,20 +264,20 @@ export function Sidebar({
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col gap-2">
             <Link
               href="/profile"
-              className="inline-flex items-center gap-1.5 text-xs text-[#9CA3AF] transition-colors hover:text-brand-black"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#E5E0D8] bg-white px-4 py-2.5 text-sm font-medium text-[#1C1A16] transition-colors hover:bg-[#F5F2ED]"
             >
-              <User className="h-3.5 w-3.5" />
+              <User className="h-4 w-4" strokeWidth={1.5} />
               <span>个人资料</span>
             </Link>
             <button
               type="button"
               onClick={() => logout()}
-              className="inline-flex items-center gap-1.5 text-xs text-[#9CA3AF] transition-colors hover:text-brand-black"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#E5E0D8] bg-white px-4 py-2.5 text-sm font-medium text-[#6B7280] transition-colors hover:bg-[#F5F2ED] hover:text-[#1C1A16]"
             >
-              <LogOut className="h-3.5 w-3.5" />
+              <LogOut className="h-4 w-4" strokeWidth={1.5} />
               <span>退出登录</span>
             </button>
           </div>
@@ -299,7 +299,7 @@ export function Sidebar({
                 <p className="truncate text-sm font-semibold text-brand-black">
                   {user?.email?.split('@')[0] || 'VIP'}
                 </p>
-                <span className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">
+                <span className="shrink-0 rounded bg-[#C2762B]/10 px-1.5 py-0.5 text-[10px] font-semibold text-[#C2762B]">
                   VIP
                 </span>
               </div>
@@ -308,20 +308,20 @@ export function Sidebar({
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col gap-2">
             <Link
               href="/profile"
-              className="inline-flex items-center gap-1.5 text-xs text-[#9CA3AF] transition-colors hover:text-brand-black"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#E5E0D8] bg-white px-4 py-2.5 text-sm font-medium text-[#1C1A16] transition-colors hover:bg-[#F5F2ED]"
             >
-              <User className="h-3.5 w-3.5" />
+              <User className="h-4 w-4" strokeWidth={1.5} />
               <span>个人资料</span>
             </Link>
             <button
               type="button"
               onClick={() => logout()}
-              className="inline-flex items-center gap-1.5 text-xs text-[#9CA3AF] transition-colors hover:text-brand-black"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#E5E0D8] bg-white px-4 py-2.5 text-sm font-medium text-[#6B7280] transition-colors hover:bg-[#F5F2ED] hover:text-[#1C1A16]"
             >
-              <LogOut className="h-3.5 w-3.5" />
+              <LogOut className="h-4 w-4" strokeWidth={1.5} />
               <span>退出登录</span>
             </button>
           </div>

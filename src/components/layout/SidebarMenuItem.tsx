@@ -27,12 +27,12 @@ export function SidebarMenuItem({
     <span
       className={clsx(
         'relative flex items-center gap-2.5 rounded-md text-sm font-medium transition-colors duration-200 ease-out',
-        collapsed ? 'justify-center px-0 py-3' : 'px-5 py-3',
+        collapsed ? 'justify-center px-0 py-3' : 'px-5 py-3.5',
         locked
           ? 'opacity-60 cursor-not-allowed text-[#6B7280]'
           : active
-            ? 'text-black bg-[#FDF6EC]'
-            : 'text-[#6B7280] hover:text-black hover:bg-[#F9FAFB]'
+            ? 'text-black bg-[#F5F2ED]'
+            : 'text-[#6B7280] hover:text-black hover:bg-[#F0EDE8]'
       )}
     >
       {active && !locked && (
@@ -41,7 +41,7 @@ export function SidebarMenuItem({
           aria-hidden
         />
       )}
-      <Icon className="h-[20px] w-[20px]" />
+      <Icon className="h-[18px] w-[18px]" strokeWidth={1.5} />
       {!collapsed && (
         <>
           <span className="truncate flex-1">{label}</span>
