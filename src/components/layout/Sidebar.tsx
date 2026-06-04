@@ -82,6 +82,13 @@ const MENU_GROUPS: MenuGroupConfig[] = [
       { label: 'AI老黄历', href: '/huangli', icon: Calendar, paidOnly: true },
     ],
   },
+  {
+    title: '个人中心',
+    showDivider: true,
+    items: [
+      { label: '知识库', href: '/knowledge', icon: BookOpen },
+    ],
+  },
 ];
 
 const normalizePath = (path?: string) => {
