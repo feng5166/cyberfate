@@ -7,6 +7,7 @@ import { DayDetailCard } from '@/components/huangli/DayDetailCard';
 import { ShenShaPanel } from '@/components/huangli/ShenShaPanel';
 import { AiAskSection } from '@/components/huangli/AiAskSection';
 import { FeaturesSection } from '@/components/huangli/FeaturesSection';
+import { Footer } from '@/components/layout/Footer';
 import type { HuangliData } from '@/lib/huangli/calculator';
 
 function getTodayStr(): string {
@@ -152,6 +153,7 @@ export default function HuangliPage() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }
