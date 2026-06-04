@@ -542,9 +542,10 @@ export default function TarotPage() {
             </div>
           )}
 
-          <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-3 md:p-6">
-            <h2 className="font-display text-lg tracking-[0.08em] text-[#1C1A16]">模式选择</h2>
-            <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
+          <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 md:p-8">
+            <h2 className="font-display text-xl tracking-[0.08em] text-[#1C1A16] text-center mb-6">选择您的塔罗体验</h2>
+            <p className="text-center text-sm text-[#6B7280] mb-8 -mt-4">不同解读风格</p>
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
               {MODES.map((item) => {
                 const active = item.id === mode;
                 return (
@@ -552,23 +553,22 @@ export default function TarotPage() {
                     key={item.id}
                     type="button"
                     onClick={() => handleModeSelect(item.id)}
-                    className={`group/tip rounded-xl border p-3 text-left transition-all duration-300 ${
+                    className={`flex flex-col items-center text-center rounded-2xl border-2 p-5 transition-all duration-200 ${
                       active
-                        ? 'border-[#1C1A16]/20 bg-[#FAF9F6] shadow-card-hover'
-                        : 'border-[#1C1A16]/10 bg-white hover:border-[#1C1A16]/20 hover:shadow-card-hover'
+                        ? 'border-[#1C1A16] bg-white shadow-lg'
+                        : 'border-[#E5E0D8] bg-white hover:border-[#1C1A16]/40 hover:shadow-md'
                     }`}
                   >
-                    <p className="relative flex items-center text-sm font-semibold text-[#1C1A16]">
-                      <span className="mr-1">{item.icon}</span>
+                    <div className="w-12 h-12 rounded-full bg-[#F5F2ED] flex items-center justify-center text-xl mb-3 flex-shrink-0">
+                      {item.icon}
+                    </div>
+                    <p className={`text-base font-semibold mb-2 ${active ? 'text-[#1C1A16]' : 'text-[#1C1A16]'}`}>
                       {item.name}
-                      <span className="relative ml-1 inline-block cursor-help text-[12px] text-[#1C1A16]/40">
-                        ⓘ
-                        <span className="pointer-events-none absolute left-1/2 top-full z-50 mt-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-[#1C1A16] px-3 py-2 text-xs font-normal text-white opacity-0 shadow-lg transition-opacity duration-200 group-hover/tip:opacity-100 group-active/tip:opacity-100">
-                          {item.tooltip}
-                        </span>
-                      </span>
                     </p>
-                    <p className="mt-1 text-xs text-[#1C1A16]/60">{item.desc}</p>
+                    <p className="text-xs text-[#6B7280] leading-relaxed flex-1">{item.desc}</p>
+                    <p className={`text-xs mt-3 font-medium ${active ? 'text-[#1C1A16]' : 'text-[#9CA3AF]'}`}>
+                      {active ? '当前模式 ✓' : '选择此模式 →'}
+                    </p>
                   </button>
                 );
               })}
@@ -688,24 +688,40 @@ export default function TarotPage() {
           )}
         </section>
 
-        <section className="mx-auto mt-10 max-w-5xl animate-fadeIn">
-          <h2 className="font-display text-2xl tracking-[0.08em] text-[#1C1A16]">AI 塔罗占卜应用场景</h2>
-          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <section className="mx-auto mt-12 max-w-5xl animate-fadeIn">
+          <div className="text-center mb-10">
+            <h2 className="font-display text-[28px] tracking-[0.06em] text-[#1C1A16]">AI 塔罗牌解析系统</h2>
+            <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-[#6B7280]">
+              CyberFate AI 塔罗系统结合了传统塔罗牌智慧与大语言模型技术，通过 78 张牌的图像符号和 AI 精准分析来揭示内心深处的答案。不仅融合了传统塔罗占卜技巧，还结合现代心理学理论，为你提供深入且实用的人生指引。
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
             {[
-              { icon: '💕', title: '爱情关系探索', desc: '探索感情走向、了解伴侣想法、处理情感困惑' },
-              { icon: '💼', title: '事业发展与决策', desc: '职业选择、项目前景、职场人际关系判断' },
-              { icon: '🔀', title: '重要抉择参考', desc: '面临人生十字路口时获取额外视角' },
-              { icon: '🌟', title: '日常灵感指引', desc: '每日一牌、寻找生活灵感、自我对话与觉察' },
+              {
+                icon: '✦',
+                title: 'AI 精准解读',
+                desc: '人工智能分析塔罗牌象征意义，提供精准个性化的解读，激发你的直觉洞察力',
+              },
+              {
+                icon: '⚡',
+                title: '即时占卜反馈',
+                desc: '无需等待，AI 系统即时生成专业塔罗牌解读，随时随地获取命运指引',
+              },
+              {
+                icon: '☆',
+                title: '专业塔罗智慧',
+                desc: '基于传统塔罗牌理论，结合 AI 分析能力，为你的人生关键决策提供深刻洞见',
+              },
             ].map((item) => (
               <div
                 key={item.title}
-                className="flex items-start gap-3 rounded-xl border border-[#1C1A16]/8 bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover"
+                className="flex flex-col items-center text-center rounded-2xl border border-[#E5E0D8] bg-white p-8"
               >
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#FAF9F6] text-base">{item.icon}</div>
-                <div>
-                  <h3 className="text-sm font-semibold text-[#1C1A16]">{item.title}</h3>
-                  <p className="mt-1 text-xs leading-relaxed text-[#1C1A16]/68">{item.desc}</p>
+                <div className="w-14 h-14 rounded-full bg-[#F5F2ED] flex items-center justify-center text-2xl text-[#9CA3AF] mb-4">
+                  {item.icon}
                 </div>
+                <h3 className="text-base font-semibold text-[#1C1A16] mb-3">{item.title}</h3>
+                <p className="text-sm leading-relaxed text-[#6B7280]">{item.desc}</p>
               </div>
             ))}
           </div>
