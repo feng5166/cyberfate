@@ -529,7 +529,7 @@ export default function TarotPage() {
           <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 md:p-8">
             <h2 className="font-display text-xl tracking-[0.08em] text-[#1C1A16] text-center mb-4">选择您的塔罗体验</h2>
             <hr className="border-[#E5E0D8] mb-4" />
-            <p className="text-center text-sm text-[#6B7280] mb-8 font-medium">不同解读风格</p>
+            <p className="text-center text-base font-semibold text-[#1C1A16]/60 mb-8">不同解读风格</p>
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
               {MODES.map((item) => {
                 const active = item.id === mode;
@@ -544,7 +544,7 @@ export default function TarotPage() {
                         : 'border-[#E5E0D8] bg-white hover:border-[#1C1A16]/40 hover:shadow-md'
                     }`}
                   >
-                    <div className="w-12 h-12 flex items-center justify-center text-2xl mb-3 flex-shrink-0">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl mb-3 flex-shrink-0 border-2 transition-all duration-200 ${active ? 'bg-[#1C1A16] border-[#1C1A16] text-white' : 'bg-transparent border-[#1C1A16]/25 text-[#1C1A16]'}`}>
                       {item.icon}
                     </div>
                     <p className={`text-base font-semibold mb-2 ${active ? 'text-[#1C1A16]' : 'text-[#1C1A16]'}`}>
@@ -552,7 +552,7 @@ export default function TarotPage() {
                     </p>
                     <p className="text-xs text-[#6B7280] leading-relaxed flex-1">{item.desc}</p>
                     <p className={`text-xs mt-3 font-medium ${active ? 'text-[#1C1A16]' : 'text-[#9CA3AF]'}`}>
-                      {active ? '当前模式 ✓' : '选择此模式 →'}
+                      {active ? '✓ 当前风格' : '选择此风格 →'}
                     </p>
                   </button>
                 );
