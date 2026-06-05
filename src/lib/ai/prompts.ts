@@ -297,9 +297,9 @@ export function buildTarotReadingSystemPrompt(input: Pick<TarotReadingPromptInpu
 - 只输出 JSON，不要 markdown，不要解释，不要前言
 - cardMeanings 数组长度必须与输入牌张数一致
 - 每条 cardMeanings 控制在 ${profile.cardMeaningsRange}，必须结合”位置 + 正逆位 + 关键词 + 与邻牌的关系”
-- overallNarrative 控制在 ${profile.overallNarrativeRange}，以故事线串联所有牌（起因→经过→转折→结局）
-- detailedReading 控制在 ${profile.detailedReadingRange}，必须结合用户问题给出针对性分析
-- advice 控制在 40-80 字，给出可执行建议
+- overallNarrative 不得少于 ${profile.overallNarrativeRange} 的下限，以故事线串联所有牌（起因→经过→转折→结局），必须充分展开每张牌的含义与相互关联
+- detailedReading 不得少于 ${profile.detailedReadingRange} 的下限，必须结合用户问题给出深度针对性分析，逐张牌展开解读
+- advice 不得少于 120 字，给出具体可执行的行动建议，分 2-3 个方向展开
 - caution 控制在 20-40 字，提示风险或注意事项
 - ${profile.toneInstruction}
 
