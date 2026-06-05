@@ -163,6 +163,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const spread = resolveSpread(body?.spread);
   const question = safeQuestion(body?.question);
+  const preDrawnCards = Array.isArray(body?.preDrawnCards) ? body.preDrawnCards : null;
 
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
   if (session?.user?.id) {
@@ -183,7 +184,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  if (session?.user?.id && spread !== 'celtic') {
+  if (!preDrawnCards && session?.user?.id && spread !== 'celtic') {
     const vip = await isVip(session.user.id);
     if (!vip) {
       const allowed = await atomicCheckAndUseQuota(session.user.id, spread);
@@ -201,17 +202,28 @@ export async function POST(req: NextRequest) {
   }
 
   const config = spreadConfig[spread];
-  const cards = drawRandomCards(config.count);
 
-  if (cards.length !== config.count) {
-    return NextResponse.json({ error: '抽牌失败，请重试' }, { status: 500 });
+  let cardsWithImages: Array<ReturnType<typeof drawRandomCards>[number] & { image_url: string; position?: string }>;
+
+  if (preDrawnCards && preDrawnCards.length === config.count) {
+    cardsWithImages = preDrawnCards.map((card: typeof preDrawnCards[number], idx: number) => ({
+      ...card,
+      image_url: card.image_url || getCardImageUrl(card),
+      position: card.position || config.positions?.[idx],
+    }));
+  } else {
+    const cards = drawRandomCards(config.count);
+
+    if (cards.length !== config.count) {
+      return NextResponse.json({ error: '抽牌失败，请重试' }, { status: 500 });
+    }
+
+    cardsWithImages = cards.map((card, idx) => ({
+      ...card,
+      image_url: getCardImageUrl(card),
+      position: config.positions?.[idx],
+    }));
   }
-
-  const cardsWithImages = cards.map((card, idx) => ({
-    ...card,
-    image_url: getCardImageUrl(card),
-    position: config.positions?.[idx],
-  }));
 
   const cacheKey = generateCacheKey('tarot_v3', {
     spread,

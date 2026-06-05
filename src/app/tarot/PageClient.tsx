@@ -222,7 +222,48 @@ export default function TarotPage() {
     flipTimersRef.current.push(startTimer, doneTimer);
   };
 
-  const handleDraw = async () => {
+  const handleDrawCards = async () => {
+    setLoading(true);
+    setError('');
+    setStep('drawing');
+
+    try {
+      const res = await fetch('/api/tarot/draw-cards', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          spread: currentSpread,
+          question: question.trim(),
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        if (data.error === 'VIP_REQUIRED') {
+          setError('凯尔特十字牌阵为会员专属功能,升级后即可使用。');
+        } else if (data.error === 'QUOTA_EXCEEDED') {
+          setError('今日免费次数已用完,明日 00:00 自动重置,或升级会员继续使用。');
+        } else if (data.error === 'LOGIN_REQUIRED') {
+          setError('请先登录后再使用此功能。');
+        } else {
+          setError('网络连接不稳定,请稍后重试。');
+        }
+        setStep('question');
+        return;
+      }
+
+      setDrawnCards(data.cards);
+      setStep('drawn');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '未知错误');
+      setStep('question');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAIReading = async (cards: TarotCard[]) => {
     setLoading(true);
     setError('');
     setStep('loading');
@@ -234,6 +275,7 @@ export default function TarotPage() {
         body: JSON.stringify({
           spread: currentSpread,
           question: question.trim(),
+          preDrawnCards: cards,
         }),
       });
 
@@ -249,7 +291,7 @@ export default function TarotPage() {
         } else {
           setError('网络连接不稳定,请稍后重试。');
         }
-        setStep('question');
+        setStep('drawn');
         return;
       }
 
@@ -303,7 +345,7 @@ export default function TarotPage() {
       setStreaming(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : '未知错误');
-      setStep('question');
+      setStep('drawn');
     } finally {
       setLoading(false);
       setStreaming(false);
@@ -474,7 +516,7 @@ export default function TarotPage() {
         </section>
 
         <section className="mx-auto max-w-5xl space-y-4 animate-fadeIn">
-          {step !== 'loading' && step !== 'result' && (
+          {step === 'question' && (
             <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-3 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
               <label className="mb-2 block text-sm text-[#1C1A16]/75">你的问题</label>
               <div className="relative">
@@ -520,11 +562,11 @@ export default function TarotPage() {
 
               <button
                 type="button"
-                onClick={handleDraw}
+                onClick={handleDrawCards}
                 disabled={loading}
                 className="mt-5 h-[44px] w-full rounded-xl bg-[#1C1A16] text-sm font-medium text-white transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                🃏 开始解读
+                🎴 抽取塔罗牌
               </button>
             </div>
           )}
@@ -572,6 +614,102 @@ export default function TarotPage() {
                   <OracleLoading />
                 </div>
               )}
+            </div>
+          )}
+
+          {step === 'drawing' && (
+            <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 text-center transition-shadow duration-300 hover:shadow-card-hover md:p-10">
+              <div className="flex justify-center">
+                <OracleLoading />
+              </div>
+              <p className="mt-4 text-sm text-[#1C1A16]/60">正在抽取塔罗牌...</p>
+            </div>
+          )}
+
+          {step === 'drawn' && drawnCards && (
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-3 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
+                <h3 className="font-display text-2xl tracking-[0.08em] text-[#1C1A16] text-center">✨ 您抽到了这些牌</h3>
+                <div className="mt-6">
+                  {(() => {
+                    const spread = currentSpread;
+                    const positions = getPositions(spread);
+                    const containerWidth = spread === 'celtic' ? 80 : spread === 'mirror' ? 110 : 140;
+
+                    const renderCard = (card: TarotCard, idx: number) => (
+                      <div key={`drawn-${card.id}-${idx}`} className="text-center">
+                        <p className="mb-2 text-xs tracking-[0.16em] text-[#1C1A16]/55">
+                          {card.position || positions[idx]}
+                        </p>
+                        <div className="mx-auto" style={{ width: containerWidth, maxWidth: '100%' }}>
+                          <div
+                            className="relative overflow-hidden rounded-[0.85rem] border border-[#1C1A16]/12 bg-[#FAF9F6]"
+                            style={{ aspectRatio: '2 / 3' }}
+                          >
+                            <img
+                              src={card.image_url}
+                              alt={card.name_zh}
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                                transform: card.orientation === 'reversed' ? 'rotate(180deg)' : undefined,
+                              }}
+                            />
+                          </div>
+                        </div>
+                        <h4 className={`mt-2 font-medium text-[#1C1A16] ${spread === 'celtic' ? 'text-[10px] sm:text-xs' : 'text-xs sm:text-sm'}`}>
+                          {card.name_zh}
+                        </h4>
+                        <span
+                          className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[11px] ${
+                            card.orientation === 'upright'
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : 'bg-amber-100 text-amber-700'
+                          }`}
+                        >
+                          {card.orientation === 'upright' ? '正位' : '逆位'}
+                        </span>
+                      </div>
+                    );
+
+                    if (spread === 'celtic') {
+                      return (
+                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
+                          {drawnCards.map((card, idx) => renderCard(card, idx))}
+                        </div>
+                      );
+                    }
+
+                    if (spread === 'mirror') {
+                      return (
+                        <div className="grid grid-cols-2 gap-3 md:flex md:justify-center md:gap-4">
+                          {drawnCards.map((card, idx) => (
+                            <div key={`mirror-drawn-${card.id}-${idx}`} className="md:w-[150px]">
+                              {renderCard(card, idx)}
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div className="grid grid-cols-3 justify-items-center gap-2 sm:gap-4">
+                        {drawnCards.map((card, idx) => renderCard(card, idx))}
+                      </div>
+                    );
+                  })()}
+                </div>
+                {error && <p className="mt-4 text-center text-sm text-red-600">{error}</p>}
+                <button
+                  type="button"
+                  onClick={() => handleAIReading(drawnCards)}
+                  disabled={loading}
+                  className="mt-6 h-[44px] w-full rounded-xl bg-[#1C1A16] text-sm font-medium text-white transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  ✨ AI解读牌意 →
+                </button>
+              </div>
             </div>
           )}
 
