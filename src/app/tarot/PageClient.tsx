@@ -73,7 +73,7 @@ const SPREAD_TO_MODE: Record<TarotSpread, string> = {
 };
 
 type ModeId = (typeof MODES)[number]['id'];
-type Step = 'question' | 'loading' | 'result';
+type Step = 'question' | 'drawing' | 'drawn' | 'loading' | 'result';
 
 const MODE_TO_SPREAD: Record<ModeId, TarotSpread> = {
   classic: 'three',
@@ -127,6 +127,7 @@ export default function TarotPage() {
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<TarotDrawResult | null>(null);
+  const [drawnCards, setDrawnCards] = useState<TarotCard[] | null>(null);
   const [detailedExpanded, setDetailedExpanded] = useState(true);
   const [flippedCards, setFlippedCards] = useState<boolean[]>([]);
   const [showReading, setShowReading] = useState(false);
@@ -188,6 +189,7 @@ export default function TarotPage() {
     setStep('question');
     setQuestion('');
     setResult(null);
+    setDrawnCards(null);
     setDetailedExpanded(false);
     setFlippedCards([]);
     setShowReading(false);
@@ -313,6 +315,7 @@ export default function TarotPage() {
     setStep('question');
     setQuestion('');
     setResult(null);
+    setDrawnCards(null);
     setError('');
     setDetailedExpanded(false);
     setFlippedCards([]);
@@ -466,7 +469,7 @@ export default function TarotPage() {
             AI 塔罗占卜
           </h1>
           <p className="mx-auto mt-5 max-w-3xl text-[16px] leading-relaxed tracking-[0.02em] text-[#1C1A16]/55">
-            人工智能驱动的塔罗牌解读系统,更准确、更有深度的占卜体验。
+            人工智能驱动的专业塔罗牌解读，探索生命的奥秘，寻找内心的答案
           </p>
         </section>
 
