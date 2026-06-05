@@ -675,84 +675,33 @@ export default function TarotPage() {
 
         <section className="mx-auto mt-12 max-w-5xl animate-fadeIn">
           <div className="text-center mb-10">
-            <h2 className="font-display text-[28px] tracking-[0.06em] text-[#1C1A16]">AI 塔罗牌解析系统</h2>
-            <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-[#6B7280]">
-              FateMaster AI 塔罗牌占卜系统结合了传统塔罗牌智慧与尖端人工智能技术，通过78张牌的图像符号和 AI 精准分析来揭示人生的真相和智慧。我们的 AI 塔罗牌解读不仅融合了传统塔罗牌占卜技巧，还结合现代心理学理论，为您提供深入且实用的人生指引。
-            </p>
-          </div>
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-3 mb-12">
-            {[
-              {
-                icon: '✦',
-                title: 'AI 精准解读',
-                desc: '人工智能分析塔罗牌象征意义，提供精准个性化的解读，激发您的直觉洞察力',
-              },
-              {
-                icon: '⚡',
-                title: '即时占卜反馈',
-                desc: '无需等待，AI 系统即时生成专业塔罗牌解读，随时随地获取命运指引',
-              },
-              {
-                icon: '☆',
-                title: '专业塔罗智慧',
-                desc: '基于传统塔罗牌理论，结合 AI 分析能力，为您的人生关键决策提供深刻洞见',
-              },
-            ].map((item) => (
-              <div
-                key={item.title}
-                className="flex flex-col items-center text-center rounded-2xl border border-[#E5E0D8] bg-white p-8"
-              >
-                <div className="w-14 h-14 rounded-full bg-[#F5F2ED] flex items-center justify-center text-2xl mb-5 flex-shrink-0">
-                  {item.icon}
-                </div>
-                <h3 className="text-base font-semibold text-[#1C1A16] mb-3">{item.title}</h3>
-                <p className="text-sm leading-relaxed text-[#6B7280]">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="mx-auto mt-12 max-w-5xl animate-fadeIn">
-          <div className="text-center mb-10">
-            <h2 className="font-display text-[28px] tracking-[0.06em] text-[#1C1A16]">AI 塔罗牌解析系统</h2>
-            <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-[#6B7280]">
-              CyberFate AI 塔罗系统结合了传统塔罗牌智慧与大语言模型技术，通过 78 张牌的图像符号和 AI 精准分析来揭示内心深处的答案。
-            </p>
+            <h2 className="font-display text-[28px] tracking-[0.06em] text-[#1C1A16]">AI 塔罗牌占卜应用场景</h2>
           </div>
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             {[
               {
-                icon: '💕',
                 title: '感情关系解析',
-                desc: '深入解读情感走向，帮助你理解伴侣的内心世界，化解感情中的困惑与迷茫，找到爱与被爱的正确方式。',
+                desc: 'AI 塔罗牌占卜能帮助您理解当前感情状况和潜在发展方向，洞察伴侣想法和关系中的隐藏问题，为您的情感决策提供指引。',
               },
               {
-                icon: '💼',
                 title: '事业发展预测',
-                desc: '洞察职场机遇与挑战，为你的事业规划提供前瞻性指引，助你把握关键时机，实现职业突破与成长。',
+                desc: '通过 AI 塔罗牌占卜分析当前职业环境和未来机遇，识别潜在障碍和有利因素，帮助您在职业道路上做出明智选择。',
               },
               {
-                icon: '🔀',
                 title: '重大决策指导',
-                desc: '面对人生十字路口时，塔罗牌能提供多角度的视角与洞见，帮助你权衡利弊，做出更明智的选择。',
+                desc: '面临人生十字路口时，AI 塔罗牌占卜可以为您提供多角度思考，展示不同选择可能带来的结果，帮助您权衡利弊。',
               },
               {
-                icon: '🌟',
                 title: '自我成长探索',
-                desc: '通过塔罗牌的象征语言，深入了解自己的内心需求与潜在能力，开启自我认知与个人成长的旅程。',
+                desc: 'AI 塔罗牌占卜能揭示您内心深处的真实想法，帮助您认识自己的潜能和盲点，指引个人成长和自我实现的方向。',
               },
             ].map((item) => (
               <div
                 key={item.title}
-                className="flex items-start gap-5 rounded-2xl border border-[#E5E0D8] bg-white p-7"
+                className="rounded-2xl border border-[#E5E0D8] bg-white p-8"
               >
-                <div className="w-14 h-14 rounded-2xl bg-[#F5F2ED] flex items-center justify-center text-2xl flex-shrink-0">
-                  {item.icon}
-                </div>
-                <div>
-                  <h3 className="text-base font-semibold text-[#1C1A16] mb-2">{item.title}</h3>
-                  <p className="text-sm leading-relaxed text-[#6B7280]">{item.desc}</p>
-                </div>
+                <h3 className="text-base font-semibold text-[#1C1A16] mb-3">{item.title}</h3>
+                <p className="text-sm leading-relaxed text-[#6B7280]">{item.desc}</p>
               </div>
             ))}
           </div>
