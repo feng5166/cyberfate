@@ -527,8 +527,9 @@ export default function TarotPage() {
           )}
 
           <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 md:p-8">
-            <h2 className="font-display text-xl tracking-[0.08em] text-[#1C1A16] text-center mb-6">选择您的塔罗体验</h2>
-            <p className="text-center text-sm text-[#6B7280] mb-8 -mt-4">不同解读风格</p>
+            <h2 className="font-display text-xl tracking-[0.08em] text-[#1C1A16] text-center mb-4">选择您的塔罗体验</h2>
+            <hr className="border-[#E5E0D8] mb-4" />
+            <p className="text-center text-sm text-[#6B7280] mb-8 font-medium">不同解读风格</p>
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
               {MODES.map((item) => {
                 const active = item.id === mode;
@@ -539,11 +540,11 @@ export default function TarotPage() {
                     onClick={() => handleModeSelect(item.id)}
                     className={`flex flex-col items-center text-center rounded-2xl border-2 p-5 transition-all duration-200 ${
                       active
-                        ? 'border-[#1C1A16] bg-white shadow-lg'
+                        ? 'border-[#1C1A16] bg-gray-50 shadow-sm'
                         : 'border-[#E5E0D8] bg-white hover:border-[#1C1A16]/40 hover:shadow-md'
                     }`}
                   >
-                    <div className="w-12 h-12 rounded-full bg-[#F5F2ED] flex items-center justify-center text-xl mb-3 flex-shrink-0">
+                    <div className="w-12 h-12 flex items-center justify-center text-2xl mb-3 flex-shrink-0">
                       {item.icon}
                     </div>
                     <p className={`text-base font-semibold mb-2 ${active ? 'text-[#1C1A16]' : 'text-[#1C1A16]'}`}>
