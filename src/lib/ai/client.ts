@@ -360,9 +360,9 @@ function getTarotTextLimits(spread: TarotSpread): {
 }
 
 function getTarotMaxTokens(spread: TarotSpread): number {
-  if (spread === 'celtic') return 2600;
-  if (spread === 'mirror') return 1800;
-  return 1200;
+  if (spread === 'celtic') return 5000;
+  if (spread === 'mirror') return 4000;
+  return 3500;
 }
 
 export async function generateTarotReading(
