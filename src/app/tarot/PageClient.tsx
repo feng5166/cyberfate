@@ -323,13 +323,13 @@ export default function TarotPage() {
               setLoading(false);
               const initial: TarotDrawResult = {
                 spread: json.meta.spread,
-                cards: json.meta.cards,
+                cards: cards,
                 overallNarrative: '',
                 detailedReading: json.meta.detailedReading,
                 advice: json.meta.advice,
                 caution: json.meta.caution,
               };
-              cardCount = json.meta.cards.length;
+              cardCount = cards.length;
               setResult(initial);
               setDetailedExpanded(false);
               setStep('result');
