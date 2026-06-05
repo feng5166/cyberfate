@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 import { Footer } from '@/components/layout/Footer';
 import { OracleLoading } from '@/components/ui/OracleLoading';
-import { ChevronDown, ChevronUp, Share2, X } from 'lucide-react';
+import { Share2, X } from 'lucide-react';
 import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { useEffect, useRef, useState } from 'react';
@@ -18,10 +18,10 @@ const CardDrawAnimation = dynamic(() => import('@/components/tarot/CardDrawAnima
 });
 
 const SAMPLE_PROMPTS = [
-  '我的感情走向如何？',
-  '这份工作值得去吗？',
-  '他/她是怎么想的？',
-  '我该如何做这个决定？',
+  '我的感情走向如何?',
+  '这份工作值得去吗?',
+  '他/她是怎么想的?',
+  '我该如何做这个决定?',
 ];
 
 type TarotSpread = 'three' | 'celtic' | 'moonlight' | 'mirror';
@@ -29,16 +29,16 @@ type TarotSpread = 'three' | 'celtic' | 'moonlight' | 'mirror';
 const THREE_POSITIONS = ['过去', '现在', '未来'];
 
 const CELTIC_POSITIONS = [
-  '①现状',
-  '②挑战',
-  '③意识',
-  '④根源',
-  '⑤希望/恐惧',
-  '⑥近期发展',
-  '⑦可能结果',
-  '⑧外部环境',
-  '⑨心态信念',
-  '⑩最终结局',
+  '1现状',
+  '2挑战',
+  '3意识',
+  '4根源',
+  '5希望/恐惧',
+  '6近期发展',
+  '7可能结果',
+  '8外部环境',
+  '9心态信念',
+  '10最终结局',
 ];
 
 const MOONLIGHT_POSITIONS = ['身心灵', '潜意识', '指引'];
@@ -46,23 +46,23 @@ const MOONLIGHT_POSITIONS = ['身心灵', '潜意识', '指引'];
 const MIRROR_POSITIONS = ['现状', '阻碍', '建议', '风险', 'Outcome'];
 
 const CELTIC_DESKTOP_LAYOUT: { col: number; row: number }[] = [
-  { col: 1, row: 4 }, // ①现状
-  { col: 2, row: 2 }, // ②挑战
-  { col: 2, row: 4 }, // ③意识
-  { col: 3, row: 4 }, // ④根源
-  { col: 2, row: 3 }, // ⑤希望/恐惧
-  { col: 2, row: 1 }, // ⑥近期发展
-  { col: 5, row: 4 }, // ⑦可能结果
-  { col: 3, row: 2 }, // ⑧外部环境 → 修正为 col3,row4 → 按需求 col3,row4 已被④占用
-  { col: 4, row: 2 }, // ⑨心态信念
-  { col: 1, row: 2 }, // ⑩最终结局
+  { col: 1, row: 4 }, // 1现状
+  { col: 2, row: 2 }, // 2挑战
+  { col: 2, row: 4 }, // 3意识
+  { col: 3, row: 4 }, // 4根源
+  { col: 2, row: 3 }, // 5希望/恐惧
+  { col: 2, row: 1 }, // 6近期发展
+  { col: 5, row: 4 }, // 7可能结果
+  { col: 3, row: 2 }, // 8外部环境 → 修正为 col3,row4 → 按需求 col3,row4 已被4占用
+  { col: 4, row: 2 }, // 9心态信念
+  { col: 1, row: 2 }, // 10最终结局
 ];
 
 const MODES = [
-  { id: 'classic' as const, icon: '◉', name: '经典', desc: '3张牌·过去/现在/未来，新手首选', tooltip: '3张牌过去/现在/未来，新手首选' },
-  { id: 'celtic' as const, icon: '✝', name: '凯尔特十字', desc: '10张牌·全面深度分析，会员专属', tooltip: '10张牌深度解读，全面分析人生各维度' },
-  { id: 'moonlight' as const, icon: '☽', name: '月光', desc: '3张牌·柔和内省，适合情感探索', tooltip: '温柔内省风格，适合情感/睡前探索' },
-  { id: 'mirror' as const, icon: '✦', name: '镜像', desc: '5张牌·多角度透视，复杂决策专用', tooltip: '5张多角度深度分析，复杂决策专用' },
+  { id: 'classic' as const, icon: '◉', name: '经典', desc: '3张牌·过去/现在/未来,新手首选', tooltip: '3张牌过去/现在/未来,新手首选' },
+  { id: 'celtic' as const, icon: '✝', name: '凯尔特十字', desc: '10张牌·全面深度分析,会员专属', tooltip: '10张牌深度解读,全面分析人生各维度' },
+  { id: 'moonlight' as const, icon: '☽', name: '月光', desc: '3张牌·柔和内省,适合情感探索', tooltip: '温柔内省风格,适合情感/睡前探索' },
+  { id: 'mirror' as const, icon: '✦', name: '镜像', desc: '5张牌·多角度透视,复杂决策专用', tooltip: '5张多角度深度分析,复杂决策专用' },
 ];
 
 const SPREAD_TO_MODE: Record<TarotSpread, string> = {
@@ -131,7 +131,7 @@ export default function TarotPage() {
   const [flippedCards, setFlippedCards] = useState<boolean[]>([]);
   const [showReading, setShowReading] = useState(false);
   const [useLegacyDrawAnimation] = useState(false);
-  const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
+
   const [celticModalIdx, setCelticModalIdx] = useState<number | null>(null);
   const flipTimersRef = useRef<Array<ReturnType<typeof setTimeout>>>([]);
 
@@ -241,11 +241,11 @@ export default function TarotPage() {
           data = await res.json();
         } catch {}
         if (data.error === 'VIP_REQUIRED') {
-          setError('凯尔特十字牌阵为会员专属功能，升级后即可使用。');
+          setError('凯尔特十字牌阵为会员专属功能,升级后即可使用。');
         } else if (data.error === 'QUOTA_EXCEEDED') {
-          setError('今日免费次数已用完，明日 00:00 自动重置，或升级会员继续使用。');
+          setError('今日免费次数已用完,明日 00:00 自动重置,或升级会员继续使用。');
         } else {
-          setError('网络连接不稳定，请稍后重试。');
+          setError('网络连接不稳定,请稍后重试。');
         }
         setStep('question');
         return;
@@ -466,7 +466,7 @@ export default function TarotPage() {
             AI 塔罗占卜
           </h1>
           <p className="mx-auto mt-5 max-w-3xl text-[16px] leading-relaxed tracking-[0.02em] text-[#1C1A16]/55">
-            人工智能驱动的塔罗牌解读系统，更准确、更有深度的占卜体验。
+            人工智能驱动的塔罗牌解读系统,更准确、更有深度的占卜体验。
           </p>
         </section>
 
@@ -602,9 +602,9 @@ export default function TarotPage() {
                             </span>
                           </div>
                           <p className="mt-2 text-sm leading-relaxed text-[#1C1A16]/80">
-                            传统含义：{card.orientation === 'upright' ? card.upright : card.reversed}
+                            传统含义:{card.orientation === 'upright' ? card.upright : card.reversed}
                           </p>
-                          <p className="mt-1 text-sm leading-relaxed text-[#1C1A16]/80">现代解读：{card.meaning}</p>
+                          <p className="mt-1 text-sm leading-relaxed text-[#1C1A16]/80">现代解读:{card.meaning}</p>
                         </div>
                       ))}
                     </div>
@@ -677,7 +677,7 @@ export default function TarotPage() {
           <div className="text-center mb-10">
             <h2 className="font-display text-[28px] tracking-[0.06em] text-[#1C1A16]">AI 塔罗牌解析系统</h2>
             <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-[#6B7280]">
-              FateMaster AI 塔罗牌占卜系统结合了传统塔罗牌智慧与尖端人工智能技术，通过78张牌的图像符号和 AI 精准分析来揭示人生的真相和智慧。我们的 AI 塔罗牌解读不仅融合了传统塔罗牌占卜技巧，还结合现代心理学理论，为您提供深入且实用的人生指引。
+              FateMaster AI 塔罗牌占卜系统结合了传统塔罗牌智慧与尖端人工智能技术,通过78张牌的图像符号和 AI 精准分析来揭示人生的真相和智慧。我们的 AI 塔罗牌解读不仅融合了传统塔罗牌占卜技巧,还结合现代心理学理论,为您提供深入且实用的人生指引。
             </p>
           </div>
           <div className="grid grid-cols-1 gap-5 md:grid-cols-3 mb-4">
@@ -685,17 +685,17 @@ export default function TarotPage() {
               {
                 icon: '✶',
                 title: 'AI 精准解读',
-                desc: '人工智能分析塔罗牌象征意义，提供精准个性化的解读，激发您的直觉洞察力',
+                desc: '人工智能分析塔罗牌象征意义,提供精准个性化的解读,激发您的直觉洞察力',
               },
               {
                 icon: '⚡',
                 title: '即时占卜反馈',
-                desc: '无需等待，AI 系统即时生成专业塔罗牌解读，随时随地获取命运指引',
+                desc: '无需等待,AI 系统即时生成专业塔罗牌解读,随时随地获取命运指引',
               },
               {
                 icon: '☆',
                 title: '专业塔罗智慧',
-                desc: '基于传统塔罗牌理论，结合 AI 分析能力，为您的人生关键决策提供深刻洞见',
+                desc: '基于传统塔罗牌理论,结合 AI 分析能力,为您的人生关键决策提供深刻洞见',
               },
             ].map((item) => (
               <div
@@ -720,19 +720,19 @@ export default function TarotPage() {
             {[
               {
                 title: '感情关系解析',
-                desc: 'AI 塔罗牌占卜能帮助您理解当前感情状况和潜在发展方向，洞察伴侣想法和关系中的隐藏问题，为您的情感决策提供指引。',
+                desc: 'AI 塔罗牌占卜能帮助您理解当前感情状况和潜在发展方向,洞察伴侣想法和关系中的隐藏问题,为您的情感决策提供指引。',
               },
               {
                 title: '事业发展预测',
-                desc: '通过 AI 塔罗牌占卜分析当前职业环境和未来机遇，识别潜在障碍和有利因素，帮助您在职业道路上做出明智选择。',
+                desc: '通过 AI 塔罗牌占卜分析当前职业环境和未来机遇,识别潜在障碍和有利因素,帮助您在职业道路上做出明智选择。',
               },
               {
                 title: '重大决策指导',
-                desc: '面临人生十字路口时，AI 塔罗牌占卜可以为您提供多角度思考，展示不同选择可能带来的结果，帮助您权衡利弊。',
+                desc: '面临人生十字路口时,AI 塔罗牌占卜可以为您提供多角度思考,展示不同选择可能带来的结果,帮助您权衡利弊。',
               },
               {
                 title: '自我成长探索',
-                desc: 'AI 塔罗牌占卜能揭示您内心深处的真实想法，帮助您认识自己的潜能和盲点，指引个人成长和自我实现的方向。',
+                desc: 'AI 塔罗牌占卜能揭示您内心深处的真实想法,帮助您认识自己的潜能和盲点,指引个人成长和自我实现的方向。',
               },
             ].map((item) => (
               <div
@@ -747,50 +747,33 @@ export default function TarotPage() {
         </section>
 
         <section className="mx-auto mt-12 max-w-5xl animate-fadeIn">
-          <h2 className="font-display text-[28px] tracking-[0.06em] text-[#1C1A16] text-center mb-10">常见问题</h2>
+          <h2 className="font-display text-[28px] tracking-[0.06em] text-[#1C1A16] text-center mb-10">AI 塔罗牌占卜常见问题</h2>
           <div className="space-y-4">
             {[
               {
-                q: 'AI 塔罗与传统塔罗有何不同？',
-                a: '传统塔罗占卜依赖占卜师的个人直觉与经验，解读结果因人而异。CyberFate AI 塔罗系统则结合了数千年塔罗智慧与现代人工智能技术，通过深度学习分析牌面象征，提供更系统化、更一致的个性化解读，同时保留了塔罗的神秘与启示性。',
+                q: 'AI 塔罗牌占卜与传统塔罗牌有何不同？',
+                a: 'AI 塔罗牌占卜结合了传统塔罗牌的象征体系和人工智能的分析能力，提供更客观、全面的解读。AI 能快速处理大量信息、找出牌阵中的关联和模式，同时保持塔罗牌的神秘性和直觉性。',
               },
               {
-                q: '如何提出有效的塔罗占卜问题？',
-                a: '好的塔罗问题应该聚焦于你真正关心的事情，建议以开放式提问为主，比如"我在感情方面需要注意什么？"而非"他爱不爱我？"。问题越具体清晰，AI 解读就越有针对性。避免重复问同一个问题，相信第一次的指引。',
+                q: '如何提出有效的塔罗牌问题？',
+                a: '提出明确、具体但开放性的问题能获得更有价値的 AI 塔罗牌解读。避免简单的是非问题，更好的问法是“我如何能……”、“什么因素影响……”或“我需要了解什么关于……”这类引导深入思考的问题。',
               },
               {
-                q: 'AI 塔罗占卜的准确性如何？',
-                a: 'AI 塔罗占卜提供的是基于塔罗牌象征系统的参考视角，而非对未来的确定性预测。它更像一面镜子，帮你从不同角度审视当前处境与内心状态。许多用户反馈解读内容对他们当下的困惑具有很强的共鸣感与启发性，但最终的判断与行动仍需结合自身实际情况。',
+                q: 'AI 塔罗牌占卜的准确性如何？',
+                a: 'AI 塔罗牌占卜是一种引导性工具，其价値在于提供新的思考角度和个人反思的机会。我们的系统基于深度学习训练，能提供有深度的见解，但最终决策权和判断力仍在您手中。',
               },
-            ].map((item, index) => {
-              const expanded = expandedFaq === index;
-              return (
-                <div key={item.q} className="rounded-2xl border border-[#E5E0D8] bg-white overflow-hidden">
-                  <button
-                    type="button"
-                    className="flex w-full items-center justify-between gap-3 text-left px-7 py-5"
-                    onClick={() => setExpandedFaq((prev) => (prev === index ? null : index))}
-                  >
-                    <span className="text-[15px] font-semibold text-[#1C1A16]">{item.q}</span>
-                    {expanded ? (
-                      <ChevronUp className="h-5 w-5 shrink-0 text-[#9CA3AF]" />
-                    ) : (
-                      <ChevronDown className="h-5 w-5 shrink-0 text-[#9CA3AF]" />
-                    )}
-                  </button>
-                  <div
-                    className={`overflow-hidden transition-all duration-300 ${
-                      expanded ? 'max-h-60 opacity-100' : 'max-h-0 opacity-0'
-                    }`}
-                  >
-                    <p className="px-7 pb-6 text-sm leading-relaxed text-[#6B7280]">{item.a}</p>
-                  </div>
-                </div>
-              );
-            })}
+            ].map((item) => (
+              <div key={item.q} className="rounded-2xl border border-[#E5E0D8] bg-white p-7">
+                <h3 className="flex items-center gap-2 text-[15px] font-semibold text-[#1C1A16] mb-3">
+                  <span className="text-[#6B7280] text-base">&#9432;</span>
+                  {item.q}
+                </h3>
+                <p className="text-sm leading-relaxed text-[#6B7280]">{item.a}</p>
+              </div>
+            ))}
           </div>
           <div className="mt-6 rounded-2xl border border-[#E5E0D8] bg-white/60 p-4 text-center text-xs text-[#9CA3AF]">
-            ⚠️ 免责声明：本站塔罗占卜内容仅供娱乐与自我探索参考，不构成医疗、法律或投资建议。请结合现实信息理性判断。
+            ⚠️ 免责声明:本站塔罗占卜内容仅供娱乐与自我探索参考,不构成医疗、法律或投资建议。请结合现实信息理性判断。
           </div>
         </section>
 
@@ -800,7 +783,7 @@ export default function TarotPage() {
               开启你的<br />AI 塔罗占卜之旅
             </h2>
             <p className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-[#6B7280]">
-              赛博命理师的 AI 塔罗系统融合了传统塔罗智慧与现代 AI 技术，为你提供更准确、更有深度的解读。无论你是塔罗新手还是资深爱好者，都能从中获得启发。
+              赛博命理师的 AI 塔罗系统融合了传统塔罗智慧与现代 AI 技术,为你提供更准确、更有深度的解读。无论你是塔罗新手还是资深爱好者,都能从中获得启发。
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <button
@@ -818,7 +801,7 @@ export default function TarotPage() {
                 八字分析 →
               </button>
             </div>
-            <p className="mt-4 text-xs text-[#9CA3AF]">免费体验，无需注册</p>
+            <p className="mt-4 text-xs text-[#9CA3AF]">免费体验,无需注册</p>
           </div>
         </section>
       </main>
