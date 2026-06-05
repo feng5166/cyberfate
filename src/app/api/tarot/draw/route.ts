@@ -13,7 +13,7 @@ import { withCircuitBreaker } from '@/lib/ai/circuitBreaker';
 import { applyChaos } from '@/lib/chaos-middleware';
 import { logger } from '@/lib/logger';
 
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 const SERVICE = 'api/tarot/draw';
 
@@ -259,7 +259,7 @@ export async function POST(req: NextRequest) {
   let reading: TarotReadingResult & { _source: 'deepseek' | 'fallback' };
   try {
     reading = await withCircuitBreaker('deepseek-tarot-v4pro', () =>
-      withAiTimeout(() => generateTarotReading(promptInput), 55_000)
+      withAiTimeout(() => generateTarotReading(promptInput), 110_000)
     );
   } catch (aiErr) {
     logger.warn(SERVICE, 'AI unavailable, using card-based fallback', { reason: aiErr instanceof Error ? aiErr.message : String(aiErr) });
