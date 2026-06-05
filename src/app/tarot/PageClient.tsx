@@ -539,14 +539,30 @@ export default function TarotPage() {
           </div>
 
           {step === 'loading' && (
-            <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 text-center transition-shadow duration-300 hover:shadow-card-hover md:p-10">
-              {useLegacyDrawAnimation ? (
-                <CardDrawAnimation cardCount={3} onComplete={() => undefined} />
-              ) : (
+            <div className="space-y-4">
+              {drawnCards && (
+                <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-5 md:p-6">
+                  <h3 className="font-display text-xl tracking-[0.08em] text-[#1C1A16] text-center mb-5">✨ 您抚到了这些牌</h3>
+                  <div>
+                    {(() => {
+                      const spread = (currentSpread as TarotSpread);
+                      const positions = getPositions(spread);
+                      if (spread === 'celtic') {
+                        return <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">{drawnCards.map((card, idx) => <div key={idx} className="text-center"><p className="mb-2 text-xs tracking-[0.16em] text-[#1C1A16]/55">{card.position || positions[idx]}</p><div className="mx-auto" style={{width:80,maxWidth:'100%'}}><div className="relative overflow-hidden rounded-[0.85rem] border border-[#1C1A16]/12 bg-[#FAF9F6]" style={{aspectRatio:'2/3'}}><img src={card.image_url} alt={card.name_zh} style={{width:'100%',height:'100%',objectFit:'cover',transform:card.orientation==='reversed'?'rotate(180deg)':undefined}} /></div></div><h4 className="mt-2 text-[10px] sm:text-xs font-medium text-[#1C1A16]">{card.name_zh}</h4><span className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[11px] ${card.orientation==='upright'?'bg-emerald-100 text-emerald-700':'bg-amber-100 text-amber-700'}`}>{card.orientation==='upright'?'正位':'逆位'}</span></div>)}</div>;
+                      }
+                      if (spread === 'mirror') {
+                        return <div className="grid grid-cols-2 gap-3 md:flex md:justify-center md:gap-4">{drawnCards.map((card, idx) => <div key={idx} className="md:w-[150px] text-center"><p className="mb-2 text-xs tracking-[0.16em] text-[#1C1A16]/55">{card.position || positions[idx]}</p><div className="mx-auto" style={{width:110,maxWidth:'100%'}}><div className="relative overflow-hidden rounded-[0.85rem] border border-[#1C1A16]/12 bg-[#FAF9F6]" style={{aspectRatio:'2/3'}}><img src={card.image_url} alt={card.name_zh} style={{width:'100%',height:'100%',objectFit:'cover',transform:card.orientation==='reversed'?'rotate(180deg)':undefined}} /></div></div><h4 className="mt-2 text-xs font-medium text-[#1C1A16]">{card.name_zh}</h4><span className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[11px] ${card.orientation==='upright'?'bg-emerald-100 text-emerald-700':'bg-amber-100 text-amber-700'}`}>{card.orientation==='upright'?'正位':'逆位'}</span></div>)}</div>;
+                      }
+                      return <div className="grid grid-cols-3 justify-items-center gap-2 sm:gap-4">{drawnCards.map((card, idx) => <div key={idx} className="text-center"><p className="mb-2 text-xs tracking-[0.16em] text-[#1C1A16]/55">{card.position || positions[idx]}</p><div className="mx-auto" style={{width:140,maxWidth:'100%'}}><div className="relative overflow-hidden rounded-[0.85rem] border border-[#1C1A16]/12 bg-[#FAF9F6]" style={{aspectRatio:'2/3'}}><img src={card.image_url} alt={card.name_zh} style={{width:'100%',height:'100%',objectFit:'cover',transform:card.orientation==='reversed'?'rotate(180deg)':undefined}} /></div></div><h4 className="mt-2 text-xs sm:text-sm font-medium text-[#1C1A16]">{card.name_zh}</h4><span className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[11px] ${card.orientation==='upright'?'bg-emerald-100 text-emerald-700':'bg-amber-100 text-amber-700'}`}>{card.orientation==='upright'?'正位':'逆位'}</span></div>)}</div>;
+                    })()}
+                  </div>
+                </div>
+              )}
+              <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 text-center">
                 <div className="flex justify-center">
                   <OracleLoading />
                 </div>
-              )}
+              </div>
             </div>
           )}
 
