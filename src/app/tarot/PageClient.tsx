@@ -59,10 +59,10 @@ const CELTIC_DESKTOP_LAYOUT: { col: number; row: number }[] = [
 ];
 
 const MODES = [
-  { id: 'classic' as const, icon: '⚫', name: '经典', desc: '3张牌·过去/现在/未来，新手首选', tooltip: '3张牌过去/现在/未来，新手首选' },
-  { id: 'celtic' as const, icon: '✝︎', name: '凯尔特十字', desc: '10张牌·全面深度分析，会员专属', tooltip: '10张牌深度解读，全面分析人生各维度' },
-  { id: 'moonlight' as const, icon: '🌙', name: '月光', desc: '3张牌·柔和内省，适合情感探索', tooltip: '温柔内省风格，适合情感/睡前探索' },
-  { id: 'mirror' as const, icon: '✧', name: '镜像', desc: '5张牌·多角度透视，复杂决策专用', tooltip: '5张多角度深度分析，复杂决策专用' },
+  { id: 'classic' as const, icon: '◉', name: '经典', desc: '3张牌·过去/现在/未来，新手首选', tooltip: '3张牌过去/现在/未来，新手首选' },
+  { id: 'celtic' as const, icon: '✝', name: '凯尔特十字', desc: '10张牌·全面深度分析，会员专属', tooltip: '10张牌深度解读，全面分析人生各维度' },
+  { id: 'moonlight' as const, icon: '☽', name: '月光', desc: '3张牌·柔和内省，适合情感探索', tooltip: '温柔内省风格，适合情感/睡前探索' },
+  { id: 'mirror' as const, icon: '✦', name: '镜像', desc: '5张牌·多角度透视，复杂决策专用', tooltip: '5张多角度深度分析，复杂决策专用' },
 ];
 
 const SPREAD_TO_MODE: Record<TarotSpread, string> = {
