@@ -27,7 +27,7 @@ const TIMEOUT_CONFIG: Record<string, number> = {
   bazi: 55000,
   daily: 55000,
   marriage: 30000,
-  tarot: 15000,
+  tarot: 55000,
   huangli: 10000,
   huangli_ask: 10000,
   default: 15000,
