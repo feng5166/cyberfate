@@ -677,7 +677,7 @@ export default function TarotPage() {
           <div className="text-center mb-10">
             <h2 className="font-display text-[28px] tracking-[0.06em] text-[#1C1A16]">AI 塔罗牌解析系统</h2>
             <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-[#6B7280]">
-              FateMaster AI 塔罗牌占卜系统结合了传统塔罗牌智慧与尖端人工智能技术,通过78张牌的图像符号和 AI 精准分析来揭示人生的真相和智慧。我们的 AI 塔罗牌解读不仅融合了传统塔罗牌占卜技巧,还结合现代心理学理论,为您提供深入且实用的人生指引。
+              CyberFate AI 塔罗牌占卜系统结合了传统塔罗牌智慧与尖端人工智能技术,通过78张牌的图像符号和 AI 精准分析来揭示人生的真相和智慧。我们的 AI 塔罗牌解读不仅融合了传统塔罗牌占卜技巧,还结合现代心理学理论,为您提供深入且实用的人生指引。
             </p>
           </div>
           <div className="grid grid-cols-1 gap-5 md:grid-cols-3 mb-4">
