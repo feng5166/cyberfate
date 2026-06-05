@@ -295,7 +295,7 @@ export function buildTarotReadingSystemPrompt(input: Pick<TarotReadingPromptInpu
 - 每条 cardMeanings 控制在 ${profile.cardMeaningsRange}
 - reading 字段字数必须达到 ${profile.readingRange}，不得少于下限，宁多勿少
 - reading 内容结构：开篇定调（对当前处境整体点评）→ 逐张牌深度分析（自然段落，不是列表，每张牌一段，开头点牌名+位置）→ 综合洞见（牌间关系与整体走向）→ 可执行建议（2-3个具体行动方向）→ 结语
-- reading 必须是一篇完整文章，不分标题，不分模块，段落间自然过渡
+- reading 必须是一篇完整文章，不分标题，不分模块，每个自然段之间必须用换行符（\n）分隔，不能把所有内容写成一整段
 - caution 控制在 30-60 字，提示具体风险
 - ${profile.toneInstruction}
 

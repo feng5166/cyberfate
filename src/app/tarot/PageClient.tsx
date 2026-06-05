@@ -657,8 +657,10 @@ export default function TarotPage() {
 
               <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 md:p-8">
                 <h3 className="font-display text-xl tracking-[0.08em] text-[#1C1A16] mb-4">✨ AI 解读</h3>
-                <div className="text-[#3D3A35] leading-relaxed text-sm whitespace-pre-wrap">
-                  {result.reading}
+                <div className="text-[#3D3A35] text-[15px] leading-[1.9] space-y-4">
+                  {result.reading.split('\n').filter(p => p.trim()).map((para, i) => (
+                    <p key={i}>{para}</p>
+                  ))}
                   {streaming && <span className="inline-block w-1 h-4 bg-[#1C1A16] ml-1 animate-pulse" />}
                 </div>
                 {!streaming && result.caution && (
