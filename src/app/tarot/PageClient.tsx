@@ -675,6 +675,45 @@ export default function TarotPage() {
 
         <section className="mx-auto mt-12 max-w-5xl animate-fadeIn">
           <div className="text-center mb-10">
+            <h2 className="font-display text-[28px] tracking-[0.06em] text-[#1C1A16]">AI 塔罗牌解析系统</h2>
+            <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-[#6B7280]">
+              FateMaster AI 塔罗牌占卜系统结合了传统塔罗牌智慧与尖端人工智能技术，通过78张牌的图像符号和 AI 精准分析来揭示人生的真相和智慧。我们的 AI 塔罗牌解读不仅融合了传统塔罗牌占卜技巧，还结合现代心理学理论，为您提供深入且实用的人生指引。
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-3 mb-4">
+            {[
+              {
+                icon: '✶',
+                title: 'AI 精准解读',
+                desc: '人工智能分析塔罗牌象征意义，提供精准个性化的解读，激发您的直觉洞察力',
+              },
+              {
+                icon: '⚡',
+                title: '即时占卜反馈',
+                desc: '无需等待，AI 系统即时生成专业塔罗牌解读，随时随地获取命运指引',
+              },
+              {
+                icon: '☆',
+                title: '专业塔罗智慧',
+                desc: '基于传统塔罗牌理论，结合 AI 分析能力，为您的人生关键决策提供深刻洞见',
+              },
+            ].map((item) => (
+              <div
+                key={item.title}
+                className="flex flex-col items-center text-center rounded-2xl border border-[#E5E0D8] bg-white p-8"
+              >
+                <div className="w-14 h-14 rounded-full bg-[#F5F2ED] flex items-center justify-center text-2xl mb-5 flex-shrink-0">
+                  {item.icon}
+                </div>
+                <h3 className="text-base font-semibold text-[#1C1A16] mb-3">{item.title}</h3>
+                <p className="text-sm leading-relaxed text-[#6B7280]">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="mx-auto mt-12 max-w-5xl animate-fadeIn">
+          <div className="text-center mb-10">
             <h2 className="font-display text-[28px] tracking-[0.06em] text-[#1C1A16]">AI 塔罗牌占卜应用场景</h2>
           </div>
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
