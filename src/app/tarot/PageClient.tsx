@@ -540,7 +540,7 @@ export default function TarotPage() {
                     onClick={() => handleModeSelect(item.id)}
                     className={`flex flex-col items-center text-center rounded-2xl border-2 p-5 transition-all duration-200 ${
                       active
-                        ? 'border-[#1C1A16] bg-gray-50 shadow-sm'
+                        ? 'border-[#1C1A16] bg-gray-100 shadow-sm'
                         : 'border-[#E5E0D8] bg-white hover:border-[#1C1A16]/40 hover:shadow-md'
                     }`}
                   >
