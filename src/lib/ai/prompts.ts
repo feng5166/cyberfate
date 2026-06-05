@@ -247,33 +247,33 @@ interface TarotPromptProfile {
 function getTarotPromptProfile(spread: TarotSpread): TarotPromptProfile {
   if (spread === 'celtic') {
     return {
-      cardMeaningsRange: '50-80 字',
-      overallNarrativeRange: '900-1000 字',
-      detailedReadingRange: '260-380 字',
+      cardMeaningsRange: '80-120 字',
+      overallNarrativeRange: '1200-1400 字',
+      detailedReadingRange: '450-600 字',
       toneInstruction: '语气稳重深入、结构清晰，强调因果脉络与阶段变化，不做绝对化预言。',
     };
   }
   if (spread === 'mirror') {
     return {
-      cardMeaningsRange: '60-100 字',
-      overallNarrativeRange: '620-720 字',
-      detailedReadingRange: '180-260 字',
+      cardMeaningsRange: '80-120 字',
+      overallNarrativeRange: '900-1100 字',
+      detailedReadingRange: '320-450 字',
       toneInstruction: '语气深度犀利、一针见血、不回避困难真相、给出具体行动方向。',
     };
   }
   if (spread === 'moonlight') {
     return {
-      cardMeaningsRange: '50-80 字',
-      overallNarrativeRange: '420-500 字',
-      detailedReadingRange: '140-220 字',
+      cardMeaningsRange: '80-120 字',
+      overallNarrativeRange: '700-900 字',
+      detailedReadingRange: '280-380 字',
       toneInstruction:
         '语气温柔治愈、关注内在感受与情感、避免直接判断、多用“或许”“可能”“邀请你觉察”。',
     };
   }
   return {
-    cardMeaningsRange: '50-80 字',
-    overallNarrativeRange: '420-500 字',
-    detailedReadingRange: '140-220 字',
+    cardMeaningsRange: '80-120 字',
+    overallNarrativeRange: '700-900 字',
+    detailedReadingRange: '280-380 字',
     toneInstruction: '语气温和、克制、启发性强，强调现实可执行性，避免绝对化承诺。',
   };
 }
