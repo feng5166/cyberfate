@@ -676,6 +676,16 @@ export default function TarotPage() {
                 >
                   <Share2 size={14} />分享
                 </button>
+                {drawnCards && (
+                  <button
+                    type="button"
+                    onClick={() => handleAIReading(drawnCards)}
+                    disabled={loading || streaming}
+                    className="rounded-xl border border-[#1C1A16]/30 px-4 py-2 text-sm text-[#1C1A16] transition-all hover:bg-[#1C1A16] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    ✨ 重新解读
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={reset}
