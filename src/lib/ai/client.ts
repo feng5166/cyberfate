@@ -273,9 +273,7 @@ function generateFallbackDailyFortune() {
 
 export interface TarotReadingResult {
   cardMeanings: string[];
-  overallNarrative: string;
-  detailedReading: string;
-  advice: string;
+  reading: string;
   caution: string;
 }
 
@@ -286,18 +284,17 @@ function buildFallbackTarotReading(input: TarotReadingPromptInput): TarotReading
     return `${card.position}的${card.name}${orientation}提示你关注“${keyword}”，先稳住当下节奏，再做下一步调整。`;
   });
 
-  const focus = input.question?.trim()
-    ? `围绕“${input.question.trim().slice(0, 24)}”这个主题，`
-    : '';
-
   return {
     cardMeanings,
-    overallNarrative:
-      `${focus}这组牌先回顾过往影响，再指向当前课题，最后落到未来趋势。整体不是僵局，而是“先看清、再行动”的过程。`,
-    detailedReading:
-      `${focus}过去阶段的经验仍在影响判断，因此需要先辨别哪些执念在拖慢节奏。当前牌面更强调现实执行力与边界感，适合把目标拆解为可验证的小步骤，先解决最关键的一件事。未来走势显示只要保持稳定投入，局势会逐步明朗，并在一到两个阶段后看到更清晰的方向。行动上建议先收集关键信息，再做节奏控制，避免情绪化决定。`,
-    advice: '把目标拆成 3 个可执行动作：先确认事实，再设时间节点，最后按轻重缓急推进。',
-    caution: '避免因为一时焦虑而仓促定论，先验证信息再表态。',
+    reading:
+      '当前 AI 服务暂时不可用，以下为基础牌义参考，建议稍后重新占卜。\n\n' +
+      input.cards
+        .map(
+          (c) =>
+            `${c.name}（${c.orientation === 'upright' ? '正位' : '逆位'}）：${c.traditionalMeaning}`
+        )
+        .join('\n\n'),
+    caution: '以上为基础牌义参考，AI 服务暂时不可用，建议稍后重试。',
   };
 }
 
@@ -322,39 +319,42 @@ function normalizeTarotReading(
 
   return {
     cardMeanings: normalizedCardMeanings,
-    overallNarrative: safeText(data.overallNarrative, fallback.overallNarrative, limits.overallNarrative),
-    detailedReading: safeText(data.detailedReading, fallback.detailedReading, limits.detailedReading),
-    advice: safeText(data.advice, fallback.advice, limits.advice),
+    reading: safeText(data.reading, fallback.reading, limits.reading),
     caution: safeText(data.caution, fallback.caution, limits.caution),
   };
 }
 
-function getTarotTextLimits(spread: TarotSpread): {
-  overallNarrative: number;
-  detailedReading: number;
-  advice: number;
+interface ReadingLimits {
+  cardMeanings: number;
+  reading: number;
   caution: number;
-} {
+}
+
+function getTarotTextLimits(spread: TarotSpread): ReadingLimits {
   if (spread === 'celtic') {
     return {
-      overallNarrative: 1300,
-      detailedReading: 520,
-      advice: 160,
+      cardMeanings: 80,
+      reading: 3000,
       caution: 100,
     };
   }
   if (spread === 'mirror') {
     return {
-      overallNarrative: 860,
-      detailedReading: 420,
-      advice: 140,
+      cardMeanings: 60,
+      reading: 1800,
+      caution: 100,
+    };
+  }
+  if (spread === 'moonlight') {
+    return {
+      cardMeanings: 60,
+      reading: 1800,
       caution: 100,
     };
   }
   return {
-    overallNarrative: 620,
-    detailedReading: 340,
-    advice: 120,
+    cardMeanings: 60,
+    reading: 1500,
     caution: 80,
   };
 }

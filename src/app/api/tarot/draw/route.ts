@@ -55,9 +55,7 @@ const DAILY_LIMITS: Record<TarotSpread, number> = {
 
 interface CachedTarotReading {
   cardMeanings: string[];
-  overallNarrative: string;
-  detailedReading: string;
-  advice: string;
+  reading: string;
   caution: string;
 }
 
@@ -123,9 +121,7 @@ function isCachedTarotReading(value: unknown): value is CachedTarotReading {
   const data = value as Record<string, unknown>;
   return (
     Array.isArray(data.cardMeanings) &&
-    typeof data.overallNarrative === 'string' &&
-    typeof data.detailedReading === 'string' &&
-    typeof data.advice === 'string' &&
+    typeof data.reading === 'string' &&
     typeof data.caution === 'string'
   );
 }
@@ -239,12 +235,10 @@ export async function POST(req: NextRequest) {
         ...card,
         meaning: cached.cardMeanings[index] || (card.orientation === 'upright' ? card.upright : card.reversed),
       })),
-      detailedReading: cached.detailedReading,
-      advice: cached.advice,
       caution: cached.caution,
       _source: 'cache',
     };
-    return new Response(buildStream(meta, cached.overallNarrative), { headers: SSE_HEADERS });
+    return new Response(buildStream(meta, cached.reading), { headers: SSE_HEADERS });
   }
 
   const promptInput: TarotReadingPromptInput = {
@@ -271,11 +265,14 @@ export async function POST(req: NextRequest) {
       cardMeanings: cardsWithImages.map((card) =>
         card.orientation === 'upright' ? card.upright : card.reversed
       ),
-      overallNarrative: '当前 AI 服务暂时不可用，以下为基础牌义参考，建议稍后重新占卜。',
-      detailedReading: cardsWithImages
-        .map((card) => `${card.name_zh}（${card.orientation === 'upright' ? '正位' : '逆位'}）：${card.orientation === 'upright' ? card.upright : card.reversed}`)
-        .join('\n\n'),
-      advice: '稍后重试可获取完整 AI 解读。',
+      reading:
+        '当前 AI 服务暂时不可用，以下为基础牌义参考，建议稍后重新占卜。\n\n' +
+        cardsWithImages
+          .map(
+            (card) =>
+              `${card.name_zh}（${card.orientation === 'upright' ? '正位' : '逆位'}）：${card.orientation === 'upright' ? card.upright : card.reversed}`
+          )
+          .join('\n\n'),
       caution: 'AI 服务暂时不可用，以上为基础牌义参考。',
       _source: 'fallback',
     };
@@ -284,9 +281,7 @@ export async function POST(req: NextRequest) {
   if (reading._source !== 'fallback') {
     await setCache(cacheKey, {
       cardMeanings: reading.cardMeanings,
-      overallNarrative: reading.overallNarrative,
-      detailedReading: reading.detailedReading,
-      advice: reading.advice,
+      reading: reading.reading,
       caution: reading.caution,
     }, 12 * 60 * 60);
   }
@@ -297,11 +292,9 @@ export async function POST(req: NextRequest) {
       ...card,
       meaning: reading.cardMeanings[index] || (card.orientation === 'upright' ? card.upright : card.reversed),
     })),
-    detailedReading: reading.detailedReading,
-    advice: reading.advice,
     caution: reading.caution,
     _source: reading._source,
   };
 
-  return new Response(buildStream(meta, reading.overallNarrative), { headers: SSE_HEADERS });
+  return new Response(buildStream(meta, reading.reading), { headers: SSE_HEADERS });
 }

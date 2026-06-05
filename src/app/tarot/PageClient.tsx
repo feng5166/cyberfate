@@ -6,7 +6,7 @@ import { OracleLoading } from '@/components/ui/OracleLoading';
 import { Share2, X } from 'lucide-react';
 import Image from 'next/image';
 import { useSession } from 'next-auth/react';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 
 const CardDrawAnimation = dynamic(() => import('@/components/tarot/CardDrawAnimation').then(m => m.CardDrawAnimation), {
   ssr: false,
@@ -111,9 +111,7 @@ interface TarotCard {
 interface TarotDrawResult {
   spread: string;
   cards: TarotCard[];
-  overallNarrative: string;
-  detailedReading: string;
-  advice: string;
+  reading: string;
   caution: string;
 }
 
@@ -128,24 +126,9 @@ export default function TarotPage() {
   const [error, setError] = useState('');
   const [result, setResult] = useState<TarotDrawResult | null>(null);
   const [drawnCards, setDrawnCards] = useState<TarotCard[] | null>(null);
-  const [detailedExpanded, setDetailedExpanded] = useState(true);
-  const [flippedCards, setFlippedCards] = useState<boolean[]>([]);
-  const [showReading, setShowReading] = useState(false);
   const [useLegacyDrawAnimation] = useState(false);
 
   const [celticModalIdx, setCelticModalIdx] = useState<number | null>(null);
-  const flipTimersRef = useRef<Array<ReturnType<typeof setTimeout>>>([]);
-
-  const clearFlipTimers = () => {
-    flipTimersRef.current.forEach((timer) => clearTimeout(timer));
-    flipTimersRef.current = [];
-  };
-
-  useEffect(() => {
-    return () => {
-      clearFlipTimers();
-    };
-  }, []);
 
   const currentSpread = MODE_TO_SPREAD[mode];
 
@@ -190,36 +173,7 @@ export default function TarotPage() {
     setQuestion('');
     setResult(null);
     setDrawnCards(null);
-    setDetailedExpanded(false);
-    setFlippedCards([]);
-    setShowReading(false);
     setCelticModalIdx(null);
-    clearFlipTimers();
-  };
-
-  const startFlipSequence = (cardCount: number) => {
-    clearFlipTimers();
-    setShowReading(false);
-    setFlippedCards(Array(cardCount).fill(false));
-
-    const startTimer = setTimeout(() => {
-      for (let i = 0; i < cardCount; i += 1) {
-        const timer = setTimeout(() => {
-          setFlippedCards((prev) => {
-            const next = [...prev];
-            next[i] = true;
-            return next;
-          });
-        }, i * 300);
-        flipTimersRef.current.push(timer);
-      }
-    }, 1500);
-
-    const doneTimer = setTimeout(() => {
-      setShowReading(true);
-    }, 1500 + (cardCount - 1) * 300 + 650);
-
-    flipTimersRef.current.push(startTimer, doneTimer);
   };
 
   const handleDrawCards = async () => {
@@ -300,7 +254,6 @@ export default function TarotPage() {
       let buffer = '';
       let metaSet = false;
       let acc = '';
-      let cardCount = 0;
 
       setStreaming(true);
 
@@ -324,19 +277,14 @@ export default function TarotPage() {
               const initial: TarotDrawResult = {
                 spread: json.meta.spread,
                 cards: cards,
-                overallNarrative: '',
-                detailedReading: json.meta.detailedReading,
-                advice: json.meta.advice,
+                reading: '',
                 caution: json.meta.caution,
               };
-              cardCount = cards.length;
               setResult(initial);
-              setDetailedExpanded(false);
               setStep('result');
-              startFlipSequence(cardCount);
             } else if (json.content) {
               acc += json.content;
-              setResult((prev) => (prev ? { ...prev, overallNarrative: acc } : prev));
+              setResult((prev) => (prev ? { ...prev, reading: acc } : prev));
             }
           } catch {}
         }
@@ -353,19 +301,13 @@ export default function TarotPage() {
   };
 
   const reset = () => {
-    clearFlipTimers();
     setStep('question');
     setQuestion('');
     setResult(null);
     setDrawnCards(null);
     setError('');
-    setDetailedExpanded(false);
-    setFlippedCards([]);
-    setShowReading(false);
     setCelticModalIdx(null);
   };
-
-  const isFlipping = step === 'result' && !showReading;
 
   const renderResultCard = (
     card: TarotCard,
@@ -373,7 +315,6 @@ export default function TarotPage() {
     spread: TarotSpread,
     positions: string[],
   ) => {
-    const isFlipped = Boolean(flippedCards[idx]);
     const isCeltic = spread === 'celtic';
     const isMirror = spread === 'mirror';
 
@@ -384,54 +325,44 @@ export default function TarotPage() {
         key={`${card.id}-${idx}`}
         className="text-center"
         onClick={() => {
-          if (isCeltic && isFlipped) {
+          if (isCeltic) {
             setCelticModalIdx(idx);
           }
         }}
-        style={isCeltic && isFlipped ? { cursor: 'pointer' } : undefined}
+        style={isCeltic ? { cursor: 'pointer' } : undefined}
       >
         <p className="mb-2 text-xs tracking-[0.16em] text-[#1C1A16]/55">
           {card.position || positions[idx]}
         </p>
-        <div className="card-container mx-auto" style={{ width: containerWidth, maxWidth: '100%' }}>
-          <div className={`card-inner ${isFlipped ? 'flipped' : ''}`}>
-            <div
-              className="card-front border border-[#1C1A16]/15"
-              style={{ background: 'linear-gradient(145deg, #f7f2e7 0%, #e8dcc2 52%, #d9c5a3 100%)' }}
-            >
-              <div className="flex h-full w-full items-center justify-center">
-                <div className="rounded-full border border-[#1C1A16]/20 px-2 py-0.5 text-[10px] tracking-[0.2em] text-[#1C1A16]/70 sm:px-3 sm:py-1 sm:text-sm">
-                  TAROT
-                </div>
-              </div>
-            </div>
-            <div className="card-back border border-[#1C1A16]/12 bg-[#FAF9F6]">
-              <img
-                src={card.image_url}
-                alt={card.name_zh}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
-            </div>
+        <div className="mx-auto" style={{ width: containerWidth, maxWidth: '100%' }}>
+          <div
+            className="relative overflow-hidden rounded-[0.85rem] border border-[#1C1A16]/12 bg-[#FAF9F6]"
+            style={{ aspectRatio: '2 / 3' }}
+          >
+            <img
+              src={card.image_url}
+              alt={card.name_zh}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                transform: card.orientation === 'reversed' ? 'rotate(180deg)' : undefined,
+              }}
+            />
           </div>
         </div>
         <h4 className={`mt-2 font-medium text-[#1C1A16] ${isCeltic ? 'text-[10px] sm:text-xs' : 'text-xs sm:text-sm'}`}>
           {card.name_zh}
         </h4>
-        {isFlipped ? (
-          <span
-            className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[11px] ${
-              card.orientation === 'upright'
-                ? 'bg-emerald-100 text-emerald-700'
-                : 'bg-amber-100 text-amber-700'
-            }`}
-          >
-            {card.orientation === 'upright' ? '正位' : '逆位'}
-          </span>
-        ) : (
-          <span className="mt-1 inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-[11px] text-gray-500">
-            待揭示
-          </span>
-        )}
+        <span
+          className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[11px] ${
+            card.orientation === 'upright'
+              ? 'bg-emerald-100 text-emerald-700'
+              : 'bg-amber-100 text-amber-700'
+          }`}
+        >
+          {card.orientation === 'upright' ? '正位' : '逆位'}
+        </span>
       </div>
     );
   };
@@ -516,7 +447,7 @@ export default function TarotPage() {
         </section>
 
         <section className="mx-auto max-w-5xl space-y-4 animate-fadeIn">
-          {step === 'question' && (
+          {step !== 'loading' && step !== 'drawing' && (
             <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-3 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
               <label className="mb-2 block text-sm text-[#1C1A16]/75">你的问题</label>
               <div className="relative">
@@ -560,14 +491,16 @@ export default function TarotPage() {
 
               {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
 
-              <button
-                type="button"
-                onClick={handleDrawCards}
-                disabled={loading}
-                className="mt-5 h-[44px] w-full rounded-xl bg-[#1C1A16] text-sm font-medium text-white transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                🎴 抽取塔罗牌
-              </button>
+              {step !== 'drawn' && (
+                <button
+                  type="button"
+                  onClick={handleDrawCards}
+                  disabled={loading}
+                  className="mt-5 h-[44px] w-full rounded-xl bg-[#1C1A16] text-sm font-medium text-white transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {step === 'result' ? '🔄 重新抽牌' : '🎴 抽取塔罗牌'}
+                </button>
+              )}
             </div>
           )}
 
@@ -715,97 +648,38 @@ export default function TarotPage() {
 
           {step === 'result' && result && (
             <div className="space-y-4" aria-live="polite">
-              <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-3 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
+              <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-3 md:p-6">
                 <h3 className="font-display text-2xl tracking-[0.08em] text-[#1C1A16]">{spreadTitle}</h3>
                 <div className="mt-4">
                   {renderCards()}
                 </div>
-                {isFlipping && <p className="mt-4 text-center text-sm text-[#1C1A16]/60">牌面正在揭示中...</p>}
               </div>
 
-              {showReading && (
-                <>
-                  <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-3 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
-                    <h3 className="font-display text-xl tracking-[0.08em] text-[#1C1A16]">牌面含义</h3>
-                    <div className="mt-3 space-y-3">
-                      {result.cards.map((card, index) => (
-                        <div key={`meaning-${card.id}-${index}`} className="rounded-xl border border-[#1C1A16]/10 bg-[#FAF9F6] p-3">
-                          <div className="flex items-center gap-2">
-                            <p className="text-sm font-semibold text-[#1C1A16]">{card.name_zh}</p>
-                            <span
-                              className={`rounded-full px-2 py-0.5 text-[11px] ${
-                                card.orientation === 'upright'
-                                  ? 'bg-emerald-100 text-emerald-700'
-                                  : 'bg-amber-100 text-amber-700'
-                              }`}
-                            >
-                              {card.orientation === 'upright' ? '正位' : '逆位'}
-                            </span>
-                          </div>
-                          <p className="mt-2 text-sm leading-relaxed text-[#1C1A16]/80">
-                            传统含义:{card.orientation === 'upright' ? card.upright : card.reversed}
-                          </p>
-                          <p className="mt-1 text-sm leading-relaxed text-[#1C1A16]/80">现代解读:{card.meaning}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+              <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 md:p-8">
+                <h3 className="font-display text-xl tracking-[0.08em] text-[#1C1A16] mb-4">✨ AI 解读</h3>
+                <div className="text-[#3D3A35] leading-relaxed text-sm whitespace-pre-wrap">
+                  {result.reading}
+                  {streaming && <span className="inline-block w-1 h-4 bg-[#1C1A16] ml-1 animate-pulse" />}
+                </div>
+                {!streaming && result.caution && (
+                  <p className="mt-6 text-xs text-[#9CA3AF] border-t border-[#E5E0D8] pt-4">
+                    ⚠️ {result.caution}
+                  </p>
+                )}
+              </div>
 
-                  <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-3 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
-                    <h3 className="font-display text-xl tracking-[0.08em] text-[#1C1A16]">综合解读</h3>
-                    <p className="mt-1 text-xs text-[#1C1A16]/45">AI 牌意解读 · 仅供参考</p>
-                    {streaming && !result.overallNarrative ? (
-                      <div className="mt-3">
-                        <OracleLoading />
-                      </div>
-                    ) : (
-                      <p className="mt-3 text-sm leading-relaxed text-[#1C1A16]/80">
-                        {result.overallNarrative}
-                        {streaming && result.overallNarrative && (
-                          <span className="inline-block w-1.5 h-4 ml-0.5 bg-[#1C1A16]/40 align-middle animate-pulse" />
-                        )}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-3 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
-                    <button
-                      type="button"
-                      onClick={() => setDetailedExpanded((prev) => !prev)}
-                      className="text-sm font-medium text-[#1C1A16]"
-                    >
-                      {detailedExpanded ? '▼ 收起详细解读' : '▶ 展开详细解读'}
-                    </button>
-                    <div
-                      className={`overflow-hidden transition-all duration-300 ${
-                        detailedExpanded ? 'mt-3 max-h-[420px] opacity-100' : 'max-h-0 opacity-0'
-                      }`}
-                    >
-                      <p className="text-sm leading-relaxed text-[#1C1A16]/80">{result.detailedReading}</p>
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-3 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
-                    <h3 className="font-display text-xl tracking-[0.06em] text-[#1C1A16]">💡 塔罗的建议</h3>
-                    <p className="mt-3 text-sm leading-relaxed text-[#1C1A16]/80">{result.advice}</p>
-                    <p className="mt-3 rounded bg-amber-50 px-2 py-1 text-sm text-amber-700">⚠ {result.caution}</p>
-                  </div>
-                </>
-              )}
-
-              <div className="flex flex-col gap-3 md:flex-row md:justify-center">
+              <div className="flex flex-col gap-3 md:flex-row md:justify-end">
                 <button
                   type="button"
                   onClick={handleShare}
-                  className="inline-flex items-center justify-center rounded-xl border border-[#1C1A16]/15 bg-transparent px-[32px] py-[12px] text-sm text-[#1C1A16] transition-all hover:-translate-y-1 hover:shadow-card-hover"
+                  className="flex items-center justify-center gap-1.5 rounded-xl border border-[#E5E0D8] px-4 py-2 text-sm text-[#6B7280] transition-all hover:border-[#1C1A16]/40 hover:text-[#1C1A16]"
                 >
-                  <Share2 className="mr-2 h-4 w-4" />
-                  分享结果
+                  <Share2 size={14} />分享
                 </button>
                 <button
                   type="button"
                   onClick={reset}
-                  className="rounded-xl border border-[#1C1A16]/15 bg-transparent px-[32px] py-[12px] text-sm text-[#1C1A16] transition-all hover:-translate-y-1 hover:shadow-card-hover"
+                  className="rounded-xl border border-[#E5E0D8] px-4 py-2 text-sm text-[#6B7280] transition-all hover:border-[#1C1A16]/40 hover:text-[#1C1A16]"
                 >
                   再来一次
                 </button>
@@ -1026,36 +900,6 @@ export default function TarotPage() {
         </div>
       )}
 
-      <style jsx>{`
-        .card-container {
-          perspective: 1000px;
-        }
-
-        .card-inner {
-          position: relative;
-          width: 100%;
-          aspect-ratio: 2 / 3;
-          transition: transform 0.6s;
-          transform-style: preserve-3d;
-        }
-
-        .card-inner.flipped {
-          transform: rotateY(180deg);
-        }
-
-        .card-front,
-        .card-back {
-          position: absolute;
-          inset: 0;
-          backface-visibility: hidden;
-          border-radius: 0.85rem;
-          overflow: hidden;
-        }
-
-        .card-back {
-          transform: rotateY(180deg);
-        }
-      `}</style>
     </div>
   );
 }

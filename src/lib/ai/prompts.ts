@@ -239,8 +239,7 @@ export type TarotSpread = 'single' | 'three' | 'celtic' | 'moonlight' | 'mirror'
 
 interface TarotPromptProfile {
   cardMeaningsRange: string;
-  overallNarrativeRange: string;
-  detailedReadingRange: string;
+  readingRange: string;
   toneInstruction: string;
 }
 
@@ -248,32 +247,28 @@ function getTarotPromptProfile(spread: TarotSpread): TarotPromptProfile {
   if (spread === 'celtic') {
     return {
       cardMeaningsRange: '80-120 字',
-      overallNarrativeRange: '1200-1400 字',
-      detailedReadingRange: '450-600 字',
+      readingRange: '≥ 2000 字',
       toneInstruction: '语气稳重深入、结构清晰，强调因果脉络与阶段变化，不做绝对化预言。',
     };
   }
   if (spread === 'mirror') {
     return {
       cardMeaningsRange: '80-120 字',
-      overallNarrativeRange: '900-1100 字',
-      detailedReadingRange: '320-450 字',
+      readingRange: '≥ 1400 字',
       toneInstruction: '语气深度犀利、一针见血、不回避困难真相、给出具体行动方向。',
     };
   }
   if (spread === 'moonlight') {
     return {
       cardMeaningsRange: '80-120 字',
-      overallNarrativeRange: '700-900 字',
-      detailedReadingRange: '280-380 字',
+      readingRange: '≥ 1000 字',
       toneInstruction:
         '语气温柔治愈、关注内在感受与情感、避免直接判断、多用“或许”“可能”“邀请你觉察”。',
     };
   }
   return {
     cardMeaningsRange: '80-120 字',
-    overallNarrativeRange: '700-900 字',
-    detailedReadingRange: '280-380 字',
+    readingRange: '≥ 1000 字',
     toneInstruction: '语气温和、克制、启发性强，强调现实可执行性，避免绝对化承诺。',
   };
 }
@@ -298,18 +293,16 @@ export function buildTarotReadingSystemPrompt(input: Pick<TarotReadingPromptInpu
 - 只输出 JSON，不要 markdown，不要解释，不要前言
 - cardMeanings 数组长度必须与输入牌张数一致
 - 每条 cardMeanings 控制在 ${profile.cardMeaningsRange}
-- overallNarrative 字数必须达到 ${profile.overallNarrativeRange}，不得少于下限，宁多勿少；以"现状处境→深层动因→可能走向"完整叙事构建，点明牌阵整体洞见，不是逐张牌简单累加
-- detailedReading 字数必须达到 ${profile.detailedReadingRange}，不得少于下限，宁多勿少；逐张牌独立段落（开头标牌名+位置），每段含牌面象征→正逆位能量→心理学/哲学深度分析→对用户处境具体指向
-- advice 不得少于 180 字；给出 2-3 个具体可执行行动方向，每个方向有具体操作方法，必须与牌面关联，不能空谈励志
+- reading 字段字数必须达到 ${profile.readingRange}，不得少于下限，宁多勿少
+- reading 内容结构：开篇定调（对当前处境整体点评）→ 逐张牌深度分析（自然段落，不是列表，每张牌一段，开头点牌名+位置）→ 综合洞见（牌间关系与整体走向）→ 可执行建议（2-3个具体行动方向）→ 结语
+- reading 必须是一篇完整文章，不分标题，不分模块，段落间自然过渡
 - caution 控制在 30-60 字，提示具体风险
 - ${profile.toneInstruction}
 
 ## 输出格式
 {
   "cardMeanings": ["...", "...", "..."],
-  "overallNarrative": "...",
-  "detailedReading": "...",
-  "advice": "...",
+  "reading": "完整连贯的解读文章...",
   "caution": "..."
 }`;
 }
