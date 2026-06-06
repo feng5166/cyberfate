@@ -92,16 +92,16 @@ const LINE_LABELS = ['上六爻', '五爻', '四爻', '三爻', '二爻', '初�
 
 const FAQ_ITEMS = [
   {
-    q: '六爻占卜和塔罗有什么区别？',
-    a: '六爻占卜源自《周易》，通过阴阳爻的组合形成六十四卦，侧重事物发展的趋势分析。塔罗牌则是西方占卜体系，通过牌面图像和位置进行解读。两者各有特色，可以互相补充参考。',
+    q: 'AI 六爻占卜的准确性如何？',
+    a: '六爻占卜是中国传统易学的核心预测方法，起源于汉代京房，历经千年传承。我们结合 AI 技术对六爻卦象进行深度解析、提供多角度分析，但最终决策仍应由您自己做出。',
   },
   {
-    q: '如何选择阴爻和阳爻？',
-    a: '可以根据直觉选择，也可以心中默念问题后随意选取。传统上阳爻代表阳刚、积极、动态，阴爻代表阴柔、被动、静态。选择时保持心态平静，不必过分纠结。',
+    q: 'AI 如何提升六爻占卜的分析质量？',
+    a: '我们的 AI 系统经过大量六爻易学资料训练，深度理解纳甲体系、六神理论等传统六爻核心理论。AI 能够快速分析复杂的世应关系、六亲配置，提供更全面、客观的六爻预测分析。',
   },
   {
-    q: 'AI 六爻解读可靠吗？',
-    a: '我们的 AI 解读融合了传统易理知识库和现代语言模型，力求在尊重传统的基础上提供清晰易懂的分析。结果仅供参考，建议结合实际情况理性判断。',
+    q: '适合用六爻占卜分析哪类问题？',
+    a: '六爻占卜适合分析各类人生重要决策问题，包括事业发展、感情婚姻、财运投资、健康状况、时机选择等。它尤其适合需要精准预测和深度分析的复杂人生问题。',
   },
 ] as const;
 
@@ -1361,32 +1361,85 @@ export default function LiuYaoPage() {
           </div>
         </section>
 
-        {/* ⑨ FAQ */}
-        <section className="mx-auto mt-8 max-w-4xl animate-fadeIn">
-          <h2 className="font-display text-xl tracking-[0.08em] text-[#1C1A16]">常见问题</h2>
-          <div className="mt-4 space-y-3">
+        {/* ⑨ 特色功能 */}
+        <section className="mx-auto mt-10 max-w-4xl animate-fadeIn">
+          <h2 className="font-display text-2xl tracking-[0.06em] text-[#1C1A16] text-center mb-10">AI 六爻占卜的特色功能</h2>
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+            {[
+              {
+                icon: (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-9 h-9 text-[#1C1A16]/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <rect x="3" y="3" width="18" height="18" rx="3" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h2m2 0h4M8 8h8M8 16h5" />
+                  </svg>
+                ),
+                title: '多维度卦象分析',
+                desc: '结合世应关系、六亲配置、六神状态等多个维度，运用 AI 技术对六爻卦象进行全面深度解析',
+              },
+              {
+                icon: (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-9 h-9 text-[#1C1A16]/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                  </svg>
+                ),
+                title: '个性化占卜解读',
+                desc: '根据您的具体问题类型和卦象特征，提供针对性的六爻预测分析，确保每一次占卜都有独特价值',
+              },
+              {
+                icon: (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-9 h-9 text-[#1C1A16]/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                ),
+                title: '现代化易学表达',
+                desc: '将传统六爻理论转化为现代通俗语言，让复杂的纳甲体系和六神理论变得易懂实用',
+              },
+              {
+                icon: (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-9 h-9 text-[#1C1A16]/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
+                  </svg>
+                ),
+                title: '智能趋势预测',
+                desc: '运用 AI 智能算法分析卦象变化趋势，结合历史案例和实战经验，预测事态发展方向',
+              },
+            ].map((item) => (
+              <div key={item.title} className="flex items-start gap-5">
+                <div className="flex-shrink-0 mt-0.5">{item.icon}</div>
+                <div>
+                  <h3 className="text-base font-bold text-[#1C1A16] mb-2">{item.title}</h3>
+                  <p className="text-sm leading-relaxed text-[#1C1A16]/55">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ⑩ FAQ */}
+        <section className="mx-auto mt-10 max-w-4xl animate-fadeIn">
+          <h2 className="font-display text-2xl tracking-[0.06em] text-[#1C1A16] text-center mb-8">常见问题</h2>
+          <div className="space-y-4">
             {FAQ_ITEMS.map((item, index) => {
               const expanded = expandedFaq === index;
               return (
-                <div key={item.q} className="rounded-xl border border-[#1C1A16]/10 bg-white p-4">
+                <div key={item.q} className="rounded-2xl border border-[#E5E0D8] bg-white p-6">
                   <button
                     type="button"
-                    className="flex w-full items-center justify-between gap-3 text-left"
+                    className="flex w-full items-start gap-3 text-left"
                     onClick={() => setExpandedFaq((prev) => (prev === index ? null : index))}
                   >
-                    <span className="text-sm font-semibold text-[#1C1A16]">{item.q}</span>
-                    {expanded ? (
-                      <ChevronUp className="h-4 w-4 shrink-0 text-[#1C1A16]/70" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4 shrink-0 text-[#1C1A16]/70" />
-                    )}
+                    <svg className="mt-0.5 h-5 w-5 shrink-0 text-[#1C1A16]/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <circle cx="12" cy="12" r="9" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v0m0 4v4" />
+                    </svg>
+                    <span className="text-[15px] font-bold text-[#1C1A16] flex-1">{item.q}</span>
                   </button>
                   <div
                     className={`overflow-hidden transition-all duration-300 ${
-                      expanded ? 'mt-3 max-h-40 opacity-100' : 'max-h-0 opacity-0'
+                      expanded ? 'mt-4 max-h-48 opacity-100' : 'max-h-0 opacity-0'
                     }`}
                   >
-                    <p className="text-sm leading-relaxed text-[#1C1A16]/72">{item.a}</p>
+                    <p className="pl-8 text-sm leading-relaxed text-[#1C1A16]/60">{item.a}</p>
                   </div>
                 </div>
               );
