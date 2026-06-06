@@ -171,6 +171,9 @@ export async function POST(req: NextRequest) {
   const chaosRes = await applyChaos(req);
   if (chaosRes) return chaosRes;
 
+  const debugToken = req.headers.get('x-debug-token');
+  const isDebugMode = !!(debugToken && debugToken === process.env.TAROT_DEBUG_TOKEN);
+
   const session = await getServerSession(authOptions);
   const body = await req.json().catch(() => ({}));
   const spread = resolveSpread(body?.spread);
@@ -178,15 +181,15 @@ export async function POST(req: NextRequest) {
   const preDrawnCards = Array.isArray(body?.preDrawnCards) ? body.preDrawnCards : null;
 
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-  if (session?.user?.id) {
+  if (!isDebugMode && session?.user?.id) {
     const rl = await checkRateLimit('ai_tarot', session.user.id, 10, 60);
     if (!rl.allowed) return NextResponse.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
-  } else {
+  } else if (!isDebugMode) {
     const rl = await checkRateLimit('ai_tarot_guest', ip, 3, 3600);
     if (!rl.allowed) return NextResponse.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
   }
 
-  if (spread === 'celtic') {
+  if (!isDebugMode && spread === 'celtic') {
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'LOGIN_REQUIRED' }, { status: 401 });
     }
@@ -196,7 +199,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  if (!preDrawnCards && session?.user?.id && spread !== 'celtic') {
+  if (!isDebugMode && !preDrawnCards && session?.user?.id && spread !== 'celtic') {
     const vip = await isVip(session.user.id);
     if (!vip) {
       const allowed = await atomicCheckAndUseQuota(session.user.id, spread);
@@ -253,6 +256,7 @@ export async function POST(req: NextRequest) {
       })),
       caution: cached.caution,
       _source: 'cache',
+      _debug: isDebugMode ? true : undefined,
     };
     return new Response(buildStream(meta, cached.reading), { headers: SSE_HEADERS });
   }
@@ -310,6 +314,7 @@ export async function POST(req: NextRequest) {
     })),
     caution: reading.caution,
     _source: reading._source,
+    _debug: isDebugMode ? true : undefined,
   };
 
   return new Response(buildStream(meta, reading.reading), { headers: SSE_HEADERS });

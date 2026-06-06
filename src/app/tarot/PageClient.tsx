@@ -138,6 +138,7 @@ export default function TarotPage() {
   const [celticModalIdx, setCelticModalIdx] = useState<number | null>(null);
 
   const currentSpread = MODE_TO_SPREAD[mode];
+  const isDebug = !!process.env.NEXT_PUBLIC_TAROT_DEBUG_TOKEN;
 
   const handleShare = async () => {
     if (!result) return;
@@ -169,7 +170,7 @@ export default function TarotPage() {
     if (targetMode === 'celtic' && authStatus === 'loading') {
       return;
     }
-    if (targetMode === 'celtic' && !session) {
+    if (!isDebug && targetMode === 'celtic' && !session) {
       window.location.href = '/auth/login?redirect=/tarot';
       return;
     }
@@ -232,7 +233,12 @@ export default function TarotPage() {
     try {
       const res = await fetch('/api/tarot/draw', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(process.env.NEXT_PUBLIC_TAROT_DEBUG_TOKEN
+            ? { 'x-debug-token': process.env.NEXT_PUBLIC_TAROT_DEBUG_TOKEN }
+            : {}),
+        },
         body: JSON.stringify({
           spread: currentSpread,
           question: question.trim(),
