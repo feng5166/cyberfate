@@ -756,18 +756,9 @@ export default function TarotPage() {
                   )}
                 </div>
                 {!streaming && result._source === 'fallback' && (
-                  <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4">
-                    <p className="text-sm font-medium text-red-700 mb-1">⚠️ AI 解读失败，以下为基础牌义参考</p>
-                    <p className="text-xs text-red-500">
-                      {result._error
-                        ? result._error.includes('AbortError') || result._error.includes('abort')
-                          ? '原因：请求超时（AI 响应超过限制时间）'
-                          : result._error.includes('fetch failed') || result._error.includes('ECONNREFUSED') || result._error.includes('ENOTFOUND')
-                          ? '原因：网络连接失败，无法访问 AI 服务'
-                          : result._error.includes('API error 4')
-                          ? '原因：API 鉴权或配额错误'
-                          : `原因：${result._error.slice(0, 80)}`
-                        : '原因：未知错误'}
+                  <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                    <p className="text-sm text-amber-700">
+                      ⚠️ {result.caution || 'AI 解读失败，以下为基础牌义参考，请稍后重试。'}
                     </p>
                   </div>
                 )}

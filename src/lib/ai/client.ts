@@ -421,7 +421,19 @@ export async function generateTarotReading(
   } catch (error) {
     const errMsg = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
     console.warn('[AI 塔罗解读] 生成失败，使用降级结果', errMsg);
-    return { ...fallback, _source: 'fallback', _error: errMsg } as TarotReadingResult & { _source: 'deepseek' | 'fallback'; _error?: string };
+    let friendlyReason = '请稍后重试';
+    if (errMsg.includes('AbortError') || errMsg.includes('abort')) {
+      friendlyReason = 'AI 响应超时，请稍后重试';
+    } else if (errMsg.includes('fetch failed') || errMsg.includes('ECONNREFUSED') || errMsg.includes('ENOTFOUND')) {
+      friendlyReason = '网络连接失败，请稍后重试';
+    } else if (errMsg.includes('API error 4')) {
+      friendlyReason = 'API 认证错误，请联系管理员';
+    }
+    const fallbackWithReason = {
+      ...fallback,
+      caution: `AI 解读失败（${friendlyReason}），以下为基础牌义参考。`,
+    };
+    return { ...fallbackWithReason, _source: 'fallback', _error: errMsg } as TarotReadingResult & { _source: 'deepseek' | 'fallback'; _error?: string };
   }
 }
 
