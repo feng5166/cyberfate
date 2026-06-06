@@ -126,13 +126,18 @@ export default function TarotPage() {
   const { data: session, status: authStatus } = useSession();
   const [step, setStep] = useState<Step>('question');
   const loadingRef = useRef<HTMLDivElement>(null);
+  const questionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (step === 'loading' && loadingRef.current) {
-      // 短暂延迟等牌面渲染完成后再滚动
       setTimeout(() => {
         loadingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 150);
+    }
+    if (step === 'question' && questionRef.current) {
+      setTimeout(() => {
+        questionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
     }
   }, [step]);
   const [mode, setMode] = useState<ModeId>('classic');
@@ -476,7 +481,7 @@ export default function TarotPage() {
 
         <section className="mx-auto max-w-5xl space-y-4 animate-fadeIn">
           {step !== 'loading' && step !== 'drawing' && (
-            <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-3 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
+            <div ref={questionRef} className="rounded-2xl border border-[#1C1A16]/10 bg-white p-3 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
               <label className="mb-2 block text-sm text-[#1C1A16]/75">你的问题</label>
               <div className="relative">
                 <textarea
