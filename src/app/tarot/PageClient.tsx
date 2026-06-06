@@ -266,10 +266,15 @@ export default function TarotPage() {
     }
   };
 
-  const handleAIReading = async (cards: TarotCard[]) => {
+  const handleAIReading = async (cards: TarotCard[], scrollToLoading = false) => {
     setLoading(true);
     setError('');
     setStep('loading');
+    if (scrollToLoading) {
+      setTimeout(() => {
+        loadingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 80);
+    }
 
     try {
       const res = await fetch('/api/tarot/draw', {
@@ -780,7 +785,7 @@ export default function TarotPage() {
                 {drawnCards && (
                   <button
                     type="button"
-                    onClick={() => handleAIReading(drawnCards)}
+                    onClick={() => handleAIReading(drawnCards, true)}
                     disabled={loading || streaming}
                     className="rounded-xl border border-[#1C1A16]/30 px-4 py-2 text-sm text-[#1C1A16] transition-all hover:bg-[#1C1A16] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                   >
