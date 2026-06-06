@@ -1367,21 +1367,23 @@ export default function LiuYaoPage() {
               </div>
 
               {/* 分析卦象按钮 */}
-              <button
-                type="button"
-                onClick={handleAIAnalysis}
-                disabled={loading || streaming}
-                className="flex h-[52px] w-full items-center justify-center rounded-xl bg-[#1C1A16] text-sm font-semibold text-white transition-all hover:bg-[#2A2621] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {loading || streaming ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    正在分析卦象...
-                  </>
-                ) : (
-                  '分析卦象含义 ✦'
-                )}
-              </button>
+              <div className="flex justify-center">
+                <button
+                  type="button"
+                  onClick={handleAIAnalysis}
+                  disabled={loading || streaming}
+                  className="inline-flex h-[44px] min-w-[180px] px-8 items-center justify-center rounded-xl bg-[#1C1A16] text-sm font-semibold text-white transition-all hover:bg-[#2A2621] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {loading || streaming ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      正在分析卦象...
+                    </>
+                  ) : (
+                    '分析卦象含义 ✦'
+                  )}
+                </button>
+              </div>
             </div>
           )}
 
