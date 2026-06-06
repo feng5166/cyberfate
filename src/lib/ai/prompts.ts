@@ -235,7 +235,7 @@ export interface TarotReadingPromptInput {
   cards: TarotReadingPromptCard[];
 }
 
-export type TarotSpread = 'single' | 'three' | 'celtic' | 'moonlight' | 'mirror';
+export type TarotSpread = 'single' | 'three' | 'celtic' | 'moonlight' | 'mirror' | 'relationship';
 
 interface TarotPromptProfile {
   cardMeaningsRange: string;
@@ -266,6 +266,13 @@ function getTarotPromptProfile(spread: TarotSpread): TarotPromptProfile {
         '语气温柔治愈、关注内在感受与情感、避免直接判断、多用“或许”“可能”“邀请你觉察”。',
     };
   }
+  if (spread === 'relationship') {
+    return {
+      cardMeaningsRange: '80-120 字',
+      readingRange: '≥ 1200 字',
+      toneInstruction: '语气温柔而直接，同时照顾双方视角，不偏袒，引导用户理解关系中的双向动态。',
+    };
+  }
   return {
     cardMeaningsRange: '80-120 字',
     readingRange: '≥ 1000 字',
@@ -275,6 +282,35 @@ function getTarotPromptProfile(spread: TarotSpread): TarotPromptProfile {
 
 export function buildTarotReadingSystemPrompt(input: Pick<TarotReadingPromptInput, 'spread' | 'spreadName'>): string {
   const profile = getTarotPromptProfile(input.spread);
+
+  let spreadStructure = '';
+  if (input.spread === 'three') {
+    spreadStructure = `- reading 内容结构（三张牌专用）：
+  开篇定调（一句话把三张牌串成一个故事的主题）
+  → 过去张解读（这段经历如何塑造了当前处境）
+  → 现在张解读（当前核心能量与用户面对的真实局面）
+  → 未来张解读（如果保持当前轨迹，能量将如何演化）
+  → 叙事弧线综合（三张牌构成的完整故事弧，不是三段分析的加总，要说清楚"从哪里来，在哪里，往哪里去"的整体叙事）
+  → 可执行建议（1-2个具体行动）`;
+  } else if (input.spread === 'celtic') {
+    spreadStructure = `- reading 内容结构（凯尔特十字专用，按以下顺序解读）：
+  第一层·核心与挑战（位置1+2）：先读核心局面，再读横切挑战，说清两者的张力关系
+  第二层·根基与来路（位置3+4）：潜意识基础 + 近期过去，说清"为何走到这一步"
+  第三层·目标与走向（位置5+6）：有意识期望 + 近期未来，说清"想要什么 vs 正在发生什么"
+  第四层·综合轴（位置7+8+9+10）：自我认知→外部环境→希望/恐惧→最终结果，形成完整因果链
+  结尾：一句话提炼整个牌阵的核心洞见`;
+  } else if (input.spread === 'relationship') {
+    spreadStructure = `- reading 内容结构（关系牌阵专用）：
+  开篇定调（用一句话描述这段关系当前的整体能量）
+  → 你的感受张（你在这段关系中的真实状态）
+  → 对方感受张（对方的视角与内在状态，用"对方可能..."等邀请式语言）
+  → 关系基础张（连接你们的底层纽带或共同主题）
+  → 当前障碍张（横亘在关系中的核心挑战）
+  → 关系走向张（如果保持当前能量流动，关系的自然演化方向）
+  → 综合建议（1-2条针对关系动态的具体行动建议）`;
+  } else {
+    spreadStructure = `- reading 内容结构：开篇定调（对当前处境整体点评）→ 逐张牌深度分析（自然段落，不是列表，每张牌一段，开头点牌名+位置）→ 综合洞见（牌间关系与整体走向）→ 可执行建议（2-3个具体行动方向）→ 结语`;
+  }
 
   return `${SAFETY_GUARDRAIL}
 
@@ -289,12 +325,26 @@ export function buildTarotReadingSystemPrompt(input: Pick<TarotReadingPromptInpu
 - 禁止泛泛而谈通用牌义，必须针对用户具体问题，说清"这张牌在这个位置对这个问题意味着什么"
 - 相邻牌之间必须明确指出呼应、对立或递进关系，构成完整叙事因果链
 
+### 逆位牌解读原则（三选一，按语境判断）
+- 能量受阻：正位能量被压制，无法自由流动——往往是外部阻力或内在回避
+- 能量过剩：正位能量被放大到失衡——往往是执念、失控或极端化
+- 能量内化：正位能量转向内在——往往是内心体验而非外部表现
+逆位解读必须选择最符合当前问题语境的一种，不得简单地说"正位的反面"。
+
+### 多牌综合分析规则（2张牌以上适用）
+- 元素互动：火🔥(权杖) + 气🌬️(宝剑)=激情与思维协同；水💧(圣杯) + 土🪙(星币)=情感与现实稳固；火🔥 + 水💧=能量冲突激烈；气🌬️ + 土🪙=理想与现实张力
+- 数字重复：同一数字出现2次=该主题被强调；3次及以上=该主题是核心
+- 大小阿卡纳比例：大阿卡纳为主→重大人生转变；小阿卡纳为主→日常可掌控事项
+- 主导花色：权杖主导→行动是关键；圣杯主导→情感是核心；宝剑主导→思维与冲突；星币主导→物质与实际
+以上分析必须整合进综合洞见段落，不要单独列出，要自然融入叙事。
+
 ## 输出规则（严格）
 - 只输出 JSON，不要 markdown，不要解释，不要前言
 - cardMeanings 数组长度必须与输入牌张数一致
 - 每条 cardMeanings 控制在 ${profile.cardMeaningsRange}
-- reading 字段字数必须达到 ${profile.readingRange}，不得少于下限，宁多勿少
-- reading 内容结构：开篇定调（对当前处境整体点评）→ 逐张牌深度分析（自然段落，不是列表，每张牌一段，开头点牌名+位置）→ 综合洞见（牌间关系与整体走向）→ 可执行建议（2-3个具体行动方向）→ 结语
+- reading 字段参考长度 ${profile.readingRange}，但以内容完整度为准，不得为凑字数填废话
+- 每个自然段必须有实质内容，禁止重复前面段落的观点，每段说一件新的事
+${spreadStructure}
 - reading 必须是一篇完整文章，不分标题，不分模块，每个自然段之间必须用两个换行符（\n\n）分隔，严禁把全部内容写成一整段密集文字，每段控制在100-150字，段与段之间留白
 - caution 控制在 30-60 字，提示具体风险
 - ${profile.toneInstruction}

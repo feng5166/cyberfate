@@ -24,7 +24,7 @@ const SAMPLE_PROMPTS = [
   '我该如何做这个决定?',
 ];
 
-type TarotSpread = 'three' | 'celtic' | 'moonlight' | 'mirror';
+type TarotSpread = 'three' | 'celtic' | 'moonlight' | 'mirror' | 'relationship';
 
 const THREE_POSITIONS = ['过去', '现在', '未来'];
 
@@ -45,6 +45,8 @@ const MOONLIGHT_POSITIONS = ['身心灵', '潜意识', '指引'];
 
 const MIRROR_POSITIONS = ['现状', '阻碍', '建议', '风险', 'Outcome'];
 
+const RELATIONSHIP_POSITIONS = ['你的感受', '对方感受', '关系基础', '当前障碍', '关系走向'];
+
 const CELTIC_DESKTOP_LAYOUT: { col: number; row: number }[] = [
   { col: 1, row: 4 }, // 1现状
   { col: 2, row: 2 }, // 2挑战
@@ -63,6 +65,7 @@ const MODES = [
   { id: 'celtic' as const, icon: '✝', name: '凯尔特十字', desc: '10张牌·全面深度分析,会员专属', tooltip: '10张牌深度解读,全面分析人生各维度' },
   { id: 'moonlight' as const, icon: '☽', name: '月光', desc: '3张牌·柔和内省,适合情感探索', tooltip: '温柔内省风格,适合情感/睡前探索' },
   { id: 'mirror' as const, icon: '✦', name: '镜像', desc: '5张牌·多角度透视,复杂决策专用', tooltip: '5张多角度深度分析,复杂决策专用' },
+  { id: 'relationship' as const, icon: '♡', name: '关系牌阵', desc: '5张牌·双方视角,适合感情与关系探索', tooltip: '从你和对方双视角解读关系现状与走向' },
 ];
 
 const SPREAD_TO_MODE: Record<TarotSpread, string> = {
@@ -70,6 +73,7 @@ const SPREAD_TO_MODE: Record<TarotSpread, string> = {
   celtic: '凯尔特十字',
   moonlight: '月光三张牌',
   mirror: '镜像五张牌',
+  relationship: '关系牌阵',
 };
 
 type ModeId = (typeof MODES)[number]['id'];
@@ -80,6 +84,7 @@ const MODE_TO_SPREAD: Record<ModeId, TarotSpread> = {
   celtic: 'celtic',
   moonlight: 'moonlight',
   mirror: 'mirror',
+  relationship: 'relationship',
 };
 
 function getPositions(spread: TarotSpread): string[] {
@@ -90,6 +95,8 @@ function getPositions(spread: TarotSpread): string[] {
       return MOONLIGHT_POSITIONS;
     case 'mirror':
       return MIRROR_POSITIONS;
+    case 'relationship':
+      return RELATIONSHIP_POSITIONS;
     default:
       return THREE_POSITIONS;
   }
@@ -316,9 +323,9 @@ export default function TarotPage() {
     positions: string[],
   ) => {
     const isCeltic = spread === 'celtic';
-    const isMirror = spread === 'mirror';
+    const isFiveCard = spread === 'mirror' || spread === 'relationship';
 
-    const containerWidth = isCeltic ? 80 : isMirror ? 110 : 140;
+    const containerWidth = isCeltic ? 80 : isFiveCard ? 110 : 140;
 
     return (
       <div
@@ -398,11 +405,11 @@ export default function TarotPage() {
       );
     }
 
-    if (spread === 'mirror') {
+    if (spread === 'mirror' || spread === 'relationship') {
       return (
         <div className="grid grid-cols-2 gap-3 md:flex md:justify-center md:gap-4">
           {result.cards.map((card, idx) => (
-            <div key={`mirror-${card.id}-${idx}`} className="md:w-[150px]">
+            <div key={`${spread}-${card.id}-${idx}`} className="md:w-[150px]">
               {renderResultCard(card, idx, spread, positions)}
             </div>
           ))}
@@ -550,7 +557,7 @@ export default function TarotPage() {
                       if (spread === 'celtic') {
                         return <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">{drawnCards.map((card, idx) => <div key={idx} className="text-center"><p className="mb-2 text-xs tracking-[0.16em] text-[#1C1A16]/55">{card.position || positions[idx]}</p><div className="mx-auto" style={{width:80,maxWidth:'100%'}}><div className="relative overflow-hidden rounded-[0.85rem] border border-[#1C1A16]/12 bg-[#FAF9F6]" style={{aspectRatio:'2/3'}}><img src={card.image_url} alt={card.name_zh} style={{width:'100%',height:'100%',objectFit:'cover',transform:card.orientation==='reversed'?'rotate(180deg)':undefined}} /></div></div><h4 className="mt-2 text-[10px] sm:text-xs font-medium text-[#1C1A16]">{card.name_zh}</h4><span className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[11px] ${card.orientation==='upright'?'bg-emerald-100 text-emerald-700':'bg-amber-100 text-amber-700'}`}>{card.orientation==='upright'?'正位':'逆位'}</span></div>)}</div>;
                       }
-                      if (spread === 'mirror') {
+                      if (spread === 'mirror' || spread === 'relationship') {
                         return <div className="grid grid-cols-2 gap-3 md:flex md:justify-center md:gap-4">{drawnCards.map((card, idx) => <div key={idx} className="md:w-[150px] text-center"><p className="mb-2 text-xs tracking-[0.16em] text-[#1C1A16]/55">{card.position || positions[idx]}</p><div className="mx-auto" style={{width:110,maxWidth:'100%'}}><div className="relative overflow-hidden rounded-[0.85rem] border border-[#1C1A16]/12 bg-[#FAF9F6]" style={{aspectRatio:'2/3'}}><img src={card.image_url} alt={card.name_zh} style={{width:'100%',height:'100%',objectFit:'cover',transform:card.orientation==='reversed'?'rotate(180deg)':undefined}} /></div></div><h4 className="mt-2 text-xs font-medium text-[#1C1A16]">{card.name_zh}</h4><span className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[11px] ${card.orientation==='upright'?'bg-emerald-100 text-emerald-700':'bg-amber-100 text-amber-700'}`}>{card.orientation==='upright'?'正位':'逆位'}</span></div>)}</div>;
                       }
                       return <div className="grid grid-cols-3 justify-items-center gap-2 sm:gap-4">{drawnCards.map((card, idx) => <div key={idx} className="text-center"><p className="mb-2 text-xs tracking-[0.16em] text-[#1C1A16]/55">{card.position || positions[idx]}</p><div className="mx-auto" style={{width:140,maxWidth:'100%'}}><div className="relative overflow-hidden rounded-[0.85rem] border border-[#1C1A16]/12 bg-[#FAF9F6]" style={{aspectRatio:'2/3'}}><img src={card.image_url} alt={card.name_zh} style={{width:'100%',height:'100%',objectFit:'cover',transform:card.orientation==='reversed'?'rotate(180deg)':undefined}} /></div></div><h4 className="mt-2 text-xs sm:text-sm font-medium text-[#1C1A16]">{card.name_zh}</h4><span className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[11px] ${card.orientation==='upright'?'bg-emerald-100 text-emerald-700':'bg-amber-100 text-amber-700'}`}>{card.orientation==='upright'?'正位':'逆位'}</span></div>)}</div>;
@@ -583,7 +590,7 @@ export default function TarotPage() {
                   {(() => {
                     const spread = currentSpread;
                     const positions = getPositions(spread);
-                    const containerWidth = spread === 'celtic' ? 80 : spread === 'mirror' ? 110 : 140;
+                    const containerWidth = spread === 'celtic' ? 80 : spread === 'mirror' || spread === 'relationship' ? 110 : 140;
 
                     const renderCard = (card: TarotCard, idx: number) => (
                       <div key={`drawn-${card.id}-${idx}`} className="text-center">
@@ -630,11 +637,11 @@ export default function TarotPage() {
                       );
                     }
 
-                    if (spread === 'mirror') {
+                    if (spread === 'mirror' || spread === 'relationship') {
                       return (
                         <div className="grid grid-cols-2 gap-3 md:flex md:justify-center md:gap-4">
                           {drawnCards.map((card, idx) => (
-                            <div key={`mirror-drawn-${card.id}-${idx}`} className="md:w-[150px]">
+                            <div key={`${spread}-drawn-${card.id}-${idx}`} className="md:w-[150px]">
                               {renderCard(card, idx)}
                             </div>
                           ))}
