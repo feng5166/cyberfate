@@ -1393,38 +1393,9 @@ export default function LiuYaoPage() {
             </div>
           )}
 
-          {/* ⑦ 解卦结果区 */}
+          {/* ⑦ 解卦结果区（卦象信息已在起卦结果区展示，此处直接显示 AI 分析） */}
           {result && (
             <div className="space-y-4 animate-fadeIn">
-              <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 transition-shadow duration-300 hover:shadow-card-hover">
-                <h3 className="text-sm font-medium text-[#1C1A16]/60 mb-3">卦象信息</h3>
-                <div className="flex flex-col items-start gap-4 md:flex-row md:items-center">
-                  <div className="flex items-center gap-4">
-                    <div className="text-4xl leading-none">
-                      {result.upperSymbol}{result.lowerSymbol}
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-semibold text-[#1C1A16]">{result.hexagramName}</h2>
-                      <p className="mt-0.5 text-sm text-[#1C1A16]/60">
-                        上卦：{result.upperTrigram} · 下卦：{result.lowerTrigram}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-5 flex flex-col items-center gap-6 md:flex-row md:justify-center">
-                  <div className="text-center">
-                    <p className="mb-2 text-xs text-[#1C1A16]/50">本卦</p>
-                    <HexagramFigure lines={lineSelections as (0 | 1)[]} size="large" />
-                    <p className="mt-2 text-sm font-medium text-[#1C1A16]">{result.hexagramName}</p>
-                  </div>
-                </div>
-
-                <p className="mt-5 text-sm leading-relaxed text-[#1C1A16]/70">
-                  <span className="font-medium text-[#1C1A16]">卦辞：</span>{result.judgment}
-                </p>
-              </div>
-
               <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 transition-shadow duration-300 hover:shadow-card-hover">
                 <h3 className="text-base font-semibold text-[#1C1A16] mb-4">各爻详解</h3>
                 <div className="space-y-0">
