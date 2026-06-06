@@ -1155,7 +1155,7 @@ export default function LiuYaoPage() {
                     正在解卦...
                   </>
                 ) : (
-                  '开始解卦 ✦'
+                  '开始起卦 ✦'
                 )}
               </button>
               {!allLinesSelected && method === 'manual' && (
