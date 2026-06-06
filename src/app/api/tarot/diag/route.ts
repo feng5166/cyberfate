@@ -1,37 +1,27 @@
 import { NextResponse } from 'next/server';
+import { generateTarotReading } from '@/lib/ai/client';
 
 export async function GET() {
-  const key = process.env.DEEPSEEK_API_KEY ?? '';
-  const baseUrl = process.env.AI_BASE_URL || 'https://api.modelverse.cn/v1';
+  const input = {
+    spread: 'three' as const,
+    spreadName: '经典三张牌',
+    question: '测试',
+    cards: [
+      { position: '过去', name: '愚者', orientation: 'upright' as const, keywords: ['自由'], traditionalMeaning: '新的开始' },
+      { position: '现在', name: '魔术师', orientation: 'upright' as const, keywords: ['意志'], traditionalMeaning: '主动创造' },
+      { position: '未来', name: '女祭司', orientation: 'upright' as const, keywords: ['直觉'], traditionalMeaning: '内在智慧' },
+    ],
+  };
 
-  const results: Record<string, unknown> = { baseUrl };
-
-  // 测试1: modelverse
   try {
-    const r = await fetch(`${baseUrl}/chat/completions`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
-      body: JSON.stringify({ model: 'deepseek-v4-pro', max_tokens: 10, enable_thinking: false, messages: [{ role: 'user', content: 'hi' }] }),
-      signal: AbortSignal.timeout(12000),
+    const result = await generateTarotReading(input);
+    return NextResponse.json({
+      source: result._source,
+      readingLen: result.reading.length,
+      readingPreview: result.reading.slice(0, 100),
+      cardMeanings: result.cardMeanings.length,
     });
-    const data = await r.json();
-    results.modelverse = { status: r.status, content: data.choices?.[0]?.message?.content ?? null, error: data.error ?? null };
   } catch (e: unknown) {
-    results.modelverse = { threw: e instanceof Error ? e.message : String(e) };
+    return NextResponse.json({ threw: e instanceof Error ? e.message : String(e) });
   }
-
-  // 测试2: 直接 IP
-  try {
-    const r = await fetch('https://106.75.185.110/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}`, Host: 'api.modelverse.cn' },
-      body: JSON.stringify({ model: 'deepseek-v4-pro', max_tokens: 10, enable_thinking: false, messages: [{ role: 'user', content: 'hi' }] }),
-      signal: AbortSignal.timeout(8000),
-    });
-    results.directIp = { status: r.status };
-  } catch (e: unknown) {
-    results.directIp = { threw: e instanceof Error ? e.message : String(e) };
-  }
-
-  return NextResponse.json(results);
 }
