@@ -129,10 +129,12 @@ export default function TarotPage() {
   const questionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (step === 'loading' && loadingRef.current) {
+    if (step === 'loading') {
+      // drawn→loading 时页面内容骤减，先重置滚动位置再滑到解读指示器
+      window.scrollTo({ top: 0, behavior: 'instant' });
       setTimeout(() => {
         loadingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 150);
+      }, 200);
     }
     if (step === 'question' && questionRef.current) {
       setTimeout(() => {
@@ -683,13 +685,12 @@ export default function TarotPage() {
                 </div>
                 {error && <p className="mt-4 text-center text-sm text-red-600">{error}</p>}
               </div>
-              <div className="rounded-2xl bg-[#1C1A16] p-6 text-center">
-                <p className="text-white/60 text-sm mb-4 tracking-wide">牌阵已就绪，命理师为你深度解读</p>
+              <div className="text-center py-2">
                 <button
                   type="button"
                   onClick={() => handleAIReading(drawnCards)}
                   disabled={loading}
-                  className="h-[52px] w-full rounded-xl bg-white text-base font-semibold text-[#1C1A16] transition-all hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60 tracking-[0.05em]"
+                  className="h-[52px] px-10 rounded-2xl bg-[#1C1A16] text-base font-semibold text-white transition-all hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-60 tracking-[0.05em] shadow-md"
                 >
                   ✨ 开始 AI 深度解读 →
                 </button>
