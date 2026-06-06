@@ -411,7 +411,11 @@ export interface MeihuaDecisionResult {
 
 function safeText(value: unknown, fallback: string, maxLength: number): string {
   if (typeof value !== 'string') return fallback;
-  const cleaned = value.replace(/\s+/g, ' ').trim();
+  // 保留段落换行（\n\n），只清理行内多余空白
+  const cleaned = value
+    .replace(/[^\S\n]+/g, ' ')   // 行内连续空白 → 单空格（保留 \n）
+    .replace(/\n{3,}/g, '\n\n') // 3个以上换行 → 2个
+    .trim();
   if (!cleaned) return fallback;
   return cleaned.slice(0, maxLength);
 }
