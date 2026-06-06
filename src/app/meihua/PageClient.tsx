@@ -558,51 +558,51 @@ export default function MeihuaPage() {
           </section>
         )}
 
-        <section className="mx-auto mt-8 max-w-4xl animate-fadeIn">
+        <section className="mx-auto mt-12 max-w-4xl animate-fadeIn">
           <div className="text-center mb-8">
-            <h2 className="font-display text-xl tracking-[0.08em] text-[#1C1A16]">AI 辅助观察</h2>
-            <p className="mt-2 text-sm text-[#1C1A16]/60">我们的系统将古老的占卜文化与现代 AI 技术结合，为您的思考提供不同角度的参考观点。</p>
+            <h2 className="font-display text-2xl tracking-[0.08em] text-[#1C1A16] mb-6">AI 辅助观察</h2>
+            <p className="mt-2 text-base text-[#1C1A16]/60 max-w-2xl mx-auto">我们的系统将古老的占卜文化与现代 AI 技术结合，为您的思考提供不同角度的参考观点。</p>
           </div>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             {AI_INSIGHT_ITEMS.map((item) => (
-              <div key={item.title} className="flex flex-col items-center rounded-2xl border border-[#1C1A16]/10 bg-white p-6 text-center shadow-none transition-shadow duration-300 hover:shadow-card-hover">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#FAF9F6] text-xl mb-4">
+              <div key={item.title} className="flex flex-col items-center rounded-2xl border border-[#1C1A16]/10 bg-white p-8 py-10 text-center shadow-none transition-shadow duration-300 hover:shadow-card-hover">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#FAF9F6] text-3xl mb-6">
                   {item.icon}
                 </div>
-                <h3 className="text-sm font-semibold text-[#1C1A16] mb-2">{item.title}</h3>
-                <p className="text-xs leading-relaxed text-[#1C1A16]/65">{item.desc}</p>
+                <h3 className="text-lg font-semibold text-[#1C1A16] mb-3">{item.title}</h3>
+                <p className="text-sm leading-relaxed text-[#1C1A16]/65">{item.desc}</p>
               </div>
             ))}
           </div>
         </section>
 
-        <section className="mx-auto mt-8 max-w-4xl animate-fadeIn">
-          <h2 className="font-display text-xl tracking-[0.08em] text-[#1C1A16] text-center">特色功能</h2>
-          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <section className="mx-auto mt-12 max-w-4xl animate-fadeIn">
+          <h2 className="font-display text-2xl tracking-[0.08em] text-[#1C1A16] text-center">特色功能</h2>
+          <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
             {FEATURE_ITEMS.map((item) => (
-              <div key={item.title} className="flex items-start gap-3 rounded-xl bg-white p-4 shadow-none transition-shadow duration-300 hover:shadow-card-hover">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FAF9F6] text-base">
+              <div key={item.title} className="flex items-start gap-3 rounded-xl bg-white p-6 shadow-none transition-shadow duration-300 hover:shadow-card-hover">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#FAF9F6] text-xl">
                   {item.icon}
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-[#1C1A16]">{item.title}</h3>
-                  <p className="mt-1 text-xs leading-relaxed text-[#1C1A16]/70">{item.desc}</p>
+                  <h3 className="text-base font-semibold text-[#1C1A16]">{item.title}</h3>
+                  <p className="mt-1 text-sm leading-relaxed text-[#1C1A16]/70">{item.desc}</p>
                 </div>
               </div>
             ))}
           </div>
         </section>
 
-        <section className="mx-auto mt-8 max-w-4xl pb-4 animate-fadeIn">
-          <h2 className="font-display text-xl tracking-[0.08em] text-[#1C1A16] text-center">常见问题</h2>
-          <div className="mt-6 space-y-4">
+        <section className="mx-auto mt-12 max-w-4xl pb-4 animate-fadeIn">
+          <h2 className="font-display text-2xl tracking-[0.08em] text-[#1C1A16] text-center">常见问题</h2>
+          <div className="mt-8 space-y-5">
             {FAQ_ITEMS.map((item) => (
-              <div key={item.question} className="rounded-2xl border border-[#1C1A16]/10 bg-white px-5 py-4">
-                <p className="flex items-start gap-2 text-sm font-semibold text-[#1C1A16]">
-                  <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border border-[#1C1A16]/30 text-xs text-[#1C1A16]/60">?</span>
+              <div key={item.question} className="rounded-2xl border border-[#1C1A16]/10 bg-white px-6 py-6">
+                <p className="flex items-start gap-2 text-base font-medium text-[#1C1A16]">
+                  <span className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-[#1C1A16]/30 text-sm text-[#1C1A16]/60">?</span>
                   {item.question}
                 </p>
-                <p className="mt-3 text-sm leading-relaxed text-[#1C1A16]/70">{item.answer}</p>
+                <p className="mt-3 text-sm leading-loose text-[#1C1A16]/70">{item.answer}</p>
               </div>
             ))}
           </div>
