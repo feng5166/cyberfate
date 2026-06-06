@@ -306,6 +306,7 @@ export async function POST(req: NextRequest) {
     }, 12 * 60 * 60);
   }
 
+  const readingWithError = reading as typeof reading & { _error?: string };
   const meta = {
     spread,
     cards: cardsWithImages.map((card, index) => ({
@@ -315,6 +316,7 @@ export async function POST(req: NextRequest) {
     caution: reading.caution,
     _source: reading._source,
     _debug: isDebugMode ? true : undefined,
+    _error: isDebugMode ? readingWithError._error : undefined,
   };
 
   return new Response(buildStream(meta, reading.reading), { headers: SSE_HEADERS });

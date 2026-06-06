@@ -352,6 +352,13 @@ function getTarotTextLimits(spread: TarotSpread): ReadingLimits {
       caution: 100,
     };
   }
+  if (spread === 'relationship') {
+    return {
+      cardMeanings: 120,
+      reading: 2500,
+      caution: 100,
+    };
+  }
   return {
     cardMeanings: 60,
     reading: 1500,
@@ -362,6 +369,7 @@ function getTarotTextLimits(spread: TarotSpread): ReadingLimits {
 function getTarotMaxTokens(spread: TarotSpread): number {
   if (spread === 'celtic') return 5000;
   if (spread === 'mirror') return 4000;
+  if (spread === 'relationship') return 4500;
   return 3500;
 }
 
@@ -384,15 +392,17 @@ export async function generateTarotReading(
     const text = await callDeepSeek(systemPrompt, prompt, getTarotMaxTokens(input.spread), 'tarot');
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      return { ...fallback, _source: 'fallback' };
+      console.warn('[AI 塔罗解读] 无法提取 JSON，text:', text.slice(0, 200));
+      return { ...fallback, _source: 'fallback', _error: `no_json_match: ${text.slice(0, 100)}` } as TarotReadingResult & { _source: 'deepseek' | 'fallback'; _error?: string };
     }
 
     const parsed = JSON.parse(jsonMatch[0]) as unknown;
     const normalized = normalizeTarotReading(parsed, fallback, input.cards.length, input.spread);
     return { ...normalized, _source: 'deepseek' };
   } catch (error) {
-    console.warn('[AI 塔罗解读] 生成失败，使用降级结果', error);
-    return { ...fallback, _source: 'fallback' };
+    const errMsg = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+    console.warn('[AI 塔罗解读] 生成失败，使用降级结果', errMsg);
+    return { ...fallback, _source: 'fallback', _error: errMsg } as TarotReadingResult & { _source: 'deepseek' | 'fallback'; _error?: string };
   }
 }
 

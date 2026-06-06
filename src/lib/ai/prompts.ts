@@ -380,7 +380,12 @@ ${input.question?.trim() ? input.question.trim() : '用户未输入具体问题�
 【抽到的牌】
 ${cardsText}
 
-请输出指定 JSON。`;
+严格按以下 JSON 格式输出，不得更改字段名，不得添加额外字段：
+{
+  "cardMeanings": ["每张牌的解读，与输入牌顺序一一对应"],
+  "reading": "完整解读文章",
+  "caution": "30-60字风险提示"
+}`;
 }
 
 export interface MeihuaDecisionPromptInput {

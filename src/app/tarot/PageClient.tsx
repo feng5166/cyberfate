@@ -558,7 +558,7 @@ export default function TarotPage() {
 
           {step === 'loading' && (
             <div className="space-y-4">
-              {drawnCards && (
+              {drawnCards && drawnCards.length === (currentSpread === 'celtic' ? 10 : currentSpread === 'mirror' || currentSpread === 'relationship' ? 5 : currentSpread === 'moonlight' ? 3 : currentSpread === 'single' ? 1 : 3) && (
                 <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-5 md:p-6">
                   <h3 className="font-display text-xl tracking-[0.08em] text-[#1C1A16] text-center mb-5">✨ 您抚到了这些牌</h3>
                   <div>
