@@ -629,11 +629,11 @@ function normalizeLiuYaoReading(raw: unknown, fallback: LiuYaoReadingResult): Li
 
   return {
     lineInterpretations: lineInterpretations.length === 6 ? lineInterpretations : fallback.lineInterpretations,
-    overallNarrative: safeText(data.overallNarrative, fallback.overallNarrative, 400),
+    overallNarrative: safeText(data.overallNarrative, fallback.overallNarrative, 800),
     summary: safeText(data.summary, fallback.summary, 60),
-    positives: safeList(data.positives, fallback.positives, 2, 3, 30),
-    cautions: safeList(data.cautions, fallback.cautions, 1, 2, 30),
-    actions: safeList(data.actions, fallback.actions, 1, 2, 50),
+    positives: safeList(data.positives, fallback.positives, 2, 3, 80),
+    cautions: safeList(data.cautions, fallback.cautions, 1, 2, 80),
+    actions: safeList(data.actions, fallback.actions, 1, 2, 100),
   };
 }
 
