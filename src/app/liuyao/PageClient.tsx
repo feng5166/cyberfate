@@ -181,6 +181,14 @@ function YaoLine({ type, height = 6, width = '80%', isMoving = false }: { type: 
   );
 }
 
+// 将 overallNarrative 文本分段，并在 ①②③④⑤ 前插入换行
+function formatNarrative(text: string): string[] {
+  const circled = '\u2460\u2461\u2462\u2463\u2464';
+  const re = new RegExp('([^\n])([' + circled + '])', 'g');
+  const normalized = text.replace(re, '$1\n$2');
+  return normalized.split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
+}
+
 function HexagramFigure({ lines, size = 'normal', movingLineIdx }: { lines: (0 | 1)[]; size?: 'normal' | 'large'; movingLineIdx?: number }) {
   const h = size === 'large' ? 8 : 6;
   const gap = size === 'large' ? 'gap-2' : 'gap-1.5';
@@ -1604,20 +1612,9 @@ export default function LiuYaoPage() {
                   <OracleLoading />
                 ) : (
                   <div className="text-sm leading-relaxed text-[#1C1A16]/75 space-y-3">
-                    {result.overallNarrative
-                      // 先在 ①②③④⑤ 前插入换行，避免序号混在一行
-                      .replace(/([^
-])([①②③④⑤])/g, '$1
-$2')
-                      .split(/
-
-+/)
-                      .filter(Boolean)
-                      .map((para, i) => (
-                        <p key={i} className="whitespace-pre-wrap">
-                          {para.trim()}
-                        </p>
-                      ))}
+                    {formatNarrative(result.overallNarrative).map((para, i) => (
+                      <p key={i} className="whitespace-pre-wrap">{para}</p>
+                    ))}
                     {streaming && result.overallNarrative && (
                       <span className="inline-block w-1.5 h-4 ml-0.5 bg-[#1C1A16]/40 align-middle animate-pulse" />
                     )}
