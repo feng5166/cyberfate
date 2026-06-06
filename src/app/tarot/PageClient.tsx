@@ -193,7 +193,6 @@ export default function TarotPage() {
     setError('');
     setMode(targetMode);
     setStep('question');
-    setQuestion('');
     setResult(null);
     setDrawnCards(null);
     setCelticModalIdx(null);
