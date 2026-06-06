@@ -1,13 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getEnvVar } from '@/lib/utils/api-wrapper';
-import { AI_BASE_URL, PRIMARY_MODEL } from '@/lib/ai/models';
-import { buildTarotReadingPrompt, buildTarotReadingSystemPrompt } from '@/lib/ai/prompts';
+import { generateTarotReading } from '@/lib/ai/client';
+import { withAiTimeout } from '@/lib/ai/withTimeout';
+import { withCircuitBreaker } from '@/lib/ai/circuitBreaker';
 
 export async function GET() {
-  const apiKey = getEnvVar('DEEPSEEK_API_KEY');
-  const baseUrl = AI_BASE_URL;
-  const model = PRIMARY_MODEL;
-
   const input = {
     spread: 'three' as const,
     spreadName: '经典三张牌',
@@ -19,32 +15,24 @@ export async function GET() {
     ],
   };
 
-  const systemPrompt = buildTarotReadingSystemPrompt({ spread: input.spread, spreadName: input.spreadName });
-  const userPrompt = buildTarotReadingPrompt(input);
+  // 方式1: 直接调
+  const direct = await generateTarotReading(input);
 
+  // 方式2: 完整走 withCircuitBreaker + withAiTimeout（和 draw route 完全一样）
+  let wrapped: Awaited<ReturnType<typeof generateTarotReading>> | { _source: string; error: string };
   try {
-    const resp = await fetch(`${baseUrl}/chat/completions`, {
-      method: 'POST',
-      signal: AbortSignal.timeout(25000),
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({ model, max_tokens: 1000, temperature: 0.3, enable_thinking: false, messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ]}),
-    });
-    const data = await resp.json();
-    const content = data.choices?.[0]?.message?.content ?? '';
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
-    return NextResponse.json({
-      status: resp.status,
-      contentLen: content.length,
-      contentPreview: content.slice(0, 200),
-      hasCardMeanings: !!parsed?.cardMeanings,
-      hasReading: !!parsed?.reading,
-      parsedKeys: parsed ? Object.keys(parsed) : null,
-    });
+    wrapped = await withCircuitBreaker('deepseek-tarot-diag', () =>
+      withAiTimeout(() => generateTarotReading(input), 110_000)
+    );
   } catch (e: unknown) {
-    return NextResponse.json({ threw: e instanceof Error ? `${e.name}: ${e.message}` : String(e) });
+    wrapped = { _source: 'threw', error: e instanceof Error ? `${e.name}: ${e.message}` : String(e) };
   }
+
+  return NextResponse.json({
+    direct_source: direct._source,
+    direct_readingLen: direct.reading.length,
+    wrapped_source: wrapped._source,
+    wrapped_readingLen: '_source' in wrapped && wrapped._source !== 'threw' ? (wrapped as typeof direct).reading?.length : 0,
+    wrapped_error: 'error' in wrapped ? (wrapped as {error:string}).error : null,
+  });
 }
