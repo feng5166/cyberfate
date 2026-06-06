@@ -177,7 +177,7 @@ export async function POST(req: NextRequest) {
     moving: movingSuffix,
   });
 
-  const cached = await getCache(cacheKey);
+  const cached = isDebugMode ? null : await getCache(cacheKey);
   if (cached && typeof cached === 'object') {
     const c = cached as Record<string, unknown>;
     if (Array.isArray(c.lineInterpretations) && typeof c.overallNarrative === 'string') {
