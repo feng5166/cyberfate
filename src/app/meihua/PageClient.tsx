@@ -5,7 +5,9 @@ import {
   Brain,
   ChevronDown,
   ChevronUp,
+  Clock,
   Clock3,
+  Info,
   Loader2,
   Sparkles,
 } from 'lucide-react';
@@ -15,7 +17,7 @@ import { OracleLoading } from '@/components/ui/OracleLoading';
 const Footer = dynamic(() => import('@/components/layout/Footer').then(m => m.Footer), { ssr: false });
 const AiDisclaimer = dynamic(() => import('@/components/ui/AiDisclaimer').then(m => m.AiDisclaimer), { ssr: false });
 
-type Method = 'time' | 'number' | 'manual';
+type Method = 'time' | 'number' | 'random' | 'manual';
 
 interface GuaMeta {
   name: string;
@@ -67,15 +69,10 @@ interface FaqItem {
   answer: string;
 }
 
-const EXAMPLE_QUESTIONS = [
-  '我是否应该接受这份工作机会？',
-  '今天适合签约吗？',
-  '这段感情值得继续吗？',
-];
-
 const METHOD_OPTIONS: Array<{ value: Method; label: string }> = [
   { value: 'time', label: '时间起卦' },
   { value: 'number', label: '数字起卦' },
+  { value: 'random', label: '随机数起卦' },
   { value: 'manual', label: '手动起卦' },
 ];
 
@@ -164,7 +161,6 @@ export default function MeihuaPage() {
   const [decision, setDecision] = useState<MeihuaDecisionResult | null>(null);
   const [expandedFaqIndex, setExpandedFaqIndex] = useState<number | null>(0);
 
-  const count = question.length;
   const isQuestionMode = Boolean(question.trim());
 
   const decisionMeta = useMemo(
@@ -189,11 +185,20 @@ export default function MeihuaPage() {
 
     setLoading(true);
 
+    let submitMethod: Method = method;
+    let submitNumbers = numbers;
+    if (method === 'random') {
+      const rand1 = Math.floor(Math.random() * 100) + 1;
+      const rand2 = Math.floor(Math.random() * 100) + 1;
+      submitMethod = 'number';
+      submitNumbers = { num1: String(rand1), num2: String(rand2) };
+    }
+
     try {
       const drawRes = await fetch('/api/meihua/draw', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ method, numbers }),
+        body: JSON.stringify({ method: submitMethod, numbers: submitNumbers }),
       });
 
       if (!drawRes.ok || !drawRes.body) {
@@ -313,58 +318,45 @@ export default function MeihuaPage() {
 
         <section className="mx-auto max-w-4xl animate-fadeIn">
           <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 shadow-none transition-shadow duration-300 hover:shadow-card-hover md:p-8">
-            <h2 className="font-display text-xl text-[#1C1A16]">提出您的决策问题</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-xl text-[#1C1A16]">提出您的决策问题</h2>
+              <Clock className="h-4 w-4 text-[#1C1A16]/40 cursor-pointer hover:text-[#1C1A16]/60" />
+            </div>
             <p className="mt-2 text-xs text-[#1C1A16]/60 md:text-sm">
-              问题可选填：不填则进入传统起卦模式；填写后将生成 AI 决策建议。
+              请输入一个明确的问题，系统将自动为您起卦
             </p>
 
             <div className="mt-4">
-              <div className="relative">
-                <textarea
-                  value={question}
-                  onChange={(e) => setQuestion(e.target.value.slice(0, 200))}
-                  maxLength={200}
-                  placeholder="输入一个令你纠结的问题，系统将自动为你起卦..."
-                  className="min-h-[100px] max-h-[200px] w-full resize-y rounded-xl border border-gray-300 p-4 pr-14 text-sm text-[#1C1A16] outline-none transition-all placeholder:text-[#1C1A16]/45 focus:border-[#1C1A16] focus:ring-2 focus:ring-[#1C1A16]/10"
-                />
-                <span className="pointer-events-none absolute bottom-3 right-3 text-xs text-[#1C1A16]/55">
-                  {count}/200
-                </span>
-              </div>
-
-              {!question.trim() && (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {EXAMPLE_QUESTIONS.map((example) => (
-                    <button
-                      key={example}
-                      type="button"
-                      onClick={() => setQuestion(example)}
-                      className="cursor-pointer rounded-full bg-gray-50 px-3 py-1.5 text-xs text-[#1C1A16]/65 transition-colors hover:bg-gray-100"
-                    >
-                      {example}
-                    </button>
-                  ))}
-                </div>
-              )}
+              <input
+                type="text"
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                placeholder="例如：我是否应该接受这个工作机会？"
+                className="w-full rounded-xl border border-gray-300 p-4 text-sm text-[#1C1A16] outline-none transition-all placeholder:text-[#1C1A16]/45 focus:border-[#1C1A16] focus:ring-2 focus:ring-[#1C1A16]/10"
+              />
             </div>
 
             <div className="mt-5">
-              <p className="mb-2 text-xs text-[#1C1A16]/60">起卦方式</p>
-              <div className="grid grid-cols-3 rounded-xl bg-gray-100 p-1">
+              <div className="flex items-center gap-1">
+                <span className="mr-2 text-xs text-[#1C1A16]/60">起卦方式</span>
                 {METHOD_OPTIONS.map((option) => (
                   <button
                     key={option.value}
                     type="button"
                     onClick={() => setMethod(option.value)}
-                    className={`h-9 rounded-lg text-xs font-medium transition-colors md:text-sm ${
+                    className={`rounded-full px-3 py-1 text-xs transition-colors ${
                       method === option.value
-                        ? 'bg-[#1C1A16] text-white'
-                        : 'text-[#1C1A16]/70 hover:bg-white'
+                        ? 'bg-[#1C1A16] text-white font-medium'
+                        : 'text-[#1C1A16]/60 hover:text-[#1C1A16]'
                     }`}
                   >
                     {option.label}
                   </button>
                 ))}
+              </div>
+              <div className="mt-2 flex items-center gap-1 text-xs text-[#1C1A16]/45">
+                <Info className="h-3 w-3" />
+                <span className="cursor-pointer hover:text-[#1C1A16]/70">查看起卦规则</span>
               </div>
             </div>
 
@@ -397,7 +389,7 @@ export default function MeihuaPage() {
               type="button"
               onClick={handleSubmit}
               disabled={loading || streaming || decisionLoading}
-              className="mt-5 flex h-[44px] w-full items-center justify-center rounded-xl bg-[#1C1A16] text-sm font-medium text-white transition-all hover:bg-[#2A2621] disabled:cursor-not-allowed disabled:opacity-70"
+              className="mt-5 flex h-[44px] w-full items-center justify-center rounded-xl bg-gray-200 text-sm font-medium text-[#1C1A16] transition-all hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {loading || streaming || decisionLoading ? (
                 <>
@@ -405,7 +397,7 @@ export default function MeihuaPage() {
                   正在解卦...
                 </>
               ) : (
-                '🀄 开始解卦'
+                '起卦解析 ✦'
               )}
             </button>
 
