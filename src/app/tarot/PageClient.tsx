@@ -515,7 +515,7 @@ export default function TarotPage() {
             <h2 className="font-display text-xl tracking-[0.08em] text-[#1C1A16] text-center mb-4">选择您的塔罗体验</h2>
             <hr className="border-[#E5E0D8] mb-4" />
             <p className="text-center text-base font-semibold text-[#1C1A16]/60 mb-8">不同解读风格</p>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
               {MODES.map((item) => {
                 const active = item.id === mode;
                 return (
@@ -523,7 +523,7 @@ export default function TarotPage() {
                     key={item.id}
                     type="button"
                     onClick={() => handleModeSelect(item.id)}
-                    className={`flex flex-col items-center text-center rounded-2xl border-2 p-5 py-8 transition-all duration-200 ${
+                    className={`flex flex-col items-center text-center rounded-2xl border-2 p-4 py-6 transition-all duration-200 ${
                       active
                         ? 'border-[#1C1A16] bg-gray-100 shadow-sm'
                         : 'border-[#E5E0D8] bg-white hover:border-[#1C1A16]/40 hover:shadow-md'
