@@ -1005,9 +1005,10 @@ export default function LiuYaoPage() {
               setResult(initial);
             } else if (json.content && current) {
               acc += json.content;
+              const normalized = acc.replace(/\\n/g, '\n');
               const currentValue: LiuYaoResult = current;
-              current = { ...currentValue, overallNarrative: acc };
-              setResult((prev) => (prev ? { ...prev, overallNarrative: acc } : prev));
+              current = { ...currentValue, overallNarrative: normalized };
+              setResult((prev) => (prev ? { ...prev, overallNarrative: normalized } : prev));
             }
           } catch {}
         }

@@ -453,8 +453,10 @@ export interface MeihuaDecisionResult {
 
 function safeText(value: unknown, fallback: string, maxLength: number): string {
   if (typeof value !== 'string') return fallback;
+  // 字面 \n 转成真实换行（AI 有时输出字面转义符）
+  const unescaped = value.replace(/\\n/g, '\n');
   // 保留段落换行（\n\n），只清理行内多余空白
-  const cleaned = value
+  const cleaned = unescaped
     .replace(/[^\S\n]+/g, ' ')   // 行内连续空白 → 单空格（保留 \n）
     .replace(/\n{3,}/g, '\n\n') // 3个以上换行 → 2个
     .trim();
