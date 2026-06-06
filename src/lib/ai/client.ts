@@ -640,7 +640,7 @@ function normalizeLiuYaoReading(raw: unknown, fallback: LiuYaoReadingResult): Li
 
 export async function generateLiuYaoReading(
   input: LiuYaoPromptInput
-): Promise<LiuYaoReadingResult & { _source: 'deepseek' | 'fallback' }> {
+): Promise<LiuYaoReadingResult & { _source: 'deepseek' | 'fallback'; _error?: string }> {
   const fallback = buildFallbackLiuYaoReading(input);
   const apiKey = getEnvVar('DEEPSEEK_API_KEY');
 
@@ -660,7 +660,8 @@ export async function generateLiuYaoReading(
     const normalized = normalizeLiuYaoReading(parsed, fallback);
     return { ...normalized, _source: 'deepseek' };
   } catch (error) {
-    console.warn('[AI 六爻解读] 生成失败，使用降级结果', error);
-    return { ...fallback, _source: 'fallback' };
+    const errMsg = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+    console.warn('[AI 六爻解读] 生成失败，使用降级结果', errMsg);
+    return { ...fallback, _source: 'fallback', _error: errMsg };
   }
 }

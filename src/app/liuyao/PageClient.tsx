@@ -73,6 +73,8 @@ interface LiuYaoResult {
     actions: string[];
   };
   overallNarrative: string;
+  _source?: string;
+  _error?: string;
 }
 
 const SAMPLE_QUESTIONS = [
@@ -996,6 +998,8 @@ export default function LiuYaoPage() {
                 judgment: json.meta.judgment,
                 actionAdvice: json.meta.actionAdvice,
                 overallNarrative: '',
+                _source: json.meta._source,
+                _error: json.meta._error,
               };
               current = initial;
               setResult(initial);
@@ -1590,7 +1594,11 @@ export default function LiuYaoPage() {
 
               <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 transition-shadow duration-300 hover:shadow-card-hover">
                 <h3 className="text-base font-semibold text-[#1C1A16] mb-1">综合分析</h3>
-                <p className="text-xs text-[#1C1A16]/45 mb-3">AI 综合分析 · 仅供参考</p>
+                <p className="text-xs text-[#1C1A16]/45 mb-3">
+                  AI 综合分析 · 仅供参考
+                  {result._source && <span className="ml-2 text-[10px] font-mono text-blue-400">[{result._source}]</span>}
+                  {result._error && <span className="ml-2 text-[10px] font-mono text-red-400" title={result._error}>[err: {result._error.slice(0, 40)}]</span>}
+                </p>
                 {streaming && !result.overallNarrative ? (
                   <OracleLoading />
                 ) : (

@@ -49,6 +49,7 @@ interface LiuYaoMeta {
     actions: string[];
   };
   _source?: string;
+  _error?: string;
 }
 
 function validateRequest(body: unknown): { valid: true; data: LiuYaoRequestBody } | { valid: false; error: string } {
@@ -228,9 +229,18 @@ export async function POST(req: NextRequest) {
     method: data.method,
   };
 
-  const reading = await withCircuitBreaker('deepseek-liuyao-v4pro', () =>
-    withAiTimeout(() => generateLiuYaoReading(promptInput), 25_000)
-  );
+  let reading: Awaited<ReturnType<typeof generateLiuYaoReading>>;
+  try {
+    reading = await withCircuitBreaker('deepseek-liuyao-v4pro', () =>
+      withAiTimeout(() => generateLiuYaoReading(promptInput), 25_000)
+    );
+    console.log('[liuyao] AI reading success, _source:', reading._source);
+  } catch (err) {
+    const errMsg = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+    console.error('[liuyao] AI reading failed, using fallback. error:', errMsg);
+    // 直接调用不经过断路器的 fallback
+    reading = await generateLiuYaoReading(promptInput);
+  }
 
   const enrichedLines = linesData.map((l, i) => ({
     ...l,
@@ -261,6 +271,7 @@ export async function POST(req: NextRequest) {
       actions: reading.actions,
     },
     _source: reading._source,
+    _error: (reading as { _error?: string })._error,
   };
 
   return new Response(buildStream(meta, reading.overallNarrative), { headers: SSE_HEADERS });
