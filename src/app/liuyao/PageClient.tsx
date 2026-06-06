@@ -1506,6 +1506,9 @@ export default function LiuYaoPage() {
           )}
         </section>
 
+        {/* ⑧⑨⑩ 介绍性模块：起卦后隐藏 */}
+        {!hexagramDrawn && <>
+
         {/* ⑧ 特色功能介绍 */}
         <section className="mx-auto mt-10 max-w-4xl animate-fadeIn">
           <div className="text-center mb-8">
@@ -1647,6 +1650,7 @@ export default function LiuYaoPage() {
             ⚠️ 免责声明：本站六爻占卜内容仅供娱乐与自我探索参考，不构成医疗、法律或投资建议。请结合现实信息理性判断。
           </div>
         </section>
+        </>}
       </main>
 
       <Footer />
