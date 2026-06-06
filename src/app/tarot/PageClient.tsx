@@ -140,10 +140,9 @@ export default function TarotPage() {
       }, 50);
     }
     if (step === 'loading') {
-      window.scrollTo({ top: 0, behavior: 'instant' });
       setTimeout(() => {
         loadingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 200);
+      }, 50);
     }
     if (step === 'drawn' && drawnRef.current) {
       setTimeout(() => {
