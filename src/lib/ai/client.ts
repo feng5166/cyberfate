@@ -649,7 +649,7 @@ export async function generateLiuYaoReading(
 
   try {
     const prompt = buildLiuYaoPrompt(input);
-    const text = await callDeepSeek(LIUYAO_SYSTEM_PROMPT, prompt, 2400);
+    const text = await callDeepSeek(LIUYAO_SYSTEM_PROMPT, prompt, 3500);
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       return { ...fallback, _source: 'fallback' };
