@@ -727,6 +727,7 @@ export default function LiuYaoPage() {
 
   const [hexagramDrawn, setHexagramDrawn] = useState(false);
   const hexagramResultRef = useRef<HTMLDivElement>(null);
+  const liuyaoLoadingRef = useRef<HTMLDivElement>(null);
 
   const allLinesSelected = method === 'manual'
     ? lineSelections.every((v) => v !== null)
@@ -897,6 +898,10 @@ export default function LiuYaoPage() {
   };
 
   const handleAIAnalysis = async () => {
+    // 滚到 loading 区域居中
+    setTimeout(() => {
+      liuyaoLoadingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 80);
     if (!allLinesSelected) {
       setError('请先完成起卦');
       return;
@@ -1262,7 +1267,7 @@ export default function LiuYaoPage() {
           </div>
 
           {/* 起卦结果区域：仅显示卦象信息（不含 AI 分析） */}
-          {hexagramDrawn && !loading && !result && drawnHexagram && (
+          {hexagramDrawn && drawnHexagram && (
             <div ref={hexagramResultRef} className="space-y-4 animate-fadeIn">
               {/* 起卦元信息 */}
               <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 transition-shadow duration-300 hover:shadow-card-hover">
@@ -1366,30 +1371,24 @@ export default function LiuYaoPage() {
                 </div>
               </div>
 
-              {/* 分析卦象按钮 */}
-              <div className="flex justify-center">
-                <button
-                  type="button"
-                  onClick={handleAIAnalysis}
-                  disabled={loading || streaming}
-                  className="inline-flex h-[44px] min-w-[180px] px-8 items-center justify-center rounded-xl bg-[#1C1A16] text-sm font-semibold text-white transition-all hover:bg-[#2A2621] disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {loading || streaming ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      正在分析卦象...
-                    </>
-                  ) : (
-                    '分析卦象含义 ✦'
-                  )}
-                </button>
-              </div>
+              {/* 分析卦象按钮：只在未开始 AI 分析时显示 */}
+              {!loading && !streaming && !result && (
+                <div className="flex justify-center">
+                  <button
+                    type="button"
+                    onClick={handleAIAnalysis}
+                    className="inline-flex h-[44px] min-w-[180px] px-8 items-center justify-center rounded-xl bg-[#1C1A16] text-sm font-semibold text-white transition-all hover:bg-[#2A2621]"
+                  >
+                    分析卦象含义 ✦
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
           {/* AI 分析中 loading 占位 */}
           {hexagramDrawn && loading && !result && (
-            <div className="mt-4 flex justify-center">
+            <div ref={liuyaoLoadingRef} className="mt-4 flex justify-center min-h-[200px] items-center">
               <OracleLoading />
             </div>
           )}
