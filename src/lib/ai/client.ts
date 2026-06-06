@@ -42,42 +42,61 @@ async function callDeepSeek(systemPrompt: string, userPrompt: string, maxTokens 
   const apiKey = getEnvVar('DEEPSEEK_API_KEY');
   if (!apiKey) throw new Error('DEEPSEEK_API_KEY 未配置');
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), getTimeout(feature));
-  const response = await fetch(`${DEEPSEEK_BASE_URL}/chat/completions`, {
-    method: 'POST',
-    signal: controller.signal,
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: DEEPSEEK_MODEL,
-      max_tokens: maxTokens,
-      temperature: 0.3,
-      enable_thinking: false,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-    }),
-  });
+  const maxRetries = 3;
+  let lastError: unknown;
 
-  clearTimeout(timeoutId);
-  if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`DeepSeek API error ${response.status}: ${err}`);
-  }
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), getTimeout(feature));
+    try {
+      const response = await fetch(`${DEEPSEEK_BASE_URL}/chat/completions`, {
+        method: 'POST',
+        signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: DEEPSEEK_MODEL,
+          max_tokens: maxTokens,
+          temperature: 0.3,
+          enable_thinking: false,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
+          ],
+        }),
+      });
 
-  const data = await response.json();
-  const content = data.choices?.[0]?.message?.content || '';
-  if (content.length < 10) {
-    const reasoningContent = data.choices?.[0]?.message?.reasoning_content || '';
-    if (reasoningContent && /\{[\s\S]*\}/.test(reasoningContent)) {
-      return reasoningContent;
+      clearTimeout(timeoutId);
+      if (!response.ok) {
+        const err = await response.text();
+        throw new Error(`DeepSeek API error ${response.status}: ${err}`);
+      }
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content || '';
+      if (content.length < 10) {
+        const reasoningContent = data.choices?.[0]?.message?.reasoning_content || '';
+        if (reasoningContent && /\{[\s\S]*\}/.test(reasoningContent)) {
+          return reasoningContent;
+        }
+      }
+      return content;
+    } catch (err) {
+      clearTimeout(timeoutId);
+      lastError = err;
+      const msg = err instanceof Error ? err.message : String(err);
+      // fetch failed = 网络错误，值得重试；AbortError = 超时，不重试
+      if (attempt < maxRetries - 1 && !msg.includes('AbortError') && !msg.includes('aborted') && !msg.includes('API error')) {
+        console.warn(`[callDeepSeek] attempt ${attempt + 1} failed (${msg}), retrying...`);
+        await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
+        continue;
+      }
+      throw err;
     }
   }
-  return content;
+  throw lastError;
 }
 
 /**
