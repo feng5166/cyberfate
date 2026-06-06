@@ -181,12 +181,45 @@ function YaoLine({ type, height = 6, width = '80%', isMoving = false }: { type: 
   );
 }
 
-// 将 overallNarrative 文本分段，并在 ①②③④⑤ 前插入换行
-function formatNarrative(text: string): string[] {
+// 解析 overallNarrative 为结构化块
+type NarrativeBlock = { type: 'heading' | 'list-item' | 'paragraph'; text: string };
+
+function parseNarrative(text: string): NarrativeBlock[] {
+  // 1. 字面 \n 转真实换行（防备）
+  const raw = text.replace(/\\n/g, '\n');
+  // 2. 在 ①②③④⑤一二三四五六七八九十 前插入换行
   const circled = '\u2460\u2461\u2462\u2463\u2464';
-  const re = new RegExp('([^\n])([' + circled + '])', 'g');
-  const normalized = text.replace(re, '$1\n$2');
-  return normalized.split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
+  const normalized = raw
+    .replace(new RegExp('([^\n])([' + circled + '])', 'g'), '$1\n$2')
+    .replace(/([^\n])(一是|二是|三是|四是|五是)/g, '$1\n$2');
+  // 3. 分割成行
+  const lines = normalized.split(/\n/).map(l => l.trim()).filter(Boolean);
+  const blocks: NarrativeBlock[] = [];
+  // 层标头匹配：①②③④⑤ 或 “周/日/月/年…”标题模式
+  const listRe = new RegExp('^([' + circled + ']|\\d+[.\u3001]|一是|二是|三是|四是|五是|\u25aa|\u2022|-\s)');
+  let paraAcc: string[] = [];
+  const flushPara = () => {
+    if (paraAcc.length) {
+      blocks.push({ type: 'paragraph', text: paraAcc.join('') });
+      paraAcc = [];
+    }
+  };
+  for (const line of lines) {
+    if (listRe.test(line)) {
+      flushPara();
+      blocks.push({ type: 'list-item', text: line });
+    } else {
+      // 单行段落：直接入块；多行同段落合并
+      if (paraAcc.length && line.length > 0) {
+        paraAcc.push(line);
+      } else {
+        flushPara();
+        paraAcc.push(line);
+      }
+    }
+  }
+  flushPara();
+  return blocks;
 }
 
 function HexagramFigure({ lines, size = 'normal', movingLineIdx }: { lines: (0 | 1)[]; size?: 'normal' | 'large'; movingLineIdx?: number }) {
@@ -1611,10 +1644,17 @@ export default function LiuYaoPage() {
                 {streaming && !result.overallNarrative ? (
                   <OracleLoading />
                 ) : (
-                  <div className="text-sm leading-relaxed text-[#1C1A16]/75 space-y-3">
-                    {formatNarrative(result.overallNarrative).map((para, i) => (
-                      <p key={i} className="whitespace-pre-wrap">{para}</p>
-                    ))}
+                  <div className="text-sm leading-relaxed text-[#1C1A16]/80 space-y-2">
+                    {parseNarrative(result.overallNarrative).map((block, i) =>
+                      block.type === 'list-item' ? (
+                        <div key={i} className="flex gap-2.5 pl-1 py-1">
+                          <span className="mt-0.5 shrink-0 w-1 rounded-full bg-[#1C1A16]/20 self-stretch" />
+                          <p className="text-[#1C1A16]/75">{block.text}</p>
+                        </div>
+                      ) : (
+                        <p key={i} className="text-[#1C1A16]/75">{block.text}</p>
+                      )
+                    )}
                     {streaming && result.overallNarrative && (
                       <span className="inline-block w-1.5 h-4 ml-0.5 bg-[#1C1A16]/40 align-middle animate-pulse" />
                     )}
