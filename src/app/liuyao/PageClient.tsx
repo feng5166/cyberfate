@@ -728,6 +728,7 @@ export default function LiuYaoPage() {
   const [hexagramDrawn, setHexagramDrawn] = useState(false);
   const hexagramResultRef = useRef<HTMLDivElement>(null);
   const liuyaoLoadingRef = useRef<HTMLDivElement>(null);
+  const questionSectionRef = useRef<HTMLDivElement>(null);
 
   const allLinesSelected = method === 'manual'
     ? lineSelections.every((v) => v !== null)
@@ -1018,6 +1019,10 @@ export default function LiuYaoPage() {
     setHexagramReady(false);
     setHexagramDrawn(false);
     setDivinationTime(getNowLocalString());
+    // 回到问题输入区域
+    setTimeout(() => {
+      questionSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
   };
 
   const handleMethodChange = (newMethod: DivinationMethod) => {
@@ -1062,7 +1067,7 @@ export default function LiuYaoPage() {
           {/* 起卦表单区域：起卦完成后隐藏 */}
           <div className={hexagramDrawn ? 'hidden' : 'space-y-4'}>
           {/* ② 问题输入区 */}
-          <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-4 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
+          <div ref={questionSectionRef} className="rounded-2xl border border-[#1C1A16]/10 bg-white p-4 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
             <label htmlFor="liuyao-question" className="mb-2 block text-sm text-[#1C1A16]/75">你的问题</label>
             <div className="relative">
               <textarea
