@@ -291,13 +291,51 @@ export default function MeihuaPage() {
             body: JSON.stringify({ question: question.trim(), draw: finalDraw }),
           });
 
-          const decideData = (await decideRes.json()) as MeihuaDecisionResult;
-          if (!decideRes.ok) {
-            setError((decideData as { error?: string }).error || '已完成起卦，AI 决策建议暂不可用。');
+          if (!decideRes.ok || !decideRes.body) {
+            let errMsg = '已完成起卦，AI 决策建议暂不可用。';
+            try {
+              const data = await decideRes.json();
+              if (data?.error) errMsg = data.error;
+            } catch {}
+            setError(errMsg);
             return;
           }
 
-          setDecision(decideData);
+          const decideReader = decideRes.body.getReader();
+          const decideDecoder = new TextDecoder();
+          let decideBuf = '';
+          let decideMeta: MeihuaDecisionResult | null = null;
+          let decideNarrative = '';
+
+          while (true) {
+            const { done, value } = await decideReader.read();
+            if (done) break;
+            decideBuf += decideDecoder.decode(value, { stream: true });
+            const lines = decideBuf.split('\n');
+            decideBuf = lines.pop() || '';
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (!trimmed || !trimmed.startsWith('data:')) continue;
+              const payload = trimmed.slice(5).trim();
+              if (payload === '[DONE]') continue;
+              try {
+                const json = JSON.parse(payload);
+                if (json.meta && !decideMeta) {
+                  decideMeta = json.meta as MeihuaDecisionResult;
+                  setDecision({ ...decideMeta, overallAdvice: '' });
+                } else if (json.content) {
+                  decideNarrative += json.content;
+                  if (decideMeta) {
+                    setDecision({ ...decideMeta, overallAdvice: decideNarrative });
+                  }
+                }
+              } catch {}
+            }
+          }
+
+          if (decideMeta) {
+            setDecision({ ...decideMeta, overallAdvice: decideNarrative });
+          }
         } finally {
           setDecisionLoading(false);
         }
