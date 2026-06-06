@@ -565,7 +565,7 @@ export default function MeihuaPage() {
           </div>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             {AI_INSIGHT_ITEMS.map((item) => (
-              <div key={item.title} className="flex flex-col items-start rounded-2xl border border-[#1C1A16]/10 bg-white p-8 py-10 text-left shadow-none transition-shadow duration-300 hover:shadow-card-hover">
+              <div key={item.title} className="flex flex-col items-center rounded-2xl border border-[#1C1A16]/10 bg-white p-8 py-10 text-center shadow-none transition-shadow duration-300 hover:shadow-card-hover">
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#FAF9F6] text-3xl mb-6">
                   {item.icon}
                 </div>
