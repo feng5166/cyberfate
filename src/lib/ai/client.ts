@@ -75,7 +75,7 @@ async function callDeepSeek(systemPrompt: string, userPrompt: string, maxTokens 
       }
 
       const data = await response.json();
-      const content = data.choices?.[0]?.message?.content || '';
+      const content = data.choices?.[0]?.message?.content || data.choices?.[0]?.message?.reasoning_content || '';
       if (content.length < 10) {
         const reasoningContent = data.choices?.[0]?.message?.reasoning_content || '';
         if (reasoningContent && /\{[\s\S]*\}/.test(reasoningContent)) {
