@@ -1311,23 +1311,51 @@ export default function LiuYaoPage() {
 
         {/* ⑧ 特色功能介绍 */}
         <section className="mx-auto mt-10 max-w-4xl animate-fadeIn">
-          <h2 className="font-display text-xl tracking-[0.08em] text-[#1C1A16]">AI 六爻占卜应用场景</h2>
-          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="text-center mb-8">
+            <h2 className="font-display text-2xl tracking-[0.06em] text-[#1C1A16] mb-4">AI 六爻占卜分析</h2>
+            <p className="text-sm leading-relaxed text-[#1C1A16]/55 max-w-2xl mx-auto">
+              六爻占卜是中国传统易学的核心预测方法，源于古代蓍草占卜，后由汉代京房发展为铜钱起卦法，历经千年传承。我们融合现代 AI 技术对传统六爻卦象进行深度解析，结合纳甲体系、六神理论，为您提供更加精准、客观的占卜结果，助您在人生重要抉择中获得智慧指引。
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
             {[
-              { icon: '🎯', title: '事业决策', desc: '工作变动、项目前景、合作关系等事业相关问题的趋势分析。' },
-              { icon: '💕', title: '感情分析', desc: '感情走向、关系发展、婚姻状况等情感问题的深度解读。' },
-              { icon: '💰', title: '财运预测', desc: '投资时机、财务规划、收益趋势等财运相关的参考建议。' },
-              { icon: '🔮', title: '趋势预测', desc: '事物发展趋势、时机把握、吉凶判断等综合性预测分析。' },
+              {
+                icon: (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <circle cx="12" cy="12" r="9" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3" />
+                  </svg>
+                ),
+                title: '精准预测',
+                desc: '运用传统六爻占卜理论，结合世应、六亲、六神等要素，为您的重要决策提供准确的预测和指导',
+              },
+              {
+                icon: (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
+                  </svg>
+                ),
+                title: 'AI 智能分析',
+                desc: '融合现代人工智能技术与古典六爻理论，深度解析卦象变化，提供客观精准的占卜结果',
+              },
+              {
+                icon: (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+                  </svg>
+                ),
+                title: '时运分析',
+                desc: '基于六爻卦象的动静变化，分析事态发展趋势和最佳行动时机，助您把握人生机遇',
+              },
             ].map((item) => (
               <div
                 key={item.title}
-                className="flex items-start gap-3 rounded-xl border border-[#1C1A16]/8 bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover"
+                className="flex flex-col items-center text-center rounded-2xl bg-white p-8 shadow-sm"
               >
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#FAF9F6] text-base">{item.icon}</div>
-                <div>
-                  <h3 className="text-sm font-semibold text-[#1C1A16]">{item.title}</h3>
-                  <p className="mt-1 text-xs leading-relaxed text-[#1C1A16]/68">{item.desc}</p>
-                </div>
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#F5F5F5] text-[#666] mb-5">{item.icon}</div>
+                <h3 className="text-base font-bold text-[#1C1A16] mb-3">{item.title}</h3>
+                <p className="text-sm leading-relaxed text-[#1C1A16]/55">{item.desc}</p>
               </div>
             ))}
           </div>
