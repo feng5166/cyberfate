@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import { ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { OracleLoading } from '@/components/ui/OracleLoading';
+import { HEXAGRAM_JUDGMENTS, getLineTexts, getLineTitle } from '@/lib/liuyao/data';
 
 const Footer = dynamic(() => import('@/components/layout/Footer').then(m => m.Footer), { ssr: false });
 const AiDisclaimer = dynamic(() => import('@/components/ui/AiDisclaimer').then(m => m.AiDisclaimer), { ssr: false });
@@ -724,6 +725,9 @@ export default function LiuYaoPage() {
   const [resolvedMovingLines, setResolvedMovingLines] = useState<number[]>([]); // 铜钱多动爻
   const [hexagramReady, setHexagramReady] = useState(false);
 
+  const [hexagramDrawn, setHexagramDrawn] = useState(false);
+  const hexagramResultRef = useRef<HTMLDivElement>(null);
+
   const allLinesSelected = method === 'manual'
     ? lineSelections.every((v) => v !== null)
     : hexagramReady;
@@ -753,6 +757,88 @@ export default function LiuYaoPage() {
     if (!upperKey || !lowerKey) return null;
     return HEXAGRAM_MAP[upperKey]?.[lowerKey] || null;
   }, [upperTrigram, lowerTrigram]);
+
+  // 起卦后用于本地展示的卦象元数据（不依赖 AI）
+  const drawnHexagram = useMemo(() => {
+    if (!hexagramDrawn) return null;
+    const lines = lineSelections as (0 | 1)[];
+    if (lines.some((v) => v === null)) return null;
+
+    let upperKey: string;
+    let lowerKey: string;
+    if (method === 'manual') {
+      upperKey = Object.entries(TRIGRAMS_MAP).find(([, v]) => v === upperTrigram)?.[0] || '';
+      lowerKey = Object.entries(TRIGRAMS_MAP).find(([, v]) => v === lowerTrigram)?.[0] || '';
+    } else {
+      upperKey = resolvedUpperKey || '';
+      lowerKey = resolvedLowerKey || '';
+    }
+    if (!upperKey || !lowerKey) return null;
+
+    const upper = TRIGRAMS_MAP[upperKey];
+    const lower = TRIGRAMS_MAP[lowerKey];
+    const name = HEXAGRAM_MAP[upperKey]?.[lowerKey] || '未知卦';
+    const judgment = HEXAGRAM_JUDGMENTS[name] || '卦辞待补充。';
+    const lineTexts = getLineTexts(name, lines as number[]);
+
+    // 变卦：动爻翻转
+    const transformedLines = lines.map((v, i) =>
+      resolvedMovingLines.includes(i) ? ((v === 1 ? 0 : 1) as 0 | 1) : (v as 0 | 1)
+    );
+    const transUpperLines = transformedLines.slice(3, 6) as [0 | 1, 0 | 1, 0 | 1];
+    const transLowerLines = transformedLines.slice(0, 3) as [0 | 1, 0 | 1, 0 | 1];
+    const transUpperEntry = Object.entries(TRIGRAMS_MAP).find(
+      ([, t]) => t.lines[0] === transUpperLines[0] && t.lines[1] === transUpperLines[1] && t.lines[2] === transUpperLines[2]
+    );
+    const transLowerEntry = Object.entries(TRIGRAMS_MAP).find(
+      ([, t]) => t.lines[0] === transLowerLines[0] && t.lines[1] === transLowerLines[1] && t.lines[2] === transLowerLines[2]
+    );
+    const transUpperKey = transUpperEntry?.[0] || upperKey;
+    const transLowerKey = transLowerEntry?.[0] || lowerKey;
+    const transformedName = HEXAGRAM_MAP[transUpperKey]?.[transLowerKey] || name;
+
+    const lineDetails = lines.map((v, i) => ({
+      index: i,
+      type: (v === 1 ? 'yang' : 'yin') as 'yin' | 'yang',
+      title: getLineTitle(i, v === 1 ? 'yang' : 'yin'),
+      originalText: lineTexts[i],
+      isMoving: resolvedMovingLines.includes(i),
+    }));
+
+    return {
+      upperKey,
+      lowerKey,
+      upper,
+      lower,
+      name,
+      judgment,
+      lines,
+      transformedLines,
+      transformedName,
+      hasMoving: resolvedMovingLines.length > 0,
+      lineDetails,
+    };
+  }, [hexagramDrawn, lineSelections, method, upperTrigram, lowerTrigram, resolvedUpperKey, resolvedLowerKey, resolvedMovingLines]);
+
+  // 干支信息（基于占卜时间）
+  const ganzhiInfo = useMemo(() => {
+    try {
+      const d = new Date(divinationTime);
+      if (isNaN(d.getTime())) return null;
+      return {
+        timeStr: d.toLocaleString('zh-CN', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+        }),
+      };
+    } catch {
+      return null;
+    }
+  }, [divinationTime]);
 
   const setLine = useCallback((displayIndex: number, value: 0 | 1) => {
     const actualIndex = 5 - displayIndex;
@@ -798,7 +884,19 @@ export default function LiuYaoPage() {
     setHexagramReady(true);
   }, []);
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
+    if (!allLinesSelected) {
+      setError('请先完成起卦');
+      return;
+    }
+    setError('');
+    setHexagramDrawn(true);
+    setTimeout(() => {
+      hexagramResultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  };
+
+  const handleAIAnalysis = async () => {
     if (!allLinesSelected) {
       setError('请先完成起卦');
       return;
@@ -913,6 +1011,7 @@ export default function LiuYaoPage() {
     setResolvedMovingLine(null);
     setResolvedMovingLines([]);
     setHexagramReady(false);
+    setHexagramDrawn(false);
     setDivinationTime(getNowLocalString());
   };
 
@@ -924,6 +1023,7 @@ export default function LiuYaoPage() {
     setResolvedMovingLine(null);
     setResolvedMovingLines([]);
     setHexagramReady(false);
+    setHexagramDrawn(false);
     setError('');
     setResult(null);
   };
@@ -954,6 +1054,8 @@ export default function LiuYaoPage() {
         </section>
 
         <section className="mx-auto max-w-4xl space-y-4 animate-fadeIn">
+          {/* 起卦表单区域：起卦完成后隐藏 */}
+          <div className={hexagramDrawn ? 'hidden' : 'space-y-4'}>
           {/* ② 问题输入区 */}
           <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-4 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
             <label htmlFor="liuyao-question" className="mb-2 block text-sm text-[#1C1A16]/75">你的问题</label>
@@ -1125,50 +1227,168 @@ export default function LiuYaoPage() {
           )}
 
           {/* ⑤ 占卜时间 + ⑥ 解卦按钮 */}
-          {!result && (
-            <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-4 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
-              {method !== 'time' && (
-                <div className="mb-4">
-                  <label htmlFor="liuyao-divination-time" className="mb-1 block text-sm text-[#1C1A16]/75">占卜时间</label>
-                  <input
-                    id="liuyao-divination-time"
-                    type="datetime-local"
-                    value={divinationTime}
-                    onChange={(e) => setDivinationTime(e.target.value)}
-                    className="h-10 w-full rounded-xl border border-gray-300 px-3 text-sm text-[#1C1A16] outline-none focus:border-[#1C1A16]/30 focus:ring-2 focus:ring-[#1C1A16]/10 md:w-auto"
-                  />
-                  <p className="mt-1 text-xs text-[#1C1A16]/45">占卜时间会影响卦象的时效性参考</p>
+          <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-4 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
+            {method !== 'time' && (
+              <div className="mb-4">
+                <label htmlFor="liuyao-divination-time" className="mb-1 block text-sm text-[#1C1A16]/75">占卜时间</label>
+                <input
+                  id="liuyao-divination-time"
+                  type="datetime-local"
+                  value={divinationTime}
+                  onChange={(e) => setDivinationTime(e.target.value)}
+                  className="h-10 w-full rounded-xl border border-gray-300 px-3 text-sm text-[#1C1A16] outline-none focus:border-[#1C1A16]/30 focus:ring-2 focus:ring-[#1C1A16]/10 md:w-auto"
+                />
+                <p className="mt-1 text-xs text-[#1C1A16]/45">占卜时间会影响卦象的时效性参考</p>
+              </div>
+            )}
+
+            {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
+
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={!allLinesSelected}
+              className="flex h-[44px] w-full items-center justify-center rounded-xl bg-[#1C1A16] text-sm font-medium text-white transition-all hover:bg-[#2A2621] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              开始起卦 ✦
+            </button>
+            {!allLinesSelected && method === 'manual' && (
+              <p className="mt-2 text-center text-xs text-[#1C1A16]/45">请先选择全部 6 爻</p>
+            )}
+            {!allLinesSelected && method !== 'manual' && (
+              <p className="mt-2 text-center text-xs text-[#1C1A16]/45">请先完成起卦</p>
+            )}
+          </div>
+          </div>
+
+          {/* 起卦结果区域：仅显示卦象信息（不含 AI 分析） */}
+          {hexagramDrawn && !loading && !result && drawnHexagram && (
+            <div ref={hexagramResultRef} className="space-y-4 animate-fadeIn">
+              {/* 起卦元信息 */}
+              <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 transition-shadow duration-300 hover:shadow-card-hover">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-medium text-[#1C1A16]/60 mb-1">起卦时间</h3>
+                    {ganzhiInfo && <p className="text-sm text-[#1C1A16]">{ganzhiInfo.timeStr}</p>}
+                  </div>
+                  <span className="rounded-full bg-[#FAF9F6] px-3 py-1 text-xs text-[#1C1A16]/60">
+                    {METHOD_OPTIONS.find((m) => m.value === method)?.label}
+                  </span>
                 </div>
-              )}
+                {question.trim() && (
+                  <div className="mt-4 rounded-xl bg-[#FAF9F6] p-4">
+                    <p className="text-xs text-[#1C1A16]/50 mb-1">您的问题</p>
+                    <p className="text-sm leading-relaxed text-[#1C1A16]/85">{question.trim()}</p>
+                  </div>
+                )}
+              </div>
 
-              {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
+              {/* 卦象图示 */}
+              <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 transition-shadow duration-300 hover:shadow-card-hover">
+                <div className="flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="text-4xl leading-none">
+                      {drawnHexagram.upper.symbol}{drawnHexagram.lower.symbol}
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-semibold text-[#1C1A16]">{drawnHexagram.name}</h2>
+                      <p className="mt-0.5 text-sm text-[#1C1A16]/60">
+                        上{drawnHexagram.upper.name}（{drawnHexagram.upper.nature}）·
+                        下{drawnHexagram.lower.name}（{drawnHexagram.lower.nature}）
+                      </p>
+                    </div>
+                  </div>
+                </div>
 
+                <div className="mt-5 flex flex-col items-center gap-8 md:flex-row md:justify-center">
+                  <div className="text-center">
+                    <p className="mb-2 text-xs text-[#1C1A16]/50">本卦</p>
+                    <HexagramFigure
+                      lines={drawnHexagram.lines as (0 | 1)[]}
+                      size="large"
+                      movingLineIdx={resolvedMovingLines.length === 1 ? resolvedMovingLines[0] : undefined}
+                    />
+                    <p className="mt-2 text-sm font-medium text-[#1C1A16]">{drawnHexagram.name}</p>
+                  </div>
+                  {drawnHexagram.hasMoving && drawnHexagram.transformedName !== drawnHexagram.name && (
+                    <div className="text-center">
+                      <p className="mb-2 text-xs text-[#1C1A16]/50">变卦</p>
+                      <HexagramFigure lines={drawnHexagram.transformedLines as (0 | 1)[]} size="large" />
+                      <p className="mt-2 text-sm font-medium text-[#1C1A16]">{drawnHexagram.transformedName}</p>
+                    </div>
+                  )}
+                </div>
+
+                {drawnHexagram.hasMoving && (
+                  <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+                    <span className="text-xs text-[#1C1A16]/50">变爻位置：</span>
+                    {resolvedMovingLines.map((idx) => (
+                      <span
+                        key={idx}
+                        className="rounded-full bg-orange-100 px-2.5 py-0.5 text-[11px] font-medium text-orange-700"
+                      >
+                        第{idx + 1}爻
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <p className="mt-5 text-sm leading-relaxed text-[#1C1A16]/70">
+                  <span className="font-medium text-[#1C1A16]">卦辞：</span>{drawnHexagram.judgment}
+                </p>
+              </div>
+
+              {/* 爻辞列表 */}
+              <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 transition-shadow duration-300 hover:shadow-card-hover">
+                <h3 className="text-base font-semibold text-[#1C1A16] mb-4">爻辞</h3>
+                <div className="space-y-0">
+                  {[...drawnHexagram.lineDetails].reverse().map((line, displayIdx) => (
+                    <div
+                      key={line.index}
+                      className={`p-4 ${displayIdx % 2 === 0 ? 'bg-gray-50' : 'bg-white'} ${displayIdx === 0 ? 'rounded-t-xl' : ''} ${displayIdx === drawnHexagram.lineDetails.length - 1 ? 'rounded-b-xl' : ''}`}
+                    >
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="text-sm font-semibold text-[#1C1A16]">
+                          {line.title}（第{line.index + 1}爻）
+                        </span>
+                        {line.isMoving && (
+                          <span className="rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-medium text-orange-700">动爻</span>
+                        )}
+                      </div>
+                      <div className="mb-2">
+                        <YaoLine type={line.type} height={8} width="120px" isMoving={line.isMoving} />
+                      </div>
+                      <p className="text-sm italic leading-relaxed text-[#1C1A16]/70">
+                        {line.originalText}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 分析卦象按钮 */}
               <button
                 type="button"
-                onClick={handleSubmit}
-                disabled={loading || streaming || !allLinesSelected}
-                className="flex h-[44px] w-full items-center justify-center rounded-xl bg-[#1C1A16] text-sm font-medium text-white transition-all hover:bg-[#2A2621] disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={handleAIAnalysis}
+                disabled={loading || streaming}
+                className="flex h-[52px] w-full items-center justify-center rounded-xl bg-[#1C1A16] text-sm font-semibold text-white transition-all hover:bg-[#2A2621] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loading || streaming ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    正在解卦...
+                    正在分析卦象...
                   </>
                 ) : (
-                  '开始起卦 ✦'
+                  '分析卦象含义 ✦'
                 )}
               </button>
-              {!allLinesSelected && method === 'manual' && (
-                <p className="mt-2 text-center text-xs text-[#1C1A16]/45">请先选择全部 6 爻</p>
-              )}
-              {!allLinesSelected && method !== 'manual' && (
-                <p className="mt-2 text-center text-xs text-[#1C1A16]/45">请先完成起卦</p>
-              )}
-              {loading && !result && (
-                <div className="mt-4 flex justify-center">
-                  <OracleLoading />
-                </div>
-              )}
+            </div>
+          )}
+
+          {/* AI 分析中 loading 占位 */}
+          {hexagramDrawn && loading && !result && (
+            <div className="mt-4 flex justify-center">
+              <OracleLoading />
             </div>
           )}
 
