@@ -6,7 +6,7 @@ import { OracleLoading } from '@/components/ui/OracleLoading';
 import { Share2, X } from 'lucide-react';
 import Image from 'next/image';
 import { useSession } from 'next-auth/react';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 const CardDrawAnimation = dynamic(() => import('@/components/tarot/CardDrawAnimation').then(m => m.CardDrawAnimation), {
   ssr: false,
@@ -125,6 +125,16 @@ interface TarotDrawResult {
 export default function TarotPage() {
   const { data: session, status: authStatus } = useSession();
   const [step, setStep] = useState<Step>('question');
+  const loadingRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (step === 'loading' && loadingRef.current) {
+      // 短暂延迟等牌面渲染完成后再滚动
+      setTimeout(() => {
+        loadingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 150);
+    }
+  }, [step]);
   const [mode, setMode] = useState<ModeId>('classic');
   const [question, setQuestion] = useState('');
   const [activePrompt, setActivePrompt] = useState<string | null>(null);
@@ -576,7 +586,7 @@ export default function TarotPage() {
                   </div>
                 </div>
               )}
-              <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 text-center">
+              <div ref={loadingRef} className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 text-center">
                 <div className="flex justify-center">
                   <OracleLoading />
                 </div>
