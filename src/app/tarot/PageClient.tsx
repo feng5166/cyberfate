@@ -616,7 +616,7 @@ export default function TarotPage() {
                   </div>
                 </div>
               )}
-              <div ref={loadingRef} className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 text-center">
+              <div ref={loadingRef} className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 text-center min-h-[400px] flex flex-col items-center justify-center">
                 <div className="flex justify-center">
                   <OracleLoading />
                 </div>
