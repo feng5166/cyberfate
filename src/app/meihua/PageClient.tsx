@@ -565,7 +565,7 @@ export default function MeihuaPage() {
           </div>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             {AI_INSIGHT_ITEMS.map((item) => (
-              <div key={item.title} className="flex flex-col items-center rounded-2xl border border-[#1C1A16]/10 bg-white p-8 py-10 text-center shadow-none transition-shadow duration-300 hover:shadow-card-hover">
+              <div key={item.title} className="flex flex-col items-start rounded-2xl border border-[#1C1A16]/10 bg-white p-8 py-10 text-left shadow-none transition-shadow duration-300 hover:shadow-card-hover">
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#FAF9F6] text-3xl mb-6">
                   {item.icon}
                 </div>
@@ -580,8 +580,8 @@ export default function MeihuaPage() {
           <h2 className="font-display text-2xl tracking-[0.08em] text-[#1C1A16] text-center">特色功能</h2>
           <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
             {FEATURE_ITEMS.map((item) => (
-              <div key={item.title} className="flex items-start gap-3 rounded-xl bg-white p-6 shadow-none transition-shadow duration-300 hover:shadow-card-hover">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#FAF9F6] text-xl">
+              <div key={item.title} className="flex items-start gap-4 p-4">
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-[#FAF9F6] text-xl">
                   {item.icon}
                 </div>
                 <div>
