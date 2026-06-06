@@ -18,10 +18,12 @@ const CardDrawAnimation = dynamic(() => import('@/components/tarot/CardDrawAnima
 });
 
 const SAMPLE_PROMPTS = [
-  '我的感情走向如何?',
-  '这份工作值得去吗?',
-  '他/她是怎么想的?',
-  '我该如何做这个决定?',
+  '创业还是留在大公司更适合我？',
+  '对方不喜欢我，我该如何让自己放下？',
+  '为何我在社交场合难以做真实的自己？',
+  '这段感情还值得继续吗？',
+  '我现在的职业方向对吗？',
+  '如何走出当前的低谷期？',
 ];
 
 type TarotSpread = 'three' | 'celtic' | 'moonlight' | 'mirror' | 'relationship';
@@ -482,28 +484,14 @@ export default function TarotPage() {
 
         <section className="mx-auto max-w-5xl space-y-4 animate-fadeIn">
           {step !== 'loading' && step !== 'drawing' && (
-            <div ref={questionRef} className="rounded-2xl border border-[#1C1A16]/10 bg-white p-3 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
-              <label className="mb-2 block text-sm text-[#1C1A16]/75">你的问题</label>
-              <div className="relative">
-                <textarea
-                  value={question}
-                  onChange={(e) => {
-                    setQuestion(e.target.value.slice(0, 200));
-                    setActivePrompt(null);
-                  }}
-                  placeholder="请输入一个你想通过塔罗牌探索的问题或主题..."
-                  maxLength={200}
-                  className="min-h-[100px] max-h-[200px] w-full resize-y rounded-xl border border-gray-300 p-4 pb-7 text-sm text-[#1C1A16] outline-none transition-all placeholder:text-[#1C1A16]/35 focus:border-[#1C1A16]/30 focus:ring-2 focus:ring-[#1C1A16]/10"
-                />
-                <span className="pointer-events-none absolute right-3 bottom-2 text-xs text-[#1C1A16]/45">
-                  {question.length}/200
-                </span>
-              </div>
+            <div ref={questionRef} className="rounded-2xl border border-[#1C1A16]/10 bg-white p-5 transition-shadow duration-300 hover:shadow-card-hover md:p-8">
+              <h2 className="text-lg font-bold text-[#1C1A16] mb-1">提出您的问题</h2>
+              <p className="text-sm text-[#1C1A16]/50 mb-4">请输入一个明确的问题，AI 将为您抽取塔罗牌并提供专业解读</p>
 
-              <div className="mt-4 flex flex-wrap gap-2">
-                {SAMPLE_PROMPTS.map((item) => {
-                  const isActive = activePrompt === item;
-                  return (
+              {/* 横向滚动示例问题 */}
+              <div className="relative mb-4">
+                <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide pr-8" style={{scrollbarWidth: 'none', msOverflowStyle: 'none'}}>
+                  {SAMPLE_PROMPTS.map((item) => (
                     <button
                       key={item}
                       type="button"
@@ -511,28 +499,44 @@ export default function TarotPage() {
                         setActivePrompt(item);
                         setQuestion(item);
                       }}
-                      className={`cursor-pointer rounded-full px-3 py-1 text-xs transition-colors ${
-                        isActive
-                          ? 'bg-[#1C1A16] text-white border border-[#1C1A16]'
-                          : 'bg-gray-50 text-[#1C1A16]/70 border border-transparent hover:bg-gray-100'
-                      }`}
+                      className="flex-shrink-0 cursor-pointer rounded-full border border-[#1C1A16]/15 px-3 py-1.5 text-xs text-[#1C1A16]/65 transition-colors hover:border-[#1C1A16]/40 hover:text-[#1C1A16] whitespace-nowrap"
                     >
                       {item}
                     </button>
-                  );
-                })}
+                  ))}
+                </div>
+                <div className="pointer-events-none absolute right-0 top-0 bottom-1 w-10 bg-gradient-to-l from-white to-transparent flex items-center justify-end pr-1">
+                  <span className="text-[#1C1A16]/35 text-xs">›</span>
+                </div>
               </div>
 
-              {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+              {/* 单行输入框 */}
+              <input
+                type="text"
+                value={question}
+                onChange={(e) => {
+                  setQuestion(e.target.value.slice(0, 200));
+                  setActivePrompt(null);
+                }}
+                placeholder="输入您的问题..."
+                maxLength={200}
+                className="w-full rounded-xl border border-[#1C1A16]/15 px-4 py-3 text-sm text-[#1C1A16] outline-none transition-all placeholder:text-[#1C1A16]/30 focus:border-[#1C1A16]/40 focus:ring-2 focus:ring-[#1C1A16]/8"
+              />
+
+              {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 
               {step !== 'drawn' && (
                 <button
                   type="button"
                   onClick={handleDrawCards}
                   disabled={loading}
-                  className="mt-5 h-[44px] w-full rounded-xl bg-[#1C1A16] text-sm font-medium text-white transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="mt-4 h-[52px] w-full rounded-xl bg-[#1C1A16] text-[15px] font-semibold text-white transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 flex items-center justify-center gap-2"
                 >
-                  {step === 'result' ? '🔄 重新抽牌' : '🎴 抽取塔罗牌'}
+                  {step === 'result' ? (
+                    <>重新抽牌</>
+                  ) : (
+                    <>抽取塔罗牌 <span className="opacity-70">☄️</span></>
+                  )}
                 </button>
               )}
             </div>
