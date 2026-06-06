@@ -30,6 +30,7 @@ const TIMEOUT_CONFIG: Record<string, number> = {
   tarot: 110000,
   huangli: 10000,
   huangli_ask: 10000,
+  liuyao: 55000,
   default: 15000,
 };
 
@@ -649,7 +650,7 @@ export async function generateLiuYaoReading(
 
   try {
     const prompt = buildLiuYaoPrompt(input);
-    const text = await callDeepSeek(LIUYAO_SYSTEM_PROMPT, prompt, 3500);
+    const text = await callDeepSeek(LIUYAO_SYSTEM_PROMPT, prompt, 2400, 'liuyao');
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       return { ...fallback, _source: 'fallback' };
