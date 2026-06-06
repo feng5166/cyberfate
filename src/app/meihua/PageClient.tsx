@@ -569,7 +569,7 @@ export default function MeihuaPage() {
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#FAF9F6] text-3xl mb-6">
                   {item.icon}
                 </div>
-                <h3 className="font-display text-lg font-semibold text-[#1C1A16] mb-3">{item.title}</h3>
+                <h3 className="text-lg font-bold text-[#1C1A16] mb-3">{item.title}</h3>
                 <p className="text-sm leading-relaxed text-[#1C1A16]/65">{item.desc}</p>
               </div>
             ))}
@@ -585,7 +585,7 @@ export default function MeihuaPage() {
                   {item.icon}
                 </div>
                 <div>
-                  <h3 className="font-display text-base font-semibold text-[#1C1A16]">{item.title}</h3>
+                  <h3 className="text-base font-bold text-[#1C1A16]">{item.title}</h3>
                   <p className="mt-1 text-sm leading-relaxed text-[#1C1A16]/70">{item.desc}</p>
                 </div>
               </div>
