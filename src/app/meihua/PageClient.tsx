@@ -577,7 +577,7 @@ export default function MeihuaPage() {
         </section>
 
         <section className="mx-auto mt-8 max-w-4xl animate-fadeIn">
-          <h2 className="font-display text-xl tracking-[0.08em] text-[#1C1A16]">特色功能</h2>
+          <h2 className="font-display text-xl tracking-[0.08em] text-[#1C1A16] text-center">特色功能</h2>
           <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
             {FEATURE_ITEMS.map((item) => (
               <div key={item.title} className="flex items-start gap-3 rounded-xl bg-white p-4 shadow-none transition-shadow duration-300 hover:shadow-card-hover">
@@ -600,7 +600,7 @@ export default function MeihuaPage() {
               <div key={item.question} className="rounded-2xl border border-[#1C1A16]/10 bg-white px-5 py-4">
                 <p className="flex items-start gap-2 text-sm font-semibold text-[#1C1A16]">
                   <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border border-[#1C1A16]/30 text-xs text-[#1C1A16]/60">?</span>
-                  {item.question}？
+                  {item.question}
                 </p>
                 <p className="mt-3 text-sm leading-relaxed text-[#1C1A16]/70">{item.answer}</p>
               </div>
