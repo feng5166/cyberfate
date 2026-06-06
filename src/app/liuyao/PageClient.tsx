@@ -680,7 +680,7 @@ function NumberPanel({ onComplete }: { onComplete: (lines: (0 | 1)[], movingLine
           onClick={handleConfirm}
           className="flex h-[44px] w-full items-center justify-center rounded-xl bg-[#1C1A16] text-sm font-medium text-white transition-all hover:bg-[#2A2621]"
         >
-          🔮 确认起卦
+          确认起卦
         </button>
       )}
 
@@ -691,7 +691,7 @@ function NumberPanel({ onComplete }: { onComplete: (lines: (0 | 1)[], movingLine
             disabled
             className="flex h-[44px] w-full items-center justify-center rounded-xl bg-[#1C1A16] text-sm font-medium text-white opacity-60 cursor-not-allowed"
           >
-            🔮 确认起卦
+            确认起卦
           </button>
           <p className="mt-2 text-center text-xs text-[#1C1A16]/45">请完成起卦参数</p>
         </div>
@@ -1155,7 +1155,7 @@ export default function LiuYaoPage() {
                     正在解卦...
                   </>
                 ) : (
-                  '开始解卦 🔮'
+                  '开始解卦 ✦'
                 )}
               </button>
               {!allLinesSelected && method === 'manual' && (

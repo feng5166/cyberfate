@@ -39,7 +39,7 @@ export function CardDrawAnimation({ cardCount, onComplete }: CardDrawAnimationPr
     <div className="space-y-6">
       {shuffling && (
         <div className="text-center py-8">
-          <div className="inline-block animate-spin text-4xl mb-4">🔮</div>
+          <div className="inline-block animate-spin text-4xl mb-4">✦</div>
           <p className="text-primary">正在洗牌...</p>
         </div>
       )}

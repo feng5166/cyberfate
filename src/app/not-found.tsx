@@ -4,7 +4,7 @@ export default function NotFound() {
   return (
     <div className="flex items-center justify-center min-h-[60vh]">
       <div className="text-center p-8 rounded-2xl bg-white border border-gray-200 shadow-sm max-w-md">
-        <div className="text-5xl mb-4">🔮</div>
+        <div className="text-5xl mb-4">✦</div>
         <h2 className="text-xl font-semibold text-gray-900 mb-2">页面未找到</h2>
         <p className="text-gray-500 text-sm mb-6">
           您访问的页面不存在，可能已被移除或链接有误。
