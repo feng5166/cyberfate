@@ -2,16 +2,13 @@
 
 import dynamic from 'next/dynamic';
 import {
-  Brain,
   ChevronDown,
   ChevronUp,
   Clock,
-  Clock3,
   Info,
   Loader2,
-  Sparkles,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { OracleLoading } from '@/components/ui/OracleLoading';
 
 const Footer = dynamic(() => import('@/components/layout/Footer').then(m => m.Footer), { ssr: false });
@@ -23,6 +20,7 @@ interface GuaMeta {
   name: string;
   symbol: string;
   meaning: string;
+  lines: [number, number, number];
 }
 
 interface GuaPair {
@@ -145,26 +143,33 @@ function firstSentence(text: string): string {
   return sentence ? `${sentence}。` : normalized;
 }
 
-function stanceMeta(stance: MeihuaDecisionResult['stance']) {
-  if (stance === 'go') {
-    return {
-      label: '倾向去做',
-      className: 'bg-green-100 text-green-700',
-      keywordClass: 'text-green-700',
-    };
-  }
-  if (stance === 'stop') {
-    return {
-      label: '倾向不做',
-      className: 'bg-red-100 text-red-700',
-      keywordClass: 'text-red-700',
-    };
-  }
-  return {
-    label: '建议观望',
-    className: 'bg-amber-100 text-amber-700',
-    keywordClass: 'text-amber-700',
-  };
+function HexagramDiagram({ upper, lower, movingLine }: {
+  upper: { lines: [number, number, number] };
+  lower: { lines: [number, number, number] };
+  movingLine?: number;
+}) {
+  const allLines = [...lower.lines, ...upper.lines];
+  return (
+    <div className="flex flex-col-reverse gap-2 w-28">
+      {allLines.map((yao, i) => {
+        const isMoving = movingLine !== undefined && (i + 1) === movingLine;
+        const isYin = yao === 0;
+        return (
+          <div key={i} className={`flex items-center gap-1.5 ${isMoving ? 'opacity-60' : ''}`}>
+            {isYin ? (
+              <>
+                <div className={`h-3 flex-1 rounded-sm ${isMoving ? 'bg-amber-400' : 'bg-[#1C1A16]'}`} />
+                <div className="h-3 w-3 flex-shrink-0" />
+                <div className={`h-3 flex-1 rounded-sm ${isMoving ? 'bg-amber-400' : 'bg-[#1C1A16]'}`} />
+              </>
+            ) : (
+              <div className={`h-3 w-full rounded-sm ${isMoving ? 'bg-amber-400' : 'bg-[#1C1A16]'}`} />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 export default function MeihuaPage() {
@@ -180,11 +185,6 @@ export default function MeihuaPage() {
   const [expandedFaqIndex, setExpandedFaqIndex] = useState<number | null>(0);
 
   const isQuestionMode = Boolean(question.trim());
-
-  const decisionMeta = useMemo(
-    () => (decision ? stanceMeta(decision.stance) : null),
-    [decision]
-  );
 
   const handleSubmit = async () => {
     setError('');
@@ -348,6 +348,55 @@ export default function MeihuaPage() {
     }
   };
 
+  const triggerDecide = async () => {
+    if (!result || !isQuestionMode) return;
+    setDecisionLoading(true);
+    try {
+      const decideRes = await fetch('/api/meihua/decide', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: question.trim(), draw: result }),
+      });
+      if (!decideRes.ok || !decideRes.body) {
+        let errMsg = '已完成起卦，AI 决策建议暂不可用。';
+        try { const d = await decideRes.json(); if (d?.error) errMsg = d.error; } catch {}
+        setError(errMsg);
+        return;
+      }
+      const decideReader = decideRes.body.getReader();
+      const decideDecoder = new TextDecoder();
+      let decideBuf = '';
+      let decideMeta: MeihuaDecisionResult | null = null;
+      let decideNarrative = '';
+      while (true) {
+        const { done, value } = await decideReader.read();
+        if (done) break;
+        decideBuf += decideDecoder.decode(value, { stream: true });
+        const lines = decideBuf.split('\n');
+        decideBuf = lines.pop() || '';
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || !trimmed.startsWith('data:')) continue;
+          const payload = trimmed.slice(5).trim();
+          if (payload === '[DONE]') continue;
+          try {
+            const json = JSON.parse(payload);
+            if (json.meta && !decideMeta) {
+              decideMeta = json.meta as MeihuaDecisionResult;
+              setDecision({ ...decideMeta, overallAdvice: '' });
+            } else if (json.content) {
+              decideNarrative += json.content;
+              if (decideMeta) setDecision({ ...decideMeta, overallAdvice: decideNarrative });
+            }
+          } catch {}
+        }
+      }
+      if (decideMeta) setDecision({ ...decideMeta, overallAdvice: decideNarrative });
+    } finally {
+      setDecisionLoading(false);
+    }
+  };
+
   return (
     <div className="relative min-h-screen bg-[#FAF9F6] text-[#1C1A16]">
       <div
@@ -468,131 +517,150 @@ export default function MeihuaPage() {
         </section>
 
         {result && (
-          <section className="mx-auto mt-8 max-w-4xl space-y-4 animate-fadeIn">
-            <div className="rounded-2xl bg-white p-6 shadow-none transition-shadow duration-300 hover:shadow-card-hover">
-              <h3 className="text-sm font-medium text-[#1C1A16]/70">卦象信息</h3>
-
-              <div className="mt-3 flex flex-col items-start gap-2 text-[#1C1A16] md:flex-row md:items-center">
-                <div className="text-xl font-semibold">
-                  {result.primary?.guaSymbol || result.gua.replace('\n', '')} {result.primary?.guaName || result.guaName}
+          <section className="mx-auto mt-8 max-w-4xl animate-fadeIn">
+            <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 shadow-none">
+              <div className="flex items-start justify-between mb-1">
+                <div>
+                  <h3 className="text-lg font-bold text-[#1C1A16]">卦象分析结果</h3>
+                  <p className="text-xs text-[#1C1A16]/45 mt-0.5">
+                    {new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    &nbsp;·&nbsp;
+                    {METHOD_OPTIONS.find(m => m.value === method)?.label ?? '时间起卦'}
+                  </p>
                 </div>
-                <span className="text-[#1C1A16]/40">→</span>
-                <div className="text-xl font-semibold text-[#1C1A16]/85">
-                  {result.changed?.guaSymbol || (result.changedGua || result.gua).replace('\n', '')}{' '}
-                  {result.changed?.guaName || result.changedGuaName || result.guaName}
-                </div>
+                <button
+                  onClick={() => { setResult(null); setDecision(null); setError(''); }}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-200 text-red-400 hover:bg-red-50 transition-colors"
+                  title="清除结果"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                </button>
               </div>
 
-              <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-[#1C1A16]/70">
-                <span>
-                  上卦：{result.primary?.upper.symbol || ''}
-                  {result.primary?.upper.name || result.upper || '未知'}
-                  {result.primary?.upper.meaning ? `（${result.primary?.upper.meaning}）` : ''}
-                </span>
-                <span>
-                  下卦：{result.primary?.lower.symbol || ''}
-                  {result.primary?.lower.name || result.lower || '未知'}
-                  {result.primary?.lower.meaning ? `（${result.primary?.lower.meaning}）` : ''}
-                </span>
-                <span>动爻：第{result.movingLine ?? 0}爻</span>
-              </div>
-
-              {result.analysis && (
-                <p className="mt-4 text-sm leading-relaxed text-[#1C1A16]/75">
-                  卦辞：{result.guaCi || firstSentence(result.analysis)}
-                </p>
+              {question.trim() && (
+                <div className="mt-4 rounded-xl bg-[#F5F5F3] px-4 py-3">
+                  <p className="text-xs font-medium text-[#1C1A16]/50 mb-1">您的问题：</p>
+                  <p className="text-sm text-[#1C1A16]">{question.trim()}</p>
+                </div>
               )}
-            </div>
 
-            {decisionLoading && !decision && (
-              <div className="rounded-2xl bg-white p-6 shadow-none">
-                <OracleLoading />
+              <div className="mt-6 grid grid-cols-2 gap-4">
+                <div className="flex flex-col items-center gap-3">
+                  <span className="rounded-full bg-[#1C1A16] px-3 py-0.5 text-xs font-medium text-white">本卦</span>
+                  {result.primary ? (
+                    <HexagramDiagram
+                      upper={result.primary.upper}
+                      lower={result.primary.lower}
+                      movingLine={result.movingLine}
+                    />
+                  ) : (
+                    <div className="text-2xl">{(result.gua || '').replace('\n','')}</div>
+                  )}
+                  <p className="text-sm font-semibold text-[#1C1A16]">{result.primary?.guaName || result.guaName || ''}</p>
+                </div>
+                <div className="flex flex-col items-center gap-3">
+                  <span className="rounded-full bg-[#1C1A16]/20 px-3 py-0.5 text-xs font-medium text-[#1C1A16]/70">变卦</span>
+                  {result.changed ? (
+                    <HexagramDiagram
+                      upper={result.changed.upper}
+                      lower={result.changed.lower}
+                    />
+                  ) : (
+                    <div className="text-2xl">{((result.changedGua || result.gua) || '').replace('\n','')}</div>
+                  )}
+                  <p className="text-sm font-semibold text-[#1C1A16]/70">{result.changed?.guaName || result.changedGuaName || result.guaName || ''}</p>
+                </div>
               </div>
-            )}
+
+              {result.movingLine !== undefined && (
+                <div className="mt-5 rounded-xl border border-[#1C1A16]/8 bg-[#FAFAF8] px-4 py-3">
+                  <p className="text-xs font-medium text-[#1C1A16]/50 mb-2">● 变爻位置</p>
+                  <span className="inline-flex items-center gap-1.5 rounded-lg bg-white border border-[#1C1A16]/10 px-3 py-1.5 text-sm text-[#1C1A16]">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#1C1A16] text-xs text-white font-bold">{result.movingLine}</span>
+                    发生变化
+                  </span>
+                </div>
+              )}
+
+              <div className="mt-6">
+                {decisionLoading && !decision ? (
+                  <div className="flex justify-center py-4">
+                    <OracleLoading />
+                  </div>
+                ) : !decision && isQuestionMode ? (
+                  <button
+                    onClick={triggerDecide}
+                    className="w-full rounded-xl bg-[#1C1A16] py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#1C1A16]/85"
+                  >
+                    分析卦象含义
+                  </button>
+                ) : null}
+              </div>
+            </div>
 
             {decision && (
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                <div className="rounded-xl bg-white p-5 shadow-none transition-shadow duration-300 hover:shadow-card-hover">
-                  <Brain className="h-6 w-6 text-[#3B82F6]" />
-                  <h4 className="mt-3 text-base font-semibold text-[#1C1A16]">思考参考</h4>
-                  <p className="mt-2 text-xs leading-relaxed text-[#1C1A16]/70">
-                    {decision.insights.thinkingReference}
-                  </p>
-                </div>
-                <div className="rounded-xl bg-white p-5 shadow-none transition-shadow duration-300 hover:shadow-card-hover">
-                  <Sparkles className="h-6 w-6 text-[#8B5CF6]" />
-                  <h4 className="mt-3 text-base font-semibold text-[#1C1A16]">卦象分析</h4>
-                  <p className="mt-2 text-xs leading-relaxed text-[#1C1A16]/70">
-                    {decision.insights.guaAnalysis}
-                  </p>
-                </div>
-                <div className="rounded-xl bg-white p-5 shadow-none transition-shadow duration-300 hover:shadow-card-hover">
-                  <Clock3 className="h-6 w-6 text-[#22C55E]" />
-                  <h4 className="mt-3 text-base font-semibold text-[#1C1A16]">时机参考</h4>
-                  <p className="mt-2 text-xs leading-relaxed text-[#1C1A16]/70">
-                    {decision.insights.timingReference}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {isQuestionMode && decision && decisionMeta && (
-              <div className="rounded-2xl bg-white p-6 shadow-none transition-shadow duration-300 hover:shadow-card-hover">
-                <h3 className="text-base font-semibold text-[#1C1A16]">决策建议</h3>
-
-                <p className="mt-3 text-sm leading-relaxed text-[#1C1A16]/85">
-                  综合建议：
-                  <span className={`mx-1 inline-flex rounded-full px-2.5 py-0.5 text-xs ${decisionMeta.className}`}>
-                    {decisionMeta.label}
-                  </span>
-                  <span className={decisionMeta.keywordClass}>{decision.overallAdvice}</span>
-                </p>
-
-                <div className="mt-4">
-                  <h4 className="text-sm font-medium text-green-700">✓ 有利因素</h4>
-                  <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm leading-relaxed text-green-700">
-                    {decision.favorable.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ol>
+              <>
+                <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+                  {[
+                    { icon: '🧠', title: '思考参考', content: decision.insights?.thinkingReference },
+                    { icon: '✦', title: '卦象分析', content: decision.insights?.guaAnalysis },
+                    { icon: '⏰', title: '时机参考', content: decision.insights?.timingReference },
+                  ].filter(item => item.content).map(item => (
+                    <div key={item.title} className="rounded-xl bg-white border border-[#1C1A16]/8 p-5">
+                      <span className="text-xl">{item.icon}</span>
+                      <h4 className="mt-3 text-sm font-bold text-[#1C1A16]">{item.title}</h4>
+                      <p className="mt-2 text-xs leading-relaxed text-[#1C1A16]/70">{item.content}</p>
+                    </div>
+                  ))}
                 </div>
 
-                <div className="mt-4">
-                  <h4 className="text-sm font-medium text-amber-700">⚠ 需要注意</h4>
-                  <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm leading-relaxed text-amber-700">
-                    {decision.cautions.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ol>
-                </div>
-
-                <div className="mt-4">
-                  <h4 className="text-sm font-medium text-blue-700">💡 下一步行动</h4>
-                  <div className="mt-2 space-y-2 text-sm leading-relaxed text-blue-700">
-                    {decision.nextSteps.map((item) => (
-                      <p key={item}>{item}</p>
-                    ))}
+                {isQuestionMode && decision.overallAdvice && (
+                  <div className="mt-4 rounded-2xl bg-white border border-[#1C1A16]/8 p-6">
+                    <h3 className="text-base font-bold text-[#1C1A16]">决策建议</h3>
+                    <p className="mt-3 text-sm leading-relaxed text-[#1C1A16]/85 whitespace-pre-wrap">{decision.overallAdvice}</p>
+                    {decision.favorable && decision.favorable.length > 0 && (
+                      <div className="mt-4">
+                        <h4 className="text-sm font-medium text-green-700">✓ 有利因素</h4>
+                        <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm leading-relaxed text-green-700">
+                          {decision.favorable.map((item: string, i: number) => <li key={i}>{item}</li>)}
+                        </ol>
+                      </div>
+                    )}
+                    {decision.cautions && decision.cautions.length > 0 && (
+                      <div className="mt-4">
+                        <h4 className="text-sm font-medium text-amber-700">⚠ 需要注意</h4>
+                        <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm leading-relaxed text-amber-700">
+                          {decision.cautions.map((item: string, i: number) => <li key={i}>{item}</li>)}
+                        </ol>
+                      </div>
+                    )}
+                    {decision.nextSteps && decision.nextSteps.length > 0 && (
+                      <div className="mt-4">
+                        <h4 className="text-sm font-medium text-blue-700">💡 下一步行动</h4>
+                        <div className="mt-2 space-y-2 text-sm leading-relaxed text-blue-700">
+                          {decision.nextSteps.map((item: string, i: number) => <p key={i}>{item}</p>)}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-              </div>
-            )}
+                )}
 
-            <div className="rounded-2xl bg-white p-6 shadow-none transition-shadow duration-300 hover:shadow-card-hover">
-              <h3 className="text-base font-semibold text-[#1C1A16]">
-                {isQuestionMode ? '基础卦象解读' : '卦象解读'}
-              </h3>
-              <p className="mt-1 text-xs text-[#1C1A16]/45 mb-3">AI 综合分析 · 仅供参考</p>
-              {streaming && !result.analysis ? (
-                <OracleLoading />
-              ) : (
-                <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-[#1C1A16]/75">
-                  {result.analysis}
-                  {streaming && result.analysis && (
-                    <span className="inline-block w-1.5 h-4 ml-0.5 bg-[#1C1A16]/40 align-middle animate-pulse" />
+                <div className="mt-4 rounded-2xl bg-white border border-[#1C1A16]/8 p-6">
+                  <h3 className="text-base font-bold text-[#1C1A16]">{isQuestionMode ? '基础卦象解读' : '卦象解读'}</h3>
+                  <p className="mt-1 text-xs text-[#1C1A16]/45 mb-3">AI 综合分析 · 仅供参考</p>
+                  {streaming && !result.analysis ? (
+                    <OracleLoading />
+                  ) : (
+                    <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-[#1C1A16]/75">
+                      {result.analysis}
+                      {streaming && result.analysis && (
+                        <span className="inline-block w-1.5 h-4 ml-0.5 bg-[#1C1A16]/40 align-middle animate-pulse" />
+                      )}
+                    </p>
                   )}
-                </p>
-              )}
-            </div>
+                </div>
+              </>
+            )}
           </section>
         )}
 
