@@ -360,14 +360,14 @@ function getTarotTextLimits(spread: TarotSpread): ReadingLimits {
   if (spread === 'mirror') {
     return {
       cardMeanings: 60,
-      reading: 1800,
+      reading: 2500,
       caution: 100,
     };
   }
   if (spread === 'moonlight') {
     return {
       cardMeanings: 60,
-      reading: 1800,
+      reading: 2500,
       caution: 100,
     };
   }
@@ -380,7 +380,7 @@ function getTarotTextLimits(spread: TarotSpread): ReadingLimits {
   }
   return {
     cardMeanings: 60,
-    reading: 1500,
+    reading: 3000,
     caution: 80,
   };
 }
