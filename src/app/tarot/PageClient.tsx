@@ -131,6 +131,7 @@ export default function TarotPage() {
   const questionRef = useRef<HTMLDivElement>(null);
   const drawnRef = useRef<HTMLDivElement>(null);
   const drawingRef = useRef<HTMLDivElement>(null);
+  const streamEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (step === 'drawing' && drawingRef.current) {
@@ -151,6 +152,7 @@ export default function TarotPage() {
       }, 100);
     }
   }, [step]);
+
   const [mode, setMode] = useState<ModeId>('classic');
   const [question, setQuestion] = useState('');
   const [activePrompt, setActivePrompt] = useState<string | null>(null);
@@ -162,6 +164,13 @@ export default function TarotPage() {
   const [useLegacyDrawAnimation] = useState(false);
 
   const [celticModalIdx, setCelticModalIdx] = useState<number | null>(null);
+
+  // 流式输出时随内容增加自动向下滚动
+  useEffect(() => {
+    if (streaming && streamEndRef.current) {
+      streamEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
+  }, [streaming, result?.reading]);
 
   const currentSpread = MODE_TO_SPREAD[mode];
   const isDebug = !!process.env.NEXT_PUBLIC_TAROT_DEBUG_TOKEN;
@@ -723,10 +732,13 @@ export default function TarotPage() {
                 <h3 className="font-display text-xl tracking-[0.08em] text-[#1C1A16] mb-4">✨ AI 解读</h3>
                 <div className="text-[#3D3A35] text-[15px] leading-[1.9]">
                   {streaming ? (
-                    <p className="whitespace-pre-wrap">
-                      {result.reading}
-                      <span className="inline-block w-0.5 h-4 bg-[#1C1A16] ml-0.5 animate-pulse" />
-                    </p>
+                    <>
+                      <p className="whitespace-pre-wrap">
+                        {result.reading}
+                        <span className="inline-block w-0.5 h-4 bg-[#1C1A16] ml-0.5 animate-pulse" />
+                      </p>
+                      <div ref={streamEndRef} />
+                    </>
                   ) : (
                     <div className="space-y-5">
                       {result.reading
