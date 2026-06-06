@@ -130,10 +130,16 @@ export default function TarotPage() {
   const loadingRef = useRef<HTMLDivElement>(null);
   const questionRef = useRef<HTMLDivElement>(null);
   const drawnRef = useRef<HTMLDivElement>(null);
+  const drawingRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (step === 'drawing' && drawingRef.current) {
+      // 点按抽牌后立即滚到动画区域，不等结果出来
+      setTimeout(() => {
+        drawingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 50);
+    }
     if (step === 'loading') {
-      // drawn→loading 时页面内容骤减，先重置滚动位置再滑到解读指示器
       window.scrollTo({ top: 0, behavior: 'instant' });
       setTimeout(() => {
         loadingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -611,7 +617,7 @@ export default function TarotPage() {
           )}
 
           {step === 'drawing' && (
-            <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-10 md:p-16 text-center flex flex-col items-center justify-center min-h-[280px]">
+            <div ref={drawingRef} className="rounded-2xl border border-[#1C1A16]/10 bg-white p-10 md:p-16 text-center flex flex-col items-center justify-center min-h-[280px]">
               <div className="flex justify-center">
                 <OracleLoading />
               </div>
