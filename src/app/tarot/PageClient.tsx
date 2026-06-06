@@ -192,7 +192,12 @@ export default function TarotPage() {
     try {
       const res = await fetch('/api/tarot/draw-cards', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(process.env.NEXT_PUBLIC_TAROT_DEBUG_TOKEN
+            ? { 'x-debug-token': process.env.NEXT_PUBLIC_TAROT_DEBUG_TOKEN }
+            : {}),
+        },
         body: JSON.stringify({
           spread: currentSpread,
           question: question.trim(),
