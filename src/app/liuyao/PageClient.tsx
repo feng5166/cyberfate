@@ -1620,7 +1620,39 @@ export default function LiuYaoPage() {
                 <p className="text-sm text-[#1C1A16]/70 leading-relaxed mb-1">基于您的六爻卦象解读，您可以就具体问题进行深入询问。</p>
                 <p className="text-sm text-[#1C1A16]/70 leading-relaxed mb-6">AI 将结合六爻理论和您的具体情况，为您提供更详细的指导。</p>
 
-                <div className="flex gap-2 mb-4">
+                {/* 推荐问题（首次）*/}
+                {qaHistory.length === 0 && (
+                  <>
+                    <p className="text-xs text-[#1C1A16]/45 mb-3">您可以问以下问题：</p>
+                    <div className="grid grid-cols-2 gap-2 mb-5">
+                      {['这个决策有什么风险？', '现在执行会遇到什么阻碍？', '应该如何应对当前局势？', '什么时机最适合行动？', '可能出现的结果是什么？', '如何把握最佳时机？'].map((q) => (
+                        <button
+                          key={q}
+                          onClick={() => setQaInput(q)}
+                          className="flex items-center gap-1.5 rounded-xl border border-[#E5E0D8] px-3 py-2 text-left text-xs text-[#1C1A16]/65 hover:border-[#1C1A16]/30 hover:text-[#1C1A16]"
+                        >
+                          <Send size={10} className="shrink-0" /> {q}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                {/* 问答历史（结果在上）*/}
+                {qaHistory.length > 0 && (
+                  <div className="space-y-4 mb-5">
+                    {qaHistory.map((item, i) => (
+                      <div key={i}>
+                        <p className="text-sm font-medium text-[#1C1A16] mb-2">{item.q}</p>
+                        <p className="text-sm leading-relaxed text-[#1C1A16]/65 whitespace-pre-wrap">{item.a}{i === qaHistory.length - 1 && qaStreaming ? '▋' : ''}</p>
+                        {i < qaHistory.length - 1 && <div className="mt-4 border-t border-[#E5E0D8]" />}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* 输入框（始终在下方）*/}
+                <div className="flex gap-2">
                   <input
                     value={qaInput}
                     onChange={(e) => setQaInput(e.target.value)}
@@ -1636,35 +1668,6 @@ export default function LiuYaoPage() {
                     <Send size={14} /> 问题
                   </button>
                 </div>
-
-                {qaHistory.length === 0 && (
-                  <>
-                    <p className="text-xs text-[#1C1A16]/45 mb-3">您可以问以下问题：</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {['这个决策有什么风险？', '现在执行会遇到什么阻碍？', '应该如何应对当前局势？', '什么时机最适合行动？', '可能出现的结果是什么？', '如何把握最佳时机？'].map((q) => (
-                        <button
-                          key={q}
-                          onClick={() => setQaInput(q)}
-                          className="flex items-center gap-1.5 rounded-xl border border-[#E5E0D8] px-3 py-2 text-left text-xs text-[#1C1A16]/65 hover:border-[#1C1A16]/30 hover:text-[#1C1A16]"
-                        >
-                          <Send size={10} className="shrink-0" /> {q}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-
-                {qaHistory.length > 0 && (
-                  <div className="space-y-4 mt-4">
-                    {qaHistory.map((item, i) => (
-                      <div key={i}>
-                        <p className="text-sm font-medium text-[#1C1A16] mb-2">{item.q}</p>
-                        <p className="text-sm leading-relaxed text-[#1C1A16]/65 whitespace-pre-wrap">{item.a}{i === qaHistory.length - 1 && qaStreaming ? '▋' : ''}</p>
-                        {i < qaHistory.length - 1 && <div className="mt-4 border-t border-[#E5E0D8]" />}
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
             </div>
           )}
