@@ -76,26 +76,44 @@ const METHOD_OPTIONS: Array<{ value: Method; label: string }> = [
   { value: 'manual', label: '手动起卦' },
 ];
 
-const FEATURE_ITEMS = [
+const AI_INSIGHT_ITEMS = [
   {
-    icon: '🎯',
-    title: '多角度观察',
-    desc: '结合易理框架的多层次洞察，既看文化背景又看实际落地。',
+    icon: '◎',
+    title: '思考参考',
+    desc: '从传统易学角度获取参考观点，帮助您从多维度思考重要事项。',
   },
   {
-    icon: '✨',
+    icon: '❋',
+    title: 'AI 观察',
+    desc: '运用算法结合现代心理学视角，观察传统符号的文化内涵。',
+  },
+  {
+    icon: '✦',
+    title: '时机思考',
+    desc: '不仅思考做什么，还可以参考不同时机的考量因素。',
+  },
+];
+
+const FEATURE_ITEMS = [
+  {
+    icon: '🤖',
+    title: '多角度观察',
+    desc: '获取超越简单是/否的多层次观察，提供文化背景和不同视角。',
+  },
+  {
+    icon: '✦',
     title: '个性化参考',
-    desc: '基于您的问题和当前状态提供定制化的参考要点。',
+    desc: '接收基于您的问题和当前情况的参考观点。',
   },
   {
     icon: '💬',
     title: '清晰表达',
-    desc: '用简洁易懂的语言将传统文化转化为易于理解的参考信息。',
+    desc: '将传统占卜符号的文化内涵转化为易于理解的参考信息。',
   },
   {
-    icon: '✦',
+    icon: '❋',
     title: '模式观察',
-    desc: 'AI 易数系统尝试捕捉模式化线索，供您思考参考。',
+    desc: '我们的 AI 系统尝试观察不同的模式和关联，供您参考思考。',
   },
 ];
 
@@ -103,17 +121,17 @@ const FAQ_ITEMS: FaqItem[] = [
   {
     question: '梅花易数的参考价值如何？',
     answer:
-      '梅花易数是中国古代占卜方法之一，基于《易经》八卦体系。我们结合传统易理和现代 AI 分析提供参考视角，但任何占卜结果仅供参考，不做唯一决策依据。',
+      '梅花易数是经过几个世纪传承的文化遗产，基于传统哲学和文化智慧提供思考角度。我们的 AI 技术帮助更好地呈现这些传统观点。',
   },
   {
-    question: 'AI 的辅助解读可靠吗？',
+    question: 'AI 如何辅助传统占卜？',
     answer:
-      '我们的 AI 解读基于梅花易数的传统规则库和现代语言模型共同生成，融合古代智慧与现代分析视角。建议作为辅助参考，不替代现实信息与专业建议。',
+      '我们的 AI 帮助观察和整理传统符号的文化内涵，结合现代视角提供多元化的参考观点，最终的理解和决策完全在您手中。',
   },
   {
-    question: '哪类问题适合这个系统？',
+    question: '哪些类型的问题适合参考这个系统？',
     answer:
-      '面临选择、需要额外视角的问题都适合尝试。问题描述越具体，参考质量越高。涉及医疗、法律等专业领域时，请优先咨询专业人士。',
+      '具体、聚焦的思考或情境问题可能获得更有针对性的参考。关于一般生活方向的开放式问题可能会收到更宽泛的思考角度。',
   },
 ];
 
@@ -541,6 +559,24 @@ export default function MeihuaPage() {
         )}
 
         <section className="mx-auto mt-8 max-w-4xl animate-fadeIn">
+          <div className="text-center mb-8">
+            <h2 className="font-display text-xl tracking-[0.08em] text-[#1C1A16]">AI 辅助观察</h2>
+            <p className="mt-2 text-sm text-[#1C1A16]/60">我们的系统将古老的占卜文化与现代 AI 技术结合，为您的思考提供不同角度的参考观点。</p>
+          </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            {AI_INSIGHT_ITEMS.map((item) => (
+              <div key={item.title} className="flex flex-col items-center rounded-2xl border border-[#1C1A16]/10 bg-white p-6 text-center shadow-none transition-shadow duration-300 hover:shadow-card-hover">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#FAF9F6] text-xl mb-4">
+                  {item.icon}
+                </div>
+                <h3 className="text-sm font-semibold text-[#1C1A16] mb-2">{item.title}</h3>
+                <p className="text-xs leading-relaxed text-[#1C1A16]/65">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="mx-auto mt-8 max-w-4xl animate-fadeIn">
           <h2 className="font-display text-xl tracking-[0.08em] text-[#1C1A16]">特色功能</h2>
           <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
             {FEATURE_ITEMS.map((item) => (
@@ -569,7 +605,10 @@ export default function MeihuaPage() {
                     className="flex w-full items-center justify-between text-left"
                     onClick={() => setExpandedFaqIndex((prev) => (prev === index ? null : index))}
                   >
-                    <span className="text-sm font-medium text-[#1C1A16]">{item.question}</span>
+                    <span className="flex items-center gap-2 text-sm font-medium text-[#1C1A16]">
+                      <span className="text-[#1C1A16]/40 text-base">&#9432;</span>
+                      {item.question}
+                    </span>
                     {expanded ? (
                       <ChevronUp className="h-4 w-4 text-[#6B7280]" />
                     ) : (
