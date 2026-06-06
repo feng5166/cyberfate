@@ -353,34 +353,34 @@ function getTarotTextLimits(spread: TarotSpread): ReadingLimits {
   if (spread === 'celtic') {
     return {
       cardMeanings: 80,
-      reading: 3000,
+      reading: 5000,
       caution: 100,
     };
   }
   if (spread === 'mirror') {
     return {
       cardMeanings: 60,
-      reading: 2500,
+      reading: 4000,
       caution: 100,
     };
   }
   if (spread === 'moonlight') {
     return {
       cardMeanings: 60,
-      reading: 2500,
+      reading: 4000,
       caution: 100,
     };
   }
   if (spread === 'relationship') {
     return {
       cardMeanings: 120,
-      reading: 2500,
+      reading: 4000,
       caution: 100,
     };
   }
   return {
     cardMeanings: 60,
-    reading: 3000,
+    reading: 4000,
     caution: 80,
   };
 }
@@ -458,7 +458,24 @@ function safeText(value: unknown, fallback: string, maxLength: number): string {
     .replace(/\n{3,}/g, '\n\n') // 3个以上换行 → 2个
     .trim();
   if (!cleaned) return fallback;
-  return cleaned.slice(0, maxLength);
+  if (cleaned.length <= maxLength) return cleaned;
+  // 内容完整度截断：在 maxLength 付近找最近的句子/段落结尾
+  const searchZone = cleaned.slice(0, maxLength);
+  // 优先找段落结尾（\n\n）
+  const paraEnd = searchZone.lastIndexOf('\n\n');
+  if (paraEnd > maxLength * 0.6) return cleaned.slice(0, paraEnd).trim();
+  // 再找中文句号。！？
+  const sentenceMatch = searchZone.match(/[\s\S]*[。！？]/);
+  if (sentenceMatch && sentenceMatch[0].length > maxLength * 0.6) {
+    return sentenceMatch[0].trim();
+  }
+  // 再找英文句号
+  const engMatch = searchZone.match(/[\s\S]*[.!?]/);
+  if (engMatch && engMatch[0].length > maxLength * 0.6) {
+    return engMatch[0].trim();
+  }
+  // fallback: 硬截
+  return searchZone.trim();
 }
 
 function safeList(
