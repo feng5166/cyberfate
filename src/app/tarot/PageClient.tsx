@@ -599,11 +599,11 @@ export default function TarotPage() {
           )}
 
           {step === 'drawing' && (
-            <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 text-center transition-shadow duration-300 hover:shadow-card-hover md:p-10">
+            <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-10 md:p-16 text-center flex flex-col items-center justify-center min-h-[280px]">
               <div className="flex justify-center">
                 <OracleLoading />
               </div>
-              <p className="mt-4 text-sm text-[#1C1A16]/60">正在抽取塔罗牌...</p>
+              <p className="mt-6 text-base font-medium text-[#1C1A16]/70 tracking-[0.08em]">命理师正在解读...</p>
             </div>
           )}
 
@@ -682,13 +682,16 @@ export default function TarotPage() {
                   })()}
                 </div>
                 {error && <p className="mt-4 text-center text-sm text-red-600">{error}</p>}
+              </div>
+              <div className="rounded-2xl bg-[#1C1A16] p-6 text-center">
+                <p className="text-white/60 text-sm mb-4 tracking-wide">牌阵已就绪，命理师为你深度解读</p>
                 <button
                   type="button"
                   onClick={() => handleAIReading(drawnCards)}
                   disabled={loading}
-                  className="mt-6 h-[44px] w-full rounded-xl bg-[#1C1A16] text-sm font-medium text-white transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="h-[52px] w-full rounded-xl bg-white text-base font-semibold text-[#1C1A16] transition-all hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60 tracking-[0.05em]"
                 >
-                  ✨ AI解读牌意 →
+                  ✨ 开始 AI 深度解读 →
                 </button>
               </div>
             </div>
