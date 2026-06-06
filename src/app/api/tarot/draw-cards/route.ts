@@ -6,7 +6,7 @@ import { prisma } from '@/lib/db';
 import { drawRandomCards, getCardImageUrl } from '@/data/tarot';
 import { applyChaos } from '@/lib/chaos-middleware';
 
-type TarotSpread = 'single' | 'three' | 'celtic' | 'moonlight' | 'mirror';
+type TarotSpread = 'single' | 'three' | 'celtic' | 'moonlight' | 'mirror' | 'relationship';
 
 const spreadConfig: Record<TarotSpread, { count: number; positions?: string[] }> = {
   single: { count: 1 },
@@ -34,6 +34,10 @@ const spreadConfig: Record<TarotSpread, { count: number; positions?: string[] }>
     count: 5,
     positions: ['现状', '阻碍', '建议', '风险', 'Outcome'],
   },
+  relationship: {
+    count: 5,
+    positions: ['你的感受', '对方感受', '关系基础', '当前障碍', '关系走向'],
+  },
 };
 
 const DAILY_LIMITS: Record<TarotSpread, number> = {
@@ -42,6 +46,7 @@ const DAILY_LIMITS: Record<TarotSpread, number> = {
   celtic: 0,
   moonlight: 1,
   mirror: 1,
+  relationship: 1,
 };
 
 async function atomicCheckAndUseQuota(userId: string, spread: TarotSpread): Promise<boolean> {
@@ -75,7 +80,7 @@ async function isVip(userId: string): Promise<boolean> {
 }
 
 function resolveSpread(value: unknown): TarotSpread {
-  if (value === 'single' || value === 'three' || value === 'celtic' || value === 'moonlight' || value === 'mirror') {
+  if (value === 'single' || value === 'three' || value === 'celtic' || value === 'moonlight' || value === 'mirror' || value === 'relationship') {
     return value;
   }
   return 'three';
@@ -86,6 +91,7 @@ function quotaLabel(spread: TarotSpread): string {
   if (spread === 'moonlight') return '月光模式';
   if (spread === 'mirror') return '镜像模式';
   if (spread === 'celtic') return '凯尔特十字';
+  if (spread === 'relationship') return '关系牌阵';
   return '三张牌';
 }
 
