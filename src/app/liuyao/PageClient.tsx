@@ -1348,7 +1348,8 @@ export default function LiuYaoPage() {
                 </p>
               </div>
 
-              {/* 爻辞列表 */}
+              {/* 爻辞列表：有 AI 结果后隐藏，避免与「各爻详解」重复 */}
+              {!result && (
               <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 transition-shadow duration-300 hover:shadow-card-hover">
                 <h3 className="text-base font-semibold text-[#1C1A16] mb-4">爻辞</h3>
                 <div className="space-y-0">
@@ -1375,6 +1376,8 @@ export default function LiuYaoPage() {
                   ))}
                 </div>
               </div>
+
+              )}
 
               {/* 分析卦象按钮：只在未开始 AI 分析时显示 */}
               {!loading && !streaming && !result && (
