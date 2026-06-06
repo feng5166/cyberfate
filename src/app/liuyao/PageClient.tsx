@@ -1603,12 +1603,25 @@ export default function LiuYaoPage() {
                 {streaming && !result.overallNarrative ? (
                   <OracleLoading />
                 ) : (
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#1C1A16]/75">
-                    {result.overallNarrative}
+                  <div className="text-sm leading-relaxed text-[#1C1A16]/75 space-y-3">
+                    {result.overallNarrative
+                      // 先在 ①②③④⑤ 前插入换行，避免序号混在一行
+                      .replace(/([^
+])([①②③④⑤])/g, '$1
+$2')
+                      .split(/
+
++/)
+                      .filter(Boolean)
+                      .map((para, i) => (
+                        <p key={i} className="whitespace-pre-wrap">
+                          {para.trim()}
+                        </p>
+                      ))}
                     {streaming && result.overallNarrative && (
                       <span className="inline-block w-1.5 h-4 ml-0.5 bg-[#1C1A16]/40 align-middle animate-pulse" />
                     )}
-                  </p>
+                  </div>
                 )}
               </div>
 
