@@ -229,7 +229,7 @@ export async function POST(req: NextRequest) {
   };
 
   const reading = await withCircuitBreaker('deepseek-liuyao-v4pro', () =>
-    withAiTimeout(() => generateLiuYaoReading(promptInput), 15_000)
+    withAiTimeout(() => generateLiuYaoReading(promptInput), 25_000)
   );
 
   const enrichedLines = linesData.map((l, i) => ({

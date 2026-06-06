@@ -629,7 +629,7 @@ function normalizeLiuYaoReading(raw: unknown, fallback: LiuYaoReadingResult): Li
 
   return {
     lineInterpretations: lineInterpretations.length === 6 ? lineInterpretations : fallback.lineInterpretations,
-    overallNarrative: safeText(data.overallNarrative, fallback.overallNarrative, 800),
+    overallNarrative: safeText(data.overallNarrative, fallback.overallNarrative, 1200),
     summary: safeText(data.summary, fallback.summary, 60),
     positives: safeList(data.positives, fallback.positives, 2, 3, 80),
     cautions: safeList(data.cautions, fallback.cautions, 1, 2, 80),
@@ -649,7 +649,7 @@ export async function generateLiuYaoReading(
 
   try {
     const prompt = buildLiuYaoPrompt(input);
-    const text = await callDeepSeek(LIUYAO_SYSTEM_PROMPT, prompt, 1200);
+    const text = await callDeepSeek(LIUYAO_SYSTEM_PROMPT, prompt, 2400);
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       return { ...fallback, _source: 'fallback' };
