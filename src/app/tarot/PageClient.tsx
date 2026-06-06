@@ -134,16 +134,12 @@ export default function TarotPage() {
 
   useEffect(() => {
     if (step === 'drawing' && drawingRef.current) {
-      // 点按抽牌后立即滚到动画区域，不等结果出来
+      // 点击抽牌后立刻滚到动画区域居中
       setTimeout(() => {
         drawingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 50);
     }
-    if (step === 'loading') {
-      setTimeout(() => {
-        loadingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 50);
-    }
+    // loading 状态不主动滚动，保持用户当前视图位置
     if (step === 'drawn' && drawnRef.current) {
       setTimeout(() => {
         drawnRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
