@@ -594,33 +594,17 @@ export default function MeihuaPage() {
         </section>
 
         <section className="mx-auto mt-8 max-w-4xl pb-4 animate-fadeIn">
-          <h2 className="font-display text-xl tracking-[0.08em] text-[#1C1A16]">常见问题</h2>
-          <div className="mt-4 space-y-3">
-            {FAQ_ITEMS.map((item, index) => {
-              const expanded = expandedFaqIndex === index;
-              return (
-                <div key={item.question} className="rounded-2xl border border-[#1C1A16]/10 bg-white px-4 py-3">
-                  <button
-                    type="button"
-                    className="flex w-full items-center justify-between text-left"
-                    onClick={() => setExpandedFaqIndex((prev) => (prev === index ? null : index))}
-                  >
-                    <span className="flex items-center gap-2 text-sm font-medium text-[#1C1A16]">
-                      <span className="text-[#1C1A16]/40 text-base">&#9432;</span>
-                      {item.question}
-                    </span>
-                    {expanded ? (
-                      <ChevronUp className="h-4 w-4 text-[#6B7280]" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4 text-[#6B7280]" />
-                    )}
-                  </button>
-                  {expanded && (
-                    <p className="mt-2 text-sm leading-relaxed text-[#1C1A16]/78">{item.answer}</p>
-                  )}
-                </div>
-              );
-            })}
+          <h2 className="font-display text-xl tracking-[0.08em] text-[#1C1A16] text-center">常见问题</h2>
+          <div className="mt-6 space-y-4">
+            {FAQ_ITEMS.map((item) => (
+              <div key={item.question} className="rounded-2xl border border-[#1C1A16]/10 bg-white px-5 py-4">
+                <p className="flex items-start gap-2 text-sm font-semibold text-[#1C1A16]">
+                  <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border border-[#1C1A16]/30 text-xs text-[#1C1A16]/60">?</span>
+                  {item.question}？
+                </p>
+                <p className="mt-3 text-sm leading-relaxed text-[#1C1A16]/70">{item.answer}</p>
+              </div>
+            ))}
           </div>
 
           <AiDisclaimer />
