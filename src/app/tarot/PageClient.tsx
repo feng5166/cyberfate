@@ -129,6 +129,7 @@ export default function TarotPage() {
   const [step, setStep] = useState<Step>('question');
   const loadingRef = useRef<HTMLDivElement>(null);
   const questionRef = useRef<HTMLDivElement>(null);
+  const drawnRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (step === 'loading') {
@@ -137,6 +138,11 @@ export default function TarotPage() {
       setTimeout(() => {
         loadingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 200);
+    }
+    if (step === 'drawn' && drawnRef.current) {
+      setTimeout(() => {
+        drawnRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 150);
     }
     if (step === 'question' && questionRef.current) {
       setTimeout(() => {
@@ -614,7 +620,7 @@ export default function TarotPage() {
           )}
 
           {step === 'drawn' && drawnCards && (
-            <div className="space-y-4">
+            <div ref={drawnRef} className="space-y-4">
               <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-3 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
                 <h3 className="font-display text-2xl tracking-[0.08em] text-[#1C1A16] text-center">✨ 您抽到了这些牌</h3>
                 <div className="mt-6">
