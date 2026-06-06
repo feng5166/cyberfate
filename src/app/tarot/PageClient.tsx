@@ -690,9 +690,10 @@ export default function TarotPage() {
                   type="button"
                   onClick={() => handleAIReading(drawnCards)}
                   disabled={loading}
-                  className="h-[52px] px-10 rounded-2xl bg-[#1C1A16] text-base font-semibold text-white transition-all hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-60 tracking-[0.05em] shadow-md"
+                  className="inline-flex items-center gap-3 h-[52px] px-8 rounded-full bg-[#1C1A16] text-base font-medium text-white transition-all hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  ✨ 开始 AI 深度解读 →
+                  <span className="text-lg">✦</span>
+                  <span>AI 解读牌义</span>
                 </button>
               </div>
             </div>
