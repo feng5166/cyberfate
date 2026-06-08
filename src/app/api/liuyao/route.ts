@@ -3,7 +3,6 @@ import { checkRateLimit } from '@/lib/rate-limit';
 import { generateCacheKey, getCache, setCache } from '@/lib/ai/cache';
 import { generateLiuYaoReading } from '@/lib/ai/client';
 import type { LiuYaoPromptInput } from '@/lib/ai/prompts';
-import { withAiTimeout } from '@/lib/ai/withTimeout';
 import { withCircuitBreaker } from '@/lib/ai/circuitBreaker';
 import { applyChaos } from '@/lib/chaos-middleware';
 import {
@@ -232,7 +231,7 @@ export async function POST(req: NextRequest) {
   let reading: Awaited<ReturnType<typeof generateLiuYaoReading>>;
   try {
     reading = await withCircuitBreaker('deepseek-liuyao-v4pro', () =>
-      withAiTimeout(() => generateLiuYaoReading(promptInput), 25_000)
+      generateLiuYaoReading(promptInput)
     );
     console.log('[liuyao] AI reading success, _source:', reading._source);
   } catch (err) {
