@@ -59,7 +59,7 @@ const MENU_GROUPS: MenuGroupConfig[] = [
     title: '紫微斗数',
     items: [
       { label: '紫微排盘', href: '/ziwei', icon: Star, paidOnly: true },
-      { label: '紫微合婚', href: '/ziwei/marriage', icon: Compass, paidOnly: true },
+      // { label: '紫微合婚', href: '/ziwei/marriage', icon: Compass, paidOnly: true },
     ],
   },
   {
