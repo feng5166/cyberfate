@@ -370,7 +370,17 @@ export const knowledgeData: Record<string, KnowledgeArticle> = {
 };
 
 // 用于首页展示的文章列表数据
-export const knowledgeList = Object.entries(knowledgeData).map(([slug, article]) => ({
+export type KnowledgeListItem = {
+  slug: string;
+  title: string;
+  emoji: string;
+  desc: string;
+  category: string;
+  categoryLabel: string;
+  readTime: string;
+};
+
+export const knowledgeList: KnowledgeListItem[] = Object.entries(knowledgeData).map(([slug, article]) => ({
   slug,
   title: article.title,
   emoji: article.emoji,
