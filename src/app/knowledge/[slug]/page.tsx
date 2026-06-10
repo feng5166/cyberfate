@@ -40,6 +40,8 @@ export async function generateMetadata({
 // ============================================================
 // 文章详情页（Server Component）
 // ============================================================
+const baseUrl = 'https://www.cyberfate.me';
+
 export default async function KnowledgeDetailPage({
   params,
 }: {
@@ -51,6 +53,65 @@ export default async function KnowledgeDetailPage({
   if (!article) {
     notFound();
   }
+
+  const articleUrl = `${baseUrl}/knowledge/${slug}`;
+
+  const articleSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    '@id': `${articleUrl}#article`,
+    headline: article.title,
+    description: article.description,
+    url: articleUrl,
+    datePublished: article.date,
+    dateModified: article.date,
+    inLanguage: 'zh-CN',
+    author: {
+      '@type': 'Organization',
+      name: 'CyberFate',
+      url: baseUrl,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: '赛博命理师 CyberFate',
+      url: baseUrl,
+      logo: {
+        '@type': 'ImageObject',
+        url: `${baseUrl}/favicon.svg`,
+      },
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': articleUrl,
+    },
+    articleSection: article.categoryLabel,
+    keywords: article.title,
+  };
+
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: '首页',
+        item: baseUrl,
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: '知识库',
+        item: `${baseUrl}/knowledge`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: article.title,
+        item: articleUrl,
+      },
+    ],
+  };
 
   // 相关文章
   const relatedArticles = article.relatedSlugs
@@ -66,6 +127,14 @@ export default async function KnowledgeDetailPage({
 
   return (
     <div className="min-h-screen bg-[#FAF9F6]">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
       {/* ====== 面包屑导航 ====== */}
       <Container>
         <nav className="flex items-center gap-2 text-sm py-6 text-[#1C1A16]/60">
