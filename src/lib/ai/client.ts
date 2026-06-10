@@ -534,7 +534,7 @@ function normalizeMeihuaDecision(raw: unknown, fallback: MeihuaDecisionResult): 
     ? (data.insights as Record<string, unknown>)
     : {};
 
-  const overallAdvice = safeText(data.overallAdvice, fallback.overallAdvice, 60);
+  const overallAdvice = safeText(data.overallAdvice, fallback.overallAdvice, 2000);
   const favorable = safeList(data.favorable, fallback.favorable, 2, 3, 40);
   const cautions = safeList(data.cautions, fallback.cautions, 1, 2, 40);
   const nextSteps = safeList(data.nextSteps, fallback.nextSteps, 1, 2, 60);
