@@ -31,6 +31,7 @@ const TIMEOUT_CONFIG: Record<string, number> = {
   huangli: 10000,
   huangli_ask: 10000,
   liuyao: 55000,
+  meihua: 55000,
   default: 15000,
 };
 
@@ -580,7 +581,7 @@ export async function generateMeihuaDecision(
 
   try {
     const prompt = buildMeihuaDecisionPrompt(input);
-    const text = await callDeepSeek(MEIHUA_DECISION_SYSTEM_PROMPT, prompt, 2000);
+    const text = await callDeepSeek(MEIHUA_DECISION_SYSTEM_PROMPT, prompt, 2000, 'meihua');
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       return { ...fallback, _source: 'fallback' };
