@@ -580,7 +580,7 @@ export async function generateMeihuaDecision(
 
   try {
     const prompt = buildMeihuaDecisionPrompt(input);
-    const text = await callDeepSeek(MEIHUA_DECISION_SYSTEM_PROMPT, prompt, 700);
+    const text = await callDeepSeek(MEIHUA_DECISION_SYSTEM_PROMPT, prompt, 2000);
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       return { ...fallback, _source: 'fallback' };
