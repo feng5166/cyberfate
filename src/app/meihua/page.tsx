@@ -8,6 +8,24 @@ export const metadata: Metadata = {
   keywords: ['梅花易数', '梅花易数占卜', '梅花起卦', '易数', '邵雍', '起卦', '卦象解读', '体用', '互卦', '变卦', '免费占卜'],
   alternates: { canonical: 'https://www.cyberfate.me/meihua' },
   openGraph: { title: '梅花易数占卜 | 赛博命理师 CyberFate', description: 'AI 起卦解卦，本卦互卦变卦三才结构，预测吉凶趋势。', type: 'website', url: 'https://www.cyberfate.me/meihua' },
+  twitter: {
+    card: 'summary',
+    title: '梅花易数占卜 | CyberFate',
+    description: '在线梅花易数起卦占卜，支持时间起卦、数字起卦、报数起卦等多种方式。AI 解读本卦、互卦、变卦三才结构。',
+  },
+}
+
+const webAppSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: '梅花易数占卜 - CyberFate',
+  url: 'https://www.cyberfate.me/meihua',
+  description: '在线梅花易数起卦占卜，AI 解读本卦互卦变卦三才结构，结合体用关系与应期预测事物吉凶。',
+  applicationCategory: 'LifestyleApplication',
+  operatingSystem: 'Web',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'CNY' },
+  inLanguage: 'zh-CN',
+  publisher: { '@type': 'Organization', name: 'CyberFate', url: 'https://www.cyberfate.me' },
 }
 
 const FAQ_ITEMS = [
@@ -28,6 +46,10 @@ const FAQ_ITEMS = [
 export default function MeihuaPage() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(webAppSchema) }}
+      />
       <FaqJsonLd items={FAQ_ITEMS} />
       <PageClient />
       <section aria-label="关于梅花易数" className="mx-auto max-w-3xl px-4 py-12 text-[#1C1A16]/60 text-sm leading-relaxed border-t border-[#1C1A16]/8 mt-8">

@@ -8,6 +8,24 @@ export const metadata: Metadata = {
   keywords: ['六爻', '六爻占卜', '六爻预测', '纳甲', '世应', '动爻', '六亲', '京房易', '卦象解读', '免费六爻', 'AI六爻'],
   alternates: { canonical: 'https://www.cyberfate.me/liuyao' },
   openGraph: { title: '六爻占卜 | 赛博命理师 CyberFate', description: 'AI 纳甲六爻预测，深度解读用神动爻、应期推算。', type: 'website', url: 'https://www.cyberfate.me/liuyao' },
+  twitter: {
+    card: 'summary',
+    title: '六爻占卜 | CyberFate',
+    description: '在线六爻占卜，AI 模拟三枚铜钱摇卦，精准排出本卦变卦，配以纳甲六亲世应。深度解读用神动爻、应期推算。',
+  },
+}
+
+const webAppSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: '六爻占卜 - CyberFate',
+  url: 'https://www.cyberfate.me/liuyao',
+  description: '在线六爻占卜，AI 模拟三枚铜钱摇卦，精准排出本卦变卦，深度解读用神动爻、应期推算。',
+  applicationCategory: 'LifestyleApplication',
+  operatingSystem: 'Web',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'CNY' },
+  inLanguage: 'zh-CN',
+  publisher: { '@type': 'Organization', name: 'CyberFate', url: 'https://www.cyberfate.me' },
 }
 
 const FAQ_ITEMS = [
@@ -28,6 +46,10 @@ const FAQ_ITEMS = [
 export default function LiuyaoPage() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(webAppSchema) }}
+      />
       <FaqJsonLd items={FAQ_ITEMS} />
       <PageClient />
       <section aria-label="关于六爻占卜" className="mx-auto max-w-3xl px-4 py-12 text-[#1C1A16]/60 text-sm leading-relaxed border-t border-[#1C1A16]/8 mt-8">

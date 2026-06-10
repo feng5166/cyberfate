@@ -28,13 +28,24 @@ export async function generateMetadata({
   if (!article) {
     return { title: '页面不存在 | CyberFate' };
   }
+  const articleUrl = `https://www.cyberfate.me/knowledge/${slug}`;
   return {
     title: `${article.title} | 赛博命理师 CyberFate — AI 命理知识库`,
     description: article.description,
+    keywords: [article.title, article.categoryLabel, '命理知识', '八字命理', 'CyberFate', '赛博命理师'],
+    alternates: { canonical: articleUrl },
     openGraph: {
       title: `${article.title} | 赛博命理师 CyberFate`,
       description: article.description,
       type: 'article',
+      url: articleUrl,
+      publishedTime: article.date,
+      section: article.categoryLabel,
+    },
+    twitter: {
+      card: 'summary',
+      title: `${article.title} | CyberFate`,
+      description: article.description,
     },
   };
 }

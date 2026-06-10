@@ -8,6 +8,24 @@ export const metadata: Metadata = {
   keywords: ['紫微斗数', '紫微排盘', '紫微命盘', '斗数', '十二宫位', '命盘解读', '紫微星', '紫微斗数免费', '命盘分析', '紫微斗数在线排盘'],
   alternates: { canonical: 'https://www.cyberfate.me/ziwei' },
   openGraph: { title: '紫微斗数排盘 | 赛博命理师 CyberFate', description: 'AI 解读十二宫位星曜组合，全面呈现命运格局与人生走势。', type: 'website', url: 'https://www.cyberfate.me/ziwei' },
+  twitter: {
+    card: 'summary',
+    title: '紫微斗数排盘 | CyberFate',
+    description: '在线紫微斗数排盘，AI 解读十二宫位星曜组合，分析命宫、财帛宫、官禄宫、夫妻宫、迁移宫等核心宫位。',
+  },
+}
+
+const webAppSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: '紫微斗数排盘 - CyberFate',
+  url: 'https://www.cyberfate.me/ziwei',
+  description: '在线紫微斗数排盘，AI 解读十二宫位星曜组合，分析命宫、财帛宫、官禄宫、夫妻宫、迁移宫等核心宫位。',
+  applicationCategory: 'LifestyleApplication',
+  operatingSystem: 'Web',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'CNY' },
+  inLanguage: 'zh-CN',
+  publisher: { '@type': 'Organization', name: 'CyberFate', url: 'https://www.cyberfate.me' },
 }
 
 const FAQ_ITEMS = [
@@ -28,6 +46,10 @@ const FAQ_ITEMS = [
 export default function ZiweiPage() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(webAppSchema) }}
+      />
       <FaqJsonLd items={FAQ_ITEMS} />
       <PageClient />
       <section aria-label="关于紫微斗数" className="mx-auto max-w-3xl px-4 py-12 text-[#1C1A16]/60 text-sm leading-relaxed border-t border-[#1C1A16]/8 mt-8">

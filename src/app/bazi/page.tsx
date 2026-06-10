@@ -8,6 +8,24 @@ export const metadata: Metadata = {
   keywords: ['八字分析', '八字命理', '四柱八字', '生辰八字', 'AI算命', '五行分析', '日主', '十神', '八字排盘', '免费算命', '命理分析', '八字免费测算'],
   alternates: { canonical: 'https://www.cyberfate.me/bazi' },
   openGraph: { title: '八字命理分析 | 赛博命理师 CyberFate', description: '输入生辰八字，AI 深度解读五行、日主、事业财运、感情婚姻。', type: 'website', url: 'https://www.cyberfate.me/bazi' },
+  twitter: {
+    card: 'summary',
+    title: '八字命理分析 | CyberFate',
+    description: '免费在线八字命理分析，输入生辰八字，AI 深度解读五行强弱、日主特征、十神含义、事业财运方向、感情婚姻走势。',
+  },
+}
+
+const webAppSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: '八字命理分析 - CyberFate',
+  url: 'https://www.cyberfate.me/bazi',
+  description: '免费在线八字命理分析，AI 深度解读五行强弱、日主特征、十神含义、事业财运方向、感情婚姻走势。',
+  applicationCategory: 'LifestyleApplication',
+  operatingSystem: 'Web',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'CNY' },
+  inLanguage: 'zh-CN',
+  publisher: { '@type': 'Organization', name: 'CyberFate', url: 'https://www.cyberfate.me' },
 }
 
 const FAQ_ITEMS = [
@@ -28,6 +46,10 @@ const FAQ_ITEMS = [
 export default function BaziPage() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(webAppSchema) }}
+      />
       <FaqJsonLd items={FAQ_ITEMS} />
       <PageClient />
       <section aria-label="关于八字命理" className="mx-auto max-w-3xl px-4 py-12 text-[#1C1A16]/60 text-sm leading-relaxed border-t border-[#1C1A16]/8 mt-8">

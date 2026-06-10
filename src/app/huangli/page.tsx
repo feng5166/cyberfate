@@ -8,6 +8,24 @@ export const metadata: Metadata = {
   keywords: ['老黄历', '黄历', '今日黄历', '宜忌', '吉时', '黄历查询', '万年历', '今天黄历', 'AI问事', '黄历宜忌', '吉日查询'],
   alternates: { canonical: 'https://www.cyberfate.me/huangli' },
   openGraph: { title: 'AI老黄历 | 赛博命理师 CyberFate', description: '每日黄历查询，宜忌吉时，AI 结合黄历智慧解答具体问事。', type: 'website', url: 'https://www.cyberfate.me/huangli' },
+  twitter: {
+    card: 'summary',
+    title: 'AI老黄历 | CyberFate',
+    description: '每日老黄历查询，宜忌、吉神、凶煞一目了然，AI 结合黄历智慧解答具体问事。',
+  },
+}
+
+const webAppSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'AI老黄历 - CyberFate',
+  url: 'https://www.cyberfate.me/huangli',
+  description: '每日老黄历查询，宜忌吉时一目了然，AI 结合黄历智慧解答具体问事。',
+  applicationCategory: 'LifestyleApplication',
+  operatingSystem: 'Web',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'CNY' },
+  inLanguage: 'zh-CN',
+  publisher: { '@type': 'Organization', name: 'CyberFate', url: 'https://www.cyberfate.me' },
 }
 
 const FAQ_ITEMS = [
@@ -28,6 +46,10 @@ const FAQ_ITEMS = [
 export default function HuangliPage() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(webAppSchema) }}
+      />
       <FaqJsonLd items={FAQ_ITEMS} />
       <PageClient />
       <section aria-label="关于老黄历" className="mx-auto max-w-3xl px-4 py-12 text-[#1C1A16]/60 text-sm leading-relaxed border-t border-[#1C1A16]/8 mt-8">

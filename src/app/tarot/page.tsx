@@ -8,6 +8,24 @@ export const metadata: Metadata = {
   keywords: ['塔罗牌', '塔罗占卜', '免费塔罗', 'AI塔罗', '塔罗抽牌', '凯尔特十字', '塔罗三牌阵', '塔罗牌解读', '感情塔罗', '塔罗测算'],
   alternates: { canonical: 'https://www.cyberfate.me/tarot' },
   openGraph: { title: '塔罗牌占卜 | 赛博命理师 CyberFate', description: '在线免费塔罗牌占卜，AI 深度解读正逆位含义，感情事业财运。', type: 'website', url: 'https://www.cyberfate.me/tarot' },
+  twitter: {
+    card: 'summary',
+    title: '塔罗牌占卜 | CyberFate',
+    description: '在线免费塔罗牌占卜，支持单张抽牌、三牌阵、凯尔特十字等多种牌阵。AI 深度解读正逆位含义。',
+  },
+}
+
+const webAppSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: '塔罗牌占卜 - CyberFate',
+  url: 'https://www.cyberfate.me/tarot',
+  description: '在线免费塔罗牌占卜，支持单张抽牌、三牌阵、凯尔特十字等多种牌阵，AI 深度解读正逆位含义。',
+  applicationCategory: 'LifestyleApplication',
+  operatingSystem: 'Web',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'CNY' },
+  inLanguage: 'zh-CN',
+  publisher: { '@type': 'Organization', name: 'CyberFate', url: 'https://www.cyberfate.me' },
 }
 
 const FAQ_ITEMS = [
@@ -28,6 +46,10 @@ const FAQ_ITEMS = [
 export default function TarotPage() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(webAppSchema) }}
+      />
       <FaqJsonLd items={FAQ_ITEMS} />
       <PageClient />
       <section aria-label="关于塔罗占卜" className="mx-auto max-w-3xl px-4 py-12 text-[#1C1A16]/60 text-sm leading-relaxed border-t border-[#1C1A16]/8 mt-8">

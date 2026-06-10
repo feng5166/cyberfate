@@ -8,6 +8,24 @@ export const metadata: Metadata = {
   keywords: ['今日运势', '每日运势', '八字运势', '日运', '今天运势怎么样', '运势分析', '每日星座运势', '今日宜忌', '运势查询', '免费运势'],
   alternates: { canonical: 'https://www.cyberfate.me/daily' },
   openGraph: { title: '今日运势 | 赛博命理师 CyberFate', description: '基于八字命理推算今日运势，AI 结合日主与当日天干地支。', type: 'website', url: 'https://www.cyberfate.me/daily' },
+  twitter: {
+    card: 'summary',
+    title: '今日运势 | CyberFate',
+    description: '基于八字命理推算今日运势，实时分析综合运势、事业运、财运、感情运、健康运五维度。',
+  },
+}
+
+const webAppSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: '今日运势 - CyberFate',
+  url: 'https://www.cyberfate.me/daily',
+  description: '基于八字命理推算今日运势，AI 结合日主与当日天干地支，提供个性化每日运势参考。',
+  applicationCategory: 'LifestyleApplication',
+  operatingSystem: 'Web',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'CNY' },
+  inLanguage: 'zh-CN',
+  publisher: { '@type': 'Organization', name: 'CyberFate', url: 'https://www.cyberfate.me' },
 }
 
 const FAQ_ITEMS = [
@@ -28,6 +46,10 @@ const FAQ_ITEMS = [
 export default function DailyPage() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(webAppSchema) }}
+      />
       <FaqJsonLd items={FAQ_ITEMS} />
       <PageClient />
       <section aria-label="关于每日运势" className="mx-auto max-w-3xl px-4 py-12 text-[#1C1A16]/60 text-sm leading-relaxed border-t border-[#1C1A16]/8 mt-8">
