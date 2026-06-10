@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Solar } from 'lunar-javascript';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { TIANGAN_WUXING } from '@/lib/bazi/constants';
 import type { TianGan, WuXing } from '@/lib/bazi/types';
 
@@ -67,6 +69,11 @@ const MONTH_CHINESE = ['正', '二', '三', '四', '五', '六', '七', '八', '
 
 export async function GET(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: '请先登录' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const birthDate = searchParams.get('birthDate');
     const birthHourStr = searchParams.get('birthHour');
