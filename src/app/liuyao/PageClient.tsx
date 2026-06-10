@@ -5,6 +5,7 @@ import { ChevronDown, ChevronUp, Loader2, Send } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { OracleLoading } from '@/components/ui/OracleLoading';
 import { HEXAGRAM_JUDGMENTS, getLineTexts, getLineTitle } from '@/lib/liuyao/data';
+import { track } from '@/lib/analytics';
 
 const Footer = dynamic(() => import('@/components/layout/Footer').then(m => m.Footer), { ssr: false });
 const AiDisclaimer = dynamic(() => import('@/components/ui/AiDisclaimer').then(m => m.AiDisclaimer), { ssr: false });
@@ -960,6 +961,8 @@ export default function LiuYaoPage() {
     setError('');
     setLoading(true);
     setResult(null);
+    const startTime = Date.now();
+    track('tool_ai_trigger', { tool: 'liuyao' });
 
     const lines = lineSelections as number[];
 
@@ -1056,8 +1059,10 @@ export default function LiuYaoPage() {
       }
 
       setStreaming(false);
+      track('tool_ai_complete', { tool: 'liuyao', duration_ms: Date.now() - startTime });
     } catch (err) {
       setError(err instanceof Error ? err.message : '未知错误');
+      track('tool_ai_error', { tool: 'liuyao', error_type: 'api_error' });
     } finally {
       setLoading(false);
       setStreaming(false);
@@ -1100,6 +1105,7 @@ export default function LiuYaoPage() {
   const handleQaSubmit = async () => {
     const q = qaInput.trim();
     if (!q || qaLoading || !result) return;
+    track('tool_question_ask', { tool: 'liuyao' });
 
     setQaLoading(true);
     setQaStreaming(true);

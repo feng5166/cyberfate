@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { OracleLoading } from '@/components/ui/OracleLoading';
+import { track } from '@/lib/analytics';
 
 const Footer = dynamic(() => import('@/components/layout/Footer').then(m => m.Footer), { ssr: false });
 const AiDisclaimer = dynamic(() => import('@/components/ui/AiDisclaimer').then(m => m.AiDisclaimer), { ssr: false });
@@ -246,6 +247,8 @@ export default function MeihuaPage() {
     }
 
     setLoading(true);
+    const startTime = Date.now();
+    track('tool_ai_trigger', { tool: 'meihua' });
 
     let submitMethod: Method = method;
     let submitNumbers = numbers;
@@ -325,9 +328,11 @@ export default function MeihuaPage() {
 
       finalDraw.guaCi = finalDraw.guaCi || firstSentence(finalDraw.analysis);
       setResult(finalDraw);
+      track('tool_ai_complete', { tool: 'meihua', duration_ms: Date.now() - startTime });
 
 
     } catch (submitError) {
+      track('tool_ai_error', { tool: 'meihua', error_type: 'api_error' });
       setError(submitError instanceof Error ? submitError.message : '起卦失败，请稍后重试。');
     } finally {
       setLoading(false);
@@ -387,6 +392,7 @@ export default function MeihuaPage() {
   const handleQaSubmit = async () => {
     const q = qaInput.trim();
     if (!q || qaLoading || !result) return;
+    track('tool_question_ask', { tool: 'meihua' });
     setQaLoading(true);
     setQaStreaming(true);
     setQaHistory((prev) => [...prev, { q, a: '' }]);

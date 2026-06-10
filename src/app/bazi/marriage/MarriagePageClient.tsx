@@ -16,6 +16,7 @@ import { RadarChart } from '@/components/marriage/RadarChart';
 import { ShishenSection } from '@/components/marriage/ShishenSection';
 import { AIAnalysisSection } from '@/components/marriage/AIAnalysisSection';
 import { AIQASection } from '@/components/marriage/AIQASection';
+import { track } from '@/lib/analytics';
 
 type SideKey = 'male' | 'female';
 
@@ -433,6 +434,8 @@ export function MarriagePageClient() {
     }
 
     setLoading(true);
+    const startTime = Date.now();
+    track('tool_ai_trigger', { tool: 'marriage' });
     try {
       const payload = {
         // 兼容旧字段（route 其他逻辑用到）
@@ -482,6 +485,8 @@ export function MarriagePageClient() {
       setAiAnalysis(null);  // 新查询，清空上次 AI 分析缓存
       setResult(data);
       setLastPayload(payload);
+      track('tool_ai_complete', { tool: 'marriage', duration_ms: Date.now() - startTime });
+      track('marriage_result_view', { tool: 'marriage' });
       try {
         const cache: MarriageCache = {
           maleData,
@@ -496,6 +501,7 @@ export function MarriagePageClient() {
         // 忽略 localStorage 写入失败（如配额超限或隐身模式）
       }
     } catch (err) {
+      track('tool_ai_error', { tool: 'marriage', error_type: 'api_error' });
       setError(err instanceof Error ? err.message : '未知错误');
     } finally {
       setLoading(false);

@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import { track } from '@/lib/analytics';
 
 function SuccessContent() {
   const searchParams = useSearchParams();
@@ -17,9 +18,10 @@ function SuccessContent() {
       updateSession().then(() => {
         setSessionRefreshed(true);
         console.log('[PaymentSuccess] Session refreshed');
+        track('payment_success', { plan: searchParams.get('plan') || 'unknown', price: 0 });
       });
     }
-  }, [updateSession, sessionRefreshed]);
+  }, [updateSession, sessionRefreshed, searchParams]);
 
   useEffect(() => {
     if (window.location.hostname === 'cyberfate.vercel.app') {

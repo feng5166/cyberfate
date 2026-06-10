@@ -9,6 +9,7 @@ import { AiAskSection } from '@/components/huangli/AiAskSection';
 import { FeaturesSection } from '@/components/huangli/FeaturesSection';
 import { Footer } from '@/components/layout/Footer';
 import type { HuangliData } from '@/lib/huangli/calculator';
+import { track } from '@/lib/analytics';
 
 function getTodayStr(): string {
   const d = new Date();
@@ -40,6 +41,8 @@ export default function HuangliPage() {
     if (!date) return;
     setLoading(true);
     setError('');
+    const startTime = Date.now();
+    track('huangli_view', { tool: 'huangli' });
     try {
       const res = await fetch(`/api/huangli?date=${date}`);
       if (!res.ok) {
@@ -48,7 +51,9 @@ export default function HuangliPage() {
       }
       const result = await res.json();
       setData(result);
+      track('tool_ai_complete', { tool: 'huangli', duration_ms: Date.now() - startTime });
     } catch (err) {
+      track('tool_ai_error', { tool: 'huangli', error_type: 'api_error' });
       setError(err instanceof Error ? err.message : '网络连接不稳定，请稍后重试');
     } finally {
       setLoading(false);

@@ -8,6 +8,7 @@ import { X } from 'lucide-react'
 import { GoogleLoginButton } from './GoogleLoginButton'
 import { EmailLoginForm } from './EmailLoginForm'
 import { ForgotPasswordModal } from './ForgotPasswordModal'
+import { track } from '@/lib/analytics'
 
 interface AuthModalProps {
   isOpen: boolean
@@ -39,6 +40,10 @@ export function AuthModal({ isOpen, onClose, callbackUrl = '/bazi' }: AuthModalP
     }
   }, [isOpen])
 
+  useEffect(() => {
+    if (isOpen) track('login_modal_open', { trigger: 'modal_open' })
+  }, [isOpen])
+
   const handleClose = useCallback(() => {
     setVisible(false)
     setTimeout(onClose, 200)
@@ -60,6 +65,7 @@ export function AuthModal({ isOpen, onClose, callbackUrl = '/bazi' }: AuthModalP
     }
     setGoogleLoading(true)
     setServerError('')
+    track('login', { method: 'google' })
     await signIn('google', { callbackUrl })
   }
 
@@ -85,6 +91,7 @@ export function AuthModal({ isOpen, onClose, callbackUrl = '/bazi' }: AuthModalP
           setServerError(result.error)
           setLoading(false)
         } else {
+          track('login', { method: 'email' })
           handleClose()
           router.push(callbackUrl)
           router.refresh()
@@ -102,6 +109,7 @@ export function AuthModal({ isOpen, onClose, callbackUrl = '/bazi' }: AuthModalP
             password,
           })
           if (!result?.error) {
+            track('sign_up', { method: 'email' })
             handleClose()
             router.push(callbackUrl)
             router.refresh()

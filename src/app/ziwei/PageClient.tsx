@@ -19,6 +19,7 @@ import {
   SHICHEN_OPTIONS,
 } from '@/components/ziwei';
 import type { PalaceData, CenterUserInfo } from '@/components/ziwei';
+import { track } from '@/lib/analytics';
 
 const _loadingSpinner = () => (
   <div className="flex justify-center py-8">
@@ -258,6 +259,8 @@ export default function ZiweiPage() {
     setLoading(true);
     setError(null);
     setGridAnimated(false);
+    const startTime = Date.now();
+    track('tool_ai_trigger', { tool: 'ziwei' });
 
     try {
       const res = await fetch('/api/ziwei', {
@@ -301,6 +304,7 @@ export default function ZiweiPage() {
       });
 
       setTimeout(() => setGridAnimated(true), 100);
+      track('tool_ai_complete', { tool: 'ziwei', duration_ms: Date.now() - startTime });
     } catch (err) {
       const cached = loadCachedResult();
       if (cached) {
@@ -308,9 +312,11 @@ export default function ZiweiPage() {
         if (cached.meta) setChartMeta(cached.meta);
         setShowChart(true);
         setSelectedPalaceIndex(0);
+        track('tool_ai_error', { tool: 'ziwei', error_type: 'api_error' });
         setError('网络异常，已显示上次缓存的结果');
         setTimeout(() => setGridAnimated(true), 100);
       } else {
+        track('tool_ai_error', { tool: 'ziwei', error_type: 'api_error' });
         setError(err instanceof Error ? err.message : '排盘失败，请检查网络后重试');
       }
     } finally {

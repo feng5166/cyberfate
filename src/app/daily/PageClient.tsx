@@ -19,6 +19,7 @@ import TimelineSection from '@/components/daily/TimelineSection';
 import DailyDetailAnalysis from '@/components/daily/DailyDetailAnalysis';
 import DailyFortuneQA from '@/components/daily/DailyFortuneQA';
 import html2canvas from 'html2canvas';
+import { track } from '@/lib/analytics';
 
 // 十二时辰选项
 const shichenOptions = [
@@ -506,6 +507,8 @@ export default function DailyPage() {
     if (!formData.birthDate) { setError('请选择出生日期'); return; }
     if (!formData.birthHour) { setError('请选择出生时辰'); return; }
     setLoading(true);
+    const startTime = Date.now();
+    track('tool_ai_trigger', { tool: 'daily' });
     try {
       const response = await fetch('/api/daily', {
         method: 'POST',
@@ -514,8 +517,11 @@ export default function DailyPage() {
       });
       if (!response.ok) throw new Error('获取运势失败');
       setResult(await response.json());
+      track('tool_ai_complete', { tool: 'daily', duration_ms: Date.now() - startTime });
+      track('daily_fortune_view', { tool: 'daily' });
       saveBirthInfo(formData);
     } catch (err) {
+      track('tool_ai_error', { tool: 'daily', error_type: 'api_error' });
       setError(err instanceof Error ? err.message : '未知错误');
     } finally {
       setLoading(false);

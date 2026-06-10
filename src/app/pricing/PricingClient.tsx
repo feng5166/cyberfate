@@ -8,6 +8,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import { PricingCardList } from '@/components/pricing/PricingCardList';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { type PlanId, isValidPlanId, PLAN_NAME_TO_ID, getDefaultPlanId, PRICING_CONFIG } from '@/lib/pricing-config';
+import { track } from '@/lib/analytics';
 
 const defaultPlanId = getDefaultPlanId();
 const defaultPlanConfig = PRICING_CONFIG[defaultPlanId];
@@ -39,6 +40,10 @@ export default function PricingClient({ currentPlan }: PricingClientProps) {
   const [selectedPlan, setSelectedPlan] = useState(isSubscribed ? '' : defaultPlanId);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
 
+  useEffect(() => {
+    track('pricing_page_view', { source: document.referrer || 'direct' });
+  }, []);
+
   const redirectToCheckout = useCallback(async (planName: string) => {
     const planId = PLAN_NAME_TO_ID[planName] || planName as PlanId;
     if (!isValidPlanId(planId)) return;
@@ -57,6 +62,9 @@ export default function PricingClient({ currentPlan }: PricingClientProps) {
         alert(errorMsg);
         return;
       }
+      const planConfig = PRICING_CONFIG[planId];
+      const planPrice = planConfig?.displayPrice ? parseFloat(String(planConfig.displayPrice)) : 0;
+      track('payment_start', { plan: planName, price: planPrice });
       window.location.href = data.checkout_url;
     } catch (error) {
       console.error('Checkout network error:', error);
@@ -68,6 +76,7 @@ export default function PricingClient({ currentPlan }: PricingClientProps) {
   }, []);
 
   const handleCTAClick = (planName: string, price: string) => {
+    track('upgrade_plan_select', { plan: planName });
     if (!session) {
       setPendingPlan({ planName, price });
       setAuthOpen(true);
