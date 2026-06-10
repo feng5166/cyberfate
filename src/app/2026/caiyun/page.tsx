@@ -1,0 +1,442 @@
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { Container } from '@/components/ui/Container';
+import { Card } from '@/components/ui/Card';
+import { Footer } from '@/components/layout/Footer';
+import { FaqJsonLd } from '@/components/seo/FaqJsonLd';
+
+export const dynamic = 'force-static';
+
+export const metadata: Metadata = {
+  title: '2026年财运最旺的生肖排行 | CyberFate — 丙午马年运势',
+  description:
+    '2026丙午马年，哪些生肖财运最旺？从命理角度解析12生肖2026年财运强弱排行，结合五行相生相克给出实用开运建议。',
+  keywords: [
+    '2026年财运',
+    '2026生肖财运',
+    '丙午年财运',
+    '马年财运',
+    '2026年最旺生肖',
+    '生肖财运排行',
+    '2026十二生肖运势',
+    '寅午戌三合',
+    '午未六合',
+    '财运开运',
+  ],
+  alternates: { canonical: 'https://www.cyberfate.me/2026/caiyun' },
+  openGraph: {
+    title: '2026年财运最旺的生肖排行 | CyberFate',
+    description:
+      '2026丙午马年，从五行命理角度解析12生肖财运强弱排行，给出实用开运建议。',
+    type: 'article',
+    url: 'https://www.cyberfate.me/2026/caiyun',
+  },
+  twitter: {
+    card: 'summary',
+    title: '2026年财运最旺的生肖排行 | CyberFate',
+    description: '2026丙午马年财运排行：羊、虎、蛇、兔、狗稳居前列。',
+  },
+};
+
+interface ZodiacFortune {
+  name: string;
+  emoji: string;
+  rank: number;
+  stars: number;
+  reason: string;
+  detail: string;
+  advice: string;
+}
+
+const zodiacs: ZodiacFortune[] = [
+  {
+    name: '生肖羊',
+    emoji: '🐏',
+    rank: 1,
+    stars: 5,
+    reason: '午未六合，财星入命',
+    detail:
+      '羊与马构成午未六合，2026年生肖羊与流年太岁形成最和谐的配置。未土中藏丁火、乙木、己土，与丙午年丁火当令完美呼应，财星活跃。投资机会增多，副业财源广开，尤其适合主动出击拓展商业关系。',
+    advice: '宜主动投资、扩展副业、发展人脉。忌冒进借贷。',
+  },
+  {
+    name: '生肖虎',
+    emoji: '🐯',
+    rank: 2,
+    stars: 5,
+    reason: '寅午戌三合火局，火生土利财',
+    detail:
+      '寅午戌三合火局在2026年因午火当令而完整成立，生肖虎得三合之利，气场极强。虎为木，木生火、火生土，财星层层流转。偏财运极佳，意外之财、投资回报、奖金分红都有机会。是2026年财运最值得期待的生肖之一。',
+    advice: '宜把握偏财机会、果断投资、积极理财。忌过度自信。',
+  },
+  {
+    name: '生肖蛇',
+    emoji: '🐍',
+    rank: 3,
+    stars: 4,
+    reason: '巳午同气，得天独厚',
+    detail:
+      '巳火与午火同气连枝，2026年生肖蛇与流年保持火势相助的格局。主动财运表现突出，靠自己的努力与判断获取收益。适合从事销售、谈判、项目主导等需要主动出击的工作。正财稳定增长，偏财亦有惊喜。',
+    advice: '宜主动谈判、推进合作、争取项目。忌被动等待。',
+  },
+  {
+    name: '生肖兔',
+    emoji: '🐰',
+    rank: 4,
+    stars: 4,
+    reason: '卯木生午火，木火通明',
+    detail:
+      '卯木生午火，木火通明的格局让生肖兔在2026年财路顺畅。木为生发之气，火为光明之象，象征着创意和才华能转化为实际收益。文创、教育、咨询、设计等行业的属兔人士，今年大有可为。',
+    advice: '宜发挥才华、做内容变现、签长期合约。忌短线投机。',
+  },
+  {
+    name: '生肖狗',
+    emoji: '🐶',
+    rank: 5,
+    stars: 4,
+    reason: '午戌半合火，贵人财运同步',
+    detail:
+      '午戌半合火局，生肖狗在2026年得贵人提携。戌土收纳火气，象征着财富的积累与稳固。贵人运与财运同步到来，往往因为一次相遇、一次推荐而打开新的财源。适合通过人际关系拓展事业版图。',
+    advice: '宜结交贵人、参加聚会、主动求助。忌闭门造车。',
+  },
+  {
+    name: '生肖马',
+    emoji: '🐴',
+    rank: 6,
+    stars: 3,
+    reason: '本命年伏吟，收入波动',
+    detail:
+      '2026年是马年生肖马的本命年，午午自刑伏吟，能量过旺反而带来波动。收入水平不会下降，但起伏较大，月度差异明显。适合稳定的工作和收入来源，不宜大举扩张或做高风险投资。佩戴红色饰物可化解伏吟之煞。',
+    advice: '宜守不宜博，稳定现有收入。忌创业、借贷、高风险投资。',
+  },
+  {
+    name: '生肖龙',
+    emoji: '🐲',
+    rank: 7,
+    stars: 3,
+    reason: '辰土厚实，火生土',
+    detail:
+      '辰土为湿土，能很好地承接午火的能量，火生土的格局让生肖龙2026年走稳健理财路线。不是大富大贵之年，但是财富稳步积累的好时机。适合配置稳健型资产，定投、储蓄、保险都是不错的选择。',
+    advice: '宜稳健理财、定投储蓄、配置保险。忌激进投资。',
+  },
+  {
+    name: '生肖牛',
+    emoji: '🐮',
+    rank: 8,
+    stars: 3,
+    reason: '丑土稳重，正财稳定',
+    detail:
+      '丑土厚重稳定，与午火无直接刑冲合害，生肖牛2026年财运平稳。正财表现稳定，工资、奖金按部就班。偏财机会一般，不必强求。适合在本职工作上深耕，提升专业能力，为来年布局。',
+    advice: '宜深耕主业、提升能力、稳健储蓄。忌频繁跳槽。',
+  },
+  {
+    name: '生肖猴',
+    emoji: '🐵',
+    rank: 9,
+    stars: 2,
+    reason: '申金被午火克制，财运起伏',
+    detail:
+      '午火克申金，生肖猴在2026年财运受压。原本聪明灵活的猴子，今年容易因冲动决策而损失。投资上忌冒险，工作上忌跳槽。建议保守过渡，等待明年丁未年金气回归。',
+    advice: '宜保守理财、控制支出、避免投机。忌冒险跳槽。',
+  },
+  {
+    name: '生肖鸡',
+    emoji: '🐔',
+    rank: 10,
+    stars: 2,
+    reason: '酉金火克，财运偏弱',
+    detail:
+      '午火克酉金，生肖鸡2026年财运偏弱。容易出现意料之外的支出，如医疗、维修、人情往来等。建议提前规划预算，做好风险准备。本职工作收入稳定即可，不宜大动作。',
+    advice: '宜守成、做预算、备应急金。忌冲动消费。',
+  },
+  {
+    name: '生肖猪',
+    emoji: '🐷',
+    rank: 11,
+    stars: 2,
+    reason: '亥午相害，财运损耗',
+    detail:
+      '亥水与午火形成"亥午害"，生肖猪2026年财运有损耗。容易因合作纠纷、合同问题、信任错位而损失财富。建议所有合作书面化，签合同要慎重。健康问题也可能间接影响财运。',
+    advice: '宜书面合作、谨慎签约、关注健康。忌口头承诺、轻信他人。',
+  },
+  {
+    name: '生肖鼠',
+    emoji: '🐭',
+    rank: 12,
+    stars: 1,
+    reason: '子午冲，财运压制最重',
+    detail:
+      '2026年子午相冲，生肖鼠是冲太岁的生肖，财运受压制最为明显。容易遇到大额意外支出、投资亏损、收入断档等情况。建议全年保守，不做重大财务决策，多做储蓄少做投资，等待2027年丁未年化解。',
+    advice: '宜全面保守、增加储蓄、化解冲煞。忌投资、跳槽、借贷。',
+  },
+];
+
+const top3 = zodiacs.slice(0, 3);
+
+const faqItems = [
+  {
+    question: '2026年哪个生肖财运最好？',
+    answer:
+      '2026丙午年，生肖羊（午未六合）和生肖虎（寅午戌三合火局）财运最为突出。羊与马形成最和谐的六合关系，财星活跃；虎得三合火局之力，偏财运极佳。其次是蛇、兔、狗，都因与午火形成相生或相合关系而财运亨通。',
+  },
+  {
+    question: '2026年鼠年生肖财运如何？',
+    answer:
+      '2026年子午相冲，生肖鼠是冲太岁的生肖，财运受压制最为明显。建议全年保守理财，避免大额投资和借贷，增加储蓄比例。可佩戴马形饰物或红色物品化解冲煞，等待2027年丁未年财运回升。',
+  },
+  {
+    question: '生肖运势和个人八字有什么关系？',
+    answer:
+      '生肖运势是基于出生年份地支的宏观参考，覆盖面广但不够精准。真正决定个人2026年运势的是完整八字（年月日时）的综合作用，特别是日主与流年丙午的关系。建议先看生肖大方向，再结合个人八字做精准分析。',
+  },
+  {
+    question: '本命年（生肖马）2026年财运到底怎么样？',
+    answer:
+      '本命年的马年生肖马面临"午午自刑伏吟"，能量过旺反而带来波动。收入水平不会下降，但月度起伏较大。建议稳定现有工作和收入来源，不宜大举扩张或做高风险投资，可佩戴红色饰物化煞。',
+  },
+];
+
+const faqJsonLd = faqItems.map((it) => ({ question: it.question, answer: it.answer }));
+
+const articleSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: '2026年财运最旺的生肖排行（丙午马年）',
+  description:
+    '2026丙午马年12生肖财运排行与命理深度解析，结合五行相生相克给出实用开运建议。',
+  author: { '@type': 'Organization', name: 'CyberFate' },
+  publisher: { '@type': 'Organization', name: 'CyberFate', url: 'https://www.cyberfate.me' },
+  datePublished: '2026-01-01',
+  dateModified: '2026-06-10',
+  inLanguage: 'zh-CN',
+  mainEntityOfPage: 'https://www.cyberfate.me/2026/caiyun',
+};
+
+function StarRating({ count }: { count: number }) {
+  return (
+    <span className="text-[#C8956C] tracking-wider" aria-label={`${count}星`}>
+      {'★'.repeat(count)}
+      <span className="text-[#1C1A16]/15">{'★'.repeat(5 - count)}</span>
+    </span>
+  );
+}
+
+export default function Page() {
+  return (
+    <div className="min-h-screen bg-[#FAF9F6] text-[#1C1A16] font-serif">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
+      <FaqJsonLd items={faqJsonLd} />
+
+      {/* Hero */}
+      <section className="pt-20 pb-10">
+        <Container>
+          <div className="max-w-3xl mx-auto text-center">
+            <p className="text-sm tracking-[0.3em] text-[#C8956C] mb-4">2026 · 丙午马年</p>
+            <h1 className="font-heading text-3xl sm:text-5xl text-[#1C1A16] mb-5 leading-tight">
+              2026年财运最旺的生肖排行
+            </h1>
+            <p className="text-base text-[#1C1A16]/75 leading-relaxed">
+              丙午马年，午火当令。从五行相生相克与地支刑冲合害的角度，解析12生肖在2026年的财运强弱，给出针对每个生肖的实用开运建议。
+            </p>
+          </div>
+        </Container>
+      </section>
+
+      {/* TOP 3 Cards */}
+      <section className="pb-12">
+        <Container>
+          <div className="text-center mb-8">
+            <p className="text-sm tracking-[0.2em] text-[#1C1A16]/60">TOP 3 · 财运三甲</p>
+            <h2 className="font-heading text-2xl text-[#1C1A16] mt-2">2026 财运最旺三大生肖</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {top3.map((z) => (
+              <Card
+                key={z.name}
+                hover={false}
+                className="relative overflow-hidden border-2 border-[#C8956C]/40 bg-gradient-to-br from-[#FFF6EC] via-[#FBE8D1] to-[#F5D6B0]"
+              >
+                <div className="absolute top-3 right-4 text-[#C8956C]/30 font-heading text-7xl leading-none select-none">
+                  {z.rank}
+                </div>
+                <div className="relative">
+                  <div className="text-5xl mb-3">{z.emoji}</div>
+                  <h3 className="font-heading text-2xl text-[#1C1A16] mb-1">{z.name}</h3>
+                  <div className="mb-3 text-base">
+                    <StarRating count={z.stars} />
+                  </div>
+                  <p className="font-heading text-base text-[#8B5A2B] mb-3">{z.reason}</p>
+                  <p className="text-sm text-[#1C1A16]/75 leading-relaxed">{z.detail}</p>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </Container>
+      </section>
+
+      {/* 12 zodiac table */}
+      <section className="pb-16">
+        <Container>
+          <div className="text-center mb-8">
+            <p className="text-sm tracking-[0.2em] text-[#1C1A16]/60">RANKING · 完整排行</p>
+            <h2 className="font-heading text-2xl text-[#1C1A16] mt-2">12生肖 2026 财运概览</h2>
+          </div>
+          <Card hover={false} className="bg-white/95 p-0 overflow-hidden">
+            <div className="divide-y divide-[#1C1A16]/8">
+              {zodiacs.map((z) => (
+                <div
+                  key={z.name}
+                  className="grid grid-cols-12 items-center gap-4 px-5 py-4 hover:bg-[#FAF6EE] transition-colors"
+                >
+                  <div className="col-span-1 text-xl text-[#1C1A16]/40 font-heading">{z.rank}</div>
+                  <div className="col-span-3 sm:col-span-2 flex items-center gap-2">
+                    <span className="text-2xl">{z.emoji}</span>
+                    <span className="font-heading text-base">{z.name}</span>
+                  </div>
+                  <div className="col-span-3 sm:col-span-2 text-sm">
+                    <StarRating count={z.stars} />
+                  </div>
+                  <div className="col-span-12 sm:col-span-7 text-sm text-[#1C1A16]/75 leading-relaxed">
+                    <span className="text-[#8B5A2B] font-medium">{z.reason}</span>
+                    <span className="text-[#1C1A16]/40"> — </span>
+                    <span>{z.advice}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </Container>
+      </section>
+
+      {/* 命理深度分析 */}
+      <section className="pb-16">
+        <Container>
+          <div className="max-w-3xl mx-auto space-y-10">
+            <div>
+              <h2 className="font-heading text-2xl sm:text-3xl text-[#1C1A16] mb-4">
+                2026 年为什么是这些生肖财运旺？
+              </h2>
+              <div className="space-y-4 text-[#1C1A16]/80 leading-relaxed">
+                <p>
+                  2026 年的天干为"丙"，地支为"午"，组合为"丙午"。丙为太阳之火，午为正午之火，
+                  天干地支同属火行，构成"火气当令"的强势格局。这一年的财运分布，本质上取决于每个生肖的本命地支与
+                  "午"火之间的关系——是相生、相合、相冲、相害，还是相刑。
+                </p>
+                <p>
+                  在十二地支中，"午"与"未"形成<span className="text-[#8B5A2B] font-medium">六合</span>
+                  ，与"寅、戌"形成<span className="text-[#8B5A2B] font-medium">三合火局</span>
+                  ，与"巳"同为火气，与"卯"形成"卯木生午火"的相生关系，与"戌"还有半合关系。这五种关系都是有利的财运配置。
+                </p>
+                <p>
+                  反之，"午"与"子"<span className="text-[#8B5A2B] font-medium">相冲</span>
+                  ，与"亥"形成"<span className="text-[#8B5A2B] font-medium">亥午害</span>"，与"申、酉"金被火克。
+                  这些不利配置的生肖，在2026年需要更加谨慎，做好风险防御。
+                </p>
+                <p>
+                  而生肖马自身遇到马年，构成"<span className="text-[#8B5A2B] font-medium">午午自刑伏吟</span>"，
+                  能量过载反而带来波动，是典型的"本命年"现象。需要通过红色饰物、太岁符等方式调节。
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <h2 className="font-heading text-2xl sm:text-3xl text-[#1C1A16] mb-4">
+                各生肖财运详解
+              </h2>
+              <div className="space-y-6">
+                {zodiacs.map((z) => (
+                  <div key={z.name} className="border-l-2 border-[#C8956C]/40 pl-5">
+                    <h3 className="font-heading text-xl text-[#1C1A16] mb-2 flex items-center gap-3">
+                      <span className="text-2xl">{z.emoji}</span>
+                      <span>{z.name}</span>
+                      <span className="text-base"><StarRating count={z.stars} /></span>
+                    </h3>
+                    <p className="text-sm text-[#1C1A16]/75 leading-relaxed mb-2">{z.detail}</p>
+                    <p className="text-xs text-[#8B5A2B]">建议：{z.advice}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </Container>
+      </section>
+
+      {/* 相关页面 */}
+      <section className="pb-12">
+        <Container>
+          <div className="max-w-3xl mx-auto">
+            <Card hover={false} className="bg-white/90">
+              <h3 className="font-heading text-xl text-[#1C1A16] mb-4">查看其他维度的2026年生肖运势</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+                <Link
+                  href="/2026/shiyeyun"
+                  className="border border-[#1C1A16]/10 rounded-lg p-4 hover:border-[#C8956C] transition-colors"
+                >
+                  <div className="font-heading text-base mb-1">事业运排行 →</div>
+                  <div className="text-[#1C1A16]/60 text-xs">2026 哪些生肖事业上升最快</div>
+                </Link>
+                <Link
+                  href="/2026/aiqingyun"
+                  className="border border-[#1C1A16]/10 rounded-lg p-4 hover:border-[#C8956C] transition-colors"
+                >
+                  <div className="font-heading text-base mb-1">爱情运排行 →</div>
+                  <div className="text-[#1C1A16]/60 text-xs">2026 桃花最旺的生肖</div>
+                </Link>
+                <Link
+                  href="/2026"
+                  className="border border-[#1C1A16]/10 rounded-lg p-4 hover:border-[#C8956C] transition-colors"
+                >
+                  <div className="font-heading text-base mb-1">2026 总览 →</div>
+                  <div className="text-[#1C1A16]/60 text-xs">完整的丙午马年运势导航</div>
+                </Link>
+              </div>
+            </Card>
+          </div>
+        </Container>
+      </section>
+
+      {/* CTA */}
+      <section className="pb-20">
+        <Container>
+          <Card
+            hover={false}
+            className="bg-gradient-to-br from-[#1C1A16] to-[#3A2F23] text-white border-0 shadow-xl text-center max-w-3xl mx-auto"
+          >
+            <h3 className="font-heading text-2xl sm:text-3xl mb-3">想要更精准的2026年个人运势？</h3>
+            <p className="text-sm text-white/75 mb-6 leading-relaxed">
+              生肖只是地支之一。完整的八字（年月日时）才能精准定位你2026年的财、官、印、食的具体走势。
+            </p>
+            <Link
+              href="/bazi"
+              className="inline-block bg-[#C8956C] hover:bg-[#B5825B] text-white px-8 py-3 rounded-full font-heading transition-colors"
+            >
+              免费做八字详细分析 →
+            </Link>
+          </Card>
+        </Container>
+      </section>
+
+      {/* FAQ */}
+      <section className="pb-20">
+        <Container>
+          <div className="max-w-3xl mx-auto">
+            <h2 className="font-heading text-2xl text-[#1C1A16] mb-6 text-center">常见问题</h2>
+            <div className="space-y-4">
+              {faqItems.map((it) => (
+                <Card key={it.question} hover={false} className="bg-white/90">
+                  <h3 className="font-heading text-base text-[#1C1A16] mb-2">{it.question}</h3>
+                  <p className="text-sm text-[#1C1A16]/70 leading-relaxed">{it.answer}</p>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </Container>
+      </section>
+
+      <Footer />
+    </div>
+  );
+}

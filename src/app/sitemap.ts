@@ -24,6 +24,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/pricing`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.7 },
     { url: `${baseUrl}/knowledge`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.8 },
     { url: `${baseUrl}/about`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.5 },
+    { url: `${baseUrl}/2026`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.9 },
+    { url: `${baseUrl}/2026/caiyun`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.85 },
+    { url: `${baseUrl}/2026/shiyeyun`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.85 },
+    { url: `${baseUrl}/2026/aiqingyun`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.85 },
     ...knowledgeArticles,
   ];
 }
