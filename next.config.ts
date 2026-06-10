@@ -69,11 +69,11 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.stripe.com https://js.stripe.com",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.stripe.com https://js.stripe.com https://www.googletagmanager.com https://www.google-analytics.com https://app.posthog.com https://us-assets.i.posthog.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com",
       "font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com data:",
       "img-src 'self' data: blob: https:",
-      "connect-src 'self' https://api.stripe.com https://api.modelverse.cn https://open.feishu.cn https://*.upstash.io",
+      "connect-src 'self' https://api.stripe.com https://api.modelverse.cn https://open.feishu.cn https://*.upstash.io https://www.google-analytics.com https://analytics.google.com https://app.posthog.com https://us.i.posthog.com https://eu.i.posthog.com",
       "frame-src https://checkout.stripe.com https://js.stripe.com",
       "frame-ancestors 'self' https://checkout.stripe.com https://js.stripe.com",
     ].join("; "),
