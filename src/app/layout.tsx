@@ -6,6 +6,7 @@ import { AuthProvider } from "@/stores/authStore";
 import { LayoutWrapper } from "@/components/layout/LayoutWrapper";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
+import { PostHogProvider } from "@/components/analytics/PostHogProvider";
 
 const notoSerifSC = Noto_Serif_SC({
   weight: ["400", "600", "700"],
@@ -103,13 +104,15 @@ export default function RootLayout({
           跳到主要内容
         </a>
         <JsonLd />
-        <SessionProvider>
-          <AuthProvider>
-            <LayoutWrapper>
-              {children}
-            </LayoutWrapper>
-          </AuthProvider>
-        </SessionProvider>
+        <PostHogProvider>
+          <SessionProvider>
+            <AuthProvider>
+              <LayoutWrapper>
+                {children}
+              </LayoutWrapper>
+            </AuthProvider>
+          </SessionProvider>
+        </PostHogProvider>
         <InstallPrompt />
       </body>
     </html>

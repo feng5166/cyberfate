@@ -6,6 +6,7 @@ import { Share2, X } from 'lucide-react';
 import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { useState, useRef, useEffect } from 'react';
+import { track } from '@/lib/analytics';
 
 const SAMPLE_PROMPTS = [
   '创业还是留在大公司更适合我？',
@@ -205,6 +206,7 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
     setLoading(true);
     setError('');
     setStep('drawing');
+    track('tool_submit', { tool: 'tarot', spread: currentSpread });
 
     try {
       const res = await fetch('/api/tarot/draw-cards', {
@@ -251,6 +253,7 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
     setLoading(true);
     setError('');
     setStep('loading');
+    track('tool_result_view', { tool: 'tarot', spread: currentSpread });
     if (scrollToLoading) {
       setTimeout(() => {
         loadingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });

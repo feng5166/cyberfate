@@ -28,6 +28,7 @@ import { AuthModal } from '@/components/auth/AuthModal';
 import { UpgradeModal } from '@/components/pricing/UpgradeModal';
 import { Container } from '@/components/ui/Container';
 import { CitySearch } from '@/components/ui/CitySearch';
+import { track } from '@/lib/analytics';
 import { Tag } from '@/components/ui/Tag';
 import { Footer } from '@/components/layout/Footer';
 import { AiDisclaimer } from '@/components/ui/AiDisclaimer';
@@ -811,6 +812,7 @@ function BaziPageContent() {
     }
 
     setLoading(true);
+    track('tool_submit', { tool: 'bazi' });
     saveBirthInfo({
       birthDate: formData.birthDate,
       birthHour: formData.birthHour,
@@ -867,6 +869,7 @@ function BaziPageContent() {
       }
 
       setResult(data);
+      track('tool_result_view', { tool: 'bazi' });
 
       // 自动保存到历史记录
       try {

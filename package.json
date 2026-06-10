@@ -27,6 +27,7 @@
     "lunar-javascript": "^1.7.7",
     "next": "16.1.6",
     "next-auth": "^4.24.13",
+    "posthog-js": "^1.384.1",
     "prisma": "^5.22.0",
     "qrcode": "^1.5.4",
     "react": "19.2.3",

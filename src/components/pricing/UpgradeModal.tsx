@@ -7,6 +7,7 @@ import { X } from 'lucide-react';
 import { PricingCardList } from './PricingCardList';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { type PlanId, PLAN_NAME_TO_ID, PRICING_CONFIG, getDefaultPlanId, isValidPlanId } from '@/lib/pricing-config';
+import { track } from '@/lib/analytics';
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -29,6 +30,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
     if (shouldShow) {
       requestAnimationFrame(() => setVisible(true));
       document.body.style.overflow = 'hidden';
+      track('upgrade_modal_open', { source: 'mask' });
     } else {
       setVisible(false);
       document.body.style.overflow = '';
@@ -91,6 +93,8 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
   if (!shouldShow) return null;
 
   const handleCTAClick = (planName: string, price: string) => {
+    const planId = PLAN_NAME_TO_ID[planName] || (isValidPlanId(planName as PlanId) ? planName as PlanId : planName);
+    track('upgrade_click', { plan: planId, price });
     if (!session) {
       setPendingPlan({ planName, price });
       setAuthOpen(true);
