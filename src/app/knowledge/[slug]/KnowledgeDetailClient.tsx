@@ -122,19 +122,19 @@ export function KnowledgeDetailClient({
               </div>
 
               {/* CTA 卡片 */}
-              <div className="mt-12 p-6 md:p-8 rounded-2xl bg-gradient-to-br from-[#1C1A16] to-[#2C2924] text-white">
+              <div className="mt-12 p-6 md:p-8 rounded-2xl bg-gradient-to-br from-[#F5EFE6] to-[#EDE3D5] border border-[#C8956C]/20">
                 <div className="flex items-start gap-4">
-                  <span className="text-3xl">✨</span>
+                  <span className="text-3xl">✦</span>
                   <div className="flex-1">
-                    <h3 className="font-serif text-lg font-semibold mb-2">
+                    <h3 className="font-serif text-lg font-semibold mb-2 text-[#1C1A16]">
                       立即体验{article.title.includes('时') ? '相关功能' : article.title.replace('理论', '')}
                     </h3>
-                    <p className="text-white/80 text-sm leading-relaxed mb-4">
+                    <p className="text-[#1C1A16]/65 text-sm leading-relaxed mb-4">
                       {article.cta.text}
                     </p>
                     <Link
                       href={article.cta.href}
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-white text-[#1C1A16] rounded-lg font-medium text-sm hover:bg-white/90 transition-colors"
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-[#C8956C] text-white rounded-lg font-medium text-sm hover:bg-[#B07D58] transition-colors"
                     >
                       {article.cta.btnText}
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
