@@ -569,7 +569,7 @@ export default function MeihuaPage() {
                 </div>
               )}
 
-              <div className="mt-6">
+              <div className="mt-6 flex justify-center">
                 {decisionLoading && !decision ? (
                   <div className="flex justify-center py-4">
                     <OracleLoading />
@@ -577,7 +577,7 @@ export default function MeihuaPage() {
                 ) : result && !decision && !decisionLoading ? (
                   <button
                     onClick={triggerDecide}
-                    className="w-full rounded-xl bg-[#1C1A16] py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#1C1A16]/85"
+                    className="rounded-xl bg-[#1C1A16] px-8 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#1C1A16]/85"
                   >
                     分析卦象含义
                   </button>
