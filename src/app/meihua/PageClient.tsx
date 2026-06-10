@@ -183,6 +183,45 @@ export default function MeihuaPage() {
   const [result, setResult] = useState<MeihuaDrawResult | null>(null);
   const [decision, setDecision] = useState<MeihuaDecisionResult | null>(null);
   const [expandedFaqIndex, setExpandedFaqIndex] = useState<number | null>(0);
+  const [showRuleModal, setShowRuleModal] = useState(false);
+
+  const RULE_CONTENT: Record<Method, { title: string; rules: string[] }> = {
+    time: {
+      title: '时间起卦规则',
+      rules: [
+        '根据起卦时刻的年、月、日、时推算卦象',
+        '年月日之和取余8得上卦，加时支数取余8得下卦',
+        '年月日时之和取余6得动爻',
+        '系统自动获取当前时间，无需手动输入',
+      ],
+    },
+    number: {
+      title: '数字起卦规则',
+      rules: [
+        '输入两个有意义的数字（如门牌号、电话尾号等）',
+        '第一个数字取余8得上卦，第二个数字取余8得下卦',
+        '两数之和取余6得动爻',
+        '数字应与问题有一定关联，增强占卜准确性',
+      ],
+    },
+    random: {
+      title: '随机数起卦规则',
+      rules: [
+        '系统在起卦瞬间自动生成随机数推算卦象',
+        '随机数取余8分别得上卦、下卦',
+        '随机数之和取余6得动爻',
+        '心诚则灵，起卦前请默念您的问题',
+      ],
+    },
+    manual: {
+      title: '手动起卦规则',
+      rules: [
+        '手动起卦功能即将上线',
+        '届时可自行输入上卦、下卦及动爻',
+        '适合有一定梅花易数基础的用户',
+      ],
+    },
+  };
 
   const isQuestionMode = Boolean(question.trim());
 
@@ -461,7 +500,12 @@ export default function MeihuaPage() {
               </div>
               <div className="mt-2 flex items-center gap-1 text-xs text-[#1C1A16]/45">
                 <Info className="h-3 w-3" />
-                <span className="cursor-pointer hover:text-[#1C1A16]/70">查看起卦规则</span>
+                <span
+                  className="cursor-pointer hover:text-[#1C1A16]/70"
+                  onClick={() => setShowRuleModal(true)}
+                >
+                  查看起卦规则
+                </span>
               </div>
             </div>
 
@@ -723,6 +767,38 @@ export default function MeihuaPage() {
       </main>
 
       <Footer />
+
+      {showRuleModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+          onClick={() => setShowRuleModal(false)}
+        >
+          <div
+            className="mx-4 w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="font-display text-lg font-semibold text-[#1C1A16]">
+                {RULE_CONTENT[method].title}
+              </h3>
+              <button
+                onClick={() => setShowRuleModal(false)}
+                className="text-[#1C1A16]/40 hover:text-[#1C1A16]/70"
+              >
+                ✕
+              </button>
+            </div>
+            <ul className="space-y-3">
+              {RULE_CONTENT[method].rules.map((rule, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm text-[#1C1A16]/70">
+                  <span className="mt-0.5 text-[#1C1A16]/30">•</span>
+                  <span>{rule}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
