@@ -199,6 +199,7 @@ export default async function KnowledgeDetailPage({
       {/* ====== 双栏布局（含交互的部分用 Client Component） ====== */}
       <KnowledgeDetailClient
         article={article}
+        slug={slug}
         toc={toc}
         relatedArticles={relatedArticles}
       />

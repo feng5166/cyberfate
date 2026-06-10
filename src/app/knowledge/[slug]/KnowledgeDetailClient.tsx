@@ -5,6 +5,25 @@ import DOMPurify from 'dompurify';
 import { knowledgeData } from '@/data/knowledge';
 import { Container } from '@/components/ui/Container';
 
+// 相关工具映射表
+const TOOL_INFO: Record<string, { name: string; desc: string; emoji: string; href: string }> = {
+  bazi:    { name: '八字分析', desc: '根据生辰时间推算命局、格局与大运', emoji: '☀️', href: '/bazi' },
+  tarot:   { name: '塔罗占卜', desc: '抽牌辞南 · 结合 AI 解读凯尔特布阵', emoji: '🃏', href: '/tarot' },
+  ziwei:   { name: '紫微斗数', desc: '星盘命盘相互参照，一生走势总览', emoji: '⭐', href: '/ziwei' },
+  meihua:  { name: '梅花易数', desc: '起卦时刻解占，即问即答', emoji: '🌸', href: '/meihua' },
+  liuyao:  { name: '六爻占卜', desc: '摇铜钱起卦，六爻分析五行生克', emoji: '☯️', href: '/liuyao' },
+  huangli: { name: '黄历查询', desc: '宜忌宜忌日期选择参考', emoji: '📅', href: '/huangli' },
+};
+
+// 根据文章 slug 返回推荐工具 key 列表
+function getRelatedTools(slug: string, category: string): string[] {
+  if (slug.startsWith('shengxiao-')) return ['bazi', 'ziwei', 'huangli'];
+  if (category === 'basic') return ['bazi', 'ziwei'];
+  if (category === 'advanced') return ['bazi', 'tarot', 'liuyao'];
+  if (slug === 'zhenyang' || slug === 'zaowan') return ['bazi'];
+  return ['bazi', 'ziwei', 'tarot'];
+}
+
 interface Article {
   title: string;
   emoji: string;
@@ -43,10 +62,12 @@ interface RelatedArticle {
 
 export function KnowledgeDetailClient({
   article,
+  slug,
   toc,
   relatedArticles,
 }: {
   article: Article;
+  slug: string;
   toc: TocItem[];
   relatedArticles: RelatedArticle[];
 }) {
@@ -120,6 +141,31 @@ export function KnowledgeDetailClient({
                   </section>
                 ))}
               </div>
+
+              {/* 相关工具内链 */}
+              {(() => {
+                const tools = getRelatedTools(slug, article.category).map(k => TOOL_INFO[k]).filter(Boolean);
+                return tools.length > 0 ? (
+                  <div className="mt-10 mb-2">
+                    <h2 className="font-serif text-lg font-semibold text-[#1C1A16] mb-4 tracking-wide">✦ 相关工具</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {tools.map((tool) => (
+                        <Link
+                          key={tool.href}
+                          href={tool.href}
+                          className="flex items-start gap-3 p-4 rounded-xl border border-[#1C1A16]/8 bg-white hover:border-[#C8956C]/40 hover:shadow-sm transition-all duration-200 group"
+                        >
+                          <span className="text-2xl mt-0.5">{tool.emoji}</span>
+                          <div>
+                            <div className="text-sm font-medium text-[#1C1A16] group-hover:text-[#C8956C] transition-colors">{tool.name}</div>
+                            <div className="text-xs text-[#1C1A16]/50 mt-0.5 leading-relaxed">{tool.desc}</div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                ) : null;
+              })()}
 
               {/* CTA 卡片 */}
               <div className="mt-12 p-6 md:p-8 rounded-2xl bg-gradient-to-br from-[#F5EFE6] to-[#EDE3D5] border border-[#C8956C]/20">
