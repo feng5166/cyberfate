@@ -68,7 +68,8 @@ export default async function KnowledgeDetailPage({
     inLanguage: 'zh-CN',
     author: {
       '@type': 'Organization',
-      name: 'CyberFate',
+      '@id': `${baseUrl}/#organization`,
+      name: 'CyberFate 命理研究组',
       url: baseUrl,
     },
     publisher: {
@@ -181,6 +182,16 @@ export default async function KnowledgeDetailPage({
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs bg-[#1C1A16]/5 text-[#1C1A16]/60">
               {article.categoryLabel}
             </span>
+          </div>
+          <div className="flex items-center gap-2 mt-4 pt-4 border-t border-[#1C1A16]/8">
+            <div className="w-7 h-7 rounded-full bg-[#C8956C]/15 flex items-center justify-center text-xs font-bold text-[#C8956C]">
+              CF
+            </div>
+            <div className="text-sm">
+              <span className="text-[#1C1A16]/80 font-medium">CyberFate 命理研究组</span>
+              <span className="text-[#1C1A16]/40 mx-2">·</span>
+              <span className="text-[#1C1A16]/50">融合传统命理典籍与现代 AI 分析，持续更新</span>
+            </div>
           </div>
         </div>
       </Container>
