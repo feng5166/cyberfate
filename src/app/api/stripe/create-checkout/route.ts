@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { listCustomers, createCustomer, createCheckoutSession } from '@/lib/stripe-direct';
 import { PRICING_CONFIG, isValidPlanId, type PlanId } from '@/lib/pricing-config';
+import { log } from '@/lib/logger';
 
 const PLAN_RANK: Record<PlanId, number> = {
   daily: 1,
@@ -81,7 +82,7 @@ export async function POST(req: NextRequest) {
       action = 'upgrade';
 
       // 安全日志：记录升级操作
-      console.log(`[Stripe Security] User ${user.id} upgrade ${currentPlan}→${plan}, serverAmount=${serverAmount}, clientProvided=${clientAmount ?? 'N/A'}`);
+      log({ service: 'stripe', level: 'info', message: 'upgrade security check', meta: { userId: user.id, currentPlan, targetPlan: plan, serverAmount, clientAmount: clientAmount ?? 'N/A' } });
     } else {
       // 新购：金额完全由服务端定价决定
       amount = planConfig.amount;

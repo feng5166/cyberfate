@@ -5,6 +5,7 @@ import { generateLiuYaoReading } from '@/lib/ai/client';
 import type { LiuYaoPromptInput } from '@/lib/ai/prompts';
 import { withCircuitBreaker } from '@/lib/ai/circuitBreaker';
 import { applyChaos } from '@/lib/chaos-middleware';
+import { log } from '@/lib/logger';
 import {
   identifyTrigrams,
   getHexagramName,
@@ -233,7 +234,7 @@ export async function POST(req: NextRequest) {
     reading = await withCircuitBreaker('deepseek-liuyao-v4pro', () =>
       generateLiuYaoReading(promptInput)
     );
-    console.log('[liuyao] AI reading success, _source:', reading._source);
+    log({ service: 'liuyao', level: 'info', message: 'AI reading success', meta: { source: reading._source } });
   } catch (err) {
     const errMsg = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
     console.error('[liuyao] AI reading failed, using fallback. error:', errMsg);

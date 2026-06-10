@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import crypto from 'crypto';
 import { authOptions } from '@/lib/auth';
+import { log } from '@/lib/logger';
 
 const VALID_TYPES = ['suggestion', 'bug', 'experience', 'other'] as const;
 type FeedbackType = (typeof VALID_TYPES)[number];
@@ -68,10 +69,8 @@ async function sendFeishuNotification(payload: {
   const userOpenId = process.env.FEISHU_USER_OPEN_ID;
 
   if (!appId || !appSecret || !userOpenId) {
-    // 未配置飞书时降级为 console.log
-    console.log('=== 📝 CyberFate 用户反馈（飞书未配置，降级输出） ===');
-    console.log(JSON.stringify(payload, null, 2));
-    console.log('=== 反馈结束 ===');
+    // 未配置飞书时降级输出
+    log({ service: 'feedback', level: 'info', message: '飞书未配置，降级输出反馈', meta: { payload } });
     return;
   }
 
@@ -222,14 +221,7 @@ export async function POST(req: NextRequest) {
       createdAt,
     };
 
-    console.log('[feedback] received:', {
-      id,
-      type,
-      length: content.length,
-      userEmail: userEmail || '(anon)',
-      ip,
-      pageUrl,
-    });
+    log({ service: 'feedback', level: 'info', message: 'feedback received', meta: { type: body.type, userId } });
 
     // 异步发送飞书通知（不阻塞响应）
     void sendFeishuNotification(record);

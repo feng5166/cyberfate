@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { isAdminEmail } from '@/lib/admin';
 import {
   calculateBazi,
   getCurrentDayun,
@@ -26,18 +27,12 @@ const requestSchema = z.object({
   targetDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 });
 
-function isAdmin(email?: string | null): boolean {
-  const adminEmail = process.env.ADMIN_EMAIL;
-  if (!adminEmail || !email) return false;
-  return email === adminEmail;
-}
-
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: '请先登录' }, { status: 401 });
   }
-  if (!isAdmin(session.user.email)) {
+  if (!isAdminEmail(session.user.email)) {
     return NextResponse.json({ error: '权限不足，仅管理员可访问' }, { status: 403 });
   }
 
