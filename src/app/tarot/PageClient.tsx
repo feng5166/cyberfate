@@ -1,21 +1,11 @@
 'use client';
 
-import dynamic from 'next/dynamic';
 import { Footer } from '@/components/layout/Footer';
 import { OracleLoading } from '@/components/ui/OracleLoading';
 import { Share2, X } from 'lucide-react';
 import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { useState, useRef, useEffect } from 'react';
-
-const CardDrawAnimation = dynamic(() => import('@/components/tarot/CardDrawAnimation').then(m => m.CardDrawAnimation), {
-  ssr: false,
-  loading: () => (
-    <div className="flex justify-center py-8">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
-    </div>
-  ),
-});
 
 const SAMPLE_PROMPTS = [
   '创业还是留在大公司更适合我？',
@@ -70,14 +60,6 @@ const MODES = [
   { id: 'relationship' as const, icon: '♡', name: '关系牌阵', desc: '5张牌·双方视角,适合感情与关系探索', tooltip: '从你和对方双视角解读关系现状与走向' },
 ];
 
-const SPREAD_TO_MODE: Record<TarotSpread, string> = {
-  three: '经典三张牌',
-  celtic: '凯尔特十字',
-  moonlight: '月光三张牌',
-  mirror: '镜像五张牌',
-  relationship: '关系牌阵',
-};
-
 type ModeId = (typeof MODES)[number]['id'];
 type Step = 'question' | 'drawing' | 'drawn' | 'loading' | 'result';
 
@@ -126,7 +108,7 @@ interface TarotDrawResult {
   _error?: string;
 }
 
-export default function TarotPage() {
+export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode }) {
   const { data: session, status: authStatus } = useSession();
   const [step, setStep] = useState<Step>('question');
   const loadingRef = useRef<HTMLDivElement>(null);
@@ -163,7 +145,6 @@ export default function TarotPage() {
   const [error, setError] = useState('');
   const [result, setResult] = useState<TarotDrawResult | null>(null);
   const [drawnCards, setDrawnCards] = useState<TarotCard[] | null>(null);
-  const [useLegacyDrawAnimation] = useState(false);
 
   const [celticModalIdx, setCelticModalIdx] = useState<number | null>(null);
 
@@ -478,10 +459,6 @@ export default function TarotPage() {
       </div>
     );
   };
-
-  const spreadTitle = result
-    ? SPREAD_TO_MODE[(result.spread as TarotSpread) || currentSpread] || '经典三张牌'
-    : '经典三张牌';
 
   return (
     <div className="relative min-h-screen bg-[#FAF9F6] text-[#1C1A16]">
@@ -804,137 +781,7 @@ export default function TarotPage() {
           )}
         </section>
 
-        <section className="mx-auto mt-12 max-w-5xl animate-fadeIn">
-          <div className="text-center mb-10">
-            <h2 className="font-display text-[28px] tracking-[0.06em] text-[#1C1A16]">AI 塔罗牌解析系统</h2>
-            <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-[#6B7280]">
-              CyberFate AI 塔罗牌占卜系统结合了传统塔罗牌智慧与尖端人工智能技术,通过78张牌的图像符号和 AI 精准分析来揭示人生的真相和智慧。我们的 AI 塔罗牌解读不仅融合了传统塔罗牌占卜技巧,还结合现代心理学理论,为您提供深入且实用的人生指引。
-            </p>
-          </div>
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-3 mb-4">
-            {[
-              {
-                icon: '✶',
-                title: 'AI 精准解读',
-                desc: '人工智能分析塔罗牌象征意义,提供精准个性化的解读,激发您的直觉洞察力',
-              },
-              {
-                icon: '⚡',
-                title: '即时占卜反馈',
-                desc: '无需等待,AI 系统即时生成专业塔罗牌解读,随时随地获取命运指引',
-              },
-              {
-                icon: '☆',
-                title: '专业塔罗智慧',
-                desc: '基于传统塔罗牌理论,结合 AI 分析能力,为您的人生关键决策提供深刻洞见',
-              },
-            ].map((item) => (
-              <div
-                key={item.title}
-                className="flex flex-col items-center text-center rounded-2xl border border-[#E5E0D8] bg-white p-8"
-              >
-                <div className="w-14 h-14 rounded-full bg-[#F5F2ED] flex items-center justify-center text-2xl mb-5 flex-shrink-0">
-                  {item.icon}
-                </div>
-                <h3 className="text-base font-semibold text-[#1C1A16] mb-3">{item.title}</h3>
-                <p className="text-sm leading-relaxed text-[#6B7280]">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="mx-auto mt-12 max-w-5xl animate-fadeIn">
-          <div className="text-center mb-10">
-            <h2 className="font-display text-[28px] tracking-[0.06em] text-[#1C1A16]">AI 塔罗牌占卜应用场景</h2>
-          </div>
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-            {[
-              {
-                title: '感情关系解析',
-                desc: 'AI 塔罗牌占卜能帮助您理解当前感情状况和潜在发展方向,洞察伴侣想法和关系中的隐藏问题,为您的情感决策提供指引。',
-              },
-              {
-                title: '事业发展预测',
-                desc: '通过 AI 塔罗牌占卜分析当前职业环境和未来机遇,识别潜在障碍和有利因素,帮助您在职业道路上做出明智选择。',
-              },
-              {
-                title: '重大决策指导',
-                desc: '面临人生十字路口时,AI 塔罗牌占卜可以为您提供多角度思考,展示不同选择可能带来的结果,帮助您权衡利弊。',
-              },
-              {
-                title: '自我成长探索',
-                desc: 'AI 塔罗牌占卜能揭示您内心深处的真实想法,帮助您认识自己的潜能和盲点,指引个人成长和自我实现的方向。',
-              },
-            ].map((item) => (
-              <div
-                key={item.title}
-                className="rounded-2xl border border-[#E5E0D8] bg-white p-8"
-              >
-                <h3 className="text-base font-semibold text-[#1C1A16] mb-3">{item.title}</h3>
-                <p className="text-sm leading-relaxed text-[#6B7280]">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="mx-auto mt-12 max-w-5xl animate-fadeIn">
-          <h2 className="font-display text-[28px] tracking-[0.06em] text-[#1C1A16] text-center mb-10">AI 塔罗牌占卜常见问题</h2>
-          <div className="space-y-4">
-            {[
-              {
-                q: 'AI 塔罗牌占卜与传统塔罗牌有何不同？',
-                a: 'AI 塔罗牌占卜结合了传统塔罗牌的象征体系和人工智能的分析能力，提供更客观、全面的解读。AI 能快速处理大量信息、找出牌阵中的关联和模式，同时保持塔罗牌的神秘性和直觉性。',
-              },
-              {
-                q: '如何提出有效的塔罗牌问题？',
-                a: '提出明确、具体但开放性的问题能获得更有价値的 AI 塔罗牌解读。避免简单的是非问题，更好的问法是“我如何能……”、“什么因素影响……”或“我需要了解什么关于……”这类引导深入思考的问题。',
-              },
-              {
-                q: 'AI 塔罗牌占卜的准确性如何？',
-                a: 'AI 塔罗牌占卜是一种引导性工具，其价値在于提供新的思考角度和个人反思的机会。我们的系统基于深度学习训练，能提供有深度的见解，但最终决策权和判断力仍在您手中。',
-              },
-            ].map((item) => (
-              <div key={item.q} className="rounded-2xl border border-[#E5E0D8] bg-white p-7">
-                <h3 className="flex items-center gap-2 text-[15px] font-semibold text-[#1C1A16] mb-3">
-                  <span className="text-[#6B7280] text-base">&#9432;</span>
-                  {item.q}
-                </h3>
-                <p className="text-sm leading-relaxed text-[#6B7280]">{item.a}</p>
-              </div>
-            ))}
-          </div>
-          <div className="mt-6 rounded-2xl border border-[#E5E0D8] bg-white/60 p-4 text-center text-xs text-[#9CA3AF]">
-            ⚠️ 免责声明:本站塔罗占卜内容仅供娱乐与自我探索参考,不构成医疗、法律或投资建议。请结合现实信息理性判断。
-          </div>
-        </section>
-
-        <section className="mx-auto mt-12 max-w-5xl animate-fadeIn">
-          <div className="rounded-2xl bg-[#FAF9F6] border border-[#E5E0D8] p-10 text-center md:p-16">
-            <h2 className="font-display text-[32px] tracking-[0.06em] text-[#1C1A16] leading-tight">
-              开启你的<br />AI 塔罗占卜之旅
-            </h2>
-            <p className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-[#6B7280]">
-              赛博命理师的 AI 塔罗系统融合了传统塔罗智慧与现代 AI 技术,为你提供更准确、更有深度的解读。无论你是塔罗新手还是资深爱好者,都能从中获得启发。
-            </p>
-            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <button
-                type="button"
-                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                className="rounded-xl bg-[#1C1A16] px-10 py-3.5 text-sm font-medium text-white transition-all hover:bg-[#2D2B26]"
-              >
-                开始 AI 塔罗占卜 →
-              </button>
-              <button
-                type="button"
-                onClick={() => { window.location.href = '/bazi'; }}
-                className="rounded-xl border border-[#E5E0D8] bg-white px-10 py-3.5 text-sm font-medium text-[#1C1A16] transition-all hover:bg-[#F5F2ED]"
-              >
-                八字分析 →
-              </button>
-            </div>
-            <p className="mt-4 text-xs text-[#9CA3AF]">免费体验,无需注册</p>
-          </div>
-        </section>
+        {seoContent}
       </main>
 
       <Footer />
