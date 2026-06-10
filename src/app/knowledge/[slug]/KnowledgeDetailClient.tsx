@@ -3,6 +3,13 @@
 import Link from 'next/link';
 import DOMPurify from 'dompurify';
 import { knowledgeData } from '@/data/knowledge';
+
+// SSR-safe sanitize: DOMPurify 只在客户端可用
+function safeSanitize(html: string, options?: Record<string, unknown>): string {
+  if (typeof window === 'undefined') return html;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (DOMPurify as any).sanitize(html, options) as string;
+}
 import { Container } from '@/components/ui/Container';
 
 // 相关工具映射表
@@ -121,7 +128,7 @@ export function KnowledgeDetailClient({
                     </h2>
                     {section.content && (
                       <p
-                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(section.content, { ALLOWED_TAGS: ['p','br','strong','em','b','i','u','a','ul','ol','li','h3','h4','span','div'], ALLOWED_ATTR: ['class','href','target','rel'] }) }}
+                        dangerouslySetInnerHTML={{ __html: safeSanitize(section.content, { ALLOWED_TAGS: ['p','br','strong','em','b','i','u','a','ul','ol','li','h3','h4','span','div'], ALLOWED_ATTR: ['class','href','target','rel'] }) }}
                         className="mb-4"
                       />
                     )}
@@ -132,7 +139,7 @@ export function KnowledgeDetailClient({
                             key={idx}
                             className="flex gap-3 text-[#1C1A16]/80"
                             dangerouslySetInnerHTML={{
-                              __html: DOMPurify.sanitize(`<span class="mt-2 min-w-[6px] h-[6px] rounded-full bg-[#1C1A16]/30 flex-shrink-0"></span><div>${item}</div>`, { ALLOWED_TAGS: ['p','br','strong','em','b','i','u','a','ul','ol','li','h3','h4','span','div'], ALLOWED_ATTR: ['class','href','target','rel'] }),
+                              __html: safeSanitize(`<span class="mt-2 min-w-[6px] h-[6px] rounded-full bg-[#1C1A16]/30 flex-shrink-0"></span><div>${item}</div>`, { ALLOWED_TAGS: ['p','br','strong','em','b','i','u','a','ul','ol','li','h3','h4','span','div'], ALLOWED_ATTR: ['class','href','target','rel'] }),
                             }}
                           />
                         ))}
