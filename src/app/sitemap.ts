@@ -1,8 +1,16 @@
 import { MetadataRoute } from "next";
+import { knowledgeData } from "@/data/knowledge";
 
 const baseUrl = "https://www.cyberfate.me";
 
 export default function sitemap(): MetadataRoute.Sitemap {
+  const knowledgeArticles: MetadataRoute.Sitemap = Object.keys(knowledgeData).map((slug) => ({
+    url: `${baseUrl}/knowledge/${slug}`,
+    lastModified: new Date(knowledgeData[slug].date),
+    changeFrequency: "monthly",
+    priority: 0.7,
+  }));
+
   return [
     { url: `${baseUrl}/`, lastModified: new Date(), changeFrequency: "weekly", priority: 1 },
     { url: `${baseUrl}/bazi`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.9 },
@@ -13,7 +21,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/meihua`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.8 },
     { url: `${baseUrl}/liuyao`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.8 },
     { url: `${baseUrl}/pricing`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.7 },
-    { url: `${baseUrl}/knowledge`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.6 },
+    { url: `${baseUrl}/knowledge`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.8 },
     { url: `${baseUrl}/about`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.5 },
+    ...knowledgeArticles,
   ];
 }
