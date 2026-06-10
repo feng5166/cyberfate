@@ -26,9 +26,6 @@ const cormorantGaramond = Cormorant_Garamond({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.cyberfate.me"),
-  alternates: {
-    canonical: "https://www.cyberfate.me",
-  },
   title: {
     default: "赛博命理师 CyberFate - AI 驱动的东方智慧",
     template: "%s | 赛博命理师",
