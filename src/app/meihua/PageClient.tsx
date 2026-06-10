@@ -7,6 +7,7 @@ import {
   Clock,
   Info,
   Loader2,
+  Send,
 } from 'lucide-react';
 import { useState } from 'react';
 import { OracleLoading } from '@/components/ui/OracleLoading';
@@ -182,6 +183,10 @@ export default function MeihuaPage() {
   const [error, setError] = useState('');
   const [result, setResult] = useState<MeihuaDrawResult | null>(null);
   const [decision, setDecision] = useState<MeihuaDecisionResult | null>(null);
+  const [qaInput, setQaInput] = useState('');
+  const [qaHistory, setQaHistory] = useState<Array<{ q: string; a: string }>>([]);
+  const [qaLoading, setQaLoading] = useState(false);
+  const [qaStreaming, setQaStreaming] = useState(false);
   const [expandedFaqIndex, setExpandedFaqIndex] = useState<number | null>(0);
   const [showRuleModal, setShowRuleModal] = useState(false);
 
@@ -376,6 +381,67 @@ export default function MeihuaPage() {
       if (decideMeta) setDecision({ ...decideMeta, overallAdvice: decideNarrative });
     } finally {
       setDecisionLoading(false);
+    }
+  };
+
+  const handleQaSubmit = async () => {
+    const q = qaInput.trim();
+    if (!q || qaLoading || !result) return;
+    setQaLoading(true);
+    setQaStreaming(true);
+    setQaHistory((prev) => [...prev, { q, a: '' }]);
+    setQaInput('');
+    try {
+      const res = await fetch('/api/meihua/qa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question: q,
+          hexagramContext: {
+            primaryGuaName: result.guaName,
+            changedGuaName: result.changedGuaName,
+            analysis: result.analysis,
+            originalQuestion: question.trim() || '（未填写具体问题）',
+            overallAdvice: decision?.overallAdvice,
+          },
+        }),
+      });
+      if (!res.ok || !res.body) {
+        let errMsg = '请求失败，请稍后重试。';
+        try { const d = await res.json(); if (d?.error) errMsg = d.error; } catch {}
+        setQaHistory((prev) => { const n=[...prev]; n[n.length-1]={...n[n.length-1],a:errMsg}; return n; });
+        return;
+      }
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+        for (const ln of lines) {
+          const t = ln.trim();
+          if (!t || !t.startsWith('data:')) continue;
+          const d = t.slice(5).trim();
+          if (d === '[DONE]') continue;
+          try {
+            const json = JSON.parse(d);
+            const delta = json.content;
+            if (typeof delta === 'string' && delta.length > 0) {
+              setQaHistory((prev) => {
+                const n = [...prev];
+                n[n.length-1] = { ...n[n.length-1], a: n[n.length-1].a + delta };
+                return n;
+              });
+            }
+          } catch {}
+        }
+      }
+    } finally {
+      setQaLoading(false);
+      setQaStreaming(false);
     }
   };
 
@@ -648,6 +714,63 @@ export default function MeihuaPage() {
                 </div>
               </>
             )}
+          </section>
+        )}
+
+        {result && (
+          <section className="mx-auto mt-6 max-w-2xl animate-fadeIn">
+            <div className="rounded-2xl border border-[#E5E0D8] bg-white p-6 md:p-8">
+              <h3 className="text-lg font-bold text-[#1C1A16] mb-1">梅花易数问答</h3>
+              <p className="text-sm text-[#1C1A16]/50 mb-4">针对卦象提出问题，获取详细解读</p>
+              <p className="text-sm text-[#1C1A16]/70 leading-relaxed mb-1">基于您的卦象解读，您可以就具体问题进行深入询问。</p>
+              <p className="text-sm text-[#1C1A16]/70 leading-relaxed mb-6">AI 将结合易经原理和您的具体情况，为您提供更详细的指导。</p>
+
+              {qaHistory.length === 0 && (
+                <>
+                  <p className="text-xs text-[#1C1A16]/45 mb-3">您可以询问以下方面的问题：</p>
+                  <div className="grid grid-cols-2 gap-2 mb-5">
+                    {['这个决策有什么风险？','现在执行会遇到什么阻碍？','应该如何应对当前局势？','什么时机最适合行动？','可能出现的结果是什么？','如何把握最佳时机？'].map((q) => (
+                      <button
+                        key={q}
+                        onClick={() => setQaInput(q)}
+                        className="flex items-center gap-1.5 rounded-xl border border-[#E5E0D8] px-3 py-2 text-left text-xs text-[#1C1A16]/65 hover:border-[#1C1A16]/30 hover:text-[#1C1A16]"
+                      >
+                        <Send size={10} className="shrink-0" /> {q}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {qaHistory.length > 0 && (
+                <div className="space-y-4 mb-5">
+                  {qaHistory.map((item, i) => (
+                    <div key={i}>
+                      <p className="text-sm font-medium text-[#1C1A16] mb-2">{item.q}</p>
+                      <p className="text-sm leading-relaxed text-[#1C1A16]/65 whitespace-pre-wrap">{item.a}{i === qaHistory.length - 1 && qaStreaming ? '▋' : ''}</p>
+                      {i < qaHistory.length - 1 && <div className="mt-4 border-t border-[#E5E0D8]" />}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <input
+                  value={qaInput}
+                  onChange={(e) => setQaInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && !qaLoading && handleQaSubmit()}
+                  placeholder="例如：这个决定有什么风险？"
+                  className="flex-1 rounded-xl border border-[#E5E0D8] px-4 py-2.5 text-sm outline-none focus:border-[#1C1A16]/40"
+                />
+                <button
+                  onClick={handleQaSubmit}
+                  disabled={!qaInput.trim() || qaLoading}
+                  className="flex items-center gap-1.5 rounded-xl bg-[#1C1A16] px-4 py-2.5 text-sm text-white disabled:opacity-50"
+                >
+                  <Send size={14} /> 提问
+                </button>
+              </div>
+            </div>
           </section>
         )}
 
