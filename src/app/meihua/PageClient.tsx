@@ -718,7 +718,7 @@ export default function MeihuaPage() {
         )}
 
         {result && (
-          <section className="mx-auto mt-6 max-w-2xl animate-fadeIn">
+          <section className="mx-auto mt-6 max-w-4xl animate-fadeIn">
             <div className="rounded-2xl border border-[#E5E0D8] bg-white p-6 md:p-8">
               <h3 className="text-lg font-bold text-[#1C1A16] mb-1">梅花易数问答</h3>
               <p className="text-sm text-[#1C1A16]/50 mb-4">针对卦象提出问题，获取详细解读</p>
