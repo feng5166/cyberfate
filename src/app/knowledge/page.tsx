@@ -5,6 +5,8 @@ import { Footer } from '@/components/layout/Footer';
 import { knowledgeList } from '@/data/knowledge';
 import { KnowledgeListClient } from './KnowledgeListClient';
 
+export const dynamic = 'force-static';
+
 export const metadata: Metadata = {
   title: '命理知识库 | 赛博命理师 CyberFate — 八字命理基础入门',
   description:

@@ -6,6 +6,8 @@ import { Container } from '@/components/ui/Container';
 import { Footer } from '@/components/layout/Footer';
 import { KnowledgeDetailClient } from './KnowledgeDetailClient';
 
+export const dynamic = 'force-static';
+
 // ============================================================
 // 静态参数生成
 // ============================================================
