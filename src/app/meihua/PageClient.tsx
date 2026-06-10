@@ -321,64 +321,7 @@ export default function MeihuaPage() {
       finalDraw.guaCi = finalDraw.guaCi || firstSentence(finalDraw.analysis);
       setResult(finalDraw);
 
-      if (isQuestionMode) {
-        setDecisionLoading(true);
-        try {
-          const decideRes = await fetch('/api/meihua/decide', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ question: question.trim(), draw: finalDraw }),
-          });
 
-          if (!decideRes.ok || !decideRes.body) {
-            let errMsg = '已完成起卦，AI 决策建议暂不可用。';
-            try {
-              const data = await decideRes.json();
-              if (data?.error) errMsg = data.error;
-            } catch {}
-            setError(errMsg);
-            return;
-          }
-
-          const decideReader = decideRes.body.getReader();
-          const decideDecoder = new TextDecoder();
-          let decideBuf = '';
-          let decideMeta: MeihuaDecisionResult | null = null;
-          let decideNarrative = '';
-
-          while (true) {
-            const { done, value } = await decideReader.read();
-            if (done) break;
-            decideBuf += decideDecoder.decode(value, { stream: true });
-            const lines = decideBuf.split('\n');
-            decideBuf = lines.pop() || '';
-            for (const line of lines) {
-              const trimmed = line.trim();
-              if (!trimmed || !trimmed.startsWith('data:')) continue;
-              const payload = trimmed.slice(5).trim();
-              if (payload === '[DONE]') continue;
-              try {
-                const json = JSON.parse(payload);
-                if (json.meta && !decideMeta) {
-                  decideMeta = json.meta as MeihuaDecisionResult;
-                  setDecision({ ...decideMeta, overallAdvice: '' });
-                } else if (json.content) {
-                  decideNarrative += json.content;
-                  if (decideMeta) {
-                    setDecision({ ...decideMeta, overallAdvice: decideNarrative });
-                  }
-                }
-              } catch {}
-            }
-          }
-
-          if (decideMeta) {
-            setDecision({ ...decideMeta, overallAdvice: decideNarrative });
-          }
-        } finally {
-          setDecisionLoading(false);
-        }
-      }
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : '起卦失败，请稍后重试。');
     } finally {
@@ -388,7 +331,7 @@ export default function MeihuaPage() {
   };
 
   const triggerDecide = async () => {
-    if (!result || !isQuestionMode) return;
+    if (!result) return;
     setDecisionLoading(true);
     try {
       const decideRes = await fetch('/api/meihua/decide', {
@@ -631,7 +574,7 @@ export default function MeihuaPage() {
                   <div className="flex justify-center py-4">
                     <OracleLoading />
                   </div>
-                ) : !decision && isQuestionMode ? (
+                ) : result && !decision && !decisionLoading ? (
                   <button
                     onClick={triggerDecide}
                     className="w-full rounded-xl bg-[#1C1A16] py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#1C1A16]/85"
