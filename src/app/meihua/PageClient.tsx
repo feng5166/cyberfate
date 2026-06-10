@@ -493,7 +493,7 @@ export default function MeihuaPage() {
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={loading || streaming || decisionLoading}
+              disabled={loading || streaming || decisionLoading || !question.trim()}
               className="mt-5 flex h-[44px] w-full items-center justify-center rounded-xl bg-gray-200 text-sm font-medium text-[#1C1A16] transition-all hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {loading || streaming || decisionLoading ? (
