@@ -2,6 +2,13 @@ import { CreditCard } from 'lucide-react';
 import { Container } from '@/components/ui/Container';
 import { Card } from '@/components/ui/Card';
 import { Footer } from '@/components/layout/Footer';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: '退款政策 | 赛博命理师 CyberFate',
+  description: 'CyberFate 赛博命理师会员退款政策，了解退款条件与申请流程。',
+  alternates: { canonical: 'https://www.cyberfate.me/refund' },
+};
 
 export default function RefundPage() {
   return (

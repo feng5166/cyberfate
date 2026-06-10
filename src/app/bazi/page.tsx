@@ -89,6 +89,22 @@ export default function BaziPage() {
             </div>
           ))}
         </dl>
+
+        <div className="mt-8 pt-6 border-t border-[#1C1A16]/8">
+          <p className="text-xs font-medium text-[#1C1A16]/50 mb-3">相关工具</p>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { name: '合婚测算', href: '/bazi/marriage' },
+              { name: '每日运势', href: '/daily' },
+              { name: '紫微斗数', href: '/ziwei' },
+              { name: '老黄历', href: '/huangli' },
+            ].map((t) => (
+              <a key={t.href} href={t.href} className="text-xs px-3 py-1.5 rounded-full border border-[#1C1A16]/15 text-[#1C1A16]/60 hover:text-[#1C1A16] hover:border-[#1C1A16]/30 transition-colors">
+                {t.name}
+              </a>
+            ))}
+          </div>
+        </div>
       </section>
     </>
   )

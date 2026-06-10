@@ -2,6 +2,14 @@ import { Sparkles, Shield, Compass, Activity } from 'lucide-react';
 import { Container } from '@/components/ui/Container';
 import { Card } from '@/components/ui/Card';
 import { Footer } from '@/components/layout/Footer';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: '关于我们 | 赛博命理师 CyberFate',
+  description: 'CyberFate 赛博命理师是一个融合东方命理智慧与现代 AI 技术的在线平台，致力于让八字、紫微斗数、塔罗等传统命理体系在现代语境中焕发新价值。',
+  alternates: { canonical: 'https://www.cyberfate.me/about' },
+  openGraph: { title: '关于我们 | 赛博命理师 CyberFate', type: 'website', url: 'https://www.cyberfate.me/about' },
+};
 
 const brandHighlights = [
   {

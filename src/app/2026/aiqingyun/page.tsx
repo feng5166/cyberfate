@@ -211,6 +211,14 @@ const articleSchema = {
   mainEntityOfPage: 'https://www.cyberfate.me/2026/aiqingyun',
 };
 
+const webPageSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: '2026年爱情运最旺的生肖排行',
+  description: '2026丙午马年12生肖爱情运排行，桃花运与婚恋运势命理解读。',
+  url: 'https://www.cyberfate.me/2026/aiqingyun',
+};
+
 function StarRating({ count }: { count: number }) {
   return (
     <span className="text-[#C8956C] tracking-wider" aria-label={`${count}星`}>
@@ -223,6 +231,10 @@ function StarRating({ count }: { count: number }) {
 export default function Page() {
   return (
     <div className="min-h-screen bg-[#FAF9F6] text-[#1C1A16] font-serif">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }}
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}

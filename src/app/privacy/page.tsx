@@ -2,6 +2,13 @@ import { Shield } from 'lucide-react';
 import { Container } from '@/components/ui/Container';
 import { Card } from '@/components/ui/Card';
 import { Footer } from '@/components/layout/Footer';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: '隐私政策 | 赛博命理师 CyberFate',
+  description: 'CyberFate 赛博命理师隐私政策，说明我们如何收集、使用和保护您的个人信息。',
+  alternates: { canonical: 'https://www.cyberfate.me/privacy' },
+};
 
 export default function PrivacyPage() {
   return (

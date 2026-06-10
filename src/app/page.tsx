@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -15,6 +16,32 @@ import {
   Star,
   Sun,
 } from 'lucide-react';
+
+export const metadata: Metadata = {
+  title: '赛博命理师 CyberFate — AI 驱动的东方命理智慧',
+  description: '免费在线命理分析平台，融合八字、紫微斗数、塔罗、六爻、梅花易数与现代 AI 技术。提供每日运势、生辰八字分析、合婚测算，科学理性的命理参考。',
+  keywords: ['AI命理', '八字分析', '紫微斗数', '塔罗占卜', '六爻', '梅花易数', '每日运势', '免费算命', '命理分析', 'CyberFate', '赛博命理师'],
+  alternates: { canonical: 'https://www.cyberfate.me' },
+  openGraph: {
+    title: '赛博命理师 CyberFate — AI 驱动的东方命理智慧',
+    description: '免费在线命理分析平台，融合八字、紫微斗数、塔罗、六爻、梅花易数与现代 AI 技术。',
+    type: 'website',
+    url: 'https://www.cyberfate.me',
+  },
+};
+
+const websiteSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: '赛博命理师 CyberFate',
+  url: 'https://www.cyberfate.me',
+  description: 'AI 驱动的东方命理智慧平台',
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: 'https://www.cyberfate.me/knowledge?q={search_term_string}',
+    'query-input': 'required name=search_term_string',
+  },
+};
 
 const corePrinciples = [
   {
@@ -130,6 +157,10 @@ const featureGroups = [
 export default function HomePage() {
   return (
     <div className="relative bg-[#FAF9F6] min-h-screen">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+      />
       <div
         className="pointer-events-none fixed inset-0 -z-10 opacity-[0.025]"
         aria-hidden="true"

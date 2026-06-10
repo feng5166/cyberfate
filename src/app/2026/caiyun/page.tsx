@@ -212,6 +212,14 @@ const articleSchema = {
   mainEntityOfPage: 'https://www.cyberfate.me/2026/caiyun',
 };
 
+const webPageSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: '2026年财运最旺的生肖排行',
+  description: '2026丙午马年12生肖财运排行与分析，从命理角度解读各生肖财运走势。',
+  url: 'https://www.cyberfate.me/2026/caiyun',
+};
+
 function StarRating({ count }: { count: number }) {
   return (
     <span className="text-[#C8956C] tracking-wider" aria-label={`${count}星`}>
@@ -224,6 +232,10 @@ function StarRating({ count }: { count: number }) {
 export default function Page() {
   return (
     <div className="min-h-screen bg-[#FAF9F6] text-[#1C1A16] font-serif">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }}
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}

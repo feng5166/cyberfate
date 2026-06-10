@@ -2,6 +2,13 @@ import { FileText } from 'lucide-react';
 import { Container } from '@/components/ui/Container';
 import { Card } from '@/components/ui/Card';
 import { Footer } from '@/components/layout/Footer';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: '用户协议 | 赛博命理师 CyberFate',
+  description: 'CyberFate 赛博命理师用户服务协议，使用本平台前请仔细阅读。',
+  alternates: { canonical: 'https://www.cyberfate.me/terms' },
+};
 
 export default function TermsPage() {
   return (
