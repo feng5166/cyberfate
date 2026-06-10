@@ -128,7 +128,7 @@ export async function POST(req: NextRequest) {
     }
 
     const decision = await withCircuitBreaker('deepseek-meihua-v4pro', () =>
-      withAiTimeout(() => generateMeihuaDecision(input), 15_000)
+      withAiTimeout(() => generateMeihuaDecision(input), 50_000)
     );
     await setCache(cacheKey, decision, 12 * 60 * 60);
 
