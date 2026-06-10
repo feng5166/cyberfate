@@ -547,7 +547,7 @@ export default function MeihuaPage() {
               type="button"
               onClick={handleSubmit}
               disabled={loading || streaming || decisionLoading || !question.trim()}
-              className="mt-5 flex h-[44px] w-full items-center justify-center rounded-xl bg-gray-200 text-sm font-medium text-[#1C1A16] transition-all hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-70"
+              className="mt-5 flex h-[44px] w-full items-center justify-center rounded-xl bg-[#1C1A16] text-sm font-medium text-white transition-all hover:bg-[#1C1A16]/85 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-[#1C1A16] disabled:opacity-70"
             >
               {loading || streaming || decisionLoading ? (
                 <>
