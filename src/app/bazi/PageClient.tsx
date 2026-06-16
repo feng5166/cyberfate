@@ -985,8 +985,8 @@ function BaziPageContent() {
 
       <Container>
         {result && !loading && basicInfoData && (
-          <div className="max-w-4xl mx-auto w-full">
-          <Card className={`${cardClass} p-0 mb-6 lg:mb-8`}>
+          <div className="max-w-4xl mx-auto w-full mb-6 lg:mb-8">
+          <Card className={`${cardClass} p-0`}>
             <BasicInfoCard
               baziText={basicInfoData.baziText}
               name={basicInfoData.name}
