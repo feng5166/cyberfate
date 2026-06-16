@@ -1005,6 +1005,7 @@ function BaziPageContent() {
         )}
         <form onSubmit={handleSubmit}>
         <div className="max-w-3xl mx-auto w-full flex flex-col pb-20 md:pb-26">
+          {(!result || loading) && (
           <div className="bazi-input-card w-full rounded-2xl bg-white shadow-none px-6 py-6 sm:px-8 sm:py-8 border border-[#1C1A16]/8 space-y-6">
           {/* 基本信息：姓名 + 性别 */}
           <div>
@@ -1176,6 +1177,7 @@ function BaziPageContent() {
                 {loading ? '正在计算...' : '开始解读'}
               </Button>
           </div>
+          )}
 
           <div className="w-full">
             {loading && (
