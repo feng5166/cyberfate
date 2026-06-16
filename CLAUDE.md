@@ -1,93 +1,73 @@
 # CyberFate 赛博命理师
 
-> AI 驱动的东方命理分析网站
+> AI 驱动的东方命理 + 占卜应用
 
 ## 项目状态
 
-🚀 **开发中** - M1 技术搭建阶段
+🟢 **已上线运营** — 9 大命理模块 + 订阅商业化闭环均已落地。
 
 ## 技术栈
 
 | 层级 | 技术 |
 |------|------|
-| 框架 | Next.js 14 (App Router) |
-| 语言 | TypeScript |
-| 样式 | Tailwind CSS + shadcn/ui |
-| 八字计算 | lunar-javascript |
-| AI | Claude 3.5 Sonnet (Vercel AI SDK) |
-| 部署 | Vercel |
+| 框架 | Next.js 16 (App Router) + React 19 |
+| 语言 | TypeScript(严格模式) |
+| 样式 | Tailwind CSS v4 |
+| 命理计算 | `lunar-javascript` + 自研 `src/lib/*` |
+| AI | **DeepSeek v4-pro**(主,经 ModelVerse 网关)+ DeepSeek-V3.2 兜底;Claude Sonnet 仅作为「每日深度分析」的异常兜底 |
+| 数据库 | PostgreSQL + Prisma(本地 SQLite `dev.db`) |
+| 缓存/限流 | Upstash Redis |
+| 认证 | NextAuth(JWT):邮箱密码 / Google / 微信 |
+| 支付 | Stripe(WeChat/Alipay 枚举占位,未启用) |
+| 部署 | Vercel · PWA |
 
-## 团队分工
+> ⚠️ 历史遗留:部分代码注释/函数名写"调用 Claude"(如 `callClaudeAPI`),实际请求 DeepSeek。真实主模型是 DeepSeek v4-pro。改动 AI 逻辑前先确认实际端点。
 
-### 主程：代码虾 🦐
+## 功能模块
 
-负责：整体架构、任务协调、核心功能
+八字 / 合婚 / 紫微斗数 / 六爻 / 梅花易数 / 黄历 / 塔罗 / 音乐运势签 / 每日运势;
+另有 2026 生肖运势、知识库、认证、个人中心、历史、定价支付、Admin 后台。
+详见 `docs/PRD-MODULES-DETAILED.md`。
 
-### 子代理 (`.claude/agents/`)
+## 商业化与配额
 
-| 代理 | 职责 | 模型 |
-|------|------|------|
-| `frontend-dev` | 前端开发 (页面/组件/样式) | Sonnet |
-| `backend-dev` | 后端开发 (API/业务逻辑) | Sonnet |
-| `bazi-engine` | 命理算法 (八字计算) | Sonnet |
-| `ai-integrator` | AI 集成 (Claude/Prompt) | Sonnet |
-| `test-engineer` | 测试 | Sonnet |
-| `code-reviewer` | 代码审查（只读） | Sonnet |
-| `explorer` | 代码探索（只读） | Haiku |
-
-## MVP 功能
-
-- ✅ 首页（功能导航）
-- ✅ 八字计算页
-- ✅ 每日运势页
-- ✅ 隐私政策/服务条款
+- 订阅三档:基础版 $9.99/天、专业版 $49/年、尊享版 $199/永久(`src/lib/pricing-config.ts`)。
+- 免费配额(`UsageQuota`,按北京时间日重置):八字 AI 1/日、塔罗单/三张各 1/日、每日深度分析 1/日;VIP 不限量。
+- 金额一律服务端按配置校验,不信任前端。
 
 ## 开发规范
 
 ### Git 提交格式
 ```
-feat: 新功能
-fix: 修复
-docs: 文档
-style: 样式
-refactor: 重构
-test: 测试
+feat: 新功能   fix: 修复   docs: 文档
+style: 样式    refactor: 重构   test: 测试
 ```
 
 ### 代码规范
-- TypeScript 严格模式
-- 优先 Server Components
-- 客户端组件加 'use client'
+- TypeScript 严格模式;优先 Server Components,客户端组件加 `'use client'`。
+- 命理排盘走本地确定性算法(`src/lib/<module>`);AI 解读统一经 `src/lib/ai` 模型层 + Redis 缓存 + 失败回退。
+- 配额修改走原子操作(`updateMany` 计数),防并发竞态。
 
 ## 目录结构
 
 ```
-cyberfate/
-├── src/
-│   ├── app/           # 页面路由
-│   ├── components/    # 组件
-│   ├── lib/           # 核心库
-│   └── hooks/         # Hooks
-├── docs/              # 文档
-├── .claude/agents/    # 子代理配置
-└── CLAUDE.md
+src/
+├── app/          # 页面路由 + API
+├── components/   # 组件
+├── lib/          # 命理算法 + AI + 支付/配额
+└── hooks/ stores/ data/ types/
+docs/             # PRD / 设计 / 运维
+.claude/agents/   # 子代理配置
 ```
 
-## 文档
+## 关键文档
 
-- PRD: `docs/PRD.md`
-- 设计规范: `docs/DESIGN_SPEC.md`
-- 技术设计: `docs/tech-design.md`
-
-## 排期
-
-| 阶段 | 时间 | 状态 |
-|------|------|------|
-| M1 技术搭建 | Day 1-3 | 🔄 进行中 |
-| M2 核心页面 | Day 4-8 | ⏳ |
-| M3 功能完善 | Day 9-11 | ⏳ |
-| M4 测试上线 | Day 12-14 | ⏳ |
+- 整体 PRD(逆向):`docs/PRD-REVERSE-ENGINEERED.md`
+- 模块级 PRD:`docs/PRD-MODULES-DETAILED.md`
+- 改进任务:`docs/IMPROVEMENT-TASKS.md`
+- AI 成本模型:`docs/AI_COST_MODEL.md`
+- 部署/运维:`DEPLOY_GUIDE.md` · `docs/DEPLOYMENT.md` · `docs/RUNBOOK.md`
 
 ---
 
-_游进代码海，写出好虾码 🦐_
+_游进代码海,写出好虾码 🦐_

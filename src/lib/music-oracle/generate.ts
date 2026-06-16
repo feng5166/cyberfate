@@ -1,6 +1,6 @@
 /**
  * 音乐运势签 AI 生成逻辑
- * 调用 Claude API 生成歌曲推荐 + 签文
+ * 调用 DeepSeek API（经 ModelVerse 中转）生成歌曲推荐 + 签文
  */
 
 import { MUSIC_ORACLE_SYSTEM_PROMPT, buildDailyMusicPrompt } from './prompts';
@@ -27,7 +27,7 @@ export interface DailyMusicResult {
 }
 
 /**
- * 调用 Claude API 生成今日音乐运势
+ * 调用 DeepSeek API 生成今日音乐运势
  * 返回 null 表示失败（不抛异常）
  */
 export async function generateDailyMusic(): Promise<DailyMusicResult | null> {
@@ -45,7 +45,7 @@ export async function generateDailyMusic(): Promise<DailyMusicResult | null> {
     });
 
     console.log('[MusicOracle] 调用 AI API...');
-    const rawResponse = await callClaudeAPI(MUSIC_ORACLE_SYSTEM_PROMPT, userPrompt);
+    const rawResponse = await callDeepSeekAPI(MUSIC_ORACLE_SYSTEM_PROMPT, userPrompt);
     if (!rawResponse) {
       console.error('[MusicOracle] AI API 返回空');
       return null;
@@ -81,7 +81,7 @@ export async function generateDailyMusic(): Promise<DailyMusicResult | null> {
 const DEEPSEEK_BASE_URL = AI_BASE_URL;
 const DEEPSEEK_MODEL = PRIMARY_MODEL;
 
-async function callClaudeAPI(systemPrompt: string, userPrompt: string): Promise<string | null> {
+async function callDeepSeekAPI(systemPrompt: string, userPrompt: string): Promise<string | null> {
   const apiKey = getEnvVar('DEEPSEEK_API_KEY');
 
   if (!apiKey) {
