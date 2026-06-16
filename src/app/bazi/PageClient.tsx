@@ -1002,61 +1002,71 @@ function BaziPageContent() {
           </Card>
         )}
         <form onSubmit={handleSubmit}>
-        <div className="rounded-xl bg-[#FAF9F6] p-5 border border-[#1C1A16]/6 mb-6">
-          <div className="font-display text-base text-[#1C1A16]/85 px-2 tracking-wide mb-4">📋 基本信息</div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="space-y-1.5">
-              <label htmlFor="bazi-name" className="block text-sm font-medium text-[#1C1A16]/70">姓名</label>
-              <input
-                id="bazi-name"
-                type="text"
-                placeholder="请输入姓名"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className={inputClass}
+        <div className="mb-6 space-y-6">
+          {/* 基本信息：姓名 + 性别 */}
+          <div>
+            <p className="text-sm font-semibold text-[#1C1A16]/50 mb-3 tracking-wide">基本信息</p>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label htmlFor="bazi-name" className="block text-sm font-medium text-[#1C1A16]/70">姓名</label>
+                <input
+                  id="bazi-name"
+                  type="text"
+                  placeholder="请输入姓名"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className={inputClass}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium text-[#1C1A16]/70">性别</label>
+                <Select
+                  options={[
+                    { value: '', label: '请选择性别', disabled: true },
+                    { value: 'male', label: '男' },
+                    { value: 'female', label: '女' },
+                  ]}
+                  value={formData.gender}
+                  onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                  className="h-10 rounded-lg border border-[#1C1A16]/15 bg-white px-3 text-sm text-[#1C1A16]"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* 时间信息：日期类型 + 出生日期 */}
+          <div>
+            <p className="text-sm font-semibold text-[#1C1A16]/50 mb-3 tracking-wide">时间信息</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium text-[#1C1A16]/70">日期类型</label>
+                <SegmentControl
+                  options={[
+                    { value: 'solar', label: '阳历' },
+                    { value: 'lunar', label: '农历' },
+                  ]}
+                  value={formData.isLunar ? 'lunar' : 'solar'}
+                  onChange={(value) => setFormData({ ...formData, isLunar: value === 'lunar' })}
+                  className="h-10 rounded-lg border border-[#1C1A16]/15 bg-white text-[#1C1A16] overflow-hidden"
+                  optionClassName="px-3 py-0 h-full flex items-center justify-center text-sm"
+                />
+              </div>
+              <DatePicker
+                label={formData.isLunar ? '出生日期（农历）' : '出生日期（阳历）'}
+                value={formData.birthDate}
+                onChange={(value) => setFormData({ ...formData, birthDate: value })}
+                className="space-y-1.5"
+                triggerClassName="h-10 rounded-lg"
               />
             </div>
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-[#1C1A16]/70">性别</label>
-              <Select
-                options={[
-                  { value: '', label: '请选择性别', disabled: true },
-                  { value: 'male', label: '男' },
-                  { value: 'female', label: '女' },
-                ]}
-                value={formData.gender}
-                onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                className="h-10 rounded-lg border border-[#1C1A16]/15 bg-white px-3 text-sm text-[#1C1A16]"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-[#1C1A16]/70">日期类型</label>
-              <SegmentControl
-                options={[
-                  { value: 'solar', label: '阳历' },
-                  { value: 'lunar', label: '农历' },
-                ]}
-                value={formData.isLunar ? 'lunar' : 'solar'}
-                onChange={(value) => setFormData({ ...formData, isLunar: value === 'lunar' })}
-                className="h-10 rounded-lg border border-[#1C1A16]/15 bg-white text-[#1C1A16] overflow-hidden"
-                optionClassName="px-3 py-0 h-full flex items-center justify-center text-sm"
-              />
-            </div>
-            <DatePicker
-              label={formData.isLunar ? '出生日期（农历）' : '出生日期（阳历）'}
-              value={formData.birthDate}
-              onChange={(value) => setFormData({ ...formData, birthDate: value })}
-              className="space-y-1.5"
-              triggerClassName="h-10 rounded-lg"
-            />
           </div>
         </div>
         <div className="flex flex-col gap-6 pb-20 md:pb-26">
           <div className="bazi-input-card w-full rounded-2xl bg-white shadow-none px-6 py-6 sm:px-8 sm:py-8 border border-[#1C1A16]/8">
             <div className="space-y-8">
               {/* 时辰组 */}
-              <fieldset className="space-y-5 rounded-xl bg-[#FAF9F6] p-5 border border-[#1C1A16]/6">
-                <legend className="font-display text-base text-[#1C1A16]/85 px-2 tracking-wide">🕐 时辰信息</legend>
+              <fieldset className="space-y-4">
+                <p className="text-sm font-semibold text-[#1C1A16]/50 tracking-wide">时辰信息</p>
 
                 <label className="flex items-start gap-2 cursor-pointer">
                   <input
@@ -1159,9 +1169,8 @@ function BaziPageContent() {
 
               <Button
                 type="submit"
-                variant="ghost"
                 loading={loading}
-                className="w-full text-[13px] px-[38px] py-[12px] rounded-xl border border-[#1C1A16]/30 text-[#1C1A16] bg-transparent hover:bg-[#1C1A16]/5"
+                className="w-full h-13 text-[14px] font-medium rounded-xl bg-[#1C1A16] text-white hover:bg-[#1C1A16]/85 transition-colors"
               >
                 {loading ? '正在计算...' : '开始解读'}
               </Button>
