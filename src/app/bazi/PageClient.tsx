@@ -985,6 +985,7 @@ function BaziPageContent() {
 
       <Container>
         {result && !loading && basicInfoData && (
+          <div className="max-w-4xl mx-auto w-full">
           <Card className={`${cardClass} p-0 mb-6 lg:mb-8`}>
             <BasicInfoCard
               baziText={basicInfoData.baziText}
@@ -1000,9 +1001,10 @@ function BaziPageContent() {
               onDelete={handleDeleteBasicInfo}
             />
           </Card>
+          </div>
         )}
         <form onSubmit={handleSubmit}>
-        <div className="mb-6 space-y-6">
+        <div className="max-w-3xl mx-auto w-full mb-6 space-y-6">
           {/* 基本信息：姓名 + 性别 */}
           <div>
             <p className="text-sm font-semibold text-[#1C1A16]/50 mb-3 tracking-wide">基本信息</p>
@@ -1061,7 +1063,7 @@ function BaziPageContent() {
             </div>
           </div>
         </div>
-        <div className="flex flex-col gap-6 pb-20 md:pb-26">
+        <div className="max-w-3xl mx-auto w-full flex flex-col gap-6 pb-20 md:pb-26">
           <div className="bazi-input-card w-full rounded-2xl bg-white shadow-none px-6 py-6 sm:px-8 sm:py-8 border border-[#1C1A16]/8">
             <div className="space-y-8">
               {/* 时辰组 */}
@@ -1207,6 +1209,7 @@ function BaziPageContent() {
             )}
 
             {result && !loading && basicInfoData && dayMasterInsight && (
+              <div className="max-w-4xl mx-auto w-full">
               <div ref={resultRef} className="space-y-6 animate-fadeIn" aria-live="polite">
                 {result._source !== 'history' && !isMember && (
                   <div className="flex items-center justify-between gap-3 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 px-4 py-3">
@@ -1562,6 +1565,7 @@ function BaziPageContent() {
                 <div className="text-center text-xs text-[#6B7280] p-3 bg-white rounded-2xl border border-[#1C1A16]/10">
                   ⚠️ 免责声明：本站所有命理分析仅供娱乐参考，不构成任何决策建议。命运掌握在自己手中，请理性对待。
                 </div>
+              </div>
               </div>
             )}
           </div>
