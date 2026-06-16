@@ -3,6 +3,7 @@ import { checkRateLimit } from '@/lib/rate-limit';
 import { getEnvVar } from '@/lib/utils/api-wrapper';
 import { AI_BASE_URL, PRIMARY_MODEL } from '@/lib/ai/models';
 import { applyChaos } from '@/lib/chaos-middleware';
+import { attachClientAbort } from '@/lib/ai/streamProxy';
 
 export const maxDuration = 60;
 
@@ -109,8 +110,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'AI 服务未配置' }, { status: 503 });
   }
 
+  const abortHandle = attachClientAbort(req);
+
   const upstream = await fetch(`${AI_BASE_URL}/chat/completions`, {
     method: 'POST',
+    signal: abortHandle.signal,
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${apiKey}`,
@@ -127,11 +131,13 @@ export async function POST(req: NextRequest) {
       ],
     }),
   }).catch((err: unknown) => {
+    abortHandle.release();
     const msg = err instanceof Error ? err.message : String(err);
     return new Response(JSON.stringify({ error: `AI 请求失败：${msg}` }), { status: 502 });
   });
 
   if (!upstream.ok || !upstream.body) {
+    abortHandle.release();
     let errMsg = 'AI 请求失败';
     try {
       const errText = await upstream.text();
@@ -172,8 +178,12 @@ export async function POST(req: NextRequest) {
         controller.enqueue(encodeSse({ error: msg }));
       } finally {
         controller.enqueue(encodeSse('[DONE]'));
+        abortHandle.release();
         controller.close();
       }
+    },
+    async cancel() {
+      await abortHandle.cancel(reader);
     },
   });
 

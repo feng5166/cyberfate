@@ -3,6 +3,8 @@
  * PRD 12.6.2 节
  */
 
+import { getBeijingDate } from '@/lib/timezone';
+
 export interface WuxingMusicProfile {
   wuxing: string;           // 五行：木/火/土/金/水
   emotion: string;          // 情绪色彩
@@ -91,8 +93,9 @@ export function getWuxingProfileByElement(wuxing: string): WuxingMusicProfile {
 export function getTodayTiangan(): { tiangan: string; ganzhi: string; wuxing: string; description: string } {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { Solar } = require('lunar-javascript');
-  const today = new Date();
-  const solar = Solar.fromYmd(today.getFullYear(), today.getMonth() + 1, today.getDate());
+  // 北京时间统一收口，避免服务器 UTC 影响"今日干支"
+  const today = getBeijingDate();
+  const solar = Solar.fromYmd(today.getUTCFullYear(), today.getUTCMonth() + 1, today.getUTCDate());
   const lunar = solar.getLunar();
   const eightChar = lunar.getEightChar();
   const dayGan = eightChar.getDayGan();   // 天干：甲/乙/丙/丁...

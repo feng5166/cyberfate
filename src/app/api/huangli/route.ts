@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { calculateHuangli } from '@/lib/huangli/calculator';
+import { getTodayBeijing } from '@/lib/timezone';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const date = searchParams.get('date') || new Date().toISOString().split('T')[0];
+  const date = searchParams.get('date') || getTodayBeijing();
 
   try {
     const [year] = date.split('-').map(Number);

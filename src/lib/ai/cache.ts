@@ -35,7 +35,7 @@ export async function getCache(key: string): Promise<any | null> {
   try {
     const cached = await redis.get(key);
     if (cached) {
-      console.log(`[Cache Hit] ${key}`);
+      if (process.env.NODE_ENV !== 'production') console.log(`[Cache Hit] ${key}`);
       return cached;
     }
     return null;
@@ -55,10 +55,10 @@ export async function setCache(key: string, data: any, ttl?: number): Promise<vo
   try {
     if (ttl) {
       await redis.setex(key, ttl, data);
-      console.log(`[Cache Set] ${key} (TTL: ${ttl}s)`);
+      if (process.env.NODE_ENV !== 'production') console.log(`[Cache Set] ${key} (TTL: ${ttl}s)`);
     } else {
       await redis.set(key, data);
-      console.log(`[Cache Set] ${key} (永久)`);
+      if (process.env.NODE_ENV !== 'production') console.log(`[Cache Set] ${key} (永久)`);
     }
   } catch (err) {
     console.warn('[Cache Write Error]', err);

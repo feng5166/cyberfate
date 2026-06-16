@@ -8,6 +8,8 @@ import { generateDailyFortune } from '@/lib/ai';
 import { withAiTimeout } from '@/lib/ai/withTimeout';
 import { withCircuitBreaker } from '@/lib/ai/circuitBreaker';
 import { logger } from '@/lib/logger';
+import { checkDailyQuota, refundQuota } from '@/lib/quota';
+import { getTodayBeijing } from '@/lib/timezone';
 
 const SERVICE = 'api/daily';
 
@@ -26,14 +28,6 @@ const DIZHI_IMAGES: Record<string, string> = {
   '戌': '/images/daily/xu.jpg',
   '亥': '/images/daily/hai.jpg',
 };
-
-// 返回北京时间 (UTC+8) 的 YYYY-MM-DD 日期字符串
-function getBeijingDateString(): string {
-  const now = new Date();
-  const beijingOffset = 8 * 60 * 60 * 1000;
-  const beijingTime = new Date(now.getTime() + beijingOffset);
-  return beijingTime.toISOString().split('T')[0];
-}
 
 // 时辰映射：数字 -> 时辰名称
 const HOUR_TO_SHICHEN: Record<number, string> = {
@@ -79,12 +73,24 @@ export async function POST(req: NextRequest) {
   }
   const rl = await checkRateLimit('ai_daily', session.user.id, 20, 60);
   if (!rl.allowed) return NextResponse.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
+
+  // 配额：免费 3 次/天，VIP 不限
+  const quota = await checkDailyQuota(session.user.id);
+  if (!quota.hasQuota) {
+    return NextResponse.json({
+      error: 'QUOTA_EXCEEDED',
+      message: `今日运势查询已达上限（${quota.limit} 次），请升级 VIP 解锁不限次数。`,
+    }, { status: 403 });
+  }
+  const quotaConsumed = !quota.isVip;
+
   try {
     const body = await req.json();
     const input = requestSchema.parse(body);
 
     // BUG-019: 新用户未设置生日时返回 400 + 引导文案
     if (!input.birthDate) {
+      if (quotaConsumed) await refundQuota(session.user.id, 'dailyCount');
       return Response.json(
         {
           error: '请先设置出生日期',
@@ -97,9 +103,9 @@ export async function POST(req: NextRequest) {
 
     // 转换时辰
     const shichen = HOUR_TO_SHICHEN[input.birthHour] || '午时';
-    
+
     // 目标日期默认为今天（用北京时间 UTC+8）
-    const targetDate = input.targetDate || getBeijingDateString();
+    const targetDate = input.targetDate || getTodayBeijing();
     
     // 1. 计算用户八字，获取日主
     const baziResult = calculateBazi({
@@ -129,7 +135,12 @@ export async function POST(req: NextRequest) {
       logger.error(SERVICE, 'AI fortune generation failed', aiError instanceof Error ? aiError : undefined);
       fortune = generateFallbackFortune(baziResult.dayMaster, dayGanzhi, targetDate);
     }
-    
+
+    // fallback 不消耗配额
+    if (quotaConsumed && (fortune as any)._source === 'fallback') {
+      await refundQuota(session.user.id, 'dailyCount');
+    }
+
     const normalizedRatings = normalizeRatings(fortune.ratings, fortune.overall);
     const dayZhi = dayGanzhi[1];
     const imageUrl = DIZHI_IMAGES[dayZhi] || null;
@@ -164,8 +175,11 @@ export async function POST(req: NextRequest) {
       _source: (fortune as any)._source ?? 'unknown',
     });
   } catch (error) {
+    if (quotaConsumed) {
+      try { await refundQuota(session.user.id, 'dailyCount'); } catch {}
+    }
     logger.error(SERVICE, 'Daily API error', error instanceof Error ? error : undefined);
-    
+
     if (error instanceof z.ZodError) {
       return Response.json(
         { error: '输入数据格式错误：' + error.issues.map(e => e.message).join(', ') },

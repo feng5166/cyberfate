@@ -7,6 +7,8 @@ import { logger } from '@/lib/logger';
 import { prisma } from '@/lib/db';
 import { withCircuitBreaker } from '@/lib/ai/circuitBreaker';
 import { AI_BASE_URL, PRIMARY_MODEL } from '@/lib/ai/models';
+import { attachClientAbort } from '@/lib/ai/streamProxy';
+import { getTodayBeijing } from '@/lib/timezone';
 
 const SERVICE = 'api/daily/fortune-qa';
 const DEEPSEEK_BASE_URL = AI_BASE_URL;
@@ -61,7 +63,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const targetDate = date || new Date().toISOString().slice(0, 10);
+    const targetDate = date || getTodayBeijing();
 
     const systemPrompt = `你是赛博命理师的 AI 运势问答助手。
 
@@ -81,9 +83,12 @@ export async function POST(req: NextRequest) {
 - 涉及投资/疾病等敏感话题时，给出温和提醒
 - 本产品为文化娱乐，分析仅供参考`;
 
+    const abortHandle = attachClientAbort(req);
+
     const response = await withCircuitBreaker('deepseek-fortune-qa-v4pro', () =>
       fetch(`${DEEPSEEK_BASE_URL}/chat/completions`, {
         method: 'POST',
+        signal: abortHandle.signal,
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
@@ -103,17 +108,18 @@ export async function POST(req: NextRequest) {
     );
 
     if (!response.ok || !response.body) {
+      abortHandle.release();
       logger.error(SERVICE, `DeepSeek API error: ${response.status}`);
       return Response.json({ error: '服务暂时不可用' }, { status: 502 });
     }
 
     const encoder = new TextEncoder();
     const upstreamBody = response.body;
+    const reader = upstreamBody.getReader();
     let fullAnswer = '';
 
     const readable = new ReadableStream({
       async start(controller) {
-        const reader = upstreamBody.getReader();
         const decoder = new TextDecoder();
         let buffer = '';
 
@@ -161,8 +167,12 @@ export async function POST(req: NextRequest) {
         } catch (err) {
           logger.error(SERVICE, 'Stream error', err instanceof Error ? err : undefined);
         } finally {
+          abortHandle.release();
           controller.close();
         }
+      },
+      async cancel() {
+        await abortHandle.cancel(reader);
       },
     });
 

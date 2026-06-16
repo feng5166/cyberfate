@@ -124,7 +124,7 @@ export async function generateBaziAnalysis(
   try {
     const cached = await redis.get(cacheKey);
     if (cached) {
-      console.log(`[Cache Hit] ${cacheKey}`);
+      if (process.env.NODE_ENV !== 'production') console.log(`[Cache Hit] ${cacheKey}`);
       return { ...(cached as BaziAnalysis), _source: 'cache' };
     }
   } catch (err) {
@@ -159,7 +159,7 @@ export async function generateBaziAnalysis(
     if (!apiResult.fromFallback) {
       try {
         await redis.set(cacheKey, apiResult.data);
-        console.log(`[Cache Set] ${cacheKey}`);
+        if (process.env.NODE_ENV !== 'production') console.log(`[Cache Set] ${cacheKey}`);
       } catch (err) {
         console.warn('[Cache Write Error]', err);
       }
@@ -219,7 +219,7 @@ export async function generateDailyFortune(
   try {
     const cached = await redis.get(cacheKey);
     if (cached) {
-      console.log(`[Cache Hit] ${cacheKey}`);
+      if (process.env.NODE_ENV !== 'production') console.log(`[Cache Hit] ${cacheKey}`);
       return { ...(cached as ReturnType<typeof generateFallbackDailyFortune>), _source: 'cache' };
     }
   } catch (err) {
@@ -267,7 +267,7 @@ export async function generateDailyFortune(
     if (!apiResult.fromFallback) {
       try {
         await redis.setex(cacheKey, 86400, apiResult.data);
-        console.log(`[Cache Set] ${cacheKey} (TTL: 24h)`);
+        if (process.env.NODE_ENV !== 'production') console.log(`[Cache Set] ${cacheKey} (TTL: 24h)`);
       } catch (err) {
         console.warn('[Cache Write Error]', err);
       }

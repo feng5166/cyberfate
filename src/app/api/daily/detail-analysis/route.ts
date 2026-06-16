@@ -7,13 +7,8 @@ import { calculateBazi, getCurrentDayun, getDayGanzhi, getLunarDate, getYearGanz
 import { DAILY_DETAIL_SYSTEM_PROMPT, buildDailyDetailUserPrompt } from '@/lib/ai/prompts-daily-detail';
 import { getEnvVar } from '@/lib/utils/api-wrapper';
 import { AI_BASE_URL, PRIMARY_MODEL } from '@/lib/ai/models';
-
-function getBeijingDateString(): string {
-  const now = new Date();
-  const beijingOffset = 8 * 60 * 60 * 1000;
-  const beijingTime = new Date(now.getTime() + beijingOffset);
-  return beijingTime.toISOString().split('T')[0];
-}
+import { attachClientAbort } from '@/lib/ai/streamProxy';
+import { getTodayBeijing } from '@/lib/timezone';
 
 const TIANGAN_WUXING: Record<string, string> = {
   '甲': '木', '乙': '木', '丙': '火', '丁': '火',
@@ -30,7 +25,7 @@ export async function POST(req: NextRequest) {
 
   let body: { date?: string } = {};
   try { body = await req.json(); } catch {}
-  const targetDate = body.date || getBeijingDateString();
+  const targetDate = body.date || getTodayBeijing();
 
   const vip = await isVip(userId);
   if (!vip) {
@@ -77,6 +72,9 @@ export async function POST(req: NextRequest) {
   const encoder = new TextEncoder();
   let fullContent = '';
 
+  const abortHandle = attachClientAbort(req);
+  let activeReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
+
   const stream = new ReadableStream({
     async start(controller) {
       try {
@@ -85,6 +83,7 @@ export async function POST(req: NextRequest) {
 
         const response = await fetch(`${AI_BASE_URL}/chat/completions`, {
           method: 'POST',
+          signal: abortHandle.signal,
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${apiKey}`,
@@ -109,6 +108,7 @@ export async function POST(req: NextRequest) {
 
         const reader = response.body?.getReader();
         if (!reader) throw new Error('No response body');
+        activeReader = reader;
 
         const decoder = new TextDecoder();
         let buffer = '';
@@ -146,15 +146,27 @@ export async function POST(req: NextRequest) {
         });
 
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true, id: record.id })}\n\n`));
+        abortHandle.release();
         controller.close();
       } catch (error: any) {
         console.error('[daily-detail-analysis] Error:', error);
+
+        // M7: fallback 前重置 fullContent，避免主路径残段被拼到 fallback 输出里
+        // 同时若主路径已有输出就跳过 fallback，避免向客户端二次喷流
+        if (fullContent) {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: '分析生成失败，请稍后重试' })}\n\n`));
+          abortHandle.release();
+          controller.close();
+          return;
+        }
+        fullContent = '';
 
         try {
           const anthropicKey = getEnvVar('ANTHROPIC_API_KEY');
           if (anthropicKey) {
             const fallbackResponse = await fetch('https://api.anthropic.com/v1/messages', {
               method: 'POST',
+              signal: abortHandle.signal,
               headers: {
                 'Content-Type': 'application/json',
                 'x-api-key': anthropicKey,
@@ -172,6 +184,7 @@ export async function POST(req: NextRequest) {
             if (fallbackResponse.ok) {
               const reader = fallbackResponse.body?.getReader();
               if (reader) {
+                activeReader = reader;
                 const decoder = new TextDecoder();
                 let buffer = '';
 
@@ -204,6 +217,7 @@ export async function POST(req: NextRequest) {
                 });
 
                 controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true, id: record.id })}\n\n`));
+                abortHandle.release();
                 controller.close();
                 return;
               }
@@ -214,8 +228,12 @@ export async function POST(req: NextRequest) {
         }
 
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: '分析生成失败，请稍后重试' })}\n\n`));
+        abortHandle.release();
         controller.close();
       }
+    },
+    async cancel() {
+      await abortHandle.cancel(activeReader);
     },
   });
 

@@ -87,6 +87,7 @@ ${typeof score === 'number' ? `综合匹配度：${score}分（${level || ''}）
   try {
     const aiResponse = await fetch(`${AI_BASE_URL}/chat/completions`, {
       method: 'POST',
+      signal: req.signal,
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,

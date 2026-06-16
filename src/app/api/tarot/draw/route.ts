@@ -7,6 +7,8 @@ import type { TarotReadingPromptInput } from '@/lib/ai/prompts';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { isVip } from '@/lib/subscription';
+import { getTodayBeijing } from '@/lib/timezone';
 import { drawRandomCards, getCardImageUrl } from '@/data/tarot';
 import { withAiTimeout } from '@/lib/ai/withTimeout';
 import { withCircuitBreaker } from '@/lib/ai/circuitBreaker';
@@ -67,7 +69,7 @@ interface CachedTarotReading {
 }
 
 async function atomicCheckAndUseQuota(userId: string, spread: TarotSpread): Promise<boolean> {
-  const today = new Date(new Date().getTime() + 8 * 60 * 60 * 1000).toISOString().split('T')[0];
+  const today = getTodayBeijing();
   const limit = DAILY_LIMITS[spread];
 
   await prisma.usageQuota.upsert({
@@ -87,13 +89,6 @@ async function atomicCheckAndUseQuota(userId: string, spread: TarotSpread): Prom
       });
 
   return result.count > 0;
-}
-
-async function isVip(userId: string): Promise<boolean> {
-  const subscription = await prisma.subscription.findFirst({
-    where: { userId, status: 'active', expireAt: { gt: new Date() } },
-  });
-  return !!subscription;
 }
 
 function resolveSpread(value: unknown): TarotSpread {

@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getRedis } from '@/lib/cache/redis';
 import { generateDailyMusic, type DailyMusicResult } from '@/lib/music-oracle/generate';
 import { getTodayTiangan, getWuxingMusicProfile } from '@/lib/music-oracle/wuxing-music-map';
+import { getTodayBeijing } from '@/lib/timezone';
 
 interface CachedData extends DailyMusicResult {
   /** 当前展示的索引：0=main, 1/2=alternates[0]/[1] */
@@ -18,8 +19,7 @@ interface CachedData extends DailyMusicResult {
 }
 
 function getTodayDateStr(): string {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  return getTodayBeijing();
 }
 
 function getSecondsUntilMidnight(): number {

@@ -154,13 +154,14 @@ export async function POST(req: NextRequest) {
   const event = verification.event;
 
   // BUG-008: charge.refunded → mark subscription as expired
+  // Stripe 不会自动把 checkout/PaymentIntent 的 metadata 拷贝到 charge，
+  // 所以用 charge.payment_intent 反查 Order.transactionId 来定位被退款的订单。
   if (event.type === 'charge.refunded') {
     const charge = event.data.object as StripeCharge;
-    const orderId = charge.metadata?.orderId;
-    const userId = charge.metadata?.userId;
+    const paymentIntent = charge.payment_intent;
 
-    if (orderId) {
-      const order = await prisma.order.findUnique({ where: { id: orderId } });
+    if (paymentIntent) {
+      const order = await prisma.order.findFirst({ where: { transactionId: paymentIntent } });
       if (order) {
         // Only expire the subscription created for this specific order (startAt >= paidAt),
         // to avoid cancelling newer subscriptions the user purchased after this refunded one.
@@ -174,10 +175,12 @@ export async function POST(req: NextRequest) {
           },
           data: { status: 'expired' },
         });
-        logger.info(SERVICE, 'charge.refunded processed', { orderId, userId: order.userId, expiredCount: result.count });
+        logger.info(SERVICE, 'charge.refunded processed', { orderId: order.id, userId: order.userId, expiredCount: result.count });
+      } else {
+        logger.warn(SERVICE, 'charge.refunded no matching order', { paymentIntent, chargeId: charge.id });
       }
     } else {
-      logger.warn(SERVICE, 'charge.refunded missing orderId', { chargeId: charge.id });
+      logger.warn(SERVICE, 'charge.refunded missing payment_intent', { chargeId: charge.id });
     }
     return NextResponse.json({ received: true });
   }
@@ -282,16 +285,13 @@ export async function POST(req: NextRequest) {
       }
     } else if (userId) {
       // Stripe 直接支付流程（无 Order）
-      // BUG-R2-005: 从 amount_total 反查套餐，不信任 metadata.plan
-      const amountTotal = (checkoutSession as unknown as { amount_total?: number }).amount_total;
-      const resolvedPlanId = amountTotal != null
-        ? (Object.keys(PRICING_CONFIG) as PlanId[]).find((id) => PRICING_CONFIG[id].amount === amountTotal)
-        : undefined;
-      if (!resolvedPlanId) {
-        logger.error(SERVICE, 'Cannot resolve plan from amount_total', undefined, { amountTotal });
-        return NextResponse.json({ error: 'Cannot resolve plan from amount' }, { status: 400 });
+      // 信任服务端在 checkout 创建时写入的 metadata.plan，避免 amount_total 反推
+      // （促销/proration/补差价场景下 amount_total 与 PRICING_CONFIG.amount 不一致会反推失败）
+      if (!plan || !(plan in PRICING_CONFIG)) {
+        logger.error(SERVICE, 'checkout.session.completed missing or invalid metadata.plan', undefined, { plan });
+        return NextResponse.json({ error: 'Invalid plan in metadata' }, { status: 400 });
       }
-      const resolvedPlan = resolvedPlanId;
+      const resolvedPlan = plan as PlanId;
 
       try {
         await prisma.$transaction(async (tx) => {

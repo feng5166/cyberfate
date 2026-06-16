@@ -43,7 +43,9 @@ export async function POST(req: NextRequest) {
         const now = new Date();
         const expireAt = new Date(subscription.expireAt);
         const totalDays = PRICING_CONFIG[currentPlan].duration;
-        const remainingDays = Math.ceil((expireAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        const rawRemainingDays = Math.ceil((expireAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        // clamp 到 [0, totalDays]：lifetime/超长订阅时比例不会 > 1，过期残值不会为负
+        const remainingDays = Math.max(0, Math.min(totalDays, rawRemainingDays));
         const remainingValue = Math.round(currentPrice * (remainingDays / totalDays));
         const proratedAmount = Math.max(0, newPrice - remainingValue);
         const outTradeNo = `CF${Date.now()}${Math.random().toString(36).slice(2, 9)}`;

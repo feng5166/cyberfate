@@ -46,24 +46,34 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Stripe 未配置' }, { status: 500 });
     }
 
-    const customersRes = await listCustomers(user.email!);
-    if (!customersRes.ok) {
-      return NextResponse.json({ error: 'Stripe 未配置' }, { status: 500 });
-    }
-
+    // M6: 优先用 DB 里持久化的 stripeCustomerId，避免 listByEmail 选错 customer
     let customerId: string;
-    if (customersRes.data!.data.length > 0) {
-      customerId = customersRes.data!.data[0].id;
+    if (user.stripeCustomerId) {
+      customerId = user.stripeCustomerId;
     } else {
-      const customerRes = await createCustomer(
-        user.email!,
-        user.nickname || undefined,
-        { userId: user.id },
-      );
-      if (!customerRes.ok) {
+      const customersRes = await listCustomers(user.email!);
+      if (!customersRes.ok) {
         return NextResponse.json({ error: 'Stripe 未配置' }, { status: 500 });
       }
-      customerId = customerRes.data!.id;
+
+      if (customersRes.data!.data.length > 0) {
+        customerId = customersRes.data!.data[0].id;
+      } else {
+        const customerRes = await createCustomer(
+          user.email!,
+          user.nickname || undefined,
+          { userId: user.id },
+        );
+        if (!customerRes.ok) {
+          return NextResponse.json({ error: 'Stripe 未配置' }, { status: 500 });
+        }
+        customerId = customerRes.data!.id;
+      }
+
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { stripeCustomerId: customerId },
+      });
     }
 
     const baseUrl = process.env.NEXTAUTH_URL || 'https://www.cyberfate.me';

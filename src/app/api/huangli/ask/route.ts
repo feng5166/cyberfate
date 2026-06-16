@@ -5,6 +5,7 @@ import { sanitizeUserInput } from '@/lib/utils/sanitize';
 import { applyChaos } from '@/lib/chaos-middleware';
 import { logger } from '@/lib/logger';
 import { AI_BASE_URL, PRIMARY_MODEL } from '@/lib/ai/models';
+import { attachClientAbort } from '@/lib/ai/streamProxy';
 
 const SERVICE = 'api/huangli/ask';
 
@@ -65,8 +66,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '服务配置异常' }, { status: 500 });
     }
 
+    const abortHandle = attachClientAbort(req);
+
     const apiResponse = await fetch(`${AI_BASE_URL}/chat/completions`, {
       method: 'POST',
+      signal: abortHandle.signal,
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
@@ -82,15 +86,16 @@ export async function POST(req: NextRequest) {
     });
 
     if (!apiResponse.ok || !apiResponse.body) {
+      abortHandle.release();
       logger.error(SERVICE, `AI API responded with ${apiResponse.status}`);
       return NextResponse.json({ error: '服务暂时不可用' }, { status: 502 });
     }
 
     const encoder = new TextEncoder();
     const upstreamBody = apiResponse.body;
+    const reader = upstreamBody.getReader();
     const readable = new ReadableStream({
       async start(controller) {
-        const reader = upstreamBody.getReader();
         const decoder = new TextDecoder();
         let buffer = '';
 
@@ -125,8 +130,12 @@ export async function POST(req: NextRequest) {
         } catch (err) {
           logger.error(SERVICE, 'Stream error', err instanceof Error ? err : undefined);
         } finally {
+          abortHandle.release();
           controller.close();
         }
+      },
+      async cancel() {
+        await abortHandle.cancel(reader);
       },
     });
 

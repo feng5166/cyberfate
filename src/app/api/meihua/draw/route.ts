@@ -63,17 +63,21 @@ function resolveDraw(method: DrawMethod, numbers?: { num1?: unknown; num2?: unkn
   const now = new Date();
 
   if (method === 'time') {
-    const upperIndex = positiveMod(now.getHours() + now.getMinutes(), 8);
-    const lowerIndex = positiveMod(now.getMinutes() + now.getSeconds(), 8);
-    const movingLine = positiveMod(now.getHours() + now.getMinutes() + now.getSeconds(), 6) + 1;
+    const upperSum = now.getHours() + now.getMinutes();
+    const lowerSum = now.getMinutes() + now.getSeconds();
+    const moveSum = now.getHours() + now.getMinutes() + now.getSeconds();
+    const upperIndex = positiveMod(upperSum - 1, 8);
+    const lowerIndex = positiveMod(lowerSum - 1, 8);
+    const movingLine = moveSum % 6 === 0 ? 6 : moveSum % 6;
     return { upperIndex, lowerIndex, movingLine };
   }
 
   const num1 = parseNumber(numbers?.num1, 1);
   const num2 = parseNumber(numbers?.num2, 1);
-  const upperIndex = positiveMod(num1, 8);
-  const lowerIndex = positiveMod(num2, 8);
-  const movingLine = positiveMod(num1 + num2, 6) + 1;
+  const upperIndex = positiveMod(num1 - 1, 8);
+  const lowerIndex = positiveMod(num2 - 1, 8);
+  const sumForLine = num1 + num2;
+  const movingLine = sumForLine % 6 === 0 ? 6 : sumForLine % 6;
 
   return { upperIndex, lowerIndex, movingLine };
 }

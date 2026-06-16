@@ -13,10 +13,12 @@ import { getRedis } from '@/lib/cache/redis';
 import { getEnvVar } from '@/lib/utils/api-wrapper';
 import { getTodayTiangan, getWuxingMusicProfile } from '@/lib/music-oracle/wuxing-music-map';
 import { MUSIC_ORACLE_SYSTEM_PROMPT } from '@/lib/music-oracle/prompts';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/db';
 import { AI_BASE_URL, PRIMARY_MODEL } from '@/lib/ai/models';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { isVip as checkIsVip } from '@/lib/subscription';
+import { getTodayBeijing } from '@/lib/timezone';
 
 const DEEPSEEK_BASE_URL = AI_BASE_URL;
 const DEEPSEEK_MODEL = PRIMARY_MODEL;
@@ -44,8 +46,7 @@ function getWuxingRelation(a: string, b: string): string {
 }
 
 function getTodayDateStr(): string {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  return getTodayBeijing();
 }
 
 const SSE_HEADERS = {
@@ -110,24 +111,12 @@ export async function POST(request: NextRequest) {
       || 'unknown';
     const rateLimitKey = `music-oracle:rate:${clientIp}:${dateStr}`;
 
-    // 判断 VIP 用户跳过限流（通过有效 Subscription 判定）
+    // 判断 VIP 用户跳过限流（通过 canonical isVip 判定）
     let isVip = false;
     try {
       const session = await getServerSession(authOptions);
       if (session?.user?.id) {
-        const prisma2 = new PrismaClient();
-        const activeSub = await prisma2.subscription.findFirst({
-          where: {
-            userId: session.user.id,
-            status: 'active',
-            expireAt: { gt: new Date() },
-          },
-          select: { id: true },
-        });
-        await prisma2.$disconnect();
-        if (activeSub) {
-          isVip = true;
-        }
+        isVip = await checkIsVip(session.user.id);
       }
     } catch (err) {
       console.warn('[music-oracle] VIP 检查失败:', err);
@@ -266,7 +255,6 @@ export async function POST(request: NextRequest) {
     // 保存到数据库
     let recordId: string | undefined;
     try {
-      const prisma = new PrismaClient();
       const record = await prisma.musicOracleRecord.create({
         data: {
           question: question.trim(),
@@ -284,7 +272,6 @@ export async function POST(request: NextRequest) {
         },
       });
       recordId = record.id;
-      await prisma.$disconnect();
     } catch (dbErr) {
       console.warn('[music-oracle] 数据库保存失败（不影响返回）:', dbErr);
     }

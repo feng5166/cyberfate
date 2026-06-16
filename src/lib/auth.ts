@@ -130,37 +130,89 @@ export const authOptions: NextAuthOptions = {
       }
       
       if (account?.provider === 'wechat') {
-        // 微信登录：查找或创建用户
-        // Security Fix: SEC-010 — 使用明确接口代替 any
+        // H6: 微信登录用户创建修复 —— 不再用 openid 当主键，让 DB 自动生成 cuid。
+        // 先按 openid/unionid 查询已有用户，找不到才新建，并补写 Account 表记录。
         const wechatProfile = profile as { openid?: string; unionid?: string; nickname?: string; headimgurl?: string }
-        const existingUser = await prisma.user.findUnique({
-          where: { wechatOpenId: wechatProfile.openid },
-        })
+        const openid = wechatProfile.openid
+        const unionid = wechatProfile.unionid
+        if (!openid) {
+          console.error('[auth] WeChat profile missing openid')
+          return false
+        }
+        const providerAccountId = unionid || openid
 
-        if (!existingUser) {
-          // 创建新用户 — 微信无邮箱，生成合成邮箱以确保唯一性
-          const syntheticEmail = `wechat.${wechatProfile.unionid || wechatProfile.openid}@cyberfate.internal`
-          await prisma.user.create({
-            data: {
-              id: user.id,
-              email: syntheticEmail,
-              emailVerified: new Date(),
-              wechatOpenId: wechatProfile.openid,
-              wechatUnionId: wechatProfile.unionid,
-              nickname: wechatProfile.nickname,
-              avatar: wechatProfile.headimgurl,
-            },
+        try {
+          await prisma.$transaction(async (tx) => {
+            let existingUser = await tx.user.findUnique({
+              where: { wechatOpenId: openid },
+            })
+
+            // 兜底：unionId 查找（同一账号在不同公众号/小程序下 openid 不同，但 unionId 相同）
+            if (!existingUser && unionid) {
+              existingUser = await tx.user.findFirst({
+                where: { wechatUnionId: unionid },
+              })
+              if (existingUser && !existingUser.wechatOpenId) {
+                existingUser = await tx.user.update({
+                  where: { id: existingUser.id },
+                  data: { wechatOpenId: openid },
+                })
+              }
+            }
+
+            const syntheticEmail = `wechat.${unionid || openid}@cyberfate.internal`
+
+            if (!existingUser) {
+              existingUser = await tx.user.create({
+                data: {
+                  email: syntheticEmail,
+                  emailVerified: new Date(),
+                  wechatOpenId: openid,
+                  wechatUnionId: unionid,
+                  nickname: wechatProfile.nickname,
+                  avatar: wechatProfile.headimgurl,
+                },
+              })
+            } else if (!existingUser.email || existingUser.email.endsWith('@cyberfate.internal')) {
+              existingUser = await tx.user.update({
+                where: { id: existingUser.id },
+                data: { email: syntheticEmail, emailVerified: new Date() },
+              })
+            }
+
+            // 与 Google OAuth 路径保持一致：写入/更新 Account 记录
+            await tx.account.upsert({
+              where: {
+                provider_providerAccountId: {
+                  provider: 'wechat',
+                  providerAccountId,
+                },
+              },
+              update: {
+                access_token: account.access_token,
+                expires_at: account.expires_at,
+                token_type: account.token_type,
+                scope: account.scope,
+              },
+              create: {
+                userId: existingUser.id,
+                type: account.type,
+                provider: 'wechat',
+                providerAccountId,
+                access_token: account.access_token,
+                expires_at: account.expires_at,
+                token_type: account.token_type,
+                scope: account.scope,
+              },
+            })
+
+            // 同步 NextAuth user 对象，让后续回调拿到正确的数据库 id / email
+            user.id = existingUser.id
+            user.email = existingUser.email ?? syntheticEmail
           })
-          // 同步更新 session user 的 email（否则后续流程拿不到）
-          user.email = syntheticEmail
-        } else if (!existingUser.email || existingUser.email.endsWith('@cyberfate.internal')) {
-          // 老用户补丁：如果之前创建时没有 email，补上
-          const syntheticEmail = `wechat.${existingUser.wechatUnionId || existingUser.wechatOpenId}@cyberfate.internal`
-          await prisma.user.update({
-            where: { id: existingUser.id },
-            data: { email: syntheticEmail, emailVerified: new Date() },
-          })
-          user.email = syntheticEmail
+        } catch (error) {
+          console.error('[auth] WeChat signIn transaction failed:', error)
+          return false
         }
       }
       return true

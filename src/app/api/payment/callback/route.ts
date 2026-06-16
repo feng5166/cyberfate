@@ -21,6 +21,10 @@ function verifyCallbackSignature(body: string, signature: string | null): boolea
 }
 
 export async function POST(req: NextRequest) {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'disabled' }, { status: 403 });
+  }
+
   const rawBody = await req.text();
   const signature = req.headers.get('x-callback-signature');
 

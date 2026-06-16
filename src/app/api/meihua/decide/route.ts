@@ -6,6 +6,7 @@ import type { MeihuaDecisionPromptInput } from '@/lib/ai/prompts';
 import { withAiTimeout } from '@/lib/ai/withTimeout';
 import { withCircuitBreaker } from '@/lib/ai/circuitBreaker';
 import { applyChaos } from '@/lib/chaos-middleware';
+import { checkMeihuaDecideQuota, refundQuota } from '@/lib/quota';
 
 const SSE_HEADERS = {
   'Content-Type': 'text/event-stream',
@@ -103,12 +104,26 @@ export async function POST(req: NextRequest) {
   const rl = await checkRateLimit('ai_meihua', userId, 10, 60);
   if (!rl.allowed) return NextResponse.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
 
+  // 配额：免费 3 次/天，VIP 不限
+  let quotaConsumed = false;
+  if (!isDebugMode) {
+    const quota = await checkMeihuaDecideQuota(session!.user.id);
+    if (!quota.hasQuota) {
+      return NextResponse.json({
+        error: 'QUOTA_EXCEEDED',
+        message: `今日梅花决策已达上限（${quota.limit} 次），请升级 VIP 解锁不限次数。`,
+      }, { status: 403 });
+    }
+    quotaConsumed = !quota.isVip;
+  }
+
   try {
     const body = await req.json().catch(() => ({}));
     const question = safeText(body?.question).slice(0, 200);
     const draw = (body?.draw ?? {}) as DrawPayload;
 
     if (!question) {
+      if (quotaConsumed) await refundQuota(session!.user.id, 'meihuaDecideCount');
       return NextResponse.json({ error: '问题不能为空' }, { status: 400 });
     }
 
@@ -122,6 +137,7 @@ export async function POST(req: NextRequest) {
 
     const cached = await getCache(cacheKey);
     if (cached?.overallAdvice) {
+      if (quotaConsumed) await refundQuota(session!.user.id, 'meihuaDecideCount');
       const cachedDecision = { ...(cached as MeihuaDecisionResult), _source: 'cache' as const };
       const { meta, narrative } = splitMeta(cachedDecision);
       return new Response(buildStream(meta, narrative), { headers: SSE_HEADERS });
@@ -130,11 +146,19 @@ export async function POST(req: NextRequest) {
     const decision = await withCircuitBreaker('deepseek-meihua-v4pro', () =>
       withAiTimeout(() => generateMeihuaDecision(input), 50_000)
     );
+
+    if (quotaConsumed && (decision as { _source?: string })._source === 'fallback') {
+      await refundQuota(session!.user.id, 'meihuaDecideCount');
+    }
+
     await setCache(cacheKey, decision, 12 * 60 * 60);
 
     const { meta, narrative } = splitMeta(decision);
     return new Response(buildStream(meta, narrative), { headers: SSE_HEADERS });
   } catch (error) {
+    if (quotaConsumed) {
+      try { await refundQuota(session!.user.id, 'meihuaDecideCount'); } catch {}
+    }
     console.error('[Meihua Decide] error:', error);
     return NextResponse.json(
       { error: '决策建议生成失败，请稍后重试。' },

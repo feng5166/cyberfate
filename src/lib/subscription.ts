@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db'
+import { getTodayBeijing } from '@/lib/timezone'
 
 const FREE_BAZI_AI_LIMIT = 1
 
@@ -37,7 +38,7 @@ export async function checkQuota(userId: string): Promise<{
   hasQuota: boolean
 }> {
   const vip = await isVip(userId)
-  const date = new Date().toISOString().slice(0, 10)
+  const date = getTodayBeijing()
   const limit = vip ? Infinity : FREE_BAZI_AI_LIMIT
 
   const quota = await prisma.usageQuota.findUnique({

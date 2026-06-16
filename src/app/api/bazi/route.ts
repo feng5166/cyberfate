@@ -5,7 +5,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { calculateBazi, WUXING_KEYS, analyzeMingGe, getCurrentDayun } from '@/lib/bazi';
 import { generateBaziAnalysis } from '@/lib/ai';
-import { peekBaziQuota, deductBaziQuota, isUserVip } from '@/lib/quota';
+import { checkBaziQuota, refundQuota, isUserVip } from '@/lib/quota';
 import { checkRateLimit } from '@/lib/rate-limit';
 import type { BaziAnalysis, FiveDimensions, MingGeInfo, PillarRecord, WuxingCount } from '@/lib/bazi/types';
 import { withAiTimeout } from '@/lib/ai/withTimeout';
@@ -60,33 +60,36 @@ export async function POST(req: NextRequest) {
   const chaosRes = await applyChaos(req);
   if (chaosRes) return chaosRes;
 
+  // 检查登录状态和配额（游客可以试用）
+  const session = await getServerSession(authOptions);
+  let baziQuotaConsumed = false;
+
+  // B-6: Rate limiting
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  if (session?.user?.id) {
+    const rl = await checkRateLimit('ai_bazi', session.user.id, 10, 60);
+    if (!rl.allowed) return Response.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
+  } else {
+    const rl = await checkRateLimit('ai_bazi_guest', ip, 3, 3600);
+    if (!rl.allowed) return Response.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
+  }
+
+  // B-4 + BUG-012 + H2: 原子 checkBaziQuota（avoid peek-then-deduct race）
+  let cachedIsVip = false;
+  if (session?.user?.id) {
+    const quota = await checkBaziQuota(session.user.id);
+    cachedIsVip = quota.isVip;
+
+    if (!quota.hasQuota) {
+      return Response.json({
+        error: 'QUOTA_EXCEEDED',
+        message: '今日免费解读次数已用完，请升级 VIP'
+      }, { status: 403 });
+    }
+    baziQuotaConsumed = !quota.isVip;
+  }
+
   try {
-    // 检查登录状态和配额（游客可以试用）
-    const session = await getServerSession(authOptions);
-
-    // B-6: Rate limiting
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-    if (session?.user?.id) {
-      const rl = await checkRateLimit('ai_bazi', session.user.id, 10, 60);
-      if (!rl.allowed) return Response.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
-    } else {
-      const rl = await checkRateLimit('ai_bazi_guest', ip, 3, 3600);
-      if (!rl.allowed) return Response.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
-    }
-
-    // B-4 + BUG-012: 查一次 isVip，传给 peekBaziQuota 避免重复查库
-    let cachedIsVip = false;
-    if (session?.user?.id) {
-      cachedIsVip = await isUserVip(session.user.id);
-      const { hasQuota } = await peekBaziQuota(session.user.id, cachedIsVip);
-
-      if (!hasQuota) {
-        return Response.json({
-          error: 'QUOTA_EXCEEDED',
-          message: '今日免费解读次数已用完，请升级 VIP'
-        }, { status: 403 });
-      }
-    }
     
     const body = await req.json();
     const input = requestSchema.parse(body);
@@ -155,9 +158,9 @@ export async function POST(req: NextRequest) {
     const aiAnalysis = formatAnalysis(analysisObj);
     const _aiSource = (analysisObj as any)._source ?? 'unknown';
 
-    // BUG-012: 仅在非 fallback 时扣减配额（B-4: 用已缓存的 isVip）
-    if (session?.user?.id && _aiSource !== 'fallback' && !cachedIsVip) {
-      await deductBaziQuota(session.user.id);
+    // H2: fallback 时退还已扣减的配额
+    if (baziQuotaConsumed && _aiSource === 'fallback' && session?.user?.id) {
+      await refundQuota(session.user.id, 'baziAiCount');
     }
     
     // 处理时柱（可能为 null）
@@ -218,8 +221,11 @@ export async function POST(req: NextRequest) {
       zodiac: baziResult.zodiac,
     });
   } catch (error) {
+    if (baziQuotaConsumed && session?.user?.id) {
+      try { await refundQuota(session.user.id, 'baziAiCount'); } catch {}
+    }
     logger.error(SERVICE, 'Bazi API error', error instanceof Error ? error : undefined);
-    
+
     if (error instanceof z.ZodError) {
       return Response.json(
         { error: '输入数据格式错误：' + error.issues.map(e => e.message).join(', ') },

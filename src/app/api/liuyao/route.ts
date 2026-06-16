@@ -6,6 +6,7 @@ import type { LiuYaoPromptInput } from '@/lib/ai/prompts';
 import { withCircuitBreaker } from '@/lib/ai/circuitBreaker';
 import { applyChaos } from '@/lib/chaos-middleware';
 import { log } from '@/lib/logger';
+import { checkLiuyaoQuota, refundQuota } from '@/lib/quota';
 import {
   identifyTrigrams,
   getHexagramName,
@@ -146,10 +147,24 @@ export async function POST(req: NextRequest) {
     if (!rl.allowed) return NextResponse.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
   }
 
+  // 配额：免费 3 次/天，VIP 不限
+  let quotaConsumed = false;
+  if (!isDebugMode) {
+    const quota = await checkLiuyaoQuota(session!.user!.id);
+    if (!quota.hasQuota) {
+      return NextResponse.json({
+        error: 'QUOTA_EXCEEDED',
+        message: `今日六爻解读已达上限（${quota.limit} 次），请升级 VIP 解锁不限次数。`,
+      }, { status: 403 });
+    }
+    quotaConsumed = !quota.isVip;
+  }
+
   const body = await req.json().catch(() => ({}));
   const validation = validateRequest(body);
 
   if (!validation.valid) {
+    if (quotaConsumed) await refundQuota(session!.user!.id, 'liuyaoCount');
     return NextResponse.json({ error: validation.error }, { status: 400 });
   }
 
@@ -182,6 +197,7 @@ export async function POST(req: NextRequest) {
   if (cached && typeof cached === 'object') {
     const c = cached as Record<string, unknown>;
     if (Array.isArray(c.lineInterpretations) && typeof c.overallNarrative === 'string') {
+      if (quotaConsumed) await refundQuota(session!.user!.id, 'liuyaoCount');
       const cachedLines = linesData.map((l, i) => ({
         ...l,
         interpretation: (c.lineInterpretations as string[])[i] || '',
@@ -240,6 +256,11 @@ export async function POST(req: NextRequest) {
     console.error('[liuyao] AI reading failed, using fallback. error:', errMsg);
     // 直接调用不经过断路器的 fallback
     reading = await generateLiuYaoReading(promptInput);
+  }
+
+  // fallback 不消耗配额
+  if (quotaConsumed && reading._source === 'fallback') {
+    await refundQuota(session!.user!.id, 'liuyaoCount');
   }
 
   const enrichedLines = linesData.map((l, i) => ({

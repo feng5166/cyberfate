@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/db';
 
 export async function GET(
   request: NextRequest,
@@ -20,11 +20,9 @@ export async function GET(
       );
     }
 
-    const prisma = new PrismaClient();
     const record = await prisma.musicOracleRecord.findUnique({
       where: { id: recordId },
     });
-    await prisma.$disconnect();
 
     if (!record) {
       return NextResponse.json(
@@ -34,11 +32,10 @@ export async function GET(
     }
 
     // 更新分享计数（异步，不阻塞响应）
-    const prisma2 = new PrismaClient();
-    prisma2.musicOracleRecord.update({
+    prisma.musicOracleRecord.update({
       where: { id: recordId },
       data: { shareCount: { increment: 1 } },
-    }).then(() => prisma2.$disconnect()).catch(() => prisma2.$disconnect());
+    }).catch((err) => console.warn('[music-oracle/share] increment failed:', err));
 
     return NextResponse.json({
       success: true,

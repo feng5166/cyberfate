@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
       date: (order.paidAt ?? order.createdAt).toISOString().slice(0, 10),
       description: getPlanDisplayName(order.plan),
       amount: order.amount / 100,
-      currency: 'CNY',
+      currency: 'USD',
       status: statusMap[order.status] ?? order.status,
       invoice_url: null,
     }))
@@ -75,7 +75,7 @@ export async function GET(req: NextRequest) {
     date: (order.paidAt ?? order.createdAt).toISOString().slice(0, 10),
     description: getPlanDisplayName(order.plan),
     amount: order.amount / 100,
-    currency: 'CNY',
+    currency: 'USD',
     status: statusMap[order.status] ?? order.status,
     invoice_url: null,
   }))
