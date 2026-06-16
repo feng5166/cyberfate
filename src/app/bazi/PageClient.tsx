@@ -984,6 +984,23 @@ function BaziPageContent() {
       </div>
 
       <Container>
+        {result && !loading && basicInfoData && (
+          <Card className={`${cardClass} p-0 mb-6 lg:mb-8`}>
+            <BasicInfoCard
+              baziText={basicInfoData.baziText}
+              name={basicInfoData.name}
+              gender={basicInfoData.gender}
+              birthTime={basicInfoData.birthTime}
+              lunarDate={basicInfoData.lunarDate}
+              zodiac={basicInfoData.zodiac}
+              dayunStartDescription={basicInfoData.dayunStartDescription}
+              dayunStartAt={basicInfoData.dayunStartAt}
+              isAuthenticated={status === 'authenticated'}
+              onEdit={handleEditBasicInfo}
+              onDelete={handleDeleteBasicInfo}
+            />
+          </Card>
+        )}
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 pb-20 md:pb-26">
           <div className="bazi-input-card flex-shrink-0 w-full lg:w-auto lg:max-w-[440px] rounded-2xl bg-white shadow-none px-6 py-6 sm:px-8 sm:py-8 border border-[#1C1A16]/8">
             <form onSubmit={handleSubmit} className="space-y-8">
@@ -1197,22 +1214,6 @@ function BaziPageContent() {
                     <p className="text-sm text-blue-700">AI 解读耗时较长，已为您准备基础解读（简化版解读，完整版需会员）</p>
                   </div>
                 )}
-                <Card className={`${cardClass} p-0`}>
-                  <BasicInfoCard
-                    baziText={basicInfoData.baziText}
-                    name={basicInfoData.name}
-                    gender={basicInfoData.gender}
-                    birthTime={basicInfoData.birthTime}
-                    lunarDate={basicInfoData.lunarDate}
-                    zodiac={basicInfoData.zodiac}
-                    dayunStartDescription={basicInfoData.dayunStartDescription}
-                    dayunStartAt={basicInfoData.dayunStartAt}
-                    isAuthenticated={status === 'authenticated'}
-                    onEdit={handleEditBasicInfo}
-                    onDelete={handleDeleteBasicInfo}
-                  />
-                </Card>
-
                 <Card className={cardClass}>
                   <BaziChart pillars={result.pillars} />
                 </Card>
