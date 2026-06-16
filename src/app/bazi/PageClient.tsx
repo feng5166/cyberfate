@@ -1051,8 +1051,8 @@ function BaziPageContent() {
             />
           </div>
         </div>
-        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 pb-20 md:pb-26">
-          <div className="bazi-input-card flex-shrink-0 w-full lg:w-auto lg:max-w-[440px] rounded-2xl bg-white shadow-none px-6 py-6 sm:px-8 sm:py-8 border border-[#1C1A16]/8">
+        <div className="flex flex-col gap-6 pb-20 md:pb-26">
+          <div className="bazi-input-card w-full rounded-2xl bg-white shadow-none px-6 py-6 sm:px-8 sm:py-8 border border-[#1C1A16]/8">
             <div className="space-y-8">
               {/* 时辰组 */}
               <fieldset className="space-y-5 rounded-xl bg-[#FAF9F6] p-5 border border-[#1C1A16]/6">
@@ -1166,7 +1166,7 @@ function BaziPageContent() {
             </div>
           </div>
 
-          <div className="flex-1 min-w-0">
+          <div className="w-full">
             {loading && (
               <Card className={`flex flex-col items-center justify-center py-16 ${cardClass}`}>
                 <BaguaSpinner size={64} />
@@ -1183,7 +1183,7 @@ function BaziPageContent() {
                   <Sparkles className="w-8 h-8 text-[#6B7280]" />
                 </div>
                 <p className="text-[#1C1A16] font-medium text-lg">开始您的命盘解读</p>
-                <p className="text-sm text-[#6B7280] mt-2 max-w-[260px]">填写左侧出生信息，AI 将生成专属八字解读</p>
+                <p className="text-sm text-[#6B7280] mt-2 max-w-[260px]">填写上方出生信息，AI 将生成专属八字解读</p>
                 <div className="mt-6 text-left bg-[#FAF9F6] rounded-xl p-4 max-w-[300px] w-full">
                   <p className="text-xs font-medium text-[#1C1A16]/60 mb-2">填写提示</p>
                   <ul className="space-y-1.5 text-xs text-[#1C1A16]/55">
