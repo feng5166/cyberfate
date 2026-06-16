@@ -1004,7 +1004,8 @@ function BaziPageContent() {
           </div>
         )}
         <form onSubmit={handleSubmit}>
-        <div className="max-w-3xl mx-auto w-full mb-6 space-y-6">
+        <div className="max-w-3xl mx-auto w-full flex flex-col pb-20 md:pb-26">
+          <div className="bazi-input-card w-full rounded-2xl bg-white shadow-none px-6 py-6 sm:px-8 sm:py-8 border border-[#1C1A16]/8 space-y-6">
           {/* 基本信息：姓名 + 性别 */}
           <div>
             <p className="text-sm font-semibold text-[#1C1A16]/50 mb-3 tracking-wide">基本信息</p>
@@ -1035,6 +1036,7 @@ function BaziPageContent() {
               </div>
             </div>
           </div>
+          <hr className="border-[#1C1A16]/8" />
 
           {/* 时间信息：日期类型 + 出生日期 */}
           <div>
@@ -1062,11 +1064,8 @@ function BaziPageContent() {
               />
             </div>
           </div>
-        </div>
-        <div className="max-w-3xl mx-auto w-full flex flex-col gap-6 pb-20 md:pb-26">
-          <div className="bazi-input-card w-full rounded-2xl bg-white shadow-none px-6 py-6 sm:px-8 sm:py-8 border border-[#1C1A16]/8">
-            <div className="space-y-8">
-              {/* 时辰组 */}
+          <hr className="border-[#1C1A16]/8" />
+          {/* 时辰组 */}
               <fieldset className="space-y-4">
                 <p className="text-sm font-semibold text-[#1C1A16]/50 tracking-wide">时辰信息</p>
 
@@ -1176,7 +1175,6 @@ function BaziPageContent() {
               >
                 {loading ? '正在计算...' : '开始解读'}
               </Button>
-            </div>
           </div>
 
           <div className="w-full">
