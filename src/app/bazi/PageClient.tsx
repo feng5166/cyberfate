@@ -1080,9 +1080,9 @@ function BaziPageContent() {
                   </div>
                 </label>
 
-                {formData.knowTime ? (
-                  <>
-                    <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {formData.knowTime ? (
+                    <>
                       <div className="space-y-1.5">
                         <label className="block text-sm font-medium text-[#1C1A16]/70">时（小时）</label>
                         <Select
@@ -1108,24 +1108,8 @@ function BaziPageContent() {
                           className="h-10 rounded-lg border border-[#1C1A16]/15 bg-white px-3 text-sm text-[#1C1A16]"
                         />
                       </div>
-                    </div>
-                    <label className="flex items-start gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.lateZiShi}
-                        onChange={(e) => setFormData({ ...formData, lateZiShi: e.target.checked })}
-                        className="mt-1 w-4 h-4 accent-[#C2762B]"
-                      />
-                      <div>
-                        <p className="text-sm font-medium text-[#1C1A16]">晚子时（23:00 后归次日日柱）</p>
-                        <p className="text-xs text-[#1C1A16]/55 mt-0.5">
-                          专业命理项，仅当出生在 23:00-23:59 时影响日柱。
-                        </p>
-                      </div>
-                    </label>
-                  </>
-                ) : (
-                  <>
+                    </>
+                  ) : (
                     <div className="space-y-1.5">
                       <label htmlFor="bazi-birth-hour" className="block text-sm font-medium text-[#1C1A16]/70">出生时辰（粗略）</label>
                       <Select
@@ -1136,21 +1120,39 @@ function BaziPageContent() {
                         className="h-10 rounded-lg border border-[#1C1A16]/15 bg-white px-4 text-sm text-[#1C1A16]"
                       />
                     </div>
-                    {formData.birthHour === '-1' && (
-                      <p className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">
-                        ⚠️ 未提供出生时间将按无时辰排盘，时柱缺失会显著降低分析精度。
+                  )}
+
+                  <CitySearch
+                    label="出生地"
+                    placeholder="如 北京市、上海市"
+                    value={formData.birthPlace}
+                    onInputChange={(value) => setFormData(prev => ({ ...prev, birthPlace: value }))}
+                    onSelect={(city) => setFormData(prev => ({ ...prev, birthPlace: city.name }))}
+                  />
+                </div>
+
+                {formData.knowTime && (
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.lateZiShi}
+                      onChange={(e) => setFormData({ ...formData, lateZiShi: e.target.checked })}
+                      className="mt-1 w-4 h-4 accent-[#C2762B]"
+                    />
+                    <div>
+                      <p className="text-sm font-medium text-[#1C1A16]">晚子时（23:00 后归次日日柱）</p>
+                      <p className="text-xs text-[#1C1A16]/55 mt-0.5">
+                        专业命理项，仅当出生在 23:00-23:59 时影响日柱。
                       </p>
-                    )}
-                  </>
+                    </div>
+                  </label>
                 )}
 
-                <CitySearch
-                  label="出生地"
-                  placeholder="如 北京市、上海市"
-                  value={formData.birthPlace}
-                  onInputChange={(value) => setFormData(prev => ({ ...prev, birthPlace: value }))}
-                  onSelect={(city) => setFormData(prev => ({ ...prev, birthPlace: city.name }))}
-                />
+                {!formData.knowTime && formData.birthHour === '-1' && (
+                  <p className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">
+                    ⚠️ 未提供出生时间将按无时辰排盘，时柱缺失会显著降低分析精度。
+                  </p>
+                )}
               </fieldset>
 
               {error && <div className="p-3.5 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">{error}</div>}
