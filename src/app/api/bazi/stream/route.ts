@@ -136,9 +136,7 @@ export async function POST(req: NextRequest) {
             try {
               const obj = JSON.parse(payload);
               const delta: string =
-                obj?.choices?.[0]?.delta?.content ??
-                obj?.choices?.[0]?.delta?.reasoning_content ??
-                '';
+                obj?.choices?.[0]?.delta?.content ?? '';
               if (delta) {
                 fullText += delta;
                 controller.enqueue(encoder.encode(`data: ${JSON.stringify({ delta })}\n\n`));
