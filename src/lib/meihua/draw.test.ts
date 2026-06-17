@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { BAGUA, resolveNumberDraw, resolveTimeDraw, buildPair, getChangedPair } from './draw';
+import {
+  BAGUA,
+  resolveNumberDraw,
+  resolveTimeDraw,
+  resolveDraw,
+  parseNumber,
+  buildPair,
+  getChangedPair,
+} from './draw';
 
 describe('梅花数字起卦 — 卦数↔卦 映射 (C2 回归)', () => {
   // 先天八卦数:乾1 兑2 离3 震4 巽5 坎6 艮7 坤8;余 8 取坤(上卦),即数字 N → 第 N 卦
@@ -79,5 +87,56 @@ describe('变卦:翻动爻得到合法卦', () => {
     const changed = getChangedPair(primary, 1); // 翻最下爻 1→0:下卦 111→011=巽
     expect(changed.lower.name).toBe('巽');
     expect(changed.upper.name).toBe('乾');
+  });
+});
+
+describe('parseNumber 分支', () => {
+  it('有限数字原样返回', () => {
+    expect(parseNumber(7)).toBe(7);
+    expect(parseNumber(0)).toBe(0);
+  });
+
+  it('数字字符串被解析', () => {
+    expect(parseNumber('5')).toBe(5);
+    expect(parseNumber('  12 ')).toBe(12);
+  });
+
+  it('非有限数字 / 非数字字符串 / 其它类型 → 兜底值', () => {
+    expect(parseNumber(NaN)).toBe(1); // Number.isFinite=false
+    expect(parseNumber(Infinity)).toBe(1);
+    expect(parseNumber('abc')).toBe(1); // parseInt → NaN
+    expect(parseNumber('')).toBe(1); // 空串 trim 为假
+    expect(parseNumber(null)).toBe(1);
+    expect(parseNumber(undefined)).toBe(1);
+    expect(parseNumber({})).toBe(1);
+    expect(parseNumber('99', 3)).toBe(99); // 自定义兜底不触发
+    expect(parseNumber(null, 8)).toBe(8); // 自定义兜底触发
+  });
+});
+
+describe('resolveDraw 派发器', () => {
+  const fixedNow = new Date('2026-06-17T08:30:45');
+
+  it("method='time' 走时间起卦(与 resolveTimeDraw 一致)", () => {
+    expect(resolveDraw('time', undefined, fixedNow)).toEqual(resolveTimeDraw(fixedNow));
+  });
+
+  it("method='number' 解析字符串入参(与 resolveNumberDraw 一致)", () => {
+    expect(resolveDraw('number', { num1: '3', num2: '5' }, fixedNow)).toEqual(
+      resolveNumberDraw(3, 5)
+    );
+  });
+
+  it("method='number' 缺省入参回退到 1/1", () => {
+    expect(resolveDraw('number', undefined, fixedNow)).toEqual(resolveNumberDraw(1, 1));
+  });
+});
+
+describe('buildPair 越界兜底', () => {
+  it('非法下标回退到 BAGUA[0](乾)', () => {
+    const pair = buildPair(99, -1);
+    expect(pair.upper).toBe(BAGUA[0]);
+    expect(pair.lower).toBe(BAGUA[0]);
+    expect(pair.upper.name).toBe('乾');
   });
 });

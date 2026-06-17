@@ -29,7 +29,11 @@ import {
   checkBaziQuota,
   useBaziQuota,
   checkLiuyaoQuota,
+  checkMeihuaDecideQuota,
+  checkDailyQuota,
   peekBaziQuota,
+  deductBaziQuota,
+  refundQuota,
 } from '@/lib/quota'
 
 beforeEach(() => {
@@ -126,6 +130,54 @@ describe('quota — peekBaziQuota (read-only)', () => {
     findUnique.mockResolvedValue(null)
     const res = await peekBaziQuota('user-1', false)
     expect(res.hasQuota).toBe(true)
+  })
+
+  it('VIP short-circuits without reading the DB', async () => {
+    const res = await peekBaziQuota('vip', true)
+    expect(res).toEqual({ hasQuota: true, isVip: true })
+    expect(findUnique).not.toHaveBeenCalled()
+  })
+
+  it('queries isVip when vipStatus omitted', async () => {
+    isVipMock.mockResolvedValue(false)
+    findUnique.mockResolvedValue({ baziAiCount: 0 })
+    const res = await peekBaziQuota('user-1')
+    expect(isVipMock).toHaveBeenCalledWith('user-1')
+    expect(res.hasQuota).toBe(true)
+  })
+})
+
+describe('quota — 其余 AI 模块限额(3/天)', () => {
+  it('梅花决策用 meihuaDecideCount, limit 3', async () => {
+    updateMany.mockResolvedValue({ count: 1 })
+    const res = await checkMeihuaDecideQuota('u', false)
+    expect(res.limit).toBe(3)
+    expect(updateMany.mock.calls[0][0].where).toMatchObject({ meihuaDecideCount: { lt: 3 } })
+  })
+
+  it('每日运势用 dailyCount, limit 3', async () => {
+    updateMany.mockResolvedValue({ count: 0 })
+    const res = await checkDailyQuota('u', false)
+    expect(res).toEqual({ hasQuota: false, limit: 3, isVip: false })
+    expect(updateMany.mock.calls[0][0].where).toMatchObject({ dailyCount: { lt: 3 } })
+  })
+})
+
+describe('quota — deductBaziQuota / refundQuota', () => {
+  it('deductBaziQuota upsert 自增,create 初值为 1', async () => {
+    await deductBaziQuota('user-1')
+    expect(upsert).toHaveBeenCalledTimes(1)
+    const arg = upsert.mock.calls[0][0]
+    expect(arg.update).toMatchObject({ baziAiCount: { increment: 1 } })
+    expect(arg.create).toMatchObject({ baziAiCount: 1 })
+  })
+
+  it('refundQuota 仅对 >0 的行 decrement', async () => {
+    updateMany.mockResolvedValue({ count: 1 })
+    await refundQuota('user-1', 'liuyaoCount')
+    const arg = updateMany.mock.calls[0][0]
+    expect(arg.where).toMatchObject({ userId: 'user-1', liuyaoCount: { gt: 0 } })
+    expect(arg.data).toMatchObject({ liuyaoCount: { decrement: 1 } })
   })
 })
 
