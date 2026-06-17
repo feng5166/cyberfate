@@ -8,7 +8,7 @@ import { logger } from '@/lib/logger';
 const SERVICE = 'api/payment/webhook';
 
 // Stripe 签名验证（参考官方 SDK 实现）
-export function verifyStripeWebhook(
+function verifyStripeWebhook(
   payload: string,
   header: string,
   secret: string,
