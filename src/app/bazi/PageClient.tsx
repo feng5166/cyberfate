@@ -1642,32 +1642,14 @@ function BaziPageContent() {
                 </div>
 
                 <Card className={cardClass}>
-                  <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em] mb-5">常见问题</h2>
-                  <div className="space-y-3">
-                    {faqItems.map((item, index) => {
-                      const expanded = expandedFaqIndex === index;
-                      return (
-                        <div key={item.question} className="rounded-2xl border border-[#1C1A16]/10 bg-white px-4 py-3">
-                          <button
-                            type="button"
-                            className="w-full flex items-center justify-between text-left"
-                            onClick={() => setExpandedFaqIndex(prev => (prev === index ? null : index))}
-                          >
-                            <span className="text-sm font-medium text-[#1C1A16]">{item.question}</span>
-                            {expanded ? (
-                              <ChevronUp className="w-4 h-4 text-[#6B7280]" />
-                            ) : (
-                              <ChevronDown className="w-4 h-4 text-[#6B7280]" />
-                            )}
-                          </button>
-                          {expanded && (
-                            <p className="mt-2 text-sm leading-relaxed text-[#1C1A16]/78">
-                              {item.answer}
-                            </p>
-                          )}
-                        </div>
-                      );
-                    })}
+                  <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em] mb-5 text-center">八字常见问题</h2>
+                  <div className="space-y-4">
+                    {faqItems.map((item) => (
+                      <div key={item.question} className="rounded-2xl border border-[#1C1A16]/8 bg-white px-5 py-4">
+                        <p className="text-sm font-semibold text-[#1C1A16] mb-2">{item.question}</p>
+                        <p className="text-sm leading-relaxed text-[#1C1A16]/60">{item.answer}</p>
+                      </div>
+                    ))}
                   </div>
                 </Card>
 
