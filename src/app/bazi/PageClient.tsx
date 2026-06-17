@@ -734,11 +734,14 @@ function BaziPageContent() {
     }
   }, [result]);
 
-  // 流式输出时自动滚到底部
+  // 流式输出时自动滚到底部（节流，避免频繁触发）
+  const lastScrollRef = useRef(0);
   useEffect(() => {
-    if (aiStreaming && aiStreamText) {
-      window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' });
-    }
+    if (!aiStreaming || !aiStreamText) return;
+    const now = Date.now();
+    if (now - lastScrollRef.current < 300) return; // 300ms 节流
+    lastScrollRef.current = now;
+    streamEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [aiStreamText, aiStreaming]);
 
   useEffect(() => {
