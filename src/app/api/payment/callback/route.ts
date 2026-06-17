@@ -1,24 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
 import { prisma } from '@/lib/db';
 import { addDays } from 'date-fns';
 import { LIFETIME_DURATION } from '@/lib/pricing-config';
+import { verifyCallbackSignature } from '@/lib/payment/signature';
 
 const REPLAY_TOLERANCE_MS = 5 * 60 * 1000; // ±5分钟
-
-function verifyCallbackSignature(body: string, signature: string | null): boolean {
-  const secret = process.env.CALLBACK_SECRET;
-  if (!secret) {
-    console.error('[PaymentCallback] CALLBACK_SECRET 未配置，拒绝请求');
-    return false;
-  }
-  if (!signature) {
-    return false;
-  }
-  const expected = crypto.createHmac('sha256', secret).update(body, 'utf8').digest('hex');
-  if (expected.length !== signature.length) return false;
-  return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
-}
 
 export async function POST(req: NextRequest) {
   if (process.env.NODE_ENV === 'production') {

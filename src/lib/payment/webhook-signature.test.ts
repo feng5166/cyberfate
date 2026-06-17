@@ -1,20 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import crypto from 'node:crypto'
 
-// The verify helpers live in the route modules. Importing those modules pulls
-// in next/server + prisma, so stub them. We only exercise the pure HMAC verify
-// functions (exported via an export-only edit — see report).
-vi.mock('next/server', () => ({
-  NextRequest: class {},
-  NextResponse: { json: (b: unknown, init?: unknown) => ({ body: b, init }) },
-}))
-vi.mock('@/lib/db', () => ({ prisma: {} }))
-vi.mock('@/lib/logger', () => ({
-  logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
-}))
-
-import { verifyStripeWebhook } from '@/app/api/payment/webhook/route'
-import { verifyCallbackSignature } from '@/app/api/payment/callback/route'
+// 验签逻辑已抽到纯 lib(仅依赖 node:crypto),直接 import,无需 mock 路由依赖。
+import { verifyStripeWebhook, verifyCallbackSignature } from '@/lib/payment/signature'
 
 const SECRET = 'whsec_test_secret'
 

@@ -1,90 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import crypto from 'crypto';
+import { verifyStripeWebhook } from '@/lib/payment/signature';
 import { addDays } from 'date-fns';
 import { isLifetimePlan, LIFETIME_DURATION, PRICING_CONFIG, type PlanId } from '@/lib/pricing-config';
 import { logger } from '@/lib/logger';
 
 const SERVICE = 'api/payment/webhook';
-
-// Stripe 签名验证（参考官方 SDK 实现）
-function verifyStripeWebhook(
-  payload: string,
-  header: string,
-  secret: string,
-  tolerance: number = 300
-): { valid: boolean; event?: StripeEvent; error?: string } {
-  const details = parseSignatureHeader(header);
-
-  if (!details || details.timestamp === -1) {
-    return { valid: false, error: 'Unable to extract timestamp and signatures from header' };
-  }
-
-  if (details.signatures.length === 0) {
-    return { valid: false, error: 'No signatures found with expected scheme v1' };
-  }
-
-  const expectedSignature = computeSignature(
-    `${details.timestamp}.${payload}`,
-    secret
-  );
-
-  const signatureFound = details.signatures.some((sig) =>
-    secureCompare(sig, expectedSignature)
-  );
-
-  if (!signatureFound) {
-    return { valid: false, error: 'Webhook signature verification failed' };
-  }
-
-  const timestampAge = Math.floor(Date.now() / 1000) - details.timestamp;
-  if (tolerance > 0 && timestampAge > tolerance) {
-    return { valid: false, error: `Timestamp outside tolerance. Age: ${timestampAge}s` };
-  }
-
-  try {
-    const event = JSON.parse(payload) as StripeEvent;
-    return { valid: true, event };
-  } catch (e) {
-    return { valid: false, error: 'Invalid JSON payload' };
-  }
-}
-
-function parseSignatureHeader(header: string): { timestamp: number; signatures: string[] } | null {
-  if (typeof header !== 'string') {
-    return null;
-  }
-
-  const items = header.split(',');
-  const timestamp = items
-    .map((item) => item.split('='))
-    .filter(([key]) => key === 't')
-    .map(([, value]) => parseInt(value, 10))[0] ?? -1;
-
-  const signatures = items
-    .map((item) => item.split('='))
-    .filter(([key]) => key === 'v1')
-    .map(([, value]) => value);
-
-  return { timestamp, signatures };
-}
-
-function computeSignature(payload: string, secret: string): string {
-  return crypto
-    .createHmac('sha256', secret)
-    .update(payload, 'utf8')
-    .digest('hex');
-}
-
-function secureCompare(a: string, b: string): boolean {
-  if (a.length !== b.length) {
-    return false;
-  }
-
-  const bufA = Buffer.from(a);
-  const bufB = Buffer.from(b);
-  return crypto.timingSafeEqual(bufA, bufB);
-}
 
 interface StripeCheckoutSession {
   id: string;
@@ -142,7 +63,7 @@ export async function POST(req: NextRequest) {
   }
 
   // 验证签名
-  const verification = verifyStripeWebhook(body, sig, webhookSecret);
+  const verification = verifyStripeWebhook<StripeEvent>(body, sig, webhookSecret);
   if (!verification.valid || !verification.event) {
     logger.error(SERVICE, 'Signature verification failed', undefined, { error: verification.error });
     return NextResponse.json(
