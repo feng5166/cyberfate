@@ -6,7 +6,7 @@ import { refundQuota } from '@/lib/quota';
 import { redis } from '@/lib/cache/redis';
 import { getEnvVar } from '@/lib/utils/api-wrapper';
 import { AI_BASE_URL, PRIMARY_MODEL } from '@/lib/ai/models';
-import { BAZI_SYSTEM_PROMPT, buildBaziPrompt } from '@/lib/ai/prompts';
+import { BAZI_STREAM_SYSTEM_PROMPT, buildBaziStreamPrompt } from '@/lib/ai/prompts';
 import { generateFallbackBaziAnalysis } from '@/lib/ai/client';
 import { formatAnalysis } from '@/lib/ai/formatAnalysis';
 import { attachClientAbort } from '@/lib/ai/streamProxy';
@@ -44,7 +44,9 @@ export async function POST(req: NextRequest) {
     try {
       const cached = await redis.get(cacheKey);
       if (cached) {
-        const text = formatAnalysis(cached as BaziAnalysis);
+        // 兼容旧缓存：字符串直接返回，对象走 formatAnalysis
+        const text =
+          typeof cached === 'string' ? cached : formatAnalysis(cached as BaziAnalysis);
         return new Response(text, {
           status: 200,
           headers: {
@@ -70,7 +72,7 @@ export async function POST(req: NextRequest) {
   }
 
   // 2. 调 DeepSeek stream
-  const prompt = buildBaziPrompt(baziResult as BaziResult, name, gender, dayunExtra);
+  const prompt = buildBaziStreamPrompt(baziResult as BaziResult, name, gender, dayunExtra);
   const proxy = attachClientAbort(req);
 
   let upstream: Response;
@@ -89,7 +91,7 @@ export async function POST(req: NextRequest) {
         stream: true,
         enable_thinking: false,
         messages: [
-          { role: 'system', content: BAZI_SYSTEM_PROMPT },
+          { role: 'system', content: BAZI_STREAM_SYSTEM_PROMPT },
           { role: 'user', content: prompt },
         ],
       }),
@@ -147,32 +149,21 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        // 流结束 — 解析完整文本写缓存
-        const jsonMatch = fullText.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) {
-          // 无可解析 JSON，发 fallback 事件
+        // 流结束 — 内容是纯文本，长度过短认为失败走 fallback
+        if (fullText.trim().length < 100) {
           await handleFallback(controller, encoder, baziResult, session, name, birthDate);
           return;
         }
 
-        let analysis: BaziAnalysis;
+        // 写 Redis 缓存（存纯文本）
         try {
-          analysis = JSON.parse(jsonMatch[0]) as BaziAnalysis;
-        } catch {
-          await handleFallback(controller, encoder, baziResult, session, name, birthDate);
-          return;
-        }
-
-        // 写 Redis 缓存
-        try {
-          await redis.set(cacheKey, analysis);
+          await redis.set(cacheKey, fullText);
         } catch (err) {
           console.warn('[bazi stream] cache write error', err);
         }
 
-        const aiAnalysis = formatAnalysis(analysis);
         controller.enqueue(
-          encoder.encode(`data: ${JSON.stringify({ done: true, source: 'deepseek', aiAnalysis })}\n\n`)
+          encoder.encode(`data: ${JSON.stringify({ done: true, source: 'deepseek', aiAnalysis: fullText })}\n\n`)
         );
       } catch (err) {
         logger.error(SERVICE, 'stream read failed', err instanceof Error ? err : undefined);

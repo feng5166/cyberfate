@@ -536,6 +536,93 @@ export const MEIHUA_DECISION_SYSTEM_PROMPT = `${SAFETY_GUARDRAIL}
   }
 }`;
 
+// ===== 八字流式输出专用 prompt（纯文本输出，供 /api/bazi/stream 使用）=====
+
+export const BAZI_STREAM_SYSTEM_PROMPT = `${SAFETY_GUARDRAIL}
+
+你是赛博命理师，一位精通子平命理的专业分析师。
+你的任务是基于用户八字数据，输出一份深度命理分析报告。
+
+## 输出规范
+- 纯文本输出，不使用 JSON、不使用 Markdown 符号（不要 ##、**、* 等）
+- 章节标题格式：【章节名】，单独占一行
+- 章节之间空一行
+- bullet 条目用「- 」开头
+
+## 章节顺序（严格按此顺序）
+【日主分析】
+【性格特点】
+【事业运势】
+【财运分析】
+【感情运势】
+【健康提示】
+【大运流年】
+
+## 内容规范
+- 每章节 150-250 字
+- 先列命理依据，再给结论
+- 不重复引用其他章节内容
+- 使用第三人称「命主」，不用「您」
+- 评价措辞使用「偏向」「较」「倾向」，不用绝对断言
+- 禁止空泛套话，每句话要有具体命理支撑`;
+
+export interface BaziStreamDayunExtra {
+  ageStart?: number;
+  ageEnd?: number;
+  endYear?: number;
+  nextGanZhi?: string;
+  nextStartYear?: number;
+  currentDayun?: string;
+  currentYear?: string | number;
+}
+
+export function buildBaziStreamPrompt(
+  baziResult: BaziResult,
+  name?: string,
+  gender?: string,
+  dayunExtra?: BaziStreamDayunExtra
+): string {
+  const { chart, wuxing, dayMaster } = baziResult as BaziResult & {
+    dayun?: { current?: string; liunian?: string };
+  };
+
+  const pillarStr = chart
+    ? `年柱${chart.year.gan}${chart.year.zhi} 月柱${chart.month.gan}${chart.month.zhi} 日柱${chart.day.gan}${chart.day.zhi}${
+        chart.hour ? ` 时柱${chart.hour.gan}${chart.hour.zhi}` : ' 时柱未知'
+      }`
+    : '';
+
+  const wuxingStr = wuxing
+    ? `金${wuxing.metal} 木${wuxing.wood} 水${wuxing.water} 火${wuxing.fire} 土${wuxing.earth}`
+    : '';
+
+  const genderLabel = gender === 'male' ? '男' : gender === 'female' ? '女' : '未知';
+  const safeName = name ? sanitizeUserInput(name.replace(/[【】\[\]「」『』〔〕《》〈〉]/g, ''), 50) : '';
+  const nameStr = safeName || '缘主';
+
+  const dayunLine = (() => {
+    if (!dayunExtra) return '';
+    const segs: string[] = [];
+    if (dayunExtra.currentDayun) segs.push(`当前大运：${dayunExtra.currentDayun}`);
+    if (dayunExtra.ageStart != null && dayunExtra.ageEnd != null) {
+      segs.push(`${dayunExtra.ageStart}-${dayunExtra.ageEnd}岁`);
+    }
+    if (dayunExtra.currentYear) segs.push(`流年：${dayunExtra.currentYear}`);
+    if (dayunExtra.nextGanZhi && dayunExtra.nextStartYear) {
+      segs.push(`下一步大运：${dayunExtra.nextGanZhi}（约${dayunExtra.nextStartYear}年起）`);
+    }
+    return segs.length ? `\n${segs.join('，')}` : '';
+  })();
+
+  return `姓名：${nameStr}
+性别：${genderLabel}
+八字：${pillarStr}
+日主：${dayMaster || ''}
+五行统计：${wuxingStr}${dayunLine}
+
+请按照系统要求的章节格式，输出完整的八字命理分析报告。每章节必须有实质内容，不得省略。`;
+}
+
 export function buildMeihuaDecisionPrompt(input: MeihuaDecisionPromptInput): string {
   return `【用户问题】
 ${input.question}

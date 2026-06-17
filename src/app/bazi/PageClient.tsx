@@ -959,6 +959,7 @@ function BaziPageContent() {
               const obj = JSON.parse(payload);
               if (typeof obj.delta === 'string') {
                 fullText += obj.delta;
+                setAiStreamText(fullText);
               }
               if (obj.done) {
                 finalSource = obj.source || 'deepseek';
@@ -1578,15 +1579,20 @@ function BaziPageContent() {
                   )}
 
                   {aiStreaming && (
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 text-xs text-[#1C1A16]/50">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-xs text-[#1C1A16]/50 mb-3">
                         <RefreshCw className="w-3.5 h-3.5 text-[#C2762B] animate-spin" />
                         AI 正在解读中…
                       </div>
                       {aiStreamText && (
-                        <div className="text-sm leading-loose text-[#1C1A16]/85 whitespace-pre-wrap">
+                        <div className="text-sm leading-loose text-[#1C1A16]/75 whitespace-pre-wrap font-mono">
                           {aiStreamText}
                           <span className="inline-block w-1.5 h-4 ml-0.5 align-middle bg-[#C2762B] animate-pulse" />
+                        </div>
+                      )}
+                      {!aiStreamText && (
+                        <div className="py-6 flex justify-center">
+                          <RefreshCw className="w-6 h-6 text-[#C2762B] animate-spin" />
                         </div>
                       )}
                     </div>
