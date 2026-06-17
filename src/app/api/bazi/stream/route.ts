@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
   }
 
   // 2. 调 DeepSeek stream
-  const prompt = buildBaziStreamPrompt(baziResult as BaziResult, name, gender, dayunExtra, birthDate);
+  const prompt = buildBaziStreamPrompt(baziResult as BaziResult, name, gender, dayunExtra);
   const proxy = attachClientAbort(req);
 
   let upstream: Response;
