@@ -154,7 +154,7 @@ export function calculateBazi(input: BaziInput): BaziResult {
     // knowTime===false 强制无时柱; 否则按旧 birthHour (粗时辰) 处理
     if (knowTime === false) {
       hourPillar = null;
-    } else if (birthHour != null && birthHour >= 0) {
+    } else if (birthHour) {
       hourPillar = getHourPillar(dayPillar.gan, birthHour);
     } else {
       hourPillar = null;
