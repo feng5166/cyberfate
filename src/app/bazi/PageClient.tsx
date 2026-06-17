@@ -398,10 +398,13 @@ function renderSectionContent(content: string): ReactNode {
   // 1. 数字+点+空格 (如 "1. 内容" "2. 内容") 前加换行
   normalizedContent = normalizedContent.replace(/(?<!\n)(\d+\.\s)/g, '\n\n$1');
 
-  // 2. 短语(≤10字)+冒号 前加换行 (避免段首已有换行的情况)
-  normalizedContent = normalizedContent.replace(/(?<=[^\n\s])\s*([^\n：:，。；、\s]{1,10}[：:])/g, '\n\n$1');
+  // 2. "- " 开头的 bullet 行前确保有换行（但不拆成双换行，保持在同一段落组）
+  normalizedContent = normalizedContent.replace(/(?<!\n)(- )/g, '\n$1');
 
-  // 3. 清理多余空行
+  // 3. 短语(≤10字)+冒号 前加换行 (避免段首已有换行的情况，bullet行内冒号不再额外处理)
+  normalizedContent = normalizedContent.replace(/(?<=[^\n\s-])\s*([^\n：:，。；、\s-]{1,10}[：:])/g, '\n\n$1');
+
+  // 4. 清理多余空行
   normalizedContent = normalizedContent.replace(/\n{3,}/g, '\n\n').trim();
 
   const paragraphs = normalizedContent.split(/\n\n+/);
@@ -412,6 +415,32 @@ function renderSectionContent(content: string): ReactNode {
         const trimmed = para.trim();
         const isNumbered = /^[①②③④⑤⑥⑦⑧⑨⑩]/.test(trimmed);
         const lines = para.split('\n');
+
+        // 段落内含 bullet 行时，每行独立渲染
+        const hasBullet = lines.some(l => l.trimStart().startsWith('- '));
+
+        if (hasBullet) {
+          return (
+            <div key={i} className="space-y-1.5">
+              {lines.map((line, j) => {
+                const trimmedLine = line.trimStart();
+                if (trimmedLine.startsWith('- ')) {
+                  const bulletContent = trimmedLine.slice(2);
+                  return (
+                    <div key={j} className="flex gap-2 pl-1">
+                      <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#C2762B]/60" />
+                      <span className="flex-1">{renderHighlightedLine(bulletContent)}</span>
+                    </div>
+                  );
+                }
+                if (!trimmedLine) return null;
+                return (
+                  <p key={j}>{renderHighlightedLine(line)}</p>
+                );
+              })}
+            </div>
+          );
+        }
 
         return (
           <p key={i} className={isNumbered ? 'pl-5 -indent-5' : ''}>
