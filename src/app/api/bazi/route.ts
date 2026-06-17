@@ -180,6 +180,16 @@ export async function POST(req: NextRequest) {
     if (baziQuotaConsumed && _aiSource === 'fallback' && session?.user?.id) {
       await refundQuota(session.user.id, 'baziAiCount');
     }
+
+    // H3: AI fallback 时发飞书告警
+    if (_aiSource === 'fallback') {
+      void sendFeishuAlert({
+        name: input.name || '缘主',
+        birthDate: input.birthDate,
+        userId: session?.user?.id,
+        userEmail: (session?.user as { email?: string } | undefined)?.email,
+      });
+    }
     
     // 处理时柱（可能为 null）
     // Provide a valid placeholder pillar when hour data is unavailable.
@@ -332,4 +342,46 @@ function calculateFiveDimensions(pillars: PillarRecord, wuxing: WuxingCount): Fi
     health: clampScore(85 - deviation * 12),
     studies: clampScore(64 + ratio('water') * 10 + ratio('wood') * 6 + dayBoost * 0.5),
   };
+}
+
+// ── 飞书告警（AI fallback 时通知 Frank）─────────────────
+async function sendFeishuAlert(info: {
+  name: string;
+  birthDate: string;
+  userId?: string;
+  userEmail?: string;
+}) {
+  const APP_ID = process.env.FEISHU_BOT_APP_ID;
+  const APP_SECRET = process.env.FEISHU_BOT_APP_SECRET;
+  const OPEN_ID = process.env.FEISHU_USER_OPEN_ID;
+  if (!APP_ID || !APP_SECRET || !OPEN_ID) return;
+
+  try {
+    // 1. 获取 tenant_access_token
+    const tokenRes = await fetch('https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ app_id: APP_ID, app_secret: APP_SECRET }),
+    });
+    const tokenData = await tokenRes.json() as { tenant_access_token?: string };
+    const token = tokenData.tenant_access_token;
+    if (!token) return;
+
+    // 2. 发送消息
+    const text = `⚠️ CyberFate 八字 AI 解读失败\n姓名：${info.name}\n生日：${info.birthDate}\n用户：${info.userEmail || info.userId || '游客'}\n时间：${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}`;
+    await fetch('https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=open_id', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        receive_id: OPEN_ID,
+        msg_type: 'text',
+        content: JSON.stringify({ text }),
+      }),
+    });
+  } catch (e) {
+    console.error('[bazi] feishu alert failed:', e);
+  }
 }
