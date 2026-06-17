@@ -672,7 +672,7 @@ function BaziPageContent() {
   const aiSections = useMemo(() => extractAiSections(result?.aiAnalysis || ''), [result?.aiAnalysis]);
 
   const personalityText = useMemo(() => {
-    return aiSections.personality || firstSentence(result?.aiAnalysis || '') || 'AI 正在准备性格概括，请稍后重试。';
+    return aiSections.personality || firstSentence(result?.aiAnalysis || '') || '';
   }, [aiSections.personality, result?.aiAnalysis]);
 
   const dayMasterInsight = useMemo(() => {
@@ -698,7 +698,7 @@ function BaziPageContent() {
     const avoidGods = sortedElements.slice(-2).map(item => item.label);
     const trait = DAYMASTER_TRAITS[dayPillar.gan] || '';
     const personalityBrief = firstSentence(personalityText);
-    const corePersonality = trait ? `${personalityBrief} ${trait}` : personalityBrief;
+    const corePersonality = personalityBrief ? (trait ? `${personalityBrief} ${trait}` : personalityBrief) : trait;
 
     return {
       title: `${dayPillar.gan}${dayPillar.ganWuxing}`,
