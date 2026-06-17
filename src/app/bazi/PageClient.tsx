@@ -959,7 +959,14 @@ function BaziPageContent() {
               const obj = JSON.parse(payload);
               if (typeof obj.delta === 'string') {
                 fullText += obj.delta;
-                setAiStreamText(fullText);
+                // 流式期间提取可读文字预览（去掉JSON结构符号）
+                const readable = fullText
+                  .replace(/"[^"]+"s*:/g, '')
+                  .replace(/[{}[]]/g, '')
+                  .replace(/"/g, '')
+                  .replace(/,s*$/gm, '')
+                  .trim();
+                setAiStreamText(readable);
               }
               if (obj.done) {
                 finalSource = obj.source || 'deepseek';
@@ -1579,9 +1586,17 @@ function BaziPageContent() {
                   )}
 
                   {aiStreaming && (
-                    <div className="py-10 flex flex-col items-center justify-center gap-3">
-                      <RefreshCw className="w-6 h-6 text-[#C2762B] animate-spin" />
-                      <p className="text-sm text-[#1C1A16]/60">AI 正在解读中，请稍候…</p>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-xs text-[#1C1A16]/50">
+                        <RefreshCw className="w-3.5 h-3.5 text-[#C2762B] animate-spin" />
+                        AI 正在解读中…
+                      </div>
+                      {aiStreamText && (
+                        <div className="text-sm leading-loose text-[#1C1A16]/85 whitespace-pre-wrap">
+                          {aiStreamText}
+                          <span className="inline-block w-1.5 h-4 ml-0.5 align-middle bg-[#C2762B] animate-pulse" />
+                        </div>
+                      )}
                     </div>
                   )}
 
