@@ -39,6 +39,14 @@ interface FavoriteRecord {
   timestamp: number;
 }
 
+interface BirthInput {
+  birthDate: string;
+  gender: 'male' | 'female';
+  knowTime?: boolean;
+  birthHourNum?: number;
+  birthMinute?: number;
+}
+
 interface BaziChatSectionProps {
   baziData: {
     pillars: PillarRecord;
@@ -47,6 +55,7 @@ interface BaziChatSectionProps {
     mingGe?: MingGeInfo;
     traits?: BaziTrait[];
   };
+  birthInput?: BirthInput;
   isLoggedIn: boolean;
   isVip: boolean;
 }
@@ -118,21 +127,7 @@ function ThinkingSteps({
   );
 }
 
-export function BaziChatSection({ baziData, isLoggedIn, isVip }: BaziChatSectionProps) {
-  const now = new Date();
-  const currentYear = now.getFullYear();
-  const currentMonth = now.getMonth() + 1;
-
-  const THINKING_STEPS = [
-    '查询今天日期',
-    '分析十神',
-    '分析刑冲会合',
-    '查询神煞',
-    '查询大运',
-    `查询流年 ${currentYear}年`,
-    `查询流月 ${currentYear}年 ${currentMonth}月`,
-  ];
-
+export function BaziChatSection({ baziData, birthInput, isLoggedIn, isVip }: BaziChatSectionProps) {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [favorites, setFavorites] = useState<FavoriteRecord[]>([]);
@@ -215,30 +210,11 @@ export function BaziChatSection({ baziData, isLoggedIn, isVip }: BaziChatSection
     setInput('');
     setSubmitting(true);
 
-    THINKING_STEPS.forEach((step, index) => {
-      setTimeout(() => {
-        setMessages(prev =>
-          prev.map(m =>
-            m.id === id
-              ? { ...m, thinkingSteps: THINKING_STEPS.slice(0, index + 1) }
-              : m
-          )
-        );
-        if (index === THINKING_STEPS.length - 1) {
-          setTimeout(() => {
-            setMessages(prev =>
-              prev.map(m => (m.id === id ? { ...m, thinkingDone: true } : m))
-            );
-          }, 300);
-        }
-      }, index * 400);
-    });
-
     try {
       const res = await fetch('/api/bazi/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ baziData, question: trimmed }),
+        body: JSON.stringify({ baziData, birthInput, question: trimmed }),
       });
 
       if (res.status === 401) {
@@ -285,12 +261,22 @@ export function BaziChatSection({ baziData, isLoggedIn, isVip }: BaziChatSection
           if (data === '[DONE]') continue;
           try {
             const json = JSON.parse(data);
-            if (json.content) {
+            if (json.type === 'step' && typeof json.label === 'string') {
+              // 真实工具链步骤（后端确定性计算后逐条推送）
+              setMessages(prev =>
+                prev.map(m =>
+                  m.id === id
+                    ? { ...m, thinkingSteps: [...m.thinkingSteps, json.label] }
+                    : m
+                )
+              );
+            } else if (json.content) {
+              // 回答 token：首个 token 到达即标记思考完成并折叠
               acc += json.content;
               setMessages(prev =>
                 prev.map(m =>
                   m.id === id
-                    ? { ...m, answer: acc, thinkingExpanded: false }
+                    ? { ...m, answer: acc, thinkingDone: true, thinkingExpanded: false }
                     : m
                 )
               );
@@ -300,7 +286,7 @@ export function BaziChatSection({ baziData, isLoggedIn, isVip }: BaziChatSection
       }
 
       setMessages(prev =>
-        prev.map(m => (m.id === id ? { ...m, streaming: false } : m))
+        prev.map(m => (m.id === id ? { ...m, streaming: false, thinkingDone: true } : m))
       );
     } catch (err) {
       setMessages(prev =>
