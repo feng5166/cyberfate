@@ -1032,6 +1032,29 @@ function BaziPageContent() {
         dayunStartDescription: data.dayunStartDescription,
         dayunStartAt: data.dayunStartAt,
       });
+      // 同步更新本地历史记录，避免下次加载时显示旧缓存
+      try {
+        saveRecord({
+          name: formData.name || '缘主',
+          gender: formData.gender || 'unknown',
+          birthDate: formData.birthDate,
+          birthHour: formData.birthHour,
+          birthPlace: formData.birthPlace,
+          dayMaster: data.pillars?.day?.gan || '',
+          aiSummary: (data.aiAnalysis || '').split(/[。！？]/)[0] || '已重新分析命盘记录。',
+          aiAnalysis: data.aiAnalysis || '',
+          pillars: data.pillars,
+          wuxing: data.wuxing,
+          fiveDimensions: data.fiveDimensions,
+          traits: data.traits,
+          dayMasterElement: data.pillars?.day?.ganWuxing,
+          lunarDate: data.lunarDate,
+          zodiac: data.zodiac,
+          trueSolarOffsetMinutes: data.trueSolarOffsetMinutes ?? null,
+          dayunStartDescription: data.dayunStartDescription,
+          dayunStartAt: data.dayunStartAt,
+        });
+      } catch(e) { console.error('reanalyze save failed', e); }
       setActionMessage('重新分析完成');
     } catch (err) {
       setError(err instanceof Error ? err.message : '重新分析失败，请稍后重试');
