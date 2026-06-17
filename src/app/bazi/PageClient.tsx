@@ -1331,18 +1331,7 @@ function BaziPageContent() {
                 )}
 
                 <Card className={cardClass}>
-                  <div className="flex items-center justify-between mb-1">
-                    <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em]">AI 解读</h2>
-                    <button
-                      type="button"
-                      onClick={handleReanalyze}
-                      disabled={loading}
-                      className="flex items-center gap-1 text-xs text-[#1C1A16]/40 hover:text-[#1C1A16]/70 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                      <RefreshCw className="w-3 h-3" />
-                      重新分析
-                    </button>
-                  </div>
+                  <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em] mb-1">AI 解读</h2>
                   <p className="text-xs text-[#1C1A16]/45 mb-4">AI 命理解读 · 仅供参考</p>
 
                   {/* AI解读引言区块 */}
@@ -1480,6 +1469,18 @@ function BaziPageContent() {
                         <ShishenDetailTab pillars={result.pillars} dayGan={result.pillars.day.gan} />
                       </div>
                     </div>
+                  </div>
+
+                  <div className="mt-6 pt-5 border-t border-[#1C1A16]/8 flex justify-center">
+                    <button
+                      type="button"
+                      onClick={handleReanalyze}
+                      disabled={loading}
+                      className="flex items-center gap-1.5 text-sm text-[#1C1A16]/40 hover:text-[#1C1A16]/70 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      重新分析
+                    </button>
                   </div>
                 </Card>
 
