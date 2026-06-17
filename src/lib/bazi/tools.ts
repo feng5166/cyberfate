@@ -11,7 +11,7 @@ import {
 import { describeDayun } from './dayunDetail';
 import { analyzeInteractions } from './interactions';
 import { analyzeShensha } from './shensha';
-import { analyzeLiunian, analyzeLiuyue } from './liunian';
+import { analyzeLiunian, analyzeLiuyue, analyzeLiuyueRange } from './liunian';
 
 /**
  * 八字「真实工具」流水线
@@ -40,9 +40,11 @@ export interface ToolchainInput {
   };
   /** 北京时间当天 YYYY-MM-DD（由调用方传入，避免服务端时区误差） */
   today: string;
+  /** 流月推算的月数：1=仅当月（默认）；>1=从当月起逐月铺开（用于运势走势类问答） */
+  liuyueMonths?: number;
 }
 
-type StepFn = (ctx: ToolchainInput) => ToolStepResult;
+type StepFn = (ctx: ToolchainInput) => ToolStepResult | ToolStepResult[];
 
 /** 步骤 1：查询今天日期与干支 */
 function queryDate({ today }: ToolchainInput): ToolStepResult {
@@ -137,16 +139,22 @@ function analyzeLiunianStep({ chart, today }: ToolchainInput): ToolStepResult {
   };
 }
 
-/** 步骤 7：分析流月 */
-function analyzeLiuyueStep({ chart, today }: ToolchainInput): ToolStepResult {
+/** 步骤 7：分析流月（默认仅当月；liuyueMonths>1 时逐月铺开） */
+function analyzeLiuyueStep({ chart, today, liuyueMonths }: ToolchainInput): ToolStepResult | ToolStepResult[] {
   const year = Number(today.slice(0, 4));
   const month = Number(today.slice(5, 7));
-  const flow = analyzeLiuyue(chart, year, month);
-  return {
+  const count = Math.max(1, Math.min(12, Math.floor(liuyueMonths ?? 1)));
+
+  if (count === 1) {
+    const flow = analyzeLiuyue(chart, year, month);
+    return { name: 'analyzeLiuyue', label: flow.label, data: { year, month, flow } };
+  }
+
+  return analyzeLiuyueRange(chart, year, month, count).map(item => ({
     name: 'analyzeLiuyue',
-    label: flow.label,
-    data: { year, month, flow },
-  };
+    label: item.label,
+    data: { year: item.year, month: item.month, flow: item },
+  }));
 }
 
 /** 固定顺序的工具链（八字解读的标准推算范式） */
@@ -165,17 +173,21 @@ const STEPS: StepFn[] = [
  * 单步失败不影响其余步骤（产出降级占位，便于排查）。
  */
 export function runBaziToolchain(input: ToolchainInput): ToolStepResult[] {
-  return STEPS.map(step => {
+  const out: ToolStepResult[] = [];
+  for (const step of STEPS) {
     try {
-      return step(input);
+      const result = step(input);
+      if (Array.isArray(result)) out.push(...result);
+      else out.push(result);
     } catch (err) {
-      return {
+      out.push({
         name: step.name || 'unknown',
         label: '该步计算暂不可用',
         data: { error: err instanceof Error ? err.message : String(err) },
-      };
+      });
     }
-  });
+  }
+  return out;
 }
 
 /** 把工具链结果汇总成注入 prompt 的「命理推算事实」文本 */

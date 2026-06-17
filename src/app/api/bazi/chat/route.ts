@@ -119,6 +119,11 @@ export async function POST(req: NextRequest) {
     }
     const baziData = parsed.data;
 
+    // 识别「运势走势/某段时间」类问题：需要逐月流月数据 + 长篇结构化输出
+    const TREND_INTENT_RE = /下半年|上半年|今年|明年|后年|未来|这半年|后半年|半年|全年|几个月|这几个月|每个月|逐月|各月|运势|走势|趋势|流年|流月|年底|年初|季度|\d+\s*月/;
+    const isTrendQuestion = TREND_INTENT_RE.test(question);
+    const liuyueMonths = isTrendQuestion ? 8 : 1;
+
     // 出生信息（可选）：提供后服务端重算命盘并跑真实工具链，得到确定性命理事实
     let toolSteps: ToolStepResult[] = [];
     let promptFacts = '';
@@ -140,6 +145,7 @@ export async function POST(req: NextRequest) {
           chart: result.chart,
           birth: { birthDate: b.birthDate, gender, birthHourNum: knowTime ? b.birthHourNum : undefined, birthMinute: knowTime ? b.birthMinute : undefined },
           today: beijingToday(),
+          liuyueMonths,
         });
         promptFacts = toolchainToPromptFacts(toolSteps);
         chartFacts = JSON.stringify({
@@ -169,9 +175,15 @@ ${promptFacts ? `## 命理推算事实（确定性本地计算，务必以此为
 ${chartFacts || JSON.stringify({ ...baziData, aiAnalysis: undefined }, null, 2)}${baziData.aiAnalysis ? `\n\n## 已有AI分析摘要\n${baziData.aiAnalysis.slice(0, 2000)}` : ''}
 
 ## 回答规则
-- 严格基于上方「命理推算事实」与命盘数据回答，引用具体十神/大运/流年/神煞等推算结论
+- 严格基于上方「命理推算事实」与命盘数据回答，引用具体干支/十神/大运/流年/流月/刑冲会合/神煞等推算结论，不得编造未提供的命理结论
+${isTrendQuestion
+  ? `- 本问涉及一段时间的运势走势，请输出**结构化逐月分析**（篇幅可长，约 1000–2000 字）：
+  1. 先「结论先行」：用一句话概括整体走势（如先扬后抑），并点出关键风险月与机会月
+  2. 再**逐月解析**：按上方流月事实逐月展开，每月标注【流月干支 · 主要十神】，结合该月地支与命局的刑冲会合、神煞，给出该月运势关键词与具体可执行建议
+  3. 最后给 2–3 条核心行动建议
+  4. 可用小标题、表格、列表、少量 emoji 提升可读性`
+  : `- 回答简明扼要，控制在 200 字以内`}
 - 使用友好、温暖的口吻
-- 回答控制在 200 字以内
 - 涉及投资/疾病/死亡等敏感话题时，给出温和提醒
 - 如有困扰请拨打心理援助热线 400-161-9995
 - 本产品为文化娱乐，分析仅供参考`;
@@ -194,7 +206,7 @@ ${chartFacts || JSON.stringify({ ...baziData, aiAnalysis: undefined }, null, 2)}
           { role: 'system', content: systemPrompt },
           { role: 'user', content: question.trim() },
         ],
-        max_tokens: 500,
+        max_tokens: isTrendQuestion ? 3500 : 800,
         temperature: 0.7,
         enable_thinking: false,
         stream: true,

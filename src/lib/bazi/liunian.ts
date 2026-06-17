@@ -94,3 +94,30 @@ export function analyzeLiuyue(chart: BaziChart, year: number, month: number): Fl
   const ganzhi = getMonthGanzhi(`${year}-${mm}-15`);
   return analyzeFlow(chart, ganzhi, `${year}年${month}月流月`);
 }
+
+/** 流月分析（含公历年月） */
+export type LiuyueItem = FlowAnalysis & { year: number; month: number };
+
+/**
+ * 连续分析从 (startYear, startMonth) 起的 count 个流月（跨年自动进位）。
+ * 用于「下半年/未来几个月运势走势」这类需要逐月推演的问答。
+ */
+export function analyzeLiuyueRange(
+  chart: BaziChart,
+  startYear: number,
+  startMonth: number,
+  count: number,
+): LiuyueItem[] {
+  const out: LiuyueItem[] = [];
+  let y = startYear;
+  let m = startMonth;
+  for (let i = 0; i < Math.max(0, count); i++) {
+    out.push({ year: y, month: m, ...analyzeLiuyue(chart, y, m) });
+    m += 1;
+    if (m > 12) {
+      m = 1;
+      y += 1;
+    }
+  }
+  return out;
+}
