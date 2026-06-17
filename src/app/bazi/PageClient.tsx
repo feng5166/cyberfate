@@ -734,14 +734,12 @@ function BaziPageContent() {
     }
   }, [result]);
 
-  // 流式输出时自动滚到底部（节流，避免频繁触发）
-  const lastScrollRef = useRef(0);
+  // 流式输出时自动滚到底部（容器内滚动）
+  const streamContainerRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!aiStreaming || !aiStreamText) return;
-    const now = Date.now();
-    if (now - lastScrollRef.current < 300) return; // 300ms 节流
-    lastScrollRef.current = now;
-    streamEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    const el = streamContainerRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
   }, [aiStreamText, aiStreaming]);
 
   useEffect(() => {
@@ -1595,6 +1593,7 @@ function BaziPageContent() {
                         <RefreshCw className="w-3.5 h-3.5 text-[#C2762B] animate-spin" />
                         AI 正在解读中…
                       </div>
+                      <div ref={streamContainerRef} className="max-h-[60vh] overflow-y-auto pr-1">
                       {aiStreamText ? (() => {
                         const streamSections = [
                           { title: '一、日主强弱判断', content: parseSection(aiStreamText, ['日主分析']) },
@@ -1632,6 +1631,7 @@ function BaziPageContent() {
                           <RefreshCw className="w-6 h-6 text-[#C2762B] animate-spin" />
                         </div>
                       )}
+                      </div>
                     </div>
                   )}
 
