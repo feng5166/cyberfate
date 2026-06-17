@@ -153,10 +153,11 @@ export function BaziChatSection({ baziData, isLoggedIn, isVip }: BaziChatSection
     setSubmitting(true);
 
     try {
+      const { aiAnalysis: _removed, ...safeBasiData } = baziData;
       const res = await fetch('/api/bazi/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ baziData, question: trimmed }),
+        body: JSON.stringify({ baziData: safeBasiData, question: trimmed }),
       });
 
       if (res.status === 401) {
