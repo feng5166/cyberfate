@@ -1506,7 +1506,7 @@ function BaziPageContent() {
                 )}
 
                 <Card className={`${cardClass} relative`}>
-                  {reanalyzing && (
+                  {reanalyzing && !aiStreaming && (
                     <div className="absolute inset-0 z-10 rounded-2xl bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
                       <RefreshCw className="w-6 h-6 text-[#C2762B] animate-spin" />
                       <p className="text-sm font-medium text-[#1C1A16]/70">AI 正在重新解读中…</p>
@@ -1576,15 +1576,9 @@ function BaziPageContent() {
                   )}
 
                   {aiStreaming && (
-                    <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-5">
-                      <p className="text-sm font-medium text-[#1C1A16] mb-3 flex items-center gap-2">
-                        <RefreshCw className="w-3.5 h-3.5 text-[#C2762B] animate-spin" />
-                        AI 正在解读中…
-                      </p>
-                      <div className="text-sm leading-loose text-[#1C1A16]/85 whitespace-pre-wrap">
-                        {aiStreamText}
-                        <span className="inline-block w-2 h-4 ml-0.5 align-middle bg-[#C2762B] animate-pulse" />
-                      </div>
+                    <div className="py-10 flex flex-col items-center justify-center gap-3">
+                      <RefreshCw className="w-6 h-6 text-[#C2762B] animate-spin" />
+                      <p className="text-sm text-[#1C1A16]/60">AI 正在解读中，请稍候…</p>
                     </div>
                   )}
 
