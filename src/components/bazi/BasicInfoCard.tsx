@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, Copy, Pencil, Trash2 } from 'lucide-react';
+import { Check, Copy, Pencil, RefreshCw, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 
 interface BasicInfoCardProps {
@@ -16,6 +16,7 @@ interface BasicInfoCardProps {
   isAuthenticated: boolean;
   onEdit: () => void;
   onDelete: () => void;
+  onReanalyze?: () => void;
 }
 
 interface InfoRow {
@@ -42,6 +43,7 @@ export function BasicInfoCard({
   isAuthenticated,
   onEdit,
   onDelete,
+  onReanalyze,
 }: BasicInfoCardProps) {
   const [copied, setCopied] = useState(false);
 
@@ -95,6 +97,16 @@ export function BasicInfoCard({
           >
             <Trash2 className="h-4 w-4" />
           </button>
+          {onReanalyze && (
+            <button
+              type="button"
+              aria-label="重新分析"
+              onClick={onReanalyze}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[rgba(28,26,22,0.52)] transition-colors hover:bg-[#1C1A16]/5 hover:text-[#1C1A16]"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </div>
 
