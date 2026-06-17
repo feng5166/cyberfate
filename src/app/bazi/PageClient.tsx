@@ -988,7 +988,7 @@ function BaziPageContent() {
     setError('');
     setActionMessage('');
     setFullReadExpanded(false);
-    setLoading(true);
+    setReanalyzing(true);
 
     try {
       const response = await fetch('/api/bazi', {
