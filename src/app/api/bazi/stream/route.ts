@@ -117,6 +117,7 @@ export async function POST(req: NextRequest) {
       upstreamReader = upstream.body!.getReader();
       let buffer = '';
       let fullText = '';
+      let outputStarted = false; // 第一个「【」出现前丢弃思考过程
 
       try {
         while (true) {
@@ -138,8 +139,26 @@ export async function POST(req: NextRequest) {
               const delta: string =
                 obj?.choices?.[0]?.delta?.content ?? '';
               if (delta) {
-                fullText += delta;
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ delta })}\n\n`));
+                if (!outputStarted) {
+                  // 检测第一个「【」章节标志符
+                  const testText = fullText + delta;
+                  const markerIdx = testText.indexOf('【');
+                  if (markerIdx === -1) {
+                    // 还没出现「【」，丢弃这段（思考过程）
+                    fullText = testText; // 保留小缓冲防止跨 delta 切割
+                    continue;
+                  }
+                  // 找到「【」，从这里开始
+                  outputStarted = true;
+                  const realDelta = testText.slice(markerIdx);
+                  fullText = realDelta;
+                  if (realDelta) {
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ delta: realDelta })}\n\n`));
+                  }
+                } else {
+                  fullText += delta;
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ delta })}\n\n`));
+                }
               }
             } catch {
               // 单行 JSON 不完整或不可解析时跳过
