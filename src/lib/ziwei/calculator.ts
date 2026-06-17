@@ -40,7 +40,7 @@ function dizhiIndex(dz: DiZhi): number {
   return DIZHI_LIST.indexOf(dz);
 }
 
-function indexToDizhi(idx: number): DiZhi {
+export function indexToDizhi(idx: number): DiZhi {
   return DIZHI_LIST[((idx % 12) + 12) % 12];
 }
 
@@ -48,7 +48,7 @@ function tianganIndex(tg: TianGan): number {
   return TIANGAN_LIST.indexOf(tg);
 }
 
-function indexToTiangan(idx: number): TianGan {
+export function indexToTiangan(idx: number): TianGan {
   return TIANGAN_LIST[((idx % 10) + 10) % 10];
 }
 
@@ -56,7 +56,7 @@ function indexToTiangan(idx: number): TianGan {
 // 步骤 2：真太阳时修正
 // ================================================================
 
-function adjustTrueSolarTime(
+export function adjustTrueSolarTime(
   birthHour: number,
   longitude?: number,
 ): { adjustedHour: number; offsetMinutes: number } {
@@ -83,7 +83,7 @@ function adjustTrueSolarTime(
  * monthPalaceIndex = (2 + lunarMonth - 1) % 12
  * mingGongIndex    = (monthPalaceIndex - birthHour + 12) % 12
  */
-function calcMingGong(lunarMonth: number, birthHour: number): number {
+export function calcMingGong(lunarMonth: number, birthHour: number): number {
   const monthPalaceIndex = (2 + lunarMonth - 1) % 12;
   return (monthPalaceIndex - birthHour + 12) % 12;
 }
@@ -95,7 +95,7 @@ function calcMingGong(lunarMonth: number, birthHour: number): number {
 /**
  * 从寅宫起正月顺数到出生月，再从该宫起子时顺数到出生时
  */
-function calcShenGong(lunarMonth: number, birthHour: number): number {
+export function calcShenGong(lunarMonth: number, birthHour: number): number {
   const monthPalaceIndex = (2 + lunarMonth - 1) % 12;
   return (monthPalaceIndex + birthHour) % 12;
 }
@@ -104,7 +104,7 @@ function calcShenGong(lunarMonth: number, birthHour: number): number {
 // 步骤 5：各宫天干（五虎遁元）
 // ================================================================
 
-function getPalaceStem(yearGan: TianGan, branch: DiZhi): TianGan {
+export function getPalaceStem(yearGan: TianGan, branch: DiZhi): TianGan {
   const yinGan = YINGAN_BY_YEARGAN[yearGan];
   const yinGanIdx = tianganIndex(yinGan);
   const branchIdx = dizhiIndex(branch);
@@ -125,7 +125,7 @@ function getPalaceStem(yearGan: TianGan, branch: DiZhi): TianGan {
  *   if R even: offset = Q - 1 - R
  *   紫微地支索引 = (2 + offset + 1200) % 12
  */
-function calcZiweiPosition(lunarDay: number, juNumber: number): number {
+export function calcZiweiPosition(lunarDay: number, juNumber: number): number {
   const Q = Math.ceil(lunarDay / juNumber);
   const R = Q * juNumber - lunarDay;
 
@@ -149,7 +149,7 @@ function calcZiweiPosition(lunarDay: number, juNumber: number): number {
  * 天府地支索引：与紫微关于寅宫对称
  * tianfuIndex = (4 - ziweiIndex + 12) % 12
  */
-function calcTianfuPosition(ziweiIndex: number): number {
+export function calcTianfuPosition(ziweiIndex: number): number {
   return (4 - ziweiIndex + 12) % 12;
 }
 

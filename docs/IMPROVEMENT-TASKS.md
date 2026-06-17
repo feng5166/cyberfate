@@ -41,4 +41,17 @@
 
 > T4、T7 含产品/商业决策,建议先与产品方对齐再排期。
 
-_任务清单 by Claude · 2026-06-16_
+---
+
+## 测试落地进展(2026-06-17 追加)
+
+- [x] **S1** Vitest 接入 + 梅花 C2 回归(红→绿,已修复并去重)。
+- [x] **S2** 纯算法层:bazi / ziwei / huangli / liuyao / music-oracle / marriage 共 ~190 用例(黄金值经 lunar-javascript 交叉核对,复杂派生值标注 characterization)。
+- [x] **S3** 业务逻辑层:quota 原子性、isVip/缓存、proration 不变量、Stripe/callback 验签共 46 用例(mock prisma/redis)。
+- [x] **S4** API 路由层:meihua/liuyao/bazi 的校验/鉴权/配额门 20 用例(mock auth/db/ai)+ GitHub Actions 测试门(`.github/workflows/test.yml`)。
+- 合计 **235 用例全绿**。源码改动仅 export-only(ziwei 7 处、payment 验签 2 处),零行为变更。
+
+### T12(新发现,测试中暴露)· geju 用神/忌神可能语义错位
+`src/lib/bazi/geju.ts` `calculateYongShen`:偏弱日主的忌神用 `WUXING_CONTROL[dayWuxing]`(=我克),而"克泄耗"里的"克"传统指克我(官杀)。例:弱金日主算出忌神=木(金克木),而传统应为火(火克金)。偏强的用神也复用了同一"我克"语义。已用 characterization 测试固化现状(未改源码),需命理口径确认是有意简写还是 bug。
+
+_任务清单 by Claude · 2026-06-16(测试进展 2026-06-17 追加)_

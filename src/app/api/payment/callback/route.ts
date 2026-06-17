@@ -6,7 +6,7 @@ import { LIFETIME_DURATION } from '@/lib/pricing-config';
 
 const REPLAY_TOLERANCE_MS = 5 * 60 * 1000; // ±5分钟
 
-function verifyCallbackSignature(body: string, signature: string | null): boolean {
+export function verifyCallbackSignature(body: string, signature: string | null): boolean {
   const secret = process.env.CALLBACK_SECRET;
   if (!secret) {
     console.error('[PaymentCallback] CALLBACK_SECRET 未配置，拒绝请求');
