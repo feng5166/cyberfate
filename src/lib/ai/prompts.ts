@@ -109,6 +109,55 @@ export function buildBaziPrompt(
   const strongest = wuxingMap[sorted[0][0]];
   const weakest = wuxingMap[sorted[sorted.length - 1][0]];
 
+  // 收集所有地支
+  const zhiList: string[] = [
+    chart.year.zhi,
+    chart.month.zhi,
+    chart.day.zhi,
+    ...(chart.hour ? [chart.hour.zhi] : []),
+  ];
+
+  // 六冲对
+  const CHONG_PAIRS: [string, string][] = [
+    ['子','午'],['丑','未'],['寅','申'],['卯','酉'],['辰','戌'],['巳','亥'],
+  ];
+  // 六合对
+  const HE_PAIRS: [string, string][] = [
+    ['子','丑'],['寅','亥'],['卯','戌'],['辰','酉'],['巳','申'],['午','未'],
+  ];
+  // 三刑（简化：寅巳申、丑戌未、子卯）
+  const XING_GROUPS: string[][] = [
+    ['寅','巳','申'],['丑','戌','未'],['子','卯'],
+  ];
+
+  const chongRelations: string[] = [];
+  for (const [a, b] of CHONG_PAIRS) {
+    if (zhiList.includes(a) && zhiList.includes(b)) {
+      chongRelations.push(`${a}${b}相冲`);
+    }
+  }
+
+  const heRelations: string[] = [];
+  for (const [a, b] of HE_PAIRS) {
+    if (zhiList.includes(a) && zhiList.includes(b)) {
+      heRelations.push(`${a}${b}相合`);
+    }
+  }
+
+  const xingRelations: string[] = [];
+  for (const group of XING_GROUPS) {
+    const matched = group.filter(z => zhiList.includes(z));
+    if (matched.length >= 2) {
+      xingRelations.push(`${matched.join('')}相刑`);
+    }
+  }
+
+  const zhiRelationsStr = [
+    ...chongRelations,
+    ...heRelations,
+    ...xingRelations,
+  ].join('，') || '无明显刑冲合';
+
   // 当前大运和流年
   const currentYear = new Date().getFullYear();
   const dayunName = dayun?.current ?? '待推算';
@@ -132,6 +181,7 @@ export function buildBaziPrompt(
 月柱:${chart.month.gan}${chart.month.zhi}(${chart.month.ganWuxing}${chart.month.zhiWuxing})
 日柱:${chart.day.gan}${chart.day.zhi}(${chart.day.ganWuxing}${chart.day.zhiWuxing})
 ${hourInfo}
+地支关系:${zhiRelationsStr}
 
 【日主信息】
 日主:${dayMaster}(${dayMasterTrait})
@@ -149,7 +199,7 @@ ${nextDayunInfo ? nextDayunInfo + '\n' : ''}${liunianInfo}
 {
   "dayMasterAnalysis": "得令/得地/得生/得助逐项判断+综合格局+用神喜忌,要求200-280字,不得少于200字",
   "personality": "含核心特质/思维模式/行为模式/优缺点4角度,每角度指出对应干支依据,要求280-350字,不得少于280字",
-  "career": "从用神喜忌推导适合行业,含大运影响+发展建议,要求280-350字,不得少于280字",
+  "career": "从用神喜忌推导适合行业,至少两条适合路线,必须写出1-2条事业禁忌(格式:最忌XX——命理依据),含大运影响+发展建议,要求300-380字,不得少于300字",
   "wealth": "含正偏财格局+守财能力+最大风险+理财建议,必须指出劫财/比肩影响,要求280-350字,不得少于280字",
   "relationship": "男命以财星为妻星/女命以官杀为夫星展开,含配偶特征/婚姻宫状态/波折原因/经营建议,必须写出婚姻关系中的矛盾张力(用既…又…的对比句式),要求280-350字,不得少于280字",
   "health": "从五行偏枯指出重点关注部位,含地支刑冲具体隐患,必须包含饮食调养方向+运动调养方向各一条具体建议,要求180-220字,不得少于180字",
