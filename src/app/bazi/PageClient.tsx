@@ -46,6 +46,7 @@ import {
 import type {
   BaziApiResult,
   BaziHistoryRecord,
+  BaziResult,
   BaziTrait,
   DayunTimelineItem,
   Gender,
@@ -84,6 +85,14 @@ interface FaqItem {
   answer: string;
 }
 
+interface DayunExtra {
+  ageStart?: number;
+  ageEnd?: number;
+  endYear?: number;
+  nextGanZhi?: string;
+  nextStartYear?: number;
+}
+
 type BaziPageResult = BaziApiResult & {
   dayMasterElement?: WuXing;
   lunarDate?: string;
@@ -93,6 +102,9 @@ type BaziPageResult = BaziApiResult & {
   trueSolarTime?: string;
   dayunStartDescription?: string;
   dayunStartAt?: string;
+  cacheKey?: string;
+  baziResult?: BaziResult;
+  dayunExtra?: DayunExtra;
 };
 
 const shichenOptions = [
@@ -509,6 +521,9 @@ function BaziPageContent() {
   const [result, setResult] = useState<BaziPageResult | null>(null);
   const [actionMessage, setActionMessage] = useState('');
   const [isMember, setIsMember] = useState(false);
+  const [aiStreaming, setAiStreaming] = useState(false);
+  const [aiStreamText, setAiStreamText] = useState('');
+  const [showAiButton, setShowAiButton] = useState(false);
   const autoLoadAttemptedRef = useRef(false);
 
   useEffect(() => {
@@ -845,11 +860,150 @@ function BaziPageContent() {
     return sections.filter(s => s.content.trim());
   }, [aiSections]);
 
+  const autoSaveRecord = (data: BaziPageResult, source: string) => {
+    if (source === 'fallback') return;
+    try {
+      saveRecord({
+        name: formData.name || '缘主',
+        gender: formData.gender || 'unknown',
+        birthDate: formData.birthDate,
+        birthHour: formData.birthHour,
+        birthPlace: formData.birthPlace,
+        dayMaster: data.pillars?.day?.gan || '',
+        aiSummary: (data.aiAnalysis || '').split(/[。！？]/)[0] || '已保存命盘记录。',
+        aiAnalysis: data.aiAnalysis || '',
+        pillars: data.pillars,
+        wuxing: data.wuxing,
+        fiveDimensions: data.fiveDimensions,
+        traits: data.traits,
+        dayMasterElement: data.pillars?.day?.ganWuxing,
+        lunarDate: data.lunarDate,
+        zodiac: data.zodiac,
+        trueSolarOffsetMinutes: data.trueSolarOffsetMinutes ?? null,
+        dayunStartDescription: data.dayunStartDescription,
+        dayunStartAt: data.dayunStartAt,
+      });
+    } catch (e) {
+      console.error('auto save failed', e);
+    }
+  };
+
+  const runAiStream = async (forceRefresh: boolean): Promise<boolean> => {
+    if (!result?.cacheKey || !result?.baziResult) {
+      setError('命盘数据缺失，请先点击「开始解读」');
+      return false;
+    }
+
+    setShowAiButton(false);
+    setAiStreaming(true);
+    setAiStreamText('');
+
+    try {
+      const response = await fetch('/api/bazi/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cacheKey: result.cacheKey,
+          baziResult: result.baziResult,
+          name: formData.name || '缘主',
+          gender: formData.gender || 'unknown',
+          birthDate: formData.birthDate,
+          birthHour: parseInt(formData.birthHour, 10),
+          forceRefresh,
+          dayunExtra: result.dayunExtra,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('AI 解读请求失败');
+      }
+
+      const source = response.headers.get('X-Source');
+
+      // 缓存命中：直接拿完整文本
+      if (source === 'cache') {
+        const text = await response.text();
+        setResult(prev => {
+          const next = prev ? { ...prev, aiAnalysis: text, _source: 'cache' } : prev;
+          if (next) autoSaveRecord(next, 'cache');
+          return next;
+        });
+        return true;
+      }
+
+      // SSE 流式
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('流式响应不可读');
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let fullText = '';
+      let finalSource: string | null = null;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        let nl: number;
+        while ((nl = buffer.indexOf('\n\n')) >= 0) {
+          const chunk = buffer.slice(0, nl);
+          buffer = buffer.slice(nl + 2);
+          const lines = chunk.split('\n');
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const payload = line.slice(6).trim();
+            if (!payload) continue;
+            try {
+              const obj = JSON.parse(payload);
+              if (typeof obj.delta === 'string') {
+                fullText += obj.delta;
+                setAiStreamText(fullText);
+              }
+              if (obj.done) {
+                finalSource = obj.source || 'deepseek';
+              }
+              if (obj.fallback) {
+                finalSource = 'fallback';
+                fullText = typeof obj.text === 'string' ? obj.text : fullText;
+              }
+            } catch {
+              // skip
+            }
+          }
+        }
+      }
+
+      const resolvedSource = finalSource || 'deepseek';
+      setResult(prev => {
+        const next = prev ? { ...prev, aiAnalysis: fullText, _source: resolvedSource } : prev;
+        if (next) autoSaveRecord(next, resolvedSource);
+        return next;
+      });
+      return true;
+    } catch (streamErr) {
+      setError(streamErr instanceof Error ? streamErr.message : 'AI 解读失败，请重试');
+      setShowAiButton(true);
+      return false;
+    } finally {
+      setAiStreaming(false);
+    }
+  };
+
+  const handleStartAiReading = () => {
+    setError('');
+    setActionMessage('');
+    void runAiStream(false);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setResult(null);
     setActionMessage('');
+    setShowAiButton(false);
+    setAiStreaming(false);
+    setAiStreamText('');
 
     if (!formData.gender) {
       setError('请选择性别');
@@ -910,7 +1064,7 @@ function BaziPageContent() {
         }),
       });
 
-      const data = (await response.json()) as BaziApiResult & { error?: string };
+      const data = (await response.json()) as BaziPageResult & { error?: string };
       if (!response.ok) {
         if (response.status === 401) {
           window.location.href = '/auth/login?redirect=/bazi';
@@ -924,36 +1078,8 @@ function BaziPageContent() {
       }
 
       setResult(data);
+      setShowAiButton(true);
       track('tool_result_view', { tool: 'bazi' });
-
-      // 自动保存到历史记录
-      try {
-        const autoSave = {
-          name: formData.name || '缘主',
-          gender: formData.gender || 'unknown',
-          birthDate: formData.birthDate,
-          birthHour: formData.birthHour,
-          birthPlace: formData.birthPlace,
-          dayMaster: data.pillars?.day?.gan || '',
-          aiSummary: (data.aiAnalysis || '').split(/[。！？]/)[0] || '已保存命盘记录。',
-          aiAnalysis: data.aiAnalysis || '',
-          pillars: data.pillars,
-          wuxing: data.wuxing,
-          fiveDimensions: data.fiveDimensions,
-          traits: data.traits,
-          dayMasterElement: data.pillars?.day?.ganWuxing,
-          lunarDate: data.lunarDate,
-          zodiac: data.zodiac,
-          trueSolarOffsetMinutes: data.trueSolarOffsetMinutes ?? null,
-          dayunStartDescription: data.dayunStartDescription,
-          dayunStartAt: data.dayunStartAt,
-        };
-        // fallback 内容不保存到历史，避免下次加载时显示失败内容
-        if (data._source !== 'fallback') {
-          saveRecord(autoSave);
-        }
-      } catch(e) { console.error('auto save failed', e); }
-
       setFullReadExpanded(false);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : '未知错误');
@@ -1048,71 +1174,37 @@ function BaziPageContent() {
     setReanalyzing(true);
 
     try {
-      const response = await fetch('/api/bazi', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: formData.name || '缘主',
-          gender: formData.gender || 'unknown',
-          birthDate: formData.birthDate,
-          birthHour: parseInt(formData.birthHour, 10),
-          birthPlace: formData.birthPlace,
-          isLunar: formData.isLunar,
-          knowTime: formData.knowTime,
-          birthHourNum: formData.knowTime ? formData.birthHourNum : undefined,
-          birthMinute: formData.knowTime ? formData.birthMinute : undefined,
-          lateZiShi: formData.knowTime ? formData.lateZiShi : undefined,
-          forceRefresh: true,
-        }),
-      });
-
-      const data = (await response.json()) as BaziApiResult & { error?: string };
-      if (!response.ok) {
-        if (data.error === 'QUOTA_EXCEEDED') {
-          setShowQuotaModal(true);
-          return;
+      // 历史记录场景下没有 cacheKey/baziResult，需先 POST /api/bazi 重新计算
+      if (!result?.cacheKey || !result?.baziResult) {
+        const baseResp = await fetch('/api/bazi', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: formData.name || '缘主',
+            gender: formData.gender || 'unknown',
+            birthDate: formData.birthDate,
+            birthHour: parseInt(formData.birthHour, 10),
+            birthPlace: formData.birthPlace,
+            isLunar: formData.isLunar,
+            knowTime: formData.knowTime,
+            birthHourNum: formData.knowTime ? formData.birthHourNum : undefined,
+            birthMinute: formData.knowTime ? formData.birthMinute : undefined,
+            lateZiShi: formData.knowTime ? formData.lateZiShi : undefined,
+          }),
+        });
+        const baseData = (await baseResp.json()) as BaziPageResult & { error?: string };
+        if (!baseResp.ok) {
+          if (baseData.error === 'QUOTA_EXCEEDED') {
+            setShowQuotaModal(true);
+            return;
+          }
+          throw new Error(baseData.error || '服务器错误，请稍后重试');
         }
-        throw new Error(data.error || '服务器错误，请稍后重试');
+        setResult(baseData);
       }
 
-      setResult({
-        pillars: data.pillars,
-        wuxing: data.wuxing,
-        aiAnalysis: data.aiAnalysis || '',
-        fiveDimensions: data.fiveDimensions,
-        traits: data.traits,
-        birthPlace: formData.birthPlace,
-        dayMasterElement: data.pillars?.day?.ganWuxing,
-        lunarDate: data.lunarDate,
-        zodiac: data.zodiac,
-        trueSolarOffsetMinutes: data.trueSolarOffsetMinutes,
-        dayunStartDescription: data.dayunStartDescription,
-        dayunStartAt: data.dayunStartAt,
-      });
-      // 同步更新本地历史记录，避免下次加载时显示旧缓存，fallback 不保存
-      if (data._source !== 'fallback') try {
-        saveRecord({
-          name: formData.name || '缘主',
-          gender: formData.gender || 'unknown',
-          birthDate: formData.birthDate,
-          birthHour: formData.birthHour,
-          birthPlace: formData.birthPlace,
-          dayMaster: data.pillars?.day?.gan || '',
-          aiSummary: (data.aiAnalysis || '').split(/[。！？]/)[0] || '已重新分析命盘记录。',
-          aiAnalysis: data.aiAnalysis || '',
-          pillars: data.pillars,
-          wuxing: data.wuxing,
-          fiveDimensions: data.fiveDimensions,
-          traits: data.traits,
-          dayMasterElement: data.pillars?.day?.ganWuxing,
-          lunarDate: data.lunarDate,
-          zodiac: data.zodiac,
-          trueSolarOffsetMinutes: data.trueSolarOffsetMinutes ?? null,
-          dayunStartDescription: data.dayunStartDescription,
-          dayunStartAt: data.dayunStartAt,
-        });
-      } catch(e) { console.error('reanalyze save failed', e); }
-      setActionMessage('重新分析完成');
+      const ok = await runAiStream(true);
+      if (ok) setActionMessage('重新分析完成');
     } catch (err) {
       setError(err instanceof Error ? err.message : '重新分析失败，请稍后重试');
     } finally {
@@ -1423,15 +1515,21 @@ function BaziPageContent() {
                   <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em] mb-1">AI 解读</h2>
                   <p className="text-xs text-[#1C1A16]/45 mb-4 flex items-center gap-2">
                     AI 命理解读 · 仅供参考
-                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${
-                      result._source === 'history'
-                        ? 'bg-[#F5F3EF] text-[#1C1A16]/50'
-                        : (result._source === 'fallback' || result._source === 'unknown')
-                        ? 'bg-red-50 text-red-400'
-                        : 'bg-emerald-50 text-emerald-600'
-                    }`}>
-                      {result._source === 'history' ? 'from cache' : (result._source === 'fallback' || result._source === 'unknown') ? 'AI failed' : 'from AI'}
-                    </span>
+                    {!showAiButton && !aiStreaming && result.aiAnalysis && (
+                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                        result._source === 'history' || result._source === 'cache'
+                          ? 'bg-[#F5F3EF] text-[#1C1A16]/50'
+                          : (result._source === 'fallback' || result._source === 'unknown')
+                          ? 'bg-red-50 text-red-400'
+                          : 'bg-emerald-50 text-emerald-600'
+                      }`}>
+                        {result._source === 'history' || result._source === 'cache'
+                          ? 'from cache'
+                          : (result._source === 'fallback' || result._source === 'unknown')
+                          ? 'AI failed'
+                          : 'from AI'}
+                      </span>
+                    )}
                   </p>
 
                   {/* AI解读引言区块 */}
@@ -1466,7 +1564,31 @@ function BaziPageContent() {
                     </p>
                   </div>
 
-                  {summaryPoints.length > 0 && (
+                  {showAiButton && (
+                    <button
+                      type="button"
+                      onClick={handleStartAiReading}
+                      className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-[#C2762B] hover:bg-[#A86425] text-white font-medium text-sm transition-colors"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      开始 AI 解读
+                    </button>
+                  )}
+
+                  {aiStreaming && (
+                    <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-5">
+                      <p className="text-sm font-medium text-[#1C1A16] mb-3 flex items-center gap-2">
+                        <RefreshCw className="w-3.5 h-3.5 text-[#C2762B] animate-spin" />
+                        AI 正在解读中…
+                      </p>
+                      <div className="text-sm leading-loose text-[#1C1A16]/85 whitespace-pre-wrap">
+                        {aiStreamText}
+                        <span className="inline-block w-2 h-4 ml-0.5 align-middle bg-[#C2762B] animate-pulse" />
+                      </div>
+                    </div>
+                  )}
+
+                  {!showAiButton && !aiStreaming && summaryPoints.length > 0 && (
                     <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-5">
                       <p className="text-sm font-medium text-[#1C1A16] mb-3">AI 要点</p>
                       <ul className="space-y-2">
@@ -1480,31 +1602,33 @@ function BaziPageContent() {
                     </div>
                   )}
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (fullReadExpanded) {
-                        setFullReadExpanded(false);
-                        return;
-                      }
-                      if (status !== 'authenticated') {
-                        setShowAuthModal(true);
-                        return;
-                      }
-                      if (!isMember) {
-                        setShowUpgradeModal(true);
-                        return;
-                      }
-                      setFullReadExpanded(true);
-                    }}
-                    className="w-full flex items-center justify-center gap-1.5 py-2.5 mt-3 text-sm font-medium text-[#C2762B] hover:text-[#A86425] transition-colors"
-                  >
-                    {fullReadExpanded ? (
-                      <>收起 <ChevronUp className="w-4 h-4" /></>
-                    ) : (
-                      <>查看完整解读 <ChevronDown className="w-4 h-4" /></>
-                    )}
-                  </button>
+                  {!showAiButton && !aiStreaming && result.aiAnalysis && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (fullReadExpanded) {
+                          setFullReadExpanded(false);
+                          return;
+                        }
+                        if (status !== 'authenticated') {
+                          setShowAuthModal(true);
+                          return;
+                        }
+                        if (!isMember) {
+                          setShowUpgradeModal(true);
+                          return;
+                        }
+                        setFullReadExpanded(true);
+                      }}
+                      className="w-full flex items-center justify-center gap-1.5 py-2.5 mt-3 text-sm font-medium text-[#C2762B] hover:text-[#A86425] transition-colors"
+                    >
+                      {fullReadExpanded ? (
+                        <>收起 <ChevronUp className="w-4 h-4" /></>
+                      ) : (
+                        <>查看完整解读 <ChevronDown className="w-4 h-4" /></>
+                      )}
+                    </button>
+                  )}
 
                   <div
                     className={`overflow-hidden transition-all duration-500 ease-in-out ${

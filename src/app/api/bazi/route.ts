@@ -1,15 +1,13 @@
+import crypto from 'crypto';
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { sanitizeUserInput } from '@/lib/utils/sanitize';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { calculateBazi, WUXING_KEYS, analyzeMingGe, getCurrentDayun, getDayunTimeline } from '@/lib/bazi';
-import { generateBaziAnalysis } from '@/lib/ai';
-import { checkBaziQuota, refundQuota, isUserVip } from '@/lib/quota';
+import { checkBaziQuota, refundQuota } from '@/lib/quota';
 import { checkRateLimit } from '@/lib/rate-limit';
-import type { BaziAnalysis, FiveDimensions, MingGeInfo, PillarRecord, WuxingCount } from '@/lib/bazi/types';
-import { withAiTimeout } from '@/lib/ai/withTimeout';
-import { withCircuitBreaker } from '@/lib/ai/circuitBreaker';
+import type { FiveDimensions, MingGeInfo, PillarRecord, WuxingCount } from '@/lib/bazi/types';
 import { applyChaos } from '@/lib/chaos-middleware';
 import { logger } from '@/lib/logger';
 
@@ -76,10 +74,8 @@ export async function POST(req: NextRequest) {
   }
 
   // B-4 + BUG-012 + H2: 原子 checkBaziQuota（avoid peek-then-deduct race）
-  let cachedIsVip = false;
   if (session?.user?.id) {
     const quota = await checkBaziQuota(session.user.id);
-    cachedIsVip = quota.isVip;
 
     if (!quota.hasQuota) {
       return Response.json({
@@ -91,7 +87,6 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    
     const body = await req.json();
     const input = requestSchema.parse(body);
     if (input.name !== undefined) {
@@ -152,55 +147,14 @@ export async function POST(req: NextRequest) {
       nextStartYear: nextDayunStartYear,
     };
 
-    // 2. AI 解读（可能失败，优雅降级）
-    let analysisObj: BaziAnalysis;
-    try {
-      analysisObj = await withCircuitBreaker('deepseek-bazi-v4pro', () =>
-        withAiTimeout(
-          () => generateBaziAnalysis(baziResultWithDayun, input.name, {
-            birthDate: input.birthDate,
-            birthHour: input.birthHour,
-            gender: input.gender ?? 'unknown',
-            forceRefresh: input.forceRefresh ?? false,
-          }, dayunExtra),
-          25_000,
-          () => ({ ...generateFallbackAnalysis(baziResult), _source: 'fallback' as const })
-        )
-      );
-    } catch (aiError) {
-      logger.error(SERVICE, 'AI analysis failed', aiError instanceof Error ? aiError : undefined);
-      analysisObj = generateFallbackAnalysis(baziResult);
-      (analysisObj as any)._source = 'fallback';
-    }
-    
-    // 将分析对象转换为可读文本
-    const aiAnalysis = formatAnalysis(analysisObj);
-    const _aiSource = (analysisObj as any)._source ?? 'unknown';
-
-    // H2: fallback 时退还已扣减的配额
-    if (baziQuotaConsumed && _aiSource === 'fallback' && session?.user?.id) {
-      await refundQuota(session.user.id, 'baziAiCount');
-    }
-
-    // H3: AI fallback 时发飞书告警
-    if (_aiSource === 'fallback') {
-      void sendFeishuAlert({
-        name: input.name || '缘主',
-        birthDate: input.birthDate,
-        userId: session?.user?.id,
-        userEmail: (session?.user as { email?: string } | undefined)?.email,
-      });
-    }
-    
     // 处理时柱（可能为 null）
-    // Provide a valid placeholder pillar when hour data is unavailable.
     const hourPillar = baziResult.chart.hour ?? {
       gan: '甲',
       zhi: '子',
       ganWuxing: '木',
       zhiWuxing: '水',
     };
-    
+
     const pillars: PillarRecord = {
       year: {
         gan: baziResult.chart.year.gan,
@@ -238,16 +192,29 @@ export async function POST(req: NextRequest) {
       jiShen: mingGeResult.jiShen,
     };
 
+    // 生成 cacheKey（与 /api/bazi/stream 共用，对应 generateBaziAnalysis 内部规则）
+    const hash = crypto.createHash('sha256')
+      .update(JSON.stringify({
+        birthDate: input.birthDate,
+        birthHour: input.birthHour,
+        gender: input.gender ?? 'unknown',
+      }))
+      .digest('hex')
+      .slice(0, 16);
+    const cacheKey = `v4:bazi:${hash}`;
+
     return Response.json({
       pillars,
       wuxing: baziResult.wuxing,
-      aiAnalysis,
+      aiAnalysis: '',
       fiveDimensions,
-      traits: (analysisObj as any).traits || [],
+      traits: [],
       mingGe,
       birthPlace: input.birthPlace,
-      _source: _aiSource,
       zodiac: baziResult.zodiac,
+      cacheKey,
+      baziResult: baziResultWithDayun,
+      dayunExtra,
     });
   } catch (error) {
     if (baziQuotaConsumed && session?.user?.id) {
@@ -261,67 +228,12 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    
+
     return Response.json(
       { error: '服务器错误，请稍后重试' },
       { status: 500 }
     );
   }
-}
-
-// 将分析对象格式化为可读文本
-function formatAnalysis(analysis: BaziAnalysis): string {
-  return `【日主分析】
-${analysis.dayMasterAnalysis}
-
-【性格特点】
-${analysis.personality}
-
-【事业运势】
-${analysis.career}
-
-【财运分析】
-${analysis.wealth}
-
-【感情运势】
-${analysis.relationship}
-
-【健康提示】
-${analysis.health}
-
-【大运流年】
-${analysis.dayunAnalysis || '当前大运阶段宜稳健行事，结合命局五行特点，关注事业节奏与健康管理，把握流年机遇。'}`;
-}
-
-// 降级分析（当 AI 不可用时）
-function generateFallbackAnalysis(bazi: ReturnType<typeof calculateBazi>): BaziAnalysis {
-  const { wuxing, dayMaster } = bazi;
-  
-  const wuxingNames: Record<string, string> = {
-    metal: '金',
-    wood: '木',
-    water: '水',
-    fire: '火',
-    earth: '土',
-  };
-  
-  // 找出最旺和最弱的五行
-  const entries = Object.entries(wuxing) as [keyof typeof wuxing, number][];
-  const sorted = entries.sort((a, b) => b[1] - a[1]);
-  const strongest = wuxingNames[sorted[0][0]];
-  const weakest = sorted[sorted.length - 1][1] === 0 
-    ? wuxingNames[sorted[sorted.length - 1][0]]
-    : null;
-  
-  return {
-    dayMasterAnalysis: `日主为「${dayMaster}」，五行中${strongest}最旺${weakest ? `，${weakest}较弱或缺失` : ''}。八字整体${sorted[0][1] - sorted[sorted.length - 1][1] <= 2 ? '较为平衡' : '有所偏向'}。`,
-    personality: '您性格中有多元的特质，善于适应不同环境，具有一定的灵活性和韧性。',
-    career: '事业方面有发展潜力，建议把握机遇，稳步前进，注重积累和提升。',
-    wealth: '财运方面需要稳健理财，避免冲动消费，适当投资可带来回报。',
-    relationship: '感情方面宜真诚相待，注重沟通和理解，感情运势稳定。',
-    health: '注意劳逸结合，保持良好作息，适当运动有助于身心健康。',
-    dayunAnalysis: '当前大运阶段宜稳健行事，结合命局五行特点把握机遇。事业方面注重积累，财务方面避免冒险，健康方面保持规律作息，心态上保持平稳积极。',
-  };
 }
 
 function calculateFiveDimensions(pillars: PillarRecord, wuxing: WuxingCount): FiveDimensions {
@@ -343,46 +255,4 @@ function calculateFiveDimensions(pillars: PillarRecord, wuxing: WuxingCount): Fi
     health: clampScore(85 - deviation * 12),
     studies: clampScore(64 + ratio('water') * 10 + ratio('wood') * 6 + dayBoost * 0.5),
   };
-}
-
-// ── 飞书告警（AI fallback 时通知 Frank）─────────────────
-async function sendFeishuAlert(info: {
-  name: string;
-  birthDate: string;
-  userId?: string;
-  userEmail?: string;
-}) {
-  const APP_ID = process.env.FEISHU_BOT_APP_ID;
-  const APP_SECRET = process.env.FEISHU_BOT_APP_SECRET;
-  const OPEN_ID = process.env.FEISHU_USER_OPEN_ID;
-  if (!APP_ID || !APP_SECRET || !OPEN_ID) return;
-
-  try {
-    // 1. 获取 tenant_access_token
-    const tokenRes = await fetch('https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ app_id: APP_ID, app_secret: APP_SECRET }),
-    });
-    const tokenData = await tokenRes.json() as { tenant_access_token?: string };
-    const token = tokenData.tenant_access_token;
-    if (!token) return;
-
-    // 2. 发送消息
-    const text = `⚠️ CyberFate 八字 AI 解读失败\n姓名：${info.name}\n生日：${info.birthDate}\n用户：${info.userEmail || info.userId || '游客'}\n时间：${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}`;
-    await fetch('https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=open_id', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        receive_id: OPEN_ID,
-        msg_type: 'text',
-        content: JSON.stringify({ text }),
-      }),
-    });
-  } catch (e) {
-    console.error('[bazi] feishu alert failed:', e);
-  }
 }

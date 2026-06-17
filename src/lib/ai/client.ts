@@ -179,7 +179,7 @@ export async function generateBaziAnalysis(
   return { ...generateFallbackBaziAnalysis(result), _source: 'fallback' };
 }
 
-function generateFallbackBaziAnalysis(result: BaziResult): BaziAnalysis {
+export function generateFallbackBaziAnalysis(result: BaziResult): BaziAnalysis {
   const { wuxing, dayMaster } = result;
   const wuxingNames: Record<string, string> = {
     metal: '金', wood: '木', water: '水', fire: '火', earth: '土',
