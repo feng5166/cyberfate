@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { sanitizeUserInput } from '@/lib/utils/sanitize';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { calculateBazi, WUXING_KEYS, analyzeMingGe, getCurrentDayun } from '@/lib/bazi';
+import { calculateBazi, WUXING_KEYS, analyzeMingGe, getCurrentDayun, getDayunTimeline } from '@/lib/bazi';
 import { generateBaziAnalysis } from '@/lib/ai';
 import { checkBaziQuota, refundQuota, isUserVip } from '@/lib/quota';
 import { checkRateLimit } from '@/lib/rate-limit';
@@ -129,11 +129,27 @@ export async function POST(req: NextRequest) {
     // 获取当前大运
     const gender = input.gender === 'unknown' ? 'male' : (input.gender || 'male');
     const currentDayun = getCurrentDayun(input.birthDate, gender as 'male' | 'female');
+    const dayunTimeline = getDayunTimeline(input.birthDate, gender as 'male' | 'female');
+    const currentDayunItem = dayunTimeline.find(item => item.isCurrent);
+    const nextDayunItem = currentDayunItem ? dayunTimeline.find(item => item.index === currentDayunItem.index + 1) : undefined;
+
+    const birthYear = Number(input.birthDate.split('-')[0]);
+    const dayunEndYear = currentDayunItem ? birthYear + currentDayunItem.ageEnd : undefined;
+    const nextDayunStartYear = currentDayunItem ? birthYear + currentDayunItem.ageEnd + 1 : undefined;
+
     const baziResultWithDayun = Object.assign(baziResult, {
       dayun: {
         current: currentDayun ? `${currentDayun.gan}${currentDayun.zhi}` : undefined,
       }
     });
+
+    const dayunExtra = {
+      ageStart: currentDayunItem?.ageStart,
+      ageEnd: currentDayunItem?.ageEnd,
+      endYear: dayunEndYear,
+      nextGanZhi: nextDayunItem ? `${nextDayunItem.gan}${nextDayunItem.zhi}` : undefined,
+      nextStartYear: nextDayunStartYear,
+    };
 
     // 2. AI 解读（可能失败，优雅降级）
     let analysisObj: BaziAnalysis;
@@ -144,7 +160,7 @@ export async function POST(req: NextRequest) {
             birthDate: input.birthDate,
             birthHour: input.birthHour,
             gender: input.gender ?? 'unknown',
-          }),
+          }, dayunExtra),
           25_000,
           () => ({ ...generateFallbackAnalysis(baziResult), _source: 'fallback' as const })
         )

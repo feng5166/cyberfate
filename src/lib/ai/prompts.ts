@@ -79,7 +79,18 @@ export const BAZI_SYSTEM_PROMPT = `${SAFETY_GUARDRAIL}
 /**
  * 构建八字分析的用户提示词
  */
-export function buildBaziPrompt(result: BaziResult, name?: string, gender?: string): string {
+export function buildBaziPrompt(
+  result: BaziResult,
+  name?: string,
+  gender?: string,
+  dayunExtra?: {
+    ageStart?: number;
+    ageEnd?: number;
+    endYear?: number;
+    nextGanZhi?: string;
+    nextStartYear?: number;
+  }
+): string {
   const { chart, wuxing, dayMaster, dayun } = result as BaziResult & { dayun?: { current?: string; liunian?: string } };
   const dayGan = chart.day.gan as TianGan;
   const dayMasterTrait = DAYMASTER_TRAITS[dayGan];
@@ -100,7 +111,17 @@ export function buildBaziPrompt(result: BaziResult, name?: string, gender?: stri
 
   // 当前大运和流年
   const currentYear = new Date().getFullYear();
-  const dayunInfo = dayun?.current ? `当前大运:${dayun.current}` : `当前大运:待推算(生于命盘数据中)`;
+  const dayunName = dayun?.current ?? '待推算';
+  const dayunAgeRange = (dayunExtra?.ageStart != null && dayunExtra?.ageEnd != null)
+    ? `${dayunExtra.ageStart}-${dayunExtra.ageEnd}岁`
+    : '';
+  const dayunEndYearStr = dayunExtra?.endYear ? `(约${dayunExtra.endYear}年底交运)` : '';
+  const dayunInfo = `当前大运:${dayunName} ${dayunAgeRange} ${dayunEndYearStr}`.trim();
+
+  const nextDayunInfo = (dayunExtra?.nextGanZhi && dayunExtra?.nextStartYear)
+    ? `下一步大运:${dayunExtra.nextGanZhi}(约${dayunExtra.nextStartYear}年起)`
+    : '';
+
   const liunianInfo = `当前流年:${currentYear}年`;
 
   return `${greeting}
@@ -121,7 +142,7 @@ ${hourInfo}
 
 【大运流年】
 ${dayunInfo}
-${liunianInfo}
+${nextDayunInfo ? nextDayunInfo + '\n' : ''}${liunianInfo}
 
 【输出要求】
 严格按以下 JSON 结构输出,字数为最低要求,所有分析必须先列命理依据再给结论:
@@ -130,9 +151,9 @@ ${liunianInfo}
   "personality": "含核心特质/思维模式/行为模式/优缺点4角度,每角度指出对应干支依据,要求280-350字,不得少于280字",
   "career": "从用神喜忌推导适合行业,含大运影响+发展建议,要求280-350字,不得少于280字",
   "wealth": "含正偏财格局+守财能力+最大风险+理财建议,必须指出劫财/比肩影响,要求280-350字,不得少于280字",
-  "relationship": "男命以财星为妻星展开,含配偶特征/婚姻宫状态/波折原因/经营建议,要求280-350字,不得少于280字",
-  "health": "从五行偏枯指出重点关注部位,含地支刑冲具体隐患,要求120-160字,不得少于120字",
-  "dayunAnalysis": "1大运天干与命局交互2大运地支与命局交互3流年与大运叠加效应4事业/财务/健康/心态四方向行动建议,要求350-450字,不得少于350字",
+  "relationship": "男命以财星为妻星/女命以官杀为夫星展开,含配偶特征/婚姻宫状态/波折原因/经营建议,必须写出婚姻关系中的矛盾张力(用既…又…的对比句式),要求280-350字,不得少于280字",
+  "health": "从五行偏枯指出重点关注部位,含地支刑冲具体隐患,必须包含饮食调养方向+运动调养方向各一条具体建议,要求180-220字,不得少于180字",
+  "dayunAnalysis": "开头必须写明大运年龄区间(如:命主当前走XX大运,XX-XX岁)。1大运天干与命局交互(合化/冲克关系)2大运地支与命局交互3当前流年与大运叠加效应4当前阶段行动建议必须用a.b.c.d.编号分别对应事业/财务/健康/心态四方向5下一步大运预告(说明下一步大运干支、五行影响、何时起运、当前应如何提前准备),约80-100字。要求450-560字",
   "traits": [5-8条命理特质标签数组,每条对象含 label(4-6字标签名) 和 desc(15-25字一句话描述),必须基于命局推导,不能泛化]
 }
 

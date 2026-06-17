@@ -108,7 +108,14 @@ async function callDeepSeek(systemPrompt: string, userPrompt: string, maxTokens 
 export async function generateBaziAnalysis(
   result: BaziResult,
   name?: string,
-  birthInfo?: { birthDate: string; birthHour: number; gender?: string }
+  birthInfo?: { birthDate: string; birthHour: number; gender?: string },
+  dayunExtra?: {
+    ageStart?: number;
+    ageEnd?: number;
+    endYear?: number;
+    nextGanZhi?: string;
+    nextStartYear?: number;
+  }
 ): Promise<BaziAnalysis & { _source: 'deepseek' | 'fallback' | 'cache' }> {
 
   // 1. 构建缓存 key（hash摘要，避免明文PII写入Redis）
@@ -137,7 +144,7 @@ export async function generateBaziAnalysis(
     return { ...generateFallbackBaziAnalysis(result), _source: 'fallback' };
   }
 
-  const prompt = buildBaziPrompt(result, name, birthInfo?.gender);
+  const prompt = buildBaziPrompt(result, name, birthInfo?.gender, dayunExtra);
 
   const apiResult = await callExternalAPI(
     async () => {
