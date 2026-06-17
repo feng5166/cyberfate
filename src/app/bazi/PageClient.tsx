@@ -1784,7 +1784,7 @@ function BaziPageContent() {
                                           : 'bg-[#F5F3EF] text-[#1C1A16]/60'
                                       }`}
                                     >
-                                      {dayunDetailRich.fortune === '吉' ? '吉运' : dayunDetailRich.fortune === '凶' ? '逆境' : '平运'}
+                                      {dayunDetailRich.fortune === '吉' ? '偏吉' : dayunDetailRich.fortune === '凶' ? '偏凶' : '中平'}
                                     </span>
                                     {selectedDayun.isCurrent && (
                                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#FFF6E8] text-[#C2762B]">
