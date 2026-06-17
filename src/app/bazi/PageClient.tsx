@@ -939,6 +939,7 @@ function BaziPageContent() {
       let buffer = '';
       let fullText = '';
       let finalSource: string | null = null;
+      let finalAiAnalysis: string | null = null;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -962,6 +963,7 @@ function BaziPageContent() {
               }
               if (obj.done) {
                 finalSource = obj.source || 'deepseek';
+                if (typeof obj.aiAnalysis === 'string') finalAiAnalysis = obj.aiAnalysis;
               }
               if (obj.fallback) {
                 finalSource = 'fallback';
@@ -975,8 +977,9 @@ function BaziPageContent() {
       }
 
       const resolvedSource = finalSource || 'deepseek';
+      const resolvedAnalysis = finalAiAnalysis || fullText;
       setResult(prev => {
-        const next = prev ? { ...prev, aiAnalysis: fullText, _source: resolvedSource } : prev;
+        const next = prev ? { ...prev, aiAnalysis: resolvedAnalysis, _source: resolvedSource } : prev;
         if (next) autoSaveRecord(next, resolvedSource);
         return next;
       });

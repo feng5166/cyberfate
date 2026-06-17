@@ -170,8 +170,9 @@ export async function POST(req: NextRequest) {
           console.warn('[bazi stream] cache write error', err);
         }
 
+        const aiAnalysis = formatAnalysis(analysis);
         controller.enqueue(
-          encoder.encode(`data: ${JSON.stringify({ done: true, source: 'deepseek' })}\n\n`)
+          encoder.encode(`data: ${JSON.stringify({ done: true, source: 'deepseek', aiAnalysis })}\n\n`)
         );
       } catch (err) {
         logger.error(SERVICE, 'stream read failed', err instanceof Error ? err : undefined);
