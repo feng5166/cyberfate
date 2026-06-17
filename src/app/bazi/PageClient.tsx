@@ -821,6 +821,14 @@ function BaziPageContent() {
   // 是否存在真实时柱：优先用 API 的 hasHour；历史记录无该字段时按时辰是否为「不知道」推断
   const hasHourPillar = result?.hasHour ?? (formData.birthHour !== '-1' && formData.birthHour !== '');
 
+  // 传给 AI 问答的代表小时：精确时间用 birthHourNum；否则把粗略时辰转为该时辰起始小时；
+  // 真不知道时辰（-1/空）才不传。修复问答丢时柱导致身强弱判错的问题。
+  const chatBirthHourNum: number | undefined = formData.knowTime
+    ? formData.birthHourNum
+    : (formData.birthHour !== '-1' && formData.birthHour !== ''
+        ? SHICHEN_START_HOUR[formData.birthHour]
+        : undefined);
+
   const basicInfoData = useMemo(() => {
     if (!result) return null;
 
@@ -1876,9 +1884,9 @@ function BaziPageContent() {
                   birthInput={{
                     birthDate: formData.birthDate,
                     gender: formData.gender === 'female' ? 'female' : 'male',
-                    knowTime: formData.knowTime,
-                    birthHourNum: formData.knowTime ? formData.birthHourNum : undefined,
-                    birthMinute: formData.knowTime ? formData.birthMinute : undefined,
+                    knowTime: chatBirthHourNum !== undefined,
+                    birthHourNum: chatBirthHourNum,
+                    birthMinute: formData.knowTime ? formData.birthMinute : 0,
                   }}
                   isLoggedIn={status === 'authenticated'}
                   isVip={isMember}

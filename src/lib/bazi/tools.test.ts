@@ -16,12 +16,13 @@ const input = {
 };
 
 describe('runBaziToolchain', () => {
-  it('返回 7 个有序步骤', () => {
+  it('返回 8 个有序步骤', () => {
     const steps = runBaziToolchain(input);
-    expect(steps).toHaveLength(7);
+    expect(steps).toHaveLength(8);
     expect(steps.map(s => s.name)).toEqual([
       'queryDate',
       'analyzeTenGods',
+      'analyzeMingGe',
       'analyzeInteractions',
       'queryShensha',
       'queryDayun',
@@ -49,10 +50,16 @@ describe('runBaziToolchain', () => {
     expect((step.data as any).flow.ganzhi).toBe('丙午');
   });
 
-  it('toolchainToPromptFacts 输出 7 行编号事实', () => {
+  it('toolchainToPromptFacts 输出 8 行编号事实', () => {
     const facts = toolchainToPromptFacts(runBaziToolchain(input));
-    expect(facts.split('\n')).toHaveLength(7);
+    expect(facts.split('\n')).toHaveLength(8);
     expect(facts).toContain('1. ');
+  });
+
+  it('analyzeMingGe 步骤含格局/强弱/用忌', () => {
+    const step = runBaziToolchain(input).find(s => s.name === 'analyzeMingGe')!;
+    expect(step.label).toMatch(/命格：.+，日主(偏强|中和|偏弱)/);
+    expect((step.data as any).mingGe.rizhuStrength).toBeTruthy();
   });
 
   it('无时柱命盘也能跑完（不抛错）', () => {
@@ -62,6 +69,6 @@ describe('runBaziToolchain', () => {
       birth: { birthDate: '1990-03-20', gender: 'female' },
       today: '2026-06-18',
     });
-    expect(steps).toHaveLength(7);
+    expect(steps).toHaveLength(8);
   });
 });

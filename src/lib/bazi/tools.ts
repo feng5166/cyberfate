@@ -85,6 +85,16 @@ function analyzeTenGods({ chart }: ToolchainInput): ToolStepResult {
   };
 }
 
+/** 步骤 2.5：命格（格局 / 日主强弱 / 用神忌神）—— 明确给出确定性强弱，避免 AI 自行臆断 */
+function analyzeMingGeStep({ chart }: ToolchainInput): ToolStepResult {
+  const mg = analyzeMingGe(chart);
+  return {
+    name: 'analyzeMingGe',
+    label: `命格：${mg.geju}，日主${mg.rizhuStrength}（强弱分 ${mg.strengthScore}），用神${mg.yongShen}、忌神${mg.jiShen}`,
+    data: { mingGe: mg },
+  };
+}
+
 /** 步骤 3：分析刑冲会合 */
 function analyzeInteractionsStep({ chart }: ToolchainInput): ToolStepResult {
   const interactions = analyzeInteractions(chart);
@@ -184,6 +194,7 @@ function analyzeLiuyueStep({ chart, today, liuyueMonths, liuyueStart }: Toolchai
 const STEPS: StepFn[] = [
   queryDate,
   analyzeTenGods,
+  analyzeMingGeStep,
   analyzeInteractionsStep,
   queryShensha,
   queryDayun,
