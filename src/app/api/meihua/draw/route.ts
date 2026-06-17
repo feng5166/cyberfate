@@ -1,106 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateCacheKey, getCache, setCache } from '@/lib/ai/cache';
 import { AI_BASE_URL, PRIMARY_MODEL } from '@/lib/ai/models';
-
-type DrawMethod = 'time' | 'number' | 'manual';
-
-interface BaguaItem {
-  name: string;
-  symbol: string;
-  meaning: string;
-  lines: [number, number, number];
-}
-
-const BAGUA: BaguaItem[] = [
-  { name: '乾', symbol: '☰', meaning: '天', lines: [1, 1, 1] },
-  { name: '兑', symbol: '☱', meaning: '泽', lines: [1, 1, 0] },
-  { name: '离', symbol: '☲', meaning: '火', lines: [1, 0, 1] },
-  { name: '震', symbol: '☳', meaning: '雷', lines: [1, 0, 0] },
-  { name: '巽', symbol: '☴', meaning: '风', lines: [0, 1, 1] },
-  { name: '坎', symbol: '☵', meaning: '水', lines: [0, 1, 0] },
-  { name: '艮', symbol: '☶', meaning: '山', lines: [0, 0, 1] },
-  { name: '坤', symbol: '☷', meaning: '地', lines: [0, 0, 0] },
-];
-
-const BAGUA_BY_LINES = new Map<string, BaguaItem>(
-  BAGUA.map((item) => [item.lines.join(''), item])
-);
-
-interface GuaPair {
-  upper: BaguaItem;
-  lower: BaguaItem;
-  gua: string;
-  guaName: string;
-  guaSymbol: string;
-}
-
-function positiveMod(value: number, modulo: number): number {
-  return ((value % modulo) + modulo) % modulo;
-}
-
-function parseNumber(value: unknown, fallback = 1): number {
-  if (typeof value === 'number' && Number.isFinite(value)) return value;
-  if (typeof value === 'string' && value.trim()) {
-    const n = Number.parseInt(value, 10);
-    if (Number.isFinite(n)) return n;
-  }
-  return fallback;
-}
-
-function buildPair(upperIndex: number, lowerIndex: number): GuaPair {
-  const upper = BAGUA[upperIndex] ?? BAGUA[0];
-  const lower = BAGUA[lowerIndex] ?? BAGUA[0];
-  return {
-    upper,
-    lower,
-    gua: `${upper.symbol}\n${lower.symbol}`,
-    guaName: `${upper.meaning}${lower.meaning}`,
-    guaSymbol: `${upper.symbol}${lower.symbol}`,
-  };
-}
-
-function resolveDraw(method: DrawMethod, numbers?: { num1?: unknown; num2?: unknown }) {
-  const now = new Date();
-
-  if (method === 'time') {
-    const upperSum = now.getHours() + now.getMinutes();
-    const lowerSum = now.getMinutes() + now.getSeconds();
-    const moveSum = now.getHours() + now.getMinutes() + now.getSeconds();
-    const upperIndex = positiveMod(upperSum - 1, 8);
-    const lowerIndex = positiveMod(lowerSum - 1, 8);
-    const movingLine = moveSum % 6 === 0 ? 6 : moveSum % 6;
-    return { upperIndex, lowerIndex, movingLine };
-  }
-
-  const num1 = parseNumber(numbers?.num1, 1);
-  const num2 = parseNumber(numbers?.num2, 1);
-  const upperIndex = positiveMod(num1 - 1, 8);
-  const lowerIndex = positiveMod(num2 - 1, 8);
-  const sumForLine = num1 + num2;
-  const movingLine = sumForLine % 6 === 0 ? 6 : sumForLine % 6;
-
-  return { upperIndex, lowerIndex, movingLine };
-}
-
-function getChangedPair(primary: GuaPair, movingLine: number): GuaPair {
-  const lines = [...primary.lower.lines, ...primary.upper.lines] as number[];
-  const lineIndex = Math.min(5, Math.max(0, movingLine - 1));
-  lines[lineIndex] = lines[lineIndex] === 1 ? 0 : 1;
-
-  const changedLowerLines = `${lines[0]}${lines[1]}${lines[2]}`;
-  const changedUpperLines = `${lines[3]}${lines[4]}${lines[5]}`;
-
-  const changedLower = BAGUA_BY_LINES.get(changedLowerLines) ?? primary.lower;
-  const changedUpper = BAGUA_BY_LINES.get(changedUpperLines) ?? primary.upper;
-
-  return {
-    upper: changedUpper,
-    lower: changedLower,
-    gua: `${changedUpper.symbol}\n${changedLower.symbol}`,
-    guaName: `${changedUpper.meaning}${changedLower.meaning}`,
-    guaSymbol: `${changedUpper.symbol}${changedLower.symbol}`,
-  };
-}
+import { type DrawMethod, buildPair, resolveDraw, getChangedPair } from '@/lib/meihua/draw';
 
 function firstSentence(text: string): string {
   const normalized = text.replace(/\s+/g, ' ').trim();
@@ -135,7 +36,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '手动起卦即将上线，请先选择时间起卦或数字起卦。' }, { status: 400 });
   }
 
-  const { upperIndex, lowerIndex, movingLine } = resolveDraw(method, numbers);
+  const { upperIndex, lowerIndex, movingLine } = resolveDraw(method, numbers, new Date());
   const primary = buildPair(upperIndex, lowerIndex);
   const changed = getChangedPair(primary, movingLine);
 
