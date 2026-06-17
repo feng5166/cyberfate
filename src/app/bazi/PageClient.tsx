@@ -925,8 +925,9 @@ function BaziPageContent() {
     }
   };
 
-  const runAiStream = async (forceRefresh: boolean): Promise<boolean> => {
-    if (!result?.cacheKey || !result?.baziResult) {
+  const runAiStream = async (forceRefresh: boolean, overrideResult?: BaziPageResult): Promise<boolean> => {
+    const activeResult = overrideResult ?? result;
+    if (!activeResult?.cacheKey || !activeResult?.baziResult) {
       setError('命盘数据缺失，请先点击「开始解读」');
       return false;
     }
@@ -940,14 +941,14 @@ function BaziPageContent() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          cacheKey: result.cacheKey,
-          baziResult: result.baziResult,
+          cacheKey: activeResult.cacheKey,
+          baziResult: activeResult.baziResult,
           name: formData.name || '缘主',
           gender: formData.gender || 'unknown',
           birthDate: formData.birthDate,
           birthHour: parseInt(formData.birthHour, 10),
           forceRefresh,
-          dayunExtra: result.dayunExtra,
+          dayunExtra: activeResult.dayunExtra,
         }),
       });
 
@@ -1245,6 +1246,9 @@ function BaziPageContent() {
           throw new Error(baseData.error || '服务器错误，请稍后重试');
         }
         setResult(baseData);
+        const ok = await runAiStream(true, baseData as BaziPageResult);
+        if (ok) setActionMessage('重新分析完成');
+        return;
       }
 
       const ok = await runAiStream(true);
