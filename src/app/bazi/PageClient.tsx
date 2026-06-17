@@ -401,6 +401,22 @@ function renderSectionContent(content: string): ReactNode {
   // 2. "- " 开头的 bullet 行前确保有换行
   normalizedContent = normalizedContent.replace(/(?<!\n)(- )/g, '\n$1');
 
+  // 2.5 将孤立短行(仅含1-3个汉字且不是 bullet)与下一行合并，防止 AI 输出在"\u7efc\u5408\u5224\u65ad"\u4e4b类词中间插入了换行
+  normalizedContent = normalizedContent
+    .split('\n')
+    .reduce<string[]>((acc, line) => {
+      const trimmed = line.trim();
+      const isBullet = trimmed.startsWith('- ');
+      const isShortOrphan = !isBullet && /^[\u4e00-\u9fa5a-zA-Z]{1,3}$/.test(trimmed);
+      if (isShortOrphan && acc.length > 0) {
+        acc[acc.length - 1] = acc[acc.length - 1] + trimmed;
+      } else {
+        acc.push(line);
+      }
+      return acc;
+    }, [])
+    .join('\n');
+
   // 3. 清理多余空行
   normalizedContent = normalizedContent.replace(/\n{3,}/g, '\n\n').trim();
 
