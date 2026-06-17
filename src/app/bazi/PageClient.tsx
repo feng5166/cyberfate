@@ -1588,18 +1588,43 @@ function BaziPageContent() {
 
                   {aiStreaming && (
                     <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-xs text-[#1C1A16]/50 mb-3">
+                      <div className="flex items-center gap-2 text-xs text-[#1C1A16]/50 mb-4">
                         <RefreshCw className="w-3.5 h-3.5 text-[#C2762B] animate-spin" />
                         AI 正在解读中…
                       </div>
-                      {aiStreamText && (
-                        <div className="text-sm leading-loose text-[#1C1A16]/75 whitespace-pre-wrap font-mono">
-                          {aiStreamText}
-                          <span className="inline-block w-1.5 h-4 ml-0.5 align-middle bg-[#C2762B] animate-pulse" />
-                          <div ref={streamEndRef} />
-                        </div>
-                      )}
-                      {!aiStreamText && (
+                      {aiStreamText ? (() => {
+                        const streamSections = [
+                          { title: '一、日主强弱判断', content: parseSection(aiStreamText, ['日主分析']) },
+                          { title: '二、性格特征分析', content: parseSection(aiStreamText, ['性格特点', '性格特质']) },
+                          { title: '三、事业发展方向', content: parseSection(aiStreamText, ['事业运势', '事业分析']) },
+                          { title: '四、财运分析', content: parseSection(aiStreamText, ['财运分析', '财富分析']) },
+                          { title: '五、感情婚姻分析', content: parseSection(aiStreamText, ['感情运势', '婚姻分析']) },
+                          { title: '六、健康提示', content: parseSection(aiStreamText, ['健康提示', '健康分析']) },
+                          { title: '七、当前运势重点', content: parseSection(aiStreamText, ['大运流年', '流年趋势']) },
+                        ].filter(s => s.content.trim());
+                        return streamSections.length > 0 ? (
+                          <div>
+                            {streamSections.map((section, index) => (
+                              <div key={section.title}>
+                                {index > 0 && <hr className="border-[#1C1A16]/8 my-6" />}
+                                <h4 className="border-l-4 border-[#C2762B] pl-3 text-base font-semibold mb-3 text-[#8B3A2A]">
+                                  {section.title}
+                                </h4>
+                                <div className="text-sm leading-loose text-[#1C1A16]/85">
+                                  {renderSectionContent(section.content)}
+                                </div>
+                              </div>
+                            ))}
+                            <div ref={streamEndRef} />
+                          </div>
+                        ) : (
+                          <div className="text-sm leading-loose text-[#1C1A16]/75 whitespace-pre-wrap">
+                            {aiStreamText}
+                            <span className="inline-block w-1.5 h-4 ml-0.5 align-middle bg-[#C2762B] animate-pulse" />
+                            <div ref={streamEndRef} />
+                          </div>
+                        );
+                      })() : (
                         <div className="py-6 flex justify-center">
                           <RefreshCw className="w-6 h-6 text-[#C2762B] animate-spin" />
                         </div>
