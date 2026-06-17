@@ -398,6 +398,9 @@ function renderSectionContent(content: string): ReactNode {
   // 1. 数字+点+空格 (如 "1. 内容" "2. 内容") 前加换行
   normalizedContent = normalizedContent.replace(/(?<!\n)(\d+\.\s)/g, '\n\n$1');
 
+  // 1.5 将 AI 输出的各种破折号 bullet（–—\\-）统一转为 "- "
+  normalizedContent = normalizedContent.replace(/^[\s]*[\u2013\u2014\-]{1,2}\s+/gm, '- ');
+
   // 2. "- " 开头的 bullet 行前确保有换行
   normalizedContent = normalizedContent.replace(/(?<!\n)(- )/g, '\n$1');
 
