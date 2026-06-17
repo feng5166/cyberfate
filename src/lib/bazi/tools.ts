@@ -10,7 +10,7 @@ import {
 } from './calculator';
 import { describeDayun } from './dayunDetail';
 import { analyzeInteractions } from './interactions';
-import { analyzeShensha } from './shensha';
+import { analyzeShensha, shenshaNature } from './shensha';
 import { analyzeLiunian, analyzeLiuyue, analyzeLiuyueRange } from './liunian';
 
 /**
@@ -40,8 +40,10 @@ export interface ToolchainInput {
   };
   /** 北京时间当天 YYYY-MM-DD（由调用方传入，避免服务端时区误差） */
   today: string;
-  /** 流月推算的月数：1=仅当月（默认）；>1=从当月起逐月铺开（用于运势走势类问答） */
+  /** 流月推算的月数：1=仅当月（默认）；>1=逐月铺开（用于运势走势类问答） */
   liuyueMonths?: number;
+  /** 流月推算的起点（公历年月）；缺省时从 today 当月起 */
+  liuyueStart?: { year: number; month: number };
 }
 
 type StepFn = (ctx: ToolchainInput) => ToolStepResult | ToolStepResult[];
@@ -96,14 +98,35 @@ function analyzeInteractionsStep({ chart }: ToolchainInput): ToolStepResult {
   };
 }
 
-/** 步骤 4：查询神煞 */
+/** 步骤 4：查询神煞（按吉凶分类计数） */
 function queryShensha({ chart }: ToolchainInput): ToolStepResult {
   const shensha = analyzeShensha(chart);
-  const names = [...new Set(shensha.map(s => s.name))];
+  // 按神煞名聚合命中次数（同名多柱计多次，体现"贵人满盘/某煞重"）
+  const counts = new Map<string, number>();
+  for (const s of shensha) counts.set(s.name, (counts.get(s.name) ?? 0) + 1);
+
+  const ji: string[] = [];
+  const xiong: string[] = [];
+  const zhong: string[] = [];
+  for (const [name, n] of counts) {
+    const tag = n > 1 ? `${name}×${n}` : name;
+    const nature = shenshaNature(name);
+    if (nature === '吉') ji.push(tag);
+    else if (nature === '凶') xiong.push(tag);
+    else zhong.push(tag);
+  }
+  const jiCount = ji.reduce((s, t) => s + (Number(t.split('×')[1]) || 1), 0);
+  const xiongCount = xiong.reduce((s, t) => s + (Number(t.split('×')[1]) || 1), 0);
+
+  const parts: string[] = [];
+  if (ji.length) parts.push(`吉神(${jiCount})：${ji.join('、')}`);
+  if (zhong.length) parts.push(`中性：${zhong.join('、')}`);
+  if (xiong.length) parts.push(`凶煞(${xiongCount})：${xiong.join('、')}`);
+
   return {
     name: 'queryShensha',
-    label: names.length ? `神煞：${names.join('、')}` : '未见常用神煞',
-    data: { shensha },
+    label: parts.length ? `神煞 ${parts.join('；')}` : '未见常用神煞',
+    data: { shensha, ji, zhong, xiong, jiCount, xiongCount },
   };
 }
 
@@ -139,10 +162,10 @@ function analyzeLiunianStep({ chart, today }: ToolchainInput): ToolStepResult {
   };
 }
 
-/** 步骤 7：分析流月（默认仅当月；liuyueMonths>1 时逐月铺开） */
-function analyzeLiuyueStep({ chart, today, liuyueMonths }: ToolchainInput): ToolStepResult | ToolStepResult[] {
-  const year = Number(today.slice(0, 4));
-  const month = Number(today.slice(5, 7));
+/** 步骤 7：分析流月（默认仅当月；liuyueMonths>1 时从 liuyueStart/当月起逐月铺开） */
+function analyzeLiuyueStep({ chart, today, liuyueMonths, liuyueStart }: ToolchainInput): ToolStepResult | ToolStepResult[] {
+  const year = liuyueStart?.year ?? Number(today.slice(0, 4));
+  const month = liuyueStart?.month ?? Number(today.slice(5, 7));
   const count = Math.max(1, Math.min(12, Math.floor(liuyueMonths ?? 1)));
 
   if (count === 1) {

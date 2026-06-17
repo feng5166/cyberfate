@@ -2,6 +2,7 @@ import type { BaziChart, TianGan, DiZhi, PillarKey } from './types';
 import { getTenGod, type TenGod } from './helpers';
 import { DIZHI_HIDDEN_GAN } from './geju';
 import { relateBranches, type PairRelation } from './interactions';
+import { getShenshaTargets, analyzeShensha } from './shensha';
 import { getYearGanzhi, getMonthGanzhi } from './calculator';
 
 /**
@@ -24,6 +25,14 @@ export interface FlowBranchRelation {
   relations: PairRelation[];
 }
 
+/** 流月/流年引动的神煞 */
+export interface FlowShensha {
+  name: string;
+  /** 流月逢=流月地支本身命中神煞靶位；引动=流月与命局带煞柱刑冲会合 */
+  type: '流月逢' | '引动';
+  detail: string;
+}
+
 export interface FlowAnalysis {
   /** 干支，如 "丙午" */
   ganzhi: string;
@@ -35,11 +44,44 @@ export interface FlowAnalysis {
   zhiHiddenTenGods: { gan: TianGan; tenGod: TenGod }[];
   /** 与命局四柱地支的刑冲会合害 */
   interactions: FlowBranchRelation[];
+  /** 该流月/流年引动的神煞 */
+  shensha: FlowShensha[];
   /** 人读摘要 */
   label: string;
 }
 
 const PILLAR_ORDER: PillarKey[] = ['year', 'month', 'day', 'hour'];
+
+/** 计算某流月/流年地支引动的神煞 */
+function analyzeFlowShensha(chart: BaziChart, zhi: DiZhi): FlowShensha[] {
+  const out: FlowShensha[] = [];
+  const seen = new Set<string>();
+  const push = (s: FlowShensha) => {
+    const key = `${s.name}|${s.type}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push(s);
+  };
+
+  // A：流月地支本身命中神煞靶位（流月逢桃花/驿马/华盖…）
+  for (const t of getShenshaTargets(chart)) {
+    if (t.branch === zhi) push({ name: t.name, type: '流月逢', detail: t.source });
+  }
+
+  // B：流月地支与命局「带煞之柱」刑冲会合 → 引动该神煞
+  for (const s of analyzeShensha(chart)) {
+    const rels = relateBranches(zhi, s.branch);
+    if (rels.length) {
+      push({
+        name: s.name,
+        type: '引动',
+        detail: `流月${zhi}与${s.pillars.join('/')}柱${s.branch}相${rels.map(r => r.type).join('、')}`,
+      });
+    }
+  }
+
+  return out;
+}
 
 function analyzeFlow(chart: BaziChart, ganzhi: string, period: string): FlowAnalysis {
   const dayGan = chart.day.gan;
@@ -69,11 +111,16 @@ function analyzeFlow(chart: BaziChart, ganzhi: string, period: string): FlowAnal
         .join('，')
     : '与命局地支无明显刑冲会合';
 
+  const shensha = analyzeFlowShensha(chart, zhi);
+  const shenshaText = shensha.length
+    ? `；神煞：${shensha.map(s => `${s.name}(${s.type})`).join('、')}`
+    : '';
+
   const label = `${period}${ganzhi}：天干${gan}为${ganTenGod}，地支${zhi}藏${zhiHiddenTenGods
     .map(t => `${t.gan}(${t.tenGod})`)
-    .join('')}；${relText}`;
+    .join('')}；${relText}${shenshaText}`;
 
-  return { ganzhi, gan, zhi, ganTenGod, zhiHiddenTenGods, interactions, label };
+  return { ganzhi, gan, zhi, ganTenGod, zhiHiddenTenGods, interactions, shensha, label };
 }
 
 /**

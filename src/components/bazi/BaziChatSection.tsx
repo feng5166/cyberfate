@@ -5,6 +5,7 @@ import { Bookmark, BookmarkCheck, ChevronDown, ChevronUp, Clock, Send, Wrench, X
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { OracleLoading } from '@/components/ui/OracleLoading';
+import { MiniMarkdown } from '@/components/ui/MiniMarkdown';
 import type {
   BaziTrait,
   MingGeInfo,
@@ -384,16 +385,18 @@ export function BaziChatSection({ baziData, birthInput, isLoggedIn, isVip }: Baz
                         }
                       />
                     )}
-                    <div className="whitespace-pre-wrap">
+                    <div>
                       {msg.streaming && !msg.answer ? (
                         <OracleLoading />
-                      ) : (
-                        <>
+                      ) : msg.streaming ? (
+                        // 流式过程中用纯文本，避免半截表格/标题抖动
+                        <div className="whitespace-pre-wrap">
                           {msg.answer}
-                          {msg.streaming && msg.answer && (
-                            <span className="inline-block w-1.5 h-4 ml-0.5 bg-[#1C1A16]/40 align-middle animate-pulse" />
-                          )}
-                        </>
+                          <span className="inline-block w-1.5 h-4 ml-0.5 bg-[#1C1A16]/40 align-middle animate-pulse" />
+                        </div>
+                      ) : (
+                        // 完成后按 Markdown 渲染（标题/粗体/列表/表格）
+                        <MiniMarkdown text={msg.answer} />
                       )}
                     </div>
                     {!msg.streaming && msg.answer && (
@@ -525,9 +528,8 @@ export function BaziChatSection({ baziData, birthInput, isLoggedIn, isVip }: Baz
                     <p className="text-sm font-medium text-[#1C1A16] mb-2">
                       Q：{item.question}
                     </p>
-                    <p className="text-sm text-[#1C1A16]/75 leading-relaxed whitespace-pre-wrap">
-                      {item.answer}
-                    </p>
+                    <MiniMarkdown text={item.answer} className="text-sm text-[#1C1A16]/75" />
+
                     <div className="mt-2 flex items-center justify-between">
                       <span className="text-[11px] text-[#1C1A16]/40">
                         {new Date(item.timestamp).toLocaleString('zh-CN', {

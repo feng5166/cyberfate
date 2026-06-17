@@ -67,6 +67,31 @@ const YANGREN: Partial<Record<TianGan, DiZhi>> = {
   '甲': '卯', '丙': '午', '戊': '午', '庚': '酉', '壬': '子',
 };
 
+// 国印贵人：甲→戌，乙→亥，丙→丑，丁→寅，戊→丑，己→寅，庚→辰，辛→巳，壬→未，癸→申
+const GUOYIN: Record<TianGan, DiZhi> = {
+  '甲': '戌', '乙': '亥', '丙': '丑', '丁': '寅', '戊': '丑',
+  '己': '寅', '庚': '辰', '辛': '巳', '壬': '未', '癸': '申',
+};
+
+// 金舆：甲→辰，乙→巳，丙→未，丁→申，戊→未，己→申，庚→戌，辛→亥，壬→丑，癸→寅
+const JINYU: Record<TianGan, DiZhi> = {
+  '甲': '辰', '乙': '巳', '丙': '未', '丁': '申', '戊': '未',
+  '己': '申', '庚': '戌', '辛': '亥', '壬': '丑', '癸': '寅',
+};
+
+// 神煞吉凶属性（吉=贵人/助力，凶=煞/耗，中=双面，需结合用忌）
+export type ShenshaNature = '吉' | '凶' | '中';
+export const SHENSHA_NATURE: Record<string, ShenshaNature> = {
+  '天乙贵人': '吉', '太极贵人': '吉', '文昌贵人': '吉', '禄神': '吉',
+  '国印贵人': '吉', '金舆': '吉', '将星': '吉',
+  '桃花': '中', '驿马': '中', '华盖': '中',
+  '羊刃': '凶', '劫煞': '凶', '空亡': '凶',
+};
+
+export function shenshaNature(name: string): ShenshaNature {
+  return SHENSHA_NATURE[name] ?? '中';
+}
+
 // —— 以三合局起的神煞（年支/日支三合局取法）——
 // 局：申子辰(水)、寅午戌(火)、巳酉丑(金)、亥卯未(木)。
 // 每个局对应一组神煞地支。
@@ -122,49 +147,75 @@ function getKongWang(dayGan: TianGan, dayZhi: DiZhi): DiZhi[] {
   return [DIZHI_LIST[kong1], DIZHI_LIST[kong2]];
 }
 
+/** 神煞「靶位」：某神煞应落的地支（不论命盘是否占据） */
+export interface ShenshaTarget {
+  name: string;
+  branch: DiZhi;
+  source: string;
+}
+
+/**
+ * 计算命盘的全部神煞靶位（基于日干 / 年支日支三合局 / 旬空）。
+ * 与命盘是否实际占据该地支无关 —— 用于判断「流月/流年逢神煞」。
+ */
+export function getShenshaTargets(chart: BaziChart): ShenshaTarget[] {
+  const dayGan = chart.day.gan;
+  const dayZhi = chart.day.zhi;
+  const yearZhi = chart.year.zhi;
+  const targets: ShenshaTarget[] = [];
+
+  const add = (name: string, branches: DiZhi[], source: string) => {
+    for (const branch of branches) targets.push({ name, branch, source });
+  };
+
+  // 以日干起
+  add('天乙贵人', TIANYI[dayGan] ?? [], `日干${dayGan}见${(TIANYI[dayGan] ?? []).join('')}`);
+  add('太极贵人', TAIJI[dayGan] ?? [], `日干${dayGan}见${(TAIJI[dayGan] ?? []).join('')}`);
+  add('文昌贵人', WENCHANG[dayGan] ? [WENCHANG[dayGan]] : [], `日干${dayGan}见${WENCHANG[dayGan]}`);
+  add('禄神', LUSHEN[dayGan] ? [LUSHEN[dayGan]] : [], `日干${dayGan}临官在${LUSHEN[dayGan]}`);
+  add('国印贵人', GUOYIN[dayGan] ? [GUOYIN[dayGan]] : [], `日干${dayGan}见${GUOYIN[dayGan]}`);
+  add('金舆', JINYU[dayGan] ? [JINYU[dayGan]] : [], `日干${dayGan}见${JINYU[dayGan]}`);
+  if (YANGREN[dayGan]) {
+    add('羊刃', [YANGREN[dayGan] as DiZhi], `阳日干${dayGan}刃在${YANGREN[dayGan]}`);
+  }
+
+  // 以三合局起（年支、日支各取一次）
+  for (const ref of [{ zhi: yearZhi, label: '年支' }, { zhi: dayZhi, label: '日支' }]) {
+    const sh = SANHE_SHENSHA.find(s => s.group.includes(ref.zhi));
+    if (!sh) continue;
+    add('桃花', [sh.taohua], `${ref.label}${ref.zhi}属${sh.group.join('')}局，桃花在${sh.taohua}`);
+    add('驿马', [sh.yima], `${ref.label}${ref.zhi}属${sh.group.join('')}局，驿马在${sh.yima}`);
+    add('华盖', [sh.huagai], `${ref.label}${ref.zhi}属${sh.group.join('')}局，华盖在${sh.huagai}`);
+    add('将星', [sh.jiangxing], `${ref.label}${ref.zhi}属${sh.group.join('')}局，将星在${sh.jiangxing}`);
+    add('劫煞', [sh.jiesha], `${ref.label}${ref.zhi}属${sh.group.join('')}局，劫煞在${sh.jiesha}`);
+  }
+
+  // 空亡（以日柱定旬）
+  add('空亡', getKongWang(dayGan, dayZhi), `日柱${dayGan}${dayZhi}旬空`);
+
+  // 同名 + 同地支去重（年支/日支取法可能重叠）
+  const seen = new Set<string>();
+  return targets.filter(t => {
+    const key = `${t.name}|${t.branch}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 /**
  * 分析命盘神煞。
  * @returns 命中的神煞列表（去重后）
  */
 export function analyzeShensha(chart: BaziChart): ShenshaHit[] {
   const slots = collectBranches(chart);
-  const dayGan = chart.day.gan;
-  const dayZhi = chart.day.zhi;
-  const yearZhi = chart.year.zhi;
   const hits: ShenshaHit[] = [];
 
-  const pushHits = (
-    name: string,
-    targets: DiZhi[],
-    source: string,
-  ) => {
-    for (const { branch, pillars } of findPillars(slots, targets)) {
-      hits.push({ name, branch, pillars, source });
+  for (const t of getShenshaTargets(chart)) {
+    for (const { branch, pillars } of findPillars(slots, [t.branch])) {
+      hits.push({ name: t.name, branch, pillars, source: t.source });
     }
-  };
-
-  // 以日干起
-  pushHits('天乙贵人', TIANYI[dayGan] ?? [], `日干${dayGan}见${(TIANYI[dayGan] ?? []).join('')}`);
-  pushHits('太极贵人', TAIJI[dayGan] ?? [], `日干${dayGan}见${(TAIJI[dayGan] ?? []).join('')}`);
-  pushHits('文昌贵人', WENCHANG[dayGan] ? [WENCHANG[dayGan]] : [], `日干${dayGan}见${WENCHANG[dayGan]}`);
-  pushHits('禄神', LUSHEN[dayGan] ? [LUSHEN[dayGan]] : [], `日干${dayGan}临官在${LUSHEN[dayGan]}`);
-  if (YANGREN[dayGan]) {
-    pushHits('羊刃', [YANGREN[dayGan] as DiZhi], `阳日干${dayGan}刃在${YANGREN[dayGan]}`);
   }
-
-  // 以三合局起（年支、日支各取一次，去重）
-  for (const ref of [{ zhi: yearZhi, label: '年支' }, { zhi: dayZhi, label: '日支' }]) {
-    const sh = SANHE_SHENSHA.find(s => s.group.includes(ref.zhi));
-    if (!sh) continue;
-    pushHits('桃花', [sh.taohua], `${ref.label}${ref.zhi}属${sh.group.join('')}局，桃花在${sh.taohua}`);
-    pushHits('驿马', [sh.yima], `${ref.label}${ref.zhi}属${sh.group.join('')}局，驿马在${sh.yima}`);
-    pushHits('华盖', [sh.huagai], `${ref.label}${ref.zhi}属${sh.group.join('')}局，华盖在${sh.huagai}`);
-    pushHits('将星', [sh.jiangxing], `${ref.label}${ref.zhi}属${sh.group.join('')}局，将星在${sh.jiangxing}`);
-    pushHits('劫煞', [sh.jiesha], `${ref.label}${ref.zhi}属${sh.group.join('')}局，劫煞在${sh.jiesha}`);
-  }
-
-  // 空亡（以日柱定旬）
-  pushHits('空亡', getKongWang(dayGan, dayZhi), `日柱${dayGan}${dayZhi}旬空`);
 
   return dedupe(hits);
 }
