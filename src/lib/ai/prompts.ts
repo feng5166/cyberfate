@@ -580,7 +580,8 @@ export function buildBaziStreamPrompt(
   baziResult: BaziResult,
   name?: string,
   gender?: string,
-  dayunExtra?: BaziStreamDayunExtra
+  dayunExtra?: BaziStreamDayunExtra,
+  birthDate?: string
 ): string {
   const { chart, wuxing, dayMaster } = baziResult as BaziResult & {
     dayun?: { current?: string; liunian?: string };
@@ -614,11 +615,16 @@ export function buildBaziStreamPrompt(
     return segs.length ? `\n${segs.join('，')}` : '';
   })();
 
+  const currentYear = new Date().getFullYear();
+  const birthYear = birthDate ? parseInt(birthDate.slice(0, 4)) : 0;
+  const currentAge = birthYear ? (currentYear - birthYear) : 0;
+  const ageStr = currentAge > 0 ? `\n当前年龄：${currentAge}岁（周岁）` : '';
+
   return `姓名：${nameStr}
 性别：${genderLabel}
 八字：${pillarStr}
 日主：${dayMaster || ''}
-五行统计：${wuxingStr}${dayunLine}
+五行统计：${wuxingStr}${dayunLine}${ageStr}
 
 请按照系统要求的章节格式，输出完整的八字命理分析报告。每章节必须有实质内容，不得省略。`;
 }

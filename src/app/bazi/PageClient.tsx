@@ -357,6 +357,11 @@ function buildDayunDetail(
       }
     }
     dayunSpecific = captured.slice(0, 5).join('\n').trim();
+    // 如果没有匹配到该大运的专属描述，取整个大运流年章节的前几句作为概述
+    if (!dayunSpecific && dayunFullText) {
+      const fallbackLines = dayunFullText.split('\n').filter(l => l.trim()).slice(0, 4);
+      dayunSpecific = fallbackLines.join('\n').trim();
+    }
   }
 
   const parts = [
