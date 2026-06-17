@@ -959,14 +959,6 @@ function BaziPageContent() {
               const obj = JSON.parse(payload);
               if (typeof obj.delta === 'string') {
                 fullText += obj.delta;
-                // 流式期间提取可读文字预览（去掉JSON结构符号）
-                const readable = fullText
-                  .replace(/"[^"]+"s*:/g, '')
-                  .replace(/[{}[]]/g, '')
-                  .replace(/"/g, '')
-                  .replace(/,s*$/gm, '')
-                  .trim();
-                setAiStreamText(readable);
               }
               if (obj.done) {
                 finalSource = obj.source || 'deepseek';
