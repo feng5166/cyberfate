@@ -1603,39 +1603,8 @@ function BaziPageContent() {
                   )}
 
                   {!showAiButton && !aiStreaming && result.aiAnalysis && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (fullReadExpanded) {
-                          setFullReadExpanded(false);
-                          return;
-                        }
-                        if (status !== 'authenticated') {
-                          setShowAuthModal(true);
-                          return;
-                        }
-                        if (!isMember) {
-                          setShowUpgradeModal(true);
-                          return;
-                        }
-                        setFullReadExpanded(true);
-                      }}
-                      className="w-full flex items-center justify-center gap-1.5 py-2.5 mt-3 text-sm font-medium text-[#C2762B] hover:text-[#A86425] transition-colors"
-                    >
-                      {fullReadExpanded ? (
-                        <>收起 <ChevronUp className="w-4 h-4" /></>
-                      ) : (
-                        <>查看完整解读 <ChevronDown className="w-4 h-4" /></>
-                      )}
-                    </button>
-                  )}
-
-                  <div
-                    className={`overflow-hidden transition-all duration-500 ease-in-out ${
-                      fullReadExpanded ? 'max-h-[8000px] opacity-100 mt-5' : 'max-h-0 opacity-0'
-                    }`}
-                  >
-                    <div>
+                    <div className="mt-5">
+                      <div>
                       {fullReadSections.map((section, index) => {
                         const isDayunSection = section.title.includes('运势重点');
                         return (
@@ -1696,6 +1665,7 @@ function BaziPageContent() {
                       </div>
                     </div>
                   </div>
+                  )}
 
                 </Card>
 
