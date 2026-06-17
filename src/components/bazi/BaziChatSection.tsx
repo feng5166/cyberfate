@@ -301,9 +301,17 @@ export function BaziChatSection({ baziData, birthInput, isLoggedIn, isVip }: Baz
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.SyntheticEvent) => {
+    e?.preventDefault();
     handleAsk(input);
+  };
+
+  // 回车提交（避免冒泡触发外层八字表单提交）
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+      e.preventDefault();
+      if (!submitting && input.trim()) handleAsk(input);
+    }
   };
 
   return (
@@ -413,25 +421,27 @@ export function BaziChatSection({ baziData, birthInput, isLoggedIn, isVip }: Baz
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="mt-5 flex gap-2">
+      <div className="mt-5 flex gap-2">
         <input
           type="text"
           value={input}
           onChange={e => setInput(e.target.value)}
+          onKeyDown={handleInputKeyDown}
           placeholder="输入你的问题，如：我今年适合换工作吗？"
           maxLength={200}
           disabled={submitting}
           className="flex-1 h-11 rounded-xl border border-[#1C1A16]/15 bg-white px-4 text-sm text-[#1C1A16] placeholder:text-[#1C1A16]/40 focus:border-[#1C1A16]/30 focus:ring-2 focus:ring-[#1C1A16]/10 outline-none transition-all disabled:opacity-50"
         />
         <button
-          type="submit"
+          type="button"
+          onClick={handleSubmit}
           disabled={submitting || !input.trim()}
           className="inline-flex items-center justify-center h-11 px-5 rounded-xl bg-[#C2762B] hover:bg-[#A86425] text-white text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Send className="w-4 h-4 mr-1.5" />
           提问
         </button>
-      </form>
+      </div>
 
       {toast && (
         <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 bg-[#1C1A16] text-white text-sm rounded-xl shadow-lg">
