@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Bookmark, BookmarkCheck, Clock, Send, X } from 'lucide-react';
+import { Bookmark, BookmarkCheck, ChevronDown, ChevronUp, Clock, Send, Wrench, X } from 'lucide-react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { OracleLoading } from '@/components/ui/OracleLoading';
@@ -28,6 +28,9 @@ interface ChatMessage {
   streaming: boolean;
   favorited: boolean;
   timestamp: number;
+  thinkingSteps: string[];
+  thinkingDone: boolean;
+  thinkingExpanded: boolean;
 }
 
 interface FavoriteRecord {
@@ -72,7 +75,64 @@ function saveFavorites(list: FavoriteRecord[]) {
   }
 }
 
+function ThinkingSteps({
+  steps,
+  done,
+  expanded,
+  onToggle,
+}: {
+  steps: string[];
+  done: boolean;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  if (steps.length === 0) return null;
+  return (
+    <div className="mb-3 rounded-xl border border-[#1C1A16]/8 bg-white overflow-hidden">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-[#FAF9F6] transition-colors"
+      >
+        <Wrench className="w-3.5 h-3.5 text-[#1C1A16]/40 flex-shrink-0" />
+        <span className="text-xs text-[#1C1A16]/60 flex-1">
+          {done ? `分析完成，共 ${steps.length} 次查询` : `分析中，已完成 ${steps.length} 步...`}
+        </span>
+        {expanded ? (
+          <ChevronUp className="w-3.5 h-3.5 text-[#1C1A16]/30" />
+        ) : (
+          <ChevronDown className="w-3.5 h-3.5 text-[#1C1A16]/30" />
+        )}
+      </button>
+      {expanded && (
+        <div className="px-3 pb-2 space-y-1">
+          {steps.map((step, i) => (
+            <div key={i} className="flex items-center gap-2 text-xs text-[#1C1A16]/55">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
+              {step}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function BaziChatSection({ baziData, isLoggedIn, isVip }: BaziChatSectionProps) {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+
+  const THINKING_STEPS = [
+    '查询今天日期',
+    '分析十神',
+    '分析刑冲会合',
+    '查询神煞',
+    '查询大运',
+    `查询流年 ${currentYear}年`,
+    `查询流月 ${currentYear}年 ${currentMonth}月`,
+  ];
+
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [favorites, setFavorites] = useState<FavoriteRecord[]>([]);
@@ -147,10 +207,32 @@ export function BaziChatSection({ baziData, isLoggedIn, isVip }: BaziChatSection
       streaming: true,
       favorited: false,
       timestamp: Date.now(),
+      thinkingSteps: [],
+      thinkingDone: false,
+      thinkingExpanded: true,
     };
     setMessages(prev => [...prev, newMsg]);
     setInput('');
     setSubmitting(true);
+
+    THINKING_STEPS.forEach((step, index) => {
+      setTimeout(() => {
+        setMessages(prev =>
+          prev.map(m =>
+            m.id === id
+              ? { ...m, thinkingSteps: THINKING_STEPS.slice(0, index + 1) }
+              : m
+          )
+        );
+        if (index === THINKING_STEPS.length - 1) {
+          setTimeout(() => {
+            setMessages(prev =>
+              prev.map(m => (m.id === id ? { ...m, thinkingDone: true } : m))
+            );
+          }, 300);
+        }
+      }, index * 400);
+    });
 
     try {
       const res = await fetch('/api/bazi/chat', {
@@ -206,7 +288,11 @@ export function BaziChatSection({ baziData, isLoggedIn, isVip }: BaziChatSection
             if (json.content) {
               acc += json.content;
               setMessages(prev =>
-                prev.map(m => (m.id === id ? { ...m, answer: acc } : m))
+                prev.map(m =>
+                  m.id === id
+                    ? { ...m, answer: acc, thinkingExpanded: false }
+                    : m
+                )
               );
             }
           } catch {}
@@ -288,6 +374,22 @@ export function BaziChatSection({ baziData, isLoggedIn, isVip }: BaziChatSection
                 </div>
                 <div className="flex justify-start">
                   <div className="max-w-[90%] bg-[#FAF9F6] text-[#1C1A16] text-sm rounded-2xl rounded-tl-sm px-4 py-3 leading-relaxed">
+                    {msg.thinkingSteps && msg.thinkingSteps.length > 0 && (
+                      <ThinkingSteps
+                        steps={msg.thinkingSteps}
+                        done={msg.thinkingDone ?? false}
+                        expanded={msg.thinkingExpanded ?? true}
+                        onToggle={() =>
+                          setMessages(prev =>
+                            prev.map(m =>
+                              m.id === msg.id
+                                ? { ...m, thinkingExpanded: !m.thinkingExpanded }
+                                : m
+                            )
+                          )
+                        }
+                      />
+                    )}
                     <div className="whitespace-pre-wrap">
                       {msg.streaming && !msg.answer ? (
                         <OracleLoading />
