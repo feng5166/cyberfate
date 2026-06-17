@@ -161,7 +161,7 @@ const aiSectionTitleMap: Record<AiSectionKey, string[]> = {
   wealth: ['财运分析', '财富分析'],
   relationship: ['感情运势', '婚姻分析'],
   health: ['健康提示', '健康分析'],
-  dayun: ['大运流年', '流年趋势'],
+  dayun: ['大运流年', '流年趋势', '当前运势重点', '当前运势'],
 };
 
 const wuxingDisplay: Array<{ key: keyof WuxingCount; label: WuXing; variant: TagVariant }> = [
@@ -1605,7 +1605,7 @@ function BaziPageContent() {
                           { title: '四、财运分析', content: parseSection(aiStreamText, ['财运分析', '财富分析']) },
                           { title: '五、感情婚姻分析', content: parseSection(aiStreamText, ['感情运势', '婚姻分析']) },
                           { title: '六、健康提示', content: parseSection(aiStreamText, ['健康提示', '健康分析']) },
-                          { title: '七、当前运势重点', content: parseSection(aiStreamText, ['大运流年', '流年趋势']) },
+                          { title: '七、当前运势重点', content: parseSection(aiStreamText, ['大运流年', '流年趋势', '当前运势重点', '当前运势']) },
                         ].filter(s => s.content.trim());
                         return streamSections.length > 0 ? (
                           <div>
