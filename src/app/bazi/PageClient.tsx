@@ -1356,7 +1356,13 @@ function BaziPageContent() {
                   </Card>
                 )}
 
-                <Card className={cardClass}>
+                <Card className={`${cardClass} relative`}>
+                  {reanalyzing && (
+                    <div className="absolute inset-0 z-10 rounded-2xl bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
+                      <RefreshCw className="w-6 h-6 text-[#C2762B] animate-spin" />
+                      <p className="text-sm font-medium text-[#1C1A16]/70">AI 正在重新解读中…</p>
+                    </div>
+                  )}
                   <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em] mb-1">AI 解读</h2>
                   <p className="text-xs text-[#1C1A16]/45 mb-4 flex items-center gap-2">
                     AI 命理解读 · 仅供参考
