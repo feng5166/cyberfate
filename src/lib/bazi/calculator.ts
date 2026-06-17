@@ -2,8 +2,6 @@ import { Solar, Lunar } from 'lunar-javascript';
 import type { BaziInput, BaziResult, BaziChart, Pillar, WuxingCount, WuXing, TianGan, DiZhi, ShiChen, Gender, DayunResult, DayunTimelineItem } from './types';
 import { TIANGAN_WUXING, DIZHI_WUXING, SHICHEN_DIZHI, WUXING_KEYS, TIANGAN_LIST, DIZHI_LIST } from './constants';
 
-const YANG_GAN_SET = new Set<TianGan>(['甲', '丙', '戊', '庚', '壬']);
-
 /**
  * 构建一个柱（年/月/日/时柱）
  */
@@ -211,21 +209,15 @@ export function getYearGanzhi(date: string): string {
   return `${eightChar.getYearGan()}${eightChar.getYearZhi()}`;
 }
 
-function getAgeByBirthDate(birthDate: Date, now: Date): number {
-  let age = now.getFullYear() - birthDate.getFullYear();
-  const monthDiff = now.getMonth() - birthDate.getMonth();
-  const dayDiff = now.getDate() - birthDate.getDate();
-
-  if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
-    age--;
-  }
-
-  return Math.max(0, age);
-}
-
 function getBeijingNow(): Date {
   const now = new Date();
   return new Date(now.getTime() + 8 * 60 * 60 * 1000);
+}
+
+/** 当前公历年份（按北京时间） */
+function getCurrentYear(): number {
+  const today = getBeijingNow();
+  return today.getUTCFullYear();
 }
 
 function getFallbackDayun(): DayunResult {
@@ -252,52 +244,89 @@ function getFallbackDayun(): DayunResult {
 }
 
 /**
- * 获取当前大运（简化版 — 起运年龄为估算值，非精确节气数日法）
- * - 以月柱干支为起点
- * - 阳男阴女顺行，阴男阳女逆行
- * - 起运年龄采用 3-5 岁简化估算（BUG-017：如需精确，改用节气 API 计算），每步 10 年
+ * 用出生信息构建 lunar-javascript 的 EightChar 对象。
+ * 提供精确时分时按时分构建（起运计算更准），否则退回当日 0 点。
  */
-export function getCurrentDayun(birthDate: string, gender: Gender): DayunResult {
+function buildEightChar(birthDate: string, birthHourNum?: number, birthMinute?: number): any | null {
+  const [year, month, day] = birthDate.split('-').map(Number);
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
+    return null;
+  }
+  const solar = typeof birthHourNum === 'number'
+    ? (Solar as any).fromYmdHms(year, month, day, birthHourNum, typeof birthMinute === 'number' ? birthMinute : 0, 0)
+    : Solar.fromYmd(year, month, day);
+  return solar.getLunar().getEightChar();
+}
+
+/** male=1 / female=0（lunar-javascript getYun 约定） */
+function genderToNum(gender: Gender): number {
+  return gender === 'male' ? 1 : 0;
+}
+
+/**
+ * 从 lunar-javascript 的 getYun().getDaYun() 取出「真正的」大运列表。
+ * 索引 0 为起运前童限期（干支为空），故跳过，返回干支齐全的大运。
+ */
+function getRealDayunList(eightChar: any, gender: Gender): any[] {
+  const yun = eightChar.getYun(genderToNum(gender));
+  const raw = yun.getDaYun() as any[];
+  return raw.filter((d) => {
+    const gz = d.getGanZhi?.();
+    return typeof gz === 'string' && gz.length >= 2;
+  });
+}
+
+/**
+ * 获取当前大运（精确节气数日法，基于 lunar-javascript getYun）。
+ * - 起运虚岁、各步公历年份均来自库的节气数日计算，非估算。
+ * - 若当前年份尚未起运（童限期），以月柱代之并标记 beforeFirstDayun。
+ * @param birthHourNum 可选精确小时(0-23)；提供后起运计算更准。
+ */
+export function getCurrentDayun(
+  birthDate: string,
+  gender: Gender,
+  birthHourNum?: number,
+  birthMinute?: number,
+): DayunResult {
   try {
-    const [year, month, day] = birthDate.split('-').map(Number);
-    if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
-      return getFallbackDayun();
+    const eightChar = buildEightChar(birthDate, birthHourNum, birthMinute);
+    if (!eightChar) return getFallbackDayun();
+
+    const dayunList = getRealDayunList(eightChar, gender);
+    if (!dayunList.length) return getFallbackDayun();
+
+    const currentYear = getCurrentYear();
+
+    // 起运前（童限期）：以月柱代表当前阶段
+    const firstStartYear = dayunList[0].getStartYear() as number;
+    if (currentYear < firstStartYear) {
+      const gan = eightChar.getMonthGan() as TianGan;
+      const zhi = eightChar.getMonthZhi() as DiZhi;
+      return {
+        gan,
+        zhi,
+        wuxing: TIANGAN_WUXING[gan],
+        startYear: firstStartYear,
+        beforeFirstDayun: true,
+      };
     }
 
-    const solar = Solar.fromYmd(year, month, day);
-    const lunar = solar.getLunar();
-    const eightChar = lunar.getEightChar();
+    // 命中当前年份所在的大运，否则取最后一步
+    const active =
+      dayunList.find((d) => currentYear >= d.getStartYear() && currentYear <= d.getEndYear()) ||
+      dayunList[dayunList.length - 1];
 
-    const yearGan = eightChar.getYearGan() as TianGan;
-    const monthGan = eightChar.getMonthGan() as TianGan;
-    const monthZhi = eightChar.getMonthZhi() as DiZhi;
-
-    const isYearYang = YANG_GAN_SET.has(yearGan);
-    const forward = (isYearYang && gender === 'male') || (!isYearYang && gender === 'female');
-
-    const birth = new Date(year, month - 1, day);
-    const now = new Date();
-    const age = getAgeByBirthDate(birth, now);
-
-    // 估算值仅供参考：3-5 岁，非精确节气数日法（BUG-017）
-    const startAge = 3 + ((month + day) % 3);
-    const offset = age < startAge ? 0 : Math.floor((age - startAge) / 10) + 1;
-
-    const monthGanIndex = TIANGAN_LIST.indexOf(monthGan);
-    const monthZhiIndex = DIZHI_LIST.indexOf(monthZhi);
-    if (monthGanIndex < 0 || monthZhiIndex < 0) {
-      return getFallbackDayun();
-    }
-
-    const step = forward ? offset : -offset;
-    const gan = TIANGAN_LIST[(monthGanIndex + step + 10 * 100) % 10];
-    const zhi = DIZHI_LIST[(monthZhiIndex + step + 12 * 100) % 12];
+    const gz = active.getGanZhi() as string;
+    const gan = gz[0] as TianGan;
+    const zhi = gz[1] as DiZhi;
 
     return {
       gan,
       zhi,
       wuxing: TIANGAN_WUXING[gan],
-      estimated: true,
+      startAge: active.getStartAge(),
+      startYear: active.getStartYear(),
+      endYear: active.getEndYear(),
     };
   } catch {
     return getFallbackDayun();
@@ -318,66 +347,46 @@ export function getLunarDate(date: string): string {
 }
 
 /**
- * 获取大运时间轴（完整版）
- * - 返回 6 步大运（过去、当前、未来）
- * - 每步 10 年
- * - 阳男阴女顺行，阴男阳女逆行
+ * 获取大运时间轴（精确版，基于 lunar-javascript getYun）。
+ * - 返回前 6 步大运，每步约 10 年。
+ * - 起运虚岁、公历年份段均为库的节气数日精确计算。
+ * - 顺逆排布由库按「阳男阴女顺行、阴男阳女逆行」内部处理。
+ * @param birthHourNum 可选精确小时(0-23)；提供后起运计算更准。
  */
-export function getDayunTimeline(birthDate: string, gender: Gender): DayunTimelineItem[] {
+export function getDayunTimeline(
+  birthDate: string,
+  gender: Gender,
+  birthHourNum?: number,
+  birthMinute?: number,
+): DayunTimelineItem[] {
   try {
-    const [year, month, day] = birthDate.split('-').map(Number);
-    if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
-      return [];
-    }
+    const eightChar = buildEightChar(birthDate, birthHourNum, birthMinute);
+    if (!eightChar) return [];
 
-    const solar = Solar.fromYmd(year, month, day);
-    const lunar = solar.getLunar();
-    const eightChar = lunar.getEightChar();
+    const dayunList = getRealDayunList(eightChar, gender);
+    if (!dayunList.length) return [];
 
-    const yearGan = eightChar.getYearGan() as TianGan;
-    const monthGan = eightChar.getMonthGan() as TianGan;
-    const monthZhi = eightChar.getMonthZhi() as DiZhi;
+    const currentYear = getCurrentYear();
 
-    const isYearYang = YANG_GAN_SET.has(yearGan);
-    const forward = (isYearYang && gender === 'male') || (!isYearYang && gender === 'female');
+    return dayunList.slice(0, 6).map((d, i) => {
+      const gz = d.getGanZhi() as string;
+      const gan = gz[0] as TianGan;
+      const zhi = gz[1] as DiZhi;
+      const yearStart = d.getStartYear() as number;
+      const yearEnd = d.getEndYear() as number;
 
-    const birth = new Date(year, month - 1, day);
-    const now = new Date();
-    const currentAge = getAgeByBirthDate(birth, now);
-
-    // 估算值仅供参考：3-5 岁，非精确节气数日法（BUG-017）
-    const startAge = 3 + ((month + day) % 3);
-
-    const monthGanIndex = TIANGAN_LIST.indexOf(monthGan);
-    const monthZhiIndex = DIZHI_LIST.indexOf(monthZhi);
-    if (monthGanIndex < 0 || monthZhiIndex < 0) {
-      return [];
-    }
-
-    const timeline: DayunTimelineItem[] = [];
-
-    // 生成 6 步大运
-    for (let i = 0; i < 6; i++) {
-      const ageStart = startAge + i * 10;
-      const ageEnd = ageStart + 9;
-      const isCurrent = currentAge >= ageStart && currentAge <= ageEnd;
-
-      const step = forward ? (i + 1) : -(i + 1);
-      const gan = TIANGAN_LIST[(monthGanIndex + step + 10 * 100) % 10];
-      const zhi = DIZHI_LIST[(monthZhiIndex + step + 12 * 100) % 12];
-
-      timeline.push({
+      return {
         index: i,
         gan,
         zhi,
         wuxing: TIANGAN_WUXING[gan],
-        ageStart,
-        ageEnd,
-        isCurrent,
-      });
-    }
-
-    return timeline;
+        ageStart: d.getStartAge() as number,
+        ageEnd: d.getEndAge() as number,
+        yearStart,
+        yearEnd,
+        isCurrent: currentYear >= yearStart && currentYear <= yearEnd,
+      };
+    });
   } catch (error) {
     console.error('getDayunTimeline error:', error);
     return [];

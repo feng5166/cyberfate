@@ -87,8 +87,14 @@ export interface DayunResult {
   gan: TianGan;
   zhi: DiZhi;
   wuxing: WuXing;
-  /** 起运年龄为估算值（非精确节气数日法） */
-  estimated?: true;
+  /** 起运虚岁（精确节气数日法，lunar-javascript getYun） */
+  startAge?: number;
+  /** 该大运起始公历年 */
+  startYear?: number;
+  /** 该大运结束公历年 */
+  endYear?: number;
+  /** 当前是否处于起运前的童限期（尚未起运，以月柱代之） */
+  beforeFirstDayun?: boolean;
 }
 
 // 大运时间轴项
@@ -97,8 +103,14 @@ export interface DayunTimelineItem {
   gan: TianGan;
   zhi: DiZhi;
   wuxing: WuXing;
+  /** 起运虚岁（含），精确节气数日法 */
   ageStart: number;
+  /** 该步大运结束虚岁（含） */
   ageEnd: number;
+  /** 该步大运起始公历年 */
+  yearStart: number;
+  /** 该步大运结束公历年 */
+  yearEnd: number;
   isCurrent: boolean;
 }
 
@@ -123,6 +135,8 @@ export interface MingGeInfo {
 
 export interface BaziApiResult {
   pillars: PillarRecord;
+  /** 是否存在真实时柱；false 表示用户未提供时辰，pillars.hour 为占位值不应展示 */
+  hasHour?: boolean;
   wuxing: WuxingCount;
   aiAnalysis: string;
   fiveDimensions?: FiveDimensions;

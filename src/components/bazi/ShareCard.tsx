@@ -11,6 +11,8 @@ interface ShareCardProps {
   dayMaster: string;
   zodiac: string;
   summary: string;
+  /** 是否存在真实时柱；false 时分享卡时柱显示「未知」 */
+  hasHour?: boolean;
   className?: string;
 }
 
@@ -110,7 +112,7 @@ async function buildCanvas(baziText: string, dayMaster: string, zodiac: string, 
   return canvas;
 }
 
-export function ShareCard({ pillars, dayMaster, zodiac, summary, className }: ShareCardProps) {
+export function ShareCard({ pillars, dayMaster, zodiac, summary, hasHour = true, className }: ShareCardProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
@@ -123,7 +125,8 @@ export function ShareCard({ pillars, dayMaster, zodiac, summary, className }: Sh
     }).then(setQrDataUrl).catch(() => {});
   }, []);
 
-  const baziText = `${pillars.year.gan}${pillars.year.zhi} ${pillars.month.gan}${pillars.month.zhi} ${pillars.day.gan}${pillars.day.zhi} ${pillars.hour.gan}${pillars.hour.zhi}`;
+  const hourText = hasHour ? `${pillars.hour.gan}${pillars.hour.zhi}` : '时柱未知';
+  const baziText = `${pillars.year.gan}${pillars.year.zhi} ${pillars.month.gan}${pillars.month.zhi} ${pillars.day.gan}${pillars.day.zhi} ${hourText}`;
 
   const fallbackCopyText = () => {
     const text = `我的八字命盘\n${baziText}\n日主：${dayMaster} | 生肖：${zodiac}\n\n${summary || ''}\n\n访问 CyberFate.me 查看你的命盘`;

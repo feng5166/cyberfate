@@ -21,7 +21,7 @@
 | 支付 | Stripe(WeChat/Alipay 枚举占位,未启用) |
 | 部署 | Vercel · PWA |
 
-> ⚠️ 历史遗留:部分代码注释/函数名写"调用 Claude"(如 `callClaudeAPI`),实际请求 DeepSeek。真实主模型是 DeepSeek v4-pro。改动 AI 逻辑前先确认实际端点。
+> ⚠️ 模型归属:命理解读主链路一律走 DeepSeek v4-pro(经 ModelVerse)。早期误导性命名(如 `callClaudeAPI`)已统一改为 `callDeepSeek*`(见 `docs/IMPROVEMENT-TASKS.md` T3)。当前代码中唯一真实调用 Claude 的是 `src/app/api/daily/detail-analysis`(每日深度分析的异常兜底,模型 `claude-sonnet-4-20250514`)。改动 AI 逻辑前仍以 `src/lib/ai/models.ts` 的实际端点为准。
 
 ## 功能模块
 

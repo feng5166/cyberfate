@@ -122,16 +122,18 @@ export async function POST(req: NextRequest) {
     // 1. 计算八字
     const baziResult = calculateBazi(calcInput);
 
-    // 获取当前大运
+    // 获取当前大运（精确节气数日法；提供精确时分时一并传入，起运更准）
     const gender = input.gender === 'unknown' ? 'male' : (input.gender || 'male');
-    const currentDayun = getCurrentDayun(input.birthDate, gender as 'male' | 'female');
-    const dayunTimeline = getDayunTimeline(input.birthDate, gender as 'male' | 'female');
+    const dayunHour = hasPrecise ? input.birthHourNum : undefined;
+    const dayunMinute = hasPrecise ? input.birthMinute : undefined;
+    const currentDayun = getCurrentDayun(input.birthDate, gender as 'male' | 'female', dayunHour, dayunMinute);
+    const dayunTimeline = getDayunTimeline(input.birthDate, gender as 'male' | 'female', dayunHour, dayunMinute);
     const currentDayunItem = dayunTimeline.find(item => item.isCurrent);
     const nextDayunItem = currentDayunItem ? dayunTimeline.find(item => item.index === currentDayunItem.index + 1) : undefined;
 
-    const birthYear = Number(input.birthDate.split('-')[0]);
-    const dayunEndYear = currentDayunItem ? birthYear + currentDayunItem.ageEnd : undefined;
-    const nextDayunStartYear = currentDayunItem ? birthYear + currentDayunItem.ageEnd + 1 : undefined;
+    // 大运结束年/下一步起始年直接取库的精确公历年份段
+    const dayunEndYear = currentDayunItem?.yearEnd;
+    const nextDayunStartYear = nextDayunItem?.yearStart;
 
     const baziResultWithDayun = Object.assign(baziResult, {
       dayun: {
@@ -142,12 +144,14 @@ export async function POST(req: NextRequest) {
     const dayunExtra = {
       ageStart: currentDayunItem?.ageStart,
       ageEnd: currentDayunItem?.ageEnd,
+      startYear: currentDayunItem?.yearStart,
       endYear: dayunEndYear,
       nextGanZhi: nextDayunItem ? `${nextDayunItem.gan}${nextDayunItem.zhi}` : undefined,
       nextStartYear: nextDayunStartYear,
     };
 
-    // 处理时柱（可能为 null）
+    // 处理时柱（可能为 null）：无时辰时用占位值维持结构，但通过 hasHour=false 告知前端不要展示
+    const hasHour = baziResult.chart.hour != null;
     const hourPillar = baziResult.chart.hour ?? {
       gan: '甲',
       zhi: '子',
@@ -205,6 +209,7 @@ export async function POST(req: NextRequest) {
 
     return Response.json({
       pillars,
+      hasHour,
       wuxing: baziResult.wuxing,
       aiAnalysis: '',
       fiveDimensions,

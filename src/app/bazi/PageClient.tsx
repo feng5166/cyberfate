@@ -42,7 +42,9 @@ import {
   getDayunTimeline,
   getLunarDate,
   getYearGanzhi,
+  describeDayun,
 } from '@/lib/bazi';
+import type { DayunDetail } from '@/lib/bazi';
 import type {
   BaziApiResult,
   BaziHistoryRecord,
@@ -273,12 +275,12 @@ function toHourLabel(hourValue: string): string {
   return shichenOptions.find(option => option.value === hourValue)?.label || '未知时辰';
 }
 
-function buildBaziText(result: BaziPageResult): string {
+function buildBaziText(result: BaziPageResult, hasHour: boolean): string {
   return [
     `${result.pillars.year.gan}${result.pillars.year.zhi}`,
     `${result.pillars.month.gan}${result.pillars.month.zhi}`,
     `${result.pillars.day.gan}${result.pillars.day.zhi}`,
-    `${result.pillars.hour.gan}${result.pillars.hour.zhi}`,
+    hasHour ? `${result.pillars.hour.gan}${result.pillars.hour.zhi}` : '时柱未知',
   ].join(' ');
 }
 
@@ -307,11 +309,16 @@ function getScoreStyle(score: number): { barClass: string; textClass: string } {
   return { barClass: 'bg-rose-500', textClass: 'text-rose-600' };
 }
 
-function buildDayunTimeline(birthDate: string, genderValue: string): Array<DayunTimelineItem & { key: string }> {
+function buildDayunTimeline(
+  birthDate: string,
+  genderValue: string,
+  birthHourNum?: number,
+  birthMinute?: number,
+): Array<DayunTimelineItem & { key: string }> {
   if (!birthDate) return [];
 
   const gender: Gender = genderValue === 'female' ? 'female' : 'male';
-  const timeline = getDayunTimeline(birthDate, gender);
+  const timeline = getDayunTimeline(birthDate, gender, birthHourNum, birthMinute);
 
   return timeline.map(item => ({
     ...item,
@@ -319,51 +326,56 @@ function buildDayunTimeline(birthDate: string, genderValue: string): Array<Dayun
   }));
 }
 
+/** 该大运在人生中的阶段定位（已过 / 当前 / 未来） */
+function getDayunPhaseText(item: DayunTimelineItem | null, birthDate: string): string {
+  if (!item) return '';
+  const age = getAge(birthDate);
+  return item.isCurrent
+    ? '当前正在经历该阶段。'
+    : age < item.ageStart
+      ? '这是未来阶段，可提前布局。'
+      : '这是已走过阶段，可用于复盘成长轨迹。';
+}
+
+/**
+ * 从「大运流年」AI 章节里按「XX大运」标记精确抽取该大运的专属解读。
+ * 命中头标记后采集后续行，遇到下一个 `「.+大运」` 头标记停止。
+ */
+function extractDayunAiText(item: DayunTimelineItem | null, aiSections: Record<AiSectionKey, string>): string {
+  if (!item) return '';
+  const dayunFullText = aiSections.dayun || '';
+  if (!dayunFullText) return '';
+  const ganZhi = `${item.gan}${item.zhi}`;
+  const lines = dayunFullText.split('\n');
+  let capturing = false;
+  const captured: string[] = [];
+  for (const line of lines) {
+    if (line.includes(`「${ganZhi}大运」`)) {
+      capturing = true;
+      continue;
+    }
+    if (capturing) {
+      if (/「.+大运」/.test(line)) break;
+      if (line.trim()) captured.push(line);
+    }
+  }
+  return captured.join('\n').trim();
+}
+
+/** 组合纯文本版大运详情（供通用 Tab 模板 / buildPoints 使用） */
 function buildDayunDetail(
   item: DayunTimelineItem | null,
   aiSections: Record<AiSectionKey, string>,
   birthDate: string
 ): string {
   if (!item) return '暂无大运信息';
-
-  const age = getAge(birthDate);
-  const phaseText = item.isCurrent
-    ? '当前正在经历该阶段。'
-    : age < item.ageStart
-      ? '这是未来阶段，可提前布局。'
-      : '这是已走过阶段，可用于复盘成长轨迹。';
-
   const yearGanzhi = getYearGanzhi(getDateString(new Date()));
-
-  // 从大运流年章节里按「XX大运」标记精确匹配该大运的专属内容
-  // 命中头标记后开始采集后续行，遇到下一个 `「.+大运」` 头标记停止
-  const dayunFullText = aiSections.dayun || '';
-  const ganZhi = `${item.gan}${item.zhi}`;
-  let dayunSpecific = '';
-  if (dayunFullText) {
-    const lines = dayunFullText.split('\n');
-    let capturing = false;
-    const captured: string[] = [];
-    for (const line of lines) {
-      if (line.includes(`「${ganZhi}大运」`)) {
-        capturing = true;
-        continue;
-      }
-      if (capturing) {
-        if (/「.+大运」/.test(line)) break;
-        if (line.trim()) captured.push(line);
-      }
-    }
-    dayunSpecific = captured.join('\n').trim();
-  }
-
   const parts = [
-    `${ganZhi}大运（${item.ageStart}-${item.ageEnd}岁）。${phaseText}`,
+    `${item.gan}${item.zhi}大运（${item.ageStart}-${item.ageEnd}岁）。${getDayunPhaseText(item, birthDate)}`,
     `当前流年：${yearGanzhi}。`,
   ];
-  if (dayunSpecific) {
-    parts.push(dayunSpecific);
-  }
+  const aiText = extractDayunAiText(item, aiSections);
+  if (aiText) parts.push(aiText);
   return parts.join('\n');
 }
 
@@ -731,8 +743,13 @@ function BaziPageContent() {
   }, [result, personalityText]);
 
   const dayunTimeline = useMemo(
-    () => buildDayunTimeline(formData.birthDate, formData.gender),
-    [formData.birthDate, formData.gender]
+    () => buildDayunTimeline(
+      formData.birthDate,
+      formData.gender,
+      formData.knowTime ? formData.birthHourNum : undefined,
+      formData.knowTime ? formData.birthMinute : undefined,
+    ),
+    [formData.birthDate, formData.gender, formData.knowTime, formData.birthHourNum, formData.birthMinute]
   );
 
   useEffect(() => {
@@ -778,6 +795,32 @@ function BaziPageContent() {
     return buildDayunDetail(selectedDayun, aiSections, formData.birthDate);
   }, [selectedDayun, aiSections, formData.birthDate]);
 
+  // 选中大运的确定性结构化详情（十神 / 藏干 / 纳音 / 吉凶 / 四维），不依赖 AI
+  const dayunDetailRich = useMemo<DayunDetail | null>(() => {
+    if (!selectedDayun || !result) return null;
+    return describeDayun(
+      selectedDayun,
+      result.pillars.day.gan,
+      result.mingGe?.yongShen,
+      result.mingGe?.jiShen,
+    );
+  }, [selectedDayun, result]);
+
+  const dayunPhaseText = useMemo(
+    () => getDayunPhaseText(selectedDayun, formData.birthDate),
+    [selectedDayun, formData.birthDate]
+  );
+
+  const dayunAiText = useMemo(
+    () => extractDayunAiText(selectedDayun, aiSections),
+    [selectedDayun, aiSections]
+  );
+
+  const currentLiunian = useMemo(() => getYearGanzhi(getDateString(new Date())), []);
+
+  // 是否存在真实时柱：优先用 API 的 hasHour；历史记录无该字段时按时辰是否为「不知道」推断
+  const hasHourPillar = result?.hasHour ?? (formData.birthHour !== '-1' && formData.birthHour !== '');
+
   const basicInfoData = useMemo(() => {
     if (!result) return null;
 
@@ -788,7 +831,7 @@ function BaziPageContent() {
       : '未提供';
 
     return {
-      baziText: buildBaziText(result),
+      baziText: buildBaziText(result, hasHourPillar),
       name: formData.name || '缘主',
       gender: toGenderLabel(formData.gender),
       birthTime: `${formData.birthDate || '未填写'} ${toHourLabel(formData.birthHour)}`,
@@ -797,7 +840,7 @@ function BaziPageContent() {
       dayunStartDescription: result.dayunStartDescription || dayunFallback.description,
       dayunStartAt: result.dayunStartAt || dayunFallback.at,
     };
-  }, [formData.birthDate, formData.birthHour, formData.gender, formData.name, result]);
+  }, [formData.birthDate, formData.birthHour, formData.gender, formData.name, result, hasHourPillar]);
 
   const tabContent = useMemo<Record<ResultTab, TabContent>>(() => {
     const dimensions = result?.fiveDimensions;
@@ -1512,7 +1555,7 @@ function BaziPageContent() {
                   </div>
                 )}
                 <Card className={cardClass}>
-                  <BaziChart pillars={result.pillars} />
+                  <BaziChart pillars={result.pillars} hasHour={hasHourPillar} />
                 </Card>
 
                 <Card className={cardClass}>
@@ -1587,7 +1630,7 @@ function BaziPageContent() {
                         {result.pillars.year.gan}{result.pillars.year.zhi}{' '}
                         {result.pillars.month.gan}{result.pillars.month.zhi}{' '}
                         {result.pillars.day.gan}{result.pillars.day.zhi}{' '}
-                        {result.pillars.hour.gan}{result.pillars.hour.zhi}
+                        {hasHourPillar ? `${result.pillars.hour.gan}${result.pillars.hour.zhi}` : '时柱未知'}
                       </span>
                       {'　'}
                       <span className="text-[#1C1A16]/50">性别：</span>
@@ -1719,15 +1762,90 @@ function BaziPageContent() {
                                     >
                                       <p className="text-lg font-semibold tracking-[0.08em]">{item.gan}{item.zhi}</p>
                                       <p className="text-xs mt-1 opacity-80">{item.ageStart}-{item.ageEnd} 岁</p>
-                                      {item.isCurrent && <p className="text-[11px] mt-1">当前大运</p>}
+                                      <p className="text-[11px] mt-0.5 opacity-60">{item.yearStart}-{item.yearEnd} 年</p>
+                                      {item.isCurrent && <p className="text-[11px] mt-1 font-medium text-[#C2762B]">当前大运</p>}
                                     </button>
                                   ))}
                                 </div>
                               </div>
-                              {dayunDetail && (
-                                <p className="mt-3 text-sm leading-loose text-[#1C1A16]/75 whitespace-pre-wrap">
-                                  {dayunDetail}
-                                </p>
+                              {selectedDayun && dayunDetailRich && (
+                                <div className="mt-4 rounded-xl border border-[#1C1A16]/10 bg-white p-4 sm:p-5">
+                                  {/* 标题：干支大运 + 吉凶 + 阶段 */}
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="text-base font-semibold tracking-[0.08em] text-[#1C1A16]">
+                                      {dayunDetailRich.ganZhi}大运
+                                    </span>
+                                    <span
+                                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                        dayunDetailRich.fortune === '吉'
+                                          ? 'bg-emerald-50 text-emerald-600'
+                                          : dayunDetailRich.fortune === '凶'
+                                          ? 'bg-rose-50 text-rose-500'
+                                          : 'bg-[#F5F3EF] text-[#1C1A16]/60'
+                                      }`}
+                                    >
+                                      {dayunDetailRich.fortune === '吉' ? '吉运' : dayunDetailRich.fortune === '凶' ? '逆境' : '平运'}
+                                    </span>
+                                    {selectedDayun.isCurrent && (
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#FFF6E8] text-[#C2762B]">
+                                        当前大运
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  <p className="mt-1.5 text-xs text-[#1C1A16]/55">
+                                    {selectedDayun.ageStart}-{selectedDayun.ageEnd} 岁 · {selectedDayun.yearStart}-{selectedDayun.yearEnd} 年 · {dayunPhaseText}
+                                  </p>
+
+                                  {/* 命理要素：天干十神 / 藏干 / 纳音 / 五行 */}
+                                  <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-xs sm:grid-cols-4">
+                                    <div>
+                                      <span className="text-[#1C1A16]/45">天干十神</span>
+                                      <p className="mt-0.5 font-medium text-[#1C1A16]">{dayunDetailRich.ganShiShen}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-[#1C1A16]/45">大运五行</span>
+                                      <p className="mt-0.5 font-medium text-[#1C1A16]">{dayunDetailRich.wuxing}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-[#1C1A16]/45">地支藏干</span>
+                                      <p className="mt-0.5 font-medium text-[#1C1A16]">
+                                        {dayunDetailRich.hiddenGods.map(h => `${h.gan}·${h.shishen}`).join('，')}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <span className="text-[#1C1A16]/45">纳音</span>
+                                      <p className="mt-0.5 font-medium text-[#1C1A16]">{dayunDetailRich.naYin}</p>
+                                    </div>
+                                  </div>
+
+                                  {/* 吉凶依据 + 阶段主题 */}
+                                  <p className="mt-3 text-sm leading-relaxed text-[#1C1A16]/75">
+                                    {dayunDetailRich.fortuneReason}
+                                    {dayunDetailRich.theme !== '—' && ` 本阶段主题：${dayunDetailRich.theme}。`}
+                                  </p>
+                                  <p className="mt-1 text-xs text-[#1C1A16]/50">当前流年：{currentLiunian}</p>
+
+                                  {/* 四维简评 */}
+                                  {dayunDetailRich.aspects.length > 0 && (
+                                    <div className="mt-3 space-y-2 border-t border-[#1C1A16]/8 pt-3">
+                                      {dayunDetailRich.aspects.map(a => (
+                                        <div key={a.label} className="flex gap-2 text-sm">
+                                          <span className="flex-shrink-0 w-9 font-medium text-[#C2762B]">{a.label}</span>
+                                          <span className="flex-1 text-[#1C1A16]/75 leading-relaxed">{a.text}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+
+                                  {/* AI 针对该大运的专属解读（若有） */}
+                                  {dayunAiText && (
+                                    <div className="mt-3 border-t border-[#1C1A16]/8 pt-3">
+                                      <p className="text-xs font-medium text-[#1C1A16]/55 mb-1">AI 专属解读</p>
+                                      <p className="text-sm leading-loose text-[#1C1A16]/75 whitespace-pre-wrap">{dayunAiText}</p>
+                                    </div>
+                                  )}
+                                </div>
                               )}
                             </div>
                           )}
@@ -1885,6 +2003,7 @@ function BaziPageContent() {
                     dayMaster={dayMasterInsight.title}
                     zodiac={result.zodiac || '未知'}
                     summary={dayMasterInsight.personality.split('。')[0] + '。'}
+                    hasHour={hasHourPillar}
                   />
                 </Card>
 

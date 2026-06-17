@@ -353,14 +353,42 @@ describe('getCurrentDayun / getDayunTimeline (time-dependent)', () => {
     tl.forEach((item, i) => {
       expect(item.index).toBe(i);
       expect(item.ageEnd - item.ageStart).toBe(9);
+      expect(item.yearEnd - item.yearStart).toBe(9);
       if (i > 0) {
         expect(item.ageStart).toBe(tl[i - 1].ageStart + 10);
+        expect(item.yearStart).toBe(tl[i - 1].yearStart + 10);
       }
       expect(GAN_SET.has(item.gan)).toBe(true);
       expect(ZHI_SET.has(item.zhi)).toBe(true);
     });
     // at most one current window
     expect(tl.filter((x) => x.isCurrent).length).toBeLessThanOrEqual(1);
+  });
+
+  it('uses precise 起运 from lunar-javascript getYun (not the old 3-5 estimate)', () => {
+    // Oracle: 1990-05-15 male 起运虚岁 8, first 大运 壬午, 公历 1997 起.
+    const tl = getDayunTimeline('1990-05-15', 'male');
+    expect(tl[0].ageStart).toBe(8);
+    expect(`${tl[0].gan}${tl[0].zhi}`).toBe('壬午');
+    expect(tl[0].yearStart).toBe(1997);
+    // female 起运虚岁 4, first 大运 庚辰, 公历 1993 起.
+    const tlF = getDayunTimeline('1990-05-15', 'female');
+    expect(tlF[0].ageStart).toBe(4);
+    expect(`${tlF[0].gan}${tlF[0].zhi}`).toBe('庚辰');
+    expect(tlF[0].yearStart).toBe(1993);
+  });
+
+  it('getCurrentDayun matches the timeline step containing the current year', () => {
+    // 2026: male 1990 → 大运 庚辰 (2017-2026) per oracle
+    const cur = getCurrentDayun('1990-05-15', 'male');
+    expect(GAN_SET.has(cur.gan)).toBe(true);
+    expect(cur.startYear).toBeLessThanOrEqual(2026);
+    expect(cur.endYear).toBeGreaterThanOrEqual(2026);
+    const tl = getDayunTimeline('1990-05-15', 'male');
+    const currentStep = tl.find((x) => x.isCurrent);
+    if (currentStep) {
+      expect(`${cur.gan}${cur.zhi}`).toBe(`${currentStep.gan}${currentStep.zhi}`);
+    }
   });
 
   it('returns [] for a malformed birth date timeline', () => {

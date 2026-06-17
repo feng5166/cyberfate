@@ -5,6 +5,8 @@ import { cn } from '@/lib/utils/cn';
 
 interface BaziChartProps {
   pillars: PillarRecord;
+  /** 是否存在真实时柱；false 时时柱显示「未知」而非占位值 */
+  hasHour?: boolean;
 }
 
 const pillarConfig: { key: PillarKey; label: string }[] = [
@@ -22,7 +24,7 @@ const wuxingColorMap: Record<string, { bg: string; text: string }> = {
   土: { bg: '#FEF3C7', text: '#D97706' },
 };
 
-export function BaziChart({ pillars }: BaziChartProps) {
+export function BaziChart({ pillars, hasHour = true }: BaziChartProps) {
   return (
     <section>
       <h3 className="text-lg font-semibold text-[#1C1A16] mb-5 font-display tracking-[0.08em]">四柱命盘</h3>
@@ -30,6 +32,7 @@ export function BaziChart({ pillars }: BaziChartProps) {
         {pillarConfig.map(({ key, label }) => {
           const pillar = pillars[key];
           const isDay = key === 'day';
+          const isUnknownHour = key === 'hour' && !hasHour;
           const wuxingStyle = wuxingColorMap[pillar.ganWuxing] ?? { bg: '#F3F4F6', text: '#4B5563' };
 
           return (
@@ -40,23 +43,36 @@ export function BaziChart({ pillars }: BaziChartProps) {
                 'hover:-translate-y-0.5 hover:shadow-card-hover',
                 isDay
                   ? 'border-[#1C1A16]/35 bg-[#FFF7E8]'
-                  : 'border-[#1C1A16]/10 bg-white'
+                  : isUnknownHour
+                    ? 'border-dashed border-[#1C1A16]/20 bg-[#FAF9F6]'
+                    : 'border-[#1C1A16]/10 bg-white'
               )}
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="text-sm text-[#1C1A16]/65">{label}</div>
-                <span
-                  className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
-                  style={{ backgroundColor: wuxingStyle.bg, color: wuxingStyle.text }}
-                >
-                  <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full" style={{ backgroundColor: wuxingStyle.text }} />
-                  {pillar.ganWuxing}
-                </span>
+                {!isUnknownHour && (
+                  <span
+                    className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                    style={{ backgroundColor: wuxingStyle.bg, color: wuxingStyle.text }}
+                  >
+                    <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full" style={{ backgroundColor: wuxingStyle.text }} />
+                    {pillar.ganWuxing}
+                  </span>
+                )}
               </div>
-              <div className="text-2xl font-bold text-[#1C1A16] tracking-[0.08em]">
-                {`${pillar.gan}${pillar.zhi}`}
-              </div>
-              <div className="mt-2 text-xs text-[#1C1A16]/60">{pillar.ganWuxing} / {pillar.zhiWuxing}</div>
+              {isUnknownHour ? (
+                <>
+                  <div className="text-2xl font-bold text-[#1C1A16]/35 tracking-[0.08em]">未知</div>
+                  <div className="mt-2 text-xs text-[#1C1A16]/45">未提供出生时辰</div>
+                </>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold text-[#1C1A16] tracking-[0.08em]">
+                    {`${pillar.gan}${pillar.zhi}`}
+                  </div>
+                  <div className="mt-2 text-xs text-[#1C1A16]/60">{pillar.ganWuxing} / {pillar.zhiWuxing}</div>
+                </>
+              )}
               {isDay && (
                 <span className="mt-3 inline-flex animate-pulse items-center rounded-full bg-[#1C1A16] px-2 py-0.5 text-[11px] font-medium text-white">
                   日主
