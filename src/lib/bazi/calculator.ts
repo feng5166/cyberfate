@@ -209,6 +209,18 @@ export function getYearGanzhi(date: string): string {
   return `${eightChar.getYearGan()}${eightChar.getYearZhi()}`;
 }
 
+/**
+ * 获取指定日期的流月干支（月柱，按节气换月，非公历月）。
+ */
+export function getMonthGanzhi(date: string): string {
+  const [year, month, day] = date.split('-').map(Number);
+  const solar = Solar.fromYmd(year, month, day);
+  const lunar = solar.getLunar();
+  const eightChar = lunar.getEightChar();
+
+  return `${eightChar.getMonthGan()}${eightChar.getMonthZhi()}`;
+}
+
 function getBeijingNow(): Date {
   const now = new Date();
   return new Date(now.getTime() + 8 * 60 * 60 * 1000);

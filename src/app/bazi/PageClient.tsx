@@ -1873,6 +1873,13 @@ function BaziPageContent() {
                     mingGe: result.mingGe,
                     traits: result.traits,
                   }}
+                  birthInput={{
+                    birthDate: formData.birthDate,
+                    gender: formData.gender === 'female' ? 'female' : 'male',
+                    knowTime: formData.knowTime,
+                    birthHourNum: formData.knowTime ? formData.birthHourNum : undefined,
+                    birthMinute: formData.knowTime ? formData.birthMinute : undefined,
+                  }}
                   isLoggedIn={status === 'authenticated'}
                   isVip={isMember}
                 />

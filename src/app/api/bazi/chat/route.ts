@@ -6,6 +6,26 @@ import { isUserVip } from '@/lib/quota';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 import { AI_BASE_URL, PRIMARY_MODEL } from '@/lib/ai/models';
+import { calculateBazi } from '@/lib/bazi/calculator';
+import { runBaziToolchain, toolchainToPromptFacts, type ToolStepResult } from '@/lib/bazi/tools';
+import type { Gender } from '@/lib/bazi/types';
+
+// 出生信息：用于服务端重算命盘 + 跑真实工具链（不信任前端命盘）
+const birthInputSchema = z.object({
+  birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '出生日期格式应为 YYYY-MM-DD'),
+  gender: z.enum(['male', 'female']).optional(),
+  birthHourNum: z.number().int().min(0).max(23).optional(),
+  birthMinute: z.number().int().min(0).max(59).optional(),
+  knowTime: z.boolean().optional(),
+}).strict();
+
+/** 北京时间当天 YYYY-MM-DD */
+function beijingToday(): string {
+  const bj = new Date(Date.now() + 8 * 60 * 60 * 1000);
+  return bj.toISOString().slice(0, 10);
+}
+
+const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
 // H5: 限定 baziData 的字段与长度，防止 prompt 注入 / 超长上下文
 const pillarSchema = z.object({
@@ -99,6 +119,44 @@ export async function POST(req: NextRequest) {
     }
     const baziData = parsed.data;
 
+    // 出生信息（可选）：提供后服务端重算命盘并跑真实工具链，得到确定性命理事实
+    let toolSteps: ToolStepResult[] = [];
+    let promptFacts = '';
+    let chartFacts = '';
+    const birthParsed = birthInputSchema.safeParse(rawBody?.birthInput);
+    if (birthParsed.success) {
+      try {
+        const b = birthParsed.data;
+        const gender: Gender = b.gender === 'female' ? 'female' : 'male';
+        const knowTime = b.knowTime !== false && typeof b.birthHourNum === 'number';
+        const result = calculateBazi({
+          gender,
+          birthDate: b.birthDate,
+          birthHourNum: knowTime ? b.birthHourNum : undefined,
+          birthMinute: knowTime ? b.birthMinute : undefined,
+          knowTime,
+        });
+        toolSteps = runBaziToolchain({
+          chart: result.chart,
+          birth: { birthDate: b.birthDate, gender, birthHourNum: knowTime ? b.birthHourNum : undefined, birthMinute: knowTime ? b.birthMinute : undefined },
+          today: beijingToday(),
+        });
+        promptFacts = toolchainToPromptFacts(toolSteps);
+        chartFacts = JSON.stringify({
+          pillars: result.chart,
+          wuxing: result.wuxing,
+          dayMaster: result.dayMaster,
+          zodiac: result.zodiac,
+        }, null, 2);
+      } catch (toolErr) {
+        const msg = toolErr instanceof Error ? toolErr.message : String(toolErr);
+        logger.error(SERVICE, `toolchain error: ${msg}`);
+        // 工具链失败不阻断问答，退回纯命盘数据
+        toolSteps = [];
+        promptFacts = '';
+      }
+    }
+
     const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
     if (!DEEPSEEK_API_KEY) {
       logger.error(SERVICE, 'DEEPSEEK_API_KEY not configured');
@@ -107,11 +165,11 @@ export async function POST(req: NextRequest) {
 
     const systemPrompt = `你是赛博命理师的AI八字问答助手。
 
-## 用户八字命盘
-${JSON.stringify({ ...baziData, aiAnalysis: undefined }, null, 2)}${baziData.aiAnalysis ? `\n\n## 已有AI分析摘要\n${baziData.aiAnalysis.slice(0, 2000)}` : ''}
+${promptFacts ? `## 命理推算事实（确定性本地计算，务必以此为依据，不得编造其他命理结论）\n${promptFacts}\n` : ''}## 用户八字命盘
+${chartFacts || JSON.stringify({ ...baziData, aiAnalysis: undefined }, null, 2)}${baziData.aiAnalysis ? `\n\n## 已有AI分析摘要\n${baziData.aiAnalysis.slice(0, 2000)}` : ''}
 
 ## 回答规则
-- 基于用户八字命盘数据回答问题
+- 严格基于上方「命理推算事实」与命盘数据回答，引用具体十神/大运/流年/神煞等推算结论
 - 使用友好、温暖的口吻
 - 回答控制在 200 字以内
 - 涉及投资/疾病/死亡等敏感话题时，给出温和提醒
@@ -157,6 +215,15 @@ ${JSON.stringify({ ...baziData, aiAnalysis: undefined }, null, 2)}${baziData.aiA
         const decoder = new TextDecoder();
         let buffer = '';
 
+        // 先逐条推送真实工具链步骤（带轻微节奏，纯展示节奏，结果均为真实计算）
+        for (const step of toolSteps) {
+          if (ac.signal.aborted) break;
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({ type: 'step', name: step.name, label: step.label, data: step.data })}\n\n`),
+          );
+          await sleep(150);
+        }
+
         try {
           while (true) {
             const { done, value } = await reader.read();
@@ -178,7 +245,7 @@ ${JSON.stringify({ ...baziData, aiAnalysis: undefined }, null, 2)}${baziData.aiA
                 const json = JSON.parse(data);
                 const content = json.choices?.[0]?.delta?.content;
                 if (content) {
-                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'content', content })}\n\n`));
                 }
               } catch {}
             }
