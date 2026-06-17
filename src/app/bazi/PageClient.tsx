@@ -208,7 +208,7 @@ function firstSentence(text: string): string {
   if (!trimmed) return '';
   const sentences = trimmed
     .split(/[。！？\n]/)
-    .map(chunk => chunk.trim())
+    .map(chunk => chunk.trim().replace(/^[–—\-]+\s*/, '').trim())
     .filter(Boolean);
   if (!sentences.length) return trimmed;
   return `${sentences[0]}。`;
