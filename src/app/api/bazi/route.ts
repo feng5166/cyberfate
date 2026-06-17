@@ -169,7 +169,7 @@ export async function POST(req: NextRequest) {
       );
     } catch (aiError) {
       logger.error(SERVICE, 'AI analysis failed', aiError instanceof Error ? aiError : undefined);
-      analysisObj = generateFallbackAnalysis(baziResult);
+      analysisObj = { ...generateFallbackAnalysis(baziResult), _source: 'fallback' as const };
     }
     
     // 将分析对象转换为可读文本
