@@ -51,7 +51,7 @@
 - [x] **S4** API 路由层:meihua/liuyao/bazi 的校验/鉴权/配额门 20 用例(mock auth/db/ai)+ GitHub Actions 测试门(`.github/workflows/test.yml`)。
 - 合计 **235 用例全绿**。源码改动仅 export-only(ziwei 7 处、payment 验签 2 处),零行为变更。
 
-### T12(新发现,测试中暴露)· geju 用神/忌神可能语义错位
-`src/lib/bazi/geju.ts` `calculateYongShen`:偏弱日主的忌神用 `WUXING_CONTROL[dayWuxing]`(=我克),而"克泄耗"里的"克"传统指克我(官杀)。例:弱金日主算出忌神=木(金克木),而传统应为火(火克金)。偏强的用神也复用了同一"我克"语义。已用 characterization 测试固化现状(未改源码),需命理口径确认是有意简写还是 bug。
+### T12 ✅已核查—非 bug · geju 用神/忌神语义
+初判 `calculateYongShen` 把"克泄耗"的克写成了我克。复核后确认**实现正确**:"克泄耗"含克(官杀)、泄(食伤)、耗(财)三类,代码以"财(耗)= WUXING_CONTROL[日主]"作为代表项,财本就是克泄耗之一,属合法简化。身强用财(耗)、身弱忌财(耗),内部逻辑自洽。测试已改为明确断言正确行为(`geju.test.ts`),无需改源码。
 
 _任务清单 by Claude · 2026-06-16(测试进展 2026-06-17 追加)_

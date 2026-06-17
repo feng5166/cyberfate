@@ -102,19 +102,22 @@ describe('calculateRizhuStrength', () => {
 });
 
 describe('calculateYongShen', () => {
-  it('偏强: 忌神=日主五行, 用神=日主所克之五行 (source WUXING_CONTROL = 我克)', () => {
+  // 身强需"克泄耗"为用、"生助"为忌;身弱反之。"克泄耗"含三类:
+  // 克(官杀=克我)、泄(食伤=我生)、耗(财=我克)。本实现以"财(耗)"= WUXING_CONTROL[日主]
+  // 作为该三类的代表项——这是合法选择(财本就是克泄耗之一),非 bug。
+  it('偏强: 用神=财(耗,我克), 忌神=比劫(日主五行)', () => {
     const chart = chartFor('1990-05-15', 10);
     const { yongShen, jiShen } = calculateYongShen(chart, '偏强');
-    // 日主庚=金; 忌神=金; 用神=WUXING_CONTROL[金]=木 (金克木)
-    expect(jiShen).toBe('金');
+    // 日主庚=金; 用神=WUXING_CONTROL[金]=木(金克木=财/耗,身强宜耗); 忌神=金(比劫,身强忌助)
     expect(yongShen).toBe('木');
+    expect(jiShen).toBe('金');
     expect(ELEMENTS).toContain(yongShen);
   });
 
-  it('偏弱: 用神=生日主之五行, 忌神=日主所克之五行', () => {
+  it('偏弱: 用神=印(生我), 忌神=财(耗,我克)', () => {
     const chart = chartFor('1990-05-15', 10);
     const { yongShen, jiShen } = calculateYongShen(chart, '偏弱');
-    // 日主庚=金; 生金者=土 -> 用神=土; 忌神=WUXING_CONTROL[金]=木
+    // 日主庚=金; 用神=生金者=土(印,身弱宜生助); 忌神=WUXING_CONTROL[金]=木(财/耗,身弱忌耗)
     expect(yongShen).toBe('土');
     expect(jiShen).toBe('木');
   });

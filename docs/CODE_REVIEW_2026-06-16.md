@@ -113,4 +113,27 @@
 3. **随后**:M3–M8、L1 时区收口、L2 middleware。
 4. **架构**:统一"AI 调用计量"、统一北京时间 helper、梅花复用 liuyao 模块——可一次性消掉 C2/C3/H3/M5/L1 多个同源问题。
 
-_Code review by Claude · 2026-06-16_
+---
+
+## 修复进展(2026-06-17 复核)
+
+复核当前代码,review 系列绝大多数已修复(上游维护者按本报告编号逐条修复,代码内可见 `H1`/`H2`/`H5`/`BUG-007/008` 等标注):
+
+| 编号 | 状态 | 说明 |
+|------|------|------|
+| C1 免费升级 | ✅ 上游已修 | `subscription/upgrade` mock 路由已删除,全仓无"跳过真实支付" |
+| C2 梅花取模 | ✅ 已修(本会话) | 抽到 `lib/meihua/draw` + 修复 + 19 回归用例 |
+| C3 无配额 AI | ✅ 上游已修 | liuyao/meihua-decide/daily 均接入原子 `checkXxxQuota`(免费 3/天、VIP 不限、回退退还) |
+| H1 pendingPlan | ✅ 上游已修 | `subscription/current` 到期落地 pendingPlan |
+| H2 bazi 配额竞态 | ✅ 上游已修 | 改用原子 `checkBaziQuota`(注释标 H2) |
+| H4 流式断连泄漏 | ✅ 上游已修 | 抽出 `attachClientAbort(req)`,各流式路由接 signal/cancel/release |
+| H5 baziData 注入 | ✅ 上游已修 | bazi/chat 加 zod `baziDataSchema` 限字段+限长 |
+| M1 webhook 按金额反推 | ✅ 上游已修 | 改为信任服务端 `metadata.plan` |
+| M2 退款不撤权 | ✅ 上游已修 | 改用 `charge.payment_intent` 反查 `Order.transactionId`(BUG-008) |
+| M5 PrismaClient/请求 | ✅ 上游已修 | `new PrismaClient` 仅存于 `lib/db.ts` 单例 |
+| L2 middleware geo 失效 | ✅ 已修(本会话) | 删除死代码 middleware.ts(`request.geo` 已废弃,响应头无人消费,单区域部署使其无意义) |
+| T12 geju 用神/忌神 | ✅ 核查非 bug | "克泄耗"含耗(财=我克),代码取财作代表项合法;测试改为断言正确行为 |
+
+剩余未单独处理:H3(已查 `checkQuota` 现用北京时间,无不一致)、H6(微信登录)、M3/M4/M6/M8、L 系列若干——多为低风险或需产品决策,留待后续。
+
+_Code review by Claude · 2026-06-16(修复进展 2026-06-17 追加)_
