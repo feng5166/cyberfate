@@ -1449,9 +1449,11 @@ function BaziPageContent() {
                                       onClick={() => setSelectedDayunIndex(idx)}
                                       className={`min-w-[160px] snap-start rounded-xl border p-3 text-left transition-colors ${
                                         idx === selectedDayunIndex
-                                          ? 'border-[#1C1A16] bg-[#1C1A16] text-white'
+                                          ? item.isCurrent
+                                            ? 'border-[#C2762B] bg-[#FFF6E8] text-[#1C1A16] ring-1 ring-[#C2762B]/40'
+                                            : 'border-[#1C1A16] bg-[#FAF9F6] text-[#1C1A16]'
                                           : item.isCurrent
-                                            ? 'border-[#1C1A16]/40 bg-[#FFF6E8] text-[#1C1A16]'
+                                            ? 'border-[#1C1A16]/30 bg-[#FFF6E8] text-[#1C1A16]'
                                             : 'border-[#1C1A16]/12 bg-white text-[#1C1A16]'
                                       }`}
                                     >
