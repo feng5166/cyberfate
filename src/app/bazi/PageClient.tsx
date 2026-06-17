@@ -340,25 +340,28 @@ function buildDayunDetail(
   const ganZhi = `${item.gan}${item.zhi}`;
   let dayunSpecific = '';
   if (dayunFullText) {
-    // 按大运干支匹配对应段落（要求是该大运的主句，不是其他大运里的预告提及）
+    // 按「XX大运」格式匹配对应段落
     const lines = dayunFullText.split('\n');
     let capturing = false;
     const captured: string[] = [];
+    const markerRegex = /「(.+?)大运」/;
     for (const line of lines) {
-      // 必须是「XX大运」开头或「XX大运（」才算主句，避免把预告句子算进去
-      const isMainEntry = (line.includes(`${ganZhi}大运`) || line.includes(`${ganZhi}偏财`) || line.includes(`${ganZhi}正财`) || line.includes(`进入${ganZhi}`) || line.includes(`走${ganZhi}`));
-      if (!capturing && isMainEntry) {
-        capturing = true;
-        captured.push(line);
+      const markerMatch = line.match(markerRegex);
+      if (markerMatch) {
+        if (markerMatch[1] === ganZhi || line.includes(`「${ganZhi}大运」`)) {
+          capturing = true;
+          captured.push(line);
+        } else if (capturing && captured.length > 0) {
+          break; // 遇到下一个大运标记就停
+        }
       } else if (capturing) {
-        const isNewDayun = /[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥]大运/.test(line) && !line.includes(ganZhi);
-        if (isNewDayun && captured.length > 1) break;
         if (line.trim()) captured.push(line);
-        if (captured.length >= 6) break;
+        if (captured.length >= 5) break;
       }
     }
-    dayunSpecific = captured.slice(0, 5).join('\n').trim();
-    // 匹配不到时提取提及该干支的句子
+    dayunSpecific = captured.join('\n').trim();
+
+    // fallback: 提取提及该干支的句子
     if (!dayunSpecific) {
       const mentionLines = dayunFullText.split('\n').filter(l => l.includes(ganZhi)).slice(0, 3);
       dayunSpecific = mentionLines.join('\n').trim();
