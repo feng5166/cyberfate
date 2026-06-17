@@ -1004,6 +1004,7 @@ function BaziPageContent() {
           birthHourNum: formData.knowTime ? formData.birthHourNum : undefined,
           birthMinute: formData.knowTime ? formData.birthMinute : undefined,
           lateZiShi: formData.knowTime ? formData.lateZiShi : undefined,
+          forceRefresh: true,
         }),
       });
 

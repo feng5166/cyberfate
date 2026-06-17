@@ -108,7 +108,7 @@ async function callDeepSeek(systemPrompt: string, userPrompt: string, maxTokens 
 export async function generateBaziAnalysis(
   result: BaziResult,
   name?: string,
-  birthInfo?: { birthDate: string; birthHour: number; gender?: string },
+  birthInfo?: { birthDate: string; birthHour: number; gender?: string; forceRefresh?: boolean },
   dayunExtra?: {
     ageStart?: number;
     ageEnd?: number;
@@ -127,15 +127,17 @@ export async function generateBaziAnalysis(
     cacheKey = `v4:bazi:${hash}`;
   }
   
-  // 2. 尝试从 Redis 读取
-  try {
-    const cached = await redis.get(cacheKey);
-    if (cached) {
-      if (process.env.NODE_ENV !== 'production') console.log(`[Cache Hit] ${cacheKey}`);
-      return { ...(cached as BaziAnalysis), _source: 'cache' };
+  // 2. 尝试从 Redis 读取（forceRefresh 时跳过）
+  if (!birthInfo?.forceRefresh) {
+    try {
+      const cached = await redis.get(cacheKey);
+      if (cached) {
+        if (process.env.NODE_ENV !== 'production') console.log(`[Cache Hit] ${cacheKey}`);
+        return { ...(cached as BaziAnalysis), _source: 'cache' };
+      }
+    } catch (err) {
+      console.warn('[Cache Read Error]', err);
     }
-  } catch (err) {
-    console.warn('[Cache Read Error]', err);
   }
 
   const apiKey = getEnvVar('DEEPSEEK_API_KEY');

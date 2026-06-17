@@ -54,6 +54,7 @@ const requestSchema = z.object({
   birthHourNum: z.number().int().min(0).max(23).optional(),
   birthMinute: z.number().int().min(0).max(59).optional(),
   lateZiShi: z.boolean().optional(),
+  forceRefresh: z.boolean().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -160,6 +161,7 @@ export async function POST(req: NextRequest) {
             birthDate: input.birthDate,
             birthHour: input.birthHour,
             gender: input.gender ?? 'unknown',
+            forceRefresh: input.forceRefresh ?? false,
           }, dayunExtra),
           25_000,
           () => ({ ...generateFallbackAnalysis(baziResult), _source: 'fallback' as const })
