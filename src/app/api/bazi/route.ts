@@ -258,7 +258,10 @@ ${analysis.wealth}
 ${analysis.relationship}
 
 【健康提示】
-${analysis.health}${analysis.dayunAnalysis ? `\n\n【大运流年】\n${analysis.dayunAnalysis}` : ''}`;
+${analysis.health}
+
+【大运流年】
+${analysis.dayunAnalysis || '当前大运阶段宜稳健行事，结合命局五行特点，关注事业节奏与健康管理，把握流年机遇。'}`;
 }
 
 // 降级分析（当 AI 不可用时）
@@ -288,6 +291,7 @@ function generateFallbackAnalysis(bazi: ReturnType<typeof calculateBazi>): BaziA
     wealth: '财运方面需要稳健理财，避免冲动消费，适当投资可带来回报。',
     relationship: '感情方面宜真诚相待，注重沟通和理解，感情运势稳定。',
     health: '注意劳逸结合，保持良好作息，适当运动有助于身心健康。',
+    dayunAnalysis: '当前大运阶段宜稳健行事，结合命局五行特点把握机遇。事业方面注重积累，财务方面避免冒险，健康方面保持规律作息，心态上保持平稳积极。',
   };
 }
 
