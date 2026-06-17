@@ -953,10 +953,9 @@ function BaziPageContent() {
   };
 
   const handleEditBasicInfo = () => {
-    setActionMessage('请在左侧表单修改信息后重新测算。');
+    clearResultState('请修改信息后重新测算。');
     if (typeof window !== 'undefined') {
-      const formCard = document.querySelector('.bazi-input-card');
-      formCard?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -967,6 +966,21 @@ function BaziPageContent() {
       message = deleted ? '已删除该历史记录并清空结果。' : '已清空结果（历史记录不存在或删除失败）。';
     }
     clearResultState(message);
+    setFormData({
+      name: '',
+      gender: '',
+      birthDate: '',
+      birthHour: '-1',
+      birthPlace: '',
+      isLunar: false,
+      knowTime: false,
+      birthHourNum: 12,
+      birthMinute: 0,
+      lateZiShi: false,
+    });
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   const inputClass =
