@@ -984,7 +984,6 @@ function BaziPageContent() {
   };
 
   const handleReanalyze = async () => {
-    setResult(null);
     setError('');
     setActionMessage('');
     setFullReadExpanded(false);
