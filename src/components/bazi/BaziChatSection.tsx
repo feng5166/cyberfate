@@ -388,15 +388,14 @@ export function BaziChatSection({ baziData, birthInput, isLoggedIn, isVip }: Baz
                     <div>
                       {msg.streaming && !msg.answer ? (
                         <OracleLoading />
-                      ) : msg.streaming ? (
-                        // 流式过程中用纯文本，避免半截表格/标题抖动
-                        <div className="whitespace-pre-wrap">
-                          {msg.answer}
-                          <span className="inline-block w-1.5 h-4 ml-0.5 bg-[#1C1A16]/40 align-middle animate-pulse" />
-                        </div>
                       ) : (
-                        // 完成后按 Markdown 渲染（标题/粗体/列表/表格）
-                        <MiniMarkdown text={msg.answer} />
+                        // 流式过程中即实时渲染 Markdown（标题/粗体/列表/表格），末尾带光标
+                        <div className="relative">
+                          <MiniMarkdown text={msg.answer} />
+                          {msg.streaming && (
+                            <span className="inline-block w-1.5 h-4 ml-0.5 bg-[#1C1A16]/40 align-middle animate-pulse" />
+                          )}
+                        </div>
                       )}
                     </div>
                     {!msg.streaming && msg.answer && (

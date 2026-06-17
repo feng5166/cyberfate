@@ -25,6 +25,77 @@ function classifyIntent(question: string): ChatIntent {
   return 'simple';
 }
 
+// ── analysis 领域细化：每个领域指明"该看哪些命理要素" ──────────────
+interface AnalysisDomain {
+  key: string;
+  label: string;
+  test: RegExp;
+  focus: string;
+}
+
+// 顺序即优先级：具体领域在前，综合兜底在后
+const ANALYSIS_DOMAINS: AnalysisDomain[] = [
+  {
+    key: 'career', label: '事业',
+    test: /事业|工作|职业|职场|升职|升迁|晋升|前途|发展|创业|官运|事业编|体制|跳槽|换工作|事业方向/,
+    focus: '聚焦官杀(事业/权力/约束/上司)、食伤(才华/技术/表达)、正偏财(事业变现)、印星(平台/资源/学历靠山)、月柱(事业宫)与当前大运十神；区分体制管理路线(重官印)与创业技术路线(重食伤财)。结合地支刑冲会合看事业波动、合作与小人风险。',
+  },
+  {
+    key: 'wealth', label: '财运',
+    test: /财运|财富|钱财|赚钱|求财|发财|进财|破财|投资|理财|偏财|正财|收入|财库|生意|经商/,
+    focus: '聚焦正财(稳定正职收入)、偏财(机会/投资/副业/外财)、食伤生财(以才华手艺生财)、比劫(竞争/破财/合伙散财)、财星是否居用神之位与财库藏蓄；结合大运流年看财运起伏、聚散与最佳求财方式。',
+  },
+  {
+    key: 'marriage', label: '婚姻感情',
+    test: /婚姻|感情|姻缘|配偶|对象|另一半|伴侣|老公|老婆|妻子|丈夫|结婚|婚期|正缘|脱单|恋爱|桃花|离婚|复合|何时.*婚|什么时候.*婚/,
+    focus: '聚焦夫妻宫(日支)的稳定度与刑冲合害、配偶星(男命以财星为妻、女命以官杀为夫)的旺衰与所在柱位、桃花/红艳等感情神煞；据此判断正缘特征、相处模式、婚姻宫受损与否、宜早婚或晚婚，并结合大运流年引动配偶星/夫妻宫推断感情或婚姻应期。',
+  },
+  {
+    key: 'health', label: '健康',
+    test: /健康|身体|疾病|病|养生|体质|寿|精力|肝|心|脾|肺|肾/,
+    focus: '聚焦五行的偏枯与受克(金主肺/大肠、木主肝胆、水主肾/泌尿、火主心/血、土主脾胃)、日主强弱、忌神所在与刑冲对健康宫的冲击；指出需重点调养的脏腑与作息方向。仅作养生提醒，不作医疗诊断。',
+  },
+  {
+    key: 'study', label: '学业考试',
+    test: /学业|学习|考试|读书|升学|高考|考研|考公|考证|功名|文凭|学历|成绩/,
+    focus: '聚焦印星(学习力/记忆/文凭)、文昌/太极/华盖等利学神煞、食伤(才思/创造/发挥)、官印相生(考试功名)；结合当前大运是否走印运/官运，判断学业与考试的节奏与有利时段。',
+  },
+  {
+    key: 'children', label: '子女',
+    test: /子女|孩子|生育|怀孕|要孩子|几个孩子|儿女|后代/,
+    focus: '聚焦时柱(子女宫)的旺衰刑冲、子女星(男命以官杀为子、女命以食伤为子)的状态、相关神煞；据此判断子女缘分厚薄、早晚与相处，并结合大运流年看生育有利时段。',
+  },
+  {
+    key: 'relatives', label: '六亲',
+    test: /父母|母亲|父亲|爸|妈|兄弟|姐妹|家人|六亲|家庭关系/,
+    focus: '聚焦印星(母)、财星(父)、比劫(兄弟姐妹)及其所在宫位的旺衰与刑冲生克；据此说明与各六亲的缘分厚薄、助力与相处。',
+  },
+  {
+    key: 'suit', label: '适合方向',
+    test: /适合.*行业|适合.*工作|行业|开运|方位|颜色|幸运|喜用|忌讳|改运|风水|发展方向|去哪/,
+    focus: '先据日主强弱与命局定出喜用神五行，再据用神映射到落地建议：行业(木→文教/木材/服装；火→能源/电子/餐饮；土→地产/农牧/建筑；金→金融/机械/五金；水→贸易/流通/物流)、方位(木东/火南/土中/金西/水北)、颜色与数字。',
+  },
+  {
+    key: 'personality', label: '性格天赋',
+    test: /性格|个性|脾气|为人|天赋|才华|特质|心性|内向|外向|人缘|情商/,
+    focus: '聚焦日主五行本性与月令旺衰、十神组合(食伤主才华表达、官杀主自律责任、比劫主行动竞争、印主内敛沉稳)、利才神煞(华盖主孤高才艺、文昌主聪慧)与日主强弱；归纳性格优势、短板与相处/扬长避短建议。',
+  },
+  {
+    key: 'timing', label: '应期时机',
+    test: /何时|什么时候|几岁|哪一年|哪年|应期|时机|转运|时来运转/,
+    focus: '聚焦与问题相关的用神星(婚=配偶星/夫妻宫、事业=官印、财=财星)被大运流年引动(合冲会刑)的年份，结合当前大运给出大致应期区间，强调命理应期仅供参考、需结合现实努力。',
+  },
+  {
+    key: 'general', label: '命格综合',
+    test: /.*/,
+    focus: '综合格局、日主强弱、喜用忌神、最突出的十神与神煞贵人，归纳命格的核心结构。问优势则突出吉神/得用十神/有利组合(可提炼"核心铁三角")；问劣势/短板则突出忌神、刑冲、凶煦与失衡处，并给出补救方向。',
+  },
+];
+
+function resolveAnalysisDomain(question: string): AnalysisDomain {
+  return ANALYSIS_DOMAINS.find(d => d.test.test(question)) ?? ANALYSIS_DOMAINS[ANALYSIS_DOMAINS.length - 1];
+}
+
 // ── 流月时间窗口解析（trend 类）──────────────────────────────
 const CN_NUM: Record<string, number> = {
   一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9,
@@ -187,6 +258,9 @@ export async function POST(req: NextRequest) {
     const curY = Number(today.slice(0, 4));
     const curM = Number(today.slice(5, 7));
 
+    // analysis 类细化到具体领域（事业/财运/婚姻/健康…）
+    const domain = intent === 'analysis' ? resolveAnalysisDomain(question) : null;
+
     // trend 类解析时间窗口；其余仅当月
     const window: LiuyueWindow = intent === 'trend'
       ? resolveLiuyueWindow(question, curY, curM)
@@ -198,11 +272,13 @@ export async function POST(req: NextRequest) {
     let toolSteps: ToolStepResult[] = [];
     let promptFacts = '';
     let chartFacts = '';
+    let promptGender = '';
     const birthParsed = birthInputSchema.safeParse(rawBody?.birthInput);
     if (birthParsed.success) {
       try {
         const b = birthParsed.data;
         const gender: Gender = b.gender === 'female' ? 'female' : 'male';
+        promptGender = gender === 'female' ? '女' : '男';
         const knowTime = b.knowTime !== false && typeof b.birthHourNum === 'number';
         const result = calculateBazi({
           gender,
@@ -286,17 +362,18 @@ export async function POST(req: NextRequest) {
   2. 再「**逐月解析**」：按上方流月事实逐月展开，每月标注【流月干支·主十神】，结合该月地支与命局的刑冲会合、引动神煞，给出运势关键词与可执行建议
   3. 末尾「**核心行动建议**」给 2–3 条`
         : intent === 'analysis'
-        ? `- 本问是对命格的深度解读，请输出**按维度的结构化长文**（约 1000–1800 字），用 Markdown：
+        ? `- 本问聚焦【${domain?.label ?? '命格综合'}】，请输出**按维度的结构化长文**（约 1000–1800 字），用 Markdown：
+  · 分析要领（务必据此选择展开的维度，并逐条落到命理事实上）：${domain?.focus ?? ''}
   1. \`#\` 标题点题；先「**结论先行**」：用一句话给出核心判断，并用一个 Markdown 表格列出 2–4 个关键维度（维度｜核心结论｜命局支撑：引用具体干支/十神/神煞/刑冲/大运）
-  2. 再「**逐层拆解**」：每个维度一节（\`##\`），逐条引用确定性事实展开论证，**每个论点都要落到具体的干支/十神/神煞/刑冲/大运上**
-  3. 再「**协同与应用**」：说明各维度如何相互作用、最适合的方向或场景
-  4. 末尾「**注意事项**」：给出该优势/特点的反面与应对
+  2. 再「**逐层拆解**」：每个维度一节（\`##\`），逐条引用确定性事实展开论证，**每个论点都要落到具体的干支/十神/神煞/刑冲/大运上**，不泛泛而谈
+  3. 再「**协同与应用**」：说明各维度如何相互作用，并给出可落地的方向或建议
+  4. 末尾「**注意事项**」：给出反面风险与应对
   5. 善用小标题、表格、列表、少量 emoji 提升可读性`
         : `- 回答简明扼要、口语化，控制在 200 字以内，直接回应问题`;
 
     const systemPrompt = `你是赛博命理师的AI八字问答助手，擅长把确定性命理事实组织成专业、有层次、可落地的解读。
 
-${promptFacts ? `## 命理推算事实（确定性本地计算，务必以此为唯一依据，不得编造其他命理结论）\n${promptFacts}\n` : ''}## 用户八字命盘
+${promptGender ? `## 命主性别：${promptGender}（配偶星：男命以财星为妻、女命以官杀为夫；子女星：男命以官杀、女命以食伤）\n` : ''}${promptFacts ? `## 命理推算事实（确定性本地计算，务必以此为唯一依据，不得编造其他命理结论）\n${promptFacts}\n` : ''}## 用户八字命盘
 ${chartFacts || JSON.stringify({ ...baziData, aiAnalysis: undefined }, null, 2)}${baziData.aiAnalysis ? `\n\n## 已有AI分析摘要\n${baziData.aiAnalysis.slice(0, 2000)}` : ''}
 
 ## 回答规则
