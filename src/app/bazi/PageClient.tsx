@@ -341,9 +341,6 @@ function buildDayunDetail(
   return [
     `${item.gan}${item.zhi}大运（${item.ageStart}-${item.ageEnd}岁）。${phaseText}`,
     `当前流年：${yearGanzhi}。`,
-    `阶段提示：${dayunBrief}`,
-    `事业财运：${careerBrief}`,
-    `婚姻健康：${relationBrief}`,
   ].join('\n');
 }
 
