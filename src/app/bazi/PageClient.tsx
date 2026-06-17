@@ -398,11 +398,17 @@ function renderSectionContent(content: string): ReactNode {
   // 1. 数字+点+空格 (如 "1. 内容" "2. 内容") 前加换行
   normalizedContent = normalizedContent.replace(/(?<!\n)(\d+\.\s)/g, '\n\n$1');
 
-  // 2. "- " 开头的 bullet 行前确保有换行（但不拆成双换行，保持在同一段落组）
+  // 2. "- " 开头的 bullet 行前确保有换行
   normalizedContent = normalizedContent.replace(/(?<!\n)(- )/g, '\n$1');
 
-  // 3. 短语(≤10字)+冒号 前加换行 (避免段首已有换行的情况，bullet行内冒号不再额外处理)
-  normalizedContent = normalizedContent.replace(/(?<=[^\n\s-])\s*([^\n：:，。；、\s-]{1,10}[：:])/g, '\n\n$1');
+  // 3. 短语+冒号 前加换行，但跳过 bullet 行（bullet行内冒号是子项标题，不拆行）
+  normalizedContent = normalizedContent
+    .split('\n')
+    .map(line => {
+      if (line.trimStart().startsWith('- ')) return line; // bullet 行不处理
+      return line.replace(/(?<=[^\s：:，。；、])\s*([^\n：:，。；、\s]{1,10}[：:])/g, '\n\n$1');
+    })
+    .join('\n');
 
   // 4. 清理多余空行
   normalizedContent = normalizedContent.replace(/\n{3,}/g, '\n\n').trim();
