@@ -495,6 +495,7 @@ function BaziPageContent() {
   const searchParams = useSearchParams();
   const recordId = searchParams.get('record');
   const resultRef = useRef<HTMLDivElement>(null);
+  const streamEndRef = useRef<HTMLDivElement>(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -732,6 +733,13 @@ function BaziPageContent() {
       }, 100);
     }
   }, [result]);
+
+  // 流式输出时自动滚到底部
+  useEffect(() => {
+    if (aiStreaming && aiStreamText && streamEndRef.current) {
+      streamEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [aiStreamText, aiStreaming]);
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
@@ -1588,6 +1596,7 @@ function BaziPageContent() {
                         <div className="text-sm leading-loose text-[#1C1A16]/75 whitespace-pre-wrap font-mono">
                           {aiStreamText}
                           <span className="inline-block w-1.5 h-4 ml-0.5 align-middle bg-[#C2762B] animate-pulse" />
+                          <div ref={streamEndRef} />
                         </div>
                       )}
                       {!aiStreamText && (
