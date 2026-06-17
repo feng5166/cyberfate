@@ -1380,6 +1380,18 @@ function BaziPageContent() {
                     </div>
                   )}
 
+                  <div className="mt-3 pt-3 border-t border-[#1C1A16]/8 flex justify-center">
+                    <button
+                      type="button"
+                      onClick={handleReanalyze}
+                      disabled={loading}
+                      className="flex items-center gap-1.5 text-xs text-[#1C1A16]/40 hover:text-[#1C1A16]/70 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <RefreshCw className="w-3 h-3" />
+                      重新分析
+                    </button>
+                  </div>
+
                   <button
                     type="button"
                     onClick={() => {
@@ -1471,17 +1483,6 @@ function BaziPageContent() {
                     </div>
                   </div>
 
-                  <div className="mt-6 pt-5 border-t border-[#1C1A16]/8 flex justify-center">
-                    <button
-                      type="button"
-                      onClick={handleReanalyze}
-                      disabled={loading}
-                      className="flex items-center gap-1.5 text-sm text-[#1C1A16]/40 hover:text-[#1C1A16]/70 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                      <RefreshCw className="w-3.5 h-3.5" />
-                      重新分析
-                    </button>
-                  </div>
                 </Card>
 
                 <BaziChatSection
