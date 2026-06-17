@@ -334,14 +334,39 @@ function buildDayunDetail(
       : '这是已走过阶段，可用于复盘成长轨迹。';
 
   const yearGanzhi = getYearGanzhi(getDateString(new Date()));
-  const careerBrief = firstSentence(`${aiSections.career} ${aiSections.wealth}`) || '关注节奏与资金管理。';
-  const relationBrief = firstSentence(`${aiSections.relationship} ${aiSections.health}`) || '保持稳定作息与关系沟通。';
-  const dayunBrief = firstSentence(aiSections.dayun) || '结合十年节奏与年度变化，滚动复盘。';
 
-  return [
-    `${item.gan}${item.zhi}大运（${item.ageStart}-${item.ageEnd}岁）。${phaseText}`,
+  // 从大运流年章节里提取该大运的专属描述
+  const dayunFullText = aiSections.dayun || '';
+  const ganZhi = `${item.gan}${item.zhi}`;
+  let dayunSpecific = '';
+  if (dayunFullText) {
+    // 按大运干支匹配对应段落
+    const lines = dayunFullText.split('\n');
+    let capturing = false;
+    const captured: string[] = [];
+    for (const line of lines) {
+      if (line.includes(ganZhi)) {
+        capturing = true;
+        captured.push(line);
+      } else if (capturing) {
+        // 遇到下一个大运干支或空行+新大运开头时停止
+        const isNewDayun = /^[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥]/.test(line.trim()) && line.includes('大运');
+        if (isNewDayun && captured.length > 1) break;
+        if (line.trim()) captured.push(line);
+        if (captured.length >= 6) break;
+      }
+    }
+    dayunSpecific = captured.slice(0, 5).join('\n').trim();
+  }
+
+  const parts = [
+    `${ganZhi}大运（${item.ageStart}-${item.ageEnd}岁）。${phaseText}`,
     `当前流年：${yearGanzhi}。`,
-  ].join('\n');
+  ];
+  if (dayunSpecific) {
+    parts.push(dayunSpecific);
+  }
+  return parts.join('\n');
 }
 
 function scoreValue(score?: number): number {
