@@ -395,6 +395,9 @@ function renderHighlightedLine(line: string): ReactNode {
 function renderSectionContent(content: string): ReactNode {
   let normalizedContent = content;
 
+  // 0. 去掉 AI 输出的方括号及其内容（如 [\u6c34\u6728\u884c\u4e1a]\uff09
+  normalizedContent = normalizedContent.replace(/\[[^\]]{1,20}\]/g, '');
+
   // 1. 数字+点+空格 (如 "1. 内容" "2. 内容") 前加换行
   normalizedContent = normalizedContent.replace(/(?<!\n)(\d+\.\s)/g, '\n\n$1');
 
