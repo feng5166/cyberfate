@@ -736,8 +736,8 @@ function BaziPageContent() {
 
   // 流式输出时自动滚到底部
   useEffect(() => {
-    if (aiStreaming && aiStreamText && streamEndRef.current) {
-      streamEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    if (aiStreaming && aiStreamText) {
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' });
     }
   }, [aiStreamText, aiStreaming]);
 
