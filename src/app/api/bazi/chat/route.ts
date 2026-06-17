@@ -39,6 +39,7 @@ const baziDataSchema = z.object({
     health: z.number().optional(),
     studies: z.number().optional(),
   }).strict().partial().optional(),
+  aiAnalysis: z.string().max(4000).optional(),
 }).strict().partial();
 
 const SERVICE = 'api/bazi/chat';
@@ -106,8 +107,8 @@ export async function POST(req: NextRequest) {
 
     const systemPrompt = `你是赛博命理师的AI八字问答助手。
 
-## 用户八字信息
-${JSON.stringify(baziData, null, 2)}
+## 用户八字命盘
+${JSON.stringify({ ...baziData, aiAnalysis: undefined }, null, 2)}${baziData.aiAnalysis ? `\n\n## 已有AI分析摘要\n${baziData.aiAnalysis.slice(0, 2000)}` : ''}
 
 ## 回答规则
 - 基于用户八字命盘数据回答问题
