@@ -448,6 +448,7 @@ function BaziPageContent() {
   });
   const [loading, setLoading] = useState(false);
   const [loadingLong, setLoadingLong] = useState(false);
+  const [reanalyzing, setReanalyzing] = useState(false);
   const [showQuotaModal, setShowQuotaModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -1035,7 +1036,7 @@ function BaziPageContent() {
     } catch (err) {
       setError(err instanceof Error ? err.message : '重新分析失败，请稍后重试');
     } finally {
-      setLoading(false);
+      setReanalyzing(false);
     }
   };
 
@@ -1070,6 +1071,7 @@ function BaziPageContent() {
               onEdit={handleEditBasicInfo}
               onDelete={handleDeleteBasicInfo}
               onReanalyze={handleReanalyze}
+              reanalyzing={reanalyzing}
             />
           </Card>
           </div>

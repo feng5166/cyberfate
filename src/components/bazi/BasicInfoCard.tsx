@@ -17,6 +17,7 @@ interface BasicInfoCardProps {
   onEdit: () => void;
   onDelete: () => void;
   onReanalyze?: () => void;
+  reanalyzing?: boolean;
 }
 
 interface InfoRow {
@@ -44,6 +45,7 @@ export function BasicInfoCard({
   onEdit,
   onDelete,
   onReanalyze,
+  reanalyzing = false,
 }: BasicInfoCardProps) {
   const [copied, setCopied] = useState(false);
 
@@ -102,9 +104,10 @@ export function BasicInfoCard({
               type="button"
               aria-label="重新分析"
               onClick={onReanalyze}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[rgba(28,26,22,0.52)] transition-colors hover:bg-[#1C1A16]/5 hover:text-[#1C1A16]"
+              disabled={reanalyzing}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[rgba(28,26,22,0.52)] transition-colors hover:bg-[#1C1A16]/5 hover:text-[#1C1A16] disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <RefreshCw className="h-4 w-4" />
+              <RefreshCw className={`h-4 w-4 ${reanalyzing ? 'animate-spin' : ''}`} />
             </button>
           )}
         </div>
