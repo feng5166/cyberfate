@@ -334,43 +334,26 @@ function buildDayunDetail(
       : '这是已走过阶段，可用于复盘成长轨迹。';
 
   const yearGanzhi = getYearGanzhi(getDateString(new Date()));
-
-  // 从大运流年章节里提取该大运的专属描述
-  const dayunFullText = aiSections.dayun || '';
   const ganZhi = `${item.gan}${item.zhi}`;
+
+  // 从大运流年章节里按「XX大运」标记精确匹配该大运内容
+  const dayunFullText = aiSections.dayun || '';
   let dayunSpecific = '';
   if (dayunFullText) {
-    // 按「XX大运」格式匹配对应段落
     const lines = dayunFullText.split('\n');
     let capturing = false;
     const captured: string[] = [];
-    const markerRegex = /「(.+?)大运」/;
     for (const line of lines) {
-      const markerMatch = line.match(markerRegex);
-      if (markerMatch) {
-        if (markerMatch[1] === ganZhi || line.includes(`「${ganZhi}大运」`)) {
-          capturing = true;
-          captured.push(line);
-        } else if (capturing && captured.length > 0) {
-          break; // 遇到下一个大运标记就停
-        }
+      if (line.includes(`「${ganZhi}大运」`)) {
+        capturing = true;
+        captured.push(line);
       } else if (capturing) {
+        if (/「.+大运」/.test(line)) break;
         if (line.trim()) captured.push(line);
-        if (captured.length >= 5) break;
+        if (captured.length >= 6) break;
       }
     }
     dayunSpecific = captured.join('\n').trim();
-
-    // fallback: 提取提及该干支的句子
-    if (!dayunSpecific) {
-      const mentionLines = dayunFullText.split('\n').filter(l => l.includes(ganZhi)).slice(0, 3);
-      dayunSpecific = mentionLines.join('\n').trim();
-    }
-    // 还是没有则取章节整体前几句
-    if (!dayunSpecific && dayunFullText) {
-      const fallbackLines = dayunFullText.split('\n').filter(l => l.trim()).slice(0, 4);
-      dayunSpecific = fallbackLines.join('\n').trim();
-    }
   }
 
   const parts = [
@@ -382,7 +365,6 @@ function buildDayunDetail(
   }
   return parts.join('\n');
 }
-
 function scoreValue(score?: number): number {
   if (typeof score !== 'number' || Number.isNaN(score)) return 0;
   return Math.max(0, Math.min(100, Math.round(score)));
