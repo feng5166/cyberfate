@@ -3,6 +3,8 @@ export interface CityRecord {
   province: string;
   pinyin: string;
   timezone: string;
+  country?: string;
+  nameEn?: string;
 }
 
 type CityTuple = [name: string, province: string, pinyin: string, timezone?: string];

@@ -3,6 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { MapPin } from 'lucide-react';
 import { CHINA_CITIES, type CityRecord } from '@/data/chinaCities';
+import { WORLD_CITIES } from '@/data/worldCities';
+
+const ALL_CITIES = [...CHINA_CITIES, ...WORLD_CITIES];
 
 interface CitySearchProps {
   value?: string;
@@ -19,7 +22,7 @@ function matchCities(query: string): CityRecord[] {
   const normalized = rawQuery.toLowerCase();
   const collapsed = normalized.replace(/\s+/g, '');
 
-  return CHINA_CITIES.filter((city) => {
+  return ALL_CITIES.filter((city) => {
     const pinyin = city.pinyin.toLowerCase();
     const collapsedPinyin = pinyin.replace(/\s+/g, '');
     const province = city.province.toLowerCase();
@@ -29,9 +32,10 @@ function matchCities(query: string): CityRecord[] {
       city.province.includes(rawQuery) ||
       pinyin.includes(normalized) ||
       province.includes(normalized) ||
-      collapsedPinyin.includes(collapsed)
+      collapsedPinyin.includes(collapsed) ||
+      (city.nameEn ? city.nameEn.toLowerCase().includes(normalized) : false)
     );
-  }).slice(0, 8);
+  }).slice(0, 10);
 }
 
 export function CitySearch({
