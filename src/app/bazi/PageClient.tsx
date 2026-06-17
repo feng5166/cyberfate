@@ -800,7 +800,11 @@ function BaziPageContent() {
     ].filter(Boolean);
     return sections
       .map(s => {
-        const first = s.split(/[。！？\n]/)[0]?.trim();
+        // 跳过 bullet 行，找第一句正文内容
+        const lines = s.split('\n');
+        const firstMeaningfulLine = lines.find(l => l.trim() && !l.trim().startsWith('- ')) || lines[0];
+        const cleaned = (firstMeaningfulLine || '').replace(/^[-\s]+/, '').trim();
+        const first = cleaned.split(/[。！？]/)[0]?.trim();
         return first ? `${first}。` : '';
       })
       .filter(Boolean)
