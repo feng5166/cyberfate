@@ -983,6 +983,62 @@ function BaziPageContent() {
     }
   };
 
+  const handleReanalyze = async () => {
+    setResult(null);
+    setError('');
+    setActionMessage('');
+    setFullReadExpanded(false);
+    setLoading(true);
+
+    try {
+      const response = await fetch('/api/bazi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name || '缘主',
+          gender: formData.gender || 'unknown',
+          birthDate: formData.birthDate,
+          birthHour: parseInt(formData.birthHour, 10),
+          birthPlace: formData.birthPlace,
+          isLunar: formData.isLunar,
+          knowTime: formData.knowTime,
+          birthHourNum: formData.knowTime ? formData.birthHourNum : undefined,
+          birthMinute: formData.knowTime ? formData.birthMinute : undefined,
+          lateZiShi: formData.knowTime ? formData.lateZiShi : undefined,
+        }),
+      });
+
+      const data = (await response.json()) as BaziApiResult & { error?: string };
+      if (!response.ok) {
+        if (data.error === 'QUOTA_EXCEEDED') {
+          setShowQuotaModal(true);
+          return;
+        }
+        throw new Error(data.error || '服务器错误，请稍后重试');
+      }
+
+      setResult({
+        pillars: data.pillars,
+        wuxing: data.wuxing,
+        aiAnalysis: data.aiAnalysis || '',
+        fiveDimensions: data.fiveDimensions,
+        traits: data.traits,
+        birthPlace: formData.birthPlace,
+        dayMasterElement: data.pillars?.day?.ganWuxing,
+        lunarDate: data.lunarDate,
+        zodiac: data.zodiac,
+        trueSolarOffsetMinutes: data.trueSolarOffsetMinutes,
+        dayunStartDescription: data.dayunStartDescription,
+        dayunStartAt: data.dayunStartAt,
+      });
+      setActionMessage('重新分析完成');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '重新分析失败，请稍后重试');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const inputClass =
     'w-full h-10 rounded-lg border border-[#1C1A16]/15 bg-white px-4 text-sm text-[#1C1A16] placeholder:text-[#1C1A16]/40 focus:border-[#1C1A16]/30 focus:ring-2 focus:ring-[#1C1A16]/10 outline-none transition-all';
   const cardClass =
@@ -1275,7 +1331,18 @@ function BaziPageContent() {
                 )}
 
                 <Card className={cardClass}>
-                  <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em] mb-1">AI 解读</h2>
+                  <div className="flex items-center justify-between mb-1">
+                    <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em]">AI 解读</h2>
+                    <button
+                      type="button"
+                      onClick={handleReanalyze}
+                      disabled={loading}
+                      className="flex items-center gap-1 text-xs text-[#1C1A16]/40 hover:text-[#1C1A16]/70 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <RefreshCw className="w-3 h-3" />
+                      重新分析
+                    </button>
+                  </div>
                   <p className="text-xs text-[#1C1A16]/45 mb-4">AI 命理解读 · 仅供参考</p>
 
                   {/* AI解读引言区块 */}
