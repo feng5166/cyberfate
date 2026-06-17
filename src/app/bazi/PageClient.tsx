@@ -1333,7 +1333,16 @@ function BaziPageContent() {
 
                 <Card className={cardClass}>
                   <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em] mb-1">AI 解读</h2>
-                  <p className="text-xs text-[#1C1A16]/45 mb-4">AI 命理解读 · 仅供参考</p>
+                  <p className="text-xs text-[#1C1A16]/45 mb-4 flex items-center gap-2">
+                    AI 命理解读 · 仅供参考
+                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                      result._source === 'history'
+                        ? 'bg-[#F5F3EF] text-[#1C1A16]/50'
+                        : 'bg-emerald-50 text-emerald-600'
+                    }`}>
+                      {result._source === 'history' ? 'from cache' : 'from AI'}
+                    </span>
+                  </p>
 
                   {/* AI解读引言区块 */}
                   <div className="mb-4 rounded-lg bg-[#FAF9F6] px-4 py-3">
