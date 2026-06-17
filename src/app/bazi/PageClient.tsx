@@ -736,6 +736,7 @@ function BaziPageContent() {
 
   // 流式输出时自动滚到底部（容器内滚动）
   const streamContainerRef = useRef<HTMLDivElement>(null);
+  const aiReadingRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!aiStreaming || !aiStreamText) return;
     const el = streamContainerRef.current;
@@ -1184,6 +1185,10 @@ function BaziPageContent() {
     setActionMessage('');
     setFullReadExpanded(false);
     setReanalyzing(true);
+    // 滚动到 AI 解读卡片
+    setTimeout(() => {
+      aiReadingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
 
     try {
       // 历史记录场景下没有 cacheKey/baziResult，需先 POST /api/bazi 重新计算
@@ -1517,6 +1522,7 @@ function BaziPageContent() {
                   </Card>
                 )}
 
+                <div ref={aiReadingRef}>
                 <Card className={`${cardClass} relative`}>
                   {reanalyzing && !aiStreaming && (
                     <div className="absolute inset-0 z-10 rounded-2xl bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
@@ -1715,6 +1721,7 @@ function BaziPageContent() {
                   )}
 
                 </Card>
+                </div>
 
                 <BaziChatSection
                   baziData={{
