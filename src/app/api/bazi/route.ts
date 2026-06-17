@@ -93,11 +93,11 @@ export async function POST(req: NextRequest) {
       input.name = sanitizeUserInput(input.name, 50);
     }
 
-    const shichen = HOUR_TO_SHICHEN[input.birthHour] || '午时';
+    const shichen = input.birthHour >= 0 ? (HOUR_TO_SHICHEN[input.birthHour] || undefined) : undefined;
 
     // 高精度优先: knowTime + birthHourNum 提供时, 走 calculator 精确分支
     const hasPrecise = input.knowTime !== false && typeof input.birthHourNum === 'number';
-    const noTime = input.knowTime === false || input.birthHour === -1;
+    const noTime = input.birthHour === -1 || (!hasPrecise && !shichen);
 
     const calcInput: any = {
       name: input.name,
@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
 
     if (noTime) {
       calcInput.knowTime = false;
-      calcInput.birthHour = '不知道';
+      // birthHour 不传，calculator 里 if(birthHour) 为 false，时柱为 null
     } else if (hasPrecise) {
       calcInput.knowTime = true;
       calcInput.birthHourNum = input.birthHourNum;
