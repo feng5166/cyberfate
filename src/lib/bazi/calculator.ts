@@ -152,11 +152,11 @@ export function calculateBazi(input: BaziInput): BaziResult {
     dayPillar = buildPillar(eightChar.getDayGan(), eightChar.getDayZhi());
 
     // knowTime===false 强制无时柱; 否则按旧 birthHour (粗时辰) 处理
-    if (knowTime === false) {
-      hourPillar = null;
-    } else if (birthHour) {
+    if (birthHour) {
+      // 选了时辰（knowTime=false 也属于知道时辰）
       hourPillar = getHourPillar(dayPillar.gan, birthHour);
     } else {
+      // 真正不知道时辰
       hourPillar = null;
     }
 
