@@ -948,7 +948,10 @@ function BaziPageContent() {
           dayunStartDescription: data.dayunStartDescription,
           dayunStartAt: data.dayunStartAt,
         };
-        saveRecord(autoSave);
+        // fallback 内容不保存到历史，避免下次加载时显示失败内容
+        if (data._source !== 'fallback') {
+          saveRecord(autoSave);
+        }
       } catch(e) { console.error('auto save failed', e); }
 
       setFullReadExpanded(false);
@@ -1086,8 +1089,8 @@ function BaziPageContent() {
         dayunStartDescription: data.dayunStartDescription,
         dayunStartAt: data.dayunStartAt,
       });
-      // 同步更新本地历史记录，避免下次加载时显示旧缓存
-      try {
+      // 同步更新本地历史记录，避免下次加载时显示旧缓存，fallback 不保存
+      if (data._source !== 'fallback') try {
         saveRecord({
           name: formData.name || '缘主',
           gender: formData.gender || 'unknown',
