@@ -407,21 +407,23 @@ function renderSectionContent(content: string): ReactNode {
   // 2. "- " 开头的 bullet 行前确保有换行
   normalizedContent = normalizedContent.replace(/(?<!\n)(- )/g, '\n$1');
 
-  // 2.5 将孤立短行(仅含1-3个汉字且不是 bullet)与下一行合并，防止 AI 输出在"\u7efc\u5408\u5224\u65ad"\u4e4b类词中间插入了换行
-  normalizedContent = normalizedContent
-    .split('\n')
-    .reduce<string[]>((acc, line) => {
-      const trimmed = line.trim();
+  // 2.5 将孤立短行(仅含1-3个汉字且不是 bullet)与下一行合并，防止 AI 在词中间插入换行
+  {
+    const lines = normalizedContent.split('\n');
+    const merged: string[] = [];
+    for (let i = 0; i < lines.length; i++) {
+      const trimmed = lines[i].trim();
       const isBullet = trimmed.startsWith('- ');
       const isShortOrphan = !isBullet && /^[\u4e00-\u9fa5a-zA-Z]{1,3}$/.test(trimmed);
-      if (isShortOrphan && acc.length > 0) {
-        acc[acc.length - 1] = acc[acc.length - 1] + trimmed;
+      if (isShortOrphan && i + 1 < lines.length) {
+        // 并到下一行开头
+        lines[i + 1] = trimmed + lines[i + 1].trimStart();
       } else {
-        acc.push(line);
+        merged.push(lines[i]);
       }
-      return acc;
-    }, [])
-    .join('\n');
+    }
+    normalizedContent = merged.join('\n');
+  }
 
   // 3. 清理多余空行
   normalizedContent = normalizedContent.replace(/\n{3,}/g, '\n\n').trim();
