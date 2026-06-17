@@ -1402,9 +1402,11 @@ function BaziPageContent() {
                     <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${
                       result._source === 'history'
                         ? 'bg-[#F5F3EF] text-[#1C1A16]/50'
+                        : result._source === 'fallback'
+                        ? 'bg-red-50 text-red-400'
                         : 'bg-emerald-50 text-emerald-600'
                     }`}>
-                      {result._source === 'history' ? 'from cache' : 'from AI'}
+                      {result._source === 'history' ? 'from cache' : result._source === 'fallback' ? 'AI failed' : 'from AI'}
                     </span>
                   </p>
 
