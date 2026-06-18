@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, type ReactNode, Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, type ReactNode, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
@@ -939,62 +939,69 @@ function BaziPageContent() {
   }, [recordId]);
 
   // 加载已登录用户的档案；未登录用户走 localStorage 兼容
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadProfiles() {
-      if (status === 'authenticated') {
-        try {
-          const res = await fetch('/api/bazi/profiles');
-          if (!res.ok) return;
-          const { data } = (await res.json()) as { data?: BaziProfileData[] };
-          if (cancelled || !Array.isArray(data)) return;
-          setProfiles(data);
-        } catch {
-          // ignore
+  const refreshProfiles = useCallback(async (autoSelectId?: string) => {
+    if (status === 'authenticated') {
+      try {
+        const res = await fetch('/api/bazi/profiles');
+        if (!res.ok) return;
+        const { data } = (await res.json()) as { data?: BaziProfileData[] };
+        if (!Array.isArray(data)) return;
+        setProfiles(data);
+        if (autoSelectId) {
+          const found = data.find((p) => p.id === autoSelectId);
+          if (found) setSelectedProfileId(found.id);
         }
-      } else if (status === 'unauthenticated') {
-        try {
-          const records = loadRecords();
-          if (cancelled) return;
-          const mapped: BaziProfileData[] = records.map((r) => ({
-            id: r.id,
-            label: r.name || '缘主',
-            name: r.name || '缘主',
-            gender: r.gender || '',
-            birthDate: r.birthDate,
-            birthHour: r.birthHour,
-            birthPlace: r.birthPlace || '',
-            isLunar: false,
-            isPrimary: false,
-            baziResult: {
-              pillars: r.pillars,
-              wuxing: r.wuxing,
-              aiAnalysis: r.aiAnalysis,
-              fiveDimensions: r.fiveDimensions,
-              traits: r.traits,
-              birthPlace: r.birthPlace,
-              dayMasterElement: r.dayMasterElement,
-              lunarDate: r.lunarDate,
-              zodiac: r.zodiac,
-              trueSolarOffsetMinutes: r.trueSolarOffsetMinutes,
-              dayunStartDescription: r.dayunStartDescription,
-              dayunStartAt: r.dayunStartAt,
-            },
-          }));
-          setProfiles(mapped);
-        } catch {
-          // ignore
+      } catch {
+        // ignore
+      }
+    } else if (status === 'unauthenticated') {
+      try {
+        const records = loadRecords();
+        const mapped: BaziProfileData[] = records.map((r) => ({
+          id: r.id,
+          label: r.name || '缘主',
+          name: r.name || '缘主',
+          gender: r.gender || '',
+          birthDate: r.birthDate,
+          birthHour: r.birthHour,
+          birthPlace: r.birthPlace || '',
+          isLunar: false,
+          isPrimary: false,
+          baziResult: {
+            pillars: r.pillars,
+            wuxing: r.wuxing,
+            aiAnalysis: r.aiAnalysis,
+            fiveDimensions: r.fiveDimensions,
+            traits: r.traits,
+            birthPlace: r.birthPlace,
+            dayMasterElement: r.dayMasterElement,
+            lunarDate: r.lunarDate,
+            zodiac: r.zodiac,
+            trueSolarOffsetMinutes: r.trueSolarOffsetMinutes,
+            dayunStartDescription: r.dayunStartDescription,
+            dayunStartAt: r.dayunStartAt,
+          },
+        }));
+        setProfiles(mapped);
+        if (autoSelectId) {
+          const found = mapped.find((p) => p.id === autoSelectId);
+          if (found) setSelectedProfileId(found.id);
         }
+      } catch {
+        // ignore
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status]);
 
+  useEffect(() => {
+    let cancelled = false;
     if (status !== 'loading') {
-      void loadProfiles();
+      void refreshProfiles();
     }
-
     return () => {
       cancelled = true;
+      void cancelled;
     };
   }, [status]);
 
@@ -1650,6 +1657,8 @@ function BaziPageContent() {
       setShowAddProfileModal(false);
       setEditingProfile(null);
       setActionMessage(isEditing ? '档案已更新' : '档案已新增');
+      // 从服务端刷新档案列表，确保下拉显示最新数据
+      void refreshProfiles(finalProfile.id);
     } catch (e) {
       setProfileError(e instanceof Error ? e.message : '操作失败，请重试');
     } finally {
