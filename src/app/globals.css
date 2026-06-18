@@ -213,14 +213,7 @@ body {
   animation: coinPulse 1.2s ease-in-out infinite;
 }
 
-/* 强制 Header 固定定位 */
-header {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  z-index: 9999 !important;
-}
+/* Header 随内容一起滚动（不固定）。如需恢复吸顶，给 <header> 加 sticky top-0 即可 */
 
 /* ===== 移动端触摸反馈 (任务9) ===== */
 @media (hover: none) and (pointer: coarse) {

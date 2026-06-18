@@ -55,12 +55,8 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
 
   return (
     <div className={layoutClasses}>
-      {/* 固定定位包裹层 - 确保Header始终在顶部 */}
-      {!showSidebar && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999 }}>
-          <Header />
-        </div>
-      )}
+      {/* Header 在正常文档流中，随内容一起滚动（不再固定吸顶） */}
+      {!showSidebar && <Header />}
       {showSidebar && (
         <button
           type="button"
@@ -77,7 +73,7 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
           )}
         </button>
       )}
-      <main id="main-content" className="flex-1 pb-20 lg:pb-0" style={{ paddingTop: showSidebar ? 0 : '80px' }}>
+      <main id="main-content" className="flex-1 pb-20 lg:pb-0" style={{ paddingTop: 0 }}>
         <Suspense fallback={null}>
           <PaymentSuccessHandler />
           {showSidebar ? (
