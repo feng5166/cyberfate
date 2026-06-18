@@ -1973,7 +1973,7 @@ function BaziPageContent() {
       <Container>
         {/* 命盘档案选择器：无档案时不渲染 */}
         {profiles.length > 0 && (
-        <div className="max-w-3xl mx-auto w-full mb-4">
+        <div className="max-w-[840px] mx-auto w-full mb-4">
           <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
             <Select
               value={selectedProfileId}
@@ -2046,7 +2046,7 @@ function BaziPageContent() {
         )}
 
         {result && !loading && basicInfoData && (
-          <div className="max-w-3xl mx-auto w-full mb-6 lg:mb-8">
+          <div className="max-w-[840px] mx-auto w-full mb-6 lg:mb-8">
           <Card className={`${cardClass} p-0`}>
             <BasicInfoCard
               baziText={basicInfoData.baziText}
@@ -2067,7 +2067,7 @@ function BaziPageContent() {
           </div>
         )}
         <form onSubmit={handleSubmit}>
-        <div className="max-w-3xl mx-auto w-full flex flex-col pb-20 md:pb-26">
+        <div className="max-w-[840px] mx-auto w-full flex flex-col pb-20 md:pb-26">
           {(!result || loading) && (
           <div className="bazi-input-card w-full rounded-2xl bg-white shadow-none px-6 py-6 sm:px-8 sm:py-8 border border-[#1C1A16]/8 space-y-6">
           {/* 基本信息：姓名 + 性别 */}
@@ -2272,7 +2272,7 @@ function BaziPageContent() {
             )}
 
             {result && !loading && basicInfoData && dayMasterInsight && (
-              <div className="max-w-3xl mx-auto w-full">
+              <div className="max-w-[840px] mx-auto w-full">
               <div ref={resultRef} className="space-y-6 animate-fadeIn" aria-live="polite">
                 {result._source !== 'history' && !isMember && (
                   <div className="flex items-center justify-between gap-3 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 px-4 py-3">
