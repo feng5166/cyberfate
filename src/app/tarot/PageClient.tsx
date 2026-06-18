@@ -2,7 +2,7 @@
 
 import { Footer } from '@/components/layout/Footer';
 import { OracleLoading } from '@/components/ui/OracleLoading';
-import { Share2, X } from 'lucide-react';
+import { Share2, X, Sparkles, RefreshCw, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { useState, useRef, useEffect } from 'react';
@@ -535,12 +535,15 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
                   type="button"
                   onClick={handleDrawCards}
                   disabled={loading}
-                  className="mt-4 h-[52px] w-full rounded-xl bg-[#1C1A16] text-[15px] font-semibold text-white transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 flex items-center justify-center gap-2"
+                  className="group relative mt-4 flex h-[54px] w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-[#C2762B] to-[#A8521A] text-[15px] font-semibold text-white shadow-lg shadow-[#C2762B]/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-[#C2762B]/35 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
                 >
-                  {step === 'result' ? (
-                    <>重新抽牌</>
+                  <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+                  {loading ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" /> 正在抽牌…</>
+                  ) : step === 'result' ? (
+                    <><RefreshCw className="h-4 w-4" /> 重新抽牌</>
                   ) : (
-                    <>抽取塔罗牌 <span className="opacity-70">☄️</span></>
+                    <><Sparkles className="h-4 w-4" /> 抽取塔罗牌</>
                   )}
                 </button>
               )}
