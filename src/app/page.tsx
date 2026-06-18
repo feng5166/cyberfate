@@ -310,7 +310,7 @@ export default function HomePage() {
       {/* ===== Core Principles ===== */}
       <section className="px-4 py-10 md:py-16 bg-brand-bg/60">
         <Container>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
+          <div className="max-w-[840px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
             {corePrinciples.map((principle) => {
               const Icon = principle.icon;
               return (
@@ -380,7 +380,7 @@ export default function HomePage() {
             <p className="text-sm text-[#1C1A16]/70 mb-12">探索我们全面的智能分析服务</p>
           </div>
 
-          <div className="space-y-16">
+          <div className="max-w-[840px] mx-auto space-y-16">
             {featureGroups.map((group) => (
               <div key={group.title}>
                 <h3 className="text-[18px] font-semibold text-[#1C1A16] mb-5">{group.title}</h3>
@@ -421,7 +421,7 @@ export default function HomePage() {
       {/* ===== CTA Section ===== */}
       <section className="px-4 pb-24">
         <Container>
-          <div className="text-center py-16 px-10">
+          <div className="max-w-[840px] mx-auto text-center py-16 px-10">
             <h2 className="font-display text-3xl md:text-4xl tracking-wide text-[#1C1A16]">
               AI 分析个人特质，洞察发展潜力
             </h2>
