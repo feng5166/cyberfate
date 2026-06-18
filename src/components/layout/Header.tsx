@@ -59,7 +59,7 @@ export function Header() {
 
   return (
     <header
-      className={`border-b border-[#1C1A16]/10 ${
+      className={`relative z-50 border-b border-[#1C1A16]/10 ${
         isHomePage ? 'bg-[rgba(255,255,255,0.95)]' : 'bg-[rgba(255,255,255,0.9)]'
       }`}
     >
