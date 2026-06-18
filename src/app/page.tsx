@@ -185,7 +185,7 @@ export default function HomePage() {
 
           {/* 副标题 */}
           <p className="text-[17px] tracking-[0.05em] text-[#1C1A16]/70 text-center mt-6">
-            AI 驱动的八字命理、每日运势、塔罗占卜 —— 东方智慧，科学态度
+            人工智能驱动的东方智慧解析系统
           </p>
 
           {/* 按钮组 */}
@@ -261,69 +261,6 @@ export default function HomePage() {
                 </Card>
               );
             })}
-          </div>
-        </Container>
-      </section>
-
-      {/* ===== 新手推荐路径 ===== */}
-      <section className="px-4 py-10 md:py-14">
-        <Container>
-          <div className="max-w-[840px] mx-auto">
-            <h2 className="text-center text-[14px] text-[#1C1A16]/50 tracking-wide mb-6">
-              新手推荐路径
-            </h2>
-            <div className="flex flex-col md:flex-row items-stretch gap-4">
-              {[
-                {
-                  step: '第一步',
-                  title: '测测你的八字',
-                  desc: '输入生辰，了解你的命盘特质',
-                  href: '/bazi',
-                  icon: BarChart3,
-                  iconColor: 'text-blue-500',
-                },
-                {
-                  step: '第二步',
-                  title: '看今日运势',
-                  desc: '掌握每日五行宜忌与运势评分',
-                  href: '/daily',
-                  icon: Sun,
-                  iconColor: 'text-orange-400',
-                },
-                {
-                  step: '第三步',
-                  title: '探索更多功能',
-                  desc: '梅花易数、塔罗占卜、紫微斗数',
-                  href: '#features',
-                  icon: Sparkles,
-                  iconColor: 'text-purple-500',
-                },
-              ].map((item, i) => {
-                const Icon = item.icon;
-                return (
-                  <div key={item.step} className="flex items-center gap-4 flex-1">
-                    <Link href={item.href} className="flex-1">
-                      <Card
-                        hover={false}
-                        className="text-center p-6 border-none shadow-none hover:shadow-card-hover hover:-translate-y-1 transition-all duration-300 h-full"
-                      >
-                        <div className="flex flex-col items-center">
-                          <span className="text-[11px] text-[#1C1A16]/40 tracking-widest uppercase mb-2">{item.step}</span>
-                          <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mb-3">
-                            <Icon className={`w-5 h-5 ${item.iconColor}`} strokeWidth={1.5} />
-                          </div>
-                          <h3 className="text-[15px] font-semibold text-[#1C1A16]">{item.title}</h3>
-                          <p className="text-[12px] text-[#1C1A16]/50 mt-1.5">{item.desc}</p>
-                        </div>
-                      </Card>
-                    </Link>
-                    {i < 2 && (
-                      <ArrowRight className="w-4 h-4 text-[#1C1A16]/20 flex-shrink-0 hidden md:block" />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
           </div>
         </Container>
       </section>
