@@ -11,8 +11,10 @@ import { generateFallbackBaziAnalysis } from '@/lib/ai/client';
 import { formatAnalysis } from '@/lib/ai/formatAnalysis';
 import { attachClientAbort } from '@/lib/ai/streamProxy';
 import { logger } from '@/lib/logger';
-import { runBaziToolchain, toolchainToPromptFacts } from '@/lib/bazi/tools';
+import { runBaziToolchain, toolchainToPromptFacts, type ToolStepResult } from '@/lib/bazi/tools';
 import type { BaziAnalysis, BaziChart, BaziResult, Gender } from '@/lib/bazi/types';
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 const SERVICE = 'api/bazi/stream';
 
@@ -37,28 +39,28 @@ function beijingToday(): string {
 }
 
 /**
- * 用客户端命盘跑本地确定性工具链，得到「命理推算事实」文本（格局/用神/神煞/刑冲/大运/流年…）。
- * 任意一步失败都不阻断主流程，退回空串（仅丢失增益、不影响出报告）。
+ * 用客户端命盘跑本地确定性工具链，返回每步真实计算结果（格局/用神/神煞/刑冲/大运/流年…）。
+ * 这些步骤既注入 prompt 让模型据实作答，也逐条推送给首屏作「推算中」动画。
+ * 任意一步失败都不阻断主流程，退回空数组（仅丢失增益、不影响出报告）。
  */
-function buildToolchainFacts(
+function computeToolchainSteps(
   baziResult: unknown,
   birthDate: string,
   gender: Gender,
   birthHourNum?: number,
   birthMinute?: number,
-): string {
+): ToolStepResult[] {
   try {
     const chart = (baziResult as BaziResult | undefined)?.chart as BaziChart | undefined;
-    if (!chart?.year || !chart?.month || !chart?.day) return '';
-    const steps = runBaziToolchain({
+    if (!chart?.year || !chart?.month || !chart?.day) return [];
+    return runBaziToolchain({
       chart,
       birth: { birthDate, gender, birthHourNum, birthMinute },
       today: beijingToday(),
     });
-    return toolchainToPromptFacts(steps);
   } catch (err) {
-    logger.error(SERVICE, 'toolchain facts failed', err instanceof Error ? err : undefined);
-    return '';
+    logger.error(SERVICE, 'toolchain steps failed', err instanceof Error ? err : undefined);
+    return [];
   }
 }
 
@@ -107,16 +109,17 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // 2. 跑本地确定性工具链 → 命理推算事实，注入 prompt 让模型据实作答（而非脑补）
+  // 2. 跑本地确定性工具链 → 既注入 prompt 让模型据实作答（而非脑补），也推送首屏作推算动画
   const factsGender: Gender = gender === 'female' ? 'female' : 'male';
   const hasPreciseTime = knowTime !== false && typeof birthHourNum === 'number';
-  const facts = buildToolchainFacts(
+  const toolSteps = computeToolchainSteps(
     baziResult,
     birthDate,
     factsGender,
     hasPreciseTime ? birthHourNum : undefined,
     hasPreciseTime ? birthMinute : undefined,
   );
+  const facts = toolchainToPromptFacts(toolSteps);
 
   // 3. 调 DeepSeek stream
   const prompt = buildBaziStreamPrompt(baziResult as BaziResult, name, gender, dayunExtra, facts);
@@ -161,6 +164,15 @@ export async function POST(req: NextRequest) {
 
   const stream = new ReadableStream({
     async start(controller) {
+      // 先逐条推送真实工具链步骤（首屏「推算中」动画，结果均为本地确定性计算）
+      for (const step of toolSteps) {
+        if (proxy.signal.aborted) break;
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify({ type: 'step', name: step.name, label: step.label })}\n\n`),
+        );
+        await sleep(120);
+      }
+
       upstreamReader = upstream.body!.getReader();
       let buffer = '';
       let fullText = '';

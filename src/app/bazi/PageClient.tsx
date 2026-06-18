@@ -17,6 +17,7 @@ import {
   Share2,
   Sparkles,
   Trash2,
+  Wrench,
 } from 'lucide-react';
 import { saveBirthInfo, loadBirthInfo } from '@/lib/utils/storage';
 import { deleteRecord, getRecordById, loadRecords, saveRecord } from '@/lib/utils/history';
@@ -780,6 +781,7 @@ function BaziPageContent() {
   const [isMember, setIsMember] = useState(false);
   const [aiStreaming, setAiStreaming] = useState(false);
   const [aiStreamText, setAiStreamText] = useState('');
+  const [aiSteps, setAiSteps] = useState<string[]>([]); // 工具链推算步骤（首屏「推算中」动画）
   const [showAiButton, setShowAiButton] = useState(false);
   const autoLoadAttemptedRef = useRef(false);
 
@@ -1271,6 +1273,7 @@ function BaziPageContent() {
     setShowAiButton(false);
     setAiStreaming(true);
     setAiStreamText('');
+    setAiSteps([]);
 
     try {
       const response = await fetch('/api/bazi/stream', {
@@ -1335,6 +1338,9 @@ function BaziPageContent() {
             if (!payload) continue;
             try {
               const obj = JSON.parse(payload);
+              if (obj.type === 'step' && typeof obj.label === 'string') {
+                setAiSteps(prev => [...prev, obj.label]);
+              }
               if (typeof obj.delta === 'string') {
                 fullText += obj.delta;
                 setAiStreamText(fullText);
@@ -2322,6 +2328,28 @@ function BaziPageContent() {
                         <RefreshCw className="w-3.5 h-3.5 text-[#C2762B] animate-spin" />
                         AI 正在解读中…
                       </div>
+
+                      {aiSteps.length > 0 && (
+                        <div className="mb-4 rounded-xl border border-[#1C1A16]/8 bg-white overflow-hidden">
+                          <div className="flex items-center gap-2 px-3 py-2 border-b border-[#1C1A16]/5">
+                            <Wrench className="w-3.5 h-3.5 text-[#C2762B] flex-shrink-0" />
+                            <span className="text-xs text-[#1C1A16]/60">
+                              {aiStreamText
+                                ? `命理推算完成 · 共 ${aiSteps.length} 步真实排盘`
+                                : `正在排盘推算 · 已完成 ${aiSteps.length} 步…`}
+                            </span>
+                          </div>
+                          <div className="px-3 py-2 space-y-1.5">
+                            {aiSteps.map((step, i) => (
+                              <div key={i} className="flex items-start gap-2 text-xs text-[#1C1A16]/55 leading-relaxed">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0" />
+                                <span>{step}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                       <div ref={streamContainerRef} className="max-h-[60vh] overflow-y-auto pr-1">
                       {aiStreamText ? (() => {
                         const streamSections = [
