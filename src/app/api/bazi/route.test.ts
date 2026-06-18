@@ -122,8 +122,32 @@ describe('POST /api/bazi', () => {
     // 现行架构：本路由只做确定性排盘，AI 解读延迟到 /api/bazi/stream（按 cacheKey 流式）。
     // 故 aiAnalysis 为空串占位，且本路由不调用 generateBaziAnalysis。
     expect(json.aiAnalysis).toBe('');
-    expect(json.cacheKey).toMatch(/^v5:bazi:/);
+    expect(json.cacheKey).toMatch(/^v6:bazi:/);
     expect(generateBaziAnalysis).not.toHaveBeenCalled();
+  });
+
+  it('cacheKey 区分精确时分/农历/晚子时，不再串档', async () => {
+    const keyOf = async (body: unknown) => (await (await POST(makeReq(body))).json()).cacheKey as string;
+
+    // 同一粗时辰、不同精确分钟 → 必须不同 key
+    const base = { ...validBody, knowTime: true, birthHourNum: 6, birthMinute: 10 };
+    const k0610 = await keyOf(base);
+    const k0650 = await keyOf({ ...base, birthMinute: 50 });
+    expect(k0610).not.toBe(k0650);
+
+    // 农历 vs 阳历同年月日 → 必须不同 key
+    const kSolar = await keyOf(validBody);
+    const kLunar = await keyOf({ ...validBody, isLunar: true });
+    expect(kSolar).not.toBe(kLunar);
+
+    // 晚子时 vs 早子时 → 必须不同 key
+    const ziBase = { ...validBody, knowTime: true, birthHourNum: 23, birthMinute: 30 };
+    const kEarly = await keyOf(ziBase);
+    const kLate = await keyOf({ ...ziBase, lateZiShi: true });
+    expect(kEarly).not.toBe(kLate);
+
+    // 逻辑相同的输入 → 必须同 key（缓存可复用，不碎裂）
+    expect(await keyOf(validBody)).toBe(await keyOf({ ...validBody, name: '另一个名字' }));
   });
 
   it('allows a guest (no session) when guest rate limit permits', async () => {

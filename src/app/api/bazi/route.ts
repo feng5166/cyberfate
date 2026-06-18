@@ -196,17 +196,27 @@ export async function POST(req: NextRequest) {
       jiShen: mingGeResult.jiShen,
     };
 
-    // 生成 cacheKey（与 /api/bazi/stream 共用，对应 generateBaziAnalysis 内部规则）
+    // 生成 cacheKey（与 /api/bazi/stream 共用）。
+    // 必须涵盖**全部影响排盘的字段**，否则不同精度/历法/晚子时会串档共享同一份 AI 解读：
+    // - gender 用归一化后的 calcInput.gender（unknown→male，二者本就同盘）
+    // - 时辰精度三态：noTime（无时柱）/ hasPrecise（精确时分+晚子时）/ coarse（粗时辰）
+    //   仅保留该态下真正生效的字段，避免逻辑相同的输入因无关字段不同而碎裂缓存
+    const keyMaterial = {
+      birthDate: input.birthDate,
+      gender: calcInput.gender,
+      isLunar: input.isLunar === true,
+      timeMode: noTime ? 'none' : (hasPrecise ? 'precise' : 'coarse'),
+      hourNum: hasPrecise ? input.birthHourNum : undefined,
+      minute: hasPrecise ? (typeof input.birthMinute === 'number' ? input.birthMinute : 0) : undefined,
+      lateZiShi: hasPrecise ? input.lateZiShi === true : undefined,
+      shichen: (!noTime && !hasPrecise) ? shichen : undefined,
+    };
     const hash = crypto.createHash('sha256')
-      .update(JSON.stringify({
-        birthDate: input.birthDate,
-        birthHour: input.birthHour,
-        gender: input.gender ?? 'unknown',
-      }))
+      .update(JSON.stringify(keyMaterial))
       .digest('hex')
       .slice(0, 16);
-    // v5: 主报告改为注入确定性工具链事实（格局/用神/神煞/刑冲/大运），与旧缓存不兼容，故升版
-    const cacheKey = `v5:bazi:${hash}`;
+    // v6: cacheKey 纳入精确时分/农历/晚子时，修复串档（v5 仅含粗时辰+生辰+性别）
+    const cacheKey = `v6:bazi:${hash}`;
 
     return Response.json({
       pillars,
