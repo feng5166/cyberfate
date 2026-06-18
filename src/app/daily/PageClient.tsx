@@ -633,7 +633,7 @@ export default function DailyPage() {
 
         {/* ===== 结果展示 ===== */}
         {result && !loading && (
-          <div className="space-y-5 pb-20 md:pb-26 animate-fadeIn">
+          <div className="max-w-[840px] mx-auto px-4 space-y-5 pb-20 md:pb-26 animate-fadeIn">
 
             {/* 今日核心速览 - 极简风 */}
             <div style={{ backgroundColor: '#FFFFFF', borderRadius: 16, border: '1px solid rgba(28,26,22,0.06)', padding: '32px 24px' }}>

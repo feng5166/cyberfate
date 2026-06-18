@@ -14,7 +14,7 @@
   --secondary: #666666;      /* 对比度 ~5.74:1 — AA ✅ */
   --muted: #999999;          /* 对比度 ~2.85:1 — 仅限大文字 ⚠️ */
   --border: #e0e0e0;
-  --background: #ffffff;
+  --background: #FAF9F6;
   --background-alt: #f8f8f8;
   
   /* 五行色（保留用于图表）*/

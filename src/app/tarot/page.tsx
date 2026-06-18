@@ -65,7 +65,7 @@ const TAROT_FAQ = [
 function TarotSeoSections() {
   return (
     <>
-      <section className="mx-auto mt-12 max-w-5xl animate-fadeIn">
+      <section className="mx-auto mt-12 max-w-[840px] animate-fadeIn">
         <div className="text-center mb-10">
           <h2 className="font-display text-[28px] tracking-[0.06em] text-[#1C1A16]">AI 塔罗牌解析系统</h2>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-[#6B7280]">
@@ -83,7 +83,7 @@ function TarotSeoSections() {
         </div>
       </section>
 
-      <section className="mx-auto mt-12 max-w-5xl animate-fadeIn">
+      <section className="mx-auto mt-12 max-w-[840px] animate-fadeIn">
         <div className="text-center mb-10">
           <h2 className="font-display text-[28px] tracking-[0.06em] text-[#1C1A16]">AI 塔罗牌占卜应用场景</h2>
         </div>
@@ -97,7 +97,7 @@ function TarotSeoSections() {
         </div>
       </section>
 
-      <section className="mx-auto mt-12 max-w-5xl animate-fadeIn">
+      <section className="mx-auto mt-12 max-w-[840px] animate-fadeIn">
         <h2 className="font-display text-[28px] tracking-[0.06em] text-[#1C1A16] text-center mb-10">AI 塔罗牌占卜常见问题</h2>
         <div className="space-y-4">
           {TAROT_FAQ.map((item) => (
@@ -115,7 +115,7 @@ function TarotSeoSections() {
         </div>
       </section>
 
-      <section className="mx-auto mt-12 max-w-5xl animate-fadeIn">
+      <section className="mx-auto mt-12 max-w-[840px] animate-fadeIn">
         <div className="rounded-2xl bg-[#FAF9F6] border border-[#E5E0D8] p-10 text-center md:p-16">
           <h2 className="font-display text-[32px] tracking-[0.06em] text-[#1C1A16] leading-tight">
             开启你的<br />AI 塔罗占卜之旅
