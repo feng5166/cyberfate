@@ -1,7 +1,8 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
-  important: '#__next',
+  // 注意：App Router 没有 #__next 节点，曾经的 important: '#__next' 会把所有工具类
+  // 限定到不存在的选择器，一旦配置被加载就会让整站样式失效，故移除。
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",

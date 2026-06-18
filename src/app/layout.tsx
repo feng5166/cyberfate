@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Noto_Serif_SC } from "next/font/google";
 import "./globals.css";
 import { SessionProvider } from "@/components/providers/SessionProvider";
@@ -93,6 +93,16 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  // 启用刘海屏安全区：没有 viewport-fit=cover 时，iOS 上 env(safe-area-inset-*) 恒为 0，
+  // 底部 TabBar 的安全区内边距将失效。
+  viewportFit: "cover",
+  themeColor: "#FAF9F6",
+  colorScheme: "light",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -100,7 +110,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-CN" className={`${notoSerifSC.variable} ${cormorantGaramond.variable}`}>
-      <body className="min-h-screen flex flex-col">
+      <body className="min-h-dvh flex flex-col">
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[99999] focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:rounded-lg focus:shadow-lg focus:text-[#1C1A16] focus:border focus:border-[#1C1A16]/20"

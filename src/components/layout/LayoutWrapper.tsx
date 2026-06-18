@@ -51,7 +51,7 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
   const pathname = usePathname();
   const isHomePage = pathname === '/';
   const showSidebar = !isHomePage;
-  const layoutClasses = 'flex flex-col min-h-screen';
+  const layoutClasses = 'flex flex-col min-h-dvh';
 
   return (
     <div className={layoutClasses}>
