@@ -188,24 +188,6 @@ export default function HomePage() {
             AI 驱动的八字命理、每日运势、塔罗占卜 —— 东方智慧，科学态度
           </p>
 
-          {/* 信任锚点 */}
-          <div className="flex flex-wrap items-center justify-center gap-6 mt-8 text-[14px] text-[#1C1A16]/60 tracking-wide">
-            <span className="flex items-center gap-1.5">
-              <span className="text-[20px] font-semibold text-[#1C1A16]">10万+</span>
-              <span>次分析</span>
-            </span>
-            <span className="text-[#1C1A16]/20">|</span>
-            <span className="flex items-center gap-1.5">
-              <span className="text-[20px] font-semibold text-[#1C1A16]">5万+</span>
-              <span>用户</span>
-            </span>
-            <span className="text-[#1C1A16]/20">|</span>
-            <span className="flex items-center gap-1.5">
-              <span className="text-[15px] font-medium text-[#1C1A16]">AI + 传统命理</span>
-              <span>双引擎</span>
-            </span>
-          </div>
-
           {/* 按钮组 */}
           <div className="flex flex-col sm:flex-row justify-center gap-4 mt-10">
             <Link href="/bazi">
@@ -338,12 +320,6 @@ export default function HomePage() {
       {/* ===== Social Proof ===== */}
       <section className="px-4 py-6 overflow-hidden">
         <Container>
-          <div className="text-center mb-4">
-            <p className="text-[14px] text-[#1C1A16]/60 tracking-wide">
-              <span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse" />
-              <span className="text-[18px] font-semibold text-[#1C1A16]">1,234</span> 人今日已分析
-            </p>
-          </div>
           <div className="relative max-w-[840px] mx-auto">
             <div className="flex gap-4 overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
               <div className="flex gap-4 animate-[scroll_30s_linear_infinite]">
