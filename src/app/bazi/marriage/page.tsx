@@ -64,6 +64,7 @@ export default function MarriagePage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webAppSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <MarriagePageClient />
+      <Footer>
       <section
         aria-label="关于八字合婚"
         className="mx-auto max-w-3xl px-4 py-12 text-[#1C1A16]/60 text-sm leading-relaxed border-t border-[#1C1A16]/8 mt-8"
@@ -98,7 +99,7 @@ export default function MarriagePage() {
           ))}
         </dl>
       </section>
-      <Footer />
+      </Footer>
     </>
   );
 }

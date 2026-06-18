@@ -38,10 +38,11 @@ const FOOTER_GROUPS = [
   },
 ];
 
-export function Footer() {
+export function Footer({ children }: { children?: React.ReactNode }) {
   return (
     <>
       <FeedbackSection />
+      {children}
       <footer className="bg-brand-bg border-t border-brand-border-light">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-20 py-12">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-8">

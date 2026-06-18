@@ -2825,8 +2825,6 @@ function BaziPageContent() {
         />
       )}
 
-      <Footer />
-
       <div className="hidden" data-version="20260407-v3"></div>
     </div>
   );

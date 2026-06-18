@@ -74,7 +74,10 @@ export default function MusicOraclePageClient() {
   const [error, setError] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
+  // 默认全部展开，可单独折叠
+  const [openFaqs, setOpenFaqs] = useState<number[]>(() => FAQ_LIST.map((_, i) => i));
+  const toggleFaq = (i: number) =>
+    setOpenFaqs((prev) => (prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i]));
   const [showExample, setShowExample] = useState(false);
 
   const resultRef = useRef<HTMLDivElement>(null);
@@ -582,17 +585,17 @@ export default function MusicOraclePageClient() {
             {FAQ_LIST.map((item, i) => (
               <div key={i} className="border border-[#F0EDE8] rounded-xl bg-white overflow-hidden">
                 <button
-                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                  onClick={() => toggleFaq(i)}
                   className="w-full flex items-center justify-between px-5 py-4 text-left"
                 >
                   <span className="text-sm font-medium text-[#1C1A16] pr-4">{item.q}</span>
-                  {openFaq === i ? (
+                  {openFaqs.includes(i) ? (
                     <ChevronUp className="w-4 h-4 text-[#9CA3AF] flex-shrink-0" />
                   ) : (
                     <ChevronDown className="w-4 h-4 text-[#9CA3AF] flex-shrink-0" />
                   )}
                 </button>
-                {openFaq === i && (
+                {openFaqs.includes(i) && (
                   <div className="px-5 pb-4">
                     <p className="text-sm text-[#6B7280] leading-relaxed">{item.a}</p>
                   </div>

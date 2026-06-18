@@ -95,8 +95,16 @@ export default function HuangliPage() {
       </div>
 
       <div className="max-w-[840px] mx-auto px-4 pb-16">
-        {/* 单列：内容 → 日历 → 特性/使用指南 */}
+        {/* 单列：日历 → 内容 → 特性/使用指南 */}
         <div className="space-y-5">
+            {/* 选择日期日历 - 置顶（移动端顶部为日期快捷条） */}
+            <div className="hidden lg:block max-w-[380px] mx-auto">
+              <CalendarPicker
+                selectedDate={selectedDate}
+                onDateSelect={handleDateSelect}
+              />
+            </div>
+
             {/* 加载状态 */}
             {loading && (
               <div className="bg-white rounded-2xl shadow-sm border border-[#F0EDE8] p-6">
@@ -141,14 +149,6 @@ export default function HuangliPage() {
                 <AiAskSection date={selectedDate} />
               </>
             )}
-
-            {/* 日历移至内容下方（桌面端；移动端顶部已有日期快捷条） */}
-            <div className="hidden lg:block max-w-[380px] mx-auto pt-2">
-              <CalendarPicker
-                selectedDate={selectedDate}
-                onDateSelect={handleDateSelect}
-              />
-            </div>
 
             {/* 底部特性介绍 + 使用指南 */}
             <div className="mt-8">

@@ -334,19 +334,8 @@ export default function ZiweiPage() {
 
   return (
     <div className="min-h-screen bg-[#FAF9F6]">
-      {/* 面包屑 */}
-      <Container className="!max-w-[840px] pt-16 md:pt-24">
-        <nav className="flex items-center gap-1.5 text-sm text-[#1C1A16]/50 mb-6" aria-label="面包屑导航">
-          <Link href="/" className="hover:text-[#1C1A16] transition-colors">
-            首页
-          </Link>
-          <ChevronRight className="w-3.5 h-3.5" />
-          <span className="text-[#1C1A16]">紫微斗数</span>
-        </nav>
-      </Container>
-
       {/* 标题区 */}
-      <Container className="!max-w-[840px] pb-6 md:pb-8">
+      <Container className="!max-w-[1000px] pt-16 md:pt-24 pb-6 md:pb-8">
         <div className="text-center">
           <h1 className="font-display text-3xl md:text-[40px] font-bold text-[#1C1A16] leading-tight">
             AI 紫微斗数排盘
@@ -358,7 +347,7 @@ export default function ZiweiPage() {
       </Container>
 
       {/* 输入区 */}
-      <Container className="!max-w-[840px] pb-6 md:pb-8">
+      <Container className="!max-w-[1000px] pb-6 md:pb-8">
         <div className="bg-white rounded-2xl shadow-sm border border-[#F0EDE8] p-4 sm:p-6">
           <div className="flex flex-col md:flex-row md:items-end gap-4">
             {/* 出生日期 */}
@@ -425,7 +414,7 @@ export default function ZiweiPage() {
 
       {/* 错误提示 */}
       {error && (
-        <Container className="!max-w-[840px] pb-4">
+        <Container className="!max-w-[1000px] pb-4">
           <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
             <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />
             <span className="text-sm text-red-600 flex-1">{error}</span>
@@ -442,7 +431,7 @@ export default function ZiweiPage() {
 
       {/* 命盘加载态 */}
       {loading && (
-        <Container className="!max-w-[840px] pb-10 md:pb-16">
+        <Container className="!max-w-[1000px] pb-10 md:pb-16">
           <div className="flex flex-col items-center justify-center py-20">
             <BaguaSpinner />
             <p className="mt-4 text-sm text-[#1C1A16]/50">正在排盘中...</p>
@@ -453,7 +442,7 @@ export default function ZiweiPage() {
       {/* 命盘区域 */}
       {showChart && !loading && palaces.length > 0 && (
         <>
-          <Container className="!max-w-[840px] pb-4">
+          <Container className="!max-w-[1000px] pb-4">
             <div className="bg-white rounded-2xl shadow-sm border border-[#F0EDE8] p-4 sm:p-6">
               <div className="flex items-center justify-between mb-1">
                 <div />
@@ -509,7 +498,7 @@ export default function ZiweiPage() {
           </Container>
 
           {/* P2-4: 双人对比入口 */}
-          <Container className="!max-w-[840px] pb-4">
+          <Container className="!max-w-[1000px] pb-4">
             <div className="flex justify-end">
               <DualChartCompare chartA={palaces} />
             </div>
@@ -517,7 +506,7 @@ export default function ZiweiPage() {
 
           {/* P1-1: 宫位详情面板 */}
           {selectedPalace && (
-            <Container className="!max-w-[840px] pb-4 md:pb-6">
+            <Container className="!max-w-[1000px] pb-4 md:pb-6">
               <PalaceDetailPanel
                 palace={selectedPalace}
                 onClose={() => setSelectedPalaceIndex(null)}
@@ -526,17 +515,17 @@ export default function ZiweiPage() {
           )}
 
           {/* P2-2: 四化飞星动画 */}
-          <Container className="!max-w-[840px] pb-4 md:pb-6">
+          <Container className="!max-w-[1000px] pb-4 md:pb-6">
             <SihuaAnimation palaces={palaces} visible={showChart && !loading} />
           </Container>
 
           {/* P2-3: 大运流年切换器 */}
-          <Container className="!max-w-[840px] pb-4 md:pb-6">
+          <Container className="!max-w-[1000px] pb-4 md:pb-6">
             <DayunSwitcher birthDate={birthDate} />
           </Container>
 
           {/* P1-2: AI 命盘总览解读 */}
-          <Container className="!max-w-[840px] pb-6 md:pb-8">
+          <Container className="!max-w-[1000px] pb-6 md:pb-8">
             <ZiweiAiOverview palaces={palaces} birthDate={birthDate} />
           </Container>
         </>
@@ -544,15 +533,15 @@ export default function ZiweiPage() {
 
       {/* P1-3: 底部功能区 */}
       <div className="bg-[#FAF9F6]">
-        <Container className="!max-w-[840px] pb-6 md:pb-8">
+        <Container className="!max-w-[1000px] pb-6 md:pb-8">
           <ZiweiFeatures />
         </Container>
 
-        <Container className="!max-w-[840px] pb-6 md:pb-8">
+        <Container className="!max-w-[1000px] pb-6 md:pb-8">
           <ZiweiGuide />
         </Container>
 
-        <Container className="!max-w-[840px] pb-8 md:pb-12">
+        <Container className="!max-w-[1000px] pb-8 md:pb-12">
           <ZiweiFaq />
         </Container>
       </div>
