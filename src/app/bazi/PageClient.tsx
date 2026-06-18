@@ -975,7 +975,13 @@ function BaziPageContent() {
         if (!res.ok) return;
         const { data } = (await res.json()) as { data?: BaziProfileData[] };
         if (!Array.isArray(data)) return;
-        setProfiles(data);
+        // merge: 保留前端已有的 baziResult，避免刷新后命盘数据丢失
+        setProfiles((prev) => {
+          return data.map((remote) => {
+            const local = prev.find((p) => p.id === remote.id);
+            return local ? { ...remote, baziResult: local.baziResult ?? remote.baziResult } : remote;
+          });
+        });
         if (autoSelectId) {
           const found = data.find((p) => p.id === autoSelectId);
           if (found) setSelectedProfileId(found.id);
