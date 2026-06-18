@@ -27,10 +27,11 @@ const organizationSchema = {
   url: baseUrl,
   logo: {
     "@type": "ImageObject",
-    url: `${baseUrl}/favicon.svg`,
+    url: `${baseUrl}/icons/icon-512x512.png`,
     width: 512,
     height: 512,
   },
+  // TODO: 补全社媒主页 URL（X / Instagram / YouTube / 小红书 等），增强 Google 实体识别。
   sameAs: [],
 };
 
