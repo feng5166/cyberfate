@@ -49,6 +49,8 @@ import {
   describeDayun,
   analyzeLiunian,
   analyzeLiuyueRange,
+  analyzeShensha,
+  shenshaNature,
 } from '@/lib/bazi';
 import type { DayunDetail } from '@/lib/bazi';
 import type {
@@ -264,22 +266,43 @@ function beijingYear(): number {
 }
 
 /**
- * 加载缓存档案时，按「当前年」刷新时间相关命盘模块（流年/流月 + 大运当前高亮）。
- * 静态命盘（四柱/五行/十神/神煞/大运表）仍走缓存秒出；流年/流月本应永远是当年，
- * 故从持久化命盘的 chart 现算，避免显示去年的快照。无 chart（旧本地记录）则原样返回。
+ * 取命盘四柱：优先用持久化的 baziResult.chart，否则从展示用 pillars 重建
+ * （本地历史记录只存了 pillars，没有 baziResult）。无时柱则 hour=null。
  */
-function refreshFlowModules(result: BaziPageResult): BaziPageResult {
-  const chart = result.baziResult?.chart;
+function chartFromResult(result: BaziPageResult): BaziResult['chart'] | null {
+  const fromBazi = result.baziResult?.chart;
+  if (fromBazi?.year && fromBazi?.month && fromBazi?.day) return fromBazi;
+  const pr = result.pillars;
+  if (!pr?.year || !pr?.month || !pr?.day) return null;
+  const hasHour = result.hasHour !== false;
+  return { year: pr.year, month: pr.month, day: pr.day, hour: hasHour ? (pr.hour ?? null) : null };
+}
+
+/**
+ * 恢复/切换命盘时，确保神煞/流年/流月在位且为当前年：
+ * - 神煞为静态，从四柱重算（本地历史记录从未持久化神煞，否则会空）
+ * - 流年/流月永远按当前年现算，避免显示去年快照
+ * - 大运当前高亮按当前年刷新
+ * 取不到四柱（极旧无 pillars 记录）则原样返回。
+ */
+function withFreshModules(result: BaziPageResult): BaziPageResult {
+  const chart = chartFromResult(result);
   if (!chart) return result;
   try {
     const year = beijingYear();
+    const shensha = analyzeShensha(chart).map((s) => ({
+      name: s.name,
+      pillars: s.pillars,
+      branch: s.branch,
+      nature: shenshaNature(s.name),
+    }));
     const liunian = analyzeLiunian(chart, year);
     const liuyue = analyzeLiuyueRange(chart, year, 1, 12);
     const dayunTimeline = result.dayunTimeline?.map((d) => ({
       ...d,
       isCurrent: year >= d.yearStart && year <= d.yearEnd,
     }));
-    return { ...result, liunian, liuyue, ...(dayunTimeline ? { dayunTimeline } : {}) };
+    return { ...result, shensha, liunian, liuyue, ...(dayunTimeline ? { dayunTimeline } : {}) };
   } catch {
     return result;
   }
@@ -848,8 +871,10 @@ function BaziPageContent() {
             birthPlace: latest.birthPlace || '',
           }));
 
-          setResult({
+          // 本地历史记录未存神煞/流年/流月，按四柱与当前年重算补齐
+          setResult(withFreshModules({
             pillars: latest.pillars,
+            hasHour: latest.birthHour !== '-1',
             wuxing: latest.wuxing,
             aiAnalysis: latest.aiAnalysis,
             fiveDimensions: latest.fiveDimensions,
@@ -862,7 +887,7 @@ function BaziPageContent() {
             dayunStartDescription: latest.dayunStartDescription,
             dayunStartAt: latest.dayunStartAt,
             _source: 'history',
-          });
+          }));
 
           setError('');
           setActionMessage('已为您显示上次的命盘解读');
@@ -936,8 +961,10 @@ function BaziPageContent() {
       birthPlace: record.birthPlace || '',
     }));
 
-    setResult({
+    // 本地历史记录未存神煞/流年/流月，按四柱与当前年重算补齐
+    setResult(withFreshModules({
       pillars: record.pillars,
+      hasHour: record.birthHour !== '-1',
       wuxing: record.wuxing,
       aiAnalysis: record.aiAnalysis,
       fiveDimensions: record.fiveDimensions,
@@ -950,7 +977,7 @@ function BaziPageContent() {
       dayunStartDescription: record.dayunStartDescription,
       dayunStartAt: record.dayunStartAt,
       _source: 'history',
-    });
+    }));
 
     setError('');
     setActionMessage('已加载历史命盘记录');
@@ -1437,8 +1464,8 @@ function BaziPageContent() {
       knowTime: false,
     }));
     if (profile.baziResult) {
-      // 静态命盘走缓存秒出；流年/流月/大运高亮按当前年现算，避免显示旧快照
-      setResult(refreshFlowModules({ ...profile.baziResult, _source: 'history' }));
+      // 静态命盘走缓存秒出；神煞/流年/流月/大运高亮按当前年现算，避免旧快照或缺模块
+      setResult(withFreshModules({ ...profile.baziResult, _source: 'history' }));
       setError('');
       setShowAiButton(false);
     } else {
