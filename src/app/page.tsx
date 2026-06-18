@@ -196,7 +196,7 @@ export default function HomePage() {
                 size="lg"
                 className="px-[38px] py-[14px] text-[13px] tracking-[0.08em]"
               >
-                免费开始解析 →
+                八字分析 →
               </Button>
             </Link>
             <Link href="/meihua">
@@ -376,7 +376,7 @@ export default function HomePage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center mt-10">
               <Link href="/bazi">
                 <button className="px-[38px] py-[14px] text-[13px] tracking-[0.08em] bg-[#1C1A16] text-white rounded-lg hover:bg-[#2C2924] transition-colors font-medium">
-                  免费开始解析 →
+                  八字分析 →
                 </button>
               </Link>
               <Link href="/meihua">
