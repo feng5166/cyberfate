@@ -2036,7 +2036,7 @@ function BaziPageContent() {
               dayunStartDescription={basicInfoData.dayunStartDescription}
               dayunStartAt={basicInfoData.dayunStartAt}
               isAuthenticated={status === 'authenticated'}
-              onEdit={handleEditBasicInfo}
+              onEdit={handleOpenEditProfile}
               onDelete={handleDeleteBasicInfo}
               onReanalyze={handleReanalyze}
               reanalyzing={reanalyzing || aiStreaming}
