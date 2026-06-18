@@ -86,14 +86,18 @@ export async function POST(req: NextRequest) {
   const { getServerSession } = await import('next-auth');
   const { authOptions } = await import('@/lib/auth');
   const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'LOGIN_REQUIRED', message: '请登录后使用' }, { status: 401 });
+  }
 
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-  if (session?.user?.id) {
-    const rl = await checkRateLimit('ai_liuyao_qa', session.user.id, 5, 60);
-    if (!rl.allowed) return NextResponse.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
-  } else {
-    const rl = await checkRateLimit('ai_liuyao_qa_guest', ip, 3, 3600);
-    if (!rl.allowed) return NextResponse.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
+  const rl = await checkRateLimit('ai_liuyao_qa', session.user.id, 5, 60);
+  if (!rl.allowed) return NextResponse.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
+
+  // 统一配额策略 v1：AI 问答免费 1 次/天，VIP 不限
+  const { checkLiuyaoQaQuota } = await import('@/lib/quota');
+  const qaQuota = await checkLiuyaoQaQuota(session.user.id);
+  if (!qaQuota.hasQuota) {
+    return NextResponse.json({ error: 'QUOTA_EXCEEDED', message: '今日免费问答次数已用完，升级 VIP 不限量' }, { status: 429 });
   }
 
   const body = await req.json().catch(() => ({}));

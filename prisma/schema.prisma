@@ -204,6 +204,15 @@ model UsageQuota {
   liuyaoCount       Int    @default(0) // 六爻 AI 解读使用次数
   meihuaDecideCount Int    @default(0) // 梅花决策 AI 使用次数
   dailyCount        Int    @default(0) // 每日运势 AI 使用次数
+  // —— 统一配额策略 v1 新增（免费用户主解读/问答各 1 次/天）——
+  huangliCount      Int    @default(0) // 黄历 AI 问答
+  musicCount        Int    @default(0) // 音乐运势签
+  marriageCount     Int    @default(0) // 合婚 AI（独立额度，不再共享八字）
+  meihuaDrawCount   Int    @default(0) // 梅花起卦 AI 解读
+  dailyQaCount      Int    @default(0) // 每日运势问答
+  liuyaoQaCount     Int    @default(0) // 六爻问答
+  meihuaQaCount     Int    @default(0) // 梅花问答
+  marriageQaCount   Int    @default(0) // 合婚问答
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

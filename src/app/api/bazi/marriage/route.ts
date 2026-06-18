@@ -695,9 +695,10 @@ export async function POST(req: NextRequest) {
 
   // 仅在硬数据请求时消耗配额，AI 请求复用同一配额（视作同一次合婚的子操作）
   if (!isAiRequest) {
-    const { useBaziQuota } = await import('@/lib/quota');
-    const hasQuota = await useBaziQuota(session.user.id);
-    if (!hasQuota) {
+    // 统一配额策略 v1：合婚使用独立额度（免费 1 次/天），不再共享八字解读名额
+    const { checkMarriageQuota } = await import('@/lib/quota');
+    const marriageQuota = await checkMarriageQuota(session.user.id);
+    if (!marriageQuota.hasQuota) {
       return NextResponse.json(
         { error: 'QUOTA_EXCEEDED', message: '今日免费合婚次数已用完，请升级 VIP' },
         { status: 403 }

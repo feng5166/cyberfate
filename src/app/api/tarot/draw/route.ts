@@ -54,7 +54,7 @@ const spreadConfig: Record<TarotSpread, { count: number; positions?: string[] }>
 };
 
 const DAILY_LIMITS: Record<TarotSpread, number> = {
-  single: 3,
+  single: 1,
   three: 1,
   celtic: 0,
   moonlight: 1,
@@ -180,7 +180,7 @@ export async function POST(req: NextRequest) {
     const rl = await checkRateLimit('ai_tarot', session.user.id, 10, 60);
     if (!rl.allowed) return NextResponse.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
   } else if (!isDebugMode) {
-    const rl = await checkRateLimit('ai_tarot_guest', ip, 3, 3600);
+    const rl = await checkRateLimit('ai_tarot_guest', ip, 1, 86400);
     if (!rl.allowed) return NextResponse.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
   }
 

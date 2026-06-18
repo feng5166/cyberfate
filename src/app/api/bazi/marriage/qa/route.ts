@@ -18,6 +18,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '请先登录' }, { status: 401 });
   }
 
+  // 统一配额策略 v1：合婚问答免费 1 次/天，VIP 不限
+  const { checkMarriageQaQuota } = await import('@/lib/quota');
+  const qaQuota = await checkMarriageQaQuota(session.user.id);
+  if (!qaQuota.hasQuota) {
+    return NextResponse.json({ error: 'QUOTA_EXCEEDED', message: '今日免费问答次数已用完，升级 VIP 不限量' }, { status: 429 });
+  }
+
   const body = await req.json().catch(() => ({}));
   const {
     question,

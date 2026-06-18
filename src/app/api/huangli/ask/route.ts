@@ -22,6 +22,13 @@ export async function POST(req: NextRequest) {
   const rl = await checkRateLimit('ai_huangli', session.user.id, 10, 60);
   if (!rl.allowed) return NextResponse.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
 
+  // 统一配额策略 v1：黄历 AI 问答免费 1 次/天，VIP 不限
+  const { checkHuangliQuota } = await import('@/lib/quota');
+  const hlQuota = await checkHuangliQuota(session.user.id);
+  if (!hlQuota.hasQuota) {
+    return NextResponse.json({ error: 'QUOTA_EXCEEDED', message: '今日免费次数已用完，升级 VIP 不限量' }, { status: 429 });
+  }
+
   try {
     const { question, date } = await req.json();
 

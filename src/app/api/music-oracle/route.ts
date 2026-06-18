@@ -111,29 +111,44 @@ export async function POST(request: NextRequest) {
       || 'unknown';
     const rateLimitKey = `music-oracle:rate:${clientIp}:${dateStr}`;
 
-    // 判断 VIP 用户跳过限流（通过 canonical isVip 判定）
+    // 统一配额策略 v1：游客按 IP 1次/天；免费登录用户按账号 1次/天；VIP 不限
     let isVip = false;
+    let userId: string | null = null;
     try {
       const session = await getServerSession(authOptions);
       if (session?.user?.id) {
-        isVip = await checkIsVip(session.user.id);
+        userId = session.user.id;
+        isVip = await checkIsVip(userId);
       }
     } catch (err) {
       console.warn('[music-oracle] VIP 检查失败:', err);
     }
 
-    if (redis && !isVip) {
-      try {
-        const count = await redis.get(rateLimitKey);
-        const used = typeof count === 'number' ? count : (typeof count === 'string' ? parseInt(count, 10) : 0);
-        if (used >= 3) {
+    if (!isVip) {
+      if (userId) {
+        // 免费登录用户：账号配额 1 次/天（原子扣减）
+        const { checkMusicQuota } = await import('@/lib/quota');
+        const mq = await checkMusicQuota(userId, false);
+        if (!mq.hasQuota) {
           return NextResponse.json(
-            { success: false, error: '今日求签次数已用完（3次/天），VIP 用户不限次数', code: 'RATE_LIMIT' },
+            { success: false, error: '今日求签次数已用完（1次/天），VIP 不限次数', code: 'RATE_LIMIT' },
             { status: 429 }
           );
         }
-      } catch (err) {
-        console.warn('[music-oracle] 限流检查失败:', err);
+      } else if (redis) {
+        // 游客：按 IP 1 次/天
+        try {
+          const count = await redis.get(rateLimitKey);
+          const used = typeof count === 'number' ? count : (typeof count === 'string' ? parseInt(count, 10) : 0);
+          if (used >= 1) {
+            return NextResponse.json(
+              { success: false, error: '今日求签次数已用完，登录后每日可用，VIP 不限次数', code: 'RATE_LIMIT' },
+              { status: 429 }
+            );
+          }
+        } catch (err) {
+          console.warn('[music-oracle] 限流检查失败:', err);
+        }
       }
     }
 
@@ -239,8 +254,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 更新限流计数
-    if (redis && !isVip) {
+    // 更新限流计数（仅游客走 IP 计数；登录用户已在上方按账号扣减 DB 配额）
+    if (redis && !isVip && !userId) {
       try {
         const midnight = new Date();
         midnight.setHours(24, 0, 0, 0);

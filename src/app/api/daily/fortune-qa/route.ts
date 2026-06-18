@@ -1,8 +1,7 @@
 import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { isUserVip } from '@/lib/quota';
-import { checkRateLimit } from '@/lib/rate-limit';
+import { isUserVip, checkDailyQaQuota } from '@/lib/quota';
 import { logger } from '@/lib/logger';
 import { prisma } from '@/lib/db';
 import { withCircuitBreaker } from '@/lib/ai/circuitBreaker';
@@ -25,10 +24,10 @@ export async function POST(req: NextRequest) {
     const userId = session.user.id;
     const isVip = await isUserVip(userId);
 
-    // 免费用户 3次/天，Pro 无限
+    // 统一配额策略 v1：每日运势问答免费 1 次/天，VIP 不限
     if (!isVip) {
-      const rl = await checkRateLimit('daily_fortune_qa', userId, 3, 86400);
-      if (!rl.allowed) {
+      const qaQuota = await checkDailyQaQuota(userId, isVip);
+      if (!qaQuota.hasQuota) {
         return Response.json(
           { error: 'DAILY_LIMIT_REACHED', message: '今日问答次数已用完，升级 Pro 无限提问' },
           { status: 429 }

@@ -2,11 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { isUserVip } from '@/lib/quota';
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: '未登录' }, { status: 401 });
+  }
+
+  // 统一配额策略 v1：历史记录为 VIP 专属
+  if (!(await isUserVip(session.user.id))) {
+    return NextResponse.json({ error: 'SUBSCRIPTION_REQUIRED', message: '历史记录为会员专属功能' }, { status: 403 });
   }
 
   const { searchParams } = req.nextUrl;

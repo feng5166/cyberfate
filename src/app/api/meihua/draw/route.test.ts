@@ -14,6 +14,12 @@ vi.mock('@/lib/ai/cache', () => ({
   setCache: (...args: unknown[]) => setCache(...args),
 }));
 
+// 配额：默认放行（统一配额策略 v1：梅花起卦 1 次/天）
+const checkMeihuaDrawQuota = vi.fn(async () => ({ hasQuota: true, limit: 1, isVip: false }));
+vi.mock('@/lib/quota', () => ({
+  checkMeihuaDrawQuota: (...args: unknown[]) => checkMeihuaDrawQuota(...args),
+}));
+
 // NOTE: @/lib/meihua/draw is the real (pure) lib — we want its real output.
 
 import { POST } from './route';

@@ -92,14 +92,14 @@ describe('quota — atomic check & consume (baziAiCount)', () => {
     expect(updateMany).not.toHaveBeenCalled()
   })
 
-  it('liuyao uses limit 3 and respects passed-in vipStatus (no isVip call)', async () => {
+  it('liuyao uses limit 1 and respects passed-in vipStatus (no isVip call)', async () => {
     updateMany.mockResolvedValue({ count: 1 })
 
     const res = await checkLiuyaoQuota('user-2', false)
 
-    expect(res.limit).toBe(3)
+    expect(res.limit).toBe(1)
     expect(updateMany.mock.calls[0][0].where).toMatchObject({
-      liuyaoCount: { lt: 3 },
+      liuyaoCount: { lt: 1 },
     })
     // vipStatus supplied → isVip must not be queried.
     expect(isVipMock).not.toHaveBeenCalled()
@@ -148,18 +148,18 @@ describe('quota — peekBaziQuota (read-only)', () => {
 })
 
 describe('quota — 其余 AI 模块限额(3/天)', () => {
-  it('梅花决策用 meihuaDecideCount, limit 3', async () => {
+  it('梅花决策用 meihuaDecideCount, limit 1', async () => {
     updateMany.mockResolvedValue({ count: 1 })
     const res = await checkMeihuaDecideQuota('u', false)
-    expect(res.limit).toBe(3)
-    expect(updateMany.mock.calls[0][0].where).toMatchObject({ meihuaDecideCount: { lt: 3 } })
+    expect(res.limit).toBe(1)
+    expect(updateMany.mock.calls[0][0].where).toMatchObject({ meihuaDecideCount: { lt: 1 } })
   })
 
-  it('每日运势用 dailyCount, limit 3', async () => {
+  it('每日运势用 dailyCount, limit 1', async () => {
     updateMany.mockResolvedValue({ count: 0 })
     const res = await checkDailyQuota('u', false)
-    expect(res).toEqual({ hasQuota: false, limit: 3, isVip: false })
-    expect(updateMany.mock.calls[0][0].where).toMatchObject({ dailyCount: { lt: 3 } })
+    expect(res).toEqual({ hasQuota: false, limit: 1, isVip: false })
+    expect(updateMany.mock.calls[0][0].where).toMatchObject({ dailyCount: { lt: 1 } })
   })
 })
 

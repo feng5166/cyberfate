@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
     const rl = await checkRateLimit('ai_bazi', session.user.id, 10, 60);
     if (!rl.allowed) return Response.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
   } else {
-    const rl = await checkRateLimit('ai_bazi_guest', ip, 3, 3600);
+    const rl = await checkRateLimit('ai_bazi_guest', ip, 1, 86400);
     if (!rl.allowed) return Response.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
   }
 

@@ -6,7 +6,25 @@ import { getTodayBeijing } from '@/lib/timezone'
 // BUG-010: VIP 判断统一使用 subscription.ts 的 isVip（re-exported as isUserVip）
 export { isUserVip }
 
-type QuotaField = 'baziAiCount' | 'liuyaoCount' | 'meihuaDecideCount' | 'dailyCount'
+type QuotaField =
+  | 'baziAiCount'
+  | 'liuyaoCount'
+  | 'meihuaDecideCount'
+  | 'dailyCount'
+  // —— 统一配额策略 v1 新增 ——
+  | 'huangliCount'
+  | 'musicCount'
+  | 'marriageCount'
+  | 'meihuaDrawCount'
+  | 'dailyQaCount'
+  | 'liuyaoQaCount'
+  | 'meihuaQaCount'
+  | 'marriageQaCount'
+
+/**
+ * 统一配额策略 v1：免费用户「主命理 AI 解读」与「AI 问答」统一 1 次/天，VIP 不限。
+ */
+export const FREE_DAILY_LIMIT = 1
 
 async function atomicCheckAndConsume(
   userId: string,
@@ -91,24 +109,71 @@ export async function deductBaziQuota(userId: string): Promise<void> {
 }
 
 /**
- * 六爻 AI：免费 3 次/天，VIP 不限
+ * 六爻 AI：免费 1 次/天，VIP 不限
  */
 export async function checkLiuyaoQuota(userId: string, vipStatus?: boolean) {
-  return atomicCheckAndConsume(userId, 'liuyaoCount', 3, vipStatus)
+  return atomicCheckAndConsume(userId, 'liuyaoCount', FREE_DAILY_LIMIT, vipStatus)
 }
 
 /**
- * 梅花决策 AI：免费 3 次/天，VIP 不限
+ * 梅花决策 AI：免费 1 次/天，VIP 不限
  */
 export async function checkMeihuaDecideQuota(userId: string, vipStatus?: boolean) {
-  return atomicCheckAndConsume(userId, 'meihuaDecideCount', 3, vipStatus)
+  return atomicCheckAndConsume(userId, 'meihuaDecideCount', FREE_DAILY_LIMIT, vipStatus)
 }
 
 /**
- * 每日运势 AI：免费 3 次/天，VIP 不限
+ * 每日运势 AI：免费 1 次/天，VIP 不限
  */
 export async function checkDailyQuota(userId: string, vipStatus?: boolean) {
-  return atomicCheckAndConsume(userId, 'dailyCount', 3, vipStatus)
+  return atomicCheckAndConsume(userId, 'dailyCount', FREE_DAILY_LIMIT, vipStatus)
+}
+
+/**
+ * 黄历 AI 问答：免费 1 次/天，VIP 不限
+ */
+export async function checkHuangliQuota(userId: string, vipStatus?: boolean) {
+  return atomicCheckAndConsume(userId, 'huangliCount', FREE_DAILY_LIMIT, vipStatus)
+}
+
+/**
+ * 梅花起卦 AI 解读：免费 1 次/天，VIP 不限（与决策/问答各自独立计数）
+ */
+export async function checkMeihuaDrawQuota(userId: string, vipStatus?: boolean) {
+  return atomicCheckAndConsume(userId, 'meihuaDrawCount', FREE_DAILY_LIMIT, vipStatus)
+}
+
+/**
+ * 音乐运势签：免费登录用户 1 次/天，VIP 不限（游客走 IP 限流，另行处理）
+ */
+export async function checkMusicQuota(userId: string, vipStatus?: boolean) {
+  return atomicCheckAndConsume(userId, 'musicCount', FREE_DAILY_LIMIT, vipStatus)
+}
+
+/**
+ * 合婚 AI：免费 1 次/天（独立额度，不再共享八字），VIP 不限
+ */
+export async function checkMarriageQuota(userId: string, vipStatus?: boolean) {
+  return atomicCheckAndConsume(userId, 'marriageCount', FREE_DAILY_LIMIT, vipStatus)
+}
+
+/**
+ * AI 问答类（每日/六爻/梅花/合婚问答）：免费 1 次/天，VIP 不限。
+ */
+export async function checkDailyQaQuota(userId: string, vipStatus?: boolean) {
+  return atomicCheckAndConsume(userId, 'dailyQaCount', FREE_DAILY_LIMIT, vipStatus)
+}
+
+export async function checkLiuyaoQaQuota(userId: string, vipStatus?: boolean) {
+  return atomicCheckAndConsume(userId, 'liuyaoQaCount', FREE_DAILY_LIMIT, vipStatus)
+}
+
+export async function checkMeihuaQaQuota(userId: string, vipStatus?: boolean) {
+  return atomicCheckAndConsume(userId, 'meihuaQaCount', FREE_DAILY_LIMIT, vipStatus)
+}
+
+export async function checkMarriageQaQuota(userId: string, vipStatus?: boolean) {
+  return atomicCheckAndConsume(userId, 'marriageQaCount', FREE_DAILY_LIMIT, vipStatus)
 }
 
 /**
