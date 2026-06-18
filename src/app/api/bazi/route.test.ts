@@ -119,8 +119,11 @@ describe('POST /api/bazi', () => {
     expect(json.pillars).toBeDefined();
     expect(json.pillars.year).toBeDefined();
     expect(json.wuxing).toBeDefined();
-    expect(typeof json.aiAnalysis).toBe('string');
-    expect(generateBaziAnalysis).toHaveBeenCalled();
+    // 现行架构：本路由只做确定性排盘，AI 解读延迟到 /api/bazi/stream（按 cacheKey 流式）。
+    // 故 aiAnalysis 为空串占位，且本路由不调用 generateBaziAnalysis。
+    expect(json.aiAnalysis).toBe('');
+    expect(json.cacheKey).toMatch(/^v5:bazi:/);
+    expect(generateBaziAnalysis).not.toHaveBeenCalled();
   });
 
   it('allows a guest (no session) when guest rate limit permits', async () => {

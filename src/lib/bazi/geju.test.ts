@@ -129,6 +129,31 @@ describe('calculateYongShen', () => {
     expect(ELEMENTS).toContain(jiShen);
     expect(yongShen).not.toBe(jiShen);
   });
+
+  it('中和·调候: 冬月(寒)优先取火为用神（火非日主且不过旺时）', () => {
+    // 2000-01-01 子月（冬），日主壬水。火稀少 → 调候取火暖局
+    const chart = chartFor('2000-01-01', 0);
+    expect(chart.month.zhi).toBe('子');
+    const { yongShen } = calculateYongShen(chart, '中和');
+    expect(yongShen).toBe('火');
+  });
+
+  it('中和·调候: 夏月(燥)优先取水为用神（水非日主且不过旺时）', () => {
+    // 1990-06-20 午月（夏），日主己土。水偏少 → 调候取水润局
+    const chart = chartFor('1990-06-20', 10);
+    expect(chart.month.zhi).toBe('午');
+    const { yongShen } = calculateYongShen(chart, '中和');
+    expect(yongShen).toBe('水');
+  });
+
+  it('中和·非调候月: 春秋退回五行均衡法（用神为最弱非日主五行）', () => {
+    // 选一个春/秋月样本，确认仍产出合法且 用神≠忌神
+    const chart = chartFor('1985-09-10', 10); // 酉月（秋）无强制调候
+    expect(['寅', '卯', '辰', '申', '酉', '戌']).toContain(chart.month.zhi);
+    const { yongShen, jiShen } = calculateYongShen(chart, '中和');
+    expect(ELEMENTS).toContain(yongShen);
+    expect(yongShen).not.toBe(jiShen);
+  });
 });
 
 describe('analyzeMingGe (one-stop)', () => {

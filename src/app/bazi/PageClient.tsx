@@ -197,10 +197,27 @@ const faqItems: FaqItem[] = [
   },
 ];
 
+/** 去除模型偶尔混入的 Markdown 残留符号，保持纯文本展示 */
+function stripMarkdown(s: string): string {
+  return s
+    .replace(/^#{1,6}\s*/gm, '')       // 标题井号
+    .replace(/\*\*(.+?)\*\*/g, '$1')   // 粗体
+    .trim();
+}
+
+/**
+ * 从【章节名】分段文本中取出指定章节内容。
+ * 健壮性：容忍标题内外空白、单/多换行；章节结束于下一个【任意标题】或文本末尾
+ * （不再依赖「双换行 + 【」，避免模型少打一个换行就把后续章节整段吞进来）。
+ * 流式未完成时下一个标题尚未到达，则匹配到末尾返回当前已生成部分。
+ */
 function parseSection(text: string, titles: string[]): string {
+  if (!text) return '';
   for (const title of titles) {
-    const match = new RegExp(`【${title}】([\\s\\S]*?)(?:\\n\\n【|$)`).exec(text);
-    if (match?.[1]?.trim()) return match[1].trim();
+    const t = title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // 转义正则元字符
+    const re = new RegExp(`【\\s*${t}\\s*】[ \\t]*\\n?([\\s\\S]*?)(?=\\n*【[^】]{1,12}】|$)`);
+    const match = re.exec(text);
+    if (match?.[1]?.trim()) return stripMarkdown(match[1]);
   }
   return '';
 }
@@ -991,6 +1008,10 @@ function BaziPageContent() {
           gender: formData.gender || 'unknown',
           birthDate: formData.birthDate,
           birthHour: parseInt(formData.birthHour, 10),
+          // 精确时分 + 是否知时：供服务端跑工具链（大运起运更准）
+          knowTime: formData.knowTime,
+          birthHourNum: formData.knowTime ? formData.birthHourNum : undefined,
+          birthMinute: formData.knowTime ? formData.birthMinute : undefined,
           forceRefresh,
           dayunExtra: activeResult.dayunExtra,
         }),

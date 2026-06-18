@@ -205,7 +205,8 @@ export async function POST(req: NextRequest) {
       }))
       .digest('hex')
       .slice(0, 16);
-    const cacheKey = `v4:bazi:${hash}`;
+    // v5: 主报告改为注入确定性工具链事实（格局/用神/神煞/刑冲/大运），与旧缓存不兼容，故升版
+    const cacheKey = `v5:bazi:${hash}`;
 
     return Response.json({
       pillars,

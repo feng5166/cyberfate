@@ -11,7 +11,8 @@ import { generateFallbackBaziAnalysis } from '@/lib/ai/client';
 import { formatAnalysis } from '@/lib/ai/formatAnalysis';
 import { attachClientAbort } from '@/lib/ai/streamProxy';
 import { logger } from '@/lib/logger';
-import type { BaziAnalysis, BaziResult } from '@/lib/bazi/types';
+import { runBaziToolchain, toolchainToPromptFacts } from '@/lib/bazi/tools';
+import type { BaziAnalysis, BaziChart, BaziResult, Gender } from '@/lib/bazi/types';
 
 const SERVICE = 'api/bazi/stream';
 
@@ -22,9 +23,44 @@ const requestSchema = z.object({
   gender: z.string().optional(),
   birthDate: z.string(),
   birthHour: z.number().int().min(-1).max(11),
+  // 精确时分（可选）：提供后工具链的大运起运计算更准
+  birthHourNum: z.number().int().min(0).max(23).optional(),
+  birthMinute: z.number().int().min(0).max(59).optional(),
+  knowTime: z.boolean().optional(),
   forceRefresh: z.boolean().optional(),
   dayunExtra: z.any().optional(),
 });
+
+/** 北京时间当天 YYYY-MM-DD */
+function beijingToday(): string {
+  return new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+
+/**
+ * 用客户端命盘跑本地确定性工具链，得到「命理推算事实」文本（格局/用神/神煞/刑冲/大运/流年…）。
+ * 任意一步失败都不阻断主流程，退回空串（仅丢失增益、不影响出报告）。
+ */
+function buildToolchainFacts(
+  baziResult: unknown,
+  birthDate: string,
+  gender: Gender,
+  birthHourNum?: number,
+  birthMinute?: number,
+): string {
+  try {
+    const chart = (baziResult as BaziResult | undefined)?.chart as BaziChart | undefined;
+    if (!chart?.year || !chart?.month || !chart?.day) return '';
+    const steps = runBaziToolchain({
+      chart,
+      birth: { birthDate, gender, birthHourNum, birthMinute },
+      today: beijingToday(),
+    });
+    return toolchainToPromptFacts(steps);
+  } catch (err) {
+    logger.error(SERVICE, 'toolchain facts failed', err instanceof Error ? err : undefined);
+    return '';
+  }
+}
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -37,7 +73,7 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: '请求参数错误' }, { status: 400 });
   }
 
-  const { cacheKey, baziResult, name, gender, birthDate, birthHour, forceRefresh, dayunExtra } = parsed;
+  const { cacheKey, baziResult, name, gender, birthDate, birthHour, birthHourNum, birthMinute, knowTime, forceRefresh, dayunExtra } = parsed;
 
   // 1. 查缓存（forceRefresh 时跳过）
   if (!forceRefresh) {
@@ -71,8 +107,19 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // 2. 调 DeepSeek stream
-  const prompt = buildBaziStreamPrompt(baziResult as BaziResult, name, gender, dayunExtra);
+  // 2. 跑本地确定性工具链 → 命理推算事实，注入 prompt 让模型据实作答（而非脑补）
+  const factsGender: Gender = gender === 'female' ? 'female' : 'male';
+  const hasPreciseTime = knowTime !== false && typeof birthHourNum === 'number';
+  const facts = buildToolchainFacts(
+    baziResult,
+    birthDate,
+    factsGender,
+    hasPreciseTime ? birthHourNum : undefined,
+    hasPreciseTime ? birthMinute : undefined,
+  );
+
+  // 3. 调 DeepSeek stream
+  const prompt = buildBaziStreamPrompt(baziResult as BaziResult, name, gender, dayunExtra, facts);
   const proxy = attachClientAbort(req);
 
   let upstream: Response;

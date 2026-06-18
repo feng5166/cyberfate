@@ -61,6 +61,32 @@ const WUXING_CONTROL: Record<WuXing, WuXing> = {
   '木': '土', '火': '金', '土': '水', '金': '木', '水': '火',
 };
 
+/** 生我者（印）：取「生出 X」的五行。用于身弱取印为用。 */
+const WUXING_GENERATED_BY: Record<WuXing, WuXing> = {
+  '木': '水', '火': '木', '土': '火', '金': '土', '水': '金',
+};
+
+/**
+ * 日主强弱分档阈值（得令+得地+得势 综合分）。
+ * 抽出为具名常量，避免散落魔法数字，便于统一校准。
+ */
+export const RIZHU_STRENGTH_THRESHOLDS = {
+  /** ≥ 此分判「偏强」 */
+  strong: 40,
+  /** ≥ 此分（且 < strong）判「中和」，低于则「偏弱」 */
+  neutral: 10,
+} as const;
+
+/**
+ * 调候用神（按月令寒燥取暖润）—— 仅用于「中和」局的喜用判定。
+ * 冬月(亥子丑)气寒 → 喜火暖局；夏月(巳午未)气燥 → 喜水润局。
+ * 春(寅卯辰)/秋(申酉戌)气候平和，不强制调候，退回五行均衡法。
+ */
+const TIAOHOU_BY_MONTH: Partial<Record<DiZhi, WuXing>> = {
+  '亥': '火', '子': '火', '丑': '火',
+  '巳': '水', '午': '水', '未': '水',
+};
+
 /**
  * 检查天干是否在地支中有根（即通根）
  */
@@ -206,8 +232,8 @@ export function calculateRizhuStrength(chart: BaziChart): {
   const total = deLing + deDi + deShi;
 
   let strength: RizhuStrength;
-  if (total >= 40) strength = '偏强';
-  else if (total >= 10) strength = '中和';
+  if (total >= RIZHU_STRENGTH_THRESHOLDS.strong) strength = '偏强';
+  else if (total >= RIZHU_STRENGTH_THRESHOLDS.neutral) strength = '中和';
   else strength = '偏弱';
 
   return { strength, score: total, detail: { deLing, deDi, deShi } };
@@ -235,14 +261,12 @@ export function calculateYongShen(
   }
 
   if (strength === '偏弱') {
-    const generating: Record<WuXing, WuXing> = {
-      '木': '水', '火': '木', '土': '火', '金': '土', '水': '金',
-    };
-    const yongShen = generating[dayWuxing];
-    const jiShen = WUXING_CONTROL[dayWuxing];
+    const yongShen = WUXING_GENERATED_BY[dayWuxing]; // 印（生我）为用
+    const jiShen = WUXING_CONTROL[dayWuxing];        // 财（我克，耗身）为忌
     return { yongShen, jiShen };
   }
 
+  // —— 中和局：先调候（寒暖燥湿），再退回五行均衡 ——
   const wuxingCount: Record<WuXing, number> = { '金': 0, '木': 0, '水': 0, '火': 0, '土': 0 };
   const allGan: TianGan[] = [chart.year.gan, chart.month.gan, chart.day.gan];
   if (chart.hour) allGan.push(chart.hour.gan);
@@ -252,14 +276,22 @@ export function calculateYongShen(
   for (const gan of allGan) wuxingCount[TIANGAN_WUXING[gan]]++;
   for (const zhi of allZhi) wuxingCount[DIZHI_WUXING[zhi]]++;
 
-  const entries = Object.entries(wuxingCount) as [WuXing, number][];
-  entries.sort((a, b) => a[1] - b[1]);
+  const entries = (Object.entries(wuxingCount) as [WuXing, number][])
+    .sort((a, b) => a[1] - b[1]); // 升序：最弱在前
+  const maxCount = entries[entries.length - 1][1];
 
-  const weakest = entries[0][0];
-  const strongest = entries[entries.length - 1][0];
+  // 用神：调候优先（冬月喜火、夏月喜水），仅当该五行非日主本气、且未在命局中独占最旺时采用；
+  // 否则退回五行均衡法，取命局最弱且非日主的五行补益。
+  const tiaohou = TIAOHOU_BY_MONTH[chart.month.zhi];
+  const yongShen: WuXing =
+    (tiaohou && tiaohou !== dayWuxing && wuxingCount[tiaohou] < maxCount)
+      ? tiaohou
+      : (entries.find(([el]) => el !== dayWuxing)?.[0] ?? entries[0][0]);
 
-  const yongShen = weakest === dayWuxing ? entries[1][0] : weakest;
-  const jiShen = strongest === dayWuxing ? entries[entries.length - 2][0] : strongest;
+  // 忌神：命局最旺且非日主、非用神的五行
+  const jiShen: WuXing =
+    [...entries].reverse().find(([el]) => el !== dayWuxing && el !== yongShen)?.[0]
+    ?? entries[entries.length - 1][0];
 
   return { yongShen, jiShen };
 }

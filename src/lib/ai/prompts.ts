@@ -564,7 +564,8 @@ export const BAZI_STREAM_SYSTEM_PROMPT = `${SAFETY_GUARDRAIL}
 - 不重复引用其他章节内容
 - 使用第三人称「命主」，不用「您」
 - 评价措辞使用「偏向」「较」「倾向」，不用绝对断言
-- 禁止空泛套话，每句话要有具体命理支撑`;
+- 禁止空泛套话，每句话要有具体命理支撑
+- 若提供了【命理推算事实】，必须严格以其为唯一依据：引用其中的格局、日主强弱、喜用/忌神、十神、神煞、刑冲会合、大运、流年等确定性结论，不得编造与之矛盾或未提供的命理判断`;
 
 export interface BaziStreamDayunExtra {
   ageStart?: number;
@@ -580,7 +581,9 @@ export function buildBaziStreamPrompt(
   baziResult: BaziResult,
   name?: string,
   gender?: string,
-  dayunExtra?: BaziStreamDayunExtra
+  dayunExtra?: BaziStreamDayunExtra,
+  /** 本地确定性命理工具链算出的事实（runBaziToolchain→toolchainToPromptFacts），注入后模型须据此作答 */
+  facts?: string,
 ): string {
   const { chart, wuxing, dayMaster } = baziResult as BaziResult & {
     dayun?: { current?: string; liunian?: string };
@@ -614,11 +617,15 @@ export function buildBaziStreamPrompt(
     return segs.length ? `\n${segs.join('，')}` : '';
   })();
 
+  const factsBlock = facts && facts.trim()
+    ? `\n\n【命理推算事实】（本地确定性计算，务必以此为唯一依据）\n${facts.trim()}`
+    : '';
+
   return `姓名：${nameStr}
 性别：${genderLabel}
 八字：${pillarStr}
 日主：${dayMaster || ''}
-五行统计：${wuxingStr}${dayunLine}
+五行统计：${wuxingStr}${dayunLine}${factsBlock}
 
 请按照系统要求的章节格式，输出完整的八字命理分析报告。每章节必须有实质内容，不得省略。`;
 }
