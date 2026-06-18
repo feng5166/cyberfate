@@ -16,13 +16,12 @@ interface NavItem {
   href: string;
   desc?: string;
   icon?: LucideIcon;
-  badge?: '热门' | 'NEW';
 }
 
 // 顶部主导航（高频入口，桌面端直接展示）
 const featuredNav: NavItem[] = [
   { label: '首页', href: '/' },
-  { label: '八字分析', href: '/bazi', badge: '热门' },
+  { label: '八字分析', href: '/bazi' },
   { label: '每日运势', href: '/daily' },
   { label: '塔罗占卜', href: '/tarot' },
 ];
@@ -32,7 +31,7 @@ const megaGroups: { title: string; items: NavItem[] }[] = [
   {
     title: '东方命理',
     items: [
-      { label: '八字分析', href: '/bazi', desc: 'AI 排盘，解读命盘特质与运势', icon: Sparkles, badge: '热门' },
+      { label: '八字分析', href: '/bazi', desc: 'AI 排盘，解读命盘特质与运势', icon: Sparkles },
       { label: '紫微斗数', href: '/ziwei', desc: '十二宫位与主星格局精解', icon: Star },
       { label: '合婚配对', href: '/bazi/marriage', desc: '双方八字深度匹配度分析', icon: Heart },
     ],
@@ -49,7 +48,7 @@ const megaGroups: { title: string; items: NavItem[] }[] = [
     title: '每日开运',
     items: [
       { label: '每日运势', href: '/daily', desc: '每日吉凶与开运指引', icon: Sun },
-      { label: '2026生肖运势', href: '/2026', desc: '丙午马年十二生肖全解', icon: Sparkles, badge: 'NEW' },
+      { label: '2026生肖运势', href: '/2026', desc: '丙午马年十二生肖全解', icon: Sparkles },
       { label: '黄历查询', href: '/huangli', desc: '宜忌吉日，AI 智能择日', icon: CalendarDays },
       { label: '音乐运势签', href: '/music-oracle', desc: '抽一签，听见你的运势', icon: Music },
     ],
@@ -57,18 +56,6 @@ const megaGroups: { title: string; items: NavItem[] }[] = [
 ];
 
 const allMegaHrefs = megaGroups.flatMap(g => g.items.map(i => i.href)).concat('/knowledge');
-
-function Badge({ kind }: { kind: '热门' | 'NEW' }) {
-  return (
-    <span
-      className={`ml-1.5 inline-flex items-center rounded-full px-1.5 py-px text-[10px] font-medium leading-none align-middle ${
-        kind === 'NEW' ? 'bg-emerald-50 text-emerald-600' : 'bg-[#FBEEDD] text-[#C2762B]'
-      }`}
-    >
-      {kind}
-    </span>
-  );
-}
 
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -87,11 +74,24 @@ export function Header() {
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && mobileOpen) setMobileOpen(false);
+      if (e.key === 'Escape') { setMobileOpen(false); setMoreOpen(false); }
     };
     window.addEventListener('keydown', handleEsc);
     return () => window.removeEventListener('keydown', handleEsc);
-  }, [mobileOpen]);
+  }, []);
+
+  // 路由变化时收起所有浮层
+  useEffect(() => { setMoreOpen(false); setUserMenuOpen(false); }, [pathname]);
+
+  // 点击外部关闭 mega-menu（触屏/无 hover 场景）
+  useEffect(() => {
+    if (!moreOpen) return;
+    const onDocClick = (e: MouseEvent) => {
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) setMoreOpen(false);
+    };
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, [moreOpen]);
 
   const linkCls = (active: boolean) =>
     `text-sm transition-colors duration-200 ${active ? 'text-[#1C1A16] font-medium' : 'text-brand-gray hover:text-[#1C1A16]'}`;
@@ -126,11 +126,10 @@ export function Header() {
             {featuredNav.map((item) => (
               <Link key={item.href} href={item.href} className={linkCls(pathname === item.href)}>
                 {item.label}
-                {item.badge && <Badge kind={item.badge} />}
               </Link>
             ))}
 
-            {/* 全部功能 mega-menu */}
+            {/* 全部功能 mega-menu（hover 展开；触屏可点击切换） */}
             <div
               ref={moreRef}
               className="relative"
@@ -138,6 +137,7 @@ export function Header() {
               onMouseLeave={() => setMoreOpen(false)}
             >
               <button
+                onClick={() => setMoreOpen((v) => !v)}
                 className={`flex items-center gap-1 ${linkCls(allMegaHrefs.includes(pathname))}`}
                 aria-expanded={moreOpen}
               >
@@ -161,16 +161,14 @@ export function Header() {
                                 <Link
                                   key={item.href}
                                   href={item.href}
+                                  onClick={() => setMoreOpen(false)}
                                   className={`group flex items-start gap-3 rounded-xl p-2 transition-colors ${active ? 'bg-[#FAF9F6]' : 'hover:bg-[#FAF9F6]'}`}
                                 >
                                   <span className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-[#FBEEDD] text-[#C2762B]">
                                     <Icon className="h-4 w-4" />
                                   </span>
                                   <span className="min-w-0">
-                                    <span className="flex items-center text-sm font-medium text-[#1C1A16]">
-                                      {item.label}
-                                      {item.badge && <Badge kind={item.badge} />}
-                                    </span>
+                                    <span className="block text-sm font-medium text-[#1C1A16]">{item.label}</span>
                                     <span className="block text-xs text-[#1C1A16]/50 leading-snug mt-0.5">{item.desc}</span>
                                   </span>
                                 </Link>
@@ -182,13 +180,14 @@ export function Header() {
                     </div>
                     {/* 底部：知识库 + CTA */}
                     <div className="mt-4 flex items-center justify-between border-t border-brand-border-light pt-3">
-                      <Link href="/knowledge" className="flex items-center gap-2 text-sm text-brand-gray hover:text-[#1C1A16] transition-colors">
+                      <Link href="/knowledge" onClick={() => setMoreOpen(false)} className="flex items-center gap-2 text-sm text-brand-gray hover:text-[#1C1A16] transition-colors">
                         <BookOpen className="h-4 w-4 text-[#C2762B]" />
                         命理知识库
                         <span className="text-xs text-[#1C1A16]/40">术语图解与入门科普</span>
                       </Link>
                       <Link
                         href="/bazi"
+                        onClick={() => setMoreOpen(false)}
                         className="inline-flex items-center gap-1.5 rounded-full bg-[#C2762B] px-4 py-2 text-sm font-medium text-white hover:bg-[#A86425] transition-colors"
                       >
                         免费测八字 <ArrowRight className="h-3.5 w-3.5" />
@@ -293,7 +292,6 @@ export function Header() {
                   onClick={() => setMobileOpen(false)}
                 >
                   {item.label}
-                  {item.badge && <Badge kind={item.badge} />}
                 </Link>
               ))}
             </div>
@@ -315,10 +313,7 @@ export function Header() {
                         <Icon className="h-4 w-4" />
                       </span>
                       <span className="min-w-0">
-                        <span className="flex items-center text-sm text-[#1C1A16]">
-                          {item.label}
-                          {item.badge && <Badge kind={item.badge} />}
-                        </span>
+                        <span className="block text-sm text-[#1C1A16]">{item.label}</span>
                         <span className="block text-xs text-[#1C1A16]/45 leading-snug">{item.desc}</span>
                       </span>
                     </Link>
