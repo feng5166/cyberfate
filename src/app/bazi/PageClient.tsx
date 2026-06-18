@@ -2320,18 +2320,6 @@ function BaziPageContent() {
                   </Card>
                 )}
 
-                {/* 神煞分析（结构化命盘模块） */}
-                <Card className={cardClass}>
-                  <ShenshaCard shensha={result.shensha} />
-                </Card>
-
-                {/* 流年流月（结构化命盘模块） */}
-                {(result.liunian || (result.liuyue && result.liuyue.length > 0)) && (
-                  <Card className={cardClass}>
-                    <LiunianLiuyueCard liunian={result.liunian} liuyue={result.liuyue} />
-                  </Card>
-                )}
-
                 <div ref={aiReadingRef}>
                 <Card className={`${cardClass} relative`}>
                   {reanalyzing && !aiStreaming && (
@@ -2629,12 +2617,6 @@ function BaziPageContent() {
                         </div>
                         );
                       })}
-
-                      <hr className="border-[#1C1A16]/8 my-8" />
-                      <div>
-                        <h4 className="border-l-4 border-[#C2762B] pl-3 text-base font-semibold text-[#8B3A2A] mb-3">八、十神详解</h4>
-                        <ShishenDetailTab pillars={result.pillars} dayGan={result.pillars.day.gan} />
-                      </div>
                     </div>
                   </div>
                   )}
@@ -2660,6 +2642,23 @@ function BaziPageContent() {
                   isLoggedIn={status === 'authenticated'}
                   isVip={isMember}
                 />
+
+                {/* 排盘细节模块（确定性命盘数据，置于 AI 问答之后）：十神 / 神煞 / 流年流月 */}
+                <Card className={cardClass}>
+                  <h3 className="text-base font-semibold text-[#1C1A16] mb-1">十神详解</h3>
+                  <p className="text-xs text-[#1C1A16]/45 mb-4">四柱天干十神与日主的关系及含义</p>
+                  <ShishenDetailTab pillars={result.pillars} dayGan={result.pillars.day.gan} />
+                </Card>
+
+                <Card className={cardClass}>
+                  <ShenshaCard shensha={result.shensha} />
+                </Card>
+
+                {(result.liunian || (result.liuyue && result.liuyue.length > 0)) && (
+                  <Card className={cardClass}>
+                    <LiunianLiuyueCard liunian={result.liunian} liuyue={result.liuyue} />
+                  </Card>
+                )}
 
                 <div className="rounded-2xl bg-[#FDF6F0] p-6 md:p-8">
                   <h3 className="text-lg font-semibold text-[#1C1A16]">情侣缘分测算</h3>
