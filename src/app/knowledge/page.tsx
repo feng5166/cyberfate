@@ -66,7 +66,6 @@ export default function KnowledgePage() {
         {/* 搜索 + 筛选 + 文章列表（交互部分用 Client Component） */}
         <div className="max-w-[840px] mx-auto">
           <KnowledgeListClient articles={knowledgeList} />
-        </div>
 
         {/* 说明区 — Server Component，爬虫可抓 */}
         <div className="bg-white rounded-2xl border border-[#1C1A16]/8 p-7 mb-16">
@@ -79,6 +78,7 @@ export default function KnowledgePage() {
             <li>• 命理学是一种传统文化，建议理性看待，不要过度迷信</li>
             <li>• 知识内容持续更新中，欢迎反馈建议</li>
           </ul>
+        </div>
         </div>
       </Container>
 

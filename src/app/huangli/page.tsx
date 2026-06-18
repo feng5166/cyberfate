@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import PageClient from './PageClient'
 import { FaqJsonLd } from '@/components/seo/FaqJsonLd'
+import { Footer } from '@/components/layout/Footer'
 
 export const metadata: Metadata = {
   title: 'AI老黄历 | 赛博命理师 CyberFate — 每日宜忌吉时查询',
@@ -52,6 +53,7 @@ export default function HuangliPage() {
       />
       <FaqJsonLd items={FAQ_ITEMS} />
       <PageClient />
+      <Footer>
       <section aria-label="关于老黄历" className="mx-auto max-w-3xl px-4 py-12 text-[#1C1A16]/60 text-sm leading-relaxed border-t border-[#1C1A16]/8 mt-8">
         <h2 className="text-base font-semibold text-[#1C1A16] mb-4">关于老黄历</h2>
         <p className="mb-3">老黄历又称通书、皇历，是中国传统社会用于指导日常决策的择日文化集大成者。其根基是干支纪时体系——天干地支六十甲子循环，配合二十四节气、七十二候、二十八星宿、建除十二神等多重历法元素。清乾隆年间编纂的《协纪辨方书》是现代黄历的重要规范来源。</p>
@@ -82,6 +84,7 @@ export default function HuangliPage() {
           </div>
         </div>
       </section>
+      </Footer>
     </>
   )
 }

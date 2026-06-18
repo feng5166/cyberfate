@@ -156,7 +156,6 @@ export default function HuangliPage() {
             </div>
         </div>
       </div>
-      <Footer />
     </div>
   );
 }
