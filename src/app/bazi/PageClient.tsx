@@ -648,17 +648,6 @@ function ProfileFormModal({
           {/* 基本信息 */}
           <div className="space-y-3">
             <p className="text-sm font-semibold text-[#1C1A16]/50 tracking-wide">基本信息</p>
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-[#1C1A16]/70">显示名称</label>
-              <input
-                type="text"
-                value={values.label}
-                maxLength={10}
-                onChange={(e) => setValues((v) => ({ ...v, label: e.target.value }))}
-                placeholder="如：妈妈、朋友"
-                className="w-full h-10 rounded-lg border border-[#1C1A16]/15 bg-white px-4 text-sm text-[#1C1A16] placeholder:text-[#1C1A16]/40 focus:border-[#1C1A16]/30 focus:ring-2 focus:ring-[#1C1A16]/10 outline-none transition-all"
-              />
-            </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <label className="block text-sm font-medium text-[#1C1A16]/70">姓名</label>
@@ -666,8 +655,8 @@ function ProfileFormModal({
                   type="text"
                   value={values.name}
                   maxLength={10}
-                  onChange={(e) => setValues((v) => ({ ...v, name: e.target.value }))}
-                  placeholder="真实姓名"
+                  onChange={(e) => setValues((v) => ({ ...v, name: e.target.value, label: e.target.value }))}
+                  placeholder="如：妈妈、周峰"
                   className="w-full h-10 rounded-lg border border-[#1C1A16]/15 bg-white px-4 text-sm text-[#1C1A16] placeholder:text-[#1C1A16]/40 focus:border-[#1C1A16]/30 focus:ring-2 focus:ring-[#1C1A16]/10 outline-none transition-all"
                 />
               </div>
@@ -1960,7 +1949,7 @@ function BaziPageContent() {
                 value: p.id,
                 label: `${p.label || p.name} (${p.birthDate || '未填'})`,
               }))}
-              className="!w-auto h-8 min-w-[200px] rounded-lg border border-[#1C1A16]/15 bg-white px-3 pr-8 text-sm text-[#1C1A16]"
+              className="!w-auto h-8 min-w-[240px] max-w-[280px] rounded-lg border border-[#1C1A16]/15 bg-white px-3 pr-8 text-sm text-[#1C1A16]"
             />
             {(() => {
               const isAuth = status === 'authenticated';
