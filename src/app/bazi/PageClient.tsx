@@ -825,7 +825,7 @@ function BaziPageContent() {
   const [aiStreaming, setAiStreaming] = useState(false);
   const [aiStreamText, setAiStreamText] = useState('');
   const [aiSteps, setAiSteps] = useState<string[]>([]); // 工具链推算步骤（首屏「推算中」动画）
-  const [stepsExpanded, setStepsExpanded] = useState(true); // 推算步骤折叠态：流式中展开看进度，完成后默认折叠
+  const [stepsExpanded, setStepsExpanded] = useState(false); // 推算步骤折叠态：默认折叠（含流式中），点击展开看推算链条
   const [showAiButton, setShowAiButton] = useState(false);
   const autoLoadAttemptedRef = useRef(false);
 
@@ -1344,7 +1344,7 @@ function BaziPageContent() {
     setAiStreaming(true);
     setAiStreamText('');
     setAiSteps([]);
-    setStepsExpanded(true); // 重新流式时展开看推算进度
+    setStepsExpanded(false); // 流式中也默认折叠，仅标题显示进度，点击可展开
 
     try {
       const response = await fetch('/api/bazi/stream', {
@@ -1868,6 +1868,9 @@ function BaziPageContent() {
 
   const handleReset = () => {
     clearResultState('已重置结果，请重新测算');
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   const handleEditBasicInfo = () => {
