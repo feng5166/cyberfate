@@ -214,15 +214,6 @@ export default function HomePage() {
             赛博命理师结合 AI 智能科学解析传统命理，为你提供八字、紫微、塔罗等全方位命理分析服务
           </p>
 
-          {/* 金句引用 */}
-          <blockquote className="mt-8 md:mt-10 max-w-[480px] mx-auto">
-            <p className="text-[14px] text-[#1C1A16]/50 leading-relaxed text-center italic">
-              &ldquo;When the inner situation is not made conscious, it happens outside, as fate.&rdquo;
-            </p>
-            <cite className="text-[12px] text-[#1C1A16]/45 mt-2 block text-center not-italic">
-              — C.G. Jung
-            </cite>
-          </blockquote>
         </div>
       </section>
 
@@ -317,34 +308,16 @@ export default function HomePage() {
         </Container>
       </section>
 
-      {/* ===== Social Proof ===== */}
-      <section className="px-4 py-6 overflow-hidden">
+      {/* ===== 金句 ===== */}
+      <section className="px-4 py-12 md:py-16">
         <Container>
-          <div className="relative max-w-[840px] mx-auto">
-            <div className="flex gap-4 overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
-              <div className="flex gap-4 animate-[scroll_30s_linear_infinite]">
-                {[
-                  { text: '八字分析很准，对我的事业方向有了新的认识', author: '张先生', tag: '八字分析' },
-                  { text: '每日运势很实用，每天早上都会看一看', author: '李女士', tag: '每日运势' },
-                  { text: '合婚分析给了我们很好的参考，非常详细', author: '王先生', tag: '合婚配对' },
-                  { text: '梅花易数的解读角度很独特，值得一试', author: '赵女士', tag: '梅花易数' },
-                  { text: 'AI解读比传统命理师更客观，推荐！', author: '刘先生', tag: '八字分析' },
-                  { text: '紫微斗数分析很详细，十二宫位都有解读', author: '陈女士', tag: '紫微斗数' },
-                ].flatMap((review, i) => [review, review].map((r, j) => (
-                  <div
-                    key={`${i}-${j}`}
-                    className="flex-shrink-0 w-[260px] bg-white/80 backdrop-blur-sm rounded-xl border border-[#1C1A16]/[0.06] p-4"
-                  >
-                    <p className="text-[13px] text-[#1C1A16]/70 leading-relaxed line-clamp-2">&ldquo;{r.text}&rdquo;</p>
-                    <div className="flex items-center justify-between mt-3">
-                      <span className="text-[12px] text-[#1C1A16]/50">{r.author}</span>
-                      <span className="text-[11px] text-[#1C1A16]/40 bg-[#1C1A16]/[0.04] px-2 py-0.5 rounded-full">{r.tag}</span>
-                    </div>
-                  </div>
-                )))}
-              </div>
-            </div>
-          </div>
+          <figure className="relative max-w-[840px] mx-auto rounded-2xl bg-[#F4F3F0] px-8 py-14 md:px-16 md:py-16 text-center overflow-hidden">
+            <span aria-hidden className="absolute left-6 top-3 font-serif text-[72px] leading-none text-[#1C1A16]/10 select-none">&ldquo;</span>
+            <blockquote className="relative font-display italic text-[22px] md:text-[30px] leading-[1.7] tracking-wide text-[#1C1A16]">
+              除非你意识到你的潜意识，否则潜意识将主导你的人生，而你将其称为命运。
+            </blockquote>
+            <figcaption className="mt-7 text-sm text-[#1C1A16]/45 not-italic">— 卡尔·荣格</figcaption>
+          </figure>
         </Container>
       </section>
 
