@@ -1904,7 +1904,7 @@ function BaziPageContent() {
                 value: p.id,
                 label: `${p.label || p.name} (${p.birthDate || '未填'})`,
               }))}
-              className="h-9 min-w-[160px] rounded-lg border border-[#1C1A16]/15 bg-white px-3 text-sm text-[#1C1A16]"
+              className="!w-auto h-8 min-w-[200px] rounded-lg border border-[#1C1A16]/15 bg-white px-3 pr-8 text-sm text-[#1C1A16]"
             />
             {(() => {
               const isAuth = status === 'authenticated';
@@ -1921,7 +1921,7 @@ function BaziPageContent() {
                   onClick={handleOpenAddProfile}
                   disabled={disabled}
                   title={tip}
-                  className={`inline-flex items-center gap-1 h-9 px-4 rounded-lg text-sm font-medium transition-colors ${
+                  className={`inline-flex items-center gap-1 h-8 px-3 rounded-lg text-sm font-medium transition-colors ${
                     disabled
                       ? 'bg-[#1C1A16]/8 text-[#1C1A16]/40 cursor-not-allowed'
                       : 'bg-[#1C1A16] text-white hover:bg-[#1C1A16]/85'
@@ -1941,7 +1941,7 @@ function BaziPageContent() {
                     type="button"
                     onClick={handleOpenEditProfile}
                     title="编辑档案"
-                    className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-[#1C1A16]/15 text-[#1C1A16]/70 hover:bg-[#1C1A16]/5 transition-colors"
+                    className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-[#1C1A16]/15 text-[#1C1A16]/70 hover:bg-[#1C1A16]/5 transition-colors"
                     aria-label="编辑档案"
                   >
                     <Pencil className="w-4 h-4" />
@@ -1951,7 +1951,7 @@ function BaziPageContent() {
                     onClick={handleDeleteProfile}
                     disabled={!!current.isPrimary}
                     title={current.isPrimary ? '主档案不可删除' : '删除档案'}
-                    className={`inline-flex items-center justify-center w-9 h-9 rounded-lg border transition-colors ${
+                    className={`inline-flex items-center justify-center w-8 h-8 rounded-lg border transition-colors ${
                       current.isPrimary
                         ? 'border-[#1C1A16]/8 text-[#1C1A16]/25 cursor-not-allowed'
                         : 'border-[#1C1A16]/15 text-[#1C1A16]/70 hover:bg-red-50 hover:text-red-600 hover:border-red-200'
