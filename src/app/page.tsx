@@ -217,6 +217,19 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ===== 金句 ===== */}
+      <section className="px-4 py-12 md:py-16">
+        <Container>
+          <figure className="relative max-w-[840px] mx-auto rounded-2xl bg-[#F4F3F0] px-8 py-14 md:px-16 md:py-16 text-center overflow-hidden">
+            <span aria-hidden className="absolute left-6 top-3 font-serif text-[72px] leading-none text-[#1C1A16]/10 select-none">&ldquo;</span>
+            <blockquote className="relative font-display italic text-[22px] md:text-[30px] leading-[1.7] tracking-wide text-[#1C1A16]">
+              除非你意识到你的潜意识，否则潜意识将主导你的人生，而你将其称为命运。
+            </blockquote>
+            <figcaption className="mt-7 text-sm text-[#1C1A16]/45 not-italic">— 卡尔·荣格</figcaption>
+          </figure>
+        </Container>
+      </section>
+
       {/* ===== 新手推荐路径 ===== */}
       <section className="px-4 py-10 md:py-14">
         <Container>
@@ -305,19 +318,6 @@ export default function HomePage() {
               );
             })}
           </div>
-        </Container>
-      </section>
-
-      {/* ===== 金句 ===== */}
-      <section className="px-4 py-12 md:py-16">
-        <Container>
-          <figure className="relative max-w-[840px] mx-auto rounded-2xl bg-[#F4F3F0] px-8 py-14 md:px-16 md:py-16 text-center overflow-hidden">
-            <span aria-hidden className="absolute left-6 top-3 font-serif text-[72px] leading-none text-[#1C1A16]/10 select-none">&ldquo;</span>
-            <blockquote className="relative font-display italic text-[22px] md:text-[30px] leading-[1.7] tracking-wide text-[#1C1A16]">
-              除非你意识到你的潜意识，否则潜意识将主导你的人生，而你将其称为命运。
-            </blockquote>
-            <figcaption className="mt-7 text-sm text-[#1C1A16]/45 not-italic">— 卡尔·荣格</figcaption>
-          </figure>
         </Container>
       </section>
 
