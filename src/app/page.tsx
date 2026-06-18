@@ -266,7 +266,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== 功能展示区 ===== */}
-      <section className="px-4 mt-32 md:mt-36 pb-28 md:pb-32">
+      <section className="px-4 mt-16 md:mt-20 pb-28 md:pb-32">
         <Container>
           <div className="max-w-[840px] mx-auto text-center">
             <h2 className="font-display text-[32px] text-[#1C1A16] mb-3">分析系统</h2>
