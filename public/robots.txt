@@ -7,6 +7,5 @@ Disallow: /profile/
 Disallow: /payment/
 Disallow: /reset-password/
 Disallow: /history/
-Crawl-delay: 1
 
 Sitemap: https://www.cyberfate.me/sitemap.xml

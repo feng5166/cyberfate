@@ -181,11 +181,12 @@ export default function HomePage() {
             style={{ letterSpacing: '0.06em' }}
           >
             CYBERFATE
+            <span className="sr-only">AI 八字命理 · 紫微斗数 · 塔罗占卜 · 每日运势分析</span>
           </h1>
 
           {/* 副标题 */}
           <p className="text-[17px] tracking-[0.05em] text-[#1C1A16]/70 text-center mt-6">
-            人工智能驱动的东方智慧解析系统
+            AI 驱动的八字命理 · 紫微斗数 · 塔罗占卜 · 每日运势
           </p>
 
           {/* 按钮组 */}

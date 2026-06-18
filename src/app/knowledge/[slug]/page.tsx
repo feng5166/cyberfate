@@ -41,11 +41,13 @@ export async function generateMetadata({
       url: articleUrl,
       publishedTime: article.date,
       section: article.categoryLabel,
+      images: ['/opengraph-image'],
     },
     twitter: {
-      card: 'summary',
+      card: 'summary_large_image',
       title: `${article.title} | CyberFate`,
       description: article.description,
+      images: ['/opengraph-image'],
     },
   };
 }
