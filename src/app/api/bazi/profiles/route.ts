@@ -62,6 +62,22 @@ export async function GET() {
     }
   }
 
+  // 自动修正脏数据：label 应与 name 保持一致（旧版本 label/name 分开填导致不一致）
+  const dirtyProfiles = profiles.filter((p) => p.name && p.label !== p.name);
+  if (dirtyProfiles.length > 0) {
+    await Promise.all(
+      dirtyProfiles.map((p) =>
+        prisma.baziProfile.update({
+          where: { id: p.id },
+          data: { label: p.name },
+        })
+      )
+    );
+    profiles = profiles.map((p) =>
+      dirtyProfiles.find((d) => d.id === p.id) ? { ...p, label: p.name } : p
+    );
+  }
+
   return NextResponse.json({ data: profiles });
 }
 
