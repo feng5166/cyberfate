@@ -10,10 +10,13 @@ import {
   ChevronDown,
   ChevronUp,
   History,
+  Pencil,
+  Plus,
   RefreshCw,
   Save,
   Share2,
   Sparkles,
+  Trash2,
 } from 'lucide-react';
 import { saveBirthInfo, loadBirthInfo } from '@/lib/utils/storage';
 import { deleteRecord, getRecordById, loadRecords, saveRecord } from '@/lib/utils/history';
@@ -108,6 +111,22 @@ type BaziPageResult = BaziApiResult & {
   baziResult?: BaziResult;
   dayunExtra?: DayunExtra;
 };
+
+interface BaziProfileData {
+  id: string;
+  label: string;
+  name: string;
+  gender: string;
+  birthDate: string;
+  birthHour: string;
+  birthPlace?: string | null;
+  isLunar?: boolean;
+  isPrimary?: boolean;
+  baziResult?: BaziPageResult | null;
+}
+
+const MAX_LOGGED_IN_PROFILES = 5;
+const MAX_GUEST_PROFILES = 2;
 
 const shichenOptions = [
   { value: '', label: '请选择时辰' },
@@ -539,6 +558,194 @@ function renderSectionContent(content: string): ReactNode {
   );
 }
 
+interface ProfileFormValues {
+  label: string;
+  name: string;
+  gender: string;
+  birthDate: string;
+  knowTime: boolean;
+  birthHour: string;
+  birthPlace: string;
+  isLunar: boolean;
+}
+
+function ProfileFormModal({
+  initial,
+  loading,
+  error,
+  onSubmit,
+  onClose,
+}: {
+  initial: BaziProfileData | null;
+  loading: boolean;
+  error: string;
+  onSubmit: (v: ProfileFormValues) => void;
+  onClose: () => void;
+}) {
+  const knowInitial = !!initial && initial.birthHour !== '-1';
+  const [values, setValues] = useState<ProfileFormValues>({
+    label: initial?.label || '',
+    name: initial?.name || '',
+    gender: initial?.gender || '',
+    birthDate: initial?.birthDate || '',
+    knowTime: knowInitial,
+    birthHour: knowInitial ? initial!.birthHour : '0',
+    birthPlace: initial?.birthPlace || '',
+    isLunar: !!initial?.isLunar,
+  });
+
+  return (
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-xl border border-[#1C1A16]/10">
+        <div className="sticky top-0 bg-white border-b border-[#1C1A16]/8 px-5 py-4 flex items-center justify-between">
+          <h3 className="text-base font-semibold text-[#1C1A16]">
+            {initial ? '编辑命盘档案' : '新增命盘档案'}
+          </h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-[#1C1A16]/50 hover:text-[#1C1A16] transition-colors"
+            aria-label="关闭"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="p-5 space-y-5">
+          {/* 基本信息 */}
+          <div className="space-y-3">
+            <p className="text-sm font-semibold text-[#1C1A16]/50 tracking-wide">基本信息</p>
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium text-[#1C1A16]/70">显示名称</label>
+              <input
+                type="text"
+                value={values.label}
+                maxLength={10}
+                onChange={(e) => setValues((v) => ({ ...v, label: e.target.value }))}
+                placeholder="如：妈妈、朋友"
+                className="w-full h-10 rounded-lg border border-[#1C1A16]/15 bg-white px-4 text-sm text-[#1C1A16] placeholder:text-[#1C1A16]/40 focus:border-[#1C1A16]/30 focus:ring-2 focus:ring-[#1C1A16]/10 outline-none transition-all"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium text-[#1C1A16]/70">姓名</label>
+                <input
+                  type="text"
+                  value={values.name}
+                  maxLength={10}
+                  onChange={(e) => setValues((v) => ({ ...v, name: e.target.value }))}
+                  placeholder="真实姓名"
+                  className="w-full h-10 rounded-lg border border-[#1C1A16]/15 bg-white px-4 text-sm text-[#1C1A16] placeholder:text-[#1C1A16]/40 focus:border-[#1C1A16]/30 focus:ring-2 focus:ring-[#1C1A16]/10 outline-none transition-all"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium text-[#1C1A16]/70">性别</label>
+                <Select
+                  options={[
+                    { value: '', label: '请选择性别', disabled: true },
+                    { value: 'male', label: '男' },
+                    { value: 'female', label: '女' },
+                  ]}
+                  value={values.gender}
+                  onChange={(e) => setValues((v) => ({ ...v, gender: e.target.value }))}
+                  className="h-10 rounded-lg border border-[#1C1A16]/15 bg-white px-3 text-sm text-[#1C1A16]"
+                />
+              </div>
+            </div>
+          </div>
+
+          <hr className="border-[#1C1A16]/8" />
+
+          {/* 时间信息 */}
+          <div className="space-y-3">
+            <p className="text-sm font-semibold text-[#1C1A16]/50 tracking-wide">时间信息</p>
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium text-[#1C1A16]/70">日期类型</label>
+              <SegmentControl
+                options={[
+                  { value: 'solar', label: '阳历' },
+                  { value: 'lunar', label: '农历' },
+                ]}
+                value={values.isLunar ? 'lunar' : 'solar'}
+                onChange={(value) => setValues((v) => ({ ...v, isLunar: value === 'lunar' }))}
+                className="h-10 rounded-lg border border-[#1C1A16]/15 bg-white text-[#1C1A16] overflow-hidden"
+                optionClassName="px-3 py-0 h-full flex items-center justify-center text-sm"
+              />
+            </div>
+            <DatePicker
+              label={values.isLunar ? '出生日期（农历）' : '出生日期（阳历）'}
+              value={values.birthDate}
+              onChange={(value) => setValues((v) => ({ ...v, birthDate: value }))}
+              className="space-y-1.5"
+              triggerClassName="h-10 rounded-lg"
+            />
+          </div>
+
+          <hr className="border-[#1C1A16]/8" />
+
+          {/* 时辰信息 */}
+          <div className="space-y-3">
+            <p className="text-sm font-semibold text-[#1C1A16]/50 tracking-wide">时辰信息</p>
+            <label className="flex items-start gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={values.knowTime}
+                onChange={(e) => setValues((v) => ({ ...v, knowTime: e.target.checked }))}
+                className="mt-1 w-4 h-4 accent-[#C2762B]"
+              />
+              <div>
+                <p className="text-sm font-medium text-[#1C1A16]">我知道出生时间</p>
+                <p className="text-xs text-[#1C1A16]/55 mt-0.5">不勾选时按无时辰排盘，时柱将缺失。</p>
+              </div>
+            </label>
+
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium text-[#1C1A16]/70">出生时辰</label>
+              <Select
+                options={shichenOptions.filter((o) => o.value !== '')}
+                value={values.birthHour}
+                disabled={!values.knowTime}
+                onChange={(e) => setValues((v) => ({ ...v, birthHour: e.target.value }))}
+                className={`h-10 rounded-lg border border-[#1C1A16]/15 bg-white px-3 text-sm text-[#1C1A16] ${
+                  !values.knowTime ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+              />
+            </div>
+
+            <div className={!values.knowTime ? 'opacity-50 pointer-events-none' : ''}>
+              <CitySearch
+                label="出生地"
+                placeholder="如 北京市、上海市"
+                value={values.birthPlace}
+                onInputChange={(value) => setValues((v) => ({ ...v, birthPlace: value }))}
+                onSelect={(city) => setValues((v) => ({ ...v, birthPlace: city.name }))}
+              />
+            </div>
+          </div>
+
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+              {error}
+            </div>
+          )}
+        </div>
+
+        <div className="sticky bottom-0 bg-white border-t border-[#1C1A16]/8 px-5 py-4">
+          <Button
+            type="button"
+            loading={loading}
+            onClick={() => onSubmit(values)}
+            className="w-full h-11 text-sm font-medium rounded-xl bg-[#1C1A16] text-white hover:bg-[#1C1A16]/85 transition-colors"
+          >
+            {loading ? '正在保存...' : '开始解读'}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function BaziPageContent() {
   const { status } = useSession();
   const searchParams = useSearchParams();
@@ -575,6 +782,14 @@ function BaziPageContent() {
   const [aiStreamText, setAiStreamText] = useState('');
   const [showAiButton, setShowAiButton] = useState(false);
   const autoLoadAttemptedRef = useRef(false);
+
+  // 多人档案
+  const [profiles, setProfiles] = useState<BaziProfileData[]>([]);
+  const [selectedProfileId, setSelectedProfileId] = useState<string>('');
+  const [showAddProfileModal, setShowAddProfileModal] = useState(false);
+  const [editingProfile, setEditingProfile] = useState<BaziProfileData | null>(null);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileError, setProfileError] = useState('');
 
   useEffect(() => {
     if (status !== 'authenticated') {
@@ -718,6 +933,66 @@ function BaziPageContent() {
     setError('');
     setActionMessage('已加载历史命盘记录');
   }, [recordId]);
+
+  // 加载已登录用户的档案；未登录用户走 localStorage 兼容
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadProfiles() {
+      if (status === 'authenticated') {
+        try {
+          const res = await fetch('/api/bazi/profiles');
+          if (!res.ok) return;
+          const { data } = (await res.json()) as { data?: BaziProfileData[] };
+          if (cancelled || !Array.isArray(data)) return;
+          setProfiles(data);
+        } catch {
+          // ignore
+        }
+      } else if (status === 'unauthenticated') {
+        try {
+          const records = loadRecords();
+          if (cancelled) return;
+          const mapped: BaziProfileData[] = records.map((r) => ({
+            id: r.id,
+            label: r.name || '缘主',
+            name: r.name || '缘主',
+            gender: r.gender || '',
+            birthDate: r.birthDate,
+            birthHour: r.birthHour,
+            birthPlace: r.birthPlace || '',
+            isLunar: false,
+            isPrimary: false,
+            baziResult: {
+              pillars: r.pillars,
+              wuxing: r.wuxing,
+              aiAnalysis: r.aiAnalysis,
+              fiveDimensions: r.fiveDimensions,
+              traits: r.traits,
+              birthPlace: r.birthPlace,
+              dayMasterElement: r.dayMasterElement,
+              lunarDate: r.lunarDate,
+              zodiac: r.zodiac,
+              trueSolarOffsetMinutes: r.trueSolarOffsetMinutes,
+              dayunStartDescription: r.dayunStartDescription,
+              dayunStartAt: r.dayunStartAt,
+            },
+          }));
+          setProfiles(mapped);
+        } catch {
+          // ignore
+        }
+      }
+    }
+
+    if (status !== 'loading') {
+      void loadProfiles();
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [status]);
 
   const aiSections = useMemo(() => extractAiSections(result?.aiAnalysis || ''), [result?.aiAnalysis]);
 
@@ -1102,6 +1377,278 @@ function BaziPageContent() {
     void runAiStream(false);
   };
 
+  const applyProfileToForm = (profile: BaziProfileData) => {
+    setFormData((prev) => ({
+      ...prev,
+      name: profile.name || '',
+      gender: profile.gender || '',
+      birthDate: profile.birthDate || '',
+      birthHour: profile.birthHour || '-1',
+      birthPlace: profile.birthPlace || '',
+      isLunar: Boolean(profile.isLunar),
+      knowTime: false,
+    }));
+    if (profile.baziResult) {
+      setResult({ ...profile.baziResult, _source: 'history' });
+      setError('');
+      setShowAiButton(false);
+    } else {
+      setResult(null);
+      setShowAiButton(false);
+    }
+    setActionMessage('');
+  };
+
+  const handleSelectProfile = (profileId: string) => {
+    setSelectedProfileId(profileId);
+    const profile = profiles.find((p) => p.id === profileId);
+    if (profile) applyProfileToForm(profile);
+  };
+
+  const computeBaziForProfile = async (profile: BaziProfileData): Promise<BaziPageResult | null> => {
+    const response = await fetch('/api/bazi', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: profile.name || '缘主',
+        gender: profile.gender || 'unknown',
+        birthDate: profile.birthDate,
+        birthHour: parseInt(profile.birthHour, 10),
+        birthPlace: profile.birthPlace || undefined,
+        isLunar: profile.isLunar,
+      }),
+    });
+
+    const data = (await response.json()) as BaziPageResult & { error?: string };
+    if (!response.ok) {
+      if (data.error === 'QUOTA_EXCEEDED') {
+        setShowQuotaModal(true);
+        return null;
+      }
+      throw new Error(data.error || '服务器错误，请稍后重试');
+    }
+    return data;
+  };
+
+  const handleOpenAddProfile = () => {
+    setProfileError('');
+    setEditingProfile(null);
+    setShowAddProfileModal(true);
+  };
+
+  const handleOpenEditProfile = () => {
+    const target = profiles.find((p) => p.id === selectedProfileId);
+    if (!target) return;
+    setProfileError('');
+    setEditingProfile(target);
+    setShowAddProfileModal(true);
+  };
+
+  const handleDeleteProfile = async () => {
+    const target = profiles.find((p) => p.id === selectedProfileId);
+    if (!target) return;
+    if (target.isPrimary) {
+      setActionMessage('主档案不可删除');
+      return;
+    }
+    if (!window.confirm(`确认删除「${target.label}」的命盘档案？`)) return;
+
+    try {
+      if (status === 'authenticated') {
+        const res = await fetch(`/api/bazi/profiles/${target.id}`, { method: 'DELETE' });
+        if (!res.ok) {
+          const { error: msg } = await res.json().catch(() => ({ error: '' }));
+          throw new Error(msg || '删除失败');
+        }
+      } else {
+        deleteRecord(target.id);
+      }
+      const next = profiles.filter((p) => p.id !== target.id);
+      setProfiles(next);
+      const first = next[0];
+      if (first) {
+        setSelectedProfileId(first.id);
+        applyProfileToForm(first);
+      } else {
+        setSelectedProfileId('');
+        setResult(null);
+      }
+      setActionMessage('档案已删除');
+    } catch (e) {
+      setActionMessage(e instanceof Error ? e.message : '删除失败，请重试');
+    }
+  };
+
+  const handleProfileFormSubmit = async (input: {
+    label: string;
+    name: string;
+    gender: string;
+    birthDate: string;
+    knowTime: boolean;
+    birthHour: string;
+    birthPlace: string;
+    isLunar: boolean;
+  }) => {
+    setProfileError('');
+    if (!input.label.trim()) { setProfileError('请填写显示名称'); return; }
+    if (!input.name.trim()) { setProfileError('请填写姓名'); return; }
+    if (input.gender !== 'male' && input.gender !== 'female') { setProfileError('请选择性别'); return; }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(input.birthDate)) { setProfileError('请选择出生日期'); return; }
+
+    const effectiveHour = input.knowTime ? input.birthHour : '-1';
+    const effectivePlace = input.knowTime ? input.birthPlace : '';
+
+    setProfileLoading(true);
+    try {
+      const isAuth = status === 'authenticated';
+      const isEditing = Boolean(editingProfile);
+
+      // 上限校验（仅新建）
+      if (!isEditing) {
+        if (isAuth && profiles.length >= MAX_LOGGED_IN_PROFILES) {
+          setProfileError(`免费版最多保存${MAX_LOGGED_IN_PROFILES}个命盘，升级 VIP 无限制`);
+          setProfileLoading(false);
+          return;
+        }
+        if (!isAuth && profiles.length >= MAX_GUEST_PROFILES) {
+          setProfileError(`未登录最多保存${MAX_GUEST_PROFILES}个命盘，请登录后使用`);
+          setProfileLoading(false);
+          return;
+        }
+      }
+
+      let profileId = editingProfile?.id || '';
+      let savedProfile: BaziProfileData | null = null;
+
+      if (isAuth) {
+        if (isEditing) {
+          const res = await fetch(`/api/bazi/profiles/${profileId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              label: input.label,
+              name: input.name,
+              gender: input.gender,
+              birthDate: input.birthDate,
+              birthHour: effectiveHour,
+              birthPlace: effectivePlace,
+              isLunar: input.isLunar,
+            }),
+          });
+          const json = await res.json();
+          if (!res.ok) throw new Error(json?.error || '保存失败');
+          savedProfile = json.data as BaziProfileData;
+        } else {
+          const res = await fetch('/api/bazi/profiles', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              label: input.label,
+              name: input.name,
+              gender: input.gender,
+              birthDate: input.birthDate,
+              birthHour: effectiveHour,
+              birthPlace: effectivePlace,
+              isLunar: input.isLunar,
+              isPrimary: profiles.length === 0,
+            }),
+          });
+          const json = await res.json();
+          if (!res.ok) throw new Error(json?.error || '保存失败');
+          savedProfile = json.data as BaziProfileData;
+          profileId = savedProfile.id;
+        }
+      } else {
+        // 游客：localStorage（暂存基本字段，baziResult 计算后补全）
+        profileId = editingProfile?.id || `local_${Date.now()}`;
+        savedProfile = {
+          id: profileId,
+          label: input.label,
+          name: input.name,
+          gender: input.gender,
+          birthDate: input.birthDate,
+          birthHour: effectiveHour,
+          birthPlace: effectivePlace,
+          isLunar: input.isLunar,
+          isPrimary: false,
+        };
+      }
+
+      // 调用计算接口
+      const computed = await computeBaziForProfile({
+        ...savedProfile,
+        birthPlace: effectivePlace,
+      });
+      if (!computed) {
+        // QUOTA_EXCEEDED 已处理
+        setProfileLoading(false);
+        return;
+      }
+
+      // 已登录：把 baziResult 缓存到档案
+      if (isAuth && profileId) {
+        try {
+          await fetch(`/api/bazi/profiles/${profileId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ baziResult: computed }),
+          });
+        } catch {
+          // 缓存失败不阻塞主流程
+        }
+      } else if (!isAuth) {
+        // 游客：复用 saveRecord 写入 localStorage（兼容 BaziHistoryRecord）
+        try {
+          const persisted = saveRecord({
+            id: profileId,
+            name: input.name,
+            gender: input.gender,
+            birthDate: input.birthDate,
+            birthHour: effectiveHour,
+            birthPlace: effectivePlace,
+            dayMaster: computed.pillars?.day?.gan || '',
+            aiSummary: (computed.aiAnalysis || '').split(/[。！？]/)[0] || '已保存命盘记录。',
+            aiAnalysis: computed.aiAnalysis || '',
+            pillars: computed.pillars,
+            wuxing: computed.wuxing,
+            fiveDimensions: computed.fiveDimensions,
+            traits: computed.traits,
+            dayMasterElement: computed.pillars?.day?.ganWuxing,
+            lunarDate: computed.lunarDate,
+            zodiac: computed.zodiac,
+            trueSolarOffsetMinutes: computed.trueSolarOffsetMinutes ?? null,
+            dayunStartDescription: computed.dayunStartDescription,
+            dayunStartAt: computed.dayunStartAt,
+          });
+          if (persisted) profileId = persisted.id;
+        } catch {
+          // ignore
+        }
+      }
+
+      const finalProfile: BaziProfileData = {
+        ...(savedProfile as BaziProfileData),
+        id: profileId,
+        baziResult: computed,
+      };
+
+      setProfiles((prev) => {
+        const without = prev.filter((p) => p.id !== finalProfile.id);
+        return isEditing ? prev.map((p) => (p.id === finalProfile.id ? finalProfile : p)) : [...without, finalProfile];
+      });
+      setSelectedProfileId(finalProfile.id);
+      applyProfileToForm(finalProfile);
+      setResult(computed);
+      setShowAddProfileModal(false);
+      setEditingProfile(null);
+      setActionMessage(isEditing ? '档案已更新' : '档案已新增');
+    } catch (e) {
+      setProfileError(e instanceof Error ? e.message : '操作失败，请重试');
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -1340,6 +1887,86 @@ function BaziPageContent() {
       </div>
 
       <Container>
+        {/* 命盘档案选择器 */}
+        <div className="max-w-3xl mx-auto w-full mb-4">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 rounded-2xl border border-[#1C1A16]/8 bg-white px-4 py-3">
+            <span className="text-sm font-medium text-[#1C1A16]/70 mr-1">命盘档案</span>
+            {profiles.length > 0 ? (
+              <Select
+                value={selectedProfileId}
+                onChange={(e) => handleSelectProfile(e.target.value)}
+                options={[
+                  { value: '', label: '请选择档案', disabled: true },
+                  ...profiles.map((p) => ({
+                    value: p.id,
+                    label: `${p.label || p.name}${p.isPrimary ? '（我）' : ''} (${p.birthDate || '未填'})`,
+                  })),
+                ]}
+                className="h-9 min-w-[180px] flex-1 rounded-lg border border-[#1C1A16]/15 bg-white px-3 text-sm text-[#1C1A16]"
+              />
+            ) : (
+              <span className="text-xs text-[#1C1A16]/45">还没有档案，点右侧「新增」</span>
+            )}
+            {(() => {
+              const isAuth = status === 'authenticated';
+              const cap = isAuth ? MAX_LOGGED_IN_PROFILES : MAX_GUEST_PROFILES;
+              const disabled = profiles.length >= cap;
+              const tip = disabled
+                ? isAuth
+                  ? `免费版最多保存${cap}个命盘，升级 VIP 无限制`
+                  : `未登录最多保存${cap}个命盘，请登录后使用`
+                : '新增一个命盘档案';
+              return (
+                <button
+                  type="button"
+                  onClick={handleOpenAddProfile}
+                  disabled={disabled}
+                  title={tip}
+                  className={`inline-flex items-center gap-1 h-9 px-3 rounded-lg text-sm font-medium transition-colors ${
+                    disabled
+                      ? 'bg-[#1C1A16]/8 text-[#1C1A16]/40 cursor-not-allowed'
+                      : 'bg-[#1C1A16] text-white hover:bg-[#1C1A16]/85'
+                  }`}
+                >
+                  <Plus className="w-4 h-4" />
+                  新增
+                </button>
+              );
+            })()}
+            {selectedProfileId && (() => {
+              const current = profiles.find((p) => p.id === selectedProfileId);
+              if (!current) return null;
+              return (
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={handleOpenEditProfile}
+                    title="编辑档案"
+                    className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-[#1C1A16]/15 text-[#1C1A16]/70 hover:bg-[#1C1A16]/5 transition-colors"
+                    aria-label="编辑档案"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDeleteProfile}
+                    disabled={!!current.isPrimary}
+                    title={current.isPrimary ? '主档案不可删除' : '删除档案'}
+                    className={`inline-flex items-center justify-center w-9 h-9 rounded-lg border transition-colors ${
+                      current.isPrimary
+                        ? 'border-[#1C1A16]/8 text-[#1C1A16]/25 cursor-not-allowed'
+                        : 'border-[#1C1A16]/15 text-[#1C1A16]/70 hover:bg-red-50 hover:text-red-600 hover:border-red-200'
+                    }`}
+                    aria-label="删除档案"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+
         {result && !loading && basicInfoData && (
           <div className="max-w-3xl mx-auto w-full mb-6 lg:mb-8">
           <Card className={`${cardClass} p-0`}>
@@ -2059,6 +2686,21 @@ function BaziPageContent() {
 
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
       <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />
+
+      {showAddProfileModal && (
+        <ProfileFormModal
+          initial={editingProfile}
+          loading={profileLoading}
+          error={profileError}
+          onSubmit={handleProfileFormSubmit}
+          onClose={() => {
+            if (profileLoading) return;
+            setShowAddProfileModal(false);
+            setEditingProfile(null);
+            setProfileError('');
+          }}
+        />
+      )}
 
       <Footer />
 

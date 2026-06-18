@@ -44,8 +44,31 @@ model User {
   subscriptions Subscription[]
   orders        Order[]
   usageQuotas   UsageQuota[]
+  baziProfiles  BaziProfile[]
 
   @@map("users")
+}
+
+// 八字档案表（多人命盘）
+model BaziProfile {
+  id         String   @id @default(cuid())
+  userId     String
+  label      String   // 显示名，如"妈妈"
+  name       String   // 真实姓名
+  gender     String   // "male" | "female"
+  birthDate  String   // YYYY-MM-DD（阳历）
+  birthHour  String   // "-1" to "11"
+  birthPlace String?
+  isLunar    Boolean  @default(false)
+  isPrimary  Boolean  @default(false) // 本人主档案
+  baziResult Json? // 缓存的命盘结果（BaziApiResult JSON）
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("bazi_profiles")
 }
 
 // NextAuth Account 表（OAuth 账号关联）
