@@ -95,17 +95,8 @@ export default function HuangliPage() {
       </div>
 
       <div className="max-w-[840px] mx-auto px-4 pb-16">
-        <div className="flex gap-6">
-          {/* 左侧日历 - 桌面端 */}
-          <div className="hidden lg:block w-[280px] flex-shrink-0 sticky top-[100px] self-start">
-            <CalendarPicker
-              selectedDate={selectedDate}
-              onDateSelect={handleDateSelect}
-            />
-          </div>
-
-          {/* 右侧内容区 */}
-          <div className="flex-1 min-w-0 space-y-5">
+        {/* 单列：内容 → 日历 → 特性/使用指南 */}
+        <div className="space-y-5">
             {/* 加载状态 */}
             {loading && (
               <div className="bg-white rounded-2xl shadow-sm border border-[#F0EDE8] p-6">
@@ -151,11 +142,18 @@ export default function HuangliPage() {
               </>
             )}
 
-            {/* 底部特性介绍 */}
+            {/* 日历移至内容下方（桌面端；移动端顶部已有日期快捷条） */}
+            <div className="hidden lg:block max-w-[380px] mx-auto pt-2">
+              <CalendarPicker
+                selectedDate={selectedDate}
+                onDateSelect={handleDateSelect}
+              />
+            </div>
+
+            {/* 底部特性介绍 + 使用指南 */}
             <div className="mt-8">
               <FeaturesSection />
             </div>
-          </div>
         </div>
       </div>
       <Footer />
