@@ -521,7 +521,7 @@ export function MarriagePageClient() {
         </div>
 
         <Container>
-          <div className="max-w-6xl mx-auto space-y-12 px-4 md:px-0">
+          <div className="max-w-[840px] mx-auto space-y-12 px-4 md:px-0">
             {!result && (
               <form onSubmit={handleSubmit} className="space-y-10">
                 <div className="grid gap-6 md:grid-cols-2">

@@ -1212,7 +1212,7 @@ export default function LiuYaoPage() {
 
       <main className="px-4 pb-20 md:pb-24">
         {/* ① 标题区 */}
-        <section className="mx-auto max-w-4xl pt-24 pb-10 text-center animate-fadeIn">
+        <section className="mx-auto max-w-[840px] pt-24 pb-10 text-center animate-fadeIn">
           <div className="mx-auto mb-6 h-px w-9 bg-gradient-to-r from-transparent via-[#1C1A16] to-transparent opacity-15" />
           <h1 className="font-display text-[clamp(36px,5vw,56px)] leading-tight tracking-[0.08em] text-[#1C1A16]">
             AI 六爻占卜 · 智能解读分析
@@ -1222,7 +1222,7 @@ export default function LiuYaoPage() {
           </p>
         </section>
 
-        <section className="mx-auto max-w-4xl space-y-4 animate-fadeIn">
+        <section className="mx-auto max-w-[840px] space-y-4 animate-fadeIn">
           {/* 起卦表单区域：起卦完成后隐藏 */}
           <div className={hexagramDrawn ? 'hidden' : 'space-y-4'}>
           {/* ② 问题输入区 */}
@@ -1742,7 +1742,7 @@ export default function LiuYaoPage() {
         {!hexagramDrawn && <>
 
         {/* ⑧ 特色功能介绍 */}
-        <section className="mx-auto mt-10 max-w-4xl animate-fadeIn">
+        <section className="mx-auto mt-10 max-w-[840px] animate-fadeIn">
           <div className="text-center mb-8">
             <h2 className="font-display text-2xl tracking-[0.06em] text-[#1C1A16] mb-4">AI 六爻占卜分析</h2>
             <p className="text-sm leading-relaxed text-[#1C1A16]/55 max-w-2xl mx-auto">
@@ -1794,7 +1794,7 @@ export default function LiuYaoPage() {
         </section>
 
         {/* ⑨ 特色功能 */}
-        <section className="mx-auto mt-10 max-w-4xl animate-fadeIn">
+        <section className="mx-auto mt-10 max-w-[840px] animate-fadeIn">
           <h2 className="font-display text-2xl tracking-[0.06em] text-[#1C1A16] text-center mb-10">AI 六爻占卜的特色功能</h2>
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
             {[
@@ -1848,7 +1848,7 @@ export default function LiuYaoPage() {
         </section>
 
         {/* ⑩ FAQ */}
-        <section className="mx-auto mt-10 max-w-4xl animate-fadeIn">
+        <section className="mx-auto mt-10 max-w-[840px] animate-fadeIn">
           <h2 className="font-display text-2xl tracking-[0.06em] text-[#1C1A16] text-center mb-8">常见问题</h2>
           <div className="space-y-4">
             {FAQ_ITEMS.map((item, index) => {

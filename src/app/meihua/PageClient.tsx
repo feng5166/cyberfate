@@ -465,7 +465,7 @@ export default function MeihuaPage() {
       />
 
       <main className="px-4 pb-20 md:pb-24">
-        <section className="mx-auto max-w-4xl pt-24 pb-12 text-center animate-fadeIn">
+        <section className="mx-auto max-w-[840px] pt-24 pb-12 text-center animate-fadeIn">
           <div className="mx-auto mb-6 h-px w-9 bg-gradient-to-r from-transparent via-[#1C1A16] to-transparent opacity-15" />
           <h1 className="font-display text-[clamp(36px,5vw,56px)] leading-tight text-[#1C1A16]">
             梅花易数 · 每日决策
@@ -475,7 +475,7 @@ export default function MeihuaPage() {
           </p>
         </section>
 
-        <section className="mx-auto max-w-4xl animate-fadeIn">
+        <section className="mx-auto max-w-[840px] animate-fadeIn">
           <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 shadow-none transition-shadow duration-300 hover:shadow-card-hover md:p-8">
             <div className="flex items-center justify-between">
               <h2 className="font-display text-xl text-[#1C1A16]">提出您的决策问题</h2>
@@ -576,7 +576,7 @@ export default function MeihuaPage() {
         </section>
 
         {result && (
-          <section className="mx-auto mt-8 max-w-4xl animate-fadeIn">
+          <section className="mx-auto mt-8 max-w-[840px] animate-fadeIn">
             <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 shadow-none">
               <div className="flex items-start justify-between mb-1">
                 <div>
@@ -724,7 +724,7 @@ export default function MeihuaPage() {
         )}
 
         {result && (
-          <section className="mx-auto mt-6 max-w-4xl animate-fadeIn">
+          <section className="mx-auto mt-6 max-w-[840px] animate-fadeIn">
             <div className="rounded-2xl border border-[#E5E0D8] bg-white p-6 md:p-8">
               <h3 className="text-lg font-bold text-[#1C1A16] mb-1">梅花易数问答</h3>
               <p className="text-sm text-[#1C1A16]/50 mb-4">针对卦象提出问题，获取详细解读</p>
@@ -780,7 +780,7 @@ export default function MeihuaPage() {
           </section>
         )}
 
-        <section className="mx-auto mt-12 max-w-4xl animate-fadeIn">
+        <section className="mx-auto mt-12 max-w-[840px] animate-fadeIn">
           <div className="text-center mb-8">
             <h2 className="font-display text-2xl tracking-[0.08em] text-[#1C1A16] mb-6">AI 辅助观察</h2>
             <p className="mt-2 text-base text-[#1C1A16]/60 max-w-2xl mx-auto">我们的系统将古老的占卜文化与现代 AI 技术结合，为您的思考提供不同角度的参考观点。</p>
@@ -798,7 +798,7 @@ export default function MeihuaPage() {
           </div>
         </section>
 
-        <section className="mx-auto mt-12 max-w-4xl animate-fadeIn">
+        <section className="mx-auto mt-12 max-w-[840px] animate-fadeIn">
           <h2 className="font-display text-2xl tracking-[0.08em] text-[#1C1A16] text-center">特色功能</h2>
           <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
             {FEATURE_ITEMS.map((item) => (
@@ -815,7 +815,7 @@ export default function MeihuaPage() {
           </div>
         </section>
 
-        <section className="mx-auto mt-12 max-w-4xl pb-4 animate-fadeIn">
+        <section className="mx-auto mt-12 max-w-[840px] pb-4 animate-fadeIn">
           <h2 className="font-display text-2xl tracking-[0.08em] text-[#1C1A16] text-center">常见问题</h2>
           <div className="mt-8 space-y-5">
             {FAQ_ITEMS.map((item) => (

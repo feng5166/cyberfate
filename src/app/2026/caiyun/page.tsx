@@ -245,7 +245,7 @@ export default function Page() {
       {/* Hero */}
       <section className="pt-20 pb-10">
         <Container>
-          <div className="max-w-3xl mx-auto text-center">
+          <div className="max-w-[840px] mx-auto text-center">
             <p className="text-sm tracking-[0.3em] text-[#C8956C] mb-4">2026 · 丙午马年</p>
             <h1 className="font-heading text-3xl sm:text-5xl text-[#1C1A16] mb-5 leading-tight">
               2026年财运最旺的生肖排行
@@ -326,7 +326,7 @@ export default function Page() {
       {/* 命理深度分析 */}
       <section className="pb-16">
         <Container>
-          <div className="max-w-3xl mx-auto space-y-10">
+          <div className="max-w-[840px] mx-auto space-y-10">
             <div>
               <h2 className="font-heading text-2xl sm:text-3xl text-[#1C1A16] mb-4">
                 2026 年为什么是这些生肖财运旺？
@@ -379,7 +379,7 @@ export default function Page() {
       {/* 相关页面 */}
       <section className="pb-12">
         <Container>
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-[840px] mx-auto">
             <Card hover={false} className="bg-white/90">
               <h3 className="font-heading text-xl text-[#1C1A16] mb-4">查看其他维度的2026年生肖运势</h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
@@ -415,7 +415,7 @@ export default function Page() {
         <Container>
           <Card
             hover={false}
-            className="bg-gradient-to-br from-[#1C1A16] to-[#3A2F23] text-white border-0 shadow-xl text-center max-w-3xl mx-auto"
+            className="bg-gradient-to-br from-[#1C1A16] to-[#3A2F23] text-white border-0 shadow-xl text-center max-w-[840px] mx-auto"
           >
             <h3 className="font-heading text-2xl sm:text-3xl mb-3">想要更精准的2026年个人运势？</h3>
             <p className="text-sm text-white/75 mb-6 leading-relaxed">
@@ -434,7 +434,7 @@ export default function Page() {
       {/* FAQ */}
       <section className="pb-20">
         <Container>
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-[840px] mx-auto">
             <h2 className="font-heading text-2xl text-[#1C1A16] mb-6 text-center">常见问题</h2>
             <div className="space-y-4">
               {faqItems.map((it) => (

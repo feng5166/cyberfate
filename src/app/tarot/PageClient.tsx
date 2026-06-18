@@ -477,7 +477,7 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
       />
 
       <main className="px-4 pb-20 md:pb-24">
-        <section className="mx-auto max-w-5xl pt-24 pb-10 text-center animate-fadeIn">
+        <section className="mx-auto max-w-[840px] pt-24 pb-10 text-center animate-fadeIn">
           <div className="mx-auto mb-6 h-px w-9 bg-gradient-to-r from-transparent via-[#1C1A16] to-transparent opacity-15" />
           <h1 className="font-display text-[clamp(44px,6vw,60px)] leading-tight tracking-[0.08em] text-[#1C1A16]">
             AI 塔罗占卜
@@ -487,7 +487,7 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
           </p>
         </section>
 
-        <section className="mx-auto max-w-5xl space-y-4 animate-fadeIn">
+        <section className="mx-auto max-w-[840px] space-y-4 animate-fadeIn">
           {step !== 'loading' && step !== 'drawing' && (
             <div ref={questionRef} className="rounded-2xl border border-[#1C1A16]/10 bg-white p-5 transition-shadow duration-300 hover:shadow-card-hover md:p-8">
               <h2 className="text-lg font-bold text-[#1C1A16] mb-1">提出您的问题</h2>
