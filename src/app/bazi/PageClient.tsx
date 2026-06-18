@@ -73,6 +73,8 @@ const DayMasterSummaryCard = dynamic(() => import('@/components/bazi/DayMasterSu
 const ShareCard = dynamic(() => import('@/components/bazi/ShareCard').then(m => m.ShareCard), { ssr: false, loading: _loadingSpinner });
 const ShishenDetailTab = dynamic(() => import('@/components/bazi/ShishenDetailTab').then(m => m.ShishenDetailTab), { ssr: false, loading: _loadingSpinner });
 const WuxingChart = dynamic(() => import('@/components/bazi/WuxingChart').then(m => m.WuxingChart), { ssr: false, loading: _loadingSpinner });
+const ShenshaCard = dynamic(() => import('@/components/bazi/ShenshaCard').then(m => m.ShenshaCard), { ssr: false, loading: _loadingSpinner });
+const LiunianLiuyueCard = dynamic(() => import('@/components/bazi/LiunianLiuyueCard').then(m => m.LiunianLiuyueCard), { ssr: false, loading: _loadingSpinner });
 const BaziChatSection = dynamic(() => import('@/components/bazi/BaziChatSection').then(m => m.BaziChatSection), { ssr: false, loading: _loadingSpinner });
 
 type ResultTab = '性格特质' | '事业财运' | '婚姻健康' | '十神详解' | '大运流年';
@@ -2242,6 +2244,18 @@ function BaziPageContent() {
                         </div>
                       ))}
                     </div>
+                  </Card>
+                )}
+
+                {/* 神煞分析（结构化命盘模块） */}
+                <Card className={cardClass}>
+                  <ShenshaCard shensha={result.shensha} />
+                </Card>
+
+                {/* 流年流月（结构化命盘模块） */}
+                {(result.liunian || (result.liuyue && result.liuyue.length > 0)) && (
+                  <Card className={cardClass}>
+                    <LiunianLiuyueCard liunian={result.liunian} liuyue={result.liuyue} />
                   </Card>
                 )}
 
