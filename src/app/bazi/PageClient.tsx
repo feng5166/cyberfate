@@ -825,6 +825,7 @@ function BaziPageContent() {
   const [aiStreaming, setAiStreaming] = useState(false);
   const [aiStreamText, setAiStreamText] = useState('');
   const [aiSteps, setAiSteps] = useState<string[]>([]); // 工具链推算步骤（首屏「推算中」动画）
+  const [stepsExpanded, setStepsExpanded] = useState(true); // 推算步骤折叠态：流式中展开看进度，完成后默认折叠
   const [showAiButton, setShowAiButton] = useState(false);
   const autoLoadAttemptedRef = useRef(false);
 
@@ -1343,6 +1344,7 @@ function BaziPageContent() {
     setAiStreaming(true);
     setAiStreamText('');
     setAiSteps([]);
+    setStepsExpanded(true); // 重新流式时展开看推算进度
 
     try {
       const response = await fetch('/api/bazi/stream', {
@@ -1443,6 +1445,7 @@ function BaziPageContent() {
       return false;
     } finally {
       setAiStreaming(false);
+      setStepsExpanded(false); // 推算完成默认折叠，保留可展开
     }
   };
 
@@ -2389,6 +2392,39 @@ function BaziPageContent() {
                     </p>
                   </div>
 
+                  {/* 推算步骤：流式中展开看进度，完成后默认折叠，可随时展开看推算链条 */}
+                  {aiSteps.length > 0 && (
+                    <div className="mb-4 rounded-xl border border-[#1C1A16]/8 bg-white overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={() => setStepsExpanded((v) => !v)}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-[#FAF9F6] transition-colors"
+                      >
+                        <Wrench className="w-3.5 h-3.5 text-[#C2762B] flex-shrink-0" />
+                        <span className="text-xs text-[#1C1A16]/60 flex-1">
+                          {aiStreaming && !aiStreamText
+                            ? `正在排盘推算 · 已完成 ${aiSteps.length} 步…`
+                            : `命理推算完成 · 共 ${aiSteps.length} 步真实排盘`}
+                        </span>
+                        {stepsExpanded ? (
+                          <ChevronUp className="w-3.5 h-3.5 text-[#1C1A16]/30" />
+                        ) : (
+                          <ChevronDown className="w-3.5 h-3.5 text-[#1C1A16]/30" />
+                        )}
+                      </button>
+                      {stepsExpanded && (
+                        <div className="px-3 pb-2 pt-1 space-y-1.5 border-t border-[#1C1A16]/5">
+                          {aiSteps.map((step, i) => (
+                            <div key={i} className="flex items-start gap-2 text-xs text-[#1C1A16]/55 leading-relaxed">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0" />
+                              <span>{step}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {showAiButton && (
                     <button
                       type="button"
@@ -2406,27 +2442,6 @@ function BaziPageContent() {
                         <RefreshCw className="w-3.5 h-3.5 text-[#C2762B] animate-spin" />
                         AI 正在解读中…
                       </div>
-
-                      {aiSteps.length > 0 && (
-                        <div className="mb-4 rounded-xl border border-[#1C1A16]/8 bg-white overflow-hidden">
-                          <div className="flex items-center gap-2 px-3 py-2 border-b border-[#1C1A16]/5">
-                            <Wrench className="w-3.5 h-3.5 text-[#C2762B] flex-shrink-0" />
-                            <span className="text-xs text-[#1C1A16]/60">
-                              {aiStreamText
-                                ? `命理推算完成 · 共 ${aiSteps.length} 步真实排盘`
-                                : `正在排盘推算 · 已完成 ${aiSteps.length} 步…`}
-                            </span>
-                          </div>
-                          <div className="px-3 py-2 space-y-1.5">
-                            {aiSteps.map((step, i) => (
-                              <div key={i} className="flex items-start gap-2 text-xs text-[#1C1A16]/55 leading-relaxed">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0" />
-                                <span>{step}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
 
                       <div ref={streamContainerRef} className="max-h-[60vh] overflow-y-auto pr-1">
                       {aiStreamText ? (() => {
