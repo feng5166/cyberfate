@@ -94,7 +94,7 @@ export default function HuangliPage() {
         </p>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 pb-16">
+      <div className="max-w-[840px] mx-auto px-4 pb-16">
         <div className="flex gap-6">
           {/* 左侧日历 - 桌面端 */}
           <div className="hidden lg:block w-[280px] flex-shrink-0 sticky top-[100px] self-start">
