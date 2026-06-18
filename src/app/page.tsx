@@ -210,10 +210,6 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <p className="mt-6 text-[15px] text-[#1C1A16]/70 text-center max-w-2xl mx-auto leading-relaxed">
-            赛博命理师结合 AI 智能科学解析传统命理，为你提供八字、紫微、塔罗等全方位命理分析服务
-          </p>
-
         </div>
       </section>
 
