@@ -211,7 +211,7 @@ export default function HomePage() {
                 <Button
                   variant="secondary"
                   size="lg"
-                  className="px-[38px] py-[14px] text-[13px] tracking-[0.08em] !text-[#1C1A16] !border-[#1C1A16]/30 hover:!border-[#1C1A16] hover:!bg-[#FDFBF7]"
+                  className="px-[40px] py-[15px] text-[17px] font-semibold tracking-[0.08em] !text-[#1C1A16] !border-[#1C1A16]/30 hover:!border-[#1C1A16] hover:!bg-[#FDFBF7]"
                 >
                   梅花易数 →
                 </Button>
