@@ -911,8 +911,6 @@ export default function DailyPage() {
         )}
       </Container>
 
-      <Footer />
-
       {/* 隐藏的分享卡片 */}
       <div ref={shareCardRef} style={{ position: 'absolute', left: '-9999px', top: 0, width: 375, padding: 24, backgroundColor: '#FAF9F6' }}>
         {result && (

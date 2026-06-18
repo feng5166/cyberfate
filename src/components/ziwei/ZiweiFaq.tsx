@@ -33,10 +33,11 @@ const FAQ_ITEMS = [
 ];
 
 export function ZiweiFaq() {
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
+  // 默认全部展开，可单独折叠
+  const [openIndices, setOpenIndices] = useState<number[]>(() => FAQ_ITEMS.map((_, i) => i));
 
   const toggle = (index: number) => {
-    setOpenIndex((prev) => (prev === index ? null : index));
+    setOpenIndices((prev) => (prev.includes(index) ? prev.filter((x) => x !== index) : [...prev, index]));
   };
 
   return (
@@ -54,14 +55,14 @@ export function ZiweiFaq() {
               type="button"
               onClick={() => toggle(index)}
               className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-[#FAF9F6] transition-colors"
-              aria-expanded={openIndex === index}
+              aria-expanded={openIndices.includes(index)}
               aria-controls={`faq-answer-${index}`}
             >
               <span className="text-sm font-medium text-[#1C1A16] pr-4">{item.question}</span>
               <ChevronDown
                 className={cn(
                   'w-4 h-4 text-[#1C1A16]/40 shrink-0 transition-transform duration-200',
-                  openIndex === index && 'rotate-180',
+                  openIndices.includes(index) && 'rotate-180',
                 )}
               />
             </button>
@@ -69,7 +70,7 @@ export function ZiweiFaq() {
               id={`faq-answer-${index}`}
               className={cn(
                 'overflow-hidden transition-all duration-300 ease-in-out',
-                openIndex === index ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0',
+                openIndices.includes(index) ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0',
               )}
             >
               <p className="px-5 pb-4 text-sm text-[#1C1A16]/60 leading-relaxed">

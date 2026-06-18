@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import PageClient from './PageClient'
 import { FaqJsonLd } from '@/components/seo/FaqJsonLd'
+import { Footer } from '@/components/layout/Footer'
 
 export const metadata: Metadata = {
   title: '紫微斗数排盘 | 赛博命理师 CyberFate — AI 命盘解读',
@@ -52,6 +53,7 @@ export default function ZiweiPage() {
       />
       <FaqJsonLd items={FAQ_ITEMS} />
       <PageClient />
+      <Footer>
       <section aria-label="关于紫微斗数" className="mx-auto max-w-3xl px-4 py-12 text-[#1C1A16]/60 text-sm leading-relaxed border-t border-[#1C1A16]/8 mt-8">
         <h2 className="text-base font-semibold text-[#1C1A16] mb-4">关于紫微斗数</h2>
 
@@ -105,6 +107,7 @@ export default function ZiweiPage() {
           </div>
         </div>
       </section>
+      </Footer>
     </>
   )
 }

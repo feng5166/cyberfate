@@ -545,8 +545,6 @@ export default function ZiweiPage() {
           <ZiweiFaq />
         </Container>
       </div>
-
-      <Footer />
     </div>
   );
 }

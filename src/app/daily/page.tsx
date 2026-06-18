@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import PageClient from './PageClient'
 import { FaqJsonLd } from '@/components/seo/FaqJsonLd'
+import { Footer } from '@/components/layout/Footer'
 
 export const metadata: Metadata = {
   title: '今日运势 | 赛博命理师 CyberFate — 每日八字运势分析',
@@ -52,6 +53,7 @@ export default function DailyPage() {
       />
       <FaqJsonLd items={FAQ_ITEMS} />
       <PageClient />
+      <Footer>
       <section aria-label="关于每日运势" className="mx-auto max-w-3xl px-4 py-12 text-[#1C1A16]/60 text-sm leading-relaxed border-t border-[#1C1A16]/8 mt-8">
         <h2 className="text-base font-semibold text-[#1C1A16] mb-4">关于每日运势</h2>
         <p className="mb-3">每日运势的推算原理建立在八字命理体系之上。命主的日干（日主）代表自身能量，而每一天都有对应的天干地支组合，两者之间通过五行的生克制化形成动态关系。当日干支与命主喜用神契合时，运势趋于顺畅；与忌神冲克时，运势则相对低迷。这是日运区别于通俗星座运势的根本所在。</p>
@@ -83,6 +85,7 @@ export default function DailyPage() {
           </div>
         </div>
       </section>
+      </Footer>
     </>
   )
 }

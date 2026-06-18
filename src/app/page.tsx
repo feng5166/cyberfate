@@ -174,7 +174,7 @@ export default function HomePage() {
 
       {/* ===== Hero Section ===== */}
       <section className="relative overflow-hidden px-4 pt-30 md:pt-40 pb-16 md:pb-20">
-        <div className="relative z-10 max-w-3xl mx-auto text-center">
+        <div className="relative z-10 max-w-[840px] mx-auto text-center">
           {/* 主标题 */}
           <h1
             className="font-display text-[36px] sm:text-[48px] md:text-[56px] font-[800] text-[#1C1A16] leading-tight flex items-center justify-center gap-2"
@@ -247,7 +247,7 @@ export default function HomePage() {
       {/* ===== 新手推荐路径 ===== */}
       <section className="px-4 py-10 md:py-14">
         <Container>
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-[840px] mx-auto">
             <h2 className="text-center text-[14px] text-[#1C1A16]/50 tracking-wide mb-6">
               新手推荐路径
             </h2>
@@ -344,7 +344,7 @@ export default function HomePage() {
               <span className="text-[18px] font-semibold text-[#1C1A16]">1,234</span> 人今日已分析
             </p>
           </div>
-          <div className="relative max-w-3xl mx-auto">
+          <div className="relative max-w-[840px] mx-auto">
             <div className="flex gap-4 overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
               <div className="flex gap-4 animate-[scroll_30s_linear_infinite]">
                 {[
@@ -375,7 +375,7 @@ export default function HomePage() {
       {/* ===== 功能展示区 ===== */}
       <section className="px-4 mt-32 md:mt-36 pb-28 md:pb-32">
         <Container>
-          <div className="max-w-3xl mx-auto text-center">
+          <div className="max-w-[840px] mx-auto text-center">
             <h2 className="font-display text-[32px] text-[#1C1A16] mb-3">分析系统</h2>
             <p className="text-sm text-[#1C1A16]/70 mb-12">探索我们全面的智能分析服务</p>
           </div>
