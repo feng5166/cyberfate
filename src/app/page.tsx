@@ -224,7 +224,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== 金句 ===== */}
-      <section className="px-4 py-12 md:py-16">
+      <section className="px-4 pt-6 md:pt-8 pb-12 md:pb-16">
         <Container>
           <figure className="relative max-w-[840px] mx-auto rounded-2xl bg-[#F4F3F0] px-8 py-14 md:px-16 md:py-16 text-center overflow-hidden">
             <span aria-hidden className="absolute left-6 top-3 font-serif text-[72px] leading-none text-[#1C1A16]/10 select-none">&ldquo;</span>
