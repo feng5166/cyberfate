@@ -26,10 +26,41 @@ export async function GET() {
     return NextResponse.json({ error: '未登录' }, { status: 401 });
   }
 
-  const profiles = await prisma.baziProfile.findMany({
+  let profiles = await prisma.baziProfile.findMany({
     where: { userId: session.user.id },
     orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }],
   });
+
+  // 自动初始化：已登录用户无档案时，从账户基本信息创建主档案
+  if (profiles.length === 0) {
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { nickname: true, birthDate: true, birthHour: true, gender: true },
+    });
+
+    const validGender = user?.gender === 'male' || user?.gender === 'female' ? user.gender : null;
+    const validBirthDate = user?.birthDate && /^\d{4}-\d{2}-\d{2}$/.test(user.birthDate) ? user.birthDate : null;
+    const validBirthHour = user?.birthHour !== undefined && user.birthHour !== null
+      ? String(user.birthHour)
+      : '-1';
+
+    if (validBirthDate && validGender) {
+      const label = sanitizeUserInput(user?.nickname || '我', 10);
+      const name = sanitizeUserInput(user?.nickname || '我', 10);
+      const created = await prisma.baziProfile.create({
+        data: {
+          userId: session.user.id,
+          label,
+          name,
+          gender: validGender,
+          birthDate: validBirthDate,
+          birthHour: validBirthHour,
+          isPrimary: true,
+        },
+      });
+      profiles = [created];
+    }
+  }
 
   return NextResponse.json({ data: profiles });
 }
