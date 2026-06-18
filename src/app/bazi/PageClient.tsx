@@ -1893,26 +1893,19 @@ function BaziPageContent() {
       </div>
 
       <Container>
-        {/* 命盘档案选择器 */}
+        {/* 命盘档案选择器：无档案时不渲染 */}
+        {profiles.length > 0 && (
         <div className="max-w-3xl mx-auto w-full mb-4">
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3 rounded-2xl border border-[#1C1A16]/8 bg-white px-4 py-3">
-            <span className="text-sm font-medium text-[#1C1A16]/70 mr-1">命盘档案</span>
-            {profiles.length > 0 ? (
-              <Select
-                value={selectedProfileId}
-                onChange={(e) => handleSelectProfile(e.target.value)}
-                options={[
-                  { value: '', label: '请选择档案', disabled: true },
-                  ...profiles.map((p) => ({
-                    value: p.id,
-                    label: `${p.label || p.name}${p.isPrimary ? '（我）' : ''} (${p.birthDate || '未填'})`,
-                  })),
-                ]}
-                className="h-9 min-w-[180px] flex-1 rounded-lg border border-[#1C1A16]/15 bg-white px-3 text-sm text-[#1C1A16]"
-              />
-            ) : (
-              <span className="text-xs text-[#1C1A16]/45">还没有档案，点右侧「新增」</span>
-            )}
+          <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
+            <Select
+              value={selectedProfileId}
+              onChange={(e) => handleSelectProfile(e.target.value)}
+              options={profiles.map((p) => ({
+                value: p.id,
+                label: `${p.label || p.name} (${p.birthDate || '未填'})`,
+              }))}
+              className="h-9 min-w-[160px] rounded-lg border border-[#1C1A16]/15 bg-white px-3 text-sm text-[#1C1A16]"
+            />
             {(() => {
               const isAuth = status === 'authenticated';
               const cap = isAuth ? MAX_LOGGED_IN_PROFILES : MAX_GUEST_PROFILES;
@@ -1921,25 +1914,25 @@ function BaziPageContent() {
                 ? isAuth
                   ? `免费版最多保存${cap}个命盘，升级 VIP 无限制`
                   : `未登录最多保存${cap}个命盘，请登录后使用`
-                : '新增一个命盘档案';
+                : '新增八字';
               return (
                 <button
                   type="button"
                   onClick={handleOpenAddProfile}
                   disabled={disabled}
                   title={tip}
-                  className={`inline-flex items-center gap-1 h-9 px-3 rounded-lg text-sm font-medium transition-colors ${
+                  className={`inline-flex items-center gap-1 h-9 px-4 rounded-lg text-sm font-medium transition-colors ${
                     disabled
                       ? 'bg-[#1C1A16]/8 text-[#1C1A16]/40 cursor-not-allowed'
                       : 'bg-[#1C1A16] text-white hover:bg-[#1C1A16]/85'
                   }`}
                 >
                   <Plus className="w-4 h-4" />
-                  新增
+                  新增八字
                 </button>
               );
             })()}
-            {selectedProfileId && (() => {
+            {selectedProfileId && profiles.length > 0 && (() => {
               const current = profiles.find((p) => p.id === selectedProfileId);
               if (!current) return null;
               return (
@@ -1972,6 +1965,7 @@ function BaziPageContent() {
             })()}
           </div>
         </div>
+        )}
 
         {result && !loading && basicInfoData && (
           <div className="max-w-3xl mx-auto w-full mb-6 lg:mb-8">
