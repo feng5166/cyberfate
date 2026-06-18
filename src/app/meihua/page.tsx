@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import PageClient from './PageClient'
 import { FaqJsonLd } from '@/components/seo/FaqJsonLd'
+import { Footer } from '@/components/layout/Footer'
 
 export const metadata: Metadata = {
   title: '梅花易数占卜 | 赛博命理师 CyberFate — AI 起卦解卦',
@@ -52,6 +53,7 @@ export default function MeihuaPage() {
       />
       <FaqJsonLd items={FAQ_ITEMS} />
       <PageClient />
+      <Footer>
       <section aria-label="关于梅花易数" className="mx-auto max-w-3xl px-4 py-12 text-[#1C1A16]/60 text-sm leading-relaxed border-t border-[#1C1A16]/8 mt-8">
         <h2 className="text-base font-semibold text-[#1C1A16] mb-4">关于梅花易数</h2>
         <p className="mb-3">梅花易数相传为北宋大儒邵雍（邵康节）所创，是《周易》体系中以"心易"为核心的占卜方法。相传邵雍观梅花飞落而悟得起卦之法，故名梅花易数。它打破了传统起卦对工具的依赖，主张"万物皆可起卦"——时间、数字、声音、方位、外应皆可成卦，关键在于动念瞬间的诚意与直觉。</p>
@@ -82,6 +84,7 @@ export default function MeihuaPage() {
           </div>
         </div>
       </section>
+      </Footer>
     </>
   )
 }

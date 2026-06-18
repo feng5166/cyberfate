@@ -838,7 +838,6 @@ export default function MeihuaPage() {
         <div className="hidden" data-version="20260407-meihua-v3"></div>
       </main>
 
-      <Footer />
 
       {showRuleModal && (
         <div

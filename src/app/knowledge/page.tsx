@@ -64,7 +64,9 @@ export default function KnowledgePage() {
 
       <Container>
         {/* 搜索 + 筛选 + 文章列表（交互部分用 Client Component） */}
-        <KnowledgeListClient articles={knowledgeList} />
+        <div className="max-w-[840px] mx-auto">
+          <KnowledgeListClient articles={knowledgeList} />
+        </div>
 
         {/* 说明区 — Server Component，爬虫可抓 */}
         <div className="bg-white rounded-2xl border border-[#1C1A16]/8 p-7 mb-16">

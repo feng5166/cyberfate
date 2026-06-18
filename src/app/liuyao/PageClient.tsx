@@ -1885,7 +1885,6 @@ export default function LiuYaoPage() {
         </>}
       </main>
 
-      <Footer />
     </div>
   );
 }

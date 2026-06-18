@@ -787,7 +787,6 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
         {seoContent}
       </main>
 
-      <Footer />
 
       {/* 凯尔特十字牌面详情 Modal */}
       {celticModalIdx !== null && result && result.cards[celticModalIdx] && (

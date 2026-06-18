@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import PageClient from './PageClient'
 import { FaqJsonLd } from '@/components/seo/FaqJsonLd'
+import { Footer } from '@/components/layout/Footer'
 
 export const metadata: Metadata = {
   title: '六爻占卜 | 赛博命理师 CyberFate — AI 纳甲六爻预测',
@@ -52,6 +53,7 @@ export default function LiuyaoPage() {
       />
       <FaqJsonLd items={FAQ_ITEMS} />
       <PageClient />
+      <Footer>
       <section aria-label="关于六爻占卜" className="mx-auto max-w-3xl px-4 py-12 text-[#1C1A16]/60 text-sm leading-relaxed border-t border-[#1C1A16]/8 mt-8">
         <h2 className="text-base font-semibold text-[#1C1A16] mb-4">关于六爻占卜</h2>
         <p className="mb-3">六爻占卜源自《周易》，是基于六十四卦体系的传统预测方法。其完整体系由西汉京房奠定，他将天干地支、五行、六亲等要素纳入卦爻，开创了"纳甲"体系，使原本抽象的卦象具备了系统化推演的可能。后经历代易学家发展，明清时期《卜筮正宗》等典籍进一步完善了六爻预测的理论框架。</p>
@@ -82,6 +84,7 @@ export default function LiuyaoPage() {
           </div>
         </div>
       </section>
+      </Footer>
     </>
   )
 }
