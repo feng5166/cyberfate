@@ -47,6 +47,8 @@ import {
   getLunarDate,
   getYearGanzhi,
   describeDayun,
+  analyzeLiunian,
+  analyzeLiuyueRange,
 } from '@/lib/bazi';
 import type { DayunDetail } from '@/lib/bazi';
 import type {
@@ -254,6 +256,33 @@ function extractAiSections(aiAnalysis: string): Record<AiSectionKey, string> {
     health: parseSection(aiAnalysis, aiSectionTitleMap.health),
     dayun: parseSection(aiAnalysis, aiSectionTitleMap.dayun),
   };
+}
+
+/** 北京时间当前公历年 */
+function beijingYear(): number {
+  return new Date(Date.now() + 8 * 60 * 60 * 1000).getUTCFullYear();
+}
+
+/**
+ * 加载缓存档案时，按「当前年」刷新时间相关命盘模块（流年/流月 + 大运当前高亮）。
+ * 静态命盘（四柱/五行/十神/神煞/大运表）仍走缓存秒出；流年/流月本应永远是当年，
+ * 故从持久化命盘的 chart 现算，避免显示去年的快照。无 chart（旧本地记录）则原样返回。
+ */
+function refreshFlowModules(result: BaziPageResult): BaziPageResult {
+  const chart = result.baziResult?.chart;
+  if (!chart) return result;
+  try {
+    const year = beijingYear();
+    const liunian = analyzeLiunian(chart, year);
+    const liuyue = analyzeLiuyueRange(chart, year, 1, 12);
+    const dayunTimeline = result.dayunTimeline?.map((d) => ({
+      ...d,
+      isCurrent: year >= d.yearStart && year <= d.yearEnd,
+    }));
+    return { ...result, liunian, liuyue, ...(dayunTimeline ? { dayunTimeline } : {}) };
+  } catch {
+    return result;
+  }
 }
 
 function firstSentence(text: string): string {
@@ -1270,6 +1299,15 @@ function BaziPageContent() {
     } catch (e) {
       console.error('auto save failed', e);
     }
+
+    // 登录用户：把含 AI 解读的命盘写回当前档案（按档案ID持久化，切回即时见、无需重点解读）
+    if (status === 'authenticated' && selectedProfileId && data.aiAnalysis) {
+      void fetch(`/api/bazi/profiles/${selectedProfileId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ baziResult: { ...data, _source: undefined } }),
+      }).catch(() => {});
+    }
   };
 
   const runAiStream = async (forceRefresh: boolean, overrideResult?: BaziPageResult): Promise<boolean> => {
@@ -1404,7 +1442,8 @@ function BaziPageContent() {
       knowTime: false,
     }));
     if (profile.baziResult) {
-      setResult({ ...profile.baziResult, _source: 'history' });
+      // 静态命盘走缓存秒出；流年/流月/大运高亮按当前年现算，避免显示旧快照
+      setResult(refreshFlowModules({ ...profile.baziResult, _source: 'history' }));
       setError('');
       setShowAiButton(false);
     } else {
@@ -1994,7 +2033,7 @@ function BaziPageContent() {
               onEdit={handleEditBasicInfo}
               onDelete={handleDeleteBasicInfo}
               onReanalyze={handleReanalyze}
-              reanalyzing={reanalyzing}
+              reanalyzing={reanalyzing || aiStreaming}
             />
           </Card>
           </div>
