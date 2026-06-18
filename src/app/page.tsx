@@ -189,25 +189,35 @@ export default function HomePage() {
           </p>
 
           {/* 按钮组 */}
-          <div className="flex flex-col sm:flex-row justify-center gap-4 mt-10">
-            <Link href="/bazi">
-              <Button
-                variant="primary"
-                size="lg"
-                className="px-[38px] py-[14px] text-[13px] tracking-[0.08em]"
-              >
-                八字分析 →
-              </Button>
-            </Link>
-            <Link href="/meihua">
-              <Button
-                variant="secondary"
-                size="lg"
-                className="px-[38px] py-[14px] text-[13px] tracking-[0.08em] !text-[#1C1A16] !border-[#1C1A16]/30 hover:!border-[#1C1A16] hover:!bg-[#FDFBF7]"
-              >
-                梅花易数
-              </Button>
-            </Link>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8 mt-10">
+            <div className="flex flex-col items-center gap-2.5">
+              <Link href="/bazi">
+                <Button
+                  variant="primary"
+                  size="lg"
+                  className="px-[40px] py-[15px] text-[17px] font-semibold tracking-[0.08em]"
+                >
+                  八字分析 →
+                </Button>
+              </Link>
+              <span className="text-[13px] text-[#1C1A16]/40">生命密码解析</span>
+            </div>
+
+            {/* 竖直分隔线（仅桌面端横排时显示） */}
+            <span aria-hidden className="hidden sm:block w-px h-12 bg-[#1C1A16]/10" />
+
+            <div className="flex flex-col items-center gap-2.5">
+              <Link href="/meihua">
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  className="px-[38px] py-[14px] text-[13px] tracking-[0.08em] !text-[#1C1A16] !border-[#1C1A16]/30 hover:!border-[#1C1A16] hover:!bg-[#FDFBF7]"
+                >
+                  梅花易数 →
+                </Button>
+              </Link>
+              <span className="text-[13px] text-[#1C1A16]/40">智慧决策指南</span>
+            </div>
           </div>
 
         </div>
@@ -223,6 +233,35 @@ export default function HomePage() {
             </blockquote>
             <figcaption className="mt-7 text-sm text-[#1C1A16]/45 not-italic">— 卡尔·荣格</figcaption>
           </figure>
+        </Container>
+      </section>
+
+      {/* ===== Core Principles 核心理念 ===== */}
+      <section className="px-4 py-10 md:py-16 bg-brand-bg/60">
+        <Container>
+          <h2 className="text-center font-display text-[28px] md:text-[32px] text-[#1C1A16] mb-10 md:mb-12">核心理念</h2>
+          <div className="max-w-[840px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
+            {corePrinciples.map((principle) => {
+              const Icon = principle.icon;
+              return (
+                <Card
+                  key={principle.title}
+                  className="text-center border-none shadow-none p-8 hover:shadow-card-hover hover:-translate-y-1 transition-all duration-300"
+                  hover={false}
+                >
+                  <div className="flex flex-col items-center text-center">
+                    <div className="w-[52px] h-[52px] rounded-full bg-gray-100 flex items-center justify-center">
+                      <Icon className={`w-6 h-6 ${principle.iconColor}`} strokeWidth={1.5} />
+                    </div>
+                    <h3 className="text-[19px] font-semibold text-[#1C1A16] mt-4">{principle.title}</h3>
+                    <p className="text-sm text-[#1C1A16]/70 mt-3 leading-relaxed">
+                      {principle.description}
+                    </p>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
         </Container>
       </section>
 
@@ -285,34 +324,6 @@ export default function HomePage() {
                 );
               })}
             </div>
-          </div>
-        </Container>
-      </section>
-
-      {/* ===== Core Principles ===== */}
-      <section className="px-4 py-10 md:py-16 bg-brand-bg/60">
-        <Container>
-          <div className="max-w-[840px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
-            {corePrinciples.map((principle) => {
-              const Icon = principle.icon;
-              return (
-                <Card
-                  key={principle.title}
-                  className="text-center border-none shadow-none p-8 hover:shadow-card-hover hover:-translate-y-1 transition-all duration-300"
-                  hover={false}
-                >
-                  <div className="flex flex-col items-center text-center">
-                    <div className="w-[52px] h-[52px] rounded-full bg-gray-100 flex items-center justify-center">
-                      <Icon className={`w-6 h-6 ${principle.iconColor}`} strokeWidth={1.5} />
-                    </div>
-                    <h3 className="text-[19px] font-semibold text-[#1C1A16] mt-4">{principle.title}</h3>
-                    <p className="text-sm text-[#1C1A16]/70 mt-3 leading-relaxed">
-                      {principle.description}
-                    </p>
-                  </div>
-                </Card>
-              );
-            })}
           </div>
         </Container>
       </section>
