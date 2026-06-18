@@ -239,7 +239,7 @@ export default function HomePage() {
       {/* ===== Core Principles 核心理念 ===== */}
       <section className="px-4 py-10 md:py-16 bg-brand-bg/60">
         <Container>
-          <h2 className="text-center font-display text-[28px] md:text-[32px] text-[#1C1A16] mb-10 md:mb-12">核心理念</h2>
+          <h2 className="text-center font-display text-[22px] md:text-[26px] text-[#1C1A16] mb-10 md:mb-12">核心理念</h2>
           <div className="max-w-[840px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
             {corePrinciples.map((principle) => {
               const Icon = principle.icon;
