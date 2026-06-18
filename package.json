@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "node scripts/run-build.js",
+    "migrate": "node scripts/migrate.mjs",
     "postinstall": "prisma generate",
     "start": "next start",
     "lint": "eslint",
@@ -52,6 +53,7 @@
     "dotenv": "^17.4.2",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "pg": "^8.21.0",
     "playwright": "^1.59.1",
     "tailwindcss": "^4",
     "typescript": "^5",

@@ -41,4 +41,9 @@ if (shouldRunDbPush) {
 }
 
 run('npx prisma generate');
+
+// 应用原始 SQL 迁移（db_migrations/*.sql）。无 PostgreSQL 连接串时脚本内部自跳过；
+// 有连接串时失败即中断构建，避免上线缺列导致接口 500。
+run('node scripts/migrate.mjs');
+
 run('next build --webpack');
