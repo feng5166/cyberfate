@@ -4,7 +4,8 @@ import { z } from 'zod';
 import { sanitizeUserInput } from '@/lib/utils/sanitize';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { calculateBazi, WUXING_KEYS, analyzeMingGe, getCurrentDayun, getDayunTimeline } from '@/lib/bazi';
+import { calculateBazi, WUXING_KEYS, analyzeMingGe, getCurrentDayun, getDayunTimeline, analyzeShensha, shenshaNature, analyzeLiunian, analyzeLiuyueRange } from '@/lib/bazi';
+import type { ShenshaDisplay } from '@/lib/bazi/types';
 import { checkBaziQuota, refundQuota } from '@/lib/quota';
 import { checkRateLimit } from '@/lib/rate-limit';
 import type { FiveDimensions, MingGeInfo, PillarRecord, WuxingCount } from '@/lib/bazi/types';
@@ -196,6 +197,18 @@ export async function POST(req: NextRequest) {
       jiShen: mingGeResult.jiShen,
     };
 
+    // —— 首屏结构化命盘模块（确定性，一次性算出）：神煞 / 流年 / 流月 / 终身大运表 ——
+    // 流年/流月按北京时间当前公历年计算，确保始终是当年（命盘永久缓存时此两项需按年刷新，见 PRD 评审）
+    const curYear = new Date(Date.now() + 8 * 60 * 60 * 1000).getUTCFullYear();
+    const shensha: ShenshaDisplay[] = analyzeShensha(baziResult.chart).map((s) => ({
+      name: s.name,
+      pillars: s.pillars,
+      branch: s.branch,
+      nature: shenshaNature(s.name),
+    }));
+    const liunian = analyzeLiunian(baziResult.chart, curYear);
+    const liuyue = analyzeLiuyueRange(baziResult.chart, curYear, 1, 12);
+
     // 生成 cacheKey（与 /api/bazi/stream 共用）。
     // 必须涵盖**全部影响排盘的字段**，否则不同精度/历法/晚子时会串档共享同一份 AI 解读：
     // - gender 用归一化后的 calcInput.gender（unknown→male，二者本就同盘）
@@ -231,6 +244,11 @@ export async function POST(req: NextRequest) {
       cacheKey,
       baziResult: baziResultWithDayun,
       dayunExtra,
+      // 首屏结构化命盘模块
+      shensha,
+      liunian,
+      liuyue,
+      dayunTimeline,
     });
   } catch (error) {
     if (baziQuotaConsumed && session?.user?.id) {

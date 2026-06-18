@@ -1,3 +1,5 @@
+import type { FlowAnalysis, LiuyueItem } from './liunian';
+
 // 天干类型
 export type TianGan = '甲' | '乙' | '丙' | '丁' | '戊' | '己' | '庚' | '辛' | '壬' | '癸';
 
@@ -133,6 +135,14 @@ export interface MingGeInfo {
   jiShen: WuXing;
 }
 
+/** 神煞展示项（首屏命盘「神煞」模块用，含吉凶分类） */
+export interface ShenshaDisplay {
+  name: string;
+  pillars: PillarKey[];
+  branch: DiZhi;
+  nature: '吉' | '凶' | '中';
+}
+
 export interface BaziApiResult {
   pillars: PillarRecord;
   /** 是否存在真实时柱；false 表示用户未提供时辰，pillars.hour 为占位值不应展示 */
@@ -149,6 +159,15 @@ export interface BaziApiResult {
   trueSolarOffsetMinutes?: number | null;
   dayunStartDescription?: string;
   dayunStartAt?: string;
+  // —— 首屏结构化命盘模块（开始解读时一次性算出）——
+  /** 神煞罗列（文昌/驿马/桃花…，含吉凶） */
+  shensha?: ShenshaDisplay[];
+  /** 当前公历年流年分析（干支 + 与命盘关系） */
+  liunian?: FlowAnalysis;
+  /** 当前公历年 12 个流月 */
+  liuyue?: LiuyueItem[];
+  /** 终身大运表（约 8 步） */
+  dayunTimeline?: DayunTimelineItem[];
 }
 
 export interface BaziHistoryRecord {

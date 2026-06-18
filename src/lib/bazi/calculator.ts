@@ -370,6 +370,8 @@ export function getDayunTimeline(
   gender: Gender,
   birthHourNum?: number,
   birthMinute?: number,
+  /** 返回的大运步数；默认 8（约起运后 80 年，覆盖终身大运表）。 */
+  steps: number = 8,
 ): DayunTimelineItem[] {
   try {
     const eightChar = buildEightChar(birthDate, birthHourNum, birthMinute);
@@ -380,7 +382,7 @@ export function getDayunTimeline(
 
     const currentYear = getCurrentYear();
 
-    return dayunList.slice(0, 6).map((d, i) => {
+    return dayunList.slice(0, Math.max(1, steps)).map((d, i) => {
       const gz = d.getGanZhi() as string;
       const gan = gz[0] as TianGan;
       const zhi = gz[1] as DiZhi;

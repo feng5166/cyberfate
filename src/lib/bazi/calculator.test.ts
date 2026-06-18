@@ -347,9 +347,10 @@ describe('getCurrentDayun / getDayunTimeline (time-dependent)', () => {
     expect(ZHI_SET.has(d.zhi)).toBe(true);
   });
 
-  it('timeline has 6 steps, each 10 years, ages contiguous, all legal', () => {
+  it('timeline 终身大运表（默认≤8步），each 10 years, ages contiguous, all legal', () => {
     const tl = getDayunTimeline('1990-05-15', 'male');
-    expect(tl.length).toBe(6);
+    expect(tl.length).toBeGreaterThanOrEqual(6);
+    expect(tl.length).toBeLessThanOrEqual(8);
     tl.forEach((item, i) => {
       expect(item.index).toBe(i);
       expect(item.ageEnd - item.ageStart).toBe(9);
@@ -363,6 +364,12 @@ describe('getCurrentDayun / getDayunTimeline (time-dependent)', () => {
     });
     // at most one current window
     expect(tl.filter((x) => x.isCurrent).length).toBeLessThanOrEqual(1);
+  });
+
+  it('getDayunTimeline 支持自定义步数（终身表可取更多步）', () => {
+    expect(getDayunTimeline('1990-05-15', 'male', undefined, undefined, 3).length).toBe(3);
+    // 默认应多于旧版的 6 步，体现「终身大运表」
+    expect(getDayunTimeline('1990-05-15', 'male').length).toBeGreaterThan(6);
   });
 
   it('uses precise 起运 from lunar-javascript getYun (not the old 3-5 estimate)', () => {

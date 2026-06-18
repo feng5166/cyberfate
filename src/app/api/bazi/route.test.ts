@@ -124,6 +124,16 @@ describe('POST /api/bazi', () => {
     expect(json.aiAnalysis).toBe('');
     expect(json.cacheKey).toMatch(/^v6:bazi:/);
     expect(generateBaziAnalysis).not.toHaveBeenCalled();
+    // 首屏结构化命盘模块：神煞/流年/流月(12)/终身大运表
+    expect(Array.isArray(json.shensha)).toBe(true);
+    if (json.shensha.length) {
+      expect(json.shensha[0]).toHaveProperty('name');
+      expect(['吉', '凶', '中']).toContain(json.shensha[0].nature);
+    }
+    expect(json.liunian).toHaveProperty('ganzhi');
+    expect(json.liuyue).toHaveLength(12);
+    expect(Array.isArray(json.dayunTimeline)).toBe(true);
+    expect(json.dayunTimeline.length).toBeGreaterThan(6);
   });
 
   it('cacheKey 区分精确时分/农历/晚子时，不再串档', async () => {
