@@ -1367,6 +1367,34 @@ function BaziPageContent() {
       });
 
       if (!response.ok) {
+        let errCode = '';
+        let errMsg = '';
+        try {
+          const data = await response.json();
+          errCode = data?.error || '';
+          errMsg = data?.message || '';
+        } catch {}
+        // 配额用尽（免费用户）→ 升级引导弹窗
+        if (response.status === 403 && errCode === 'QUOTA_EXCEEDED') {
+          setShowQuotaModal(true);
+          setShowAiButton(true);
+          return false;
+        }
+        // 游客每日次数用尽 / 请求过于频繁
+        if (response.status === 429) {
+          if (errCode === 'GUEST_LIMIT_REACHED') {
+            setError(errMsg || '游客每日免费次数已用完，登录后可继续使用');
+          } else {
+            setError(errMsg || '请求过于频繁，请稍后再试');
+          }
+          setShowAiButton(true);
+          return false;
+        }
+        if (response.status === 401) {
+          setError('请登录后使用');
+          setShowAiButton(true);
+          return false;
+        }
         throw new Error('AI 解读请求失败');
       }
 

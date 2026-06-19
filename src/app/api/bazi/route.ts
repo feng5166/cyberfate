@@ -6,7 +6,6 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { calculateBazi, WUXING_KEYS, analyzeMingGe, getCurrentDayun, getDayunTimeline, analyzeShensha, shenshaNature, analyzeLiunian, analyzeLiuyueRange } from '@/lib/bazi';
 import type { ShenshaDisplay } from '@/lib/bazi/types';
-import { checkBaziQuota, refundQuota } from '@/lib/quota';
 import { checkRateLimit } from '@/lib/rate-limit';
 import type { FiveDimensions, MingGeInfo, PillarRecord, WuxingCount } from '@/lib/bazi/types';
 import { applyChaos } from '@/lib/chaos-middleware';
@@ -60,31 +59,19 @@ export async function POST(req: NextRequest) {
   const chaosRes = await applyChaos(req);
   if (chaosRes) return chaosRes;
 
-  // 检查登录状态和配额（游客可以试用）
+  // 本端点仅做「排盘」（确定性计算，无 AI 成本）。
+  // AI 解读的登录/游客/配额门禁统一在 /api/bazi/stream 的实际生成处执行，
+  // 避免与 stream 双重计费，也堵住「重新分析」直接打 stream 绕过配额的漏洞。
   const session = await getServerSession(authOptions);
-  let baziQuotaConsumed = false;
 
-  // B-6: Rate limiting
+  // 轻量防刷（与 stream 的计费限流用不同 key，避免互相占用名额）
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
   if (session?.user?.id) {
-    const rl = await checkRateLimit('ai_bazi', session.user.id, 10, 60);
+    const rl = await checkRateLimit('bazi_chart', session.user.id, 30, 60);
     if (!rl.allowed) return Response.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
   } else {
-    const rl = await checkRateLimit('ai_bazi_guest', ip, 1, 86400);
+    const rl = await checkRateLimit('bazi_chart_guest', ip, 20, 3600);
     if (!rl.allowed) return Response.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
-  }
-
-  // B-4 + BUG-012 + H2: 原子 checkBaziQuota（avoid peek-then-deduct race）
-  if (session?.user?.id) {
-    const quota = await checkBaziQuota(session.user.id);
-
-    if (!quota.hasQuota) {
-      return Response.json({
-        error: 'QUOTA_EXCEEDED',
-        message: '今日免费解读次数已用完，请升级 VIP'
-      }, { status: 403 });
-    }
-    baziQuotaConsumed = !quota.isVip;
   }
 
   try {
@@ -251,9 +238,6 @@ export async function POST(req: NextRequest) {
       dayunTimeline,
     });
   } catch (error) {
-    if (baziQuotaConsumed && session?.user?.id) {
-      try { await refundQuota(session.user.id, 'baziAiCount'); } catch {}
-    }
     logger.error(SERVICE, 'Bazi API error', error instanceof Error ? error : undefined);
 
     if (error instanceof z.ZodError) {

@@ -99,11 +99,12 @@ describe('POST /api/bazi', () => {
     expect((await res.json()).error).toContain('输入数据格式错误');
   });
 
-  it('returns 403 when quota is exhausted', async () => {
+  it('does NOT gate quota at /api/bazi — 排盘开放，AI 配额改在 /api/bazi/stream 生成处校验', async () => {
+    // 即使配额耗尽，排盘端点仍返回命盘：避免与 stream 双重计费，并堵住「重新分析」直打 stream 绕过配额
     checkBaziQuota.mockResolvedValue({ hasQuota: false, isVip: false });
     const res = await POST(makeReq(validBody));
-    expect(res.status).toBe(403);
-    expect((await res.json()).error).toBe('QUOTA_EXCEEDED');
+    expect(res.status).toBe(200);
+    expect((await res.json()).pillars).toBeDefined();
   });
 
   it('returns 429 when rate limited', async () => {

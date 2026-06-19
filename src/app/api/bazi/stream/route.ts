@@ -2,7 +2,8 @@ import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { getServerSession, type Session } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { refundQuota } from '@/lib/quota';
+import { refundQuota, checkBaziQuota } from '@/lib/quota';
+import { checkRateLimit } from '@/lib/rate-limit';
 import { redis } from '@/lib/cache/redis';
 import { getEnvVar } from '@/lib/utils/api-wrapper';
 import { AI_BASE_URL, PRIMARY_MODEL } from '@/lib/ai/models';
@@ -95,6 +96,32 @@ export async function POST(req: NextRequest) {
       }
     } catch (err) {
       console.warn('[bazi stream] cache read error', err);
+    }
+  }
+
+  // 走到这里说明要真正生成 AI（forceRefresh 或缓存未命中）。
+  // 统一在「实际生成」处计费/限流——这是唯一会调用 DeepSeek 的位置，
+  // 防止「重新分析」或直接打 /api/bazi/stream（自带任意 cacheKey 制造缓存未命中）绕过配额。
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  if (session?.user?.id) {
+    const rl = await checkRateLimit('ai_bazi', session.user.id, 10, 60);
+    if (!rl.allowed) {
+      return Response.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
+    }
+    const quota = await checkBaziQuota(session.user.id);
+    if (!quota.hasQuota) {
+      return Response.json(
+        { error: 'QUOTA_EXCEEDED', message: '今日免费解读次数已用完，请升级 VIP' },
+        { status: 403 },
+      );
+    }
+  } else {
+    const rl = await checkRateLimit('ai_bazi_guest', ip, 1, 86400);
+    if (!rl.allowed) {
+      return Response.json(
+        { error: 'GUEST_LIMIT_REACHED', message: '游客每日免费解读次数已用完，登录后可继续使用' },
+        { status: 429 },
+      );
     }
   }
 
