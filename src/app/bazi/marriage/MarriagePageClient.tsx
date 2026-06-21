@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useSession } from 'next-auth/react';
 import { Sparkles, ScrollText, Compass, History, ChevronDown, User } from 'lucide-react';
+import { useAiGate, AiGateModals } from '@/components/ai/useAiGate';
 import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -406,6 +408,9 @@ export function MarriagePageClient() {
   });
   const [error, setError] = useState('');
 
+  const { status } = useSession();
+  const gate = useAiGate(status === 'authenticated');
+
   const updateMale = (patch: Partial<SideData>) => setMaleData(prev => ({ ...prev, ...patch }));
   const updateFemale = (patch: Partial<SideData>) => setFemaleData(prev => ({ ...prev, ...patch }));
 
@@ -478,6 +483,11 @@ export function MarriagePageClient() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
+        // 统一 AI 门禁：游客被拦→弹登录，登录未订阅被配额拦→弹升级
+        if (gate.handle(res.status, data.code || data.error)) {
+          setLoading(false);
+          return;
+        }
         // 优先显示服务端友好文案（message），避免把 QUOTA_EXCEEDED 等错误码直接抛给用户
         throw new Error(data.message || data.error || '请求失败');
       }
@@ -831,6 +841,7 @@ export function MarriagePageClient() {
           </div>
         </Container>
       </div>
+      <AiGateModals gate={gate} callbackUrl="/bazi/marriage" />
     </div>
   );
 }

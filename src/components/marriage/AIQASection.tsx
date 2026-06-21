@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { useSession } from 'next-auth/react';
 import { MessageCircle, Send, Loader2 } from 'lucide-react';
+import { useAiGate, AiGateModals } from '@/components/ai/useAiGate';
 
 interface AIQASectionProps {
   maleBazi: string;
@@ -42,6 +44,9 @@ export function AIQASection({
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<QAEntry[]>([]);
 
+  const { status } = useSession();
+  const gate = useAiGate(status === 'authenticated');
+
   const submit = async (questionText?: string) => {
     const q = (questionText ?? input).trim();
     if (!q || loading) return;
@@ -73,6 +78,18 @@ export function AIQASection({
 
       if (!res.ok) {
         const j = await res.json().catch(() => ({}));
+        // 统一 AI 门禁：游客被拦→弹登录，登录未订阅被配额拦→弹升级
+        if (gate.handle(res.status, j.code || j.error)) {
+          // 命中门禁：移除占位的 pending 条目并重置加载态，不在气泡里显示报错文字
+          setHistory((prev) => {
+            const next = [...prev];
+            const last = next[next.length - 1];
+            if (last && last.pending) next.pop();
+            return next;
+          });
+          setLoading(false);
+          return;
+        }
         // 优先显示服务端友好文案（如「今日免费问答次数已用完，升级 VIP 不限量」）
         throw new Error(j.message || j.error || '请求失败');
       }
@@ -192,6 +209,8 @@ export function AIQASection({
           ))}
         </div>
       </div>
+
+      <AiGateModals gate={gate} callbackUrl="/bazi/marriage" />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useSession } from 'next-auth/react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { ChevronRight, AlertTriangle, RefreshCw } from 'lucide-react';
@@ -20,6 +21,7 @@ import {
 } from '@/components/ziwei';
 import type { PalaceData, CenterUserInfo } from '@/components/ziwei';
 import { track } from '@/lib/analytics';
+import { useAiGate, AiGateModals } from '@/components/ai/useAiGate';
 
 const _loadingSpinner = () => (
   <div className="flex justify-center py-8">
@@ -178,6 +180,10 @@ export default function ZiweiPage() {
   // 入场动画
   const [gridAnimated, setGridAnimated] = useState(false);
 
+  // AI 统一门禁（游客 401 弹登录 / 未订阅弹升级）
+  const { status } = useSession();
+  const gate = useAiGate(status === 'authenticated');
+
   const selectedPalace = useMemo(() => {
     if (selectedPalaceIndex === null || !palaces[selectedPalaceIndex]) return null;
     return palaces[selectedPalaceIndex];
@@ -275,6 +281,11 @@ export default function ZiweiPage() {
 
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}));
+        // 命中统一门禁（游客未登录弹登录 / 未订阅弹升级）：直接弹窗中止，不走缓存兜底
+        if (gate.handle(res.status, errBody.code || errBody.error)) {
+          setLoading(false);
+          return;
+        }
         throw new Error(errBody.error || `请求失败 (${res.status})`);
       }
 
@@ -545,6 +556,8 @@ export default function ZiweiPage() {
           <ZiweiFaq />
         </Container>
       </div>
+
+      <AiGateModals gate={gate} callbackUrl="/ziwei" />
     </div>
   );
 }

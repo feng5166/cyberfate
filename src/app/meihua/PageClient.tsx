@@ -10,7 +10,9 @@ import {
   Send,
 } from 'lucide-react';
 import { useState } from 'react';
+import { useSession } from 'next-auth/react';
 import { OracleLoading } from '@/components/ui/OracleLoading';
+import { useAiGate, AiGateModals } from '@/components/ai/useAiGate';
 import { track } from '@/lib/analytics';
 
 const Footer = dynamic(() => import('@/components/layout/Footer').then(m => m.Footer), { ssr: false });
@@ -190,6 +192,8 @@ export default function MeihuaPage() {
   const [qaStreaming, setQaStreaming] = useState(false);
   const [expandedFaqIndex, setExpandedFaqIndex] = useState<number | null>(0);
   const [showRuleModal, setShowRuleModal] = useState(false);
+  const { status } = useSession();
+  const gate = useAiGate(status === 'authenticated');
 
   const RULE_CONTENT: Record<Method, { title: string; rules: string[] }> = {
     time: {
@@ -268,11 +272,18 @@ export default function MeihuaPage() {
 
       if (!drawRes.ok || !drawRes.body) {
         let errMsg = '起卦失败，请稍后重试。';
+        let gateCode: string | undefined;
         try {
           const data = await drawRes.json();
+          gateCode = data?.code || data?.error;
           // 优先显示服务端友好文案（message），避免把 QUOTA_EXCEEDED 等错误码直接显示给用户
           if (data?.message || data?.error) errMsg = data.message || data.error;
         } catch {}
+        if (gate.handle(drawRes.status, gateCode)) {
+          setLoading(false);
+          setStreaming(false);
+          return;
+        }
         throw new Error(errMsg);
       }
 
@@ -352,7 +363,12 @@ export default function MeihuaPage() {
       });
       if (!decideRes.ok || !decideRes.body) {
         let errMsg = '已完成起卦，AI 决策建议暂不可用。';
-        try { const d = await decideRes.json(); if (d?.message || d?.error) errMsg = d.message || d.error; } catch {}
+        let gateCode: string | undefined;
+        try { const d = await decideRes.json(); gateCode = d?.code || d?.error; if (d?.message || d?.error) errMsg = d.message || d.error; } catch {}
+        if (gate.handle(decideRes.status, gateCode)) {
+          setDecisionLoading(false);
+          return;
+        }
         setError(errMsg);
         return;
       }
@@ -415,7 +431,15 @@ export default function MeihuaPage() {
       });
       if (!res.ok || !res.body) {
         let errMsg = '请求失败，请稍后重试。';
-        try { const d = await res.json(); if (d?.message || d?.error) errMsg = d.message || d.error; } catch {}
+        let gateCode: string | undefined;
+        try { const d = await res.json(); gateCode = d?.code || d?.error; if (d?.message || d?.error) errMsg = d.message || d.error; } catch {}
+        if (gate.handle(res.status, gateCode)) {
+          // 命中门禁：移除刚追加的空占位回答，避免残留空气泡
+          setQaHistory((prev) => prev.slice(0, -1));
+          setQaLoading(false);
+          setQaStreaming(false);
+          return;
+        }
         setQaHistory((prev) => { const n=[...prev]; n[n.length-1]={...n[n.length-1],a:errMsg}; return n; });
         return;
       }
@@ -871,6 +895,8 @@ export default function MeihuaPage() {
           </div>
         </div>
       )}
+
+      <AiGateModals gate={gate} callbackUrl="/meihua" />
     </div>
   );
 }

@@ -3,6 +3,8 @@
 import dynamic from 'next/dynamic';
 import { ChevronDown, ChevronUp, Loader2, Send } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSession } from 'next-auth/react';
+import { useAiGate, AiGateModals } from '@/components/ai/useAiGate';
 import { OracleLoading } from '@/components/ui/OracleLoading';
 import { HEXAGRAM_JUDGMENTS, getLineTexts, getLineTitle } from '@/lib/liuyao/data';
 import { track } from '@/lib/analytics';
@@ -752,6 +754,8 @@ function NumberPanel({ onComplete }: { onComplete: (lines: (0 | 1)[], movingLine
 // ─── 主页面 ─────────────────────────────────────
 
 export default function LiuYaoPage() {
+  const { status } = useSession();
+  const gate = useAiGate(status === 'authenticated');
   const [question, setQuestion] = useState('');
   const [method, setMethod] = useState<DivinationMethod>('manual');
   const [lineSelections, setLineSelections] = useState<LineValue[]>([null, null, null, null, null, null]);
@@ -999,10 +1003,16 @@ export default function LiuYaoPage() {
 
       if (!res.ok || !res.body) {
         let errMsg = '请求失败，请稍后重试。';
+        let data: { message?: string; error?: string; code?: string } | null = null;
         try {
-          const data = await res.json();
-          if (data?.message || data?.error) errMsg = data.message || data.error;
+          data = await res.json();
+          if (data?.message || data?.error) errMsg = data.message || data.error || errMsg;
         } catch {}
+        if (gate.handle(res.status, data?.code || data?.error)) {
+          setLoading(false);
+          setStreaming(false);
+          return;
+        }
         throw new Error(errMsg);
       }
 
@@ -1137,10 +1147,18 @@ export default function LiuYaoPage() {
 
       if (!res.ok || !res.body) {
         let errMsg = '请求失败，请稍后重试。';
+        let data: { message?: string; error?: string; code?: string } | null = null;
         try {
-          const data = await res.json();
-          if (data?.message || data?.error) errMsg = data.message || data.error;
+          data = await res.json();
+          if (data?.message || data?.error) errMsg = data.message || data.error || errMsg;
         } catch {}
+        if (gate.handle(res.status, data?.code || data?.error)) {
+          setQaLoading(false);
+          setQaStreaming(false);
+          // 命中门禁：移除刚追加的占位问答条目，避免残留空回答
+          setQaHistory((prev) => prev.slice(0, -1));
+          return;
+        }
         setQaHistory((prev) => {
           const next = [...prev];
           next[next.length - 1] = { ...next[next.length - 1], a: errMsg };
@@ -1885,6 +1903,7 @@ export default function LiuYaoPage() {
         </>}
       </main>
 
+      <AiGateModals gate={gate} callbackUrl="/liuyao" />
     </div>
   );
 }

@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { useSession } from 'next-auth/react';
 import { Send } from 'lucide-react';
 import { OracleLoading } from '@/components/ui/OracleLoading';
+import { useAiGate, AiGateModals } from '@/components/ai/useAiGate';
 
 interface AiAskSectionProps {
   date: string;
@@ -28,6 +30,8 @@ export function AiAskSection({ date }: AiAskSectionProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { status } = useSession();
+  const gate = useAiGate(status === 'authenticated');
 
   const sendQuestion = async (question: string) => {
     if (!question.trim() || loading) return;
@@ -48,11 +52,17 @@ export function AiAskSection({ date }: AiAskSectionProps) {
 
       if (!res.ok || !res.body) {
         let errMsg = 'AI 思考较久，请稍后再试。';
+        let data: { message?: string; error?: string; code?: string } = {};
         try {
-          const data = await res.json();
+          data = await res.json();
           // 优先服务端友好文案（如「今日免费次数已用完，升级 VIP 不限量」「请先登录」）
-          if (data?.message || data?.error) errMsg = data.message || data.error;
+          if (data?.message || data?.error) errMsg = data.message || data.error || errMsg;
         } catch {}
+        // 命中统一门禁（游客弹登录 / 未订阅弹升级）：弹窗后中止，不再 push 笼统报错
+        if (gate.handle(res.status, data?.code || data?.error)) {
+          setLoading(false);
+          return;
+        }
         setMessages((prev) => [...prev, { role: 'ai', content: errMsg }]);
         return;
       }
@@ -199,6 +209,8 @@ export function AiAskSection({ date }: AiAskSectionProps) {
           ))}
         </div>
       )}
+
+      <AiGateModals gate={gate} callbackUrl="/huangli" />
     </div>
   );
 }

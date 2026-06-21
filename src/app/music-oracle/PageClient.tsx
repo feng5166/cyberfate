@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { useSession } from 'next-auth/react';
+import { useAiGate, AiGateModals } from '@/components/ai/useAiGate';
 import { Container } from '@/components/ui/Container';
 import { Footer } from '@/components/layout/Footer';
 import { OracleLoading } from '@/components/ui/OracleLoading';
@@ -64,6 +66,8 @@ interface OracleResult {
 }
 
 export default function MusicOraclePageClient() {
+  const { status } = useSession();
+  const gate = useAiGate(status === 'authenticated');
   const [question, setQuestion] = useState('');
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [birthYear, setBirthYear] = useState('');
@@ -115,9 +119,16 @@ export default function MusicOraclePageClient() {
       });
 
       if (!res.ok || !res.body) {
-        let errMsg = '求签失败，请稍后重试';
-        try { const d = await res.json(); if (d?.error) errMsg = d.error; } catch {}
-        setError(errMsg);
+        const d = await res.json().catch(() => ({})) as { message?: string; error?: string; code?: string };
+        const gateCode =
+          res.status === 429 && d?.code === 'RATE_LIMIT'
+            ? 'QUOTA_EXCEEDED'
+            : (d?.code || d?.error);
+        if (gate.handle(res.status, gateCode)) {
+          setLoading(false);
+          return;
+        }
+        setError(d?.message || d?.error || '求签失败，请稍后重试');
         return;
       }
 
@@ -612,6 +623,8 @@ export default function MusicOraclePageClient() {
       </Container>
 
       <Footer />
+
+      <AiGateModals gate={gate} callbackUrl="/music-oracle" />
     </div>
   );
 }

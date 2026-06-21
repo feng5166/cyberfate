@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { useState, useRef, useEffect } from 'react';
 import { track } from '@/lib/analytics';
+import { useAiGate, AiGateModals } from '@/components/ai/useAiGate';
 
 const SAMPLE_PROMPTS = [
   '创业还是留在大公司更适合我？',
@@ -111,6 +112,8 @@ interface TarotDrawResult {
 
 export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode }) {
   const { data: session, status: authStatus } = useSession();
+  const isLoggedIn = authStatus === 'authenticated';
+  const gate = useAiGate(isLoggedIn);
   const [step, setStep] = useState<Step>('question');
   const loadingRef = useRef<HTMLDivElement>(null);
   const questionRef = useRef<HTMLDivElement>(null);
@@ -226,6 +229,7 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
+        gate.handle(res.status, data.code || data.error);
         if (data.error === 'VIP_REQUIRED') {
           setError('凯尔特十字牌阵为会员专属功能,升级后即可使用。');
         } else if (data.error === 'QUOTA_EXCEEDED') {
@@ -277,10 +281,11 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
       });
 
       if (!res.ok || !res.body) {
-        let data: { error?: string } = {};
+        let data: { error?: string; code?: string } = {};
         try {
           data = await res.json();
         } catch {}
+        gate.handle(res.status, data.code || data.error);
         if (data.error === 'VIP_REQUIRED') {
           setError('凯尔特十字牌阵为会员专属功能,升级后即可使用。');
         } else if (data.error === 'QUOTA_EXCEEDED') {
@@ -465,6 +470,7 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
 
   return (
     <div className="relative min-h-screen bg-[#FAF9F6] text-[#1C1A16]">
+      <AiGateModals gate={gate} callbackUrl="/tarot" />
       <div
         className="pointer-events-none fixed inset-0 -z-10 opacity-[0.025]"
         aria-hidden="true"
