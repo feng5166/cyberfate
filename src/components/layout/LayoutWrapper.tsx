@@ -2,13 +2,16 @@
 
 import { useState, useEffect, ReactNode, Suspense } from 'react';
 import { usePathname, useSearchParams, useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { PanelLeft, PanelLeftClose } from 'lucide-react';
 import { Header } from './Header';
 import { DashboardLayout } from './DashboardLayout';
 import { Footer } from './Footer';
-import { BackToTop } from '../BackToTop';
-import { TabBar } from '../TabBar';
 import { AuthProvider } from '@/stores/authStore';
+
+// 非首屏的纯客户端 chrome：移动底栏 / 回到顶部，首屏不需要，懒加载以减小首屏 JS（不影响 SEO）
+const BackToTop = dynamic(() => import('../BackToTop').then(m => m.BackToTop), { ssr: false });
+const TabBar = dynamic(() => import('../TabBar').then(m => m.TabBar), { ssr: false });
 
 interface LayoutWrapperProps {
   children: ReactNode;
