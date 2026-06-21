@@ -74,21 +74,25 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
         </button>
       )}
       <main id="main-content" className="flex-1 pb-20 lg:pb-0" style={{ paddingTop: 0 }}>
+        {/* 仅把用 useSearchParams 的处理器各自包进独立 Suspense，
+            避免把 {children}(页面内容) 一起 bailout 到 CSR —— 保证首页等可 SSG/SSR */}
         <Suspense fallback={null}>
           <PaymentSuccessHandler />
-          {showSidebar ? (
-            <DashboardLayout
-              collapsed={isSidebarCollapsed}
-              onCollapseToggle={(next) => setSidebarCollapsed(next)}
-              showSidebar={showSidebar}
-            >
-              <SidebarController onExpand={() => setSidebarCollapsed(false)} />
-              {children}
-            </DashboardLayout>
-          ) : (
-            <>{children}<Footer /></>
-          )}
         </Suspense>
+        {showSidebar ? (
+          <DashboardLayout
+            collapsed={isSidebarCollapsed}
+            onCollapseToggle={(next) => setSidebarCollapsed(next)}
+            showSidebar={showSidebar}
+          >
+            <Suspense fallback={null}>
+              <SidebarController onExpand={() => setSidebarCollapsed(false)} />
+            </Suspense>
+            {children}
+          </DashboardLayout>
+        ) : (
+          <>{children}<Footer /></>
+        )}
       </main>
       <BackToTop />
       <TabBar />
