@@ -1380,10 +1380,11 @@ function BaziPageContent() {
           setShowAiButton(true);
           return false;
         }
-        // 游客每日次数用尽 / 请求过于频繁
+        // 游客每日次数用尽 → 登录引导；其它 429 为请求过频
         if (response.status === 429) {
           if (errCode === 'GUEST_LIMIT_REACHED') {
-            setError(errMsg || '游客每日免费次数已用完，登录后可继续使用');
+            setActionMessage('登录后即可重新分析（游客仅可查看本次解读）');
+            setShowAuthModal(true);
           } else {
             setError(errMsg || '请求过于频繁，请稍后再试');
           }
@@ -1933,6 +1934,12 @@ function BaziPageContent() {
   };
 
   const handleReanalyze = async () => {
+    // 重新分析需重新生成 AI（消耗配额）。游客不支持，引导登录。
+    if (status !== 'authenticated') {
+      setActionMessage('登录后即可重新分析（游客仅可查看本次解读）');
+      setShowAuthModal(true);
+      return;
+    }
     setError('');
     setActionMessage('');
     setFullReadExpanded(false);
