@@ -1001,7 +1001,7 @@ export default function LiuYaoPage() {
         let errMsg = '请求失败，请稍后重试。';
         try {
           const data = await res.json();
-          if (data?.error) errMsg = data.error;
+          if (data?.message || data?.error) errMsg = data.message || data.error;
         } catch {}
         throw new Error(errMsg);
       }
@@ -1139,7 +1139,7 @@ export default function LiuYaoPage() {
         let errMsg = '请求失败，请稍后重试。';
         try {
           const data = await res.json();
-          if (data?.error) errMsg = data.error;
+          if (data?.message || data?.error) errMsg = data.message || data.error;
         } catch {}
         setQaHistory((prev) => {
           const next = [...prev];

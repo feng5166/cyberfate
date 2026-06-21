@@ -270,7 +270,8 @@ export default function MeihuaPage() {
         let errMsg = '起卦失败，请稍后重试。';
         try {
           const data = await drawRes.json();
-          if (data?.error) errMsg = data.error;
+          // 优先显示服务端友好文案（message），避免把 QUOTA_EXCEEDED 等错误码直接显示给用户
+          if (data?.message || data?.error) errMsg = data.message || data.error;
         } catch {}
         throw new Error(errMsg);
       }
@@ -351,7 +352,7 @@ export default function MeihuaPage() {
       });
       if (!decideRes.ok || !decideRes.body) {
         let errMsg = '已完成起卦，AI 决策建议暂不可用。';
-        try { const d = await decideRes.json(); if (d?.error) errMsg = d.error; } catch {}
+        try { const d = await decideRes.json(); if (d?.message || d?.error) errMsg = d.message || d.error; } catch {}
         setError(errMsg);
         return;
       }
@@ -414,7 +415,7 @@ export default function MeihuaPage() {
       });
       if (!res.ok || !res.body) {
         let errMsg = '请求失败，请稍后重试。';
-        try { const d = await res.json(); if (d?.error) errMsg = d.error; } catch {}
+        try { const d = await res.json(); if (d?.message || d?.error) errMsg = d.message || d.error; } catch {}
         setQaHistory((prev) => { const n=[...prev]; n[n.length-1]={...n[n.length-1],a:errMsg}; return n; });
         return;
       }

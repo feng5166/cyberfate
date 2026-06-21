@@ -50,7 +50,8 @@ export function AiAskSection({ date }: AiAskSectionProps) {
         let errMsg = 'AI 思考较久，请稍后再试。';
         try {
           const data = await res.json();
-          if (data?.error) errMsg = data.error;
+          // 优先服务端友好文案（如「今日免费次数已用完，升级 VIP 不限量」「请先登录」）
+          if (data?.message || data?.error) errMsg = data.message || data.error;
         } catch {}
         setMessages((prev) => [...prev, { role: 'ai', content: errMsg }]);
         return;

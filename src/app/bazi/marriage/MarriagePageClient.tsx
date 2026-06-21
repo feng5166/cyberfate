@@ -477,8 +477,9 @@ export function MarriagePageClient() {
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || '请求失败');
+        const data = await res.json().catch(() => ({}));
+        // 优先显示服务端友好文案（message），避免把 QUOTA_EXCEEDED 等错误码直接抛给用户
+        throw new Error(data.message || data.error || '请求失败');
       }
 
       const data = await res.json();
