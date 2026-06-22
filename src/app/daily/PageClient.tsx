@@ -943,7 +943,15 @@ export default function DailyPage() {
       <div className="hidden" data-version="20260528-v3"></div>
 
       {/* 登录弹窗 */}
-      <AuthModal isOpen={authOpen} onClose={() => setAuthOpen(false)} callbackUrl="/daily" />
+      <AuthModal
+        isOpen={authOpen}
+        onClose={() => setAuthOpen(false)}
+        callbackUrl="/daily"
+        reason={{
+          title: '登录后即可查看每日运势',
+          desc: '登录或注册账号即可免费查看每日运势；开通会员不限次并解锁更多权益。',
+        }}
+      />
     </div>
   );
 }

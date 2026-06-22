@@ -35,14 +35,34 @@ const GATE_CODES = new Set([
 // 明确指向「登录」的码（即便已登录也应引导登录的少数场景）
 const LOGIN_CODES = new Set(['LOGIN_REQUIRED', 'GUEST_LIMIT_REACHED']);
 
+export interface AuthReason {
+  title: string;
+  desc: string;
+}
+
+/** 据门禁错误码生成登录框上下文说明，降低游客「为何登录」的理解成本 */
+function reasonForCode(code?: string): AuthReason {
+  if (code === 'GUEST_LIMIT_REACHED' || code === 'DAILY_LIMIT_REACHED') {
+    return {
+      title: '今日免费次数已用完',
+      desc: '游客每天可免费体验。登录后每天可继续免费使用，并保存记录；开通会员不限次。',
+    };
+  }
+  return {
+    title: '登录后即可使用',
+    desc: '登录或注册账号即可免费体验该功能；开通会员不限次并解锁更多权益。',
+  };
+}
+
 export interface AiGate {
   /** 处理 AI 接口错误：命中门禁则弹对应弹窗并返回 true（调用方据此中止后续、避免再 setError） */
   handle: (status: number, code?: string) => boolean;
-  /** 直接弹登录引导（如游客点「重新分析」前置拦截） */
-  openAuth: () => void;
+  /** 直接弹登录引导（如游客点「重新分析」前置拦截），可附上下文说明 */
+  openAuth: (reason?: AuthReason) => void;
   /** 直接弹升级引导 */
   openQuota: () => void;
   authOpen: boolean;
+  authReason?: AuthReason;
   quotaOpen: boolean;
   closeAuth: () => void;
   closeQuota: () => void;
@@ -50,14 +70,16 @@ export interface AiGate {
 
 export function useAiGate(isLoggedIn: boolean): AiGate {
   const [authOpen, setAuthOpen] = useState(false);
+  const [authReason, setAuthReason] = useState<AuthReason | undefined>(undefined);
   const [quotaOpen, setQuotaOpen] = useState(false);
 
   const handle = useCallback(
     (status: number, code?: string): boolean => {
       const isGate = status === 401 || (code != null && GATE_CODES.has(code));
       if (!isGate) return false;
-      // 未登录、或明确登录类错误码 → 登录引导；否则（登录未订阅触发配额 / 会员）→ 升级引导
+      // 未登录、或明确登录类错误码 → 登录引导（带上下文）；否则（登录未订阅触发配额 / 会员）→ 升级引导
       if (!isLoggedIn || (code != null && LOGIN_CODES.has(code))) {
+        setAuthReason(reasonForCode(code));
         setAuthOpen(true);
       } else {
         setQuotaOpen(true);
@@ -69,11 +91,12 @@ export function useAiGate(isLoggedIn: boolean): AiGate {
 
   return {
     handle,
-    openAuth: useCallback(() => setAuthOpen(true), []),
+    openAuth: useCallback((reason?: AuthReason) => { setAuthReason(reason); setAuthOpen(true); }, []),
     openQuota: useCallback(() => setQuotaOpen(true), []),
     authOpen,
+    authReason,
     quotaOpen,
-    closeAuth: useCallback(() => setAuthOpen(false), []),
+    closeAuth: useCallback(() => { setAuthOpen(false); setAuthReason(undefined); }, []),
     closeQuota: useCallback(() => setQuotaOpen(false), []),
   };
 }
@@ -82,7 +105,7 @@ export function useAiGate(isLoggedIn: boolean): AiGate {
 export function AiGateModals({ gate, callbackUrl }: { gate: AiGate; callbackUrl?: string }) {
   return (
     <>
-      <AuthModal isOpen={gate.authOpen} onClose={gate.closeAuth} callbackUrl={callbackUrl} />
+      <AuthModal isOpen={gate.authOpen} onClose={gate.closeAuth} callbackUrl={callbackUrl} reason={gate.authReason} />
       {gate.quotaOpen && <QuotaLimitModal onClose={gate.closeQuota} />}
     </>
   );
