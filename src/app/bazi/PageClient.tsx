@@ -823,6 +823,7 @@ function BaziPageContent() {
   const [reanalyzing, setReanalyzing] = useState(false);
   const [showQuotaModal, setShowQuotaModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authReason, setAuthReason] = useState<{ title: string; desc: string } | undefined>(undefined);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [fullReadExpanded, setFullReadExpanded] = useState(false);
   const [expandedFaqIndex, setExpandedFaqIndex] = useState<number | null>(0);
@@ -1392,7 +1393,10 @@ function BaziPageContent() {
         // 游客每日次数用尽 → 登录引导；其它 429 为请求过频
         if (response.status === 429) {
           if (errCode === 'GUEST_LIMIT_REACHED') {
-            setActionMessage('登录后即可重新分析（游客仅可查看本次解读）');
+            setAuthReason({
+              title: '今日免费 AI 解读已用完',
+              desc: '游客每天可免费体验 1 次 AI 深度解读。登录后每天可继续免费解读，并保存命盘随时查看。',
+            });
             setShowAuthModal(true);
           } else {
             setError(errMsg || '请求过于频繁，请稍后再试');
@@ -1995,7 +1999,10 @@ function BaziPageContent() {
   const handleReanalyze = async () => {
     // 重新分析需重新生成 AI（消耗配额）。游客不支持，引导登录。
     if (status !== 'authenticated') {
-      setActionMessage('登录后即可重新分析（游客仅可查看本次解读）');
+      setAuthReason({
+        title: '重新分析需要登录',
+        desc: '游客可查看本次解读。登录后每天可免费重新分析 1 次；开通会员不限次。',
+      });
       setShowAuthModal(true);
       return;
     }
@@ -2901,7 +2908,11 @@ function BaziPageContent() {
 
       {showQuotaModal && <QuotaLimitModal onClose={() => setShowQuotaModal(false)} />}
 
-      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => { setShowAuthModal(false); setAuthReason(undefined); }}
+        reason={authReason}
+      />
       <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />
 
       {showAddProfileModal && (

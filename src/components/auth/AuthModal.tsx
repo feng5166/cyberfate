@@ -14,9 +14,11 @@ interface AuthModalProps {
   isOpen: boolean
   onClose: () => void
   callbackUrl?: string
+  /** 触发登录的上下文说明（如「今日免费次数已用完」），用于降低游客理解成本 */
+  reason?: { title: string; desc: string }
 }
 
-export function AuthModal({ isOpen, onClose, callbackUrl = '/bazi' }: AuthModalProps) {
+export function AuthModal({ isOpen, onClose, callbackUrl = '/bazi', reason }: AuthModalProps) {
   const focusTrapRef = useFocusTrap(isOpen)
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -157,13 +159,27 @@ export function AuthModal({ isOpen, onClose, callbackUrl = '/bazi' }: AuthModalP
           <X className="w-5 h-5" />
         </button>
 
+        {/* 上下文说明（如游客次数用完）：解释为何登录 + 各档权益，降低理解成本 */}
+        {reason && (
+          <div className="mb-5 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/70 px-4 py-3.5">
+            <p className="text-sm font-semibold text-amber-900">✨ {reason.title}</p>
+            <p className="text-xs text-amber-800/85 mt-1.5 leading-relaxed">{reason.desc}</p>
+            <a
+              href="/pricing"
+              className="inline-flex items-center gap-1 mt-2.5 text-xs font-medium text-amber-700 hover:text-amber-900 transition-colors"
+            >
+              开通会员不限次解读 + AI 八字问答 →
+            </a>
+          </div>
+        )}
+
         {/* 标题区 */}
         <div className="text-center mb-6">
           <h2 className="text-[#1C1A16] text-2xl max-sm:text-xl font-semibold">
             登录 / 注册
           </h2>
           <p className="text-[#9B9590] text-sm text-center mt-2">
-            登录或创建账号以继续使用
+            {reason ? '登录后每天可继续免费解读，并保存命盘' : '登录或创建账号以继续使用'}
           </p>
         </div>
 
