@@ -77,3 +77,33 @@
 ---
 
 _由 Claude(Opus 4.8)整理 · 2026-06-17_
+
+---
+
+# 增补(2026-06-18 ~ 06-22)
+
+## 八字功能 review
+- `docs/CODE_REVIEW_BAZI.md`:两轮针对八字的改进 review(算法/AI/前端),含起运、真太阳时、旺衰、用神、缓存串档、prompt 注入等;复审记录上游已按编号修复多条,并定性 T12(geju 用神非 bug)。
+
+## 情绪陪伴 Agent「小满」设计(`docs/agent/`)
+- `README.md`(导读)、`PRD-知己-P1.md`、`memory-design.md`(核心壁垒:记忆系统)、`api-chat-design.md`、`system-prompt-小满.md`。
+- 定位:工具型→陪伴型;P1 极简验证"它记得我→留存";人设单一温暖知己;记忆每轮异步抽取、P1 不上向量。仅设计,未进实现。
+
+## 测试与 CI
+- 补齐 meihua/quota 低覆盖分支(+13 用例);收窄覆盖率统计范围至已测模块(行 95%+)。
+- 修复 CI:验签逻辑抽到 `src/lib/payment/signature.ts`(上游移除路由非 handler 导出致测试失败),路由与测试共用 lib。
+
+## 失效代码清理
+- 删除 `middleware.ts`(L2:`request.geo` 已废弃、响应头无人消费、单区域部署使其无意义)。
+
+## 订阅计划改造(2026-06-22)
+**两档制 + 下架尊享版**,定价页按设计稿重构:
+- **单日解锁** $9.99/天(原"基础版"改名,价不变)
+- **年费会员** $69.9/年,划线原价 $299 + 早鸟优惠角标 + "永久锁定续费价"banner(原"专业版"$49→$69.9)
+- **尊享版(lifetime)祖父条款下架**:Prisma 枚举与配置保留(存量有效、零迁移风险),`SELLABLE_PLAN_IDS` 仅 daily/yearly,`create-checkout` 加 `isSellablePlanId` 防护挡掉直接购买。
+- 币种维持 USD/Stripe(图片仅作版式参考)。
+- UI:`pricing-config.ts` 增 subtitle/perksTitle/audience/badge/lockPriceNote/originalPrice/sellable 字段;`PricingCard` 重构为竖排全宽卡片;`PricingCardList` 遍历可售列表竖向堆叠;`PricingClient` 标题"选择您的方案"+副标题+底部安全支付/`support@cyberfate.me`,FAQ 去除终身引用;`page.tsx` currentPlan 改传 plan id。
+- 测试:`pricing-config.test.ts` 更新新价 + 可售列表断言;全量 310 绿。
+- 提交 `95c1d05`(注:该提交因 `git add -A` 误并入维护者未提交的农历 DatePicker WIP,经确认编译/测试通过,用户选择保留)。
+
+_由 Claude(Opus 4.8)整理 · 2026-06-22_
