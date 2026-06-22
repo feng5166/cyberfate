@@ -147,7 +147,7 @@ export async function POST(req: NextRequest) {
     if (!rl.allowed) return NextResponse.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
   }
 
-  // 配额：免费 3 次/天，VIP 不限
+  // 配额：免费 1 次/天（FREE_DAILY_LIMIT），VIP 不限
   let quotaConsumed = false;
   if (!isDebugMode) {
     const quota = await checkLiuyaoQuota(session!.user!.id);

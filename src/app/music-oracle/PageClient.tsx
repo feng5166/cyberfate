@@ -37,7 +37,7 @@ const FAQ_LIST = [
   },
   {
     q: '一天可以求签几次？',
-    a: '免费用户每天可求签 3 次，VIP 用户不限次数。每次问题不同，推荐的歌曲和签文也会不同。',
+    a: '免费用户每天可求签 1 次，VIP 用户不限次数。每次问题不同，推荐的歌曲和签文也会不同。',
   },
   {
     q: '这个功能准确吗？',
@@ -408,7 +408,7 @@ export default function MusicOraclePageClient() {
               )}
             </button>
             <p className="text-xs text-[#9CA3AF] mt-2 text-center">
-              免费用户每天 3 次 · <span className="underline cursor-pointer">登录后使用</span>
+              免费用户每天 1 次 · <span className="underline cursor-pointer">登录后使用</span>
             </p>
           </div>
         </div>

@@ -15,7 +15,7 @@ const dailyConfig = PRICING_CONFIG['daily'];
 const yearlyConfig = PRICING_CONFIG['yearly'];
 
 const faqs = [
-  { q: '免费版和会员版有什么区别？', a: '免费版每天可进行 3 次基础八字分析。会员版解锁无限次分析、AI 深度报告、紫微斗数、塔罗占卜等全部高级功能，同时享受优先客服支持。' },
+  { q: '免费版和会员版有什么区别？', a: '免费版每天可免费体验 1 次基础八字分析。会员版解锁无限次分析、AI 深度报告、紫微斗数、塔罗占卜等全部高级功能，同时享受优先客服支持。' },
   { q: `${dailyConfig.name}和${yearlyConfig.name}有什么区别？`, a: `${dailyConfig.name} $${dailyConfig.displayPrice}/天，适合想先体验全部功能或临时使用的用户。${yearlyConfig.name} $${yearlyConfig.displayPrice}/年（原价 $${yearlyConfig.originalDisplayPrice}），全年无限制、性价比最高，且续费永享原价，适合长期使用者。` },
   { q: '年费会员续费会涨价吗？', a: '不会。早鸟优惠期内开通的年费会员，永久锁定续费价格，后续即便官方价格上调，您续费也始终享受当前优惠价。' },
   { q: '支付方式有哪些？', a: '目前支持 Stripe 信用卡/借记卡支付。所有交易均经过加密处理，确保您的支付安全。' },

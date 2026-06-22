@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 限流检查（游客/登录用户 3次/日，VIP 不限）
+    // 限流检查（游客/登录用户 1次/日，VIP 不限）
     const redis = getRedis();
     const dateStr = getTodayDateStr();
     // 简单用 IP 做游客标识
