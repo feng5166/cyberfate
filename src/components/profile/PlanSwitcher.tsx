@@ -1,6 +1,6 @@
 'use client';
 
-import { PRICING_PLANS_LIST } from '@/lib/pricing-config';
+import { PRICING_PLANS_LIST, SELLABLE_PLANS_LIST } from '@/lib/pricing-config';
 
 interface PlanSwitcherProps {
   currentPlan: string;
@@ -8,14 +8,15 @@ interface PlanSwitcherProps {
 }
 
 export function PlanSwitcher({ currentPlan, onPlanChange }: PlanSwitcherProps) {
+  // 当前套餐金额从全量列表取(含存量 lifetime),用于判断升降级;但只展示可售两档
   const currentPlanData = PRICING_PLANS_LIST.find(p => p.id === currentPlan);
   const currentAmount = currentPlanData?.amount || 0;
 
   return (
     <div>
       <h4 className="text-sm font-semibold text-[#1C1A16] mb-4">变更套餐</h4>
-      <div className="grid grid-cols-3 gap-3">
-        {PRICING_PLANS_LIST.map(plan => {
+      <div className="grid grid-cols-2 gap-3">
+        {SELLABLE_PLANS_LIST.map(plan => {
           const isCurrent = plan.id === currentPlan;
           const isUpgrade = plan.amount > currentAmount;
           const isDowngrade = plan.amount < currentAmount;
@@ -35,7 +36,12 @@ export function PlanSwitcher({ currentPlan, onPlanChange }: PlanSwitcherProps) {
               {isCurrent && (
                 <div className="text-xs text-emerald-600 font-medium mb-2">★ 当前</div>
               )}
-              <div className="text-lg font-bold text-[#1C1A16] mb-1">${plan.displayPrice}</div>
+              <div className="text-lg font-bold text-[#1C1A16] mb-1">
+                ${plan.displayPrice}
+                {plan.originalDisplayPrice && (
+                  <span className="text-xs font-normal text-[#1C1A16]/35 line-through ml-1">${plan.originalDisplayPrice}</span>
+                )}
+              </div>
               <div className="text-xs text-[#1C1A16]/50 mb-3">/{plan.period}</div>
               
               {!isCurrent && isUpgrade && (
