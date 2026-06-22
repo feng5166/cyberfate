@@ -234,8 +234,12 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
           setError('凯尔特十字牌阵为会员专属功能,升级后即可使用。');
         } else if (data.error === 'QUOTA_EXCEEDED') {
           setError('今日免费次数已用完,明日 00:00 自动重置,或升级会员继续使用。');
+        } else if (data.error === 'GUEST_LIMIT_REACHED') {
+          setError('游客每天可免费占卜 1 次,登录后即可解锁更多次数。');
         } else if (data.error === 'LOGIN_REQUIRED') {
           setError('请先登录后再使用此功能。');
+        } else if (data.error === 'RATE_LIMITED' || res.status === 429) {
+          setError('操作过于频繁,请稍后再试。');
         } else {
           setError('网络连接不稳定,请稍后重试。');
         }
@@ -290,6 +294,12 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
           setError('凯尔特十字牌阵为会员专属功能,升级后即可使用。');
         } else if (data.error === 'QUOTA_EXCEEDED') {
           setError('今日免费次数已用完,明日 00:00 自动重置,或升级会员继续使用。');
+        } else if (data.error === 'GUEST_LIMIT_REACHED') {
+          setError('游客每天可免费占卜 1 次,登录后即可解锁更多次数。');
+        } else if (data.error === 'LOGIN_REQUIRED') {
+          setError('请先登录后再使用此功能。');
+        } else if (data.error === 'RATE_LIMITED' || res.status === 429) {
+          setError('操作过于频繁,请稍后再试。');
         } else {
           setError('网络连接不稳定,请稍后重试。');
         }

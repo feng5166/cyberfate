@@ -178,10 +178,10 @@ export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
   if (!isDebugMode && session?.user?.id) {
     const rl = await checkRateLimit('ai_tarot', session.user.id, 10, 60);
-    if (!rl.allowed) return NextResponse.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
+    if (!rl.allowed) return NextResponse.json({ error: 'RATE_LIMITED', message: '操作过于频繁，请稍后再试' }, { status: 429 });
   } else if (!isDebugMode) {
     const rl = await checkRateLimit('ai_tarot_guest', ip, 1, 86400);
-    if (!rl.allowed) return NextResponse.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
+    if (!rl.allowed) return NextResponse.json({ error: 'GUEST_LIMIT_REACHED', message: '游客每天可免费占卜 1 次，登录后解锁更多次数' }, { status: 429 });
   }
 
   if (!isDebugMode && spread === 'celtic') {
