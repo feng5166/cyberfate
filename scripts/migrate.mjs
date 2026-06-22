@@ -10,7 +10,6 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import pg from 'pg';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const MIGRATIONS_DIR = join(__dirname, '..', 'db_migrations');
@@ -35,6 +34,10 @@ async function main() {
     console.log('[migrate] 跳过：未检测到 PostgreSQL 连接串（DATABASE_URL）。');
     return;
   }
+
+  // 仅在确有连接串时才加载 pg —— 避免无 DB 环境（本地/预览，或 node_modules 未装 pg）
+  // 因顶层 import 失败而中断构建。
+  const { default: pg } = await import('pg');
 
   const files = readdirSync(MIGRATIONS_DIR)
     .filter((f) => f.endsWith('.sql'))
