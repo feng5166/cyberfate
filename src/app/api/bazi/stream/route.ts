@@ -24,8 +24,9 @@ const requestSchema = z.object({
   baziResult: z.any(),
   name: z.string().optional(),
   gender: z.string().optional(),
-  birthDate: z.string(),
-  birthHour: z.number().int().min(-1).max(11),
+  // 八字直输模式无出生日期：birthDate/birthHour 可缺省（大运步骤将降级，不影响其余事实）
+  birthDate: z.string().optional(),
+  birthHour: z.number().int().min(-1).max(11).optional(),
   // 精确时分（可选）：提供后工具链的大运起运计算更准
   birthHourNum: z.number().int().min(0).max(23).optional(),
   birthMinute: z.number().int().min(0).max(59).optional(),
@@ -76,7 +77,9 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: '请求参数错误' }, { status: 400 });
   }
 
-  const { cacheKey, baziResult, name, gender, birthDate, birthHour, birthHourNum, birthMinute, knowTime, forceRefresh, dayunExtra } = parsed;
+  const { cacheKey, baziResult, name, gender, birthHour, birthHourNum, birthMinute, knowTime, forceRefresh, dayunExtra } = parsed;
+  // 八字直输无出生日期：统一兜底为空串，大运步骤会优雅降级
+  const birthDate = parsed.birthDate ?? '';
 
   // 1. 查缓存（forceRefresh 时跳过）
   if (!forceRefresh) {

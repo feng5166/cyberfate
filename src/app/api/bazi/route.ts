@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { sanitizeUserInput } from '@/lib/utils/sanitize';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { calculateBazi, WUXING_KEYS, analyzeMingGe, getCurrentDayun, getDayunTimeline, analyzeShensha, shenshaNature, analyzeLiunian, analyzeLiuyueRange } from '@/lib/bazi';
+import { calculateBazi, calculateBaziFromPillars, WUXING_KEYS, analyzeMingGe, getCurrentDayun, getDayunTimeline, analyzeShensha, shenshaNature, analyzeLiunian, analyzeLiuyueRange } from '@/lib/bazi';
 import type { ShenshaDisplay } from '@/lib/bazi/types';
 import { checkRateLimit } from '@/lib/rate-limit';
 import type { FiveDimensions, MingGeInfo, PillarRecord, WuxingCount } from '@/lib/bazi/types';
@@ -29,10 +29,22 @@ const HOUR_TO_SHICHEN: Record<number, string> = {
   11: '亥时',
 };
 
+const GAN = z.enum(['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸']);
+const ZHI = z.enum(['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥']);
+
+// 八字直输：四柱干支（时柱可选）
+const pillarsSchema = z.object({
+  yearGan: GAN, yearZhi: ZHI,
+  monthGan: GAN, monthZhi: ZHI,
+  dayGan: GAN, dayZhi: ZHI,
+  hourGan: GAN.optional(), hourZhi: ZHI.optional(),
+});
+
 // 请求体验证
 const requestSchema = z.object({
   name: z.string().optional(),
   gender: z.enum(['male', 'female', 'unknown']).optional(),
+  // 日期模式 birthDate 必填；八字模式 pillars 必填（二选一，POST 内校验）
   birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '日期格式应为 YYYY-MM-DD').refine(
     (d) => { const y = parseInt(d.slice(0, 4), 10); return y >= 1900 && y <= 2030; },
     '出生年份须在 1900 至 2030 之间'
@@ -43,8 +55,9 @@ const requestSchema = z.object({
       return date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === day;
     },
     '日期不合法（如 2月30日）'
-  ),
-  birthHour: z.number().int().min(-1).max(11),
+  ).optional(),
+  pillars: pillarsSchema.optional(),
+  birthHour: z.number().int().min(-1).max(11).optional(),
   birthPlace: z.string().optional(),
   // 新增高精度字段（全部可选, 向后兼容）
   isLunar: z.boolean().optional(),
@@ -81,62 +94,90 @@ export async function POST(req: NextRequest) {
       input.name = sanitizeUserInput(input.name, 50);
     }
 
-    const shichen = input.birthHour >= 0 ? (HOUR_TO_SHICHEN[input.birthHour] || undefined) : undefined;
+    const gender = input.gender === 'unknown' ? 'male' : (input.gender || 'male');
+    const isBaziMode = !!input.pillars;
 
-    // 高精度优先: knowTime + birthHourNum 提供时, 走 calculator 精确分支
-    const hasPrecise = input.knowTime !== false && typeof input.birthHourNum === 'number';
-    const noTime = input.birthHour === -1 || (!hasPrecise && !shichen);
+    let baziResult: ReturnType<typeof calculateBazi>;
+    let dayunTimeline: ReturnType<typeof getDayunTimeline> = [];
+    let dayunExtra: Record<string, unknown> = {};
+    let keyMaterial: Record<string, unknown>;
 
-    const calcInput: any = {
-      name: input.name,
-      gender: input.gender === 'unknown' ? 'male' : (input.gender || 'male'),
-      birthDate: input.birthDate,
-    };
-
-    if (input.isLunar === true) calcInput.isLunar = true;
-
-    if (noTime) {
-      calcInput.knowTime = false;
-      // birthHour 不传，calculator 里 if(birthHour) 为 false，时柱为 null
-    } else if (hasPrecise) {
-      calcInput.knowTime = true;
-      calcInput.birthHourNum = input.birthHourNum;
-      calcInput.birthMinute = typeof input.birthMinute === 'number' ? input.birthMinute : 0;
-      if (input.lateZiShi === true) calcInput.lateZiShi = true;
+    if (isBaziMode) {
+      // —— 八字直输模式：直接由四柱排盘，无出生日期 ——
+      const p = input.pillars!;
+      baziResult = calculateBaziFromPillars(p);
+      // 终身大运/起运需「出生那一刻到节气的距离」，八字模式无从推算，故不提供
+      // （dayunTimeline 留空数组，前端据此隐藏「终身大运表」模块）。
+      Object.assign(baziResult, { dayun: { current: undefined } });
+      keyMaterial = {
+        mode: 'bazi',
+        gender,
+        y: `${p.yearGan}${p.yearZhi}`,
+        m: `${p.monthGan}${p.monthZhi}`,
+        d: `${p.dayGan}${p.dayZhi}`,
+        h: p.hourGan && p.hourZhi ? `${p.hourGan}${p.hourZhi}` : 'none',
+      };
     } else {
-      calcInput.birthHour = shichen;
+      // —— 日期模式（原逻辑）——
+      if (!input.birthDate) {
+        return Response.json({ error: '请提供出生日期或八字' }, { status: 400 });
+      }
+      const birthHour = typeof input.birthHour === 'number' ? input.birthHour : -1;
+      const shichen = birthHour >= 0 ? (HOUR_TO_SHICHEN[birthHour] || undefined) : undefined;
+
+      // 高精度优先: knowTime + birthHourNum 提供时, 走 calculator 精确分支
+      const hasPrecise = input.knowTime !== false && typeof input.birthHourNum === 'number';
+      const noTime = birthHour === -1 || (!hasPrecise && !shichen);
+
+      const calcInput: any = { name: input.name, gender, birthDate: input.birthDate };
+      if (input.isLunar === true) calcInput.isLunar = true;
+      if (noTime) {
+        calcInput.knowTime = false;
+      } else if (hasPrecise) {
+        calcInput.knowTime = true;
+        calcInput.birthHourNum = input.birthHourNum;
+        calcInput.birthMinute = typeof input.birthMinute === 'number' ? input.birthMinute : 0;
+        if (input.lateZiShi === true) calcInput.lateZiShi = true;
+      } else {
+        calcInput.birthHour = shichen;
+      }
+
+      baziResult = calculateBazi(calcInput);
+
+      // 获取当前大运（精确节气数日法；提供精确时分时一并传入，起运更准）
+      const dayunHour = hasPrecise ? input.birthHourNum : undefined;
+      const dayunMinute = hasPrecise ? input.birthMinute : undefined;
+      const currentDayun = getCurrentDayun(input.birthDate, gender as 'male' | 'female', dayunHour, dayunMinute);
+      dayunTimeline = getDayunTimeline(input.birthDate, gender as 'male' | 'female', dayunHour, dayunMinute);
+      const currentDayunItem = dayunTimeline.find(item => item.isCurrent);
+      const nextDayunItem = currentDayunItem ? dayunTimeline.find(item => item.index === currentDayunItem.index + 1) : undefined;
+
+      Object.assign(baziResult, {
+        dayun: { current: currentDayun ? `${currentDayun.gan}${currentDayun.zhi}` : undefined },
+      });
+
+      dayunExtra = {
+        ageStart: currentDayunItem?.ageStart,
+        ageEnd: currentDayunItem?.ageEnd,
+        startYear: currentDayunItem?.yearStart,
+        endYear: currentDayunItem?.yearEnd,
+        nextGanZhi: nextDayunItem ? `${nextDayunItem.gan}${nextDayunItem.zhi}` : undefined,
+        nextStartYear: nextDayunItem?.yearStart,
+      };
+
+      keyMaterial = {
+        birthDate: input.birthDate,
+        gender,
+        isLunar: input.isLunar === true,
+        timeMode: noTime ? 'none' : (hasPrecise ? 'precise' : 'coarse'),
+        hourNum: hasPrecise ? input.birthHourNum : undefined,
+        minute: hasPrecise ? (typeof input.birthMinute === 'number' ? input.birthMinute : 0) : undefined,
+        lateZiShi: hasPrecise ? input.lateZiShi === true : undefined,
+        shichen: (!noTime && !hasPrecise) ? shichen : undefined,
+      };
     }
 
-    // 1. 计算八字
-    const baziResult = calculateBazi(calcInput);
-
-    // 获取当前大运（精确节气数日法；提供精确时分时一并传入，起运更准）
-    const gender = input.gender === 'unknown' ? 'male' : (input.gender || 'male');
-    const dayunHour = hasPrecise ? input.birthHourNum : undefined;
-    const dayunMinute = hasPrecise ? input.birthMinute : undefined;
-    const currentDayun = getCurrentDayun(input.birthDate, gender as 'male' | 'female', dayunHour, dayunMinute);
-    const dayunTimeline = getDayunTimeline(input.birthDate, gender as 'male' | 'female', dayunHour, dayunMinute);
-    const currentDayunItem = dayunTimeline.find(item => item.isCurrent);
-    const nextDayunItem = currentDayunItem ? dayunTimeline.find(item => item.index === currentDayunItem.index + 1) : undefined;
-
-    // 大运结束年/下一步起始年直接取库的精确公历年份段
-    const dayunEndYear = currentDayunItem?.yearEnd;
-    const nextDayunStartYear = nextDayunItem?.yearStart;
-
-    const baziResultWithDayun = Object.assign(baziResult, {
-      dayun: {
-        current: currentDayun ? `${currentDayun.gan}${currentDayun.zhi}` : undefined,
-      }
-    });
-
-    const dayunExtra = {
-      ageStart: currentDayunItem?.ageStart,
-      ageEnd: currentDayunItem?.ageEnd,
-      startYear: currentDayunItem?.yearStart,
-      endYear: dayunEndYear,
-      nextGanZhi: nextDayunItem ? `${nextDayunItem.gan}${nextDayunItem.zhi}` : undefined,
-      nextStartYear: nextDayunStartYear,
-    };
+    const baziResultWithDayun = baziResult;
 
     // 处理时柱（可能为 null）：无时辰时用占位值维持结构，但通过 hasHour=false 告知前端不要展示
     const hasHour = baziResult.chart.hour != null;
@@ -196,21 +237,8 @@ export async function POST(req: NextRequest) {
     const liunian = analyzeLiunian(baziResult.chart, curYear);
     const liuyue = analyzeLiuyueRange(baziResult.chart, curYear, 1, 12);
 
-    // 生成 cacheKey（与 /api/bazi/stream 共用）。
-    // 必须涵盖**全部影响排盘的字段**，否则不同精度/历法/晚子时会串档共享同一份 AI 解读：
-    // - gender 用归一化后的 calcInput.gender（unknown→male，二者本就同盘）
-    // - 时辰精度三态：noTime（无时柱）/ hasPrecise（精确时分+晚子时）/ coarse（粗时辰）
-    //   仅保留该态下真正生效的字段，避免逻辑相同的输入因无关字段不同而碎裂缓存
-    const keyMaterial = {
-      birthDate: input.birthDate,
-      gender: calcInput.gender,
-      isLunar: input.isLunar === true,
-      timeMode: noTime ? 'none' : (hasPrecise ? 'precise' : 'coarse'),
-      hourNum: hasPrecise ? input.birthHourNum : undefined,
-      minute: hasPrecise ? (typeof input.birthMinute === 'number' ? input.birthMinute : 0) : undefined,
-      lateZiShi: hasPrecise ? input.lateZiShi === true : undefined,
-      shichen: (!noTime && !hasPrecise) ? shichen : undefined,
-    };
+    // 生成 cacheKey（与 /api/bazi/stream 共用）。keyMaterial 已在上方按
+    // 日期/八字两种模式分别构造，涵盖全部影响排盘的字段，避免串档共享 AI 解读。
     const hash = crypto.createHash('sha256')
       .update(JSON.stringify(keyMaterial))
       .digest('hex')

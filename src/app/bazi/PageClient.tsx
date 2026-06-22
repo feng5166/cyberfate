@@ -81,6 +81,9 @@ const ShenshaCard = dynamic(() => import('@/components/bazi/ShenshaCard').then(m
 const LiunianLiuyueCard = dynamic(() => import('@/components/bazi/LiunianLiuyueCard').then(m => m.LiunianLiuyueCard), { ssr: false, loading: _loadingSpinner });
 const BaziChatSection = dynamic(() => import('@/components/bazi/BaziChatSection').then(m => m.BaziChatSection), { ssr: false, loading: _loadingSpinner });
 
+const TIANGAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+const DIZHI = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+
 type ResultTab = '性格特质' | '事业财运' | '婚姻健康' | '十神详解' | '大运流年';
 type AiSectionKey = 'dayMaster' | 'personality' | 'career' | 'wealth' | 'relationship' | 'health' | 'dayun';
 
@@ -819,6 +822,11 @@ function BaziPageContent() {
     birthMinute: 0,
     lateZiShi: false,
   });
+  // 输入方式：date=按出生日期推算；bazi=直接输入四柱八字
+  const [inputMode, setInputMode] = useState<'date' | 'bazi'>('date');
+  const [pillarsInput, setPillarsInput] = useState({
+    yGan: '', yZhi: '', mGan: '', mZhi: '', dGan: '', dZhi: '', hGan: '', hZhi: '',
+  });
   const [loading, setLoading] = useState(false);
   const [loadingLong, setLoadingLong] = useState(false);
   const [reanalyzing, setReanalyzing] = useState(false);
@@ -1198,19 +1206,19 @@ function BaziPageContent() {
   const basicInfoData = useMemo(() => {
     if (!result) return null;
 
-    const dayunFallback = getDayunStartFallback(formData.birthDate);
+    const hasBirthDate = !!formData.birthDate;
+    // 八字直输无出生日期：起运/农历/出生时间均不可得，置空（卡片显示「—」）
+    const dayunFallback = hasBirthDate ? getDayunStartFallback(formData.birthDate) : { description: '', at: '' };
 
-    const lunarDate = formData.birthDate
-      ? getLunarDate(formData.birthDate)
-      : '未提供';
+    const lunarDate = hasBirthDate ? getLunarDate(formData.birthDate) : '未提供';
 
     return {
       baziText: buildBaziText(result, hasHourPillar),
       name: formData.name || '缘主',
       gender: toGenderLabel(formData.gender),
-      birthTime: `${formData.birthDate || '未填写'} ${toHourLabel(formData.birthHour)}`,
+      birthTime: hasBirthDate ? `${formData.birthDate} ${toHourLabel(formData.birthHour)}` : '未提供（八字直输）',
       lunarDate,
-      zodiac: result.zodiac || getZodiacByBirthDate(formData.birthDate),
+      zodiac: result.zodiac || (hasBirthDate ? getZodiacByBirthDate(formData.birthDate) : '未知'),
       dayunStartDescription: result.dayunStartDescription || dayunFallback.description,
       dayunStartAt: result.dayunStartAt || dayunFallback.at,
     };
@@ -1853,6 +1861,53 @@ function BaziPageContent() {
       setError('请选择性别');
       return;
     }
+
+    // —— 八字直输模式：直接提交四柱干支 ——
+    if (inputMode === 'bazi') {
+      const p = pillarsInput;
+      if (!p.yGan || !p.yZhi || !p.mGan || !p.mZhi || !p.dGan || !p.dZhi) {
+        setError('请补全年、月、日三柱的天干地支');
+        return;
+      }
+      if ((p.hGan && !p.hZhi) || (!p.hGan && p.hZhi)) {
+        setError('时柱请同时选择天干和地支，或都留空');
+        return;
+      }
+      setLoading(true);
+      track('tool_submit', { tool: 'bazi', mode: 'bazi' });
+      try {
+        const response = await fetch('/api/bazi', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: formData.name || '缘主',
+            gender: formData.gender || 'unknown',
+            pillars: {
+              yearGan: p.yGan, yearZhi: p.yZhi,
+              monthGan: p.mGan, monthZhi: p.mZhi,
+              dayGan: p.dGan, dayZhi: p.dZhi,
+              hourGan: p.hGan || undefined, hourZhi: p.hZhi || undefined,
+            },
+          }),
+        });
+        const data = (await response.json()) as BaziPageResult & { error?: string };
+        if (!response.ok) {
+          if (response.status === 401) { window.location.href = '/auth/login?redirect=/bazi'; return; }
+          if (data.error === 'QUOTA_EXCEEDED') { setShowQuotaModal(true); return; }
+          throw new Error(data.error || '服务器错误，请稍后重试');
+        }
+        setResult(data);
+        setShowAiButton(true);
+        track('tool_result_view', { tool: 'bazi', mode: 'bazi' });
+        setFullReadExpanded(false);
+      } catch (submitError) {
+        setError(submitError instanceof Error ? submitError.message : '未知错误');
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
     if (!formData.birthDate) {
       setError('请选择出生日期');
       return;
@@ -2221,34 +2276,36 @@ function BaziPageContent() {
           </div>
           <hr className="border-[#1C1A16]/8" />
 
-          {/* 时间信息：日期类型 + 出生日期 */}
-          <div>
-            <p className="text-sm font-semibold text-[#1C1A16]/50 mb-3 tracking-wide">时间信息</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-[#1C1A16]/70">日期类型</label>
-                <SegmentControl
-                  options={[
-                    { value: 'solar', label: '阳历' },
-                    { value: 'lunar', label: '农历' },
-                  ]}
-                  value={formData.isLunar ? 'lunar' : 'solar'}
-                  onChange={(value) => setFormData({ ...formData, isLunar: value === 'lunar' })}
-                  className="h-10 rounded-lg border border-[#1C1A16]/15 bg-white text-[#1C1A16] overflow-hidden"
-                  optionClassName="px-3 py-0 h-full flex items-center justify-center text-sm"
-                />
-              </div>
+          {/* 输入方式：日期推算 / 八字直输 */}
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-semibold text-[#1C1A16]/50 tracking-wide">
+              {inputMode === 'bazi' ? '八字输入' : '时间信息'}
+            </p>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-[#1C1A16]/45">输入方式</span>
+              <SegmentControl
+                options={[
+                  { value: 'date', label: '日期' },
+                  { value: 'bazi', label: '八字' },
+                ]}
+                value={inputMode}
+                onChange={(value) => setInputMode(value as 'date' | 'bazi')}
+                className="h-9 rounded-lg border border-[#1C1A16]/15 bg-white text-[#1C1A16] overflow-hidden"
+                optionClassName="px-4 py-0 h-full flex items-center justify-center text-sm"
+              />
+            </div>
+          </div>
+
+          {inputMode === 'date' ? (
+            <>
               <DatePicker
-                lunar={formData.isLunar}
-                label={formData.isLunar ? '出生日期（农历）' : '出生日期（阳历）'}
+                label="出生日期（阳历）"
                 value={formData.birthDate}
                 onChange={(value) => setFormData({ ...formData, birthDate: value })}
                 className="space-y-1.5"
                 triggerClassName="h-10 rounded-lg"
               />
-            </div>
-          </div>
-          <hr className="border-[#1C1A16]/8" />
+              <hr className="border-[#1C1A16]/8" />
           {/* 时辰组 */}
               <fieldset className="space-y-4">
                 <p className="text-sm font-semibold text-[#1C1A16]/50 tracking-wide">时辰信息</p>
@@ -2349,6 +2406,50 @@ function BaziPageContent() {
                   </p>
                 )}
               </fieldset>
+            </>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setPillarsInput({ yGan: '', yZhi: '', mGan: '', mZhi: '', dGan: '', dZhi: '', hGan: '', hZhi: '' })}
+                  className="flex items-center gap-1 text-sm text-[#1C1A16]/45 hover:text-[#1C1A16]/70 transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" /> 清空
+                </button>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {([
+                  { label: '年柱', gan: 'yGan', zhi: 'yZhi' },
+                  { label: '月柱', gan: 'mGan', zhi: 'mZhi' },
+                  { label: '日柱', gan: 'dGan', zhi: 'dZhi' },
+                  { label: '时柱', gan: 'hGan', zhi: 'hZhi' },
+                ] as const).map((col) => (
+                  <div key={col.label} className="space-y-2">
+                    <p className="text-center text-sm font-medium text-[#1C1A16]/60">{col.label}</p>
+                    <p className="text-center text-2xl font-semibold text-[#1C1A16] h-8 leading-8">
+                      {pillarsInput[col.gan] || '—'}{pillarsInput[col.zhi] || '—'}
+                    </p>
+                    <Select
+                      options={[{ value: '', label: '选择天干' }, ...TIANGAN.map((g) => ({ value: g, label: g }))]}
+                      value={pillarsInput[col.gan]}
+                      onChange={(e) => setPillarsInput((p) => ({ ...p, [col.gan]: e.target.value }))}
+                      className="h-10 w-full rounded-lg border border-[#1C1A16]/15 bg-white px-3 text-sm text-[#1C1A16]"
+                    />
+                    <Select
+                      options={[{ value: '', label: '选择地支' }, ...DIZHI.map((z) => ({ value: z, label: z }))]}
+                      value={pillarsInput[col.zhi]}
+                      onChange={(e) => setPillarsInput((p) => ({ ...p, [col.zhi]: e.target.value }))}
+                      className="h-10 w-full rounded-lg border border-[#1C1A16]/15 bg-white px-3 text-sm text-[#1C1A16]"
+                    />
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-[#1C1A16]/45">
+                时柱可留空（按无时辰排盘）。八字直输不含「终身大运/起运」（需完整出生日期）。
+              </p>
+            </div>
+          )}
 
               {error && <div className="p-3.5 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">{error}</div>}
 
@@ -2357,7 +2458,7 @@ function BaziPageContent() {
                 loading={loading}
                 className="w-full h-13 text-[14px] font-medium rounded-xl bg-[#1C1A16] text-white hover:bg-[#1C1A16]/85 transition-colors"
               >
-                {loading ? '正在计算...' : '开始解读'}
+                {loading ? '正在计算...' : (inputMode === 'bazi' ? '开始计算八字' : '开始解读')}
               </Button>
           </div>
           )}

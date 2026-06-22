@@ -185,6 +185,37 @@ export function calculateBazi(input: BaziInput): BaziResult {
   };
 }
 
+/** 地支 → 生肖（按八字年柱地支直接映射） */
+const ZHI_SHENGXIAO: Record<string, string> = {
+  子: '鼠', 丑: '牛', 寅: '虎', 卯: '兔', 辰: '龙', 巳: '蛇',
+  午: '马', 未: '羊', 申: '猴', 酉: '鸡', 戌: '狗', 亥: '猪',
+};
+
+/**
+ * 直接由八字（四柱干支）排盘，不需要出生日期。
+ * 用于「八字直输」模式：六柱衍生模块（四柱/五行/格局/十神/神煞/流年流月）均可由此计算；
+ * 终身大运/起运因需出生那一刻到节气的距离推算，本模式不提供（由调用方决定隐藏）。
+ * 时柱可选：hourGan/hourZhi 任一缺失即视为「无时柱」。
+ */
+export function calculateBaziFromPillars(input: {
+  yearGan: string; yearZhi: string;
+  monthGan: string; monthZhi: string;
+  dayGan: string; dayZhi: string;
+  hourGan?: string; hourZhi?: string;
+}): BaziResult {
+  const year = buildPillar(input.yearGan, input.yearZhi);
+  const month = buildPillar(input.monthGan, input.monthZhi);
+  const day = buildPillar(input.dayGan, input.dayZhi);
+  const hour = input.hourGan && input.hourZhi ? buildPillar(input.hourGan, input.hourZhi) : null;
+
+  const chart: BaziChart = { year, month, day, hour };
+  const wuxing = countWuxing(chart);
+  const dayMaster = `${day.gan}${day.ganWuxing}`;
+  const zodiac = ZHI_SHENGXIAO[input.yearZhi] || '未知';
+
+  return { chart, wuxing, dayMaster, zodiac };
+}
+
 /**
  * 获取指定日期的干支
  */
