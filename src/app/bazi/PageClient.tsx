@@ -1759,7 +1759,10 @@ function BaziPageContent() {
       });
       setSelectedProfileId(finalProfile.id);
       applyProfileToForm(finalProfile);
+      // 与正常「开始解读」一致：呈现为新鲜解读并放出「开始AI解读」按钮，
+      // 使后续 AI 解读走统一的游客/登录/配额守门（此前漏置导致按钮不出、游客流程被跳过）
       setResult(computed);
+      setShowAiButton(true);
       setShowAddProfileModal(false);
       setEditingProfile(null);
       setActionMessage(isEditing ? '档案已更新' : '档案已新增');
