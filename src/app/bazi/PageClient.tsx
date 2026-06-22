@@ -1513,6 +1513,19 @@ function BaziPageContent() {
     if (profile) applyProfileToForm(profile);
   };
 
+  // 档案加载后自动选中默认档案（主档案优先，否则第一个）并回填表单+读取缓存命盘。
+  // 修复：下拉框「看起来已选中」但 selectedProfileId 为空、表单空白、命盘未读。
+  useEffect(() => {
+    if (recordId || selectedProfileId || result) return;
+    if (profiles.length === 0) return;
+    const def = profiles.find((p) => p.isPrimary) ?? profiles[0];
+    if (def) {
+      setSelectedProfileId(def.id);
+      applyProfileToForm(def);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profiles]);
+
   const computeBaziForProfile = async (profile: BaziProfileData): Promise<BaziPageResult | null> => {
     const response = await fetch('/api/bazi', {
       method: 'POST',
@@ -2311,7 +2324,7 @@ function BaziPageContent() {
               <div ref={resultRef} className="space-y-6 animate-fadeIn" aria-live="polite">
                 {result._source !== 'history' && !isMember && (
                   <div className="flex items-center justify-between gap-3 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 px-4 py-3">
-                    <p className="text-sm text-amber-800">✨ 解读已生成！升级会员解锁完整 AI 深度报告</p>
+                    <p className="text-sm text-amber-800">✨ 解读已生成！开通会员可不限次解读，并解锁 AI 八字问答</p>
                     <Link href="/pricing" className="shrink-0 text-xs font-medium text-amber-700 border border-amber-300 rounded-lg px-3 py-1.5 hover:bg-amber-100 transition-colors">
                       了解会员
                     </Link>
