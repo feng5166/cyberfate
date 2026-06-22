@@ -716,22 +716,8 @@ function ProfileFormModal({
           {/* 时间信息 */}
           <div className="space-y-3">
             <p className="text-sm font-semibold text-[#1C1A16]/50 tracking-wide">时间信息</p>
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-[#1C1A16]/70">日期类型</label>
-              <SegmentControl
-                options={[
-                  { value: 'solar', label: '阳历' },
-                  { value: 'lunar', label: '农历' },
-                ]}
-                value={values.isLunar ? 'lunar' : 'solar'}
-                onChange={(value) => setValues((v) => ({ ...v, isLunar: value === 'lunar' }))}
-                className="h-10 rounded-lg border border-[#1C1A16]/15 bg-white text-[#1C1A16] overflow-hidden"
-                optionClassName="px-3 py-0 h-full flex items-center justify-center text-sm"
-              />
-            </div>
             <DatePicker
-              lunar={values.isLunar}
-              label={values.isLunar ? '出生日期（农历）' : '出生日期（阳历）'}
+              label="出生日期（阳历）"
               value={values.birthDate}
               onChange={(value) => setValues((v) => ({ ...v, birthDate: value }))}
               className="space-y-1.5"

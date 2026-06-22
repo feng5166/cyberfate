@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Select } from '@/components/ui/Select';
-import { SegmentControl } from '@/components/ui/SegmentControl';
 import { CitySearch } from '@/components/ui/CitySearch';
 import { loadRecords } from '@/lib/utils/history';
 import type { BaziHistoryRecord } from '@/lib/bazi/types';
@@ -250,23 +249,8 @@ function SideForm({ sideKey, data, onChange }: SideFormProps) {
           </div>
         </div>
 
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-[#1C1A16]/70">日期类型</label>
-          <SegmentControl
-            options={[
-              { value: 'solar', label: '阳历' },
-              { value: 'lunar', label: '农历' },
-            ]}
-            value={data.isLunar ? 'lunar' : 'solar'}
-            onChange={(value) => onChange({ isLunar: value === 'lunar' })}
-            className="h-10 rounded-lg overflow-hidden"
-            optionClassName="px-3 py-0 h-full flex items-center justify-center text-sm"
-          />
-        </div>
-
         <DatePicker
-          lunar={data.isLunar}
-          label={data.isLunar ? '出生日期（农历）' : '出生日期（阳历）'}
+          label="出生日期（阳历）"
           value={data.birthDate}
           onChange={(value) => onChange({ birthDate: value })}
           className="space-y-2"
