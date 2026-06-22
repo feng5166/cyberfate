@@ -1605,11 +1605,28 @@ function BaziPageContent() {
   };
 
   const handleOpenEditProfile = () => {
-    const target = profiles.find((p) => p.id === selectedProfileId);
-    if (!target) return;
     setProfileError('');
-    setEditingProfile(target);
-    setShowAddProfileModal(true);
+    const target = profiles.find((p) => p.id === selectedProfileId);
+    if (target) {
+      setEditingProfile(target);
+      setShowAddProfileModal(true);
+      return;
+    }
+    // 无已选档案（如游客刚解读、未存档案）：用当前表单/命盘构造临时档案供编辑
+    if (result) {
+      setEditingProfile({
+        id: selectedProfileId || `local_${Date.now()}`,
+        label: formData.name || '我的命盘',
+        name: formData.name || '',
+        gender: formData.gender || '',
+        birthDate: formData.birthDate || '',
+        birthHour: formData.birthHour || '-1',
+        birthPlace: formData.birthPlace || '',
+        isLunar: Boolean(formData.isLunar),
+        isPrimary: false,
+      });
+      setShowAddProfileModal(true);
+    }
   };
 
   const handleDeleteProfile = async () => {
