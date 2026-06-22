@@ -260,6 +260,15 @@ function extractAiSections(aiAnalysis: string): Record<AiSectionKey, string> {
   };
 }
 
+/** 判断缓存的 AI 解读是否「完整可展示」（含足够章节）。不完整则应放出「开始AI解读」按钮。 */
+function isAiAnalysisComplete(aiAnalysis?: string): boolean {
+  if (!aiAnalysis || aiAnalysis.trim().length < 80) return false;
+  const s = extractAiSections(aiAnalysis);
+  const filled = [s.dayMaster, s.personality, s.career, s.wealth, s.relationship, s.health, s.dayun]
+    .filter((x) => x && x.trim().length > 0).length;
+  return filled >= 3;
+}
+
 /** 北京时间当前公历年 */
 function beijingYear(): number {
   return new Date(Date.now() + 8 * 60 * 60 * 1000).getUTCFullYear();
@@ -1478,9 +1487,42 @@ function BaziPageContent() {
     }
   };
 
-  const handleStartAiReading = () => {
+  const handleStartAiReading = async () => {
     setError('');
     setActionMessage('');
+    // 缓存档案/本地历史可能缺 cacheKey/baziResult（如游客记录、上次未完成）；
+    // 先重算拿到 cacheKey 再流式，避免「命盘数据缺失」且让游客也能补全完整解读。
+    if (!result?.cacheKey || !result?.baziResult) {
+      try {
+        const baseResp = await fetch('/api/bazi', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: formData.name || '缘主',
+            gender: formData.gender || 'unknown',
+            birthDate: formData.birthDate,
+            birthHour: parseInt(formData.birthHour, 10),
+            birthPlace: formData.birthPlace,
+            isLunar: formData.isLunar,
+            knowTime: formData.knowTime,
+            birthHourNum: formData.knowTime ? formData.birthHourNum : undefined,
+            birthMinute: formData.knowTime ? formData.birthMinute : undefined,
+            lateZiShi: formData.knowTime ? formData.lateZiShi : undefined,
+          }),
+        });
+        const baseData = (await baseResp.json()) as BaziPageResult & { error?: string };
+        if (!baseResp.ok) {
+          if (baseResp.status === 401) { window.location.href = '/auth/login?redirect=/bazi'; return; }
+          if (baseData.error === 'QUOTA_EXCEEDED') { setShowQuotaModal(true); return; }
+          throw new Error(baseData.error || '服务器错误，请稍后重试');
+        }
+        setResult(baseData);
+        void runAiStream(false, baseData as BaziPageResult);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'AI 解读失败，请重试');
+      }
+      return;
+    }
     void runAiStream(false);
   };
 
@@ -1499,7 +1541,8 @@ function BaziPageContent() {
       // 静态命盘走缓存秒出；神煞/流年/流月/大运高亮按当前年现算，避免旧快照或缺模块
       setResult(withFreshModules({ ...profile.baziResult, _source: 'history' }));
       setError('');
-      setShowAiButton(false);
+      // 缓存的 AI 解读不完整（如上次中断/游客早退）时，放出「开始AI解读」按钮以便重新生成
+      setShowAiButton(!isAiAnalysisComplete(profile.baziResult.aiAnalysis));
     } else {
       setResult(null);
       setShowAiButton(false);
