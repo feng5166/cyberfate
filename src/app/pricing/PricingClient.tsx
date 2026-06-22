@@ -4,25 +4,22 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Footer } from '@/components/layout/Footer';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, ShieldCheck } from 'lucide-react';
 import { PricingCardList } from '@/components/pricing/PricingCardList';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { type PlanId, isValidPlanId, PLAN_NAME_TO_ID, getDefaultPlanId, PRICING_CONFIG } from '@/lib/pricing-config';
 import { track } from '@/lib/analytics';
 
 const defaultPlanId = getDefaultPlanId();
-const defaultPlanConfig = PRICING_CONFIG[defaultPlanId];
 const dailyConfig = PRICING_CONFIG['daily'];
 const yearlyConfig = PRICING_CONFIG['yearly'];
-const lifetimeConfig = PRICING_CONFIG['lifetime'];
 
 const faqs = [
   { q: '免费版和会员版有什么区别？', a: '免费版每天可进行 3 次基础八字分析。会员版解锁无限次分析、AI 深度报告、紫微斗数、塔罗占卜等全部高级功能，同时享受优先客服支持。' },
-  { q: `${dailyConfig.name}（按天）和年费/终身有什么区别？`, a: `${dailyConfig.name} $${dailyConfig.displayPrice}/天，适合想先体验全部功能的用户。${yearlyConfig.name} $${yearlyConfig.displayPrice}/年 性价比最高，适合长期使用者。${lifetimeConfig.name} $${lifetimeConfig.displayPrice} 终身一次性付费，永久解锁所有功能包括未来更新。` },
+  { q: `${dailyConfig.name}和${yearlyConfig.name}有什么区别？`, a: `${dailyConfig.name} $${dailyConfig.displayPrice}/天，适合想先体验全部功能或临时使用的用户。${yearlyConfig.name} $${yearlyConfig.displayPrice}/年（原价 $${yearlyConfig.originalDisplayPrice}），全年无限制、性价比最高，且续费永享原价，适合长期使用者。` },
+  { q: '年费会员续费会涨价吗？', a: '不会。早鸟优惠期内开通的年费会员，永久锁定续费价格，后续即便官方价格上调，您续费也始终享受当前优惠价。' },
   { q: '支付方式有哪些？', a: '目前支持 Stripe 信用卡/借记卡支付。所有交易均经过加密处理，确保您的支付安全。' },
-  { q: '终身版真的永久有效吗？', a: `是的！${lifetimeConfig.name}为一次性终身付费，无需续费，永久享受所有功能及未来新功能。` },
-  { q: '可以升级套餐吗？', a: `可以！如果您购买了${dailyConfig.name}或${yearlyConfig.name}，后续可以补差价升级到更高版本。请联系客服或在个人中心操作。` },
-  { q: '分析结果准确吗？', a: '我们的 AI 命理分析基于传统命理学体系结合现代 AI 技术，提供参考性解读。命理分析仅供娱乐和参考，不构成任何决策依据，请理性对待。' },
+  { q: '分析结果准确吗？', a: '我们的 AI 分析基于传统文化体系结合现代 AI 技术，提供参考性解读，仅供娱乐和参考，不构成任何决策依据，请理性对待。' },
 ];
 
 interface PricingClientProps {
@@ -103,20 +100,13 @@ export default function PricingClient({ currentPlan }: PricingClientProps) {
   return (
     <div className="bg-[#FAF9F6] min-h-screen">
       <section className="px-4 pt-20 md:pt-28 pb-8">
-        <div className="max-w-5xl mx-auto text-center">
-          <h1 className="font-display text-[32px] md:text-[40px] font-semibold text-[#1C1A16] tracking-[0.08em]">
-            选择您的计划
+        <div className="max-w-[680px] mx-auto text-center">
+          <h1 className="font-display text-[32px] md:text-[40px] font-semibold text-[#1C1A16] tracking-[0.06em]">
+            选择您的方案
           </h1>
-          <p className="text-[15px] text-[#1C1A16]/55 mt-3">
-            一次付费，无需续费
+          <p className="text-[15px] text-[#1C1A16]/55 mt-4 leading-relaxed">
+            AI 智能八字助手，为您提供每日运势指引、人生重要决策参考、正缘测算等全方位服务。让智能化的命理分析，助您在人生的每个重要时刻做出明智选择。
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-6 mt-5 text-[13px] text-[#1C1A16]/55">
-            <span className="flex items-center gap-1.5">✅ 即时生效</span>
-            <span className="text-[#1C1A16]/20">|</span>
-            <span className="flex items-center gap-1.5">🔒 安全加密支付</span>
-            <span className="text-[#1C1A16]/20">|</span>
-            <span className="flex items-center gap-1.5">⭐ 5万+ 用户选择</span>
-          </div>
           {isSubscribed && (
             <div className="mt-6 inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 text-sm font-medium px-5 py-2.5 rounded-full border border-emerald-200">
               <span>您已是会员 ✨ 感谢支持</span>
@@ -125,8 +115,8 @@ export default function PricingClient({ currentPlan }: PricingClientProps) {
         </div>
       </section>
 
-      <section className="px-4 pb-20 md:pb-28">
-        <div className="max-w-[1000px] mx-auto">
+      <section className="px-4 pb-12 md:pb-16">
+        <div className="max-w-[860px] mx-auto">
           <PricingCardList
             selectedPlan={selectedPlan}
             onSelectPlan={setSelectedPlan}
@@ -134,6 +124,19 @@ export default function PricingClient({ currentPlan }: PricingClientProps) {
             isSubscribed={isSubscribed}
             currentPlan={currentPlan}
           />
+        </div>
+      </section>
+
+      <section className="px-4 pb-6">
+        <div className="max-w-[860px] mx-auto text-center">
+          <p className="inline-flex items-center gap-2 text-[13px] text-[#1C1A16]/55">
+            <ShieldCheck className="w-4 h-4 text-[#1C1A16]/45" strokeWidth={2} />
+            安全支付 · 数据加密 · 隐私保护
+          </p>
+          <p className="text-[13px] text-[#1C1A16]/45 mt-2">
+            需要帮助？联系我们：
+            <a href="mailto:support@cyberfate.me" className="text-[#1C1A16]/70 hover:underline">support@cyberfate.me</a>
+          </p>
         </div>
       </section>
 

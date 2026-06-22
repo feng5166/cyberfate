@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { listCustomers, createCustomer, createCheckoutSession } from '@/lib/stripe-direct';
-import { PRICING_CONFIG, isValidPlanId, type PlanId } from '@/lib/pricing-config';
+import { PRICING_CONFIG, isValidPlanId, isSellablePlanId, type PlanId } from '@/lib/pricing-config';
 import { log } from '@/lib/logger';
 
 const PLAN_RANK: Record<PlanId, number> = {
@@ -54,6 +54,11 @@ export async function POST(req: NextRequest) {
 
     if (!isValidPlanId(plan)) {
       return NextResponse.json({ error: '无效的套餐' }, { status: 400 });
+    }
+
+    // 已下架套餐(祖父条款)不可再购买
+    if (!isSellablePlanId(plan)) {
+      return NextResponse.json({ error: '该套餐已下架' }, { status: 400 });
     }
 
     // ── 安全校验：服务端独立计算金额，不信任客户端 ──

@@ -1,14 +1,12 @@
 'use client';
 
 import { PricingCard } from './PricingCard';
-import { PRICING_PLANS_LIST } from '@/lib/pricing-config';
-
-const CURRENCY_SYMBOLS: Record<string, string> = { usd: '$', cny: '¥' };
+import { SELLABLE_PLANS_LIST, CURRENCY_SYMBOLS } from '@/lib/pricing-config';
 
 interface PricingCardListProps {
   selectedPlan: string;
-  onSelectPlan: (name: string) => void;
-  onCTAClick: (planName: string, price: string) => void;
+  onSelectPlan: (id: string) => void;
+  onCTAClick: (planId: string, price: string) => void;
   isSubscribed?: boolean;
   currentPlan?: string;
 }
@@ -21,24 +19,18 @@ export function PricingCardList({
   currentPlan,
 }: PricingCardListProps) {
   return (
-    <div className="flex flex-col lg:flex-row gap-5 lg:gap-6">
-      {PRICING_PLANS_LIST.map((plan) => {
-        const isCurrent = isSubscribed && currentPlan === plan.name;
-        const anchor = plan.id === 'lifetime' ? '≈ 4 年专业版价格，永久使用' : undefined;
+    <div className="flex flex-col gap-6">
+      {SELLABLE_PLANS_LIST.map((plan) => {
+        const isCurrent = isSubscribed && currentPlan === plan.id;
         return (
           <PricingCard
             key={plan.id}
-            name={plan.name}
-            price={plan.displayPrice}
-            period={plan.periodLabel}
-            recommended={plan.recommended}
-            perks={plan.perks}
+            plan={plan}
+            currencySymbol={CURRENCY_SYMBOLS[plan.currency] || '$'}
             isSelected={!isCurrent && selectedPlan === plan.id}
             isCurrentPlan={isCurrent}
             isSubscribed={isSubscribed}
             ctaText={isCurrent ? '当前计划' : isSubscribed ? '管理订阅 →' : undefined}
-            currencySymbol={CURRENCY_SYMBOLS[plan.currency] || '$'}
-            anchor={anchor}
             onClick={() => onSelectPlan(plan.id)}
             onCTAClick={() => onCTAClick(plan.id, plan.displayPrice)}
           />

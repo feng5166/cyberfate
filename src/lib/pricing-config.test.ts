@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest'
 import {
   PRICING_CONFIG,
   PLAN_IDS,
+  SELLABLE_PLAN_IDS,
   PRICING_PLANS_LIST,
   LIFETIME_DURATION,
   isValidPlanId,
+  isSellablePlanId,
   isLifetimePlan,
   getPlanName,
   getDefaultPlanId,
@@ -26,7 +28,14 @@ describe('pricing-config — plan amounts & durations are sane', () => {
   it('known fixed amounts/durations (characterization)', () => {
     // characterization — current published prices
     expect(PRICING_CONFIG.daily).toMatchObject({ amount: 999, duration: 1 })
-    expect(PRICING_CONFIG.yearly).toMatchObject({ amount: 4900, duration: 365 })
+    // 年费会员:$69.9,划线原价 $299
+    expect(PRICING_CONFIG.yearly).toMatchObject({
+      amount: 6990,
+      duration: 365,
+      originalAmount: 29900,
+      originalDisplayPrice: '299',
+    })
+    // lifetime 祖父条款下架,但配置保留(存量有效)
     expect(PRICING_CONFIG.lifetime).toMatchObject({
       amount: 19900,
       duration: LIFETIME_DURATION,
@@ -42,6 +51,15 @@ describe('pricing-config — plan amounts & durations are sane', () => {
     const recommended = PRICING_PLANS_LIST.filter((p) => p.recommended)
     expect(recommended).toHaveLength(1)
     expect(getDefaultPlanId()).toBe(recommended[0].id)
+  })
+
+  it('可售套餐为 daily + yearly,lifetime 已下架(祖父条款)', () => {
+    expect(SELLABLE_PLAN_IDS).toEqual(['daily', 'yearly'])
+    expect(isSellablePlanId('yearly')).toBe(true)
+    expect(isSellablePlanId('lifetime')).toBe(false) // 存量有效但不可再售
+    expect(PRICING_CONFIG.lifetime.sellable).toBe(false)
+    // 下架不影响配置查询(存量订单仍可解析)
+    expect(getPlanName('lifetime')).toBe('尊享版')
   })
 })
 

@@ -727,6 +727,7 @@ function ProfileFormModal({
               />
             </div>
             <DatePicker
+              lunar={values.isLunar}
               label={values.isLunar ? '出生日期（农历）' : '出生日期（阳历）'}
               value={values.birthDate}
               onChange={(value) => setValues((v) => ({ ...v, birthDate: value }))}
@@ -2238,6 +2239,7 @@ function BaziPageContent() {
                 />
               </div>
               <DatePicker
+                lunar={formData.isLunar}
                 label={formData.isLunar ? '出生日期（农历）' : '出生日期（阳历）'}
                 value={formData.birthDate}
                 onChange={(value) => setFormData({ ...formData, birthDate: value })}

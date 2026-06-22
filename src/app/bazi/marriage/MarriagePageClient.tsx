@@ -265,6 +265,7 @@ function SideForm({ sideKey, data, onChange }: SideFormProps) {
         </div>
 
         <DatePicker
+          lunar={data.isLunar}
           label={data.isLunar ? '出生日期（农历）' : '出生日期（阳历）'}
           value={data.birthDate}
           onChange={(value) => onChange({ birthDate: value })}
