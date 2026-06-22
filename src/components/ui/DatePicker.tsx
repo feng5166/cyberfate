@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, Calendar, ChevronDown } from 'lucide-react'
-import { LunarMonth } from 'lunar-javascript'
+import * as LunarJs from 'lunar-javascript'
 import { cn } from '@/lib/utils/cn'
 
 interface DatePickerProps {
@@ -27,7 +27,10 @@ const LUNAR_DAYS = [
 /** 某农历月的天数（29 或 30）。取不到时回退 30。 */
 function lunarMonthDayCount(year: number, month: number): number {
   try {
-    const m = (LunarMonth as { fromYm?: (y: number, mo: number) => { getDayCount?: () => number } }).fromYm?.(year, month)
+    const LunarMonth = (LunarJs as unknown as {
+      LunarMonth?: { fromYm?: (y: number, mo: number) => { getDayCount?: () => number } | null }
+    }).LunarMonth
+    const m = LunarMonth?.fromYm?.(year, month)
     const c = m?.getDayCount?.()
     return c === 29 || c === 30 ? c : 30
   } catch {
