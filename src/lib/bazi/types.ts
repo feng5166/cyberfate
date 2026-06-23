@@ -113,6 +113,8 @@ export interface DayunTimelineItem {
   yearStart: number;
   /** 该步大运结束公历年 */
   yearEnd: number;
+  /** 该步大运的切换月（公历），各步相同，即起运公历月 */
+  startMonth: number;
   isCurrent: boolean;
 }
 

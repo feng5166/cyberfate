@@ -43,6 +43,7 @@ import {
   TIANGAN_WUXING,
   WUXING_KEYS,
   getCurrentDayun,
+  getDayunStart,
   getDayunTimeline,
   getLunarDate,
   getYearGanzhi,
@@ -392,18 +393,6 @@ function getZodiacByBirthDate(birthDate: string): string {
   if (!year) return '未提供';
   const zodiac = ['鼠', '牛', '虎', '兔', '龙', '蛇', '马', '羊', '猴', '鸡', '狗', '猪'];
   return zodiac[(year - 4 + 1200) % 12] || '未提供';
-}
-
-function getDayunStartFallback(birthDate: string): { description: string; at: string } {
-  const [birthYear, birthMonth, birthDay] = birthDate.split('-').map(Number);
-  if (!birthYear || !birthMonth || !birthDay) {
-    return { description: '待计算', at: '—' };
-  }
-  const startAge = 3 + ((birthMonth + birthDay) % 3);
-  return {
-    description: `约 ${startAge} 岁起运`,
-    at: `约 ${birthYear + startAge} 年`,
-  };
 }
 
 function getScoreStyle(score: number): { barClass: string; textClass: string } {
@@ -1194,7 +1183,15 @@ function BaziPageContent() {
 
     const hasBirthDate = !!formData.birthDate;
     // 八字直输无出生日期：起运/农历/出生时间均不可得，置空（卡片显示「—」）
-    const dayunFallback = hasBirthDate ? getDayunStartFallback(formData.birthDate) : { description: '', at: '' };
+    // 精确到月：走库的节气数日法（含性别顺逆 + 已知时辰更准），不再用粗略估算。
+    const dayunFallback = hasBirthDate
+      ? getDayunStart(
+          formData.birthDate,
+          formData.gender === 'female' ? 'female' : 'male',
+          chatBirthHourNum,
+          formData.knowTime ? formData.birthMinute : undefined,
+        )
+      : { description: '', at: '' };
 
     const lunarDate = hasBirthDate ? getLunarDate(formData.birthDate) : '未提供';
 
@@ -1208,7 +1205,7 @@ function BaziPageContent() {
       dayunStartDescription: result.dayunStartDescription || dayunFallback.description,
       dayunStartAt: result.dayunStartAt || dayunFallback.at,
     };
-  }, [formData.birthDate, formData.birthHour, formData.gender, formData.name, result, hasHourPillar]);
+  }, [formData.birthDate, formData.birthHour, formData.gender, formData.name, formData.knowTime, formData.birthMinute, chatBirthHourNum, result, hasHourPillar]);
 
   const tabContent = useMemo<Record<ResultTab, TabContent>>(() => {
     const dimensions = result?.fiveDimensions;
@@ -2737,7 +2734,7 @@ function BaziPageContent() {
                                     >
                                       <p className="text-lg font-semibold tracking-[0.08em]">{item.gan}{item.zhi}</p>
                                       <p className="text-xs mt-1 opacity-80">{item.ageStart}-{item.ageEnd} 岁</p>
-                                      <p className="text-[11px] mt-0.5 opacity-60">{item.yearStart}-{item.yearEnd} 年</p>
+                                      <p className="text-[11px] mt-0.5 opacity-60">{item.startMonth ? `${item.yearStart}年${item.startMonth}月起` : `${item.yearStart}-${item.yearEnd} 年`}</p>
                                       {item.isCurrent && <p className="text-[11px] mt-1 font-medium text-[#C2762B]">当前大运</p>}
                                     </button>
                                   ))}
@@ -2769,7 +2766,7 @@ function BaziPageContent() {
                                   </div>
 
                                   <p className="mt-1.5 text-xs text-[#1C1A16]/55">
-                                    {selectedDayun.ageStart}-{selectedDayun.ageEnd} 岁 · {selectedDayun.yearStart}-{selectedDayun.yearEnd} 年 · {dayunPhaseText}
+                                    {selectedDayun.ageStart}-{selectedDayun.ageEnd} 岁 · {selectedDayun.startMonth ? `${selectedDayun.yearStart}年${selectedDayun.startMonth}月 ~ ${selectedDayun.yearEnd + 1}年${selectedDayun.startMonth}月` : `${selectedDayun.yearStart}-${selectedDayun.yearEnd} 年`} · {dayunPhaseText}
                                   </p>
 
                                   {/* 命理要素：天干十神 / 藏干 / 纳音 / 五行 */}

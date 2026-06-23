@@ -377,6 +377,41 @@ export function getCurrentDayun(
 }
 
 /**
+ * 计算精确「起运」描述（精确到月，节气数日法，基于 lunar-javascript getYun）。
+ * - 起运顺逆依「阳男阴女顺行、阴男阳女逆行」由库按性别内部处理，故必须传性别。
+ * - getStartYear/Month 为出生到起运节气的精确折算（3 天 = 1 岁、1 天 = 4 个月）。
+ * @param birthHourNum 可选精确小时(0-23)；提供后起运计算更准（时辰影响数日差）。
+ * @returns description 形如「5岁2个月起运」；at 形如「2030年4月起运」（起运公历年月）。
+ */
+export function getDayunStart(
+  birthDate: string,
+  gender: Gender,
+  birthHourNum?: number,
+  birthMinute?: number,
+): { description: string; at: string } {
+  try {
+    const eightChar = buildEightChar(birthDate, birthHourNum, birthMinute);
+    if (!eightChar) return { description: '待计算', at: '—' };
+
+    const yun = eightChar.getYun(genderToNum(gender));
+    const years = yun.getStartYear() as number;
+    const months = yun.getStartMonth() as number;
+
+    const description =
+      years === 0 && months === 0
+        ? '出生即起运'
+        : `${years > 0 ? `${years}岁` : ''}${months > 0 ? `${months}个月` : ''}起运`;
+
+    const startSolar = yun.getStartSolar();
+    const at = `${startSolar.getYear()}年${startSolar.getMonth()}月起运`;
+
+    return { description, at };
+  } catch {
+    return { description: '待计算', at: '—' };
+  }
+}
+
+/**
  * 获取农历日期字符串（含干支年），如 "癸亥年七月十一"
  */
 export function getLunarDate(date: string): string {
@@ -412,6 +447,8 @@ export function getDayunTimeline(
     if (!dayunList.length) return [];
 
     const currentYear = getCurrentYear();
+    // 大运每 10 年切换一次，切换月恒为起运的公历月（起运日 + i*10 年）。
+    const startMonth = eightChar.getYun(genderToNum(gender)).getStartSolar().getMonth() as number;
 
     return dayunList.slice(0, Math.max(1, steps)).map((d, i) => {
       const gz = d.getGanZhi() as string;
@@ -429,6 +466,7 @@ export function getDayunTimeline(
         ageEnd: d.getEndAge() as number,
         yearStart,
         yearEnd,
+        startMonth,
         isCurrent: currentYear >= yearStart && currentYear <= yearEnd,
       };
     });
