@@ -381,7 +381,6 @@ ${chartFacts || JSON.stringify({ ...baziData, aiAnalysis: undefined }, null, 2)}
 ${answerRule}
 - 使用友好、温暖、专业的口吻
 - 涉及投资/疾病/死亡等敏感话题时，给出温和提醒
-- 如有困扰请拨打心理援助热线 400-161-9995
 - 本产品为文化娱乐，分析仅供参考`;
 
     const maxTokens =
