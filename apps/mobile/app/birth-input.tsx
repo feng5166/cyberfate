@@ -1,313 +1,157 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Button, Card, Screen } from '@/components/ui';
+import { colors } from '@/lib/theme';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Redirect } from 'expo-router';
-import { postBazi } from '../lib/api';
-import { useAppStore } from '../stores/useAppStore';
+  SHICHEN,
+  hourToShichenIndex,
+  shichenIndexToHour,
+  useProfile,
+  type Gender,
+} from '@/lib/profile-store';
 
-const SHICHEN = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
-const SHICHEN_HOURS = [23, 1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21];
-
-const YEARS = Array.from({ length: 87 }, (_, i) => 1924 + i);
-const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
-const DAYS = Array.from({ length: 31 }, (_, i) => i + 1);
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export default function BirthInputScreen() {
-  const [name, setName] = useState('');
-  const [year, setYear] = useState(1990);
-  const [month, setMonth] = useState(6);
-  const [day, setDay] = useState(15);
-  const [shichen, setShichen] = useState(4);
-  const [gender, setGender] = useState<'male' | 'female'>('male');
-  const [loading, setLoading] = useState(false);
-  const [done, setDone] = useState(false);
+  const router = useRouter();
+  const existing = useProfile((s) => s.profile);
+  const setProfile = useProfile((s) => s.setProfile);
 
-  const setProfile = useAppStore((s) => s.setProfile);
-  const setBaziResult = useAppStore((s) => s.setBaziResult);
+  const [name, setName] = useState(existing?.name ?? '');
+  const [gender, setGender] = useState<Gender>(existing?.gender ?? 'male');
+  const [birthDate, setBirthDate] = useState(existing?.birthDate ?? '');
+  const [shichenIdx, setShichenIdx] = useState(
+    existing ? hourToShichenIndex(existing.birthHour) : 0,
+  );
+  const [error, setError] = useState<string | null>(null);
 
-  if (done) return <Redirect href="/(tabs)" />;
+  function isValidDate(d: string) {
+    if (!DATE_RE.test(d)) return false;
+    const [y, m, day] = d.split('-').map(Number);
+    if (y < 1900 || y > 2030) return false;
+    const dt = new Date(y, m - 1, day);
+    return dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === day;
+  }
 
-  const handleSubmit = async () => {
-    const birthDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    const birthHour = shichen;
-    setLoading(true);
-    try {
-      const result = await postBazi({ birthDate, birthHour, gender, name: name.trim() });
-      setProfile({ userName: name.trim(), birthDate, birthHour, gender });
-      setBaziResult(result);
-      setDone(true);
-    } catch {
-      Alert.alert('计算失败', '请稍后重试');
-    } finally {
-      setLoading(false);
+  async function save() {
+    setError(null);
+    if (!isValidDate(birthDate)) {
+      setError('请输入有效出生日期（格式 YYYY-MM-DD，年份 1900–2030）');
+      return;
     }
-  };
+    await setProfile({
+      name: name.trim(),
+      gender,
+      birthDate,
+      birthHour: shichenIndexToHour(shichenIdx),
+    });
+    router.back();
+  }
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        <Text style={styles.title}>输入生辰信息</Text>
-
-        <View style={styles.section}>
-          <Text style={styles.label}>姓名</Text>
+    <Screen>
+      <Card style={{ gap: 16 }}>
+        <View style={{ gap: 6 }}>
+          <Text style={styles.label}>姓名（可选）</Text>
           <TextInput
             style={styles.input}
             value={name}
             onChangeText={setName}
-            placeholder="请输入姓名"
-            placeholderTextColor="#9CA3AF"
-            returnKeyType="done"
+            placeholder="可不填"
+            placeholderTextColor={colors.weak}
+            maxLength={20}
           />
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.label}>出生年份</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View style={styles.pickerRow}>
-              {YEARS.map((y) => (
-                <TouchableOpacity
-                  key={y}
-                  style={[styles.pickerItem, year === y && styles.pickerItemSelected]}
-                  onPress={() => setYear(y)}
-                >
-                  <Text style={[styles.pickerText, year === y && styles.pickerTextSelected]}>
-                    {y}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </ScrollView>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.label}>月份</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View style={styles.pickerRow}>
-              {MONTHS.map((m) => (
-                <TouchableOpacity
-                  key={m}
-                  style={[styles.pickerItem, month === m && styles.pickerItemSelected]}
-                  onPress={() => setMonth(m)}
-                >
-                  <Text style={[styles.pickerText, month === m && styles.pickerTextSelected]}>
-                    {m}月
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </ScrollView>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.label}>日期</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View style={styles.pickerRow}>
-              {DAYS.map((d) => (
-                <TouchableOpacity
-                  key={d}
-                  style={[styles.pickerItem, day === d && styles.pickerItemSelected]}
-                  onPress={() => setDay(d)}
-                >
-                  <Text style={[styles.pickerText, day === d && styles.pickerTextSelected]}>
-                    {d}日
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </ScrollView>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.label}>出生时辰</Text>
-          <View style={styles.shichenGrid}>
-            {SHICHEN.map((s, i) => (
-              <TouchableOpacity
-                key={s}
-                style={[styles.shichenBtn, shichen === i && styles.shichenBtnSelected]}
-                onPress={() => setShichen(i)}
+        <View style={{ gap: 6 }}>
+          <Text style={styles.label}>性别</Text>
+          <View style={styles.row}>
+            {(['male', 'female'] as Gender[]).map((g) => (
+              <Pressable
+                key={g}
+                style={[styles.choice, gender === g && styles.choiceActive]}
+                onPress={() => setGender(g)}
               >
-                <Text style={[styles.shichenText, shichen === i && styles.shichenTextSelected]}>
-                  {s}
+                <Text style={[styles.choiceText, gender === g && styles.choiceTextActive]}>
+                  {g === 'male' ? '男' : '女'}
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.label}>性别</Text>
-          <View style={styles.genderRow}>
-            <TouchableOpacity
-              style={[styles.genderBtn, gender === 'male' && styles.genderBtnSelected]}
-              onPress={() => setGender('male')}
-            >
-              <Text style={[styles.genderText, gender === 'male' && styles.genderTextSelected]}>
-                男
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.genderBtn, gender === 'female' && styles.genderBtnSelected]}
-              onPress={() => setGender('female')}
-            >
-              <Text style={[styles.genderText, gender === 'female' && styles.genderTextSelected]}>
-                女
-              </Text>
-            </TouchableOpacity>
-          </View>
+        <View style={{ gap: 6 }}>
+          <Text style={styles.label}>出生日期（公历）</Text>
+          <TextInput
+            style={styles.input}
+            value={birthDate}
+            onChangeText={setBirthDate}
+            placeholder="YYYY-MM-DD，例如 1995-08-20"
+            placeholderTextColor={colors.weak}
+            keyboardType="numbers-and-punctuation"
+            maxLength={10}
+          />
         </View>
 
-        <TouchableOpacity
-          style={[styles.submitBtn, loading && styles.submitBtnDisabled]}
-          onPress={handleSubmit}
-          disabled={loading}
-          activeOpacity={0.85}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.submitText}>开始测算</Text>
-          )}
-        </TouchableOpacity>
-      </ScrollView>
-    </SafeAreaView>
+        <View style={{ gap: 6 }}>
+          <Text style={styles.label}>出生时辰</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+            {SHICHEN.map((label, idx) => (
+              <Pressable
+                key={label}
+                style={[styles.chip, shichenIdx === idx && styles.choiceActive]}
+                onPress={() => setShichenIdx(idx)}
+              >
+                <Text style={[styles.choiceText, shichenIdx === idx && styles.choiceTextActive]}>
+                  {label}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        </View>
+
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+
+        <Button title="保存" onPress={save} />
+      </Card>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: '#FAF6EE',
-  },
-  container: {
-    padding: 24,
-    paddingBottom: 48,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1B2540',
-    textAlign: 'center',
-    marginBottom: 32,
-  },
-  section: {
-    marginBottom: 24,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1B2540',
-    marginBottom: 10,
-  },
+  label: { fontSize: 13, color: colors.secondary },
   input: {
+    height: 46,
     borderWidth: 1,
-    borderColor: '#E5DED0',
+    borderColor: colors.border,
     borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: '#1B2540',
-    backgroundColor: '#fff',
+    paddingHorizontal: 12,
+    fontSize: 15,
+    color: colors.ink,
+    backgroundColor: colors.bg,
   },
-  pickerRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  pickerItem: {
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 8,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#E5DED0',
-  },
-  pickerItemSelected: {
-    backgroundColor: '#E87722',
-    borderColor: '#E87722',
-  },
-  pickerText: {
-    fontSize: 14,
-    color: '#1B2540',
-  },
-  pickerTextSelected: {
-    color: '#fff',
-    fontWeight: '600',
-  },
-  shichenGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  shichenBtn: {
-    width: '22%',
-    paddingVertical: 13,
-    alignItems: 'center',
-    borderRadius: 8,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#E5DED0',
-  },
-  shichenBtnSelected: {
-    backgroundColor: '#E87722',
-    borderColor: '#E87722',
-  },
-  shichenText: {
-    fontSize: 18,
-    color: '#1B2540',
-    fontWeight: '500',
-  },
-  shichenTextSelected: {
-    color: '#fff',
-    fontWeight: '700',
-  },
-  genderRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  genderBtn: {
+  row: { flexDirection: 'row', gap: 10 },
+  choice: {
     flex: 1,
-    paddingVertical: 14,
-    alignItems: 'center',
+    height: 44,
     borderRadius: 10,
-    backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: '#E5DED0',
-  },
-  genderBtnSelected: {
-    backgroundColor: '#E87722',
-    borderColor: '#E87722',
-  },
-  genderText: {
-    fontSize: 18,
-    color: '#1B2540',
-    fontWeight: '500',
-  },
-  genderTextSelected: {
-    color: '#fff',
-    fontWeight: '700',
-  },
-  submitBtn: {
-    backgroundColor: '#E87722',
-    borderRadius: 14,
-    paddingVertical: 18,
+    borderColor: colors.border,
     alignItems: 'center',
-    marginTop: 8,
+    justifyContent: 'center',
   },
-  submitBtnDisabled: {
-    opacity: 0.6,
+  chip: {
+    height: 40,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  submitText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '700',
-    letterSpacing: 2,
-  },
+  choiceActive: { backgroundColor: colors.accentSoft, borderColor: colors.accent },
+  choiceText: { fontSize: 14, color: colors.secondary },
+  choiceTextActive: { color: colors.accent, fontWeight: '700' },
+  error: { color: colors.danger, fontSize: 13 },
 });

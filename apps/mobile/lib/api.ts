@@ -1,130 +1,179 @@
-import { mockDailyFortune } from "./mockData";
-import type { BaziResult, BaziPillar, FiveElement, FortuneResult } from "./types";
+import { API_BASE } from './config';
+import { useAuth, type AuthUser } from './auth-store';
+import type { BirthProfile } from './profile-store';
 
-const API_BASE = "https://www.cyberfate.me/api";
-
-const STEMS = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
-const BRANCHES = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
-const ZODIAC = ["鼠", "牛", "虎", "兔", "龙", "蛇", "马", "羊", "猴", "鸡", "狗", "猪"];
-
-// Five element for each stem index (0-9)
-const STEM_ELEMENT = ["木", "木", "火", "火", "土", "土", "金", "金", "水", "水"];
-// Five element for each branch index (0-11)
-const BRANCH_ELEMENT = ["水", "土", "木", "木", "土", "火", "火", "土", "金", "金", "土", "水"];
-
-const ELEMENT_COLOR: Record<string, string> = {
-  木: "#4CAF50",
-  火: "#F44336",
-  土: "#FF9800",
-  金: "#FFC107",
-  水: "#2196F3",
-};
-
-// 纳音 for the 30 pairs in the 60-year sexagenary cycle
-const NA_YIN = [
-  "海中金", "炉中火", "大林木", "路旁土", "剑锋金",
-  "山头火", "涧下水", "城头土", "白蜡金", "杨柳木",
-  "泉中水", "屋上土", "霹雳火", "松柏木", "长流水",
-  "砂中金", "山下火", "平地木", "壁上土", "金箔金",
-  "覆灯火", "天河水", "大驿土", "钗钏金", "桑柘木",
-  "大溪水", "沙中土", "天上火", "石榴木", "大海水",
-];
-
-export function generateLocalBazi(params: {
-  birthDate: string;
-  birthHour: number;
-  gender: "male" | "female";
-  name: string;
-}): BaziResult {
-  const [yearStr, monthStr, dayStr] = params.birthDate.split("-");
-  const year = parseInt(yearStr, 10);
-  const month = parseInt(monthStr, 10);
-  const day = parseInt(dayStr, 10);
-  const hour = params.birthHour;
-
-  // Year pillar: stem=(year-4)%10, branch=(year-4)%12
-  const yearStemIdx = ((year - 4) % 10 + 10) % 10;
-  const yearBranchIdx = ((year - 4) % 12 + 12) % 12;
-
-  // Month pillar: branch maps Jan(1)→丑(1) … Dec(12)→子(0)
-  // Stem start per year-stem group (甲己→丙, 乙庚→戊, 丙辛→庚, 丁壬→壬, 戊癸→甲)
-  const yearStemGroup = yearStemIdx % 5;
-  const monthStemIdx = (yearStemGroup * 2 + month + 1) % 10;
-  const monthBranchIdx = month % 12;
-
-  // Day pillar: hash from date components
-  const dayRawIdx = (year * 400 + month * 31 + day * 11) % 60;
-  const dayStemIdx = dayRawIdx % 10;
-  const dayBranchIdx = dayRawIdx % 12;
-
-  // Hour pillar: 子(0)=23-1h, 丑(1)=1-3h, …
-  const hourBranchIdx = Math.floor((hour + 1) / 2) % 12;
-  const dayStemGroup = dayStemIdx % 5;
-  const hourStemIdx = (dayStemGroup * 2 + hourBranchIdx) % 10;
-
-  const pillars: BaziPillar[] = [
-    { position: "年柱", heavenlyStem: STEMS[yearStemIdx], earthlyBranch: BRANCHES[yearBranchIdx] },
-    { position: "月柱", heavenlyStem: STEMS[monthStemIdx], earthlyBranch: BRANCHES[monthBranchIdx] },
-    { position: "日柱", heavenlyStem: STEMS[dayStemIdx], earthlyBranch: BRANCHES[dayBranchIdx] },
-    { position: "时柱", heavenlyStem: STEMS[hourStemIdx], earthlyBranch: BRANCHES[hourBranchIdx] },
-  ];
-
-  const dayMaster = STEMS[dayStemIdx];
-  const zodiac = ZODIAC[yearBranchIdx];
-
-  // NaYin: based on year's position in the 60-cycle
-  const yearSexIdx = ((year - 4) % 60 + 60) % 60;
-  const naYin = NA_YIN[Math.floor(yearSexIdx / 2)];
-
-  // Count 五行 across all 8 characters (4 stems + 4 branches)
-  const elementCount: Record<string, number> = { 木: 0, 火: 0, 土: 0, 金: 0, 水: 0 };
-  for (const idx of [yearStemIdx, monthStemIdx, dayStemIdx, hourStemIdx]) {
-    elementCount[STEM_ELEMENT[idx]]++;
+export class ApiError extends Error {
+  status: number;
+  code?: string;
+  constructor(message: string, status: number, code?: string) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.code = code;
   }
-  for (const idx of [yearBranchIdx, monthBranchIdx, dayBranchIdx, hourBranchIdx]) {
-    elementCount[BRANCH_ELEMENT[idx]]++;
-  }
-
-  const fiveElements: FiveElement[] = Object.entries(elementCount).map(([name, count]) => ({
-    name,
-    value: Math.round((count / 8) * 100),
-    color: ELEMENT_COLOR[name],
-  }));
-
-  return { pillars, dayMaster, zodiac, naYin, fiveElements };
 }
 
-async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${endpoint}`, {
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    ...options,
-  });
-  if (!res.ok) throw new Error(`API Error: ${res.status}`);
-  return res.json();
+function authHeaders(): Record<string, string> {
+  const token = useAuth.getState().token;
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-export async function postBazi(params: {
-  birthDate: string;
-  birthHour: number;
-  gender: "male" | "female";
-  name: string;
-}): Promise<BaziResult> {
+async function parseError(res: Response): Promise<never> {
+  const text = await res.text();
+  let data: any = null;
   try {
-    return await fetchAPI<BaziResult>("/bazi", {
-      method: "POST",
-      body: JSON.stringify(params),
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    /* non-JSON body */
+  }
+  const msg = data?.message || data?.error || `请求失败 (${res.status})`;
+  throw new ApiError(msg, res.status, data?.error);
+}
+
+async function postJson<T>(path: string, body: unknown): Promise<T> {
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify(body),
     });
   } catch {
-    return generateLocalBazi(params);
+    throw new ApiError('网络连接失败，请检查网络后重试', 0);
   }
+  if (!res.ok) return parseError(res);
+  return (await res.json()) as T;
 }
 
-export async function getDailyFortune(_date: string): Promise<FortuneResult> {
-  // TODO: return fetchAPI(`/fortune/daily?date=${_date}`);
-  return mockDailyFortune;
+// ───────────────────────── 认证 ─────────────────────────
+
+export interface LoginResponse {
+  token: string;
+  expiresIn: number;
+  user: AuthUser;
 }
 
-export async function checkIn() {
-  // TODO: return fetchAPI("/user/checkin", { method: "POST" });
-  return { success: true, consecutiveDays: 13 };
+export function mobileLogin(email: string, password: string) {
+  return postJson<LoginResponse>('/auth/mobile-login', { email, password });
+}
+
+export function register(email: string, password: string, nickname?: string) {
+  return postJson<{ id: string; email: string }>('/auth/register', { email, password, nickname });
+}
+
+// ───────────────────────── 八字 ─────────────────────────
+
+export interface Pillar {
+  gan: string;
+  zhi: string;
+  ganWuxing: string;
+  zhiWuxing: string;
+}
+
+export interface BaziResponse {
+  pillars: { year: Pillar; month: Pillar; day: Pillar; hour: Pillar };
+  hasHour: boolean;
+  zodiac: string;
+  wuxing: Record<string, number>;
+  mingGe?: { dayMaster?: string; strength?: string; [k: string]: unknown };
+  baziResult?: Record<string, unknown>;
+}
+
+export function getBazi(p: BirthProfile) {
+  return postJson<BaziResponse>('/bazi', {
+    name: p.name || undefined,
+    gender: p.gender,
+    birthDate: p.birthDate,
+    birthHour: p.birthHour,
+  });
+}
+
+// ───────────────────────── 每日运势 ─────────────────────────
+
+export interface DailyResponse {
+  date: string;
+  lunarDate: string;
+  dayGanzhi: string;
+  overall: number;
+  overallLabel: string;
+  ratings: {
+    career: number;
+    wealth: number;
+    love: number;
+    health: number;
+    studies: number;
+    social: number;
+  };
+  suitable: string[];
+  avoid: string[];
+  lucky?: Record<string, unknown>;
+  luckyHour?: string;
+  advice?: string;
+  headline?: string | null;
+}
+
+export function getDaily(p: BirthProfile) {
+  return postJson<DailyResponse>('/daily', {
+    gender: p.gender,
+    birthDate: p.birthDate,
+    birthHour: p.birthHour,
+  });
+}
+
+// ───────────────────────── 塔罗（SSE → 缓冲解析）─────────────────────────
+
+export interface TarotCard {
+  name_zh?: string;
+  name?: string;
+  orientation?: 'upright' | 'reversed';
+  image_url?: string;
+  meaning?: string;
+  position?: string;
+}
+
+export interface TarotResult {
+  reading: string;
+  cards: TarotCard[];
+  caution?: string;
+}
+
+/**
+ * 塔罗抽牌。后端返回 text/event-stream：
+ *   data: {"meta": {...cards...}}   → 牌面信息
+ *   data: {"content": "片段"}        → 解读正文（多帧拼接）
+ *   data: [DONE]
+ * M0 不做增量渲染：整段读完后切帧解析。
+ */
+export async function drawTarot(question: string, spread = 'single'): Promise<TarotResult> {
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}/tarot/draw`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({ spread, question }),
+    });
+  } catch {
+    throw new ApiError('网络连接失败，请检查网络后重试', 0);
+  }
+  if (!res.ok) return parseError(res);
+
+  const raw = await res.text();
+  let meta: { cards?: TarotCard[]; caution?: string } | null = null;
+  let content = '';
+
+  for (const block of raw.split('\n\n')) {
+    const line = block.trim();
+    if (!line.startsWith('data:')) continue;
+    const payload = line.slice(5).trim();
+    if (payload === '[DONE]') break;
+    try {
+      const obj = JSON.parse(payload);
+      if (obj.meta) meta = obj.meta;
+      if (typeof obj.content === 'string') content += obj.content;
+    } catch {
+      /* 跳过无法解析的帧 */
+    }
+  }
+
+  return { reading: content.trim(), cards: meta?.cards ?? [], caution: meta?.caution };
 }
