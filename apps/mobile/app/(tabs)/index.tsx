@@ -15,12 +15,12 @@ const MODULES: ModuleItem[] = [
   { key: 'bazi', label: '八字', icon: '🎴', href: '/bazi' },
   { key: 'daily', label: '每日运势', icon: '🌅', href: '/daily' },
   { key: 'tarot', label: '塔罗', icon: '🃏', href: '/tarot' },
-  { key: 'ziwei', label: '紫微斗数', icon: '⭐' },
-  { key: 'liuyao', label: '六爻', icon: '☯️' },
-  { key: 'meihua', label: '梅花易数', icon: '🌸' },
-  { key: 'marriage', label: '合婚', icon: '💑' },
-  { key: 'huangli', label: '黄历', icon: '📅' },
-  { key: 'music', label: '音乐运势签', icon: '🎵' },
+  { key: 'ziwei', label: '紫微斗数', icon: '⭐', href: '/ziwei' },
+  { key: 'liuyao', label: '六爻', icon: '☯️', href: '/liuyao' },
+  { key: 'meihua', label: '梅花易数', icon: '🌸', href: '/meihua' },
+  { key: 'marriage', label: '合婚', icon: '💑', href: '/marriage' },
+  { key: 'huangli', label: '黄历', icon: '📅', href: '/huangli' },
+  { key: 'music', label: '音乐运势签', icon: '🎵', href: '/music-oracle' },
 ];
 
 function greeting() {
@@ -46,7 +46,7 @@ export default function HomeScreen() {
       <Card style={styles.banner}>
         <Text style={styles.bannerTitle}>九大命理 · 一念即得</Text>
         <Text style={styles.bannerDesc}>
-          选择下方任一模块开始。八字 / 每日运势 / 塔罗 已接入真实排盘与 AI 解读。
+          九大模块均已接入真实排盘与 AI 解读。黄历、音乐签无需登录即可体验。
         </Text>
       </Card>
 

@@ -15,8 +15,7 @@ import { getTodayTiangan, getWuxingMusicProfile } from '@/lib/music-oracle/wuxin
 import { MUSIC_ORACLE_SYSTEM_PROMPT } from '@/lib/music-oracle/prompts';
 import { prisma } from '@/lib/db';
 import { AI_BASE_URL, PRIMARY_MODEL } from '@/lib/ai/models';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getAuthSession } from '@/lib/auth-session';
 import { isVip as checkIsVip } from '@/lib/subscription';
 import { getTodayBeijing } from '@/lib/timezone';
 
@@ -115,7 +114,7 @@ export async function POST(request: NextRequest) {
     let isVip = false;
     let userId: string | null = null;
     try {
-      const session = await getServerSession(authOptions);
+      const session = await getAuthSession(request);
       if (session?.user?.id) {
         userId = session.user.id;
         isVip = await checkIsVip(userId);

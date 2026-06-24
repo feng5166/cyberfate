@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Text,
   View,
+  type StyleProp,
   type ViewStyle,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -28,7 +29,7 @@ export function Screen({ children, scroll = true }: { children: ReactNode; scrol
   );
 }
 
-export function Card({ children, style }: { children: ReactNode; style?: ViewStyle }) {
+export function Card({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
   return <View style={[styles.card, style]}>{children}</View>;
 }
 

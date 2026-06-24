@@ -41,6 +41,12 @@ export default function RootLayout() {
             <Stack.Screen name="bazi" options={{ title: '八字排盘' }} />
             <Stack.Screen name="daily" options={{ title: '每日运势' }} />
             <Stack.Screen name="tarot" options={{ title: '塔罗占卜' }} />
+            <Stack.Screen name="ziwei" options={{ title: '紫微斗数' }} />
+            <Stack.Screen name="liuyao" options={{ title: '六爻' }} />
+            <Stack.Screen name="meihua" options={{ title: '梅花易数' }} />
+            <Stack.Screen name="marriage" options={{ title: '八字合婚' }} />
+            <Stack.Screen name="music-oracle" options={{ title: '音乐运势签' }} />
+            <Stack.Screen name="huangli" options={{ title: '黄历' }} />
           </Stack>
         </QueryClientProvider>
       </SafeAreaProvider>
