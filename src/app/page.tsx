@@ -312,6 +312,43 @@ export default function HomePage() {
         </Container>
       </section>
 
+      {/* ===== 命理知识库 Section ===== */}
+      <section className="px-4 pb-4">
+        <Container>
+          <div className="max-w-[840px] mx-auto">
+            <div className="text-center mb-10">
+              <h2 className="font-display text-[32px] text-[#1C1A16] mb-3">命理知识库</h2>
+              <p className="text-sm text-[#1C1A16]/70">从零读懂八字：五行、十神、大运背后的底层逻辑</p>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {[
+                { name: '五行理论', desc: '金木水火土的生克框架', href: '/knowledge/wuxing' },
+                { name: '十天干', desc: '甲乙丙丁……十干的含义', href: '/knowledge/tiangan' },
+                { name: '十二地支', desc: '子丑寅卯的时空密码', href: '/knowledge/dizhi' },
+                { name: '八字格局', desc: '格局定层次，命局高低', href: '/knowledge/geju' },
+                { name: '大运理论', desc: '十年一运的起伏规律', href: '/knowledge/dayun' },
+                { name: '神煞大全', desc: '吉神庇佑，凶煞警示', href: '/knowledge/shensha' },
+              ].map((k) => (
+                <Link
+                  key={k.href}
+                  href={k.href}
+                  className="group rounded-xl border border-[#1C1A16]/8 bg-white p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-card-hover"
+                >
+                  <p className="text-sm font-semibold text-[#1C1A16] group-hover:text-[#C2762B] transition-colors">{k.name}</p>
+                  <p className="text-xs text-[#1C1A16]/55 mt-1 leading-relaxed">{k.desc}</p>
+                </Link>
+              ))}
+            </div>
+            <div className="text-center mt-8">
+              <Link href="/knowledge" className="inline-flex items-center gap-1 text-sm text-[#1C1A16] transition-all duration-300 hover:gap-2">
+                查看全部命理知识
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+        </Container>
+      </section>
+
       {/* ===== CTA Section ===== */}
       <section className="px-4 pb-24">
         <Container>
