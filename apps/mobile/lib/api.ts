@@ -394,3 +394,59 @@ export interface HuangliResponse {
 export function getHuangli(date?: string) {
   return getJson<HuangliResponse>(`/huangli${date ? `?date=${date}` : ''}`);
 }
+
+// ───────────────────────── 档案同步 + 追问 ─────────────────────────
+
+/** 本地日期 YYYY-MM-DD（用于运势/黄历的「今日」）。 */
+export function todayStr(): string {
+  const d = new Date();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${m}-${day}`;
+}
+
+/** 时辰索引(-1..11) → 代表小时(0-23)，供需要 birthHourNum 的后端用。 */
+function shichenToClockHour(birthHour: number): number {
+  return birthHour < 0 ? 12 : (birthHour * 2) % 24;
+}
+
+/**
+ * 把本地出生档案同步到服务端用户记录。
+ * 部分功能（如每日运势追问）依赖服务端存储的出生信息，登录后需同步一次。
+ */
+export async function saveBirthInfo(p: BirthProfile): Promise<void> {
+  await postJson<{ success: boolean }>('/user/birth-info', {
+    name: p.name || undefined,
+    birthDate: p.birthDate,
+    birthHour: p.birthHour,
+    gender: p.gender,
+  });
+}
+
+/** 八字追问：携带出生信息重算命盘后回答。SSE。 */
+export async function askBazi(p: BirthProfile, question: string): Promise<string> {
+  const knowTime = p.birthHour >= 0;
+  const { content } = await postSSE('/bazi/chat', {
+    question,
+    birthInput: {
+      birthDate: p.birthDate,
+      gender: p.gender,
+      knowTime,
+      birthHourNum: knowTime ? shichenToClockHour(p.birthHour) : undefined,
+      birthMinute: 0,
+    },
+  });
+  return content;
+}
+
+/** 每日运势追问：服务端用账号已存的出生信息作答。SSE。需先同步档案。 */
+export async function askDaily(question: string): Promise<string> {
+  const { content } = await postSSE('/daily/fortune-qa', { question, date: todayStr() });
+  return content;
+}
+
+/** 黄历追问：按当日黄历作答，无需出生信息。SSE。 */
+export async function askHuangli(question: string): Promise<string> {
+  const { content } = await postSSE('/huangli/ask', { question, date: todayStr() });
+  return content;
+}

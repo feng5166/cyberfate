@@ -4,11 +4,13 @@ import { useRouter } from 'expo-router';
 import { Button, Card, Screen } from '@/components/ui';
 import { colors } from '@/lib/theme';
 import { useAuth } from '@/lib/auth-store';
-import { ApiError, mobileLogin, register } from '@/lib/api';
+import { useProfile } from '@/lib/profile-store';
+import { ApiError, mobileLogin, register, saveBirthInfo } from '@/lib/api';
 
 export default function LoginScreen() {
   const router = useRouter();
   const signIn = useAuth((s) => s.signIn);
+  const profile = useProfile((s) => s.profile);
 
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
@@ -30,6 +32,10 @@ export default function LoginScreen() {
       }
       const res = await mobileLogin(email.trim(), password);
       await signIn(res.token, res.user);
+      // 已有本地出生档案则同步到服务端（每日运势追问等依赖服务端出生信息）
+      if (profile) {
+        saveBirthInfo(profile).catch(() => {});
+      }
       router.back();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : '操作失败，请稍后再试');

@@ -2,10 +2,11 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Button, Card, ErrorView, Loading, Screen, SectionTitle } from '@/components/ui';
+import { FollowUpChat } from '@/components/FollowUpChat';
 import { colors } from '@/lib/theme';
 import { useAuth } from '@/lib/auth-store';
 import { useProfile } from '@/lib/profile-store';
-import { ApiError, getDaily } from '@/lib/api';
+import { ApiError, askDaily, getDaily } from '@/lib/api';
 
 const RATING_LABELS: Array<[keyof DailyRatings, string]> = [
   ['career', '事业'],
@@ -135,6 +136,8 @@ export default function DailyScreen() {
           {d.luckyHour ? <Text style={styles.lucky}>吉时：{d.luckyHour}</Text> : null}
         </Card>
       ) : null}
+
+      <FollowUpChat ask={askDaily} title="运势追问" placeholder="例如：今天适合谈合作吗？" />
 
       <Text style={styles.footer}>解读由 AI 生成 · 仅供娱乐参考</Text>
     </Screen>

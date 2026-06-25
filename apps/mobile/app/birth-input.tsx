@@ -3,6 +3,8 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-
 import { useRouter } from 'expo-router';
 import { Button, Card, Screen } from '@/components/ui';
 import { colors } from '@/lib/theme';
+import { useAuth } from '@/lib/auth-store';
+import { saveBirthInfo } from '@/lib/api';
 import {
   SHICHEN,
   hourToShichenIndex,
@@ -17,6 +19,7 @@ export default function BirthInputScreen() {
   const router = useRouter();
   const existing = useProfile((s) => s.profile);
   const setProfile = useProfile((s) => s.setProfile);
+  const token = useAuth((s) => s.token);
 
   const [name, setName] = useState(existing?.name ?? '');
   const [gender, setGender] = useState<Gender>(existing?.gender ?? 'male');
@@ -40,12 +43,17 @@ export default function BirthInputScreen() {
       setError('请输入有效出生日期（格式 YYYY-MM-DD，年份 1900–2030）');
       return;
     }
-    await setProfile({
+    const next = {
       name: name.trim(),
       gender,
       birthDate,
       birthHour: shichenIndexToHour(shichenIdx),
-    });
+    };
+    await setProfile(next);
+    // 已登录则同步到服务端（每日运势追问等依赖服务端出生信息）
+    if (token) {
+      saveBirthInfo(next).catch(() => {});
+    }
     router.back();
   }
 

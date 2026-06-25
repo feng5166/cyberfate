@@ -1,10 +1,13 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { Card, ErrorView, Loading, Screen, SectionTitle } from '@/components/ui';
+import { FollowUpChat } from '@/components/FollowUpChat';
 import { colors } from '@/lib/theme';
-import { ApiError, getHuangli } from '@/lib/api';
+import { useAuth } from '@/lib/auth-store';
+import { ApiError, askHuangli, getHuangli } from '@/lib/api';
 
 export default function HuangliScreen() {
+  const token = useAuth((s) => s.token);
   const q = useQuery({ queryKey: ['huangli', 'today'], queryFn: () => getHuangli() });
 
   if (q.isLoading) return <Loading label="正在排黄历…" />;
@@ -64,6 +67,10 @@ export default function HuangliScreen() {
           {d.xiongSha?.length ? <Row label="凶煞" value={d.xiongSha.join('、')} /> : null}
         </View>
       </Card>
+
+      {token ? (
+        <FollowUpChat ask={askHuangli} title="问黄历" placeholder="例如：今天适合搬家吗？" />
+      ) : null}
 
       <Text style={styles.footer}>内容仅供娱乐参考</Text>
     </Screen>

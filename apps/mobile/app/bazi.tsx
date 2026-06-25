@@ -2,9 +2,11 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Button, Card, ErrorView, Loading, Screen, SectionTitle } from '@/components/ui';
+import { FollowUpChat } from '@/components/FollowUpChat';
 import { colors, wuxingColor } from '@/lib/theme';
+import { useAuth } from '@/lib/auth-store';
 import { useProfile } from '@/lib/profile-store';
-import { ApiError, getBazi, type Pillar } from '@/lib/api';
+import { ApiError, askBazi, getBazi, type Pillar } from '@/lib/api';
 
 const PILLAR_LABELS: Array<[keyof BaziPillars, string]> = [
   ['year', '年柱'],
@@ -18,6 +20,7 @@ export default function BaziScreen() {
   const router = useRouter();
   const profile = useProfile((s) => s.profile);
   const hydrated = useProfile((s) => s.hydrated);
+  const token = useAuth((s) => s.token);
 
   const q = useQuery({
     queryKey: ['bazi', profile?.gender, profile?.birthDate, profile?.birthHour],
@@ -103,6 +106,14 @@ export default function BaziScreen() {
           ))}
         </View>
       </Card>
+
+      {token ? (
+        <FollowUpChat
+          ask={(question) => askBazi(profile, question)}
+          title="八字追问"
+          placeholder="例如：我今年的事业运怎么样？"
+        />
+      ) : null}
 
       <Text style={styles.footer}>排盘由服务端确定性算法生成 · 仅供娱乐参考</Text>
     </Screen>
