@@ -1,10 +1,11 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { useMutation } from '@tanstack/react-query';
 import { Button, Card, Screen, SectionTitle } from '@/components/ui';
+import { FollowUpChat } from '@/components/FollowUpChat';
 import { colors } from '@/lib/theme';
 import { useAuth } from '@/lib/auth-store';
 import { NeedLogin } from '@/components/gates';
-import { ApiError, drawMeihua, type MeihuaResult } from '@/lib/api';
+import { ApiError, askMeihua, drawMeihua, type MeihuaResult } from '@/lib/api';
 
 export default function MeihuaScreen() {
   const token = useAuth((s) => s.token);
@@ -50,6 +51,23 @@ export default function MeihuaScreen() {
           <Text style={styles.reading}>{m.data.reading}</Text>
           <Text style={styles.footer}>解读由 AI 生成 · 仅供娱乐参考</Text>
         </Card>
+      ) : null}
+
+      {meta && m.data?.reading ? (
+        <FollowUpChat
+          ask={(q) =>
+            askMeihua(
+              {
+                primaryGuaName: meta.primary?.guaName || meta.guaName || '此卦',
+                analysis: m.data.reading,
+                changedGuaName: meta.changed?.guaName || meta.changedGuaName,
+              },
+              q,
+            )
+          }
+          title="就此卦追问"
+          placeholder="例如：这件事该如何把握时机？"
+        />
       ) : null}
     </Screen>
   );

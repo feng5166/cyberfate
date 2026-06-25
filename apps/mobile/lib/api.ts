@@ -305,21 +305,27 @@ export async function drawMeihua(): Promise<MeihuaResult> {
   return { meta, reading: content };
 }
 
-// ───────────────────────── 合婚（?ai=1 → JSON）─────────────────────────
+// ───────────────────────── 合婚（默认硬数据 → JSON）─────────────────────────
+// 用默认接口（非 ?ai）：确定性评分 + 四柱串，后者是合婚追问 marriage/qa 的必需上下文。
 
-export interface MarriageDimension {
-  key: string;
-  title: string;
-  score: number;
-  content: string;
+export interface MarriageSide {
+  name: string;
+  gender: 'male' | 'female';
+  zodiac: string;
+  dayMaster: string;
+  bazi: string;
 }
 
 export interface MarriageResult {
   score: number;
-  dimensions: MarriageDimension[];
-  advices: string[];
-  highlight: string;
-  analysis?: string;
+  hearts: string;
+  level: string;
+  maleBazi: string;
+  femaleBazi: string;
+  male?: MarriageSide;
+  female?: MarriageSide;
+  details: string[];
+  disclaimer?: string;
 }
 
 export function matchMarriage(input: {
@@ -330,7 +336,7 @@ export function matchMarriage(input: {
   femaleBirthDate: string;
   femaleBirthHour: number;
 }) {
-  return postJson<MarriageResult>('/bazi/marriage?ai=1', {
+  return postJson<MarriageResult>('/bazi/marriage', {
     maleName: input.maleName || undefined,
     maleBirthDate: input.maleBirthDate,
     maleBirthHour: String(input.maleBirthHour),
@@ -449,4 +455,46 @@ export async function askDaily(question: string): Promise<string> {
 export async function askHuangli(question: string): Promise<string> {
   const { content } = await postSSE('/huangli/ask', { question, date: todayStr() });
   return content;
+}
+
+/** 六爻追问：携带卦象上下文。SSE。ctx 七字段后端强校验，均传字符串。 */
+export interface LiuyaoQaContext {
+  hexagramName: string;
+  upperTrigram: string;
+  lowerTrigram: string;
+  judgment: string;
+  originalQuestion: string;
+  overallNarrative: string;
+  summary: string;
+}
+export async function askLiuyao(ctx: LiuyaoQaContext, question: string): Promise<string> {
+  const { content } = await postSSE('/liuyao/qa', { question, hexagramContext: ctx });
+  return content;
+}
+
+/** 梅花追问：携带卦象上下文。SSE。primaryGuaName 与 analysis 必填非空。 */
+export interface MeihuaQaContext {
+  primaryGuaName: string;
+  analysis: string;
+  changedGuaName?: string;
+  originalQuestion?: string;
+  overallAdvice?: string;
+}
+export async function askMeihua(ctx: MeihuaQaContext, question: string): Promise<string> {
+  const { content } = await postSSE('/meihua/qa', { question, hexagramContext: ctx });
+  return content;
+}
+
+/** 合婚追问：携带双方八字上下文。返回普通 JSON { answer }。 */
+export interface MarriageQaContext {
+  maleBazi: string;
+  femaleBazi: string;
+  maleName?: string;
+  femaleName?: string;
+  score?: number;
+  level?: string;
+}
+export async function askMarriage(ctx: MarriageQaContext, question: string): Promise<string> {
+  const res = await postJson<{ answer?: string }>('/bazi/marriage/qa', { ...ctx, question });
+  return res.answer ?? '';
 }

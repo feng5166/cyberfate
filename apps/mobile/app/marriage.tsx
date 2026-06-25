@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useMutation } from '@tanstack/react-query';
 import { Button, Card, Screen, SectionTitle } from '@/components/ui';
+import { FollowUpChat } from '@/components/FollowUpChat';
 import { colors } from '@/lib/theme';
 import { useAuth } from '@/lib/auth-store';
 import { NeedLogin } from '@/components/gates';
 import { SHICHEN, shichenIndexToHour } from '@/lib/profile-store';
-import { ApiError, matchMarriage, type MarriageResult } from '@/lib/api';
+import { ApiError, askMarriage, matchMarriage, type MarriageResult } from '@/lib/api';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -77,32 +78,50 @@ export default function MarriageScreen() {
         <>
           <Card style={styles.scoreCard}>
             <Text style={styles.score}>{m.data.score}</Text>
-            <Text style={styles.scoreLabel}>合婚指数</Text>
-            {m.data.highlight ? <Text style={styles.highlight}>{m.data.highlight}</Text> : null}
+            <Text style={styles.hearts}>{m.data.hearts}</Text>
+            <Text style={styles.level}>{m.data.level}</Text>
           </Card>
 
-          {(m.data.dimensions ?? []).map((dim) => (
-            <Card key={dim.key} style={{ gap: 6 }}>
-              <View style={styles.dimHead}>
-                <Text style={styles.dimTitle}>{dim.title}</Text>
-                <Text style={styles.dimScore}>{dim.score}</Text>
-              </View>
-              <Text style={styles.dimContent}>{dim.content}</Text>
-            </Card>
-          ))}
+          <Card style={{ gap: 6 }}>
+            <SectionTitle>双方八字</SectionTitle>
+            <Text style={styles.baziLine}>
+              {m.data.male?.name || male.name || '男方'}：{m.data.maleBazi}
+            </Text>
+            <Text style={styles.baziLine}>
+              {m.data.female?.name || female.name || '女方'}：{m.data.femaleBazi}
+            </Text>
+          </Card>
 
-          {m.data.advices?.length ? (
+          {m.data.details?.length ? (
             <Card>
-              <SectionTitle>相处建议</SectionTitle>
-              {m.data.advices.map((a, i) => (
+              <SectionTitle>匹配维度</SectionTitle>
+              {m.data.details.map((d, i) => (
                 <Text key={i} style={styles.advice}>
-                  · {a}
+                  · {d}
                 </Text>
               ))}
             </Card>
           ) : null}
 
-          <Text style={styles.footer}>解读由 AI 生成 · 仅供娱乐参考</Text>
+          <FollowUpChat
+            ask={(q) =>
+              askMarriage(
+                {
+                  maleBazi: m.data!.maleBazi,
+                  femaleBazi: m.data!.femaleBazi,
+                  maleName: m.data!.male?.name || male.name || undefined,
+                  femaleName: m.data!.female?.name || female.name || undefined,
+                  score: m.data!.score,
+                  level: m.data!.level,
+                },
+                q,
+              )
+            }
+            title="合婚追问"
+            placeholder="例如：我们相处要注意什么？"
+          />
+
+          <Text style={styles.footer}>{m.data.disclaimer || '仅供娱乐参考'}</Text>
         </>
       ) : null}
     </Screen>
@@ -183,6 +202,9 @@ const styles = StyleSheet.create({
   scoreCard: { backgroundColor: colors.accentSoft, borderColor: colors.accentSoft, alignItems: 'center', gap: 2 },
   score: { fontSize: 48, fontWeight: '800', color: colors.accent },
   scoreLabel: { fontSize: 13, color: colors.secondary },
+  hearts: { fontSize: 18, marginTop: 2 },
+  level: { fontSize: 16, fontWeight: '700', color: colors.ink, marginTop: 4 },
+  baziLine: { fontSize: 14, color: colors.ink, lineHeight: 22 },
   highlight: { fontSize: 14, color: colors.ink, textAlign: 'center', marginTop: 8, lineHeight: 21 },
   dimHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   dimTitle: { fontSize: 15, fontWeight: '700', color: colors.ink },

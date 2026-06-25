@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { useMutation } from '@tanstack/react-query';
 import { Button, Card, Screen, SectionTitle } from '@/components/ui';
+import { FollowUpChat } from '@/components/FollowUpChat';
 import { colors } from '@/lib/theme';
 import { useAuth } from '@/lib/auth-store';
 import { NeedLogin } from '@/components/gates';
-import { ApiError, castLiuyao, type LiuyaoResult } from '@/lib/api';
+import { ApiError, askLiuyao, castLiuyao, type LiuyaoResult } from '@/lib/api';
 
 export default function LiuyaoScreen() {
   const token = useAuth((s) => s.token);
@@ -82,6 +83,27 @@ export default function LiuyaoScreen() {
           <Text style={styles.reading}>{m.data.reading}</Text>
           <Text style={styles.footer}>解读由 AI 生成 · 仅供娱乐参考</Text>
         </Card>
+      ) : null}
+
+      {meta && m.data?.reading ? (
+        <FollowUpChat
+          ask={(q) =>
+            askLiuyao(
+              {
+                hexagramName: meta.hexagramName ?? '',
+                upperTrigram: meta.upperTrigram ?? '',
+                lowerTrigram: meta.lowerTrigram ?? '',
+                judgment: meta.judgment ?? '',
+                originalQuestion: m.variables ?? '',
+                overallNarrative: m.data.reading,
+                summary: meta.actionAdvice?.summary ?? '',
+              },
+              q,
+            )
+          }
+          title="就此卦追问"
+          placeholder="例如：这件事大概多久有结果？"
+        />
       ) : null}
     </Screen>
   );
