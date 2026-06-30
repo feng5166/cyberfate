@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { Button, Card, ErrorView, Loading, Screen, SectionTitle } from '@/components/ui';
+import { Button, Card, ErrorView, Loading, Screen, ScreenSkeleton, SectionTitle } from '@/components/ui';
 import { FollowUpChat } from '@/components/FollowUpChat';
 import { colors } from '@/lib/theme';
 import { useAuth } from '@/lib/auth-store';
@@ -62,7 +62,7 @@ export default function DailyScreen() {
     );
   }
 
-  if (q.isLoading) return <Loading label="AI 正在为你测算今日运势…" />;
+  if (q.isLoading) return <ScreenSkeleton label="AI 正在为你测算今日运势…" />;
   if (q.error) {
     const err = q.error;
     const msg = err instanceof ApiError ? err.message : '获取失败，请重试';
@@ -77,7 +77,7 @@ export default function DailyScreen() {
   const d = q.data!;
 
   return (
-    <Screen>
+    <Screen refreshing={q.isRefetching} onRefresh={() => q.refetch()}>
       <Card style={styles.overallCard}>
         <Text style={styles.date}>
           {d.date} · {d.lunarDate} · {d.dayGanzhi}日
@@ -98,9 +98,9 @@ export default function DailyScreen() {
           {RATING_LABELS.map(([key, label]) => {
             const v = d.ratings[key] ?? 0;
             return (
-              <View key={key} style={styles.barRow}>
+              <View key={key} style={styles.barRow} accessible accessibilityLabel={`${label} ${v} 分，满分 5 分`}>
                 <Text style={styles.barLabel}>{label}</Text>
-                <View style={styles.barTrack}>
+                <View style={styles.barTrack} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
                   <View style={[styles.barFill, { width: `${(v / 5) * 100}%` }]} />
                 </View>
                 <Text style={styles.barValue}>{v}/5</Text>
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
   overallCard: { backgroundColor: colors.accentSoft, borderColor: colors.accentSoft },
   date: { fontSize: 13, color: colors.secondary },
   overallRow: { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 8 },
-  score: { fontSize: 48, fontWeight: '800', color: colors.accent },
+  score: { fontSize: 48, fontWeight: '800', color: colors.accentDeep },
   scoreLabel: { fontSize: 13, color: colors.secondary },
   level: { fontSize: 20, fontWeight: '700', color: colors.ink },
   headline: { fontSize: 14, color: colors.ink, marginTop: 10, lineHeight: 21 },
@@ -159,9 +159,9 @@ const styles = StyleSheet.create({
   barFill: { height: 10, borderRadius: 5, backgroundColor: colors.accent },
   barValue: { width: 30, textAlign: 'right', fontSize: 12, color: colors.secondary },
   split: { flexDirection: 'row', gap: 12 },
-  suitTitle: { fontSize: 16, fontWeight: '800', color: colors.accent, marginBottom: 8 },
+  suitTitle: { fontSize: 16, fontWeight: '800', color: colors.accentDeep, marginBottom: 8 },
   suitItem: { fontSize: 14, color: colors.secondary, lineHeight: 22 },
   advice: { fontSize: 15, color: colors.ink, lineHeight: 23, marginTop: 6 },
-  lucky: { fontSize: 13, color: colors.accent, marginTop: 10, fontWeight: '600' },
+  lucky: { fontSize: 13, color: colors.accentDeep, marginTop: 10, fontWeight: '600' },
   footer: { textAlign: 'center', color: colors.weak, fontSize: 12, marginTop: 4 },
 });

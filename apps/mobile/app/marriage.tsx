@@ -161,6 +161,9 @@ function SideForm({
         {SHICHEN.map((label, idx) => (
           <Pressable
             key={label}
+            accessibilityRole="radio"
+            accessibilityState={{ selected: value.shichenIdx === idx }}
+            accessibilityLabel={`时辰 ${label}`}
             style={[styles.chip, value.shichenIdx === idx && styles.chipActive]}
             onPress={() => onChange({ ...value, shichenIdx: idx })}
           >
@@ -186,21 +189,21 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg,
   },
   chip: {
-    height: 38,
-    paddingHorizontal: 12,
-    borderRadius: 19,
+    height: 44,
+    paddingHorizontal: 14,
+    borderRadius: 22,
     borderWidth: 1,
     borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  chipActive: { backgroundColor: colors.accentSoft, borderColor: colors.accent },
+  chipActive: { backgroundColor: colors.accentSoft, borderColor: colors.accentDeep },
   chipText: { fontSize: 13, color: colors.secondary },
-  chipTextActive: { color: colors.accent, fontWeight: '700' },
+  chipTextActive: { color: colors.accentDeep, fontWeight: '700' },
   note: { fontSize: 12, color: colors.weak, textAlign: 'center' },
   error: { fontSize: 14, color: colors.danger, lineHeight: 21 },
   scoreCard: { backgroundColor: colors.accentSoft, borderColor: colors.accentSoft, alignItems: 'center', gap: 2 },
-  score: { fontSize: 48, fontWeight: '800', color: colors.accent },
+  score: { fontSize: 48, fontWeight: '800', color: colors.accentDeep },
   scoreLabel: { fontSize: 13, color: colors.secondary },
   hearts: { fontSize: 18, marginTop: 2 },
   level: { fontSize: 16, fontWeight: '700', color: colors.ink, marginTop: 4 },
@@ -208,7 +211,7 @@ const styles = StyleSheet.create({
   highlight: { fontSize: 14, color: colors.ink, textAlign: 'center', marginTop: 8, lineHeight: 21 },
   dimHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   dimTitle: { fontSize: 15, fontWeight: '700', color: colors.ink },
-  dimScore: { fontSize: 16, fontWeight: '800', color: colors.accent },
+  dimScore: { fontSize: 16, fontWeight: '800', color: colors.accentDeep },
   dimContent: { fontSize: 14, color: colors.secondary, lineHeight: 21 },
   advice: { fontSize: 14, color: colors.secondary, lineHeight: 23 },
   footer: { textAlign: 'center', color: colors.weak, fontSize: 12, marginTop: 4 },

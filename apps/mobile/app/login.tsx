@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button, Card, Screen } from '@/components/ui';
-import { colors } from '@/lib/theme';
+import { colors, radius, space } from '@/lib/theme';
 import { useAuth } from '@/lib/auth-store';
 import { useProfile } from '@/lib/profile-store';
 import { ApiError, mobileLogin, register, saveBirthInfo } from '@/lib/api';
@@ -45,25 +45,25 @@ export default function LoginScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
       <Screen>
         <Card style={{ gap: 14 }}>
-          <View style={styles.tabs}>
-            <Text
-              style={[styles.tab, mode === 'login' && styles.tabActive]}
-              onPress={() => setMode('login')}
-            >
-              登录
-            </Text>
-            <Text
-              style={[styles.tab, mode === 'register' && styles.tabActive]}
-              onPress={() => setMode('register')}
-            >
-              注册
-            </Text>
+          <View style={styles.segment} accessibilityRole="tablist">
+            {(['login', 'register'] as const).map((tab) => {
+              const active = mode === tab;
+              return (
+                <Pressable
+                  key={tab}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: active }}
+                  style={[styles.segmentItem, active && styles.segmentItemActive]}
+                  onPress={() => setMode(tab)}
+                >
+                  <Text style={[styles.segmentText, active && styles.segmentTextActive]}>
+                    {tab === 'login' ? '登录' : '注册'}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </View>
 
           {mode === 'register' ? (
@@ -108,7 +108,6 @@ export default function LoginScreen() {
           <Button title={mode === 'login' ? '登录' : '注册并登录'} onPress={submit} loading={busy} />
         </Card>
       </Screen>
-    </KeyboardAvoidingView>
   );
 }
 
@@ -122,16 +121,30 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 const styles = StyleSheet.create({
-  tabs: { flexDirection: 'row', gap: 20, marginBottom: 4 },
-  tab: { fontSize: 18, fontWeight: '700', color: colors.weak, paddingVertical: 4 },
-  tabActive: { color: colors.ink, borderBottomWidth: 2, borderBottomColor: colors.accent },
+  segment: {
+    flexDirection: 'row',
+    backgroundColor: colors.bgDeep,
+    borderRadius: radius.md,
+    padding: space.xs,
+    gap: space.xs,
+  },
+  segmentItem: {
+    flex: 1,
+    height: 40,
+    borderRadius: radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  segmentItemActive: { backgroundColor: colors.card },
+  segmentText: { fontSize: 15, fontWeight: '700', color: colors.weak },
+  segmentTextActive: { color: colors.ink },
   label: { fontSize: 13, color: colors.secondary },
   input: {
     height: 46,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 10,
-    paddingHorizontal: 12,
+    borderRadius: radius.md,
+    paddingHorizontal: space.md,
     fontSize: 15,
     color: colors.ink,
     backgroundColor: colors.bg,

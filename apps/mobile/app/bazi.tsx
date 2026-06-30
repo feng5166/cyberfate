@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { Button, Card, ErrorView, Loading, Screen, SectionTitle } from '@/components/ui';
+import { Button, Card, ErrorView, Loading, Screen, ScreenSkeleton, SectionTitle } from '@/components/ui';
 import { FollowUpChat } from '@/components/FollowUpChat';
 import { colors, wuxingColor } from '@/lib/theme';
 import { useAuth } from '@/lib/auth-store';
@@ -41,7 +41,7 @@ export default function BaziScreen() {
     );
   }
 
-  if (q.isLoading) return <Loading label="正在排盘…" />;
+  if (q.isLoading) return <ScreenSkeleton label="正在排盘…" />;
   if (q.error) {
     const msg = q.error instanceof ApiError ? q.error.message : '排盘失败，请重试';
     return (
@@ -56,7 +56,7 @@ export default function BaziScreen() {
   const maxWuxing = Math.max(1, ...wuxingEntries.map(([, v]) => v));
 
   return (
-    <Screen>
+    <Screen refreshing={q.isRefetching} onRefresh={() => q.refetch()}>
       <Card>
         <SectionTitle>四柱八字</SectionTitle>
         <View style={styles.pillarRow}>
@@ -88,9 +88,9 @@ export default function BaziScreen() {
         <SectionTitle>五行分布</SectionTitle>
         <View style={{ gap: 10, marginTop: 8 }}>
           {wuxingEntries.map(([name, value]) => (
-            <View key={name} style={styles.barRow}>
+            <View key={name} style={styles.barRow} accessible accessibilityLabel={`${name} ${value}`}>
               <Text style={styles.barLabel}>{name}</Text>
-              <View style={styles.barTrack}>
+              <View style={styles.barTrack} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
                 <View
                   style={[
                     styles.barFill,
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
   pillarCol: { flex: 1, alignItems: 'center', gap: 6 },
   pillarLabel: { fontSize: 12, color: colors.weak },
   gan: { fontSize: 26, fontWeight: '800', color: colors.ink },
-  zhi: { fontSize: 26, fontWeight: '800', color: colors.accent },
+  zhi: { fontSize: 26, fontWeight: '800', color: colors.accentDeep },
   note: { fontSize: 12, color: colors.weak, marginTop: 10 },
   metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 20, marginTop: 10 },
   meta: { gap: 2 },

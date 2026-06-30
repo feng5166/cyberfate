@@ -1,26 +1,29 @@
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Card, Screen } from '@/components/ui';
-import { colors } from '@/lib/theme';
+import { colors, radius, space, type } from '@/lib/theme';
 import { useAuth } from '@/lib/auth-store';
+
+type IconName = keyof typeof MaterialCommunityIcons.glyphMap;
 
 interface ModuleItem {
   key: string;
   label: string;
-  icon: string;
-  href?: string;
+  icon: IconName;
+  href: string;
 }
 
 const MODULES: ModuleItem[] = [
-  { key: 'bazi', label: '八字', icon: '🎴', href: '/bazi' },
-  { key: 'daily', label: '每日运势', icon: '🌅', href: '/daily' },
-  { key: 'tarot', label: '塔罗', icon: '🃏', href: '/tarot' },
-  { key: 'ziwei', label: '紫微斗数', icon: '⭐', href: '/ziwei' },
-  { key: 'liuyao', label: '六爻', icon: '☯️', href: '/liuyao' },
-  { key: 'meihua', label: '梅花易数', icon: '🌸', href: '/meihua' },
-  { key: 'marriage', label: '合婚', icon: '💑', href: '/marriage' },
-  { key: 'huangli', label: '黄历', icon: '📅', href: '/huangli' },
-  { key: 'music', label: '音乐运势签', icon: '🎵', href: '/music-oracle' },
+  { key: 'bazi', label: '八字', icon: 'pillar', href: '/bazi' },
+  { key: 'daily', label: '每日运势', icon: 'white-balance-sunny', href: '/daily' },
+  { key: 'tarot', label: '塔罗', icon: 'cards-playing-outline', href: '/tarot' },
+  { key: 'ziwei', label: '紫微斗数', icon: 'star-four-points-outline', href: '/ziwei' },
+  { key: 'liuyao', label: '六爻', icon: 'yin-yang', href: '/liuyao' },
+  { key: 'meihua', label: '梅花易数', icon: 'flower-outline', href: '/meihua' },
+  { key: 'marriage', label: '合婚', icon: 'heart-outline', href: '/marriage' },
+  { key: 'huangli', label: '黄历', icon: 'calendar-month-outline', href: '/huangli' },
+  { key: 'music', label: '音乐运势签', icon: 'music', href: '/music-oracle' },
 ];
 
 function greeting() {
@@ -35,7 +38,7 @@ export default function HomeScreen() {
   const user = useAuth((s) => s.user);
 
   return (
-    <Screen>
+    <Screen withTabBar>
       <View style={styles.header}>
         <Text style={styles.greeting}>
           {greeting()}，{user?.nickname || '旅人'}
@@ -51,43 +54,45 @@ export default function HomeScreen() {
       </Card>
 
       <View style={styles.grid}>
-        {MODULES.map((m) => {
-          const enabled = !!m.href;
-          return (
-            <Pressable
-              key={m.key}
-              style={({ pressed }) => [styles.cell, pressed && enabled && { opacity: 0.7 }]}
-              onPress={() => {
-                if (m.href) router.push(m.href as never);
-                else Alert.alert(m.label, '该模块即将上线，敬请期待');
-              }}
-            >
-              <View style={[styles.iconWrap, enabled ? styles.iconActive : styles.iconSoon]}>
-                <Text style={styles.icon}>{m.icon}</Text>
-              </View>
-              <Text style={styles.cellLabel}>{m.label}</Text>
-              {!enabled ? <Text style={styles.soon}>即将上线</Text> : null}
-            </Pressable>
-          );
-        })}
+        {MODULES.map((m) => (
+          <Pressable
+            key={m.key}
+            accessibilityRole="button"
+            accessibilityLabel={m.label}
+            style={({ pressed }) => [styles.cell, pressed && { opacity: 0.6 }]}
+            onPress={() => router.push(m.href as never)}
+          >
+            <View style={styles.iconWrap}>
+              <MaterialCommunityIcons name={m.icon} size={26} color={colors.accentDeep} />
+            </View>
+            <Text style={styles.cellLabel} numberOfLines={1}>
+              {m.label}
+            </Text>
+          </Pressable>
+        ))}
       </View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  header: { gap: 4 },
+  header: { gap: space.xs },
   greeting: { fontSize: 24, fontWeight: '800', color: colors.ink },
-  subtitle: { fontSize: 14, color: colors.weak },
+  subtitle: { ...type.bodySm, color: colors.weak },
   banner: { backgroundColor: colors.accentSoft, borderColor: colors.accentSoft },
-  bannerTitle: { fontSize: 16, fontWeight: '700', color: colors.ink, marginBottom: 6 },
+  bannerTitle: { ...type.h2, color: colors.ink, marginBottom: space.sm },
   bannerDesc: { fontSize: 13, color: colors.secondary, lineHeight: 20 },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
-  cell: { width: '33.33%', alignItems: 'center', paddingVertical: 14, gap: 8 },
-  iconWrap: { width: 56, height: 56, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  iconActive: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
-  iconSoon: { backgroundColor: colors.bgDeep },
-  icon: { fontSize: 26 },
+  cell: { width: '33.33%', alignItems: 'center', paddingVertical: 14, gap: space.sm },
+  iconWrap: {
+    width: 56,
+    height: 56,
+    borderRadius: radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
   cellLabel: { fontSize: 13, color: colors.ink, fontWeight: '500' },
-  soon: { fontSize: 10, color: colors.weak },
 });

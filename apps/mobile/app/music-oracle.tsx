@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
   songCard: { backgroundColor: colors.accentSoft, borderColor: colors.accentSoft, gap: 6 },
   songName: { fontSize: 20, fontWeight: '800', color: colors.ink },
   artist: { fontSize: 14, color: colors.secondary },
-  lyrics: { fontSize: 15, color: colors.accent, fontStyle: 'italic', marginTop: 6, lineHeight: 22 },
+  lyrics: { fontSize: 15, color: colors.accentDeep, fontStyle: 'italic', marginTop: 6, lineHeight: 22 },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
   tag: { fontSize: 12, color: colors.secondary, backgroundColor: colors.card, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
   wuxing: { fontSize: 13, color: colors.secondary, marginTop: 8 },

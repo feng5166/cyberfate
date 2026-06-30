@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import { Card, ErrorView, Loading, Screen, SectionTitle } from '@/components/ui';
+import { Card, ErrorView, Screen, ScreenSkeleton, SectionTitle } from '@/components/ui';
 import { FollowUpChat } from '@/components/FollowUpChat';
 import { colors } from '@/lib/theme';
 import { useAuth } from '@/lib/auth-store';
@@ -10,7 +10,7 @@ export default function HuangliScreen() {
   const token = useAuth((s) => s.token);
   const q = useQuery({ queryKey: ['huangli', 'today'], queryFn: () => getHuangli() });
 
-  if (q.isLoading) return <Loading label="正在排黄历…" />;
+  if (q.isLoading) return <ScreenSkeleton label="正在排黄历…" />;
   if (q.error) {
     const msg = q.error instanceof ApiError ? q.error.message : '加载失败';
     return (
@@ -23,7 +23,7 @@ export default function HuangliScreen() {
   const d = q.data!;
 
   return (
-    <Screen>
+    <Screen refreshing={q.isRefetching} onRefresh={() => q.refetch()}>
       <Card style={styles.head}>
         <Text style={styles.solar}>{d.solar}</Text>
         <Text style={styles.weekday}>{d.weekday}</Text>
@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
   weekday: { fontSize: 13, color: colors.secondary },
   lunar: { fontSize: 15, color: colors.ink, marginTop: 4 },
   ganzhi: { fontSize: 13, color: colors.secondary },
-  jieqi: { fontSize: 13, color: colors.accent, fontWeight: '600', marginTop: 2 },
+  jieqi: { fontSize: 13, color: colors.accentDeep, fontWeight: '600', marginTop: 2 },
   split: { flexDirection: 'row', gap: 12 },
   yj: { flex: 1, borderWidth: 1 },
   yjTitle: { fontSize: 18, fontWeight: '800', marginBottom: 8 },

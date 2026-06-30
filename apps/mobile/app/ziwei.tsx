@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import { Card, ErrorView, Loading, Screen, SectionTitle } from '@/components/ui';
+import { Card, ErrorView, Loading, Screen, ScreenSkeleton, SectionTitle } from '@/components/ui';
 import { colors } from '@/lib/theme';
 import { useAuth } from '@/lib/auth-store';
 import { useProfile } from '@/lib/profile-store';
@@ -31,7 +31,7 @@ export default function ZiweiScreen() {
   if (!token) return <NeedLogin feature="紫微斗数" />;
   if (!profile) return <NeedProfile />;
 
-  if (q.isLoading) return <Loading label="正在排紫微命盘…" />;
+  if (q.isLoading) return <ScreenSkeleton label="正在排紫微命盘…" />;
   if (q.error) {
     const msg = q.error instanceof ApiError ? q.error.message : '排盘失败，请重试';
     return (
@@ -44,7 +44,7 @@ export default function ZiweiScreen() {
   const d = q.data!;
 
   return (
-    <Screen>
+    <Screen refreshing={q.isRefetching} onRefresh={() => q.refetch()}>
       <Card>
         <SectionTitle>命盘概览</SectionTitle>
         <View style={styles.metaRow}>

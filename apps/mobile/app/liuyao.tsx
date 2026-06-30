@@ -73,7 +73,7 @@ export default function LiuyaoScreen() {
           <Text style={styles.advSummary}>{adv.summary}</Text>
           {adv.positives?.length ? <AdvList title="有利" items={adv.positives} color="#2E7D32" /> : null}
           {adv.cautions?.length ? <AdvList title="注意" items={adv.cautions} color={colors.danger} /> : null}
-          {adv.actions?.length ? <AdvList title="建议" items={adv.actions} color={colors.accent} /> : null}
+          {adv.actions?.length ? <AdvList title="建议" items={adv.actions} color={colors.accentDeep} /> : null}
         </Card>
       ) : null}
 

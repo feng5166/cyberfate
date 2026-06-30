@@ -104,8 +104,8 @@ const styles = StyleSheet.create({
   guaTitle: { fontSize: 12, color: colors.weak },
   guaName: { fontSize: 20, fontWeight: '800', color: colors.ink },
   guaTrigram: { fontSize: 12, color: colors.secondary },
-  arrow: { fontSize: 20, color: colors.accent, paddingHorizontal: 4 },
-  moving: { textAlign: 'center', fontSize: 13, color: colors.accent, marginTop: 12, fontWeight: '600' },
+  arrow: { fontSize: 20, color: colors.accentDeep, paddingHorizontal: 4 },
+  moving: { textAlign: 'center', fontSize: 13, color: colors.accentDeep, marginTop: 12, fontWeight: '600' },
   reading: { fontSize: 15, color: colors.ink, lineHeight: 24, marginTop: 6 },
   footer: { textAlign: 'center', color: colors.weak, fontSize: 12, marginTop: 12 },
 });

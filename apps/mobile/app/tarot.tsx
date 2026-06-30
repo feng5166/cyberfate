@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
   },
   note: { fontSize: 12, color: colors.weak },
   error: { fontSize: 14, color: colors.danger, lineHeight: 21 },
-  cardName: { fontSize: 17, fontWeight: '700', color: colors.accent },
+  cardName: { fontSize: 17, fontWeight: '700', color: colors.accentDeep },
   cardMeaning: { fontSize: 14, color: colors.secondary, lineHeight: 21 },
   reading: { fontSize: 15, color: colors.ink, lineHeight: 24, marginTop: 6 },
   caution: { fontSize: 13, color: colors.weak, marginTop: 10, lineHeight: 19 },

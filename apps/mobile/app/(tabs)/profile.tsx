@@ -11,7 +11,7 @@ export default function ProfileScreen() {
   const profile = useProfile((s) => s.profile);
 
   return (
-    <Screen>
+    <Screen withTabBar>
       <SectionTitle>账号</SectionTitle>
       <Card>
         {user ? (
@@ -67,6 +67,6 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   name: { fontSize: 17, fontWeight: '700', color: colors.ink },
   muted: { fontSize: 14, color: colors.secondary, lineHeight: 20 },
-  badge: { alignSelf: 'flex-start', fontSize: 12, color: colors.accent, fontWeight: '600' },
+  badge: { alignSelf: 'flex-start', fontSize: 12, color: colors.accentDeep, fontWeight: '600' },
   footer: { textAlign: 'center', color: colors.weak, fontSize: 12, marginTop: 8 },
 });
