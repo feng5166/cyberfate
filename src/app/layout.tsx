@@ -6,6 +6,7 @@ import { AuthProvider } from "@/stores/authStore";
 import { LayoutWrapper } from "@/components/layout/LayoutWrapper";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
+import { PwaUpdatePrompt } from "@/components/pwa/PwaUpdatePrompt";
 import { PostHogProvider } from "@/components/analytics/PostHogProvider";
 import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 
@@ -128,6 +129,7 @@ export default function RootLayout({
           </SessionProvider>
         </PostHogProvider>
         <InstallPrompt />
+        <PwaUpdatePrompt />
         <GoogleAnalytics />
       </body>
     </html>

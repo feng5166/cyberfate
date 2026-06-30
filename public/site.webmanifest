@@ -1,4 +1,5 @@
 {
+  "id": "/",
   "name": "赛博命理师 CyberFate",
   "short_name": "CyberFate",
   "description": "AI 驱动的东方命理分析 · 八字合婚 · 每日运势",
@@ -9,7 +10,31 @@
   "background_color": "#FAF9F6",
   "theme_color": "#1C1A16",
   "lang": "zh-CN",
+  "dir": "ltr",
   "categories": ["lifestyle", "entertainment"],
+  "shortcuts": [
+    {
+      "name": "每日运势",
+      "short_name": "每日运势",
+      "description": "查看今日运势与宜忌",
+      "url": "/daily?source=pwa-shortcut",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "八字排盘",
+      "short_name": "八字",
+      "description": "排八字 · AI 命理解读",
+      "url": "/bazi?source=pwa-shortcut",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "塔罗占卜",
+      "short_name": "塔罗",
+      "description": "抽一张塔罗牌问问今天",
+      "url": "/tarot?source=pwa-shortcut",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ],
   "icons": [
     { "src": "/icons/icon-72x72.png", "sizes": "72x72", "type": "image/png", "purpose": "any" },
     { "src": "/icons/icon-96x96.png", "sizes": "96x96", "type": "image/png", "purpose": "any" },
