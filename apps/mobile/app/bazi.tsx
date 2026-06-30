@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { Button, Card, ErrorView, Loading, Screen, ScreenSkeleton, SectionTitle } from '@/components/ui';
+import { AnimatedBar, Button, Card, ErrorView, Loading, Screen, ScreenSkeleton, SectionTitle } from '@/components/ui';
 import { FollowUpChat } from '@/components/FollowUpChat';
 import { colors, wuxingColor } from '@/lib/theme';
 import { useAuth } from '@/lib/auth-store';
@@ -90,17 +90,7 @@ export default function BaziScreen() {
           {wuxingEntries.map(([name, value]) => (
             <View key={name} style={styles.barRow} accessible accessibilityLabel={`${name} ${value}`}>
               <Text style={styles.barLabel}>{name}</Text>
-              <View style={styles.barTrack} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-                <View
-                  style={[
-                    styles.barFill,
-                    {
-                      width: `${(value / maxWuxing) * 100}%`,
-                      backgroundColor: wuxingColor[name] ?? colors.accent,
-                    },
-                  ]}
-                />
-              </View>
+              <AnimatedBar ratio={value / maxWuxing} color={wuxingColor[name] ?? colors.accent} />
               <Text style={styles.barValue}>{value}</Text>
             </View>
           ))}
@@ -113,9 +103,14 @@ export default function BaziScreen() {
           title="八字追问"
           placeholder="例如：我今年的事业运怎么样？"
         />
-      ) : null}
+      ) : (
+        <Card style={{ gap: 12 }}>
+          <Text style={styles.tip}>登录后可就你的排盘结果向 AI 追问命理细节。</Text>
+          <Button title="去登录" variant="ghost" onPress={() => router.push('/login')} />
+        </Card>
+      )}
 
-      <Text style={styles.footer}>排盘由服务端确定性算法生成 · 仅供娱乐参考</Text>
+      <Text style={styles.footer}>排盘依传统命理推演 · 仅供娱乐参考</Text>
     </Screen>
   );
 }

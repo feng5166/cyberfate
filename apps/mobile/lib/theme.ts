@@ -19,7 +19,8 @@ export const colors = {
   border: '#E8E0D0',
   accent: '#E87722', // 亮橙：填充/图形/hero 大字
   accentDeep: '#B85410', // 深橙：小号橙字 + 主按钮底（白字 4.87:1）
-  accentSoft: '#F6E3D2',
+  accentSoft: '#F6E3D2', // 强调卡背景
+  accentBorder: '#E8C9A8', // 强调卡描边（比 accentSoft 深，避免边框=背景而失效）
   danger: '#C0392B',
 };
 

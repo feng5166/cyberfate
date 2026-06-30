@@ -4,6 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Button, Card, Screen, SectionTitle } from '@/components/ui';
 import { colors } from '@/lib/theme';
+import { haptics } from '@/lib/haptics';
 import { ApiError, musicOracle, type MusicOracleResult } from '@/lib/api';
 
 export default function MusicOracleScreen() {
@@ -16,6 +17,8 @@ export default function MusicOracleScreen() {
       const yr = birthYear.trim() ? Number(birthYear.trim()) : undefined;
       return musicOracle(question.trim() || '今天我的运势如何？', yr && !Number.isNaN(yr) ? yr : undefined);
     },
+    onSuccess: () => haptics.success(),
+    onError: () => haptics.warning(),
   });
 
   const err = m.error;
@@ -100,7 +103,7 @@ const styles = StyleSheet.create({
   },
   note: { fontSize: 12, color: colors.weak },
   error: { fontSize: 14, color: colors.danger, lineHeight: 21 },
-  songCard: { backgroundColor: colors.accentSoft, borderColor: colors.accentSoft, gap: 6 },
+  songCard: { backgroundColor: colors.accentSoft, borderColor: colors.accentBorder, gap: 6 },
   songName: { fontSize: 20, fontWeight: '800', color: colors.ink },
   artist: { fontSize: 14, color: colors.secondary },
   lyrics: { fontSize: 15, color: colors.accentDeep, fontStyle: 'italic', marginTop: 6, lineHeight: 22 },

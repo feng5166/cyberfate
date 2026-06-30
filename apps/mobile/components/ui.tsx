@@ -17,6 +17,7 @@ import {
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 import { HeaderHeightContext } from '@react-navigation/elements';
 import { colors, elevation, radius, space, type } from '@/lib/theme';
+import { haptics } from '@/lib/haptics';
 
 export function Screen({
   children,
@@ -101,7 +102,10 @@ export function Button({
   const inert = disabled || loading;
   return (
     <Pressable
-      onPress={onPress}
+      onPress={() => {
+        haptics.light();
+        onPress();
+      }}
       disabled={inert}
       accessibilityRole="button"
       accessibilityState={{ disabled: !!inert, busy: !!loading }}
@@ -207,8 +211,47 @@ export function ScreenSkeleton({ label }: { label?: string }) {
   );
 }
 
+/** 内容入场：淡入 + 轻微上移，用于占卜结果「揭晓」 */
+export function FadeInView({
+  children,
+  delay = 0,
+  style,
+}: {
+  children: ReactNode;
+  delay?: number;
+  style?: StyleProp<ViewStyle>;
+}) {
+  const v = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const anim = Animated.timing(v, { toValue: 1, duration: 380, delay, useNativeDriver: true });
+    anim.start();
+    return () => anim.stop();
+  }, [v, delay]);
+  const translateY = v.interpolate({ inputRange: [0, 1], outputRange: [12, 0] });
+  return <Animated.View style={[{ opacity: v, transform: [{ translateY }] }, style]}>{children}</Animated.View>;
+}
+
+/** 进度条：挂载时从 0 动画到目标比例（width 动画走 JS driver） */
+export function AnimatedBar({ ratio, color = colors.accent }: { ratio: number; color?: string }) {
+  const w = useRef(new Animated.Value(0)).current;
+  const target = Math.max(0, Math.min(1, Number.isFinite(ratio) ? ratio : 0));
+  useEffect(() => {
+    const anim = Animated.timing(w, { toValue: target, duration: 600, useNativeDriver: false });
+    anim.start();
+    return () => anim.stop();
+  }, [w, target]);
+  const width = w.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] });
+  return (
+    <View style={styles.abTrack}>
+      <Animated.View style={[styles.abFill, { width, backgroundColor: color }]} />
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  abTrack: { flex: 1, height: 10, borderRadius: 5, backgroundColor: colors.bgDeep, overflow: 'hidden' },
+  abFill: { height: 10, borderRadius: 5 },
   screen: { flex: 1, backgroundColor: colors.bg },
   scrollContent: { padding: space.lg, gap: space.lg, paddingBottom: 40 },
   staticContent: { flex: 1, padding: space.lg, gap: space.lg },

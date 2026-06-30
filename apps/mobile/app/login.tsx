@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button, Card, Screen } from '@/components/ui';
 import { colors, radius, space } from '@/lib/theme';
+import { haptics } from '@/lib/haptics';
 import { useAuth } from '@/lib/auth-store';
 import { useProfile } from '@/lib/profile-store';
 import { ApiError, mobileLogin, register, saveBirthInfo } from '@/lib/api';
@@ -56,7 +57,10 @@ export default function LoginScreen() {
                   accessibilityRole="tab"
                   accessibilityState={{ selected: active }}
                   style={[styles.segmentItem, active && styles.segmentItemActive]}
-                  onPress={() => setMode(tab)}
+                  onPress={() => {
+                    haptics.selection();
+                    setMode(tab);
+                  }}
                 >
                   <Text style={[styles.segmentText, active && styles.segmentTextActive]}>
                     {tab === 'login' ? '登录' : '注册'}

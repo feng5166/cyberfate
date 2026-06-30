@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { Button, Card, ErrorView, Loading, Screen, ScreenSkeleton, SectionTitle } from '@/components/ui';
+import { AnimatedBar, Button, Card, ErrorView, Loading, Screen, ScreenSkeleton, SectionTitle } from '@/components/ui';
 import { FollowUpChat } from '@/components/FollowUpChat';
 import { colors } from '@/lib/theme';
 import { useAuth } from '@/lib/auth-store';
@@ -65,11 +65,23 @@ export default function DailyScreen() {
   if (q.isLoading) return <ScreenSkeleton label="AI 正在为你测算今日运势…" />;
   if (q.error) {
     const err = q.error;
-    const msg = err instanceof ApiError ? err.message : '获取失败，请重试';
     const isQuota = err instanceof ApiError && err.status === 403;
+    if (isQuota) {
+      return (
+        <Screen>
+          <Card style={{ gap: 10 }}>
+            <SectionTitle>今日免费额度已用完</SectionTitle>
+            <Text style={styles.tip}>
+              每日运势 AI 解读每天免费 1 次，北京时间次日 0 点自动恢复。开通会员可不限次数畅享。
+            </Text>
+          </Card>
+        </Screen>
+      );
+    }
+    const msg = err instanceof ApiError ? err.message : '获取失败，请重试';
     return (
       <Screen>
-        <ErrorView message={isQuota ? `${msg}（每日免费额度有限）` : msg} onRetry={() => q.refetch()} />
+        <ErrorView message={msg} onRetry={() => q.refetch()} />
       </Screen>
     );
   }
@@ -100,9 +112,7 @@ export default function DailyScreen() {
             return (
               <View key={key} style={styles.barRow} accessible accessibilityLabel={`${label} ${v} 分，满分 5 分`}>
                 <Text style={styles.barLabel}>{label}</Text>
-                <View style={styles.barTrack} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-                  <View style={[styles.barFill, { width: `${(v / 5) * 100}%` }]} />
-                </View>
+                <AnimatedBar ratio={v / 5} />
                 <Text style={styles.barValue}>{v}/5</Text>
               </View>
             );
@@ -146,7 +156,7 @@ export default function DailyScreen() {
 
 const styles = StyleSheet.create({
   tip: { fontSize: 14, color: colors.secondary, lineHeight: 20 },
-  overallCard: { backgroundColor: colors.accentSoft, borderColor: colors.accentSoft },
+  overallCard: { backgroundColor: colors.accentSoft, borderColor: colors.accentBorder },
   date: { fontSize: 13, color: colors.secondary },
   overallRow: { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 8 },
   score: { fontSize: 48, fontWeight: '800', color: colors.accentDeep },

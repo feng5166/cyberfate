@@ -4,6 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { Button, Card, Screen, SectionTitle } from '@/components/ui';
 import { FollowUpChat } from '@/components/FollowUpChat';
 import { colors } from '@/lib/theme';
+import { haptics } from '@/lib/haptics';
 import { useAuth } from '@/lib/auth-store';
 import { NeedLogin } from '@/components/gates';
 import { ApiError, askLiuyao, castLiuyao, type LiuyaoResult } from '@/lib/api';
@@ -15,6 +16,8 @@ export default function LiuyaoScreen() {
 
   const m = useMutation<LiuyaoResult, unknown, string>({
     mutationFn: (q: string) => castLiuyao(q),
+    onSuccess: () => haptics.success(),
+    onError: () => haptics.warning(),
   });
 
   if (!hydrated) return null;

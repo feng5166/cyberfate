@@ -4,6 +4,7 @@ import DateTimePicker, { type DateTimePickerEvent } from '@react-native-communit
 import { useRouter } from 'expo-router';
 import { Button, Card, Screen } from '@/components/ui';
 import { colors, radius, space } from '@/lib/theme';
+import { haptics } from '@/lib/haptics';
 import { useAuth } from '@/lib/auth-store';
 import { saveBirthInfo } from '@/lib/api';
 import {
@@ -95,7 +96,10 @@ export default function BirthInputScreen() {
                 accessibilityState={{ selected: gender === g }}
                 accessibilityLabel={g === 'male' ? '男' : '女'}
                 style={[styles.choice, gender === g && styles.choiceActive]}
-                onPress={() => setGender(g)}
+                onPress={() => {
+                  haptics.selection();
+                  setGender(g);
+                }}
               >
                 <Text style={[styles.choiceText, gender === g && styles.choiceTextActive]}>
                   {g === 'male' ? '男' : '女'}
@@ -139,7 +143,10 @@ export default function BirthInputScreen() {
                 accessibilityState={{ selected: shichenIdx === idx }}
                 accessibilityLabel={`时辰 ${label}`}
                 style={[styles.chip, shichenIdx === idx && styles.choiceActive]}
-                onPress={() => setShichenIdx(idx)}
+                onPress={() => {
+                  haptics.selection();
+                  setShichenIdx(idx);
+                }}
               >
                 <Text style={[styles.choiceText, shichenIdx === idx && styles.choiceTextActive]}>
                   {label}

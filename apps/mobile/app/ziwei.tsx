@@ -74,7 +74,7 @@ export default function ZiweiScreen() {
         </View>
       </Card>
 
-      <Text style={styles.footer}>排盘由服务端确定性算法生成 · 仅供娱乐参考</Text>
+      <Text style={styles.footer}>排盘依传统命理推演 · 仅供娱乐参考</Text>
     </Screen>
   );
 }

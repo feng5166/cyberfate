@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useMutation } from '@tanstack/react-query';
-import { Button, Card, Screen, SectionTitle } from '@/components/ui';
+import { Button, Card, FadeInView, Screen, SectionTitle } from '@/components/ui';
 import { FollowUpChat } from '@/components/FollowUpChat';
-import { colors } from '@/lib/theme';
+import { colors, space } from '@/lib/theme';
+import { haptics } from '@/lib/haptics';
 import { useAuth } from '@/lib/auth-store';
 import { NeedLogin } from '@/components/gates';
-import { SHICHEN, shichenIndexToHour } from '@/lib/profile-store';
+import { SHICHEN, hourToShichenIndex, shichenIndexToHour, useProfile } from '@/lib/profile-store';
 import { ApiError, askMarriage, matchMarriage, type MarriageResult } from '@/lib/api';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -28,10 +29,21 @@ function isValidDate(d: string) {
 export default function MarriageScreen() {
   const token = useAuth((s) => s.token);
   const hydrated = useAuth((s) => s.hydrated);
+  const profile = useProfile((s) => s.profile);
 
   const [male, setMale] = useState<Side>({ name: '', date: '', shichenIdx: 0 });
   const [female, setFemale] = useState<Side>({ name: '', date: '', shichenIdx: 0 });
   const [formError, setFormError] = useState<string | null>(null);
+
+  const fillFromProfile = (setter: (s: Side) => void) => {
+    if (!profile) return;
+    haptics.selection();
+    setter({
+      name: profile.name ?? '',
+      date: profile.birthDate,
+      shichenIdx: hourToShichenIndex(profile.birthHour),
+    });
+  };
 
   const m = useMutation<MarriageResult, unknown, void>({
     mutationFn: () =>
@@ -43,6 +55,8 @@ export default function MarriageScreen() {
         femaleBirthDate: female.date,
         femaleBirthHour: shichenIndexToHour(female.shichenIdx),
       }),
+    onSuccess: () => haptics.success(),
+    onError: () => haptics.warning(),
   });
 
   if (!hydrated) return null;
@@ -61,8 +75,18 @@ export default function MarriageScreen() {
 
   return (
     <Screen>
-      <SideForm title="男方" value={male} onChange={setMale} />
-      <SideForm title="女方" value={female} onChange={setFemale} />
+      <SideForm
+        title="男方"
+        value={male}
+        onChange={setMale}
+        onUseMine={profile ? () => fillFromProfile(setMale) : undefined}
+      />
+      <SideForm
+        title="女方"
+        value={female}
+        onChange={setFemale}
+        onUseMine={profile ? () => fillFromProfile(setFemale) : undefined}
+      />
 
       {formError ? <Text style={styles.error}>{formError}</Text> : null}
       <Button title="开始合婚" loading={m.isPending} onPress={submit} />
@@ -75,7 +99,7 @@ export default function MarriageScreen() {
       ) : null}
 
       {m.data ? (
-        <>
+        <FadeInView style={{ gap: space.lg }}>
           <Card style={styles.scoreCard}>
             <Text style={styles.score}>{m.data.score}</Text>
             <Text style={styles.hearts}>{m.data.hearts}</Text>
@@ -122,7 +146,7 @@ export default function MarriageScreen() {
           />
 
           <Text style={styles.footer}>{m.data.disclaimer || '仅供娱乐参考'}</Text>
-        </>
+        </FadeInView>
       ) : null}
     </Screen>
   );
@@ -132,14 +156,23 @@ function SideForm({
   title,
   value,
   onChange,
+  onUseMine,
 }: {
   title: string;
   value: Side;
   onChange: (s: Side) => void;
+  onUseMine?: () => void;
 }) {
   return (
     <Card style={{ gap: 12 }}>
-      <SectionTitle>{title}</SectionTitle>
+      <View style={styles.sideHead}>
+        <SectionTitle>{title}</SectionTitle>
+        {onUseMine ? (
+          <Pressable accessibilityRole="button" onPress={onUseMine} hitSlop={8}>
+            <Text style={styles.useMine}>填入我的出生信息</Text>
+          </Pressable>
+        ) : null}
+      </View>
       <TextInput
         style={styles.input}
         value={value.name}
@@ -165,7 +198,10 @@ function SideForm({
             accessibilityState={{ selected: value.shichenIdx === idx }}
             accessibilityLabel={`时辰 ${label}`}
             style={[styles.chip, value.shichenIdx === idx && styles.chipActive]}
-            onPress={() => onChange({ ...value, shichenIdx: idx })}
+            onPress={() => {
+              haptics.selection();
+              onChange({ ...value, shichenIdx: idx });
+            }}
           >
             <Text style={[styles.chipText, value.shichenIdx === idx && styles.chipTextActive]}>
               {label}
@@ -200,9 +236,11 @@ const styles = StyleSheet.create({
   chipActive: { backgroundColor: colors.accentSoft, borderColor: colors.accentDeep },
   chipText: { fontSize: 13, color: colors.secondary },
   chipTextActive: { color: colors.accentDeep, fontWeight: '700' },
+  sideHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  useMine: { fontSize: 13, color: colors.accentDeep, fontWeight: '600' },
   note: { fontSize: 12, color: colors.weak, textAlign: 'center' },
   error: { fontSize: 14, color: colors.danger, lineHeight: 21 },
-  scoreCard: { backgroundColor: colors.accentSoft, borderColor: colors.accentSoft, alignItems: 'center', gap: 2 },
+  scoreCard: { backgroundColor: colors.accentSoft, borderColor: colors.accentBorder, alignItems: 'center', gap: 2 },
   score: { fontSize: 48, fontWeight: '800', color: colors.accentDeep },
   scoreLabel: { fontSize: 13, color: colors.secondary },
   hearts: { fontSize: 18, marginTop: 2 },

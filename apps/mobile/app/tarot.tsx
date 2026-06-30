@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { Button, Card, Screen, SectionTitle } from '@/components/ui';
-import { colors } from '@/lib/theme';
+import { Button, Card, FadeInView, Screen, SectionTitle } from '@/components/ui';
+import { colors, space } from '@/lib/theme';
+import { haptics } from '@/lib/haptics';
 import { useAuth } from '@/lib/auth-store';
 import { ApiError, drawTarot, type TarotResult } from '@/lib/api';
 
@@ -14,6 +15,8 @@ export default function TarotScreen() {
 
   const m = useMutation<TarotResult, unknown, string>({
     mutationFn: (q: string) => drawTarot(q, 'single'),
+    onSuccess: () => haptics.success(),
+    onError: () => haptics.warning(),
   });
 
   const err = m.error;
@@ -40,7 +43,7 @@ export default function TarotScreen() {
           loading={m.isPending}
           onPress={() => m.mutate(question.trim() || '我近期的整体运势如何？')}
         />
-        <Text style={styles.note}>游客每天可免费占卜 1 次，登录后解锁更多。</Text>
+        <Text style={styles.note}>每天可免费占卜 1 次。</Text>
       </Card>
 
       {errMsg ? (
@@ -51,7 +54,7 @@ export default function TarotScreen() {
       ) : null}
 
       {m.data ? (
-        <>
+        <FadeInView style={{ gap: space.lg }}>
           {m.data.cards.map((c, i) => (
             <Card key={i} style={{ gap: 6 }}>
               <Text style={styles.cardName}>
@@ -66,7 +69,7 @@ export default function TarotScreen() {
             {m.data.caution ? <Text style={styles.caution}>{m.data.caution}</Text> : null}
           </Card>
           <Text style={styles.footer}>解读由 AI 生成 · 仅供娱乐参考</Text>
-        </>
+        </FadeInView>
       ) : null}
     </Screen>
   );

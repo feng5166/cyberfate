@@ -3,6 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import { Button, Card, Screen, SectionTitle } from '@/components/ui';
 import { FollowUpChat } from '@/components/FollowUpChat';
 import { colors } from '@/lib/theme';
+import { haptics } from '@/lib/haptics';
 import { useAuth } from '@/lib/auth-store';
 import { NeedLogin } from '@/components/gates';
 import { ApiError, askMeihua, drawMeihua, type MeihuaResult } from '@/lib/api';
@@ -11,7 +12,11 @@ export default function MeihuaScreen() {
   const token = useAuth((s) => s.token);
   const hydrated = useAuth((s) => s.hydrated);
 
-  const m = useMutation<MeihuaResult, unknown, void>({ mutationFn: () => drawMeihua() });
+  const m = useMutation<MeihuaResult, unknown, void>({
+    mutationFn: () => drawMeihua(),
+    onSuccess: () => haptics.success(),
+    onError: () => haptics.warning(),
+  });
 
   if (!hydrated) return null;
   if (!token) return <NeedLogin feature="梅花易数" />;

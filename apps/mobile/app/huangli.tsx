@@ -87,7 +87,7 @@ function Row({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
-  head: { backgroundColor: colors.accentSoft, borderColor: colors.accentSoft, alignItems: 'center', gap: 4 },
+  head: { backgroundColor: colors.accentSoft, borderColor: colors.accentBorder, alignItems: 'center', gap: 4 },
   solar: { fontSize: 22, fontWeight: '800', color: colors.ink },
   weekday: { fontSize: 13, color: colors.secondary },
   lunar: { fontSize: 15, color: colors.ink, marginTop: 4 },
