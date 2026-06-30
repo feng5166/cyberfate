@@ -35,6 +35,22 @@
       "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ],
+  "screenshots": [
+    {
+      "src": "/screenshots/home.png",
+      "sizes": "828x1792",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "首页 · 八字 / 紫微 / 塔罗 / 每日运势"
+    },
+    {
+      "src": "/screenshots/huangli.png",
+      "sizes": "828x1792",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "AI 老黄历 · 智能择吉与宜忌提醒"
+    }
+  ],
   "icons": [
     { "src": "/icons/icon-72x72.png", "sizes": "72x72", "type": "image/png", "purpose": "any" },
     { "src": "/icons/icon-96x96.png", "sizes": "96x96", "type": "image/png", "purpose": "any" },
