@@ -76,7 +76,7 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
           )}
         </button>
       )}
-      <main id="main-content" className="flex-1 pb-20 lg:pb-0" style={{ paddingTop: 0 }}>
+      <main id="main-content" className="flex-1 pb-[calc(5rem_+_env(safe-area-inset-bottom))] lg:pb-0" style={{ paddingTop: 0 }}>
         {/* 仅把用 useSearchParams 的处理器各自包进独立 Suspense，
             避免把 {children}(页面内容) 一起 bailout 到 CSR —— 保证首页等可 SSG/SSR */}
         <Suspense fallback={null}>

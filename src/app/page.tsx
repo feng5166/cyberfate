@@ -156,7 +156,7 @@ const featureGroups = [
 
 export default function HomePage() {
   return (
-    <div className="relative bg-[#FAF9F6] min-h-screen">
+    <div className="relative bg-[#FAF9F6] min-h-dvh">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
@@ -173,7 +173,7 @@ export default function HomePage() {
       />
 
       {/* ===== Hero Section ===== */}
-      <section className="relative overflow-hidden px-4 pt-30 md:pt-40 pb-16 md:pb-20">
+      <section className="relative overflow-hidden px-4 pt-12 sm:pt-24 md:pt-40 pb-10 md:pb-16">
         <div className="relative z-10 max-w-[840px] mx-auto text-center">
           {/* 主标题 */}
           <h1

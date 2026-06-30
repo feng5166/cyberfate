@@ -72,7 +72,9 @@ export const metadata: Metadata = {
   applicationName: "CyberFate",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
+    // 米色宣纸底用浅色状态栏：default = 深色文字/图标，在 #FAF9F6 上清晰可见。
+    // 原 black-translucent 会让白色时钟/电量在米底上几乎不可见。
+    statusBarStyle: "default",
     title: "CyberFate",
     startupImage: [
       {

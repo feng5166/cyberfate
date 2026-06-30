@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, BarChart3, Sun, Layers, Grid3x3 } from 'lucide-react';
@@ -15,13 +14,6 @@ const tabs = [
 
 export function TabBar() {
   const pathname = usePathname();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return null;
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/';
@@ -30,7 +22,7 @@ export function TabBar() {
 
   return (
     <nav 
-      className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white/95 backdrop-blur-md border-t border-brand-border-light"
+      className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white border-t border-brand-border-light"
       style={{
         paddingBottom: 'env(safe-area-inset-bottom)',
       }}
