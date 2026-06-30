@@ -6,7 +6,7 @@ import { isVip } from '@/lib/subscription';
 import { calculateBazi, getCurrentDayun, getDayGanzhi, getLunarDate, getYearGanzhi } from '@/lib/bazi';
 import { DAILY_DETAIL_SYSTEM_PROMPT, buildDailyDetailUserPrompt } from '@/lib/ai/prompts-daily-detail';
 import { getEnvVar } from '@/lib/utils/api-wrapper';
-import { AI_BASE_URL, PRIMARY_MODEL } from '@/lib/ai/models';
+import { AI_BASE_URL, PRIMARY_MODEL, FALLBACK_MODEL } from '@/lib/ai/models';
 import { attachClientAbort } from '@/lib/ai/streamProxy';
 import { getTodayBeijing } from '@/lib/timezone';
 
@@ -172,7 +172,7 @@ export async function POST(req: NextRequest) {
                 'Authorization': `Bearer ${fallbackKey}`,
               },
               body: JSON.stringify({
-                model: PRIMARY_MODEL,
+                model: FALLBACK_MODEL,
                 messages: [
                   { role: 'system', content: DAILY_DETAIL_SYSTEM_PROMPT },
                   { role: 'user', content: userPrompt },
@@ -217,8 +217,8 @@ export async function POST(req: NextRequest) {
                 const summary = fullContent.split('\n').filter(l => l.trim() && !l.startsWith('#')).slice(0, 2).join(' ').slice(0, 100);
                 const record = await prisma.dailyDetailHistory.upsert({
                   where: { userId_date: { userId, date: targetDate } },
-                  update: { summary, fullContent, llmModel: PRIMARY_MODEL, generatedAt: new Date() },
-                  create: { userId, date: targetDate, summary, fullContent, llmModel: PRIMARY_MODEL },
+                  update: { summary, fullContent, llmModel: FALLBACK_MODEL, generatedAt: new Date() },
+                  create: { userId, date: targetDate, summary, fullContent, llmModel: FALLBACK_MODEL },
                 });
 
                 controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true, id: record.id })}\n\n`));
