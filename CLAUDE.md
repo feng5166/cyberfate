@@ -14,7 +14,7 @@
 | 语言 | TypeScript(严格模式) |
 | 样式 | Tailwind CSS v4 |
 | 命理计算 | `lunar-javascript` + 自研 `src/lib/*` |
-| AI | **DeepSeek v4-pro**(主,经 ModelVerse 网关)+ DeepSeek-V3.2 兜底;Claude Sonnet 仅作为「每日深度分析」的异常兜底 |
+| AI | **DeepSeek v4-pro**(主,经 ModelVerse 网关)+ DeepSeek-V3.2 兜底 |
 | 数据库 | PostgreSQL(生产 = Vercel Postgres,底层 Neon)+ Prisma |
 | 缓存/限流 | Upstash Redis |
 | 认证 | NextAuth(JWT):邮箱密码 / Google / 微信 |
@@ -22,7 +22,7 @@
 | 部署 | Vercel · PWA |
 | 移动端 | Expo(React Native)+ expo-router,薄 UI 复用 Web API,见 `apps/mobile`(方案 `docs/MOBILE-APP-PLAN.md`) |
 
-> ⚠️ 模型归属:命理解读主链路一律走 DeepSeek v4-pro(经 ModelVerse)。早期误导性命名(如 `callClaudeAPI`)已统一改为 `callDeepSeek*`(见 `docs/IMPROVEMENT-TASKS.md` T3)。当前代码中唯一真实调用 Claude 的是 `src/app/api/daily/detail-analysis`(每日深度分析的异常兜底,模型 `claude-sonnet-4-20250514`)。改动 AI 逻辑前仍以 `src/lib/ai/models.ts` 的实际端点为准。
+> ⚠️ 模型归属:命理解读主链路一律走 DeepSeek v4-pro(经 ModelVerse)。早期误导性命名(如 `callClaudeAPI`)已统一改为 `callDeepSeek*`(见 `docs/IMPROVEMENT-TASKS.md` T3)。**已无任何真实 Claude 调用**:`src/app/api/daily/detail-analysis` 的异常兜底原走 Claude Sonnet,现已改为重试 DeepSeek v4-pro。改动 AI 逻辑前仍以 `src/lib/ai/models.ts` 的实际端点为准。
 
 ## 功能模块
 
