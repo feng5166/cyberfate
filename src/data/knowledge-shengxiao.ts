@@ -28,7 +28,7 @@ export const knowledgeShengxiaoData: Record<string, KnowledgeArticle> = {
       { q: '属鼠人 2026 年适合结婚吗？', a: '冲太岁年通常不是结婚的最佳时机，但不绝对。如已有婚约或感情稳定，可结合双方八字精准择日。建议避开子月（农历十一月）和午月（农历五月）。' },
       { q: '属鼠人 2026 年最适合做的事是什么？', a: '学习、健身、储蓄、整理人脉、修身养性。把这一年当作"修炼内功"的窗口，下一个流年（丁未羊年）会进入与子相对友好的节奏。' },
     ],
-    relatedSlugs: ['shengxiao-ox-2026', 'shengxiao-monkey-2026'],
+    relatedSlugs: ['shengxiao-ox-2026', 'shengxiao-monkey-2026', 'shengxiao-horse-2026'],
   },
 
   // ==================== 2. 生肖牛 2026 年运势 ====================
@@ -54,7 +54,7 @@ export const knowledgeShengxiaoData: Record<string, KnowledgeArticle> = {
       { q: '属牛人 2026 年适合投资什么？', a: '稳健型为主：定存、低风险基金、自住型房产。避免短线投机和加密货币等高波动品类。' },
       { q: '属牛与属马是否相冲？', a: '子午冲是鼠与马，不涉及牛。属牛人与属马人五行上火土相生，事业合作有助益。真正与属牛人对冲的是属羊（丑未冲），需在 2027 丁未年特别留意。' },
     ],
-    relatedSlugs: ['shengxiao-rat-2026', 'shengxiao-snake-2026'],
+    relatedSlugs: ['shengxiao-rat-2026', 'shengxiao-snake-2026', 'shengxiao-goat-2026'],
   },
 
   // ==================== 3. 生肖虎 2026 年运势 ====================
@@ -80,7 +80,7 @@ export const knowledgeShengxiaoData: Record<string, KnowledgeArticle> = {
       { q: '属虎人 2026 年创业靠谱吗？', a: '整体环境支持，但要选对方向。建议从事火属性或木属性行业（文创、教育、餐饮、贸易），避免重资产投入。最好与属马、属狗的合伙人组队。' },
       { q: '属虎人 2026 年的桃花真假怎么判断？', a: '看对方愿不愿意为关系做出实际投入（时间、金钱、未来规划）。本年快进快出的关系比较多，时间是最好的过滤器，至少观察三个月再做承诺。' },
     ],
-    relatedSlugs: ['shengxiao-horse-2026', 'shengxiao-dog-2026'],
+    relatedSlugs: ['shengxiao-horse-2026', 'shengxiao-dog-2026', 'shengxiao-monkey-2026'],
   },
 
   // ==================== 4. 生肖兔 2026 年运势 ====================
@@ -106,7 +106,7 @@ export const knowledgeShengxiaoData: Record<string, KnowledgeArticle> = {
       { q: '属兔人 2026 年感情会有变化吗？', a: '整体平稳，无大起大落。已稳定关系会更进一步（订婚、结婚、备孕），不稳定的关系则可能渐行渐远，让时间来过滤。' },
       { q: '属兔与属鸡是否相冲？', a: '是，卯酉相冲。但 2026 年是午年不是酉年，所以这一冲克在 2029 己酉年才需要重点关注。本年不必为此焦虑。' },
     ],
-    relatedSlugs: ['shengxiao-pig-2026', 'shengxiao-goat-2026'],
+    relatedSlugs: ['shengxiao-pig-2026', 'shengxiao-goat-2026', 'shengxiao-rooster-2026'],
   },
 
   // ==================== 5. 生肖龙 2026 年运势 ====================
@@ -132,7 +132,7 @@ export const knowledgeShengxiaoData: Record<string, KnowledgeArticle> = {
       { q: '属龙人 2026 年的财运具体怎么样？', a: '正财远好于偏财。靠主业、靠贵人、靠扎实工作能稳步提升收入。投机、赌博、突然暴富的运势不强，不要被高收益噱头打动。' },
       { q: '属龙人 2026 年要避免什么？', a: '避免与属狗的人发生重大冲突（辰戌冲），避免在戌月（农历九月）做重大决策。也避免在过劳状态下做出冲动的人事决定。' },
     ],
-    relatedSlugs: ['shengxiao-monkey-2026', 'shengxiao-rooster-2026'],
+    relatedSlugs: ['shengxiao-monkey-2026', 'shengxiao-rooster-2026', 'shengxiao-dog-2026'],
   },
 
   // ==================== 6. 生肖蛇 2026 年运势 ====================
@@ -158,7 +158,7 @@ export const knowledgeShengxiaoData: Record<string, KnowledgeArticle> = {
       { q: '属蛇人 2026 年的桃花质量怎样？', a: '数量多但质量参差，选择标准要明确，不要被表面吸引带偏。重点观察对方在你高光时刻的态度——锦上添花的人很多，雪中送炭的才是良配。' },
       { q: '属蛇人 2026 年最大的隐患是什么？', a: '火过旺容易急躁、固执、伤身。建议每天给自己留半小时静坐或运动，平衡气场。同时避免在情绪激动时做重大决定。' },
     ],
-    relatedSlugs: ['shengxiao-rooster-2026', 'shengxiao-monkey-2026'],
+    relatedSlugs: ['shengxiao-rooster-2026', 'shengxiao-monkey-2026', 'shengxiao-pig-2026'],
   },
 
   // ==================== 7. 生肖马 2026 年运势 ====================
@@ -184,7 +184,7 @@ export const knowledgeShengxiaoData: Record<string, KnowledgeArticle> = {
       { q: '属马人 2026 年能不能结婚？', a: '一般认为本命年不宜大婚，但若已经定下计划，可结合双方八字择日，避开子月（农历十一月）。中医择日学派认为"本命年喜事化煞"也有依据，关键看具体八字配合。' },
       { q: '属马人 2026 年最该做的一件事？', a: '修炼自我控制力。本命年的考验全部来自"心"，外界的挑战都是诱发剂。把脾气、欲望、消费、人际四个维度管好，本命年就过得平稳。' },
     ],
-    relatedSlugs: ['shengxiao-goat-2026', 'shengxiao-tiger-2026'],
+    relatedSlugs: ['shengxiao-goat-2026', 'shengxiao-tiger-2026', 'shengxiao-rat-2026'],
   },
 
   // ==================== 8. 生肖羊 2026 年运势 ====================
@@ -210,7 +210,7 @@ export const knowledgeShengxiaoData: Record<string, KnowledgeArticle> = {
       { q: '属羊人 2026 年适合换工作吗？', a: '可以，但优选"贵人邀请"型而非"主动应聘"型。本年很多机会会自动来找你，不必着急。如果三个月内没有理想机会出现，再主动出击也来得及。' },
       { q: '属羊人 2026 年的财运具体怎样？', a: '正财稳定增长，偏财机会增多但要量力而行。可适度参与朋友推荐的合理投资项目，但金额控制在年收入的 20% 以内为宜。' },
     ],
-    relatedSlugs: ['shengxiao-horse-2026', 'shengxiao-pig-2026'],
+    relatedSlugs: ['shengxiao-horse-2026', 'shengxiao-pig-2026', 'shengxiao-ox-2026'],
   },
 
   // ==================== 9. 生肖猴 2026 年运势 ====================
@@ -236,7 +236,7 @@ export const knowledgeShengxiaoData: Record<string, KnowledgeArticle> = {
       { q: '属猴人 2026 年要不要主动跳槽？', a: '不建议主动跳槽。本年外面机会的"含金量"也不高，跳了未必更好。先把现有平台做扎实，等到属于自己的好年再行动。' },
       { q: '属猴人 2026 年怎么化解？', a: '多与属鼠、属龙、属蛇的人深度合作；佩戴申子辰三合相关饰物；多去北方、西方走动；衣着以白、蓝色为主，少穿大红大紫。' },
     ],
-    relatedSlugs: ['shengxiao-rat-2026', 'shengxiao-dragon-2026'],
+    relatedSlugs: ['shengxiao-rat-2026', 'shengxiao-dragon-2026', 'shengxiao-tiger-2026'],
   },
 
   // ==================== 10. 生肖鸡 2026 年运势 ====================
@@ -262,7 +262,7 @@ export const knowledgeShengxiaoData: Record<string, KnowledgeArticle> = {
       { q: '属鸡人 2026 年怎么催财？', a: '与其催，不如守。本年偏财几乎无望，把工资和家庭开支管好就是最大的成就。可佩戴金属性饰品稳财，避免参与高风险投资。' },
       { q: '属鸡人 2026 年最该做的事？', a: '学习一项新技能、储蓄一笔应急金、修复一段重要关系。这三件事任选一项坚持做下来，年底会感谢自己。' },
     ],
-    relatedSlugs: ['shengxiao-ox-2026', 'shengxiao-snake-2026'],
+    relatedSlugs: ['shengxiao-ox-2026', 'shengxiao-snake-2026', 'shengxiao-rabbit-2026'],
   },
 
   // ==================== 11. 生肖狗 2026 年运势 ====================
@@ -288,7 +288,7 @@ export const knowledgeShengxiaoData: Record<string, KnowledgeArticle> = {
       { q: '属狗人 2026 年要不要换工作？', a: '可以考虑，本年是"能进则进"的格局。如果有更好的平台主动邀请，可以认真评估。属狗人本年特别适合"借势跳槽"——用现有平台的人脉和成绩，撬动更高的位置。' },
       { q: '属狗人 2026 年最大的隐患是什么？', a: '火气过旺导致冒进、冲动决策。建议遇到重大决定时多冷静一两天，不要被气势冲昏头脑。也要小心因过度自信而忽略风险细节。' },
     ],
-    relatedSlugs: ['shengxiao-tiger-2026', 'shengxiao-horse-2026'],
+    relatedSlugs: ['shengxiao-tiger-2026', 'shengxiao-horse-2026', 'shengxiao-dragon-2026'],
   },
 
   // ==================== 12. 生肖猪 2026 年运势 ====================
@@ -314,6 +314,6 @@ export const knowledgeShengxiaoData: Record<string, KnowledgeArticle> = {
       { q: '属猪人 2026 年要不要主动求变？', a: '不建议主动求变。被动型变化（如公司调岗、行业自然转型）可以接受，但主动跳槽、创业风险较大。等下一年三合启动时再行动事半功倍。' },
       { q: '属猪人 2026 年怎么化解水火相战？', a: '佩戴木属性饰品（绿色调）作为通关——水生木、木生火，化对立为流通；多与属虎、属兔、属羊的人合作；多去北方、东方走动；衣着多用蓝绿色系。' },
     ],
-    relatedSlugs: ['shengxiao-tiger-2026', 'shengxiao-rabbit-2026'],
+    relatedSlugs: ['shengxiao-tiger-2026', 'shengxiao-rabbit-2026', 'shengxiao-snake-2026'],
   },
 };

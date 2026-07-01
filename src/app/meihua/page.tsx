@@ -83,6 +83,24 @@ export default function MeihuaPage() {
             ))}
           </div>
         </div>
+
+        <div className="mt-6 pt-6 border-t border-[#1C1A16]/8">
+          <p className="text-xs font-medium text-[#1C1A16]/50 mb-3">命理知识</p>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { name: '五行理论', href: '/knowledge/wuxing' },
+              { name: '十天干', href: '/knowledge/tiangan' },
+              { name: '十二地支', href: '/knowledge/dizhi' },
+              { name: '八字格局', href: '/knowledge/geju' },
+              { name: '大运理论', href: '/knowledge/dayun' },
+              { name: '神煞大全', href: '/knowledge/shensha' },
+            ].map((t) => (
+              <a key={t.href} href={t.href} className="text-xs px-3 py-1.5 rounded-full border border-[#1C1A16]/15 text-[#1C1A16]/60 hover:text-[#1C1A16] hover:border-[#1C1A16]/30 transition-colors">
+                {t.name}
+              </a>
+            ))}
+          </div>
+        </div>
       </section>
       </Footer>
     </>
