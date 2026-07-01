@@ -77,7 +77,7 @@ export default function HuangliPage() {
       onTouchEnd={(e) => { handleSwipe(e.changedTouches[0].clientX - touchStartX.current); }}
     >
       {/* 移动端日期快捷条 - 置顶 */}
-      <div className="lg:hidden px-4 pt-4">
+      <div className="md:hidden px-4 pt-4">
         <MobileDateBar
           selectedDate={selectedDate}
           onDateSelect={handleDateSelect}
@@ -94,11 +94,11 @@ export default function HuangliPage() {
         </p>
       </div>
 
-      <div className="max-w-[840px] mx-auto px-4 pb-16">
+      <div className="max-w-page mx-auto px-4 pb-16">
         {/* 单列：日历 → 内容 → 特性/使用指南 */}
         <div className="space-y-5">
             {/* 选择日期日历 - 置顶（移动端顶部为日期快捷条） */}
-            <div className="hidden lg:block max-w-[380px] mx-auto">
+            <div className="hidden md:block max-w-[380px] mx-auto">
               <CalendarPicker
                 selectedDate={selectedDate}
                 onDateSelect={handleDateSelect}

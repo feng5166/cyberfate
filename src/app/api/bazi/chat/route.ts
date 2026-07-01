@@ -1,8 +1,7 @@
 import crypto from 'crypto';
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getAuthSession } from '@/lib/auth-session';
 import { isUserVip } from '@/lib/quota';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
@@ -203,10 +202,10 @@ export async function POST(req: NextRequest) {
   try {
     let session;
     try {
-      session = await getServerSession(authOptions);
+      session = await getAuthSession(req);
     } catch (sessionErr) {
       const msg = sessionErr instanceof Error ? sessionErr.message : String(sessionErr);
-      console.error('[bazi/chat] getServerSession error:', msg);
+      console.error('[bazi/chat] getAuthSession error:', msg);
       return Response.json({ error: '认证服务异常，请刷新重试' }, { status: 503 });
     }
 

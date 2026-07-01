@@ -1,6 +1,5 @@
 import { NextRequest } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getAuthSession } from '@/lib/auth-session';
 import { isUserVip, checkDailyQaQuota } from '@/lib/quota';
 import { logger } from '@/lib/logger';
 import { prisma } from '@/lib/db';
@@ -15,7 +14,7 @@ const DEEPSEEK_MODEL = PRIMARY_MODEL;
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession(req);
 
     if (!session?.user?.id) {
       return Response.json({ error: 'LOGIN_REQUIRED', message: '请登录后使用' }, { status: 401 });

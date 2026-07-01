@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { getAuthSession } from '@/lib/auth-session';
 import { generateCacheKey, getCache, setCache } from '@/lib/ai/cache';
 import { sanitizeUserInput } from '@/lib/utils/sanitize';
 
-import { authOptions } from '@/lib/auth';
 import { calculateBazi as realCalculateBazi } from '@/lib/bazi';
 import { AI_BASE_URL, PRIMARY_MODEL, FALLBACK_MODEL } from '@/lib/ai/models';
 import {
@@ -682,7 +681,7 @@ async function runDeepReport(params: {
 // ═══════════════════════════════════════════════════
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getAuthSession(req);
   if (!session?.user?.id) {
     return NextResponse.json({ error: '请先登录' }, { status: 401 });
   }

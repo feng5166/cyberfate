@@ -6,6 +6,7 @@ import { AuthProvider } from "@/stores/authStore";
 import { LayoutWrapper } from "@/components/layout/LayoutWrapper";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
+import { PwaUpdatePrompt } from "@/components/pwa/PwaUpdatePrompt";
 import { PostHogProvider } from "@/components/analytics/PostHogProvider";
 import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 
@@ -14,6 +15,9 @@ const notoSerifSC = Noto_Serif_SC({
   variable: "--font-heading",
   display: "swap",
   preload: false,
+  // CJK 全字库过大不宜 preload；用中文衬线作回退，webfont 到达前后都是衬线，
+  // 减小 swap 视觉跳变（Android 默认衬线即 Noto Serif CJK，与本字体几乎一致）。
+  fallback: ["Songti SC", "STSong", "serif"],
   // 不指定 subsets，让 next/font 自动加载所需字符（包括中文）
 });
 
@@ -71,7 +75,9 @@ export const metadata: Metadata = {
   applicationName: "CyberFate",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
+    // 米色宣纸底用浅色状态栏：default = 深色文字/图标，在 #FAF9F6 上清晰可见。
+    // 原 black-translucent 会让白色时钟/电量在米底上几乎不可见。
+    statusBarStyle: "default",
     title: "CyberFate",
     startupImage: [
       {
@@ -128,6 +134,7 @@ export default function RootLayout({
           </SessionProvider>
         </PostHogProvider>
         <InstallPrompt />
+        <PwaUpdatePrompt />
         <GoogleAnalytics />
       </body>
     </html>

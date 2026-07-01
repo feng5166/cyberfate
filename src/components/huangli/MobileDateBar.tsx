@@ -42,7 +42,7 @@ export function MobileDateBar({ selectedDate, onDateSelect }: MobileDateBarProps
               key={label}
               onClick={() => onDateSelect(dateStr)}
               className={`
-                flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all
+                flex-shrink-0 min-h-[44px] px-4 py-2.5 rounded-full text-sm font-medium transition-all
                 ${isActive
                   ? 'bg-amber-100 text-[#1C1A16] border border-amber-300'
                   : 'bg-white text-[#1C1A16] border border-[#F0EDE8] hover:border-[#1C1A16]/30'
@@ -57,7 +57,7 @@ export function MobileDateBar({ selectedDate, onDateSelect }: MobileDateBarProps
         <button
           onClick={() => setShowModal(true)}
           aria-label="选择日期"
-          className="flex-shrink-0 w-10 h-10 rounded-full bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 hover:border-amber-300 transition-all flex items-center justify-center"
+          className="flex-shrink-0 w-11 h-11 rounded-full bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 hover:border-amber-300 transition-all flex items-center justify-center"
         >
           <CalendarDays className="w-5 h-5" />
         </button>
@@ -70,7 +70,7 @@ export function MobileDateBar({ selectedDate, onDateSelect }: MobileDateBarProps
             className="absolute inset-0 bg-black/30"
             onClick={() => setShowModal(false)}
           />
-          <div className="relative w-full max-w-md bg-[#FAF9F6] rounded-t-3xl p-4 pb-8 animate-slide-up">
+          <div className="relative w-full max-w-md bg-[#FAF9F6] rounded-t-3xl p-4 pb-[calc(2rem_+_env(safe-area-inset-bottom))] animate-slide-up">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-display text-lg font-semibold text-[#1C1A16]">选择日期</h3>
               <button

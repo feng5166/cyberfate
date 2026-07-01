@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* 统一内容版心 token（原 max-w-[840px] 散落 60+ 处 → 单一真源，改这里即全站生效）。
+   用法：max-w-page。Tailwind v4 从 --container-* 命名空间生成 max-w-* 工具类。 */
+@theme {
+  --container-page: 840px;
+}
+
 /* Tailwind v4 CSS-first 不会自动加载 JS 配置；显式引入以启用自定义主题
    （brand/element 配色、shadow-card、rounded-card、text-display 等工具类）。 */
 @config "../../tailwind.config.ts";

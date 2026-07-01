@@ -45,24 +45,24 @@ export function DayDetailCard({ data }: DayDetailCardProps) {
       </p>
 
       {/* 区块B: 五行与冲煞 */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
-        <div className={`rounded-xl p-3 text-center ${dayWuxingColor.bg}`}>
-          <span className={`text-2xl font-bold block ${dayWuxingColor.text}`}>
+      <div className="grid grid-cols-3 gap-3 md:gap-4 mb-6">
+        <div className={`rounded-xl p-3 md:p-4 text-center ${dayWuxingColor.bg}`}>
+          <span className={`text-2xl md:text-3xl font-bold block ${dayWuxingColor.text}`}>
             {data.dayWuxing}
           </span>
-          <span className="text-xs text-[#1C1A16]/50 mt-1 block">日主五行</span>
+          <span className="text-xs md:text-sm text-[#1C1A16]/50 mt-1 block">日主五行</span>
         </div>
-        <div className={`rounded-xl p-3 text-center ${yearWuxingColor.bg}`}>
-          <span className={`text-2xl font-bold block ${yearWuxingColor.text}`}>
+        <div className={`rounded-xl p-3 md:p-4 text-center ${yearWuxingColor.bg}`}>
+          <span className={`text-2xl md:text-3xl font-bold block ${yearWuxingColor.text}`}>
             {data.yearWuxing}
           </span>
-          <span className="text-xs text-[#1C1A16]/50 mt-1 block">年五行</span>
+          <span className="text-xs md:text-sm text-[#1C1A16]/50 mt-1 block">年五行</span>
         </div>
-        <div className="rounded-xl p-3 text-center bg-orange-50">
-          <span className="text-lg font-bold block text-orange-700">
+        <div className="rounded-xl p-3 md:p-4 text-center bg-orange-50">
+          <span className="text-lg md:text-xl font-bold block text-orange-700">
             冲{data.chongShengxiao}
           </span>
-          <span className="text-xs text-orange-600/70 mt-1 block">
+          <span className="text-xs md:text-sm text-orange-600/70 mt-1 block">
             煞{data.sha}
           </span>
         </div>

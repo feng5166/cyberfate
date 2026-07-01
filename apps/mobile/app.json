@@ -5,32 +5,20 @@
     "version": "1.0.0",
     "scheme": "cyberfate",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#FAF6EE"
-    },
+    "backgroundColor": "#FAF6EE",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "me.cyberfate.app"
     },
     "android": {
       "package": "me.cyberfate.app",
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#FAF6EE"
-      },
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
+      "edgeToEdgeEnabled": true
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-secure-store"
     ],
     "extra": {
       "router": {},

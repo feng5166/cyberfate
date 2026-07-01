@@ -84,9 +84,8 @@ export async function POST(req: NextRequest) {
   const chaosRes = await applyChaos(req);
   if (chaosRes) return chaosRes;
 
-  const { getServerSession } = await import('next-auth');
-  const { authOptions } = await import('@/lib/auth');
-  const session = await getServerSession(authOptions);
+  const { getAuthSession } = await import('@/lib/auth-session');
+  const session = await getAuthSession(req);
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'LOGIN_REQUIRED', message: '请登录后使用' }, { status: 401 });
   }

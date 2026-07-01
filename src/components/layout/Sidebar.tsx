@@ -386,7 +386,7 @@ export function Sidebar({
   );
 
   const desktopAsideClasses = clsx(
-    'hidden lg:block fixed left-0 top-0 h-screen z-30 bg-[#FAF9F6] shadow-sm transition-all duration-300 ease w-[220px]',
+    'hidden md:block fixed left-0 top-0 h-screen z-30 bg-[#FAF9F6] shadow-sm transition-all duration-300 ease w-[220px]',
     collapsed ? '-translate-x-full border-r-0' : 'translate-x-0 border-r border-brand-border-light'
   );
 

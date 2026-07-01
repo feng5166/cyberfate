@@ -17,9 +17,8 @@ export async function POST(req: NextRequest) {
   const debugToken = req.headers.get('x-debug-token');
   const isDebugMode = !!(debugToken && debugToken === process.env.TAROT_DEBUG_TOKEN);
 
-  const { getServerSession } = await import('next-auth');
-  const { authOptions } = await import('@/lib/auth');
-  const session = await getServerSession(authOptions);
+  const { getAuthSession } = await import('@/lib/auth-session');
+  const session = await getAuthSession(req);
   if (!isDebugMode && !session?.user?.id) {
     return NextResponse.json({ error: '请先登录' }, { status: 401 });
   }

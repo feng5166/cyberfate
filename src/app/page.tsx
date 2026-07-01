@@ -156,7 +156,7 @@ const featureGroups = [
 
 export default function HomePage() {
   return (
-    <div className="relative bg-[#FAF9F6] min-h-screen">
+    <div className="relative bg-[#FAF9F6] min-h-dvh">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
@@ -173,8 +173,8 @@ export default function HomePage() {
       />
 
       {/* ===== Hero Section ===== */}
-      <section className="relative overflow-hidden px-4 pt-30 md:pt-40 pb-16 md:pb-20">
-        <div className="relative z-10 max-w-[840px] mx-auto text-center">
+      <section className="relative overflow-hidden px-4 pt-12 sm:pt-20 md:pt-28 lg:pt-40 pb-10 md:pb-14 lg:pb-16">
+        <div className="relative z-10 max-w-page mx-auto text-center">
           {/* 主标题 */}
           <h1
             className="font-display text-[36px] sm:text-[48px] md:text-[56px] font-[800] text-[#1C1A16] leading-tight flex items-center justify-center gap-2"
@@ -227,7 +227,7 @@ export default function HomePage() {
       {/* ===== 金句 ===== */}
       <section className="px-4 pt-2 md:pt-4 pb-12 md:pb-16">
         <Container>
-          <figure className="relative max-w-[840px] mx-auto rounded-2xl bg-[#F4F3F0] px-8 py-14 md:px-16 md:py-16 text-center overflow-hidden">
+          <figure className="relative max-w-page mx-auto rounded-2xl bg-[#F4F3F0] px-8 py-14 md:px-16 md:py-16 text-center overflow-hidden">
             <span aria-hidden className="absolute left-6 top-3 font-serif text-[72px] leading-none text-[#1C1A16]/10 select-none">&ldquo;</span>
             <blockquote className="relative font-display italic text-[22px] md:text-[30px] leading-[1.7] tracking-wide text-[#1C1A16]">
               除非你意识到你的潜意识，否则潜意识将主导你的人生，而你将其称为命运。
@@ -241,7 +241,7 @@ export default function HomePage() {
       <section className="px-4 py-10 md:py-16 bg-brand-bg/60">
         <Container>
           <h2 className="text-center font-display text-[22px] md:text-[26px] text-[#1C1A16] mb-10 md:mb-12">核心理念</h2>
-          <div className="max-w-[840px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
+          <div className="max-w-page mx-auto grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
             {corePrinciples.map((principle) => {
               const Icon = principle.icon;
               return (
@@ -269,12 +269,12 @@ export default function HomePage() {
       {/* ===== 功能展示区 ===== */}
       <section className="px-4 mt-16 md:mt-20 pb-28 md:pb-32">
         <Container>
-          <div className="max-w-[840px] mx-auto text-center">
+          <div className="max-w-page mx-auto text-center">
             <h2 className="font-display text-[32px] text-[#1C1A16] mb-3">分析系统</h2>
             <p className="text-sm text-[#1C1A16]/70 mb-12">探索我们全面的智能分析服务</p>
           </div>
 
-          <div className="max-w-[840px] mx-auto space-y-16">
+          <div className="max-w-page mx-auto space-y-16">
             {featureGroups.map((group) => (
               <div key={group.title}>
                 <h3 className="text-[18px] font-semibold text-[#1C1A16] mb-5">{group.title}</h3>
@@ -315,7 +315,7 @@ export default function HomePage() {
       {/* ===== 命理知识库 Section ===== */}
       <section className="px-4 pb-4">
         <Container>
-          <div className="max-w-[840px] mx-auto">
+          <div className="max-w-page mx-auto">
             <div className="text-center mb-10">
               <h2 className="font-display text-[32px] text-[#1C1A16] mb-3">命理知识库</h2>
               <p className="text-sm text-[#1C1A16]/70">从零读懂八字：五行、十神、大运背后的底层逻辑</p>
@@ -352,7 +352,7 @@ export default function HomePage() {
       {/* ===== CTA Section ===== */}
       <section className="px-4 pb-24">
         <Container>
-          <div className="max-w-[840px] mx-auto text-center py-16 px-10">
+          <div className="max-w-page mx-auto text-center py-16 px-10">
             <h2 className="font-display text-3xl md:text-4xl tracking-wide text-[#1C1A16]">
               AI 分析个人特质，洞察发展潜力
             </h2>

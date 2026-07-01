@@ -2,8 +2,7 @@ import crypto from 'crypto';
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { sanitizeUserInput } from '@/lib/utils/sanitize';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getAuthSession } from '@/lib/auth-session';
 import { calculateBazi, calculateBaziFromPillars, WUXING_KEYS, analyzeMingGe, getCurrentDayun, getDayunTimeline, analyzeShensha, shenshaNature, analyzeLiunian, analyzeLiuyueRange } from '@/lib/bazi';
 import type { ShenshaDisplay } from '@/lib/bazi/types';
 import { checkRateLimit } from '@/lib/rate-limit';
@@ -75,7 +74,7 @@ export async function POST(req: NextRequest) {
   // 本端点仅做「排盘」（确定性计算，无 AI 成本）。
   // AI 解读的登录/游客/配额门禁统一在 /api/bazi/stream 的实际生成处执行，
   // 避免与 stream 双重计费，也堵住「重新分析」直接打 stream 绕过配额的漏洞。
-  const session = await getServerSession(authOptions);
+  const session = await getAuthSession(req);
 
   // 轻量防刷（与 stream 的计费限流用不同 key，避免互相占用名额）
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';

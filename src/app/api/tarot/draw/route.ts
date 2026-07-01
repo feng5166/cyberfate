@@ -4,8 +4,7 @@ import { generateCacheKey, getCache, setCache } from '@/lib/ai/cache';
 import { generateTarotReading, type TarotReadingResult } from '@/lib/ai/client';
 import type { TarotReadingPromptInput } from '@/lib/ai/prompts';
 
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getAuthSession } from '@/lib/auth-session';
 import { prisma } from '@/lib/db';
 import { isVip } from '@/lib/subscription';
 import { getTodayBeijing } from '@/lib/timezone';
@@ -169,7 +168,7 @@ export async function POST(req: NextRequest) {
   const debugToken = req.headers.get('x-debug-token');
   const isDebugMode = !!(debugToken && debugToken === process.env.TAROT_DEBUG_TOKEN);
 
-  const session = await getServerSession(authOptions);
+  const session = await getAuthSession(req);
   const body = await req.json().catch(() => ({}));
   const spread = resolveSpread(body?.spread);
   const question = safeQuestion(body?.question);

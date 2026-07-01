@@ -228,7 +228,7 @@ export default function MusicOraclePageClient() {
         </div>
 
         {/* ② 问题输入区 */}
-        <div className="max-w-[840px] mx-auto">
+        <div className="max-w-page mx-auto">
           <label className="block text-sm font-medium text-[#1C1A16] mb-2">
             你想问命运什么？
           </label>
@@ -415,7 +415,7 @@ export default function MusicOraclePageClient() {
 
         {/* 错误提示 */}
         {error && (
-          <div className="max-w-[840px] mx-auto mt-6 text-center">
+          <div className="max-w-page mx-auto mt-6 text-center">
             <p className="text-sm text-red-500 mb-2">{error}</p>
             <button
               onClick={handleSubmit}
@@ -430,7 +430,7 @@ export default function MusicOraclePageClient() {
         {result && (
           <div
             ref={resultRef}
-            className="max-w-[840px] mx-auto mt-8 bg-white border border-[#F0EDE8] rounded-2xl p-6 shadow-md animate-in fade-in slide-in-from-bottom-4 duration-400"
+            className="max-w-page mx-auto mt-8 bg-white border border-[#F0EDE8] rounded-2xl p-6 shadow-md animate-in fade-in slide-in-from-bottom-4 duration-400"
           >
             {/* 标题 */}
             <p className="text-[13px] font-medium text-[#9CA3AF] mb-5 text-center">
@@ -572,7 +572,7 @@ export default function MusicOraclePageClient() {
         )}
 
         {/* ④ 功能介绍区 */}
-        <div className="max-w-[840px] mx-auto mt-16 mb-12">
+        <div className="max-w-page mx-auto mt-16 mb-12">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {FEATURES.map((f, i) => (
               <div
@@ -588,7 +588,7 @@ export default function MusicOraclePageClient() {
         </div>
 
         {/* ⑤ FAQ */}
-        <div className="max-w-[840px] mx-auto mb-12">
+        <div className="max-w-page mx-auto mb-12">
           <h2 className="text-lg font-serif font-semibold text-[#1C1A16] text-center mb-6">
             常见问题
           </h2>
@@ -617,7 +617,7 @@ export default function MusicOraclePageClient() {
         </div>
 
         {/* 免责声明 */}
-        <div className="text-center text-xs text-[#9CA3AF] py-3 bg-white/50 rounded-lg max-w-[840px] mx-auto mb-8">
+        <div className="text-center text-xs text-[#9CA3AF] py-3 bg-white/50 rounded-lg max-w-page mx-auto mb-8">
           ⚠️ 音乐运势签为娱乐性命理参考工具，不具备预测功能，请理性对待。
         </div>
       </Container>

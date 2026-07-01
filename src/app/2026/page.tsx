@@ -125,7 +125,7 @@ export default function Page() {
       {/* Hero */}
       <section className="pt-20 pb-12">
         <Container>
-          <div className="max-w-[840px] mx-auto text-center">
+          <div className="max-w-page mx-auto text-center">
             <p className="text-sm tracking-[0.3em] text-[#C8956C] mb-4">2026 · 丙午马年</p>
             <h1 className="font-heading text-3xl sm:text-5xl text-[#1C1A16] mb-5 leading-tight">
               2026年生肖运势总览
@@ -195,7 +195,7 @@ export default function Page() {
       {/* 命理总论 */}
       <section className="pb-16">
         <Container>
-          <div className="max-w-[840px] mx-auto">
+          <div className="max-w-page mx-auto">
             <Card hover={false} className="bg-white/90">
               <h2 className="font-heading text-2xl text-[#1C1A16] mb-4">
                 丙午年的命理总论
@@ -247,7 +247,7 @@ export default function Page() {
         <Container>
           <Card
             hover={false}
-            className="bg-gradient-to-br from-[#1C1A16] to-[#3A2F23] text-white border-0 shadow-xl text-center max-w-[840px] mx-auto"
+            className="bg-gradient-to-br from-[#1C1A16] to-[#3A2F23] text-white border-0 shadow-xl text-center max-w-page mx-auto"
           >
             <h3 className="font-heading text-2xl sm:text-3xl mb-3">想看清2026年个人精准运势？</h3>
             <p className="text-sm text-white/75 mb-6 leading-relaxed">
@@ -267,7 +267,7 @@ export default function Page() {
       {/* FAQ */}
       <section className="pb-20">
         <Container>
-          <div className="max-w-[840px] mx-auto">
+          <div className="max-w-page mx-auto">
             <h2 className="font-heading text-2xl text-[#1C1A16] mb-6 text-center">常见问题</h2>
             <div className="space-y-4">
               {faqItems.map((it) => (

@@ -5,6 +5,7 @@ import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { PanelLeft, PanelLeftClose } from 'lucide-react';
 import { Header } from './Header';
+import { MobileHeader } from './MobileHeader';
 import { DashboardLayout } from './DashboardLayout';
 import { Footer } from './Footer';
 import { AuthProvider } from '@/stores/authStore';
@@ -64,7 +65,7 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
         <button
           type="button"
           onClick={() => setSidebarCollapsed((v) => !v)}
-          className="fixed top-3 z-50 hidden h-9 w-9 items-center justify-center rounded-lg border border-[#1C1A16]/[0.08] bg-[#FAF9F6] transition-all duration-300 hover:bg-gray-100 cursor-pointer lg:flex"
+          className="fixed top-3 z-50 hidden h-9 w-9 items-center justify-center rounded-lg border border-[#1C1A16]/[0.08] bg-[#FAF9F6] transition-all duration-300 hover:bg-gray-100 cursor-pointer md:flex"
           style={{ left: (isSidebarCollapsed ? 0 : 220) + 12 }}
           title={isSidebarCollapsed ? '展开导航' : '收起导航'}
           aria-label={isSidebarCollapsed ? '展开导航' : '收起导航'}
@@ -76,12 +77,14 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
           )}
         </button>
       )}
-      <main id="main-content" className="flex-1 pb-20 lg:pb-0" style={{ paddingTop: 0 }}>
+      <main id="main-content" className="flex-1 pb-[calc(5rem_+_env(safe-area-inset-bottom))] md:pb-0" style={{ paddingTop: 0 }}>
         {/* 仅把用 useSearchParams 的处理器各自包进独立 Suspense，
             避免把 {children}(页面内容) 一起 bailout 到 CSR —— 保证首页等可 SSG/SSR */}
         <Suspense fallback={null}>
           <PaymentSuccessHandler />
         </Suspense>
+        {/* 手机端内页顶栏（返回+Logo+全模块抽屉）；md+ 走 Sidebar，MobileHeader 自身 md:hidden */}
+        {showSidebar && <MobileHeader />}
         {showSidebar ? (
           <DashboardLayout
             collapsed={isSidebarCollapsed}

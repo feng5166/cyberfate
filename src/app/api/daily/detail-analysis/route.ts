@@ -6,7 +6,7 @@ import { isVip } from '@/lib/subscription';
 import { calculateBazi, getCurrentDayun, getDayGanzhi, getLunarDate, getYearGanzhi } from '@/lib/bazi';
 import { DAILY_DETAIL_SYSTEM_PROMPT, buildDailyDetailUserPrompt } from '@/lib/ai/prompts-daily-detail';
 import { getEnvVar } from '@/lib/utils/api-wrapper';
-import { AI_BASE_URL, PRIMARY_MODEL } from '@/lib/ai/models';
+import { AI_BASE_URL, PRIMARY_MODEL, FALLBACK_MODEL } from '@/lib/ai/models';
 import { attachClientAbort } from '@/lib/ai/streamProxy';
 import { getTodayBeijing } from '@/lib/timezone';
 
@@ -162,21 +162,24 @@ export async function POST(req: NextRequest) {
         fullContent = '';
 
         try {
-          const anthropicKey = getEnvVar('ANTHROPIC_API_KEY');
-          if (anthropicKey) {
-            const fallbackResponse = await fetch('https://api.anthropic.com/v1/messages', {
+          const fallbackKey = getEnvVar('DEEPSEEK_API_KEY');
+          if (fallbackKey) {
+            const fallbackResponse = await fetch(`${AI_BASE_URL}/chat/completions`, {
               method: 'POST',
               signal: abortHandle.signal,
               headers: {
                 'Content-Type': 'application/json',
-                'x-api-key': anthropicKey,
-                'anthropic-version': '2023-06-01',
+                'Authorization': `Bearer ${fallbackKey}`,
               },
               body: JSON.stringify({
-                model: 'claude-sonnet-4-20250514',
+                model: FALLBACK_MODEL,
+                messages: [
+                  { role: 'system', content: DAILY_DETAIL_SYSTEM_PROMPT },
+                  { role: 'user', content: userPrompt },
+                ],
                 max_tokens: 1500,
-                system: DAILY_DETAIL_SYSTEM_PROMPT,
-                messages: [{ role: 'user', content: userPrompt }],
+                temperature: 0.7,
+                enable_thinking: false,
                 stream: true,
               }),
             });
@@ -198,12 +201,14 @@ export async function POST(req: NextRequest) {
 
                   for (const line of lines) {
                     const trimmed = line.trim();
+                    if (!trimmed || trimmed === 'data: [DONE]') continue;
                     if (!trimmed.startsWith('data: ')) continue;
                     try {
                       const json = JSON.parse(trimmed.slice(6));
-                      if (json.type === 'content_block_delta' && json.delta?.text) {
-                        fullContent += json.delta.text;
-                        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: json.delta.text })}\n\n`));
+                      const content = json.choices?.[0]?.delta?.content;
+                      if (content) {
+                        fullContent += content;
+                        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
                       }
                     } catch {}
                   }
@@ -212,8 +217,8 @@ export async function POST(req: NextRequest) {
                 const summary = fullContent.split('\n').filter(l => l.trim() && !l.startsWith('#')).slice(0, 2).join(' ').slice(0, 100);
                 const record = await prisma.dailyDetailHistory.upsert({
                   where: { userId_date: { userId, date: targetDate } },
-                  update: { summary, fullContent, llmModel: 'claude-sonnet-4-20250514', generatedAt: new Date() },
-                  create: { userId, date: targetDate, summary, fullContent, llmModel: 'claude-sonnet-4-20250514' },
+                  update: { summary, fullContent, llmModel: FALLBACK_MODEL, generatedAt: new Date() },
+                  create: { userId, date: targetDate, summary, fullContent, llmModel: FALLBACK_MODEL },
                 });
 
                 controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true, id: record.id })}\n\n`));

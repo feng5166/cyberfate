@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getAuthSession } from '@/lib/auth-session';
 import { sanitizeUserInput } from '@/lib/utils/sanitize';
 import { AI_BASE_URL, PRIMARY_MODEL } from '@/lib/ai/models';
 
@@ -13,7 +12,7 @@ const FALLBACK_ANSWER = '当前回答服务繁忙，请稍后再试。从命理�
 
 export async function POST(req: NextRequest) {
   try {
-  const session = await getServerSession(authOptions);
+  const session = await getAuthSession(req);
   if (!session?.user?.id) {
     return NextResponse.json({ error: '请先登录' }, { status: 401 });
   }

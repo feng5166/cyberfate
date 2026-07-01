@@ -555,7 +555,7 @@ export default function DailyPage() {
       </div>
 
       {/* 周视图日期选择器 */}
-      <div className="px-4 max-w-[840px] mx-auto mb-6">
+      <div className="px-4 max-w-page mx-auto mb-6">
         <WeekCalendar
             selectedDate={(() => {
               const d = new Date(today + 'T00:00:00');
@@ -580,7 +580,7 @@ export default function DailyPage() {
       <Container>
         {/* 输入表单（紧凑版） */}
         {!hasSavedData && !result && (
-          <Card hover={false} className="max-w-[840px] mx-auto mb-8">
+          <Card hover={false} className="max-w-page mx-auto mb-8">
             <form onSubmit={handleSubmit} className="space-y-5">
               <p className="text-sm text-brand-gray text-center mb-4">输入出生信息获取专属运势</p>
               <DatePicker
@@ -607,7 +607,7 @@ export default function DailyPage() {
 
         {/* 已保存数据但加载失败 */}
         {hasSavedData && !result && !loading && error && (
-          <div className="max-w-[840px] mx-auto mb-8 space-y-3">
+          <div className="max-w-page mx-auto mb-8 space-y-3">
             <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">{error}</div>
             <div className="flex items-center justify-center gap-4">
               <button
@@ -625,7 +625,7 @@ export default function DailyPage() {
 
         {/* 加载中 */}
         {loading && (
-          <Card hover={false} className="max-w-[840px] mx-auto flex flex-col items-center py-12">
+          <Card hover={false} className="max-w-page mx-auto flex flex-col items-center py-12">
             <Sparkles className="w-8 h-8 animate-spin text-brand-light" />
             <p className="mt-4 text-brand-black font-medium">{currentDayText.loading}</p>
           </Card>
@@ -633,7 +633,7 @@ export default function DailyPage() {
 
         {/* ===== 结果展示 ===== */}
         {result && !loading && (
-          <div className="max-w-[840px] mx-auto px-4 space-y-5 pb-20 md:pb-26 animate-fadeIn">
+          <div className="max-w-page mx-auto px-4 space-y-5 pb-20 md:pb-26 animate-fadeIn">
 
             {/* 今日核心速览 - 极简风 */}
             <div style={{ backgroundColor: '#FFFFFF', borderRadius: 16, border: '1px solid rgba(28,26,22,0.06)', padding: '32px 24px' }}>
