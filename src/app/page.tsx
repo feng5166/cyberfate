@@ -173,7 +173,7 @@ export default function HomePage() {
       />
 
       {/* ===== Hero Section ===== */}
-      <section className="relative overflow-hidden px-4 pt-12 sm:pt-24 md:pt-40 pb-10 md:pb-16">
+      <section className="relative overflow-hidden px-4 pt-12 sm:pt-20 md:pt-28 lg:pt-40 pb-10 md:pb-14 lg:pb-16">
         <div className="relative z-10 max-w-[840px] mx-auto text-center">
           {/* 主标题 */}
           <h1

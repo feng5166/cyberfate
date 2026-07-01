@@ -15,6 +15,9 @@ const notoSerifSC = Noto_Serif_SC({
   variable: "--font-heading",
   display: "swap",
   preload: false,
+  // CJK 全字库过大不宜 preload；用中文衬线作回退，webfont 到达前后都是衬线，
+  // 减小 swap 视觉跳变（Android 默认衬线即 Noto Serif CJK，与本字体几乎一致）。
+  fallback: ["Songti SC", "STSong", "serif"],
   // 不指定 subsets，让 next/font 自动加载所需字符（包括中文）
 });
 
