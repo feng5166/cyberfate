@@ -94,7 +94,7 @@ export default function HuangliPage() {
         </p>
       </div>
 
-      <div className="max-w-[840px] mx-auto px-4 pb-16">
+      <div className="max-w-page mx-auto px-4 pb-16">
         {/* 单列：日历 → 内容 → 特性/使用指南 */}
         <div className="space-y-5">
             {/* 选择日期日历 - 置顶（移动端顶部为日期快捷条） */}
