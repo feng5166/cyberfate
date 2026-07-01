@@ -91,12 +91,13 @@ describe('POST /api/bazi', () => {
     expect((await res.json()).error).toContain('输入数据格式错误');
   });
 
-  it('returns 400 when required birthHour is missing', async () => {
+  it('accepts a missing birthHour（时辰未知 → 按未知时辰排盘，birthHour 现为可选）', async () => {
+    // 移动端 M0 起 birthHour 改为 optional（schema .optional()，缺失时按 -1「时辰未知」处理），
+    // 故缺 birthHour 不再 400，而是正常排盘返回 200。
     const { birthHour, ...noHour } = validBody;
     void birthHour;
     const res = await POST(makeReq(noHour));
-    expect(res.status).toBe(400);
-    expect((await res.json()).error).toContain('输入数据格式错误');
+    expect(res.status).toBe(200);
   });
 
   it('does NOT gate quota at /api/bazi — 排盘开放，AI 配额改在 /api/bazi/stream 生成处校验', async () => {
