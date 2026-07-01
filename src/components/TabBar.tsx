@@ -22,7 +22,7 @@ export function TabBar() {
 
   return (
     <nav 
-      className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white border-t border-brand-border-light"
+      className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white border-t border-brand-border-light"
       style={{
         paddingBottom: 'env(safe-area-inset-bottom)',
       }}

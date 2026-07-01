@@ -48,7 +48,7 @@ export function DashboardLayout({
         />
       )}
       <main
-        className="bg-brand-bg transition-all duration-300 ease lg:ml-[var(--sidebar-width)] lg:w-[calc(100%-var(--sidebar-width))]"
+        className="bg-brand-bg transition-all duration-300 ease md:ml-[var(--sidebar-width)] md:w-[calc(100%-var(--sidebar-width))]"
         style={{
           '--sidebar-width': resolvedShowSidebar ? `${sidebarWidth}px` : '0px',
           minHeight: 'calc(100dvh - 64px)',
