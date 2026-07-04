@@ -65,3 +65,11 @@ export function getCardImageUrl(card: TarotCard): string {
   const filename = card.filename || `${card.id}.jpg`;
   return `/images/tarot/cards/${suitFolder}/${filename}`;
 }
+
+// 按 id 从可信牌库反查（服务端用它校正客户端传来的牌义/关键词，杜绝伪造与 prompt 注入）
+const cardById = new Map<string, TarotCard>(allCards.map((c) => [String(c.id), c]));
+
+export function getCardById(id: number | string | undefined | null): TarotCard | undefined {
+  if (id === undefined || id === null) return undefined;
+  return cardById.get(String(id));
+}
