@@ -20,10 +20,10 @@
   --brand-bg: #FAF9F6;       /* 暖宣纸画布，与 body/--background 统一 */
 
   /* ===== 唯一强调色：暖古铜橙 —— 全站主 CTA / 选中态 / 激活指示 ===== */
-  --brand-accent: #C2762B;        /* 对比度 ~3.6:1 于白，实心块配白字 ~4.7:1 AA ✅ */
-  --brand-accent-hover: #A86425;
-  --brand-accent-soft: #FBEEDD;   /* 图标底片 / 极浅强调块 */
-  --brand-accent-tint: #FAF3EC;   /* 选中行 / 段控激活底 */
+  --brand-accent: #1C1A16;        /* 墨黑强调（黑白极简）；实心块配白字 ~17.5:1 AAA ✅ */
+  --brand-accent-hover: #3A352E;  /* 墨色实心块 hover 提亮 */
+  --brand-accent-soft: #EFEDEA;   /* 图标底片 / 极浅强调块（中性浅灰） */
+  --brand-accent-tint: #F6F4F1;   /* 选中行 / 段控激活底（中性） */
 
   /* 兼容旧色 */
   --primary: #1C1A16;        /* 对比度 ~17.5:1 — AAA ✅ */

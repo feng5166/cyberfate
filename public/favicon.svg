@@ -1,15 +1,15 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <!-- 暖色徽章：赭石高光 → 墨底 -->
+    <!-- 炭灰徽章：高光炭灰 → 近黑（黑白极简） -->
     <radialGradient id="cf-bg" cx="0.32" cy="0.26" r="0.95">
-      <stop offset="0" stop-color="#E7A94F"/>
-      <stop offset="0.5" stop-color="#AE651E"/>
-      <stop offset="1" stop-color="#17130F"/>
+      <stop offset="0" stop-color="#3A352E"/>
+      <stop offset="0.5" stop-color="#201C17"/>
+      <stop offset="1" stop-color="#100D0A"/>
     </radialGradient>
     <!-- 命星背后的柔光 -->
     <radialGradient id="cf-glow" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0" stop-color="#FBEEDD" stop-opacity="0.32"/>
-      <stop offset="1" stop-color="#FBEEDD" stop-opacity="0"/>
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
     </radialGradient>
   </defs>
 
@@ -20,9 +20,9 @@
   <circle cx="256" cy="256" r="150" fill="url(#cf-glow)"/>
 
   <!-- 命盘（细环） -->
-  <circle cx="256" cy="256" r="196" fill="none" stroke="#FBEEDD" stroke-opacity="0.55" stroke-width="6"/>
+  <circle cx="256" cy="256" r="196" fill="none" stroke="#F5F3EF" stroke-opacity="0.5" stroke-width="6"/>
   <!-- 罗盘方位刻度（上下左右四点） -->
-  <g fill="#FBEEDD" fill-opacity="0.55">
+  <g fill="#F5F3EF" fill-opacity="0.5">
     <circle cx="256" cy="60" r="6"/>
     <circle cx="256" cy="452" r="6"/>
     <circle cx="60" cy="256" r="6"/>
@@ -31,8 +31,8 @@
 
   <!-- 命星（四芒，罗盘星芒 / AI 火花） -->
   <path d="M256 104 L290 222 L408 256 L290 290 L256 408 L222 290 L104 256 L222 222 Z"
-        fill="#FBEEDD"/>
-  <!-- 中心暖核 -->
-  <circle cx="256" cy="256" r="21" fill="#E7A94F"/>
-  <circle cx="256" cy="256" r="9" fill="#17130F" fill-opacity="0.85"/>
+        fill="#F7F5F1"/>
+  <!-- 中心核 -->
+  <circle cx="256" cy="256" r="21" fill="#F7F5F1"/>
+  <circle cx="256" cy="256" r="9" fill="#100D0A" fill-opacity="0.9"/>
 </svg>
