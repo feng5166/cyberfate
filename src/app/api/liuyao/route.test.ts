@@ -125,8 +125,8 @@ describe('POST /api/liuyao', () => {
     expect(generateLiuYaoReading).toHaveBeenCalled();
   });
 
-  it('falls back to direct generate when circuit breaker throws, still 200', async () => {
-    // First call (inside breaker) throws, second (fallback) returns a fallback reading.
+  it('retries generate and stays 200 when the first AI call throws', async () => {
+    // First AI call throws, defensive catch retries once and gets a fallback reading.
     generateLiuYaoReading
       .mockRejectedValueOnce(new Error('upstream down'))
       .mockResolvedValueOnce({

@@ -4,7 +4,6 @@ import { generateCacheKey, getCache, setCache } from '@/lib/ai/cache';
 import { generateMeihuaDecision, type MeihuaDecisionResult } from '@/lib/ai/client';
 import type { MeihuaDecisionPromptInput } from '@/lib/ai/prompts';
 import { withAiTimeout } from '@/lib/ai/withTimeout';
-import { withCircuitBreaker } from '@/lib/ai/circuitBreaker';
 import { applyChaos } from '@/lib/chaos-middleware';
 import { checkMeihuaDecideQuota, refundQuota } from '@/lib/quota';
 
@@ -143,9 +142,8 @@ export async function POST(req: NextRequest) {
       return new Response(buildStream(meta, narrative), { headers: SSE_HEADERS });
     }
 
-    const decision = await withCircuitBreaker('deepseek-meihua-v4pro', () =>
-      withAiTimeout(() => generateMeihuaDecision(input), 50_000)
-    );
+    // 熔断已下沉到 client.ts 的 callDeepSeek（generateMeihuaDecision 内部吞异常，路由再包熔断形同虚设）
+    const decision = await withAiTimeout(() => generateMeihuaDecision(input), 50_000);
 
     if (quotaConsumed && (decision as { _source?: string })._source === 'fallback') {
       await refundQuota(session!.user.id, 'meihuaDecideCount');

@@ -10,7 +10,6 @@ import { isVip } from '@/lib/subscription';
 import { getTodayBeijing } from '@/lib/timezone';
 import { drawRandomCards, getCardImageUrl } from '@/data/tarot';
 import { withAiTimeout } from '@/lib/ai/withTimeout';
-import { withCircuitBreaker } from '@/lib/ai/circuitBreaker';
 import { applyChaos } from '@/lib/chaos-middleware';
 import { logger } from '@/lib/logger';
 
@@ -270,9 +269,8 @@ export async function POST(req: NextRequest) {
 
   let reading: TarotReadingResult & { _source: 'deepseek' | 'fallback' };
   try {
-    reading = await withCircuitBreaker('deepseek-tarot-v4pro', () =>
-      withAiTimeout(() => generateTarotReading(promptInput), 110_000)
-    );
+    // 熔断已下沉到 client.ts 的 callDeepSeek（generateTarotReading 内部吞异常，路由再包熔断形同虚设）
+    reading = await withAiTimeout(() => generateTarotReading(promptInput), 110_000);
   } catch (aiErr) {
     logger.warn(SERVICE, 'AI unavailable, using card-based fallback', { reason: aiErr instanceof Error ? aiErr.message : String(aiErr) });
     reading = {

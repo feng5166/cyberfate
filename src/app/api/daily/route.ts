@@ -5,7 +5,6 @@ import { getAuthSession } from '@/lib/auth-session';
 import { calculateBazi, getCurrentDayun, getDayGanzhi, getLunarDate, getYearGanzhi } from '@/lib/bazi';
 import { generateDailyFortune } from '@/lib/ai';
 import { withAiTimeout } from '@/lib/ai/withTimeout';
-import { withCircuitBreaker } from '@/lib/ai/circuitBreaker';
 import { logger } from '@/lib/logger';
 import { checkDailyQuota, refundQuota } from '@/lib/quota';
 import { getTodayBeijing } from '@/lib/timezone';
@@ -123,12 +122,11 @@ export async function POST(req: NextRequest) {
     // 3. 生成运势（可能失败，优雅降级）
     let fortune;
     try {
-      fortune = await withCircuitBreaker('deepseek-daily-v4pro', () =>
-        withAiTimeout(
-          () => generateDailyFortune(baziResult.dayMaster, targetDate, dayGanzhi, dayun, liunian),
-          55_000,
-          () => ({ ...generateFallbackFortune(baziResult.dayMaster, dayGanzhi, targetDate), _source: 'fallback' as const })
-        )
+      // 熔断已下沉到 client.ts 的 callDeepSeek（generateDailyFortune 内部吞异常不 throw，此处再包一层熔断永远看到成功、形同虚设）
+      fortune = await withAiTimeout(
+        () => generateDailyFortune(baziResult.dayMaster, targetDate, dayGanzhi, dayun, liunian),
+        55_000,
+        () => ({ ...generateFallbackFortune(baziResult.dayMaster, dayGanzhi, targetDate), _source: 'fallback' as const })
       );
     } catch (aiError) {
       logger.error(SERVICE, 'AI fortune generation failed', aiError instanceof Error ? aiError : undefined);

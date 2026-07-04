@@ -3,7 +3,6 @@ import { checkRateLimit } from '@/lib/rate-limit';
 import { generateCacheKey, getCache, setCache } from '@/lib/ai/cache';
 import { generateLiuYaoReading } from '@/lib/ai/client';
 import type { LiuYaoPromptInput } from '@/lib/ai/prompts';
-import { withCircuitBreaker } from '@/lib/ai/circuitBreaker';
 import { applyChaos } from '@/lib/chaos-middleware';
 import { log } from '@/lib/logger';
 import { checkLiuyaoQuota, refundQuota } from '@/lib/quota';
@@ -244,16 +243,14 @@ export async function POST(req: NextRequest) {
     method: data.method,
   };
 
+  // 熔断已下沉到 client.ts 的 callDeepSeek；此处保留路由层防御 try/catch：AI 意外抛错时直接重试一次兜底，不让请求 500
   let reading: Awaited<ReturnType<typeof generateLiuYaoReading>>;
   try {
-    reading = await withCircuitBreaker('deepseek-liuyao-v4pro', () =>
-      generateLiuYaoReading(promptInput)
-    );
+    reading = await generateLiuYaoReading(promptInput);
     log({ service: 'liuyao', level: 'info', message: 'AI reading success', meta: { source: reading._source } });
   } catch (err) {
     const errMsg = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
     console.error('[liuyao] AI reading failed, using fallback. error:', errMsg);
-    // 直接调用不经过断路器的 fallback
     reading = await generateLiuYaoReading(promptInput);
   }
 
