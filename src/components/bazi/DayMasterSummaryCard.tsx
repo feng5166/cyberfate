@@ -8,6 +8,8 @@ interface MingGeDisplayInfo {
   rizhuStrength: '偏强' | '中和' | '偏弱';
   yongShen: WuXing;
   jiShen: WuXing;
+  yongShenAll?: WuXing[];
+  jiShenAll?: WuXing[];
 }
 
 interface DayMasterSummaryCardProps {
@@ -76,17 +78,23 @@ export function DayMasterSummaryCard({
               <span className="hidden sm:inline text-[#1C1A16]/20">|</span>
 
               <span className="text-[#1C1A16]/60">用神：</span>
-              <span className="inline-flex items-center font-medium text-[#1C1A16]">
-                <WuxingDot wuxing={mingGe.yongShen} />
-                {mingGe.yongShen}
+              <span className="inline-flex items-center gap-2 font-medium text-[#1C1A16]">
+                {(mingGe.yongShenAll?.length ? mingGe.yongShenAll : [mingGe.yongShen]).map((w) => (
+                  <span key={`ys-${w}`} className="inline-flex items-center">
+                    <WuxingDot wuxing={w} />{w}
+                  </span>
+                ))}
               </span>
 
               <span className="hidden sm:inline text-[#1C1A16]/20">|</span>
 
               <span className="text-[#1C1A16]/60">忌神：</span>
-              <span className="inline-flex items-center font-medium text-[#1C1A16]">
-                <WuxingDot wuxing={mingGe.jiShen} />
-                {mingGe.jiShen}
+              <span className="inline-flex items-center gap-2 font-medium text-[#1C1A16]">
+                {(mingGe.jiShenAll?.length ? mingGe.jiShenAll : [mingGe.jiShen]).map((w) => (
+                  <span key={`js-${w}`} className="inline-flex items-center">
+                    <WuxingDot wuxing={w} />{w}
+                  </span>
+                ))}
               </span>
             </div>
           </div>

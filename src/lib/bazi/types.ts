@@ -135,6 +135,10 @@ export interface MingGeInfo {
   rizhuStrength: '偏强' | '中和' | '偏弱';
   yongShen: WuXing;
   jiShen: WuXing;
+  /** 完整喜用神集（含从格顺势）；缺省时回退单一 yongShen */
+  yongShenAll?: WuXing[];
+  /** 完整忌神集 */
+  jiShenAll?: WuXing[];
 }
 
 /** 神煞展示项（首屏命盘「神煞」模块用，含吉凶分类） */

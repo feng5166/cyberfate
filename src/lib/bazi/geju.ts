@@ -66,6 +66,11 @@ const WUXING_GENERATED_BY: Record<WuXing, WuXing> = {
   '木': '水', '火': '木', '土': '火', '金': '土', '水': '金',
 };
 
+/** 克我者（官杀）：取「克 X」的五行。用于身强取官杀为用。 */
+const WUXING_CONTROLLED_BY: Record<WuXing, WuXing> = {
+  '木': '金', '火': '水', '土': '木', '金': '火', '水': '土',
+};
+
 /**
  * 日主强弱分档阈值（得令+得地+得势 综合分）。
  * 抽出为具名常量，避免散落魔法数字，便于统一校准。
@@ -239,31 +244,76 @@ export function calculateRizhuStrength(chart: BaziChart): {
   return { strength, score: total, detail: { deLing, deDi, deShi } };
 }
 
+export interface YongShenResult {
+  /** 主用神（向后兼容） */
+  yongShen: WuXing;
+  /** 主忌神（向后兼容） */
+  jiShen: WuXing;
+  /** 完整喜用神（按重要度，去重） */
+  yongShenAll: WuXing[];
+  /** 完整忌神（去重） */
+  jiShenAll: WuXing[];
+}
+
 /**
- * 计算用神和忌神
+ * 从格检测（保守）：仅在证据充分时判定，避免误判把普通身弱/身强的用神方向整个反过来。
+ * - 从弱格：日主完全无根(得地=0) + 不得令 + 天干无帮扶（放弃抵抗、顺从旺神）。
+ * - 从强格：日主得令 + 多根 + 天干多帮 且综合分极高（顺其旺势）。
+ */
+function detectCongGe(
+  chart: BaziChart,
+  strength: { score: number; detail: { deLing: number; deDi: number; deShi: number } },
+): '从强格' | '从弱格' | null {
+  const zhiList: DiZhi[] = [chart.year.zhi, chart.month.zhi, chart.day.zhi];
+  if (chart.hour) zhiList.push(chart.hour.zhi);
+  const rooted = hasRoot(chart.day.gan, zhiList);
+  const { deLing, deDi, deShi } = strength.detail;
+
+  if (!rooted && deDi === 0 && deLing <= 0 && deShi <= 0) return '从弱格';
+  if (rooted && deLing >= 30 && deDi >= 40 && deShi >= 20 && strength.score >= 90) return '从强格';
+  return null;
+}
+
+/**
+ * 计算用神和忌神（含完整喜用/忌神集，含从格顺势）
  *
- * 日主偏强 → 需要克泄耗：官杀（克）、食伤（泄）、财（耗）为用神
- *           → 生助为忌：印（生）、比劫（助）为忌神
- * 日主偏弱 → 需要生助：印（生）、比劫（助）为用神
- *           → 克泄耗为忌：官杀（克）、食伤（泄）、财（耗）为忌神
- * 日主中和 → 平衡调候，以五行缺失/最弱为用神，最旺为忌神
+ * 常规：
+ * - 日主偏强 → 克泄耗为用（财/食伤/官杀），生助为忌（比劫/印）
+ * - 日主偏弱 → 生助为用（印/比劫），克泄耗为忌（财/食伤/官杀）
+ * - 日主中和 → 调候优先，再退回五行均衡
+ * 从格（顺势）：
+ * - 从弱格 → 顺从旺神（克泄耗为用，帮身为忌）
+ * - 从强格 → 顺其旺势（比劫印为用，逆势官杀财为忌）
  */
 export function calculateYongShen(
   chart: BaziChart,
-  strength: RizhuStrength
-): { yongShen: WuXing; jiShen: WuXing } {
+  strength: RizhuStrength,
+  geju?: string,
+): YongShenResult {
   const dayWuxing = TIANGAN_WUXING[chart.day.gan];
+  const yin = WUXING_GENERATED_BY[dayWuxing];   // 印（生我）
+  const bi = dayWuxing;                          // 比劫（同我）
+  const shi = WUXING_GENERATE[dayWuxing];        // 食伤（我生）
+  const cai = WUXING_CONTROL[dayWuxing];         // 财（我克）
+  const guan = WUXING_CONTROLLED_BY[dayWuxing];  // 官杀（克我）
+  const dedup = (arr: WuXing[]): WuXing[] => [...new Set(arr)];
 
-  if (strength === '偏强') {
-    const yongShen = WUXING_CONTROL[dayWuxing];
-    const jiShen = dayWuxing;
-    return { yongShen, jiShen };
+  // —— 从格：顺势而为 ——
+  if (geju === '从弱格') {
+    return { yongShen: cai, jiShen: bi, yongShenAll: dedup([cai, shi, guan]), jiShenAll: dedup([yin, bi]) };
+  }
+  if (geju === '从强格') {
+    return { yongShen: bi, jiShen: guan, yongShenAll: dedup([bi, yin]), jiShenAll: dedup([guan, cai, shi]) };
   }
 
+  // —— 常规身强：克泄耗为用 ——
+  if (strength === '偏强') {
+    return { yongShen: cai, jiShen: bi, yongShenAll: dedup([cai, shi, guan]), jiShenAll: dedup([bi, yin]) };
+  }
+
+  // —— 常规身弱：生助为用 ——
   if (strength === '偏弱') {
-    const yongShen = WUXING_GENERATED_BY[dayWuxing]; // 印（生我）为用
-    const jiShen = WUXING_CONTROL[dayWuxing];        // 财（我克，耗身）为忌
-    return { yongShen, jiShen };
+    return { yongShen: yin, jiShen: cai, yongShenAll: dedup([yin, bi]), jiShenAll: dedup([cai, shi, guan]) };
   }
 
   // —— 中和局：先调候（寒暖燥湿），再退回五行均衡 ——
@@ -280,20 +330,17 @@ export function calculateYongShen(
     .sort((a, b) => a[1] - b[1]); // 升序：最弱在前
   const maxCount = entries[entries.length - 1][1];
 
-  // 用神：调候优先（冬月喜火、夏月喜水），仅当该五行非日主本气、且未在命局中独占最旺时采用；
-  // 否则退回五行均衡法，取命局最弱且非日主的五行补益。
   const tiaohou = TIAOHOU_BY_MONTH[chart.month.zhi];
   const yongShen: WuXing =
     (tiaohou && tiaohou !== dayWuxing && wuxingCount[tiaohou] < maxCount)
       ? tiaohou
       : (entries.find(([el]) => el !== dayWuxing)?.[0] ?? entries[0][0]);
 
-  // 忌神：命局最旺且非日主、非用神的五行
   const jiShen: WuXing =
     [...entries].reverse().find(([el]) => el !== dayWuxing && el !== yongShen)?.[0]
     ?? entries[entries.length - 1][0];
 
-  return { yongShen, jiShen };
+  return { yongShen, jiShen, yongShenAll: [yongShen], jiShenAll: [jiShen] };
 }
 
 export interface MingGeAnalysis {
@@ -302,21 +349,30 @@ export interface MingGeAnalysis {
   strengthScore: number;
   yongShen: WuXing;
   jiShen: WuXing;
+  yongShenAll: WuXing[];
+  jiShenAll: WuXing[];
 }
 
 /**
- * 一站式命格分析：格局 + 日主强弱 + 用神忌神
+ * 一站式命格分析：格局（含从格）+ 日主强弱 + 用神忌神（含完整喜用/忌神集）
  */
 export function analyzeMingGe(chart: BaziChart): MingGeAnalysis {
-  const geju = determineGeju(chart);
-  const { strength, score } = calculateRizhuStrength(chart);
-  const { yongShen, jiShen } = calculateYongShen(chart, strength);
+  const strengthResult = calculateRizhuStrength(chart);
+  const cong = detectCongGe(chart, strengthResult);
+  const geju: GejuName = cong ?? determineGeju(chart);
+  const { yongShen, jiShen, yongShenAll, jiShenAll } = calculateYongShen(
+    chart,
+    strengthResult.strength,
+    geju,
+  );
 
   return {
     geju,
-    rizhuStrength: strength,
-    strengthScore: score,
+    rizhuStrength: strengthResult.strength,
+    strengthScore: strengthResult.score,
     yongShen,
     jiShen,
+    yongShenAll,
+    jiShenAll,
   };
 }

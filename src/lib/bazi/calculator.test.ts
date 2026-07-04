@@ -92,7 +92,7 @@ describe('calculateBazi — four pillars (precise time path)', () => {
 });
 
 describe('五行 (five-element) distribution invariants', () => {
-  it('sums to 8 when an hour pillar is present (4 pillars × 2)', () => {
+  it('sums to ≥8 with an hour pillar (4 柱含藏干：天干+地支藏干，每柱≥2)', () => {
     const { wuxing } = calculateBazi({
       gender: 'male',
       birthDate: '1990-05-15',
@@ -101,10 +101,11 @@ describe('五行 (five-element) distribution invariants', () => {
     });
     const sum =
       wuxing.metal + wuxing.wood + wuxing.water + wuxing.fire + wuxing.earth;
-    expect(sum).toBe(8);
+    // 含藏干：4 天干 + 各地支藏干(1~3)；下限 = 4 柱 × (天干1 + 地支本气1) = 8
+    expect(sum).toBeGreaterThanOrEqual(8);
   });
 
-  it('sums to 6 when no hour pillar (3 pillars × 2)', () => {
+  it('sums to ≥6 without an hour pillar (3 柱含藏干)', () => {
     const { wuxing, chart } = calculateBazi({
       gender: 'male',
       birthDate: '1990-05-15',
@@ -113,7 +114,7 @@ describe('五行 (five-element) distribution invariants', () => {
     expect(chart.hour).toBeNull();
     const sum =
       wuxing.metal + wuxing.wood + wuxing.water + wuxing.fire + wuxing.earth;
-    expect(sum).toBe(6);
+    expect(sum).toBeGreaterThanOrEqual(6);
   });
 
   it('all five-element counts are non-negative integers', () => {

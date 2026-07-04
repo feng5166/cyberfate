@@ -156,6 +156,48 @@ describe('calculateYongShen', () => {
   });
 });
 
+describe('calculateYongShen 完整喜用/忌神集 (#2) + 从格 (#1)', () => {
+  const chart = chartFor('1990-05-15', 10);
+
+  it('偏强: yongShenAll=克泄耗(财/食伤/官杀), jiShenAll=生助(比劫/印), 主用神仍=财', () => {
+    const r = calculateYongShen(chart, '偏强');
+    expect(r.yongShen).toBe(r.yongShenAll[0]); // 主用神在集合内
+    expect(new Set(r.yongShenAll).size).toBe(r.yongShenAll.length); // 去重
+    expect(r.yongShenAll.length).toBeGreaterThanOrEqual(2);
+    // 用神/忌神两集不相交
+    for (const w of r.yongShenAll) expect(r.jiShenAll).not.toContain(w);
+    expect(r.jiShenAll).toContain(r.jiShen);
+  });
+
+  it('偏弱: yongShenAll=生助(印/比劫), jiShenAll=克泄耗', () => {
+    const r = calculateYongShen(chart, '偏弱');
+    expect(r.yongShenAll).toContain(r.yongShen);
+    for (const w of r.yongShenAll) expect(r.jiShenAll).not.toContain(w);
+  });
+
+  it('从弱格: 顺从旺神——用神=克泄耗, 忌神=帮身(印比)', () => {
+    const r = calculateYongShen(chart, '偏弱', '从弱格');
+    // 从弱与身强用神方向一致(克泄耗)，与身弱相反
+    const weak = calculateYongShen(chart, '偏弱');
+    expect(r.yongShenAll).not.toEqual(weak.yongShenAll);
+    for (const w of r.yongShenAll) expect(r.jiShenAll).not.toContain(w);
+  });
+
+  it('从强格: 顺其旺势——用神=比劫印, 忌神=官杀财', () => {
+    const r = calculateYongShen(chart, '偏强', '从强格');
+    for (const w of r.yongShenAll) expect(r.jiShenAll).not.toContain(w);
+    expect(r.yongShenAll).toContain(r.yongShen);
+  });
+
+  it('analyzeMingGe 产出 yongShenAll/jiShenAll 且 geju 为合法名(含从格)', () => {
+    const m = analyzeMingGe(chart);
+    expect(GEJU_NAMES.has(m.geju)).toBe(true);
+    expect(m.yongShenAll.length).toBeGreaterThanOrEqual(1);
+    expect(m.jiShenAll.length).toBeGreaterThanOrEqual(1);
+    expect(m.yongShenAll).toContain(m.yongShen);
+  });
+});
+
 describe('analyzeMingGe (one-stop)', () => {
   it('returns consistent composite analysis', () => {
     const chart = chartFor('1990-05-15', 10);

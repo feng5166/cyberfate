@@ -1,6 +1,7 @@
 import { Solar, Lunar } from 'lunar-javascript';
 import type { BaziInput, BaziResult, BaziChart, Pillar, WuxingCount, WuXing, TianGan, DiZhi, ShiChen, Gender, DayunResult, DayunTimelineItem } from './types';
 import { TIANGAN_WUXING, DIZHI_WUXING, SHICHEN_DIZHI, WUXING_KEYS, TIANGAN_LIST, DIZHI_LIST } from './constants';
+import { DIZHI_HIDDEN_GAN } from './geju';
 
 /**
  * 构建一个柱（年/月/日/时柱）
@@ -53,7 +54,9 @@ function getHourPillar(dayGan: TianGan, shichen: ShiChen): Pillar | null {
 }
 
 /**
- * 统计五行数量
+ * 统计五行力量分布（含藏干）
+ * 天干各 +1；地支按藏干（本气/中气/余气）逐个 +1——比只数地支本气更贴近真实旺衰，
+ * 也让下游「最旺/最弱五行」与格局旺衰口径一致。每柱至少贡献 2（天干 + 地支本气）。
  */
 function countWuxing(chart: BaziChart): WuxingCount {
   const count: WuxingCount = {
@@ -63,20 +66,21 @@ function countWuxing(chart: BaziChart): WuxingCount {
     fire: 0,
     earth: 0,
   };
-  
-  // 统计年月日时四柱的天干地支五行
+
   const pillars = [chart.year, chart.month, chart.day];
   if (chart.hour) {
     pillars.push(chart.hour);
   }
-  
+
   for (const pillar of pillars) {
-    const ganKey = WUXING_KEYS[pillar.ganWuxing];
-    const zhiKey = WUXING_KEYS[pillar.zhiWuxing];
-    count[ganKey]++;
-    count[zhiKey]++;
+    // 天干
+    count[WUXING_KEYS[pillar.ganWuxing]]++;
+    // 地支藏干（含中气/余气）
+    for (const hidden of DIZHI_HIDDEN_GAN[pillar.zhi]) {
+      count[WUXING_KEYS[TIANGAN_WUXING[hidden]]]++;
+    }
   }
-  
+
   return count;
 }
 

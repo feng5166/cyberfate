@@ -230,6 +230,8 @@ export async function POST(req: NextRequest) {
       rizhuStrength: mingGeResult.rizhuStrength,
       yongShen: mingGeResult.yongShen,
       jiShen: mingGeResult.jiShen,
+      yongShenAll: mingGeResult.yongShenAll,
+      jiShenAll: mingGeResult.jiShenAll,
     };
 
     // —— 首屏结构化命盘模块（确定性，一次性算出）：神煞 / 流年 / 流月 / 终身大运表 ——
