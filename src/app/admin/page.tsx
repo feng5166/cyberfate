@@ -29,7 +29,7 @@ interface SubInfo {
   createdAt: string;
 }
 
-type Tab = 'users' | 'check' | 'fix-vip' | 'create-sub';
+type Tab = 'users' | 'check' | 'fix-vip' | 'create-sub' | 'llm';
 
 export default function AdminPage() {
   const { data: session, status } = useSession();
@@ -76,6 +76,7 @@ export default function AdminPage() {
           ['check', '🔍 查询用户'],
           ['fix-vip', '🔧 修正 VIP'],
           ['create-sub', '➕ 创建订阅'],
+          ['llm', '🤖 AI 模型'],
         ] as [Tab, string][]).map(([key, label]) => (
           <button
             key={key}
@@ -96,6 +97,7 @@ export default function AdminPage() {
       {tab === 'check' && <CheckUserTab />}
       {tab === 'fix-vip' && <FixVipTab />}
       {tab === 'create-sub' && <CreateSubTab />}
+      {tab === 'llm' && <LlmProviderTab />}
     </div>
   );
 }
@@ -1075,6 +1077,129 @@ function CreateSubTab() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ── Tab 4: AI 模型（LLM Provider 切换）─────────────────
+interface LlmProviderRow {
+  id: string;
+  label: string;
+  baseUrl: string;
+  hasKey: boolean;
+  active: boolean;
+}
+interface LlmStatus {
+  active: string;
+  providers: LlmProviderRow[];
+}
+
+function LlmProviderTab() {
+  const [status, setStatus] = useState<LlmStatus | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [switching, setSwitching] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  const load = () => {
+    setLoading(true);
+    setError(null);
+    fetch('/api/admin/llm')
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || '加载失败');
+        return data;
+      })
+      .then((data) => setStatus(data))
+      .catch((e) => setError(e instanceof Error ? e.message : '加载失败'))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(load, []);
+
+  const switchTo = async (provider: string) => {
+    if (status?.active === provider) return;
+    setSwitching(provider);
+    setError(null);
+    setNotice(null);
+    try {
+      const res = await fetch('/api/admin/llm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ provider }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || '切换失败');
+      setStatus({ active: data.active, providers: data.providers });
+      setNotice(`已切换到「${data.providers.find((p: LlmProviderRow) => p.id === provider)?.label ?? provider}」，即时全站生效。`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '切换失败');
+    } finally {
+      setSwitching(null);
+    }
+  };
+
+  return (
+    <div className="space-y-5">
+      <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 text-sm">
+        ℹ️ 切换当前生效的大模型接入点（provider）。两个 provider 模型名一致，切换只换接入网关 + 密钥，<span className="font-medium">即时对全站 AI 生效</span>；被选中的 provider 若请求失败会自动兜底到另一个。
+      </div>
+
+      {error && <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">{error}</div>}
+      {notice && <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm">{notice}</div>}
+
+      {loading && !status ? (
+        <div className="text-center py-10 text-gray-400 text-sm animate-pulse">加载中...</div>
+      ) : status ? (
+        <div className="grid gap-3 md:grid-cols-2">
+          {status.providers.map((p) => (
+            <div
+              key={p.id}
+              className={`p-5 rounded-xl border shadow-sm transition-all ${
+                p.active ? 'bg-indigo-50 border-indigo-300 ring-2 ring-indigo-200' : 'bg-white border-gray-200'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-base font-semibold text-gray-900">{p.label}</span>
+                {p.active ? (
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-500 text-white">
+                    ● 当前生效
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-400">
+                    待命（兜底）
+                  </span>
+                )}
+              </div>
+              <div className="text-xs text-gray-400 break-all mb-1">{p.baseUrl}</div>
+              <div className="mb-4">
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                  p.hasKey ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'
+                }`}>
+                  {p.hasKey ? '✅ 已配置密钥' : '⚠️ 未配置密钥'}
+                </span>
+              </div>
+              <button
+                onClick={() => switchTo(p.id)}
+                disabled={p.active || switching !== null || !p.hasKey}
+                className={`w-full px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                  p.active ? 'bg-gray-100 text-gray-400' : 'bg-indigo-500 hover:bg-indigo-600 text-white'
+                }`}
+              >
+                {p.active ? '正在使用' : switching === p.id ? '切换中...' : !p.hasKey ? '缺少密钥无法切换' : '切换为主用'}
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      <button
+        onClick={load}
+        disabled={loading}
+        className="text-xs text-gray-500 hover:text-gray-700 underline underline-offset-2 disabled:opacity-40"
+      >
+        刷新状态
+      </button>
     </div>
   );
 }

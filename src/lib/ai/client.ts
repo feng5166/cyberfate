@@ -16,12 +16,11 @@ import {
   type TarotSpread,
 } from './prompts';
 import type { BaziResult, BaziAnalysis } from '../bazi/types';
-import { callExternalAPI, getEnvVar } from '../utils/api-wrapper';
+import { callExternalAPI } from '../utils/api-wrapper';
 import { redis } from '../cache/redis';
-import { AI_BASE_URL, PRIMARY_MODEL, FALLBACK_MODEL } from './models';
+import { PRIMARY_MODEL } from './models';
 import { withCircuitBreaker } from './circuitBreaker';
-
-const DEEPSEEK_BASE_URL = AI_BASE_URL;
+import { resolveProviders, hasAnyProviderKey } from './provider';
 
 const TIMEOUT_CONFIG: Record<string, number> = {
   bazi: 55000,
@@ -66,10 +65,11 @@ function isTimeoutError(err: unknown): boolean {
   return msg.includes('AbortError') || msg.includes('aborted') || msg.includes('timed out');
 }
 
-/** 单个模型的调用：含网络错误与瞬时 5xx 的有限重试；超时/4xx 直接抛出不重试 */
+/** 单个 provider+模型的调用：含网络错误与瞬时 5xx 的有限重试；超时/4xx 直接抛出不重试 */
 async function callModelOnce(
-  model: string,
+  baseUrl: string,
   apiKey: string,
+  model: string,
   systemPrompt: string,
   userPrompt: string,
   maxTokens: number,
@@ -83,7 +83,7 @@ async function callModelOnce(
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), getTimeout(feature));
     try {
-      const response = await fetch(`${DEEPSEEK_BASE_URL}/chat/completions`, {
+      const response = await fetch(`${baseUrl}/chat/completions`, {
         method: 'POST',
         signal: controller.signal,
         headers: {
@@ -145,8 +145,9 @@ async function callModelOnce(
 }
 
 /**
- * 调 DeepSeek：主模型失败 → 非超时错误再用更快的兜底模型试一次；全程走熔断保护。
- * 超时说明本次预算已耗尽，不再追加兜底模型，直接抛给上层落本地降级。
+ * 调 LLM：按后台开关解析出 [主 provider, 兜底 provider]，主失败(非超时)时切下一个 provider 重试；
+ * 全程走熔断保护。两个 provider 模型名一致，切 provider 只换 baseUrl+apiKey。
+ * 超时说明本次预算已耗尽，不再切 provider，直接抛给上层落本地降级。
  */
 async function callDeepSeek(
   systemPrompt: string,
@@ -155,18 +156,27 @@ async function callDeepSeek(
   feature?: string,
   opts: CallDeepSeekOptions = {},
 ): Promise<string> {
-  const apiKey = getEnvVar('DEEPSEEK_API_KEY');
-  if (!apiKey) throw new Error('DEEPSEEK_API_KEY 未配置');
+  const providers = await resolveProviders();
+  if (!providers.length) throw new Error('无可用 LLM provider（未配置 API key）');
 
   return withCircuitBreaker(`ai:${feature ?? 'default'}`, async () => {
-    try {
-      return await callModelOnce(PRIMARY_MODEL, apiKey, systemPrompt, userPrompt, maxTokens, feature, opts);
-    } catch (err) {
-      if (isTimeoutError(err) || PRIMARY_MODEL === FALLBACK_MODEL) throw err;
-      const msg = err instanceof Error ? err.message : String(err);
-      console.warn(`[callDeepSeek] 主模型 ${PRIMARY_MODEL} 失败 (${msg})，切兜底模型 ${FALLBACK_MODEL} 重试`);
-      return await callModelOnce(FALLBACK_MODEL, apiKey, systemPrompt, userPrompt, maxTokens, feature, opts);
+    let lastError: unknown;
+    for (let i = 0; i < providers.length; i++) {
+      const p = providers[i];
+      try {
+        return await callModelOnce(p.baseUrl, p.apiKey, PRIMARY_MODEL, systemPrompt, userPrompt, maxTokens, feature, opts);
+      } catch (err) {
+        lastError = err;
+        if (isTimeoutError(err)) throw err; // 超时不再切 provider
+        if (i < providers.length - 1) {
+          const msg = err instanceof Error ? err.message : String(err);
+          console.warn(`[callDeepSeek] provider ${p.id} 失败 (${msg})，切下一个 provider ${providers[i + 1].id}`);
+          continue;
+        }
+        throw err;
+      }
     }
+    throw lastError;
   });
 }
 
@@ -209,9 +219,8 @@ export async function generateBaziAnalysis(
     }
   }
 
-  const apiKey = getEnvVar('DEEPSEEK_API_KEY');
-  if (!apiKey) {
-    console.warn('[AI] DEEPSEEK_API_KEY 未配置，使用降级分析');
+  if (!hasAnyProviderKey()) {
+    console.warn('[AI] 未配置任何 LLM provider 的 API key，使用降级分析');
     return { ...generateFallbackBaziAnalysis(result), _source: 'fallback' };
   }
 
@@ -304,9 +313,8 @@ export async function generateDailyFortune(
     console.warn('[Cache Read Error]', err);
   }
 
-  const apiKey = getEnvVar('DEEPSEEK_API_KEY');
-  if (!apiKey) {
-    console.warn('[AI] DEEPSEEK_API_KEY 未配置，使用降级运势');
+  if (!hasAnyProviderKey()) {
+    console.warn('[AI] 未配置任何 LLM provider 的 API key，使用降级运势');
     return { ...generateFallbackDailyFortune(), _source: 'fallback' };
   }
 
@@ -476,9 +484,7 @@ export async function generateTarotReading(
   input: TarotReadingPromptInput
 ): Promise<TarotReadingResult & { _source: 'deepseek' | 'fallback' }> {
   const fallback = buildFallbackTarotReading(input);
-  const apiKey = getEnvVar('DEEPSEEK_API_KEY');
-
-  if (!apiKey) {
+  if (!hasAnyProviderKey()) {
     return { ...fallback, _source: 'fallback' };
   }
 
@@ -651,9 +657,7 @@ export async function generateMeihuaDecision(
   input: MeihuaDecisionPromptInput
 ): Promise<MeihuaDecisionResult & { _source: 'deepseek' | 'fallback' }> {
   const fallback = buildFallbackMeihuaDecision(input);
-  const apiKey = getEnvVar('DEEPSEEK_API_KEY');
-
-  if (!apiKey) {
+  if (!hasAnyProviderKey()) {
     return { ...fallback, _source: 'fallback' };
   }
 
@@ -723,9 +727,7 @@ export async function generateLiuYaoReading(
   input: LiuYaoPromptInput
 ): Promise<LiuYaoReadingResult & { _source: 'deepseek' | 'fallback'; _error?: string }> {
   const fallback = buildFallbackLiuYaoReading(input);
-  const apiKey = getEnvVar('DEEPSEEK_API_KEY');
-
-  if (!apiKey) {
+  if (!hasAnyProviderKey()) {
     return { ...fallback, _source: 'fallback' };
   }
 

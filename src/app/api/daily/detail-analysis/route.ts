@@ -5,8 +5,8 @@ import { prisma } from '@/lib/db';
 import { isVip } from '@/lib/subscription';
 import { calculateBazi, getCurrentDayun, getDayGanzhi, getLunarDate, getYearGanzhi } from '@/lib/bazi';
 import { DAILY_DETAIL_SYSTEM_PROMPT, buildDailyDetailUserPrompt } from '@/lib/ai/prompts-daily-detail';
-import { getEnvVar } from '@/lib/utils/api-wrapper';
-import { AI_BASE_URL, PRIMARY_MODEL, FALLBACK_MODEL } from '@/lib/ai/models';
+import { PRIMARY_MODEL, FALLBACK_MODEL } from '@/lib/ai/models';
+import { getPrimaryProvider } from '@/lib/ai/provider';
 import { attachClientAbort } from '@/lib/ai/streamProxy';
 import { getTodayBeijing } from '@/lib/timezone';
 
@@ -77,16 +77,16 @@ export async function POST(req: NextRequest) {
 
   const stream = new ReadableStream({
     async start(controller) {
+      const provider = await getPrimaryProvider();
       try {
-        const apiKey = getEnvVar('DEEPSEEK_API_KEY');
-        if (!apiKey) throw new Error('DEEPSEEK_API_KEY 未配置');
+        if (!provider) throw new Error('DEEPSEEK_API_KEY 未配置');
 
-        const response = await fetch(`${AI_BASE_URL}/chat/completions`, {
+        const response = await fetch(`${provider.baseUrl}/chat/completions`, {
           method: 'POST',
           signal: abortHandle.signal,
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`,
+            'Authorization': `Bearer ${provider.apiKey}`,
           },
           body: JSON.stringify({
             model: PRIMARY_MODEL,
@@ -162,14 +162,13 @@ export async function POST(req: NextRequest) {
         fullContent = '';
 
         try {
-          const fallbackKey = getEnvVar('DEEPSEEK_API_KEY');
-          if (fallbackKey) {
-            const fallbackResponse = await fetch(`${AI_BASE_URL}/chat/completions`, {
+          if (provider) {
+            const fallbackResponse = await fetch(`${provider.baseUrl}/chat/completions`, {
               method: 'POST',
               signal: abortHandle.signal,
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${fallbackKey}`,
+                'Authorization': `Bearer ${provider.apiKey}`,
               },
               body: JSON.stringify({
                 model: FALLBACK_MODEL,

@@ -4,12 +4,12 @@ import { isUserVip, checkDailyQaQuota } from '@/lib/quota';
 import { logger } from '@/lib/logger';
 import { prisma } from '@/lib/db';
 import { withCircuitBreaker } from '@/lib/ai/circuitBreaker';
-import { AI_BASE_URL, PRIMARY_MODEL } from '@/lib/ai/models';
+import { PRIMARY_MODEL } from '@/lib/ai/models';
+import { getPrimaryProvider } from '@/lib/ai/provider';
 import { attachClientAbort } from '@/lib/ai/streamProxy';
 import { getTodayBeijing } from '@/lib/timezone';
 
 const SERVICE = 'api/daily/fortune-qa';
-const DEEPSEEK_BASE_URL = AI_BASE_URL;
 const DEEPSEEK_MODEL = PRIMARY_MODEL;
 
 export async function POST(req: NextRequest) {
@@ -42,8 +42,8 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: '问题不得超过300字' }, { status: 400 });
     }
 
-    const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
-    if (!DEEPSEEK_API_KEY) {
+    const provider = await getPrimaryProvider();
+    if (!provider) {
       logger.error(SERVICE, 'DEEPSEEK_API_KEY not configured');
       return Response.json({ error: '服务配置异常' }, { status: 500 });
     }
@@ -84,12 +84,12 @@ export async function POST(req: NextRequest) {
     const abortHandle = attachClientAbort(req);
 
     const response = await withCircuitBreaker('deepseek-fortune-qa-v4pro', () =>
-      fetch(`${DEEPSEEK_BASE_URL}/chat/completions`, {
+      fetch(`${provider.baseUrl}/chat/completions`, {
         method: 'POST',
         signal: abortHandle.signal,
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
+          Authorization: `Bearer ${provider.apiKey}`,
         },
         body: JSON.stringify({
           model: DEEPSEEK_MODEL,

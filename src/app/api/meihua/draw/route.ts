@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateCacheKey, getCache, setCache } from '@/lib/ai/cache';
-import { AI_BASE_URL, PRIMARY_MODEL } from '@/lib/ai/models';
+import { PRIMARY_MODEL } from '@/lib/ai/models';
+import { getPrimaryProvider } from '@/lib/ai/provider';
 import { type DrawMethod, buildPair, resolveDraw, getChangedPair } from '@/lib/meihua/draw';
 
 function firstSentence(text: string): string {
@@ -120,11 +121,13 @@ export async function POST(req: NextRequest) {
 
   let upstream: Response | null = null;
   try {
-    upstream = await fetch(`${AI_BASE_URL}/chat/completions`, {
+    const provider = await getPrimaryProvider();
+    if (!provider) throw new Error('AI 服务未配置');
+    upstream = await fetch(`${provider.baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+        Authorization: `Bearer ${provider.apiKey}`,
       },
       body: JSON.stringify({
         model: PRIMARY_MODEL,

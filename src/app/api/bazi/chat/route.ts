@@ -5,7 +5,8 @@ import { getAuthSession } from '@/lib/auth-session';
 import { isUserVip } from '@/lib/quota';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
-import { AI_BASE_URL, PRIMARY_MODEL } from '@/lib/ai/models';
+import { PRIMARY_MODEL } from '@/lib/ai/models';
+import { getPrimaryProvider } from '@/lib/ai/provider';
 import { calculateBazi } from '@/lib/bazi/calculator';
 import { runBaziToolchain, toolchainToPromptFacts, type ToolStepResult } from '@/lib/bazi/tools';
 import { redis } from '@/lib/cache/redis';
@@ -195,7 +196,6 @@ const baziDataSchema = z.object({
 }).strict().partial();
 
 const SERVICE = 'api/bazi/chat';
-const DEEPSEEK_BASE_URL = AI_BASE_URL;
 const DEEPSEEK_MODEL = PRIMARY_MODEL;
 
 export async function POST(req: NextRequest) {
@@ -348,8 +348,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
-    if (!DEEPSEEK_API_KEY) {
+    const provider = await getPrimaryProvider();
+    if (!provider) {
       logger.error(SERVICE, 'DEEPSEEK_API_KEY not configured');
       return Response.json({ error: '服务配置异常' }, { status: 500 });
     }
@@ -394,12 +394,12 @@ ${answerRule}
     const onClientAbort = () => ac.abort();
     req.signal.addEventListener('abort', onClientAbort);
 
-    const response = await fetch(`${DEEPSEEK_BASE_URL}/chat/completions`, {
+    const response = await fetch(`${provider.baseUrl}/chat/completions`, {
       method: 'POST',
       signal: ac.signal,
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
+        Authorization: `Bearer ${provider.apiKey}`,
       },
       body: JSON.stringify({
         model: DEEPSEEK_MODEL,

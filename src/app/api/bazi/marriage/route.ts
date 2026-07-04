@@ -4,7 +4,8 @@ import { generateCacheKey, getCache, setCache } from '@/lib/ai/cache';
 import { sanitizeUserInput } from '@/lib/utils/sanitize';
 
 import { calculateBazi as realCalculateBazi } from '@/lib/bazi';
-import { AI_BASE_URL, PRIMARY_MODEL, FALLBACK_MODEL } from '@/lib/ai/models';
+import { PRIMARY_MODEL, FALLBACK_MODEL } from '@/lib/ai/models';
+import { getPrimaryProvider, type ResolvedProvider } from '@/lib/ai/provider';
 import {
   calcSideShishen,
   buildShishenSummary,
@@ -409,10 +410,11 @@ async function runAIAnalysis(params: {
   score: number;
   level: string;
   details: string[];
+  provider: ResolvedProvider;
 }): Promise<{ structured: Structured; rawText: string; aiSource: string }> {
   const {
     safeMaleName, safeFemaleName, effectiveMaleDate, effectiveFemaleDate,
-    maleSide, femaleSide, maleBazi, femaleBazi, score, level, details,
+    maleSide, femaleSide, maleBazi, femaleBazi, score, level, details, provider,
   } = params;
 
   const cacheKey = generateCacheKey('marriage:ai:struct:v1', { male: maleBazi, female: femaleBazi });
@@ -480,9 +482,9 @@ ${details.join('\n')}
   let aiSource = 'fallback';
 
   try {
-    const structuredRes = await fetch(`${AI_BASE_URL}/chat/completions`, {
+    const structuredRes = await fetch(`${provider.baseUrl}/chat/completions`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}` },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${provider.apiKey}` },
       body: JSON.stringify({
         model: PRIMARY_MODEL,
         max_tokens: 3000,
@@ -553,10 +555,11 @@ async function runDeepReport(params: {
   femaleBazi: string;
   score: number;
   level: string;
+  provider: ResolvedProvider;
 }): Promise<{ deepReport: string; aiSource: string }> {
   const {
     safeMaleName, safeFemaleName, maleSide, femaleSide,
-    effectiveMaleDate, effectiveFemaleDate, maleBazi, femaleBazi, score, level,
+    effectiveMaleDate, effectiveFemaleDate, maleBazi, femaleBazi, score, level, provider,
   } = params;
 
   const cacheKey = generateCacheKey('marriage:ai:deep:v4', { male: maleBazi, female: femaleBazi });
@@ -642,9 +645,9 @@ async function runDeepReport(params: {
 - 如某项信息无法从八字中确定，请如实说明，不要杜撰`;
 
   try {
-    const deepReportRes = await fetch(`${AI_BASE_URL}/chat/completions`, {
+    const deepReportRes = await fetch(`${provider.baseUrl}/chat/completions`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}` },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${provider.apiKey}` },
       body: JSON.stringify({
         model: PRIMARY_MODEL,
         max_tokens: 5000,
@@ -768,11 +771,16 @@ export async function POST(req: NextRequest) {
 
   // ── ?ai=1：仅返回 AI 结构化分析（约 10s） ────────────────────
   if (aiOnly) {
+    const provider = await getPrimaryProvider();
+    if (!provider) {
+      return NextResponse.json({ error: 'AI 服务未配置' }, { status: 503 });
+    }
     const { structured, rawText, aiSource } = await runAIAnalysis({
       safeMaleName, safeFemaleName,
       effectiveMaleDate: effectiveMaleDate as string,
       effectiveFemaleDate: effectiveFemaleDate as string,
       maleSide, femaleSide, maleBazi, femaleBazi, score, level, details,
+      provider,
     });
 
     return NextResponse.json({
@@ -788,6 +796,10 @@ export async function POST(req: NextRequest) {
   // ── ?ai=deep：SSE streaming 深度命理报告 ────────────────────
   if (aiDeep) {
     try {
+    const provider = await getPrimaryProvider();
+    if (!provider) {
+      return NextResponse.json({ error: 'AI 服务未配置', deepReport: '' }, { status: 503 });
+    }
     const maleDateLine = maleSide.isLunar ? `${effectiveMaleDate}（农历）` : effectiveMaleDate;
     const femaleDateLine = femaleSide.isLunar ? `${effectiveFemaleDate}（农历）` : effectiveFemaleDate;
 
@@ -886,11 +898,11 @@ export async function POST(req: NextRequest) {
 - 大运推算要符合男女顺逆（男阳女阴顺行，男阴女阳逆行）规则
 - 如某项信息无法从八字中确定，请如实说明，不要杜撰`;
 
-    const aiRes = await fetch(`${AI_BASE_URL}/chat/completions`, {
+    const aiRes = await fetch(`${provider.baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+        'Authorization': `Bearer ${provider.apiKey}`,
       },
       body: JSON.stringify({
         model: PRIMARY_MODEL,

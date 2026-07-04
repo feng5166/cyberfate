@@ -10,16 +10,15 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getRedis } from '@/lib/cache/redis';
-import { getEnvVar } from '@/lib/utils/api-wrapper';
 import { getTodayTiangan, getWuxingMusicProfile } from '@/lib/music-oracle/wuxing-music-map';
 import { MUSIC_ORACLE_SYSTEM_PROMPT } from '@/lib/music-oracle/prompts';
 import { prisma } from '@/lib/db';
-import { AI_BASE_URL, PRIMARY_MODEL } from '@/lib/ai/models';
+import { PRIMARY_MODEL } from '@/lib/ai/models';
+import { getPrimaryProvider } from '@/lib/ai/provider';
 import { getAuthSession } from '@/lib/auth-session';
 import { isVip as checkIsVip } from '@/lib/subscription';
 import { getTodayBeijing } from '@/lib/timezone';
 
-const DEEPSEEK_BASE_URL = AI_BASE_URL;
 const DEEPSEEK_MODEL = PRIMARY_MODEL;
 
 /* ─── 天干按年份(简化) ─── */
@@ -182,8 +181,8 @@ export async function POST(request: NextRequest) {
 仅返回 JSON，不要其他文字。`;
 
     // 调用 AI
-    const apiKey = getEnvVar('DEEPSEEK_API_KEY');
-    if (!apiKey) {
+    const provider = await getPrimaryProvider();
+    if (!provider) {
       return NextResponse.json(
         { success: false, error: '服务配置异常', code: 'INTERNAL_ERROR' },
         { status: 500 }
@@ -193,12 +192,12 @@ export async function POST(request: NextRequest) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-    const aiRes = await fetch(`${DEEPSEEK_BASE_URL}/chat/completions`, {
+    const aiRes = await fetch(`${provider.baseUrl}/chat/completions`, {
       method: 'POST',
       signal: controller.signal,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
+        'Authorization': `Bearer ${provider.apiKey}`,
       },
       body: JSON.stringify({
         model: DEEPSEEK_MODEL,

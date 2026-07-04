@@ -5,8 +5,8 @@
 
 import { MUSIC_ORACLE_SYSTEM_PROMPT, buildDailyMusicPrompt } from './prompts';
 import { getTodayTiangan, getWuxingMusicProfile } from './wuxing-music-map';
-import { getEnvVar } from '../utils/api-wrapper';
-import { AI_BASE_URL, PRIMARY_MODEL } from '../ai/models';
+import { PRIMARY_MODEL } from '../ai/models';
+import { getPrimaryProvider } from '../ai/provider';
 
 export interface DailyMusicItem {
   songName: string;
@@ -78,13 +78,12 @@ export async function generateDailyMusic(): Promise<DailyMusicResult | null> {
 /**
  * 调用 DeepSeek API（与项目其他模块一致，使用 ModelVerse 中转）
  */
-const DEEPSEEK_BASE_URL = AI_BASE_URL;
 const DEEPSEEK_MODEL = PRIMARY_MODEL;
 
 async function callDeepSeekAPI(systemPrompt: string, userPrompt: string): Promise<string | null> {
-  const apiKey = getEnvVar('DEEPSEEK_API_KEY');
+  const provider = await getPrimaryProvider();
 
-  if (!apiKey) {
+  if (!provider) {
     console.error('[MusicOracle] DEEPSEEK_API_KEY 未配置');
     return null;
   }
@@ -93,12 +92,12 @@ async function callDeepSeekAPI(systemPrompt: string, userPrompt: string): Promis
   const timeoutId = setTimeout(() => controller.abort(), 50000);
 
   try {
-    const response = await fetch(`${DEEPSEEK_BASE_URL}/chat/completions`, {
+    const response = await fetch(`${provider.baseUrl}/chat/completions`, {
       method: 'POST',
       signal: controller.signal,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
+        'Authorization': `Bearer ${provider.apiKey}`,
       },
       body: JSON.stringify({
         model: DEEPSEEK_MODEL,

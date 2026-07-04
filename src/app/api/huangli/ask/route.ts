@@ -4,7 +4,8 @@ import { calculateHuangli } from '@/lib/huangli/calculator';
 import { sanitizeUserInput } from '@/lib/utils/sanitize';
 import { applyChaos } from '@/lib/chaos-middleware';
 import { logger } from '@/lib/logger';
-import { AI_BASE_URL, PRIMARY_MODEL } from '@/lib/ai/models';
+import { PRIMARY_MODEL } from '@/lib/ai/models';
+import { getPrimaryProvider } from '@/lib/ai/provider';
 import { attachClientAbort } from '@/lib/ai/streamProxy';
 
 const SERVICE = 'api/huangli/ask';
@@ -66,20 +67,20 @@ export async function POST(req: NextRequest) {
 5. 字数控制在 100-250 字
 6. 纯文本回复，不要用 markdown 格式`;
 
-    const apiKey = process.env.DEEPSEEK_API_KEY;
-    if (!apiKey) {
+    const provider = await getPrimaryProvider();
+    if (!provider) {
       logger.error(SERVICE, 'DEEPSEEK_API_KEY not configured');
       return NextResponse.json({ error: '服务配置异常' }, { status: 500 });
     }
 
     const abortHandle = attachClientAbort(req);
 
-    const apiResponse = await fetch(`${AI_BASE_URL}/chat/completions`, {
+    const apiResponse = await fetch(`${provider.baseUrl}/chat/completions`, {
       method: 'POST',
       signal: abortHandle.signal,
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${provider.apiKey}`,
       },
       body: JSON.stringify({
         model: PRIMARY_MODEL,

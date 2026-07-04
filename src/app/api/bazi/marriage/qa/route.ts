@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthSession } from '@/lib/auth-session';
 import { sanitizeUserInput } from '@/lib/utils/sanitize';
-import { AI_BASE_URL, PRIMARY_MODEL } from '@/lib/ai/models';
+import { PRIMARY_MODEL } from '@/lib/ai/models';
+import { getPrimaryProvider } from '@/lib/ai/provider';
 
 interface QAMessage {
   role: 'user' | 'assistant';
@@ -87,16 +88,21 @@ ${typeof score === 'number' ? `综合匹配度：${score}分（${level || ''}）
   }
   messages.push({ role: 'user', content: safeQuestion });
 
+  const provider = await getPrimaryProvider();
+  if (!provider) {
+    return NextResponse.json({ question: safeQuestion, answer: FALLBACK_ANSWER, _source: 'fallback' });
+  }
+
   let answer = '';
   let aiSource = 'fallback';
 
   try {
-    const aiResponse = await fetch(`${AI_BASE_URL}/chat/completions`, {
+    const aiResponse = await fetch(`${provider.baseUrl}/chat/completions`, {
       method: 'POST',
       signal: req.signal,
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+        Authorization: `Bearer ${provider.apiKey}`,
       },
       body: JSON.stringify({
         model: PRIMARY_MODEL,

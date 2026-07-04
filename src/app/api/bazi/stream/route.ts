@@ -5,8 +5,8 @@ import { authOptions } from '@/lib/auth';
 import { refundQuota, checkBaziQuota } from '@/lib/quota';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { redis } from '@/lib/cache/redis';
-import { getEnvVar } from '@/lib/utils/api-wrapper';
-import { AI_BASE_URL, PRIMARY_MODEL, FALLBACK_MODEL } from '@/lib/ai/models';
+import { PRIMARY_MODEL } from '@/lib/ai/models';
+import { resolveProviders, type ResolvedProvider } from '@/lib/ai/provider';
 import { BAZI_STREAM_SYSTEM_PROMPT, buildBaziStreamPrompt } from '@/lib/ai/prompts';
 import { generateFallbackBaziAnalysis } from '@/lib/ai/client';
 import { formatAnalysis } from '@/lib/ai/formatAnalysis';
@@ -128,8 +128,9 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const apiKey = getEnvVar('DEEPSEEK_API_KEY');
-  if (!apiKey) {
+  // 按后台开关解析出 [主 provider, 兜底 provider]（已过滤没配 key 的）
+  const providers = await resolveProviders();
+  if (!providers.length) {
     return streamFallback({
       reason: 'no_api_key',
       baziResult,
@@ -151,20 +152,20 @@ export async function POST(req: NextRequest) {
   );
   const facts = toolchainToPromptFacts(toolSteps);
 
-  // 3. 调 DeepSeek stream —— 主模型失败(网络错误/非2xx)先切更快的兜底模型，都不行才落本地降级
+  // 3. 调 LLM stream —— 主 provider 失败(网络错误/非2xx)先切兜底 provider，都不行才落本地降级
   const prompt = buildBaziStreamPrompt(baziResult as BaziResult, name, gender, dayunExtra, facts);
   const proxy = attachClientAbort(req);
 
-  const openUpstream = (model: string) =>
-    fetch(`${AI_BASE_URL}/chat/completions`, {
+  const openUpstream = (p: ResolvedProvider) =>
+    fetch(`${p.baseUrl}/chat/completions`, {
       method: 'POST',
       signal: proxy.signal,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
+        'Authorization': `Bearer ${p.apiKey}`,
       },
       body: JSON.stringify({
-        model,
+        model: PRIMARY_MODEL,
         max_tokens: 4000,
         temperature: 0.3,
         stream: true,
@@ -176,19 +177,18 @@ export async function POST(req: NextRequest) {
       }),
     });
 
-  const modelsToTry = PRIMARY_MODEL === FALLBACK_MODEL ? [PRIMARY_MODEL] : [PRIMARY_MODEL, FALLBACK_MODEL];
   let upstream: Response | null = null;
-  for (const model of modelsToTry) {
+  for (const p of providers) {
     if (proxy.signal.aborted) break;
     try {
-      const res = await openUpstream(model);
+      const res = await openUpstream(p);
       if (res.ok && res.body) {
         upstream = res;
         break;
       }
-      logger.error(SERVICE, `upstream non-ok ${res.status} (model=${model})`);
+      logger.error(SERVICE, `upstream non-ok ${res.status} (provider=${p.id})`);
     } catch (err) {
-      logger.error(SERVICE, `upstream fetch failed (model=${model})`, err instanceof Error ? err : undefined);
+      logger.error(SERVICE, `upstream fetch failed (provider=${p.id})`, err instanceof Error ? err : undefined);
     }
   }
 

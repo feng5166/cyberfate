@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkRateLimit } from '@/lib/rate-limit';
-import { getEnvVar } from '@/lib/utils/api-wrapper';
-import { AI_BASE_URL, PRIMARY_MODEL } from '@/lib/ai/models';
+import { PRIMARY_MODEL } from '@/lib/ai/models';
+import { getPrimaryProvider } from '@/lib/ai/provider';
 import { applyChaos } from '@/lib/chaos-middleware';
 import { attachClientAbort } from '@/lib/ai/streamProxy';
 
@@ -109,19 +109,19 @@ export async function POST(req: NextRequest) {
   const { question, hexagramContext } = validation.data;
   const systemPrompt = buildSystemPrompt(hexagramContext);
 
-  const apiKey = getEnvVar('DEEPSEEK_API_KEY');
-  if (!apiKey) {
+  const provider = await getPrimaryProvider();
+  if (!provider) {
     return NextResponse.json({ error: 'AI 服务未配置' }, { status: 503 });
   }
 
   const abortHandle = attachClientAbort(req);
 
-  const upstream = await fetch(`${AI_BASE_URL}/chat/completions`, {
+  const upstream = await fetch(`${provider.baseUrl}/chat/completions`, {
     method: 'POST',
     signal: abortHandle.signal,
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: `Bearer ${provider.apiKey}`,
     },
     body: JSON.stringify({
       model: PRIMARY_MODEL,
