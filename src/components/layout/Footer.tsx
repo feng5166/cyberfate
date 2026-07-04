@@ -58,7 +58,7 @@ export function Footer({ children }: { children?: React.ReactNode }) {
                     <li key={link.href}>
                       <Link
                         href={link.href}
-                        className="block py-2 px-1 text-[14px] text-brand-gray hover:text-[#1C1A16] transition-colors min-h-[44px] flex items-center"
+                        className="block py-2 px-1 text-[14px] text-brand-gray hover:text-[#1C1A16] transition-colors min-h-[44px] md:min-h-0 md:py-1 flex items-center"
                       >
                         {link.label}
                       </Link>

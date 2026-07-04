@@ -26,7 +26,6 @@ export function Header() {
   const moreRef = useRef<HTMLDivElement>(null);
   const { data: session } = useSession();
   const pathname = usePathname();
-  const isHomePage = pathname === '/';
 
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? 'hidden' : '';
@@ -35,7 +34,7 @@ export function Header() {
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { setMobileOpen(false); setMoreOpen(false); }
+      if (e.key === 'Escape') { setMobileOpen(false); setMoreOpen(false); setUserMenuOpen(false); }
     };
     window.addEventListener('keydown', handleEsc);
     return () => window.removeEventListener('keydown', handleEsc);
@@ -59,9 +58,7 @@ export function Header() {
 
   return (
     <header
-      className={`relative z-50 border-b border-[#1C1A16]/10 ${
-        isHomePage ? 'bg-[rgba(255,255,255,0.95)]' : 'bg-[rgba(255,255,255,0.9)]'
-      }`}
+      className="sticky top-0 z-50 border-b border-[#1C1A16]/10 bg-white/85 backdrop-blur-md"
     >
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-20">
         <div className="flex items-center justify-between h-16 md:h-18">
@@ -179,7 +176,12 @@ export function Header() {
                 onMouseEnter={() => setUserMenuOpen(true)}
                 onMouseLeave={() => setUserMenuOpen(false)}
               >
-                <button className="flex items-center gap-2 text-sm text-brand-gray hover:text-[#1C1A16] cursor-pointer transition-colors duration-200">
+                <button
+                  onClick={() => setUserMenuOpen((v) => !v)}
+                  aria-haspopup="menu"
+                  aria-expanded={userMenuOpen}
+                  className="flex items-center gap-2 text-sm text-brand-gray hover:text-[#1C1A16] cursor-pointer transition-colors duration-200"
+                >
                   {session.user?.image ? (
                     <img src={session.user.image} alt="用户头像" className="w-6 h-6 rounded-full" />
                   ) : (

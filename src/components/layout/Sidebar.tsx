@@ -120,7 +120,7 @@ export function Sidebar({
     <button
       type="button"
       onClick={handleUnlock}
-      className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1C1A16] px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-[#2A2620]"
+      className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-accent px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-brand-accent-hover"
     >
       <Lock className="h-4 w-4" />
       解锁全部功能
@@ -134,7 +134,7 @@ export function Sidebar({
           <button
             type="button"
             onClick={handleUnlock}
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1C1A16] text-white transition-colors hover:bg-[#2A2620]"
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-accent text-white transition-colors hover:bg-brand-accent-hover"
             title="解锁全部功能"
           >
             <Lock className="h-4 w-4" />
@@ -171,7 +171,7 @@ export function Sidebar({
           <button
             type="button"
             onClick={handleUnlock}
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1C1A16] text-white transition-colors hover:bg-[#2A2620]"
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-accent text-white transition-colors hover:bg-brand-accent-hover"
             title="解锁全部功能"
           >
             <Lock className="h-4 w-4" />
@@ -323,9 +323,10 @@ export function Sidebar({
     </div>
   );
 
+  // 收起态改为 64px 图标迷你栏（复活组件内已写好的 icon-only 渲染），而非整栏滑出屏幕丢失导航。
   const desktopAsideClasses = clsx(
-    'hidden md:block fixed left-0 top-0 h-screen z-30 bg-[#FAF9F6] shadow-sm transition-all duration-300 ease w-[220px]',
-    collapsed ? '-translate-x-full border-r-0' : 'translate-x-0 border-r border-brand-border-light'
+    'hidden md:block fixed left-0 top-0 h-screen z-30 bg-[#FAF9F6] shadow-sm transition-all duration-300 ease translate-x-0 border-r border-brand-border-light',
+    collapsed ? 'w-16' : 'w-[220px]'
   );
 
   return (

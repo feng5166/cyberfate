@@ -77,7 +77,7 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
           type="button"
           onClick={() => setSidebarCollapsed((v) => !v)}
           className="fixed top-3 z-50 hidden h-9 w-9 items-center justify-center rounded-lg border border-brand-ink/[0.08] bg-brand-bg transition-all duration-300 hover:bg-brand-border-light cursor-pointer md:flex"
-          style={{ left: (isSidebarCollapsed ? 0 : 220) + 12 }}
+          style={{ left: (isSidebarCollapsed ? 64 : 220) + 12 }}
           title={isSidebarCollapsed ? '展开导航' : '收起导航'}
           aria-label={isSidebarCollapsed ? '展开导航' : '收起导航'}
         >

@@ -8,6 +8,7 @@ export { Badge } from './Badge';
 export { SegmentControl } from './SegmentControl';
 export { Container } from './Container';
 export { PageShell } from './PageShell';
+export { SplitLayout } from './SplitLayout';
 export { PageHeader } from './PageHeader';
 export { FormField, inputRecipe } from './FormField';
 export { Modal } from './Modal';
