@@ -227,7 +227,7 @@ export function Sidebar({
                 <p className="truncate text-[15px] font-semibold text-brand-black">
                   {user?.name || user?.email?.split('@')[0] || 'VIP'}
                 </p>
-                <span className="shrink-0 rounded bg-[#C2762B]/10 px-1.5 py-0.5 text-[10px] font-semibold text-[#C2762B]">
+                <span className="shrink-0 rounded bg-[#1C1A16]/10 px-1.5 py-0.5 text-[10px] font-semibold text-[#1C1A16]">
                   VIP
                 </span>
               </div>

@@ -63,8 +63,8 @@ const CARD_BASE_STYLE: React.CSSProperties = {
 };
 
 const HIGHLIGHT_STYLE: React.CSSProperties = {
-  border: '1px solid #C2762B',
-  background: '#FAF3EC',
+  border: '1px solid #1C1A16',
+  background: '#F6F4F1',
 };
 
 const NORMAL_STYLE: React.CSSProperties = {
@@ -106,7 +106,7 @@ function shishenBadgeStyle(active: boolean): React.CSSProperties {
     padding: '2px 6px',
     borderRadius: 4,
     marginTop: 6,
-    background: active ? '#C2762B' : '#F3F4F6',
+    background: active ? '#1C1A16' : '#F3F4F6',
     color: active ? '#FFFFFF' : '#6B7280',
   };
 }
@@ -386,7 +386,7 @@ export default function TimelineSection({
                   return (
                     <div style={{ marginTop: 6, width: '100%' }}>
                       <div style={{ height: 2, backgroundColor: '#E5E7EB', borderRadius: 2 }}>
-                        <div style={{ height: '100%', width: progress + '%', backgroundColor: '#C2762B', borderRadius: 2, transition: 'width 0.6s ease' }} />
+                        <div style={{ height: '100%', width: progress + '%', backgroundColor: '#1C1A16', borderRadius: 2, transition: 'width 0.6s ease' }} />
                       </div>
                       <p style={{ fontSize: 12, color: '#9CA3AF', marginTop: 2, textAlign: 'center' }}>已走 {progress}%</p>
                     </div>

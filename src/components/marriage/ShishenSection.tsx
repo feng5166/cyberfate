@@ -56,14 +56,14 @@ function ShishenCard({
     <div
       className={`rounded-xl border p-3 transition-colors ${
         isMain
-          ? 'bg-[#FAF9F6] border-[#C2762B]/30'
+          ? 'bg-[#FAF9F6] border-[#1C1A16]/30'
           : 'bg-white border-[#E5E0D8]'
       }`}
     >
       <div className="flex items-center justify-between gap-2 mb-1.5">
         <div className="flex items-baseline gap-1.5">
           <span
-            className={`text-sm font-semibold ${isMain ? 'text-[#C2762B]' : 'text-[#1C1A16]'}`}
+            className={`text-sm font-semibold ${isMain ? 'text-[#1C1A16]' : 'text-[#1C1A16]'}`}
           >
             {god === '日主' ? '日主' : god}
           </span>

@@ -89,9 +89,9 @@ export function RadarChart({ wuxing, size = 220, className = '' }: RadarChartPro
 
       <polygon
         points={dataPath}
-        fill="#C2762B"
+        fill="#1C1A16"
         fillOpacity={0.18}
-        stroke="#C2762B"
+        stroke="#1C1A16"
         strokeWidth={2}
         strokeLinejoin="round"
       />
@@ -103,7 +103,7 @@ export function RadarChart({ wuxing, size = 220, className = '' }: RadarChartPro
           cy={p.y}
           r={3.5}
           fill="#FFFFFF"
-          stroke="#C2762B"
+          stroke="#1C1A16"
           strokeWidth={2}
         />
       ))}

@@ -501,7 +501,7 @@ function renderHighlightedLine(line: string): ReactNode {
       if (!piece) return;
       if (BAZI_TERMS_LIST.includes(piece)) {
         parts.push(
-          <span key={`${baseKey}-t${idx}`} className="text-[#C2762B] font-medium">{piece}</span>
+          <span key={`${baseKey}-t${idx}`} className="text-[#1C1A16] font-medium">{piece}</span>
         );
       } else {
         parts.push(<Fragment key={`${baseKey}-x${idx}`}>{piece}</Fragment>);
@@ -582,7 +582,7 @@ function renderSectionContent(content: string): ReactNode {
                   const bulletContent = trimmedLine.slice(2);
                   return (
                     <div key={j} className="flex gap-2 pl-1">
-                      <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#C2762B]/60" />
+                      <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#1C1A16]/60" />
                       <span className="flex-1">{renderHighlightedLine(bulletContent)}</span>
                     </div>
                   );
@@ -721,7 +721,7 @@ function ProfileFormModal({
                 type="checkbox"
                 checked={values.knowTime}
                 onChange={(e) => setValues((v) => ({ ...v, knowTime: e.target.checked }))}
-                className="mt-1 w-4 h-4 accent-[#C2762B]"
+                className="mt-1 w-4 h-4 accent-[#1C1A16]"
               />
               <div>
                 <p className="text-sm font-medium text-[#1C1A16]">我知道出生时间</p>
@@ -2237,7 +2237,7 @@ function BaziPageContent() {
                         birthHour: checked ? hourToShichenCode(prev.birthHourNum) : prev.birthHour,
                       }));
                     }}
-                    className="mt-1 w-4 h-4 accent-[#C2762B]"
+                    className="mt-1 w-4 h-4 accent-[#1C1A16]"
                   />
                   <div>
                     <p className="text-sm font-medium text-[#1C1A16]">知道出生时间</p>
@@ -2304,7 +2304,7 @@ function BaziPageContent() {
                       type="checkbox"
                       checked={formData.lateZiShi}
                       onChange={(e) => setFormData({ ...formData, lateZiShi: e.target.checked })}
-                      className="mt-1 w-4 h-4 accent-[#C2762B]"
+                      className="mt-1 w-4 h-4 accent-[#1C1A16]"
                     />
                     <div>
                       <p className="text-sm font-medium text-[#1C1A16]">晚子时（23:00 后归次日日柱）</p>
@@ -2419,7 +2419,7 @@ function BaziPageContent() {
                 <Card className={`${cardClass} relative`}>
                   {reanalyzing && !aiStreaming && (
                     <div className="absolute inset-0 z-10 rounded-2xl bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
-                      <RefreshCw className="w-6 h-6 text-[#C2762B] animate-spin" />
+                      <RefreshCw className="w-6 h-6 text-[#1C1A16] animate-spin" />
                       <p className="text-sm font-medium text-[#1C1A16]/70">AI 正在重新解读中…</p>
                     </div>
                   )}
@@ -2483,7 +2483,7 @@ function BaziPageContent() {
                         onClick={() => setStepsExpanded((v) => !v)}
                         className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-[#FAF9F6] transition-colors"
                       >
-                        <Wrench className="w-3.5 h-3.5 text-[#C2762B] flex-shrink-0" />
+                        <Wrench className="w-3.5 h-3.5 text-[#1C1A16] flex-shrink-0" />
                         <span className="text-xs text-[#1C1A16]/60 flex-1">
                           {aiStreaming && !aiStreamText
                             ? `正在排盘推算 · 已完成 ${aiSteps.length} 步…`
@@ -2522,7 +2522,7 @@ function BaziPageContent() {
                   {aiStreaming && (
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 text-xs text-[#1C1A16]/50 mb-4">
-                        <RefreshCw className="w-3.5 h-3.5 text-[#C2762B] animate-spin" />
+                        <RefreshCw className="w-3.5 h-3.5 text-[#1C1A16] animate-spin" />
                         AI 正在解读中…
                       </div>
 
@@ -2542,7 +2542,7 @@ function BaziPageContent() {
                             {streamSections.map((section, index) => (
                               <div key={section.title}>
                                 {index > 0 && <hr className="border-[#1C1A16]/8 my-6" />}
-                                <h4 className="border-l-4 border-[#C2762B] pl-3 text-base font-semibold mb-3 text-[#8B3A2A]">
+                                <h4 className="border-l-4 border-[#1C1A16] pl-3 text-base font-semibold mb-3 text-[#8B3A2A]">
                                   {section.title}
                                 </h4>
                                 <div className="text-sm leading-loose text-[#1C1A16]/85">
@@ -2555,13 +2555,13 @@ function BaziPageContent() {
                         ) : (
                           <div className="text-sm leading-loose text-[#1C1A16]/75 whitespace-pre-wrap">
                             {aiStreamText}
-                            <span className="inline-block w-1.5 h-4 ml-0.5 align-middle bg-[#C2762B] animate-pulse" />
+                            <span className="inline-block w-1.5 h-4 ml-0.5 align-middle bg-[#1C1A16] animate-pulse" />
                             <div ref={streamEndRef} />
                           </div>
                         );
                       })() : (
                         <div className="py-6 flex justify-center">
-                          <RefreshCw className="w-6 h-6 text-[#C2762B] animate-spin" />
+                          <RefreshCw className="w-6 h-6 text-[#1C1A16] animate-spin" />
                         </div>
                       )}
                       </div>
@@ -2574,7 +2574,7 @@ function BaziPageContent() {
                       <ul className="space-y-2">
                         {summaryPoints.map((point, index) => (
                           <li key={`${point}_${index}`} className="text-sm text-[#1C1A16]/85 leading-relaxed flex items-start gap-2">
-                            <span className="text-[#C2762B] mt-0.5">✓</span>
+                            <span className="text-[#1C1A16] mt-0.5">✓</span>
                             <span>{point}</span>
                           </li>
                         ))}
@@ -2591,9 +2591,9 @@ function BaziPageContent() {
                         <div key={section.title}>
                           {index > 0 && <hr className="border-[#1C1A16]/8 my-8" />}
                           <h4
-                            className={`border-l-4 border-[#C2762B] pl-3 font-semibold mb-3 text-[#8B3A2A] ${
+                            className={`border-l-4 border-[#1C1A16] pl-3 font-semibold mb-3 text-[#8B3A2A] ${
                               isDayunSection
-                                ? 'text-lg pb-2 border-b border-[#C2762B]/30'
+                                ? 'text-lg pb-2 border-b border-[#1C1A16]/30'
                                 : 'text-base'
                             }`}
                           >
@@ -2613,7 +2613,7 @@ function BaziPageContent() {
                                       className={`min-w-[160px] snap-start rounded-xl border p-3 text-left transition-colors ${
                                         idx === selectedDayunIndex
                                           ? item.isCurrent
-                                            ? 'border-[#C2762B] bg-[#FFF6E8] text-[#1C1A16] ring-1 ring-[#C2762B]/40'
+                                            ? 'border-[#1C1A16] bg-[#FFF6E8] text-[#1C1A16] ring-1 ring-[#1C1A16]/40'
                                             : 'border-[#1C1A16] bg-[#FAF9F6] text-[#1C1A16]'
                                           : item.isCurrent
                                             ? 'border-[#1C1A16]/30 bg-[#FFF6E8] text-[#1C1A16]'
@@ -2623,7 +2623,7 @@ function BaziPageContent() {
                                       <p className="text-lg font-semibold tracking-[0.08em]">{item.gan}{item.zhi}</p>
                                       <p className="text-xs mt-1 opacity-80">{item.ageStart}-{item.ageEnd} 岁</p>
                                       <p className="text-[11px] mt-0.5 opacity-60">{item.startMonth ? `${item.yearStart}年${item.startMonth}月起` : `${item.yearStart}-${item.yearEnd} 年`}</p>
-                                      {item.isCurrent && <p className="text-[11px] mt-1 font-medium text-[#C2762B]">当前大运</p>}
+                                      {item.isCurrent && <p className="text-[11px] mt-1 font-medium text-[#1C1A16]">当前大运</p>}
                                     </button>
                                   ))}
                                 </div>
@@ -2647,7 +2647,7 @@ function BaziPageContent() {
                                       {dayunDetailRich.fortune === '吉' ? '偏吉' : dayunDetailRich.fortune === '凶' ? '偏凶' : '中平'}
                                     </span>
                                     {selectedDayun.isCurrent && (
-                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#FFF6E8] text-[#C2762B]">
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#FFF6E8] text-[#1C1A16]">
                                         当前大运
                                       </span>
                                     )}
@@ -2691,7 +2691,7 @@ function BaziPageContent() {
                                     <div className="mt-3 space-y-2 border-t border-[#1C1A16]/8 pt-3">
                                       {dayunDetailRich.aspects.map(a => (
                                         <div key={a.label} className="flex gap-2 text-sm">
-                                          <span className="flex-shrink-0 w-9 font-medium text-[#C2762B]">{a.label}</span>
+                                          <span className="flex-shrink-0 w-9 font-medium text-[#1C1A16]">{a.label}</span>
                                           <span className="flex-1 text-[#1C1A16]/75 leading-relaxed">{a.text}</span>
                                         </div>
                                       ))}
@@ -2789,21 +2789,21 @@ function BaziPageContent() {
                 </div>
 
                 {/* 模块C: AI每日运势引流 */}
-                <div className="rounded-2xl border-l-4 border-[#C2762B] bg-white p-6 md:p-8">
+                <div className="rounded-2xl border-l-4 border-[#1C1A16] bg-white p-6 md:p-8">
                   <h3 className="text-lg font-semibold text-[#1C1A16]">✨ AI 每日运势分析</h3>
                   <p className="text-sm text-[#1C1A16]/60 mt-1">基于你的八字命盘，AI 为你解读今日运势</p>
                   <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <ul className="space-y-2">
                       <li className="text-sm text-[#1C1A16]/75 flex items-start gap-2">
-                        <span className="text-[#C2762B] mt-0.5">•</span>
+                        <span className="text-[#1C1A16] mt-0.5">•</span>
                         专属日签生成与宜忌建议
                       </li>
                       <li className="text-sm text-[#1C1A16]/75 flex items-start gap-2">
-                        <span className="text-[#C2762B] mt-0.5">•</span>
+                        <span className="text-[#1C1A16] mt-0.5">•</span>
                         实时 AI 流式解读过程
                       </li>
                       <li className="text-sm text-[#1C1A16]/75 flex items-start gap-2">
-                        <span className="text-[#C2762B] mt-0.5">•</span>
+                        <span className="text-[#1C1A16] mt-0.5">•</span>
                         免费功能 · 每日更新
                       </li>
                     </ul>

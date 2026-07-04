@@ -52,7 +52,7 @@ export function PwaUpdatePrompt() {
   return (
     <button
       onClick={() => window.location.reload()}
-      className="fixed left-1/2 -translate-x-1/2 bottom-24 z-[101] rounded-full bg-[#C2762B] px-4 py-2 text-xs font-medium text-white shadow-2xl"
+      className="fixed left-1/2 -translate-x-1/2 bottom-24 z-[101] rounded-full bg-[#1C1A16] px-4 py-2 text-xs font-medium text-white shadow-2xl"
     >
       ✨ 有新版本 · 点此刷新
     </button>
