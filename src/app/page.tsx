@@ -189,7 +189,7 @@ export default function HomePage() {
             className="font-display text-[36px] sm:text-[48px] md:text-[56px] font-[800] text-[#1C1A16] leading-tight flex items-center justify-center gap-2"
             style={{ letterSpacing: '0.06em' }}
           >
-            CYBERFATE
+            <span><span className="font-normal text-[#1C1A16]/45">CYBER</span><span className="font-[800]">FATE</span></span>
             <span className="sr-only">AI 八字命理 · 紫微斗数 · 塔罗占卜 · 每日运势分析</span>
           </h1>
 

@@ -278,7 +278,7 @@ export function Sidebar({
         >
           <img src="/favicon.svg" alt="CyberFate" className="w-7 h-7 shrink-0" />
           {!isCollapsed && (
-            <span className="font-display text-lg tracking-widest text-brand-black">CYBERFATE</span>
+            <span className="font-display text-lg tracking-widest text-brand-black"><span className="font-normal text-brand-black/50">CYBER</span><span className="font-bold">FATE</span></span>
           )}
         </Link>
       </div>

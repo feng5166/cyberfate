@@ -53,7 +53,7 @@ export function MobileHeader() {
 
           <Link href="/" aria-label="CyberFate 首页" className="flex items-center gap-1.5 font-display text-base tracking-widest text-brand-ink">
             <img src="/favicon.svg" alt="" className="h-6 w-6" />
-            CYBERFATE
+            <span><span className="font-normal text-brand-ink/50">CYBER</span><span className="font-bold">FATE</span></span>
           </Link>
 
           <button

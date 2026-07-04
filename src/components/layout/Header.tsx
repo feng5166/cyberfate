@@ -78,7 +78,7 @@ export function Header() {
 
             <Link href="/" className="flex items-center gap-2 font-display text-lg md:text-xl text-[#1C1A16] tracking-widest hover:opacity-70 transition-opacity">
               <img src="/favicon.svg" alt="CyberFate 赛博命理师" className="w-7 h-7" />
-              CYBERFATE
+              <span><span className="font-normal text-[#1C1A16]/50">CYBER</span><span className="font-bold">FATE</span></span>
             </Link>
           </div>
 
