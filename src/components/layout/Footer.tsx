@@ -67,11 +67,9 @@ export function Footer({ children }: { children?: React.ReactNode }) {
                 </ul>
               ) : (
                 <div className="mt-4 space-y-3">
-                  <div className="w-12 h-12 rounded-xl bg-[#1C1A16] flex items-center justify-center">
-                    <img src="/favicon.svg" alt="CyberFate" className="w-7 h-7" />
-                  </div>
+                  <img src="/favicon.svg" alt="CyberFate" className="w-12 h-12" />
                   <p className="text-[12px] text-[#1C1A16]/50">
-                    AI 赛博命理 · 探索命运之谜
+                    我不懂命理，你说人话我就懂
                   </p>
                   <div className="space-y-1.5 pt-1">
                     <p className="text-[13px] text-[#1C1A16]/60">
