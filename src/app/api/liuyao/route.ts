@@ -6,6 +6,7 @@ import type { LiuYaoPromptInput } from '@/lib/ai/prompts';
 import { applyChaos } from '@/lib/chaos-middleware';
 import { log } from '@/lib/logger';
 import { checkLiuyaoQuota, refundQuota } from '@/lib/quota';
+import { SSE_HEADERS, typewriterStream } from '@/lib/ai/sse';
 import {
   identifyTrigrams,
   getHexagramName,
@@ -102,32 +103,6 @@ function validateRequest(body: unknown): { valid: true; data: LiuYaoRequestBody 
   };
 }
 
-function buildStream(meta: LiuYaoMeta, narrative: string) {
-  const encoder = new TextEncoder();
-  return new ReadableStream({
-    async start(controller) {
-      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ meta })}\n\n`));
-
-      // Chunk narrative for typewriter effect
-      const chunkSize = 4;
-      for (let i = 0; i < narrative.length; i += chunkSize) {
-        const piece = narrative.slice(i, i + chunkSize);
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: piece })}\n\n`));
-        await new Promise((r) => setTimeout(r, 18));
-      }
-
-      controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-      controller.close();
-    },
-  });
-}
-
-const SSE_HEADERS = {
-  'Content-Type': 'text/event-stream',
-  'Cache-Control': 'no-cache',
-  Connection: 'keep-alive',
-} as const;
-
 export async function POST(req: NextRequest) {
   const chaosRes = await applyChaos(req);
   if (chaosRes) return chaosRes;
@@ -218,7 +193,7 @@ export async function POST(req: NextRequest) {
         _source: 'cache',
       };
 
-      return new Response(buildStream(meta, c.overallNarrative as string), { headers: SSE_HEADERS });
+      return new Response(typewriterStream(meta, c.overallNarrative as string), { headers: SSE_HEADERS });
     }
   }
 
@@ -291,5 +266,5 @@ export async function POST(req: NextRequest) {
     _error: (reading as { _error?: string })._error,
   };
 
-  return new Response(buildStream(meta, reading.overallNarrative), { headers: SSE_HEADERS });
+  return new Response(typewriterStream(meta, reading.overallNarrative), { headers: SSE_HEADERS });
 }

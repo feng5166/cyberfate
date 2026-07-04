@@ -6,31 +6,7 @@ import type { MeihuaDecisionPromptInput } from '@/lib/ai/prompts';
 import { withAiTimeout } from '@/lib/ai/withTimeout';
 import { applyChaos } from '@/lib/chaos-middleware';
 import { checkMeihuaDecideQuota, refundQuota } from '@/lib/quota';
-
-const SSE_HEADERS = {
-  'Content-Type': 'text/event-stream',
-  'Cache-Control': 'no-cache',
-  Connection: 'keep-alive',
-} as const;
-
-function buildStream(meta: unknown, narrative: string) {
-  const encoder = new TextEncoder();
-  return new ReadableStream({
-    async start(controller) {
-      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ meta })}\n\n`));
-
-      const chunkSize = 4;
-      for (let i = 0; i < narrative.length; i += chunkSize) {
-        const piece = narrative.slice(i, i + chunkSize);
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: piece })}\n\n`));
-        await new Promise((r) => setTimeout(r, 18));
-      }
-
-      controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-      controller.close();
-    },
-  });
-}
+import { SSE_HEADERS, typewriterStream } from '@/lib/ai/sse';
 
 function splitMeta(decision: MeihuaDecisionResult & { _source?: string }) {
   const { overallAdvice, ...rest } = decision;
@@ -139,7 +115,7 @@ export async function POST(req: NextRequest) {
       if (quotaConsumed) await refundQuota(session!.user.id, 'meihuaDecideCount');
       const cachedDecision = { ...(cached as MeihuaDecisionResult), _source: 'cache' as const };
       const { meta, narrative } = splitMeta(cachedDecision);
-      return new Response(buildStream(meta, narrative), { headers: SSE_HEADERS });
+      return new Response(typewriterStream(meta, narrative), { headers: SSE_HEADERS });
     }
 
     // 熔断已下沉到 client.ts 的 callDeepSeek（generateMeihuaDecision 内部吞异常，路由再包熔断形同虚设）
@@ -152,7 +128,7 @@ export async function POST(req: NextRequest) {
     await setCache(cacheKey, decision, 12 * 60 * 60);
 
     const { meta, narrative } = splitMeta(decision);
-    return new Response(buildStream(meta, narrative), { headers: SSE_HEADERS });
+    return new Response(typewriterStream(meta, narrative), { headers: SSE_HEADERS });
   } catch (error) {
     if (quotaConsumed) {
       try { await refundQuota(session!.user.id, 'meihuaDecideCount'); } catch {}

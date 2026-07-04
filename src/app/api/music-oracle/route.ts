@@ -18,6 +18,7 @@ import { getPrimaryProvider } from '@/lib/ai/provider';
 import { getAuthSession } from '@/lib/auth-session';
 import { isVip as checkIsVip } from '@/lib/subscription';
 import { getTodayBeijing } from '@/lib/timezone';
+import { SSE_HEADERS, typewriterStream } from '@/lib/ai/sse';
 
 const DEEPSEEK_MODEL = PRIMARY_MODEL;
 
@@ -45,31 +46,6 @@ function getWuxingRelation(a: string, b: string): string {
 
 function getTodayDateStr(): string {
   return getTodayBeijing();
-}
-
-const SSE_HEADERS = {
-  'Content-Type': 'text/event-stream',
-  'Cache-Control': 'no-cache',
-  Connection: 'keep-alive',
-} as const;
-
-function buildStream(meta: unknown, narrative: string) {
-  const encoder = new TextEncoder();
-  return new ReadableStream({
-    async start(controller) {
-      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ meta })}\n\n`));
-
-      const chunkSize = 4;
-      for (let i = 0; i < narrative.length; i += chunkSize) {
-        const piece = narrative.slice(i, i + chunkSize);
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: piece })}\n\n`));
-        await new Promise((r) => setTimeout(r, 18));
-      }
-
-      controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-      controller.close();
-    },
-  });
 }
 
 export async function POST(request: NextRequest) {
@@ -310,7 +286,7 @@ export async function POST(request: NextRequest) {
       },
     };
 
-    return new Response(buildStream(meta, oracleText), { headers: SSE_HEADERS });
+    return new Response(typewriterStream(meta, oracleText), { headers: SSE_HEADERS });
   } catch (err: any) {
     if (err.name === 'AbortError') {
       return NextResponse.json(

@@ -17,6 +17,7 @@ import {
 import { withAiTimeout } from '@/lib/ai/withTimeout';
 import { applyChaos } from '@/lib/chaos-middleware';
 import { logger } from '@/lib/logger';
+import { SSE_HEADERS, typewriterStream } from '@/lib/ai/sse';
 
 export const maxDuration = 120;
 
@@ -99,31 +100,6 @@ function buildCards(preDrawnCards: unknown, spread: TarotSpread): DerivedCard[] 
     image_url: getCardImageUrl(card),
     position: config.positions?.[idx],
   }));
-}
-
-const SSE_HEADERS = {
-  'Content-Type': 'text/event-stream',
-  'Cache-Control': 'no-cache',
-  Connection: 'keep-alive',
-} as const;
-
-function buildStream(meta: unknown, narrative: string) {
-  const encoder = new TextEncoder();
-  // 打字机效果：把动画总时长封顶（约 ≤3s），避免长文按固定步进把函数占住十几秒
-  const MAX_CHUNKS = 160;
-  const chunkSize = Math.max(4, Math.ceil(narrative.length / MAX_CHUNKS));
-  return new ReadableStream({
-    async start(controller) {
-      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ meta })}\n\n`));
-      for (let i = 0; i < narrative.length; i += chunkSize) {
-        const piece = narrative.slice(i, i + chunkSize);
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: piece })}\n\n`));
-        await new Promise((r) => setTimeout(r, 18));
-      }
-      controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-      controller.close();
-    },
-  });
 }
 
 export async function POST(req: NextRequest) {
@@ -281,5 +257,5 @@ export async function POST(req: NextRequest) {
     _error: isDebugMode ? readError : undefined,
   };
 
-  return new Response(buildStream(meta, readingText), { headers: SSE_HEADERS });
+  return new Response(typewriterStream(meta, readingText), { headers: SSE_HEADERS });
 }
