@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { TIANGAN_WUXING } from '@/lib/bazi/constants';
 import type { TianGan, WuXing } from '@/lib/bazi/types';
+import { getBeijingDate } from '@/lib/timezone';
 
 // ====== 十神计算 ======
 
@@ -106,7 +107,7 @@ export async function GET(request: NextRequest) {
       [tYear, tMonth, tDay] = targetDate.split('-').map(Number);
     } else {
       const now = new Date();
-      const beijing = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+      const beijing = getBeijingDate(now);
       tYear = beijing.getUTCFullYear();
       tMonth = beijing.getUTCMonth() + 1;
       tDay = beijing.getUTCDate();

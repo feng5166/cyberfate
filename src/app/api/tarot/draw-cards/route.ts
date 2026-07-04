@@ -6,6 +6,7 @@ import { isVip } from '@/lib/subscription';
 import { drawRandomCards, getCardImageUrl } from '@/data/tarot';
 import { applyChaos } from '@/lib/chaos-middleware';
 import { SPREAD_CONFIG, resolveSpread, quotaLabel, peekTarotQuota } from '@/lib/tarot';
+import { getClientIp } from '@/lib/ip';
 
 // 只负责抽牌（便宜、可反复重抽）。配额/限流的「真源」在 /api/tarot/draw（AI 生成处），
 // 这里仅做：轻量防刷 + 登录用户的只读配额预检（提前拦 UX），不扣任何额度。
@@ -20,7 +21,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const spread = resolveSpread(body?.spread);
 
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  const ip = getClientIp(req);
 
   // 轻量防刷：独立 key，不消耗 AI 解读 / 游客每日额度（那些在 /draw 里扣）
   if (!isDebugMode) {

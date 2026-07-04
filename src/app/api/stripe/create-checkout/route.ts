@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db';
 import { listCustomers, createCustomer, createCheckoutSession } from '@/lib/stripe-direct';
 import { PRICING_CONFIG, isValidPlanId, isSellablePlanId, type PlanId } from '@/lib/pricing-config';
 import { log } from '@/lib/logger';
+import { getClientIp } from '@/lib/ip';
 
 const PLAN_RANK: Record<PlanId, number> = {
   daily: 1,
@@ -94,7 +95,7 @@ export async function POST(req: NextRequest) {
 
       // 安全校验：如果客户端传了金额且与服务端差异过大，记录告警
       if (clientAmount && Math.abs(clientAmount - amount) > 1) {
-        console.warn(`[Stripe Security] ⚠️ 金额异常! User ${user.id} plan=${plan}, server=${amount}, clientSent=${clientAmount}, IP=${req.headers.get('x-forwarded-for') || 'unknown'}`);
+        console.warn(`[Stripe Security] ⚠️ 金额异常! User ${user.id} plan=${plan}, server=${amount}, clientSent=${clientAmount}, IP=${getClientIp(req)}`);
         // 不阻止请求（因为最终以服务端为准），但记录异常用于监控
       }
     }

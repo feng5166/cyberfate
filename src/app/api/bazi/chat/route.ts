@@ -11,6 +11,7 @@ import { calculateBazi } from '@/lib/bazi/calculator';
 import { runBaziToolchain, toolchainToPromptFacts, type ToolStepResult } from '@/lib/bazi/tools';
 import { redis } from '@/lib/cache/redis';
 import type { Gender } from '@/lib/bazi/types';
+import { getBeijingDate } from '@/lib/timezone';
 
 // ── 问题意图分类 ──────────────────────────────────────────
 // 时间走势类：需要逐月流月 + 长篇逐月结构化
@@ -154,7 +155,7 @@ const birthInputSchema = z.object({
 
 /** 北京时间当天 YYYY-MM-DD */
 function beijingToday(): string {
-  const bj = new Date(Date.now() + 8 * 60 * 60 * 1000);
+  const bj = getBeijingDate();
   return bj.toISOString().slice(0, 10);
 }
 

@@ -2,12 +2,11 @@ import { NextRequest } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/db'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { getClientIp } from '@/lib/ip'
 
 export async function POST(request: NextRequest) {
   // Security Fix: SEC-006 — Vercel 环境优先使用 x-vercel-forwarded-for 防止伪造
-  const ip = request.headers.get('x-vercel-forwarded-for')?.split(',')[0]
-    || request.headers.get('x-forwarded-for')?.split(',')[0]
-    || 'unknown';
+  const ip = getClientIp(request);
   const rateResult = await checkRateLimit('register', ip, 5, 3600);
   if (!rateResult.allowed) {
     return Response.json(

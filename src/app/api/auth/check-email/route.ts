@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { getClientIp } from '@/lib/ip'
 
 export async function POST(req: NextRequest) {
   try {
     // Security Fix: SEC-006 — 使用 x-vercel-forwarded-for 优先
-    const ip = req.headers.get('x-vercel-forwarded-for')?.split(',')[0]
-      || req.headers.get('x-forwarded-for')?.split(',')[0]
-      || 'unknown';
+    const ip = getClientIp(req);
 
     const { allowed } = await checkRateLimit('check-email', ip, 5, 60);
     if (!allowed) {

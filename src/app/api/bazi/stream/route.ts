@@ -14,6 +14,8 @@ import { attachClientAbort } from '@/lib/ai/streamProxy';
 import { logger } from '@/lib/logger';
 import { runBaziToolchain, toolchainToPromptFacts, type ToolStepResult } from '@/lib/bazi/tools';
 import type { BaziAnalysis, BaziChart, BaziResult, Gender } from '@/lib/bazi/types';
+import { getClientIp } from '@/lib/ip';
+import { getBeijingDate } from '@/lib/timezone';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -37,7 +39,7 @@ const requestSchema = z.object({
 
 /** 北京时间当天 YYYY-MM-DD */
 function beijingToday(): string {
-  return new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  return getBeijingDate().toISOString().slice(0, 10);
 }
 
 /**
@@ -105,7 +107,7 @@ export async function POST(req: NextRequest) {
   // 走到这里说明要真正生成 AI（forceRefresh 或缓存未命中）。
   // 统一在「实际生成」处计费/限流——这是唯一会调用 DeepSeek 的位置，
   // 防止「重新分析」或直接打 /api/bazi/stream（自带任意 cacheKey 制造缓存未命中）绕过配额。
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  const ip = getClientIp(req);
   if (session?.user?.id) {
     const rl = await checkRateLimit('ai_bazi', session.user.id, 10, 60);
     if (!rl.allowed) {

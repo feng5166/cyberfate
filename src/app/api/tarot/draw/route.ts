@@ -9,6 +9,7 @@ import { prisma } from '@/lib/db';
 import { isVip } from '@/lib/subscription';
 import { refundQuota } from '@/lib/quota';
 import { drawRandomCards, getCardImageUrl, getCardById } from '@/data/tarot';
+import { getClientIp } from '@/lib/ip';
 import {
   SPREAD_CONFIG, resolveSpread, spreadLabel, quotaLabel,
   chargeTarotQuota, tarotQuotaField, type TarotSpread,
@@ -139,7 +140,7 @@ export async function POST(req: NextRequest) {
   const question = safeQuestion(body?.question);
   const preDrawnCards = body?.preDrawnCards;
 
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  const ip = getClientIp(req);
 
   // —— 限流 / 游客每日额度：本端点是唯一真源（抽牌端点不再消耗）——
   if (!isDebugMode) {

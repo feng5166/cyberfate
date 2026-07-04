@@ -9,6 +9,8 @@ import { checkRateLimit } from '@/lib/rate-limit';
 import type { FiveDimensions, MingGeInfo, PillarRecord, WuxingCount } from '@/lib/bazi/types';
 import { applyChaos } from '@/lib/chaos-middleware';
 import { logger } from '@/lib/logger';
+import { getClientIp } from '@/lib/ip';
+import { getBeijingDate } from '@/lib/timezone';
 
 const SERVICE = 'api/bazi';
 
@@ -77,7 +79,7 @@ export async function POST(req: NextRequest) {
   const session = await getAuthSession(req);
 
   // 轻量防刷（与 stream 的计费限流用不同 key，避免互相占用名额）
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  const ip = getClientIp(req);
   if (session?.user?.id) {
     const rl = await checkRateLimit('bazi_chart', session.user.id, 30, 60);
     if (!rl.allowed) return Response.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
@@ -236,7 +238,7 @@ export async function POST(req: NextRequest) {
 
     // —— 首屏结构化命盘模块（确定性，一次性算出）：神煞 / 流年 / 流月 / 终身大运表 ——
     // 流年/流月按北京时间当前公历年计算，确保始终是当年（命盘永久缓存时此两项需按年刷新，见 PRD 评审）
-    const curYear = new Date(Date.now() + 8 * 60 * 60 * 1000).getUTCFullYear();
+    const curYear = getBeijingDate().getUTCFullYear();
     const shensha: ShenshaDisplay[] = analyzeShensha(baziResult.chart).map((s) => ({
       name: s.name,
       pillars: s.pillars,

@@ -2,6 +2,7 @@ import { Solar, Lunar } from 'lunar-javascript';
 import type { BaziInput, BaziResult, BaziChart, Pillar, WuxingCount, WuXing, TianGan, DiZhi, ShiChen, Gender, DayunResult, DayunTimelineItem } from './types';
 import { TIANGAN_WUXING, DIZHI_WUXING, SHICHEN_DIZHI, WUXING_KEYS, TIANGAN_LIST, DIZHI_LIST } from './constants';
 import { DIZHI_HIDDEN_GAN } from './geju';
+import { getBeijingDate } from '@/lib/timezone';
 
 /**
  * 构建一个柱（年/月/日/时柱）
@@ -258,7 +259,7 @@ export function getMonthGanzhi(date: string): string {
 
 function getBeijingNow(): Date {
   const now = new Date();
-  return new Date(now.getTime() + 8 * 60 * 60 * 1000);
+  return getBeijingDate(now);
 }
 
 /** 当前公历年份（按北京时间） */

@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs'
 import { encode } from 'next-auth/jwt'
 import { prisma } from '@/lib/db'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { getClientIp } from '@/lib/ip'
 
 /**
  * 移动端邮箱密码登录。
@@ -14,10 +15,7 @@ const MAX_AGE = 60 * 60 * 24 * 30 // 30 天
 
 export async function POST(request: NextRequest) {
   // SEC-006：Vercel 环境优先用 x-vercel-forwarded-for 防伪造
-  const ip =
-    request.headers.get('x-vercel-forwarded-for')?.split(',')[0] ||
-    request.headers.get('x-forwarded-for')?.split(',')[0] ||
-    'unknown'
+  const ip = getClientIp(request)
   const rate = await checkRateLimit('mobile_login', ip, 10, 3600)
   if (!rate.allowed) {
     return Response.json({ error: '登录过于频繁，请稍后再试' }, { status: 429 })

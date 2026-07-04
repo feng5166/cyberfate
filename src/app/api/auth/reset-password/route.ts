@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { validateResetToken, resetPassword } from '@/lib/password-reset'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { logger } from '@/lib/logger'
+import { getClientIp } from '@/lib/ip'
 
 const SERVICE = 'api/auth/reset-password'
 
@@ -19,7 +20,7 @@ const ERROR_MESSAGES: Record<string, string> = {
 // 支持 query param (?token=xxx) 和 hash fragment (#token=xxx) 两种方式
 export async function GET(request: NextRequest) {
   try {
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+    const ip = getClientIp(request)
     const { allowed } = await checkRateLimit('reset_token_check', ip, 10, 60)
     if (!allowed) {
       return Response.json(
@@ -64,7 +65,7 @@ export async function GET(request: NextRequest) {
 // ── POST: 执行密码重置（消耗 token）──────────────────────────────
 export async function POST(request: NextRequest) {
   try {
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+    const ip = getClientIp(request)
     const { allowed } = await checkRateLimit('reset_password', ip, 5, 300)
     if (!allowed) {
       return Response.json(
