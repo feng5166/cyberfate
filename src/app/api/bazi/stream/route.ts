@@ -16,6 +16,7 @@ import { runBaziToolchain, toolchainToPromptFacts, type ToolStepResult } from '@
 import type { BaziAnalysis, BaziChart, BaziResult, Gender } from '@/lib/bazi/types';
 import { getClientIp } from '@/lib/ip';
 import { getBeijingDate } from '@/lib/timezone';
+import { sendFeishuText } from '@/lib/feishu';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -372,35 +373,6 @@ async function sendFeishuAlert(info: {
   userId?: string;
   userEmail?: string;
 }) {
-  const APP_ID = process.env.FEISHU_BOT_APP_ID;
-  const APP_SECRET = process.env.FEISHU_BOT_APP_SECRET;
-  const OPEN_ID = process.env.FEISHU_USER_OPEN_ID;
-  if (!APP_ID || !APP_SECRET || !OPEN_ID) return;
-
-  try {
-    const tokenRes = await fetch('https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ app_id: APP_ID, app_secret: APP_SECRET }),
-    });
-    const tokenData = await tokenRes.json() as { tenant_access_token?: string };
-    const token = tokenData.tenant_access_token;
-    if (!token) return;
-
-    const text = `⚠️ CyberFate 八字 AI 解读失败\n姓名：${info.name}\n生日：${info.birthDate}\n用户：${info.userEmail || info.userId || '游客'}\n时间：${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}`;
-    await fetch('https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=open_id', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        receive_id: OPEN_ID,
-        msg_type: 'text',
-        content: JSON.stringify({ text }),
-      }),
-    });
-  } catch (e) {
-    console.error('[bazi stream] feishu alert failed:', e);
-  }
+  const text = `⚠️ CyberFate 八字 AI 解读失败\n姓名：${info.name}\n生日：${info.birthDate}\n用户：${info.userEmail || info.userId || '游客'}\n时间：${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}`;
+  await sendFeishuText(text);
 }

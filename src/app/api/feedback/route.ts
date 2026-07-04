@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import crypto from 'crypto';
 import { authOptions } from '@/lib/auth';
 import { log } from '@/lib/logger';
+import { feishuConfigured, sendFeishuText } from '@/lib/feishu';
 
 const VALID_TYPES = ['suggestion', 'bug', 'experience', 'other'] as const;
 type FeedbackType = (typeof VALID_TYPES)[number];
@@ -64,83 +65,31 @@ async function sendFeishuNotification(payload: {
   userId?: string;
   createdAt: string;
 }): Promise<void> {
-  const appId = process.env.FEISHU_BOT_APP_ID;
-  const appSecret = process.env.FEISHU_BOT_APP_SECRET;
-  const userOpenId = process.env.FEISHU_USER_OPEN_ID;
-
-  if (!appId || !appSecret || !userOpenId) {
+  if (!feishuConfigured()) {
     // 未配置飞书时降级输出
     log({ service: 'feedback', level: 'info', message: '飞书未配置，降级输出反馈', meta: { payload } });
     return;
   }
 
-  try {
-    // 1. 获取 tenant_access_token
-    const tokenParams = new URLSearchParams();
-    tokenParams.set('app_id', appId);
-    tokenParams.set('app_secret', appSecret);
+  // 构建消息内容（text 类型）
+  const typeLabel = payload.type ? TYPE_LABEL[payload.type] : '未分类';
+  const userLabel = payload.userEmail ? `${payload.userEmail}` : '匿名';
 
-    const tokenRes = await fetch(
-      'https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: tokenParams.toString(),
-      }
-    );
-    const tokenData = (await tokenRes.json()) as {
-      code: number;
-      tenant_access_token?: string;
-      msg?: string;
-    };
-    if (tokenData.code !== 0 || !tokenData.tenant_access_token) {
-      console.error('[feedback] feishu token error:', tokenData);
-      return;
-    }
+  const now = new Date(payload.createdAt);
+  const timeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-    // 2. 构建消息内容（使用 text 类型，兼容性最好）
-    const typeLabel = payload.type ? TYPE_LABEL[payload.type] : '未分类';
-    const userLabel = payload.userEmail ? `${payload.userEmail}` : '匿名';
+  const textContent = [
+    `📝 CyberFate 收到新反馈`,
+    ``,
+    `类型：${typeLabel}`,
+    `内容：${payload.content}`,
+    ...(payload.pageUrl ? [`页面：${payload.pageUrl}`] : []),
+    `时间：${timeStr}`,
+    `用户：${userLabel}`,
+    `ID：${payload.id}`,
+  ].join('\n');
 
-    const now = new Date(payload.createdAt);
-    const timeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-
-    const textContent = [
-      `📝 CyberFate 收到新反馈`,
-      ``,
-      `类型：${typeLabel}`,
-      `内容：${payload.content}`,
-      ...(payload.pageUrl ? [`页面：${payload.pageUrl}`] : []),
-      `时间：${timeStr}`,
-      `用户：${userLabel}`,
-      `ID：${payload.id}`,
-    ].join('\n');
-
-    // 3. 发送消息（text 类型，飞书要求 Content-Type: application/json）
-    const sendBody = {
-      receive_id: userOpenId,
-      msg_type: 'text',
-      content: JSON.stringify({ text: textContent }),
-    };
-
-    const sendRes = await fetch(
-      'https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=open_id',
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${tokenData.tenant_access_token}`,
-          'Content-Type': 'application/json; charset=utf-8',
-        },
-        body: JSON.stringify(sendBody),
-      }
-    );
-    const sendData = await sendRes.json() as { code: number; msg?: string };
-    if (sendData.code !== 0) {
-      console.error('[feedback] feishu send error:', sendData);
-    }
-  } catch (err) {
-    console.error('[feedback] feishu notification exception:', err);
-  }
+  await sendFeishuText(textContent);
 }
 
 // ── 主逻辑 ───────────────────────────────────────────────
