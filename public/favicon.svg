@@ -1,19 +1,38 @@
-<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- 背景 -->
-  <rect width="32" height="32" rx="6" fill="#000000"/>
-  
-  <!-- 几何龙虾 -->
-  <g fill="#FFFFFF">
-    <!-- 身体（椭圆） -->
-    <ellipse cx="16" cy="17" rx="5" ry="7"/>
-    
-    <!-- 左钳（圆） -->
-    <circle cx="11" cy="11" r="2.5"/>
-    
-    <!-- 右钳（圆） -->
-    <circle cx="21" cy="11" r="2.5"/>
-    
-    <!-- 尾部（三角） -->
-    <path d="M16 24 L14 28 L18 28 Z"/>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- 暖色徽章：赭石高光 → 墨底 -->
+    <radialGradient id="cf-bg" cx="0.32" cy="0.26" r="0.95">
+      <stop offset="0" stop-color="#E7A94F"/>
+      <stop offset="0.5" stop-color="#AE651E"/>
+      <stop offset="1" stop-color="#17130F"/>
+    </radialGradient>
+    <!-- 命星背后的柔光 -->
+    <radialGradient id="cf-glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#FBEEDD" stop-opacity="0.32"/>
+      <stop offset="1" stop-color="#FBEEDD" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- 徽章底（圆角方，app-icon 风） -->
+  <rect width="512" height="512" rx="116" fill="url(#cf-bg)"/>
+
+  <!-- 柔光 -->
+  <circle cx="256" cy="256" r="150" fill="url(#cf-glow)"/>
+
+  <!-- 命盘（细环） -->
+  <circle cx="256" cy="256" r="196" fill="none" stroke="#FBEEDD" stroke-opacity="0.55" stroke-width="6"/>
+  <!-- 罗盘方位刻度（上下左右四点） -->
+  <g fill="#FBEEDD" fill-opacity="0.55">
+    <circle cx="256" cy="60" r="6"/>
+    <circle cx="256" cy="452" r="6"/>
+    <circle cx="60" cy="256" r="6"/>
+    <circle cx="452" cy="256" r="6"/>
   </g>
+
+  <!-- 命星（四芒，罗盘星芒 / AI 火花） -->
+  <path d="M256 104 L290 222 L408 256 L290 290 L256 408 L222 290 L104 256 L222 222 Z"
+        fill="#FBEEDD"/>
+  <!-- 中心暖核 -->
+  <circle cx="256" cy="256" r="21" fill="#E7A94F"/>
+  <circle cx="256" cy="256" r="9" fill="#17130F" fill-opacity="0.85"/>
 </svg>
