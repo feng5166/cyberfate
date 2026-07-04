@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og'
 
 export const runtime = 'edge'
-export const alt = '赛博命理师 CyberFate'
+export const alt = '赛博命理师 CyberFate · 我不懂命理，你说人话我就懂'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
@@ -16,107 +16,63 @@ export default async function Image() {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: '#1C1A16',
+          backgroundColor: '#17130F',
           backgroundImage:
-            'radial-gradient(circle at 30% 20%, rgba(167, 139, 90, 0.15) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgba(167, 139, 90, 0.1) 0%, transparent 50%)',
+            'radial-gradient(circle at 30% 18%, rgba(231, 169, 79, 0.16) 0%, transparent 52%), radial-gradient(circle at 74% 84%, rgba(174, 101, 30, 0.14) 0%, transparent 50%)',
         }}
       >
-        {/* 装饰圆 */}
-        <div
-          style={{
-            position: 'absolute',
-            top: 60,
-            right: 100,
-            width: 200,
-            height: 200,
-            borderRadius: '50%',
-            border: '1px solid rgba(167, 139, 90, 0.2)',
-          }}
-        />
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 80,
-            left: 80,
-            width: 140,
-            height: 140,
-            borderRadius: '50%',
-            border: '1px solid rgba(167, 139, 90, 0.15)',
-          }}
-        />
+        {/* 装饰环 */}
+        <div style={{ position: 'absolute', top: 54, right: 96, width: 210, height: 210, borderRadius: '50%', border: '1px solid rgba(231,169,79,0.18)' }} />
+        <div style={{ position: 'absolute', bottom: 70, left: 78, width: 150, height: 150, borderRadius: '50%', border: '1px solid rgba(231,169,79,0.13)' }} />
 
-        {/* 主标题 */}
+        {/* 罗盘命星徽章 */}
         <div
           style={{
+            width: 128,
+            height: 128,
+            borderRadius: 32,
             display: 'flex',
-            flexDirection: 'column',
             alignItems: 'center',
-            zIndex: 1,
+            justifyContent: 'center',
+            backgroundImage: 'radial-gradient(circle at 32% 26%, #E7A94F 0%, #AE651E 52%, #17130F 100%)',
+            boxShadow: '0 18px 44px rgba(0,0,0,0.45)',
           }}
         >
-          <div
-            style={{
-              fontSize: 72,
-              fontWeight: 600,
-              color: '#E8E4DC',
-              fontFamily: '"Noto Serif SC", "Songti SC", serif',
-              letterSpacing: 4,
-              lineHeight: 1.2,
-            }}
-          >
-            赛博命理师
-          </div>
-          <div
-            style={{
-              fontSize: 36,
-              color: '#a78b5a',
-              fontFamily: '"Cormorant Garamond", serif',
-              fontStyle: 'italic',
-              letterSpacing: 8,
-              marginTop: 8,
-            }}
-          >
-            CYBERFATE
-          </div>
-          <div
-            style={{
-              fontSize: 20,
-              color: 'rgba(232, 228, 220, 0.5)',
-              marginTop: 32,
-              letterSpacing: 2,
-            }}
-          >
-            AI 驱动的东方智慧 · 八字 · 紫微 · 塔罗 · 梅花易数
-          </div>
+          <svg width="104" height="104" viewBox="0 0 512 512">
+            <circle cx="256" cy="256" r="196" fill="none" stroke="#FBEEDD" strokeOpacity="0.55" strokeWidth="6" />
+            <circle cx="256" cy="60" r="6" fill="#FBEEDD" fillOpacity="0.55" />
+            <circle cx="256" cy="452" r="6" fill="#FBEEDD" fillOpacity="0.55" />
+            <circle cx="60" cy="256" r="6" fill="#FBEEDD" fillOpacity="0.55" />
+            <circle cx="452" cy="256" r="6" fill="#FBEEDD" fillOpacity="0.55" />
+            <path d="M256 104 L290 222 L408 256 L290 290 L256 408 L222 290 L104 256 L222 222 Z" fill="#FBEEDD" />
+            <circle cx="256" cy="256" r="21" fill="#E7A94F" />
+            <circle cx="256" cy="256" r="9" fill="#17130F" fillOpacity="0.85" />
+          </svg>
         </div>
 
-        {/* 底部装饰线 */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 80,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 16,
-          }}
-        >
-          {['八字', '紫微', '塔罗', '梅花', '六爻'].map((text) => (
-            <span
-              key={text}
-              style={{
-                fontSize: 14,
-                color: 'rgba(167, 139, 90, 0.6)',
-                letterSpacing: 2,
-              }}
-            >
-              {text}
-            </span>
+        {/* 字标 CYBER / FATE 双色重 */}
+        <div style={{ display: 'flex', marginTop: 34, fontSize: 82, letterSpacing: 6, lineHeight: 1 }}>
+          <span style={{ color: '#C9B79C', fontWeight: 400 }}>CYBER</span>
+          <span style={{ color: '#FBEEDD', fontWeight: 800 }}>FATE</span>
+        </div>
+
+        {/* Slogan */}
+        <div style={{ display: 'flex', marginTop: 26, fontSize: 34, letterSpacing: 3 }}>
+          <span style={{ color: 'rgba(251,238,221,0.72)' }}>我不懂命理，</span>
+          <span style={{ color: '#E7A94F', fontWeight: 600 }}>你说人话我就懂</span>
+        </div>
+
+        {/* 分隔线 */}
+        <div style={{ width: 72, height: 2, backgroundColor: 'rgba(231,169,79,0.4)', marginTop: 34 }} />
+
+        {/* 模块 */}
+        <div style={{ display: 'flex', gap: 18, marginTop: 26, fontSize: 19, color: 'rgba(201,183,156,0.7)', letterSpacing: 2 }}>
+          {['八字', '紫微', '六爻', '梅花', '塔罗', '每日运势'].map((t) => (
+            <span key={t}>{t}</span>
           ))}
         </div>
       </div>
     ),
-    {
-      ...size,
-    }
+    { ...size }
   )
 }
