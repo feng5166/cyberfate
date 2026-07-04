@@ -44,7 +44,16 @@ export function attachClientAbort(req: Request | { signal: AbortSignal }): Strea
  * 只把非空 content 以 `{ content }` 帧回吐，末尾发 `[DONE]`；读流出错发一帧 `{ error }`。
  * 客户端断连时 cancel 上游。原先各 QA 路由（meihua/qa、liuyao/qa …）各存一份，这里统一。
  */
-export function proxyLLMDeltaStream(upstream: Response, handle: StreamProxyHandle): ReadableStream {
+export interface ProxyLLMOptions {
+  /** 流正常读完后回调，收到拼接好的完整答案（用于写历史/缓存等）。抛错会被吞，不影响出流。 */
+  onComplete?: (fullText: string) => void | Promise<void>;
+}
+
+export function proxyLLMDeltaStream(
+  upstream: Response,
+  handle: StreamProxyHandle,
+  opts: ProxyLLMOptions = {},
+): ReadableStream {
   const reader = upstream.body!.getReader();
   const decoder = new TextDecoder();
   const encoder = new TextEncoder();
@@ -54,6 +63,7 @@ export function proxyLLMDeltaStream(upstream: Response, handle: StreamProxyHandl
   return new ReadableStream({
     async start(controller) {
       let buffer = '';
+      let fullText = '';
       try {
         while (true) {
           const { done, value } = await reader.read();
@@ -70,10 +80,14 @@ export function proxyLLMDeltaStream(upstream: Response, handle: StreamProxyHandl
               const json = JSON.parse(d);
               const delta = json.choices?.[0]?.delta?.content;
               if (typeof delta === 'string' && delta.length > 0) {
+                fullText += delta;
                 controller.enqueue(encodeSse({ content: delta }));
               }
             } catch { /* 单行 JSON 不完整则跳过 */ }
           }
+        }
+        if (opts.onComplete) {
+          try { await opts.onComplete(fullText); } catch (e) { console.error('[proxyLLMDeltaStream] onComplete failed:', e); }
         }
       } catch (err) {
         controller.enqueue(encodeSse({ error: err instanceof Error ? err.message : String(err) }));

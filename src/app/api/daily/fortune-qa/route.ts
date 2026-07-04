@@ -6,7 +6,8 @@ import { prisma } from '@/lib/db';
 import { withCircuitBreaker } from '@/lib/ai/circuitBreaker';
 import { PRIMARY_MODEL } from '@/lib/ai/models';
 import { getPrimaryProvider } from '@/lib/ai/provider';
-import { attachClientAbort } from '@/lib/ai/streamProxy';
+import { attachClientAbort, proxyLLMDeltaStream } from '@/lib/ai/streamProxy';
+import { SSE_HEADERS } from '@/lib/ai/sse';
 import { getTodayBeijing } from '@/lib/timezone';
 
 const SERVICE = 'api/daily/fortune-qa';
@@ -111,45 +112,10 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: '服务暂时不可用' }, { status: 502 });
     }
 
-    const encoder = new TextEncoder();
-    const upstreamBody = response.body;
-    const reader = upstreamBody.getReader();
-    let fullAnswer = '';
-
-    const readable = new ReadableStream({
-      async start(controller) {
-        const decoder = new TextDecoder();
-        let buffer = '';
-
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n');
-            buffer = lines.pop() || '';
-
-            for (const line of lines) {
-              const trimmed = line.trim();
-              if (!trimmed || !trimmed.startsWith('data:')) continue;
-              const data = trimmed.slice(5).trim();
-              if (data === '[DONE]') {
-                controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-                continue;
-              }
-              try {
-                const json = JSON.parse(data);
-                const content = json.choices?.[0]?.delta?.content;
-                if (content) {
-                  fullAnswer += content;
-                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
-                }
-              } catch {}
-            }
-          }
-
-          // 写入历史记录
+    return new Response(
+      proxyLLMDeltaStream(response, abortHandle, {
+        // 流读完后落库历史（onComplete 内部错误被 helper 吞，不影响出流）
+        onComplete: async (fullAnswer) => {
           try {
             await prisma.dailyFortuneQaHistory.create({
               data: {
@@ -162,25 +128,10 @@ export async function POST(req: NextRequest) {
           } catch (dbErr) {
             logger.error(SERVICE, 'Failed to save QA history', dbErr instanceof Error ? dbErr : undefined);
           }
-        } catch (err) {
-          logger.error(SERVICE, 'Stream error', err instanceof Error ? err : undefined);
-        } finally {
-          abortHandle.release();
-          controller.close();
-        }
-      },
-      async cancel() {
-        await abortHandle.cancel(reader);
-      },
-    });
-
-    return new Response(readable, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        Connection: 'keep-alive',
-      },
-    });
+        },
+      }),
+      { headers: SSE_HEADERS },
+    );
   } catch (error) {
     logger.error(SERVICE, 'Fortune QA error', error instanceof Error ? error : undefined);
     return Response.json({ error: '服务器错误' }, { status: 500 });
