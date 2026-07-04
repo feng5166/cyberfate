@@ -3,7 +3,8 @@ import { checkRateLimit } from '@/lib/rate-limit';
 import { PRIMARY_MODEL } from '@/lib/ai/models';
 import { getPrimaryProvider } from '@/lib/ai/provider';
 import { applyChaos } from '@/lib/chaos-middleware';
-import { attachClientAbort } from '@/lib/ai/streamProxy';
+import { attachClientAbort, proxyLLMDeltaStream } from '@/lib/ai/streamProxy';
+import { SSE_HEADERS } from '@/lib/ai/sse';
 
 export const maxDuration = 60;
 
@@ -67,17 +68,6 @@ ${advicePart}
 - 引用相关卦辞/爻辞原文加强说服力（如果适用）
 - 不做绝对预言，用"建议"、"倾向"、"从卦象来看"等表述
 - 只输出回答文字，不要 JSON，不要 markdown 标题`;
-}
-
-const SSE_HEADERS = {
-  'Content-Type': 'text/event-stream',
-  'Cache-Control': 'no-cache',
-  Connection: 'keep-alive',
-} as const;
-
-function encodeSse(data: object | string): Uint8Array {
-  const payload = typeof data === 'string' ? data : JSON.stringify(data);
-  return new TextEncoder().encode(`data: ${payload}\n\n`);
 }
 
 export async function POST(req: NextRequest) {
@@ -150,46 +140,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: errMsg }, { status: 502 });
   }
 
-  const reader = upstream.body.getReader();
-  const decoder = new TextDecoder();
-
-  const stream = new ReadableStream({
-    async start(controller) {
-      let buffer = '';
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
-          for (const ln of lines) {
-            const t = ln.trim();
-            if (!t || !t.startsWith('data:')) continue;
-            const d = t.slice(5).trim();
-            if (d === '[DONE]') continue;
-            try {
-              const json = JSON.parse(d);
-              const delta = json.choices?.[0]?.delta?.content;
-              if (typeof delta === 'string' && delta.length > 0) {
-                controller.enqueue(encodeSse({ content: delta }));
-              }
-            } catch {}
-          }
-        }
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        controller.enqueue(encodeSse({ error: msg }));
-      } finally {
-        controller.enqueue(encodeSse('[DONE]'));
-        abortHandle.release();
-        controller.close();
-      }
-    },
-    async cancel() {
-      await abortHandle.cancel(reader);
-    },
-  });
-
-  return new Response(stream, { headers: SSE_HEADERS });
+  return new Response(proxyLLMDeltaStream(upstream, abortHandle), { headers: SSE_HEADERS });
 }
