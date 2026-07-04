@@ -7,8 +7,8 @@ export default function AuthLoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#FAF9F6] flex items-center justify-center">
-          <div className="text-[#9B9590] text-sm">加载中...</div>
+        <div className="flex min-h-[calc(100dvh-4rem)] md:min-h-[calc(100dvh-4.5rem)] items-center justify-center bg-brand-bg px-4">
+          <div className="text-brand-gray text-sm">加载中...</div>
         </div>
       }
     >

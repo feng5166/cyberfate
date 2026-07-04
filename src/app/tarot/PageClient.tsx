@@ -2,6 +2,7 @@
 
 import { Footer } from '@/components/layout/Footer';
 import { OracleLoading } from '@/components/ui/OracleLoading';
+import { inputRecipe } from '@/components/ui';
 import { Share2, X, Sparkles, RefreshCw, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { useSession } from 'next-auth/react';
@@ -479,7 +480,7 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
   };
 
   return (
-    <div className="relative min-h-screen bg-[#FAF9F6] text-[#1C1A16]">
+    <div className="relative min-h-dvh bg-[#FAF9F6] text-[#1C1A16]">
       <AiGateModals gate={gate} callbackUrl="/tarot" />
       <div
         className="pointer-events-none fixed inset-0 -z-10 opacity-[0.025]"
@@ -520,7 +521,7 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
                         setActivePrompt(item);
                         setQuestion(item);
                       }}
-                      className="flex-shrink-0 inline-flex items-center min-h-[40px] cursor-pointer rounded-full border border-[#1C1A16]/15 px-3 py-2 text-xs text-[#1C1A16]/65 transition-colors hover:border-[#1C1A16]/40 hover:text-[#1C1A16] whitespace-nowrap"
+                      className="flex-shrink-0 inline-flex items-center min-h-[44px] cursor-pointer rounded-full border border-[#1C1A16]/15 px-3 py-2 text-xs text-[#1C1A16]/65 transition-colors hover:border-[#1C1A16]/40 hover:text-[#1C1A16] whitespace-nowrap"
                     >
                       {item}
                     </button>
@@ -541,7 +542,7 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
                 }}
                 placeholder="输入您的问题..."
                 maxLength={200}
-                className="w-full rounded-xl border border-[#1C1A16]/15 px-4 py-3 text-sm text-[#1C1A16] outline-none transition-all placeholder:text-[#1C1A16]/30 focus:border-[#1C1A16]/40 focus:ring-2 focus:ring-[#1C1A16]/8"
+                className={inputRecipe}
               />
 
               {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
@@ -551,7 +552,7 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
                   type="button"
                   onClick={handleDrawCards}
                   disabled={loading}
-                  className="group relative mt-4 flex h-[54px] w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-[#C2762B] to-[#A8521A] text-[15px] font-semibold text-white shadow-lg shadow-[#C2762B]/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-[#C2762B]/35 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
+                  className="group relative mt-4 flex h-[54px] w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-brand-accent text-[15px] font-semibold text-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-brand-accent-hover active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
                 >
                   <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                   {loading ? (
@@ -580,18 +581,18 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
                     onClick={() => handleModeSelect(item.id)}
                     className={`flex flex-col items-center text-center rounded-2xl border-2 p-4 py-6 transition-all duration-200 ${
                       active
-                        ? 'border-[#1C1A16] bg-gray-100 shadow-sm'
+                        ? 'border-brand-accent bg-brand-accent-tint shadow-sm'
                         : 'border-[#E5E0D8] bg-white hover:border-[#1C1A16]/40 hover:shadow-md'
                     }`}
                   >
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl mb-3 flex-shrink-0 border-2 transition-all duration-200 ${active ? 'bg-[#1C1A16] border-[#1C1A16] text-white' : 'bg-transparent border-[#1C1A16]/25 text-[#1C1A16]'}`}>
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl mb-3 flex-shrink-0 border-2 transition-all duration-200 ${active ? 'bg-brand-accent border-brand-accent text-white' : 'bg-transparent border-[#1C1A16]/25 text-[#1C1A16]'}`}>
                       {item.icon}
                     </div>
                     <p className={`text-base font-semibold mb-2 ${active ? 'text-[#1C1A16]' : 'text-[#1C1A16]'}`}>
                       {item.name}
                     </p>
                     <p className="text-xs text-[#6B7280] leading-relaxed flex-1">{item.desc}</p>
-                    <p className={`text-xs mt-3 font-medium ${active ? 'text-[#1C1A16]' : 'text-[#9CA3AF]'}`}>
+                    <p className={`text-xs mt-3 font-medium ${active ? 'text-brand-accent' : 'text-[#9CA3AF]'}`}>
                       {active ? '✓ 当前风格' : '选择此风格 →'}
                     </p>
                   </button>
@@ -604,7 +605,7 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
             <div className="space-y-4">
               {drawnCards && drawnCards.length === (currentSpread === 'celtic' ? 10 : currentSpread === 'mirror' || currentSpread === 'relationship' ? 5 : currentSpread === 'moonlight' ? 3 : 3) && (
                 <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-5 md:p-6">
-                  <h3 className="font-display text-xl tracking-[0.08em] text-[#1C1A16] text-center mb-5">✨ 您抚到了这些牌</h3>
+                  <h3 className="font-display text-xl tracking-[0.08em] text-[#1C1A16] text-center mb-5">✨ 您抽到了这些牌</h3>
                   <div>
                     {(() => {
                       const spread = (currentSpread as TarotSpread);
@@ -633,7 +634,6 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
               <div className="flex justify-center">
                 <OracleLoading />
               </div>
-              <p className="mt-6 text-base font-medium text-[#1C1A16]/70 tracking-[0.08em]">命理师正在解读...</p>
             </div>
           )}
 
@@ -718,7 +718,7 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
                   type="button"
                   onClick={() => handleAIReading(drawnCards)}
                   disabled={loading}
-                  className="inline-flex items-center gap-3 h-[52px] px-8 rounded-full bg-[#1C1A16] text-base font-medium text-white transition-all hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex items-center gap-3 h-[52px] px-8 rounded-full bg-brand-accent text-base font-medium text-white transition-all hover:bg-brand-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <span className="text-lg">✦</span>
                   <span>AI 解读牌义</span>
@@ -730,7 +730,7 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
           {step === 'result' && result && (
             <div className="space-y-4" aria-live="polite">
               <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-5 md:p-6">
-                <h3 className="font-display text-xl tracking-[0.08em] text-[#1C1A16] text-center mb-5">✨ 您抚到了这些牌</h3>
+                <h3 className="font-display text-xl tracking-[0.08em] text-[#1C1A16] text-center mb-5">✨ 您抽到了这些牌</h3>
                 <div>
                   {renderCards()}
                 </div>

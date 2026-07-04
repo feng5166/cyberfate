@@ -206,9 +206,9 @@ function SideForm({ sideKey, data, onChange }: SideFormProps) {
   };
 
   const inputClass =
-    'w-full h-10 rounded-lg border border-[#E5E0D8] bg-white px-4 text-sm text-[#1C1A16] placeholder:text-[#1C1A16]/40 focus:border-[#C2762B] focus:ring-2 focus:ring-[#C2762B]/15 outline-none transition-all';
+    'w-full min-h-[44px] rounded-lg border border-[#E5E0D8] bg-white px-4 text-sm text-[#1C1A16] placeholder:text-[#1C1A16]/40 focus:border-[#C2762B] focus:ring-2 focus:ring-[#C2762B]/15 outline-none transition-all';
   const selectClass =
-    'h-10 rounded-lg border border-[#E5E0D8] bg-white px-3 text-sm text-[#1C1A16]';
+    'min-h-[44px] rounded-lg border border-[#E5E0D8] bg-white px-3 text-sm text-[#1C1A16]';
 
   return (
     <div className="space-y-5">
@@ -254,14 +254,14 @@ function SideForm({ sideKey, data, onChange }: SideFormProps) {
           value={data.birthDate}
           onChange={(value) => onChange({ birthDate: value })}
           className="space-y-2"
-          triggerClassName="h-10 rounded-lg"
+          triggerClassName="min-h-[44px] rounded-lg"
         />
 
         <div className="space-y-3">
           <label className="flex items-center justify-between gap-3 cursor-pointer">
             <div className="flex flex-col">
               <span className="text-sm font-medium text-[#1C1A16]">知道精确出生时间</span>
-              <span className="text-xs text-[#1C1A16]/45 mt-0.5">
+              <span className="text-xs text-brand-gray mt-0.5">
                 精确到分有助于排准时柱
               </span>
             </div>
@@ -318,7 +318,7 @@ function SideForm({ sideKey, data, onChange }: SideFormProps) {
         <label className="flex items-center justify-between gap-3 cursor-pointer">
           <div className="flex flex-col">
             <span className="text-sm font-medium text-[#1C1A16]">晚子时（23:00 后归次日日柱）</span>
-            <span className="text-xs text-[#1C1A16]/45 mt-0.5">
+            <span className="text-xs text-brand-gray mt-0.5">
               专业命理项，仅当出生在 23:00–23:59 影响日柱
             </span>
           </div>
@@ -683,7 +683,7 @@ export function MarriagePageClient() {
                             <dd className="text-[#1C1A16] font-medium text-right">
                               {side.birthDate || <span className="text-[#1C1A16]/40">未填写</span>}
                               {side.birthDate && (
-                                <span className="ml-1 text-xs text-[#1C1A16]/45">
+                                <span className="ml-1 text-xs text-brand-gray">
                                   （{side.isLunar ? '农历' : '阳历'}）
                                 </span>
                               )}
@@ -818,7 +818,7 @@ export function MarriagePageClient() {
                   />
                 )}
 
-                <p className="text-xs text-[#1C1A16]/45 leading-relaxed text-center px-2">
+                <p className="text-xs text-brand-gray leading-relaxed text-center px-2">
                   {result.disclaimer}
                 </p>
               </div>

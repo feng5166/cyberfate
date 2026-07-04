@@ -26,18 +26,18 @@ export function SidebarMenuItem({
   const content = (
     <span
       className={clsx(
-        'relative flex items-center gap-2.5 rounded-md text-[12px] font-medium transition-colors duration-200 ease-out',
-        collapsed ? 'justify-center px-0 py-3' : 'px-4 py-2',
+        'relative flex items-center gap-2.5 rounded-md text-[13px] font-medium transition-colors duration-200 ease-out',
+        collapsed ? 'justify-center px-0 py-3' : 'px-4 py-2.5',
         locked
-          ? 'opacity-60 cursor-not-allowed text-[#6B7280]'
+          ? 'opacity-60 cursor-not-allowed text-brand-gray'
           : active
-            ? 'text-black bg-[#F5F2ED]'
-            : 'text-[#374151] hover:text-black hover:bg-[#F0EDE8]'
+            ? 'text-brand-ink bg-brand-accent-tint'
+            : 'text-[#374151] hover:text-brand-ink hover:bg-[#F0EDE8]'
       )}
     >
       {active && !locked && (
         <span
-          className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-[#C2762B]"
+          className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-brand-accent"
           aria-hidden
         />
       )}

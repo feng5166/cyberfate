@@ -27,7 +27,7 @@ export function LiunianLiuyueCard({
   return (
     <div>
       <h3 className="text-base font-semibold text-[#1C1A16] mb-1">流年流月</h3>
-      <p className="text-xs text-[#1C1A16]/45 mb-4">当前公历年的流年干支及十二流月与命盘的作用关系</p>
+      <p className="text-xs text-brand-gray mb-4">当前公历年的流年干支及十二流月与命盘的作用关系</p>
 
       {/* 流年概览 */}
       {liunian && (
@@ -38,20 +38,20 @@ export function LiunianLiuyueCard({
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 text-xs text-[#1C1A16]/70">
             <p>
-              <span className="text-[#1C1A16]/45">天干十神：</span>
+              <span className="text-brand-gray">天干十神：</span>
               {liunian.gan}（{liunian.ganTenGod}）
             </p>
             <p>
-              <span className="text-[#1C1A16]/45">地支藏干：</span>
+              <span className="text-brand-gray">地支藏干：</span>
               {hiddenSummary(liunian)}
             </p>
             <p className="sm:col-span-2">
-              <span className="text-[#1C1A16]/45">与命局：</span>
+              <span className="text-brand-gray">与命局：</span>
               {relSummary(liunian.interactions)}
             </p>
             {liunian.shensha.length > 0 && (
               <p className="sm:col-span-2">
-                <span className="text-[#1C1A16]/45">引动神煞：</span>
+                <span className="text-brand-gray">引动神煞：</span>
                 {liunian.shensha.map((s) => `${s.name}(${s.type})`).join('、')}
               </p>
             )}
@@ -64,7 +64,7 @@ export function LiunianLiuyueCard({
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
-              <tr className="text-[#1C1A16]/45 border-b border-[#1C1A16]/8">
+              <tr className="text-brand-gray border-b border-[#1C1A16]/8">
                 <th className="py-2 px-2 text-left font-medium">月份</th>
                 <th className="py-2 px-2 text-left font-medium">流月</th>
                 <th className="py-2 px-2 text-left font-medium">主十神</th>

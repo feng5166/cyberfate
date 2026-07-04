@@ -74,12 +74,14 @@ function getWuxingFromGan(gan: string): WuXing {
 /**
  * 五行颜色映射
  */
+// 五行配色对齐全站唯一真源（src/data/wuxing.ts 的传统五色）。
+// 注意：class 必须为字面量，Tailwind 静态扫描无法识别运行时拼接的 bg-[${..}]，故此处写死同值。
 export const WUXING_COLORS: Record<WuXing, { bg: string; text: string; hex: string }> = {
-  '金': { bg: 'bg-[#D4A574]/10', text: 'text-[#D4A574]', hex: '#D4A574' },
-  '木': { bg: 'bg-[#5B8C5A]/10', text: 'text-[#5B8C5A]', hex: '#5B8C5A' },
-  '水': { bg: 'bg-[#4A7C9B]/10', text: 'text-[#4A7C9B]', hex: '#4A7C9B' },
-  '火': { bg: 'bg-[#C75B4B]/10', text: 'text-[#C75B4B]', hex: '#C75B4B' },
-  '土': { bg: 'bg-[#B8956A]/10', text: 'text-[#B8956A]', hex: '#B8956A' },
+  '金': { bg: 'bg-[#FBF1D0]', text: 'text-[#B0870F]', hex: '#E0A82E' },
+  '木': { bg: 'bg-[#DCFCE7]', text: 'text-[#15803D]', hex: '#22A366' },
+  '水': { bg: 'bg-[#DBEAFE]', text: 'text-[#1D4ED8]', hex: '#3B82F6' },
+  '火': { bg: 'bg-[#FEE2E2]', text: 'text-[#DC2626]', hex: '#E0524D' },
+  '土': { bg: 'bg-[#F3E7D3]', text: 'text-[#92400E]', hex: '#9B6B3A' },
 };
 
 /**

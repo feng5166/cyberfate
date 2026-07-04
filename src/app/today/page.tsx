@@ -105,14 +105,14 @@ export default function TodayPage() {
       />
       <FaqJsonLd items={FAQ_ITEMS} />
 
-      <main className="min-h-screen bg-[#FAF9F6] text-[#1C1A16]">
+      <main className="min-h-dvh bg-brand-bg text-brand-ink">
         {/* 标题区 */}
         <section className="px-4 pt-12 md:pt-16 pb-6 max-w-3xl mx-auto text-center">
-          <p className="text-sm tracking-widest text-[#1C1A16]/40 uppercase">Today · 黄历宜忌</p>
-          <h1 className="font-display text-3xl md:text-5xl font-semibold mt-3 leading-tight">
+          <p className="text-sm tracking-widest text-brand-gray uppercase">Today · 黄历宜忌</p>
+          <h1 className="font-display text-3xl md:text-5xl font-semibold mt-3 leading-tight text-brand-ink">
             今天适合做什么？
           </h1>
-          <p className="mt-4 text-base md:text-lg text-[#1C1A16]/60">
+          <p className="mt-4 text-base md:text-lg text-brand-gray">
             {year} 年 {month} 月 {day} 日 · {weekday}
             {data.jieqi ? ` · ${data.jieqi}` : ''}
           </p>
@@ -120,22 +120,22 @@ export default function TodayPage() {
 
         {/* 核心信息卡片 */}
         <section className="px-4 max-w-3xl mx-auto">
-          <div className="rounded-2xl bg-white border border-[#1C1A16]/8 shadow-sm p-6 md:p-8">
-            <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2 pb-4 border-b border-[#1C1A16]/8">
-              <span className="font-display text-4xl md:text-5xl text-[#C75B4B]">
+          <div className="rounded-card bg-white border border-brand-border-light shadow-card p-6 md:p-8">
+            <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2 pb-4 border-b border-brand-border-light">
+              <span className="font-display text-4xl md:text-5xl text-brand-accent">
                 {month}/{day}
               </span>
-              <span className="text-sm text-[#1C1A16]/60">
+              <span className="text-sm text-brand-gray">
                 农历 {data.lunarMonthName}月{data.lunarDayName}
               </span>
-              <span className="text-sm text-[#1C1A16]/60">
+              <span className="text-sm text-brand-gray">
                 {data.yearGanzhi}年 · {data.dayGanzhi}日
               </span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
               <div>
-                <h2 className="text-sm font-semibold tracking-wide text-[#5B8C5A] mb-3">
+                <h2 className="text-sm font-semibold tracking-wide text-brand-accent mb-3">
                   今日宜
                 </h2>
                 <div className="flex flex-wrap gap-2">
@@ -143,19 +143,19 @@ export default function TodayPage() {
                     data.yi.map((item) => (
                       <span
                         key={`yi-${item}`}
-                        className="px-3 py-1.5 rounded-full bg-[#5B8C5A]/10 text-[#5B8C5A] text-sm"
+                        className="px-3 py-1.5 rounded-full bg-brand-accent-soft text-brand-accent text-sm"
                       >
                         {item}
                       </span>
                     ))
                   ) : (
-                    <span className="text-sm text-[#1C1A16]/50">诸事和顺，无特别宜忌</span>
+                    <span className="text-sm text-brand-gray">诸事和顺，无特别宜忌</span>
                   )}
                 </div>
               </div>
 
               <div>
-                <h2 className="text-sm font-semibold tracking-wide text-[#C75B4B] mb-3">
+                <h2 className="text-sm font-semibold tracking-wide text-brand-ink mb-3">
                   今日忌
                 </h2>
                 <div className="flex flex-wrap gap-2">
@@ -163,39 +163,39 @@ export default function TodayPage() {
                     data.ji.map((item) => (
                       <span
                         key={`ji-${item}`}
-                        className="px-3 py-1.5 rounded-full bg-[#C75B4B]/10 text-[#C75B4B] text-sm"
+                        className="px-3 py-1.5 rounded-full bg-brand-border-light text-brand-ink text-sm"
                       >
                         {item}
                       </span>
                     ))
                   ) : (
-                    <span className="text-sm text-[#1C1A16]/50">少冲撞，行止自如</span>
+                    <span className="text-sm text-brand-gray">少冲撞，行止自如</span>
                   )}
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-[#1C1A16]/8 text-sm">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-brand-border-light text-sm">
               <div>
-                <div className="text-[#1C1A16]/50 mb-1">冲煞</div>
-                <div className="text-[#1C1A16]/85">
+                <div className="text-brand-gray mb-1">冲煞</div>
+                <div className="text-brand-ink">
                   冲{data.chongShengxiao}
                   {data.sha ? ` · 煞${data.sha}` : ''}
                 </div>
               </div>
               <div>
-                <div className="text-[#1C1A16]/50 mb-1">建除</div>
-                <div className="text-[#1C1A16]/85">{data.zhiXing}日</div>
+                <div className="text-brand-gray mb-1">建除</div>
+                <div className="text-brand-ink">{data.zhiXing}日</div>
               </div>
               <div>
-                <div className="text-[#1C1A16]/50 mb-1">值神</div>
-                <div className="text-[#1C1A16]/85">
+                <div className="text-brand-gray mb-1">值神</div>
+                <div className="text-brand-ink">
                   {data.jiShen[0] || '—'}
                 </div>
               </div>
               <div>
-                <div className="text-[#1C1A16]/50 mb-1">星宿</div>
-                <div className="text-[#1C1A16]/85">
+                <div className="text-brand-gray mb-1">星宿</div>
+                <div className="text-brand-ink">
                   {data.xiu}
                   {data.xiuLuck ? `（${data.xiuLuck}）` : ''}
                 </div>
@@ -205,27 +205,27 @@ export default function TodayPage() {
         </section>
 
         {/* SEO 详细解析 */}
-        <section className="px-4 max-w-3xl mx-auto py-12 md:py-16 text-[#1C1A16]/75 leading-relaxed">
-          <h2 className="font-display text-2xl font-semibold text-[#1C1A16] mb-4">
+        <section className="px-4 max-w-3xl mx-auto py-12 md:py-16 text-brand-gray leading-relaxed">
+          <h2 className="font-display text-2xl font-semibold text-brand-ink mb-4">
             如何看懂今日黄历？
           </h2>
           <p className="mb-4">
             黄历宜忌的判断并非凭空而来。它综合了当日的天干地支组合、建除十二神（建、除、满、平、定、执、破、危、成、收、开、闭）的轮值、吉神凶煞的分布，以及二十八星宿的位置。今天是
-            <span className="font-medium text-[#1C1A16]"> {data.dayGanzhi} </span>
+            <span className="font-medium text-brand-ink"> {data.dayGanzhi} </span>
             日，建除属
-            <span className="font-medium text-[#1C1A16]"> {data.zhiXing} </span>
+            <span className="font-medium text-brand-ink"> {data.zhiXing} </span>
             ，值日星宿为
-            <span className="font-medium text-[#1C1A16]"> {data.xiu} </span>
+            <span className="font-medium text-brand-ink"> {data.xiu} </span>
             ，整体能量决定了今日的宜忌结构。
           </p>
           <p className="mb-4">
             阅读黄历时，先看"宜"和"忌"两栏的具体事项，对照你今天准备做的事即可快速判断；再看冲煞——
             如果你属
-            <span className="font-medium text-[#1C1A16]"> {data.chongShengxiao} </span>
+            <span className="font-medium text-brand-ink"> {data.chongShengxiao} </span>
             ，今天就属于"被冲"的生肖，重大决定建议延后或借助吉时化解。
           </p>
 
-          <h2 className="font-display text-2xl font-semibold text-[#1C1A16] mt-10 mb-4">
+          <h2 className="font-display text-2xl font-semibold text-brand-ink mt-10 mb-4">
             今天适合的具体事项
           </h2>
           <p className="mb-4">
@@ -236,13 +236,13 @@ export default function TodayPage() {
           </p>
           <p className="mb-4">
             如果你正在考虑结婚、开业、签约、出行、动土等重要事项，除了看黄历通用宜忌，更建议结合自己的
-            <Link href="/bazi" className="text-[#C75B4B] underline-offset-4 hover:underline">
+            <Link href="/bazi" className="text-brand-accent underline-offset-4 hover:underline">
               生辰八字
             </Link>
             一起判断。同样的"宜嫁娶"日子，对不同八字的人吉凶力度并不相同。
           </p>
 
-          <h2 className="font-display text-2xl font-semibold text-[#1C1A16] mt-10 mb-4">
+          <h2 className="font-display text-2xl font-semibold text-brand-ink mt-10 mb-4">
             今天需要避免的事项
           </h2>
           <p className="mb-4">
@@ -252,49 +252,49 @@ export default function TodayPage() {
           </p>
           <p className="mb-4">
             对于属
-            <span className="font-medium text-[#1C1A16]"> {data.chongShengxiao} </span>
+            <span className="font-medium text-brand-ink"> {data.chongShengxiao} </span>
             的朋友，今日为冲日，重要场合建议低调处理；其他人则可以正常行事，但仍以"宜""忌"两栏为主要参考。
           </p>
         </section>
 
         {/* 相关工具推荐 */}
         <section className="px-4 max-w-3xl mx-auto pb-12 md:pb-16">
-          <h2 className="font-display text-xl font-semibold text-[#1C1A16] mb-6">
+          <h2 className="font-display text-xl font-semibold text-brand-ink mb-6">
             继续探索
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Link
               href="/huangli"
-              className="block rounded-xl bg-white border border-[#1C1A16]/8 p-5 hover:border-[#C75B4B]/40 transition-colors"
+              className="block rounded-card bg-white border border-brand-border-light p-5 hover:border-brand-accent/40 transition-colors"
             >
-              <div className="text-base font-semibold text-[#1C1A16] mb-1">完整黄历查询 →</div>
-              <div className="text-sm text-[#1C1A16]/60">查看任意日期的宜忌、吉时、神煞详情。</div>
+              <div className="text-base font-semibold text-brand-ink mb-1">完整黄历查询 →</div>
+              <div className="text-sm text-brand-gray">查看任意日期的宜忌、吉时、神煞详情。</div>
             </Link>
             <Link
               href="/bazi"
-              className="block rounded-xl bg-white border border-[#1C1A16]/8 p-5 hover:border-[#C75B4B]/40 transition-colors"
+              className="block rounded-card bg-white border border-brand-border-light p-5 hover:border-brand-accent/40 transition-colors"
             >
-              <div className="text-base font-semibold text-[#1C1A16] mb-1">八字分析 →</div>
-              <div className="text-sm text-[#1C1A16]/60">结合生辰八字判断今日对你的具体吉凶。</div>
+              <div className="text-base font-semibold text-brand-ink mb-1">八字分析 →</div>
+              <div className="text-sm text-brand-gray">结合生辰八字判断今日对你的具体吉凶。</div>
             </Link>
             <Link
               href="/daily"
-              className="block rounded-xl bg-white border border-[#1C1A16]/8 p-5 hover:border-[#C75B4B]/40 transition-colors"
+              className="block rounded-card bg-white border border-brand-border-light p-5 hover:border-brand-accent/40 transition-colors"
             >
-              <div className="text-base font-semibold text-[#1C1A16] mb-1">今日运势 →</div>
-              <div className="text-sm text-[#1C1A16]/60">基于个人八字的每日运势提示。</div>
+              <div className="text-base font-semibold text-brand-ink mb-1">今日运势 →</div>
+              <div className="text-sm text-brand-gray">基于个人八字的每日运势提示。</div>
             </Link>
           </div>
         </section>
 
         {/* FAQ */}
-        <section className="px-4 max-w-3xl mx-auto pb-16 border-t border-[#1C1A16]/8 pt-10">
-          <h2 className="font-display text-xl font-semibold text-[#1C1A16] mb-6">常见问题</h2>
+        <section className="px-4 max-w-3xl mx-auto pb-16 border-t border-brand-border-light pt-10">
+          <h2 className="font-display text-xl font-semibold text-brand-ink mb-6">常见问题</h2>
           <dl className="space-y-5 text-sm leading-relaxed">
             {FAQ_ITEMS.map((item) => (
               <div key={item.question}>
-                <dt className="font-semibold text-[#1C1A16]">{item.question}</dt>
-                <dd className="mt-1 text-[#1C1A16]/70">{item.answer}</dd>
+                <dt className="font-semibold text-brand-ink">{item.question}</dt>
+                <dd className="mt-1 text-brand-gray">{item.answer}</dd>
               </div>
             ))}
           </dl>
@@ -302,7 +302,7 @@ export default function TodayPage() {
 
         {/* 命理知识 */}
         <section className="px-4 max-w-3xl mx-auto pb-16">
-          <p className="text-xs font-medium text-[#1C1A16]/50 mb-3">命理知识</p>
+          <p className="text-xs font-medium text-brand-gray mb-3">命理知识</p>
           <div className="flex flex-wrap gap-2">
             {[
               { name: '五行理论', href: '/knowledge/wuxing' },
@@ -312,7 +312,7 @@ export default function TodayPage() {
               { name: '大运理论', href: '/knowledge/dayun' },
               { name: '神煞大全', href: '/knowledge/shensha' },
             ].map((t) => (
-              <Link key={t.href} href={t.href} className="text-xs px-3 py-1.5 rounded-full border border-[#1C1A16]/15 text-[#1C1A16]/60 hover:text-[#1C1A16] hover:border-[#1C1A16]/30 transition-colors">
+              <Link key={t.href} href={t.href} className="text-xs px-3 py-1.5 rounded-full border border-brand-border text-brand-gray hover:text-brand-ink hover:border-brand-border transition-colors">
                 {t.name}
               </Link>
             ))}

@@ -15,7 +15,7 @@ export function QuotaLimitModal({ onClose }: QuotaLimitModalProps) {
     <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
-      <div ref={focusTrapRef} className="relative bg-white border border-primary/30 rounded-2xl p-8 max-w-sm w-full shadow-glow text-center">
+      <div ref={focusTrapRef} role="dialog" aria-modal="true" aria-label="今日免费次数已用完" className="relative bg-white border border-brand-border rounded-2xl p-8 max-w-sm w-full shadow-pricing text-center">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-muted hover:text-primary transition-colors"
@@ -40,7 +40,7 @@ export function QuotaLimitModal({ onClose }: QuotaLimitModalProps) {
             onClose();
             router.push('/pricing');
           }}
-          className="w-full bg-gradient-to-r from-cyber-gold-dark to-cyber-gold text-cyber-bg font-semibold py-3 rounded-lg hover:shadow-glow transition-all duration-200 mb-3"
+          className="w-full bg-brand-accent text-white font-semibold py-3 rounded-lg hover:bg-brand-accent-hover transition-all duration-200 mb-3"
         >
           解锁全部功能
         </button>

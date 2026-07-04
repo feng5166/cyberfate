@@ -1,5 +1,5 @@
 import { CreditCard } from 'lucide-react';
-import { Container } from '@/components/ui/Container';
+import { PageShell } from '@/components/ui/PageShell';
 import { Card } from '@/components/ui/Card';
 import { Footer } from '@/components/layout/Footer';
 import type { Metadata } from 'next';
@@ -12,27 +12,26 @@ export const metadata: Metadata = {
 
 export default function RefundPage() {
   return (
-    <div className="min-h-screen bg-[#FAF9F6] text-[#1C1A16]">
-      <Container className="py-12 md:py-16">
+    <div className="min-h-dvh bg-brand-bg text-brand-ink">
+      <PageShell width="page" className="py-12 md:py-16">
         {/* 页面标题 */}
         <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-[#1C1A16]/5 mb-4">
-            <CreditCard className="w-6 h-6 text-[#1C1A16]" />
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-brand-accent-soft mb-4">
+            <CreditCard className="w-6 h-6 text-brand-accent" />
           </div>
-          <h1 className="font-display text-3xl md:text-4xl text-[#1C1A16] tracking-[0.08em] mb-3">
+          <h1 className="font-display text-3xl md:text-4xl text-brand-ink tracking-[0.08em] mb-3">
             退款政策
           </h1>
-          <p className="text-sm text-[#1C1A16]/60">
+          <p className="text-sm text-brand-gray">
             最后更新：2026年3月6日
           </p>
         </div>
 
         {/* 内容区 */}
-        <div className="max-w-3xl mx-auto">
-          <Card className="p-6 md:p-10">
-            <div className="prose prose-gray max-w-none space-y-8 text-[#1C1A16]/80">
+        <Card className="p-6 md:p-10">
+            <div className="prose prose-gray max-w-none space-y-8 text-brand-ink/80">
               <section>
-                <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.06em] mb-4">
+                <h2 className="font-display text-xl text-brand-ink tracking-[0.06em] mb-4">
                   一、退款原则
                 </h2>
                 <p className="leading-relaxed">
@@ -41,7 +40,7 @@ export default function RefundPage() {
               </section>
 
               <section>
-                <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.06em] mb-4">
+                <h2 className="font-display text-xl text-brand-ink tracking-[0.06em] mb-4">
                   二、可退款情况
                 </h2>
                 <p className="leading-relaxed mb-3">以下情况可申请全额退款：</p>
@@ -54,7 +53,7 @@ export default function RefundPage() {
               </section>
 
               <section>
-                <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.06em] mb-4">
+                <h2 className="font-display text-xl text-brand-ink tracking-[0.06em] mb-4">
                   三、不予退款情况
                 </h2>
                 <p className="leading-relaxed mb-3">以下情况不支持退款：</p>
@@ -68,12 +67,12 @@ export default function RefundPage() {
               </section>
 
               <section>
-                <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.06em] mb-4">
+                <h2 className="font-display text-xl text-brand-ink tracking-[0.06em] mb-4">
                   四、退款流程
                 </h2>
                 <div className="space-y-4 text-sm">
                   <div>
-                    <p className="font-medium text-[#1C1A16] mb-2">1. 提交申请</p>
+                    <p className="font-medium text-brand-ink mb-2">1. 提交申请</p>
                     <p className="leading-relaxed">
                       发送邮件至 refund@cyberfate.me，标题注明"退款申请"，并提供：
                     </p>
@@ -85,14 +84,14 @@ export default function RefundPage() {
                   </div>
 
                   <div>
-                    <p className="font-medium text-[#1C1A16] mb-2">2. 审核处理</p>
+                    <p className="font-medium text-brand-ink mb-2">2. 审核处理</p>
                     <p className="leading-relaxed">
                       我们会在3个工作日内审核您的申请，并通过邮件或电话联系您确认相关信息。
                     </p>
                   </div>
 
                   <div>
-                    <p className="font-medium text-[#1C1A16] mb-2">3. 退款到账</p>
+                    <p className="font-medium text-brand-ink mb-2">3. 退款到账</p>
                     <p className="leading-relaxed">
                       审核通过后，退款将在5-7个工作日内原路退回您的支付账户。具体到账时间取决于支付渠道。
                     </p>
@@ -101,7 +100,7 @@ export default function RefundPage() {
               </section>
 
               <section>
-                <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.06em] mb-4">
+                <h2 className="font-display text-xl text-brand-ink tracking-[0.06em] mb-4">
                   五、部分退款
                 </h2>
                 <p className="leading-relaxed">
@@ -110,7 +109,7 @@ export default function RefundPage() {
               </section>
 
               <section>
-                <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.06em] mb-4">
+                <h2 className="font-display text-xl text-brand-ink tracking-[0.06em] mb-4">
                   六、争议解决
                 </h2>
                 <p className="leading-relaxed">
@@ -119,7 +118,7 @@ export default function RefundPage() {
               </section>
 
               <section>
-                <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.06em] mb-4">
+                <h2 className="font-display text-xl text-brand-ink tracking-[0.06em] mb-4">
                   七、联系我们
                 </h2>
                 <p className="leading-relaxed">
@@ -138,9 +137,8 @@ export default function RefundPage() {
                 </p>
               </div>
             </div>
-          </Card>
-        </div>
-      </Container>
+        </Card>
+      </PageShell>
       <Footer />
     </div>
   );

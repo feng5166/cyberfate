@@ -196,7 +196,7 @@ export default function DailyDetailAnalysis({ isLoggedIn, isVip, onLoginRequired
         return <h2 key={i} style={{ fontSize: 18, fontWeight: 600, color: '#1C1A16', marginTop: i === 0 ? 0 : 24, marginBottom: 12, fontFamily: 'Noto Serif SC, serif' }}>{line.slice(3)}</h2>;
       }
       if (line.startsWith('### ')) {
-        return <h3 key={i} style={{ fontSize: 15, fontWeight: 600, color: '#1F2937', marginTop: 16, marginBottom: 8 }}>{line.slice(4)}</h3>;
+        return <h3 key={i} style={{ fontSize: 15, fontWeight: 600, color: '#1C1A16', marginTop: 16, marginBottom: 8 }}>{line.slice(4)}</h3>;
       }
       if (line.startsWith('- ')) {
         return <p key={i} style={{ fontSize: 14, color: '#1C1A16', lineHeight: 1.8, paddingLeft: 16, position: 'relative' }}><span style={{ position: 'absolute', left: 0 }}>•</span>{line.slice(2)}</p>;
@@ -209,18 +209,19 @@ export default function DailyDetailAnalysis({ isLoggedIn, isVip, onLoginRequired
   return (
     <>
       {/* 入口卡片 - 黑白极简 */}
-      <div style={{ background: '#FFFFFF', borderRadius: 12, padding: '24px 28px', border: '1px solid #E5E7EB', position: 'relative' }}>
+      <div style={{ background: '#FFFFFF', borderRadius: 16, padding: '24px 28px', border: '1px solid #E5E7EB', position: 'relative' }}>
         {/* 历史按钮 - 右上角绝对定位方框 */}
         <button
           onClick={openHistory}
           onMouseEnter={() => setHistoryBtnHover(true)}
           onMouseLeave={() => setHistoryBtnHover(false)}
+          aria-label="历史记录"
           style={{
             position: 'absolute',
             top: 16,
             right: 16,
-            width: 36,
-            height: 36,
+            width: 44,
+            height: 44,
             backgroundColor: historyBtnHover ? '#F9FAFB' : '#FFFFFF',
             border: `1px solid ${historyBtnHover ? '#9CA3AF' : '#E5E7EB'}`,
             borderRadius: 8,
@@ -240,7 +241,7 @@ export default function DailyDetailAnalysis({ isLoggedIn, isVip, onLoginRequired
           {status === 'idle' && (
             <div className="ddap-idle-row" style={{ display: 'flex', flexDirection: 'row', gap: 16, alignItems: 'center' }}>
               <div style={{ flex: 1, minWidth: 200, paddingRight: 52 }}>
-                <h3 style={{ fontSize: 17, fontWeight: 600, color: '#111827', fontFamily: 'Noto Serif SC, serif', margin: 0 }}>
+                <h3 style={{ fontSize: 17, fontWeight: 600, color: '#1C1A16', fontFamily: 'Noto Serif SC, serif', margin: 0 }}>
                   每日运势详细分析
                 </h3>
                 <p style={{ fontSize: 13, color: '#9CA3AF', margin: 0, marginTop: 6, lineHeight: 1.5 }}>
@@ -250,11 +251,12 @@ export default function DailyDetailAnalysis({ isLoggedIn, isVip, onLoginRequired
               <button
                 className="ddap-cta"
                 onClick={handleGenerate}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#111827')}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#1F2937')}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#A86425')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#C2762B')}
                 style={{
                   padding: '10px 28px',
-                  backgroundColor: '#1F2937',
+                  minHeight: 44,
+                  backgroundColor: '#C2762B',
                   color: 'white',
                   borderRadius: 999,
                   border: 'none',
@@ -273,13 +275,13 @@ export default function DailyDetailAnalysis({ isLoggedIn, isVip, onLoginRequired
           {/* loading 态 */}
           {status === 'loading' && (
             <div>
-              <h3 style={{ fontSize: 17, fontWeight: 600, color: '#111827', fontFamily: 'Noto Serif SC, serif', margin: 0, marginBottom: 16 }}>
+              <h3 style={{ fontSize: 17, fontWeight: 600, color: '#1C1A16', fontFamily: 'Noto Serif SC, serif', margin: 0, marginBottom: 16 }}>
                 每日运势详细分析
               </h3>
               {content ? (
                 <div ref={contentRef} style={{ maxHeight: 400, overflowY: 'auto', paddingRight: 8 }}>
                   {renderContent(content)}
-                  <span className="animate-pulse" style={{ display: 'inline-block', width: 2, height: 16, backgroundColor: '#1F2937', marginLeft: 2, verticalAlign: 'middle' }} />
+                  <span className="animate-pulse" style={{ display: 'inline-block', width: 2, height: 16, backgroundColor: '#C2762B', marginLeft: 2, verticalAlign: 'middle' }} />
                 </div>
               ) : (
                 <div style={{ textAlign: 'center', padding: '24px 0' }}>
@@ -288,7 +290,7 @@ export default function DailyDetailAnalysis({ isLoggedIn, isVip, onLoginRequired
                   </div>
                   <div style={{ marginTop: 12, display: 'flex', justifyContent: 'center', gap: 4 }}>
                     {[0, 1, 2].map(i => (
-                      <div key={i} className="animate-bounce" style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#1F2937', animationDelay: `${i * 0.15}s` }} />
+                      <div key={i} className="animate-bounce" style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#C2762B', animationDelay: `${i * 0.15}s` }} />
                     ))}
                   </div>
                 </div>
@@ -299,7 +301,7 @@ export default function DailyDetailAnalysis({ isLoggedIn, isVip, onLoginRequired
           {/* done 态 */}
           {status === 'done' && (
             <div>
-              <h3 style={{ fontSize: 17, fontWeight: 600, color: '#111827', fontFamily: 'Noto Serif SC, serif', margin: 0, marginBottom: 16 }}>
+              <h3 style={{ fontSize: 17, fontWeight: 600, color: '#1C1A16', fontFamily: 'Noto Serif SC, serif', margin: 0, marginBottom: 16 }}>
                 每日运势详细分析
               </h3>
               <div ref={contentRef} style={{ maxHeight: 500, overflowY: 'auto', paddingRight: 8 }}>
@@ -313,10 +315,11 @@ export default function DailyDetailAnalysis({ isLoggedIn, isVip, onLoginRequired
                     margin: '16px auto 0',
                     width: 'auto',
                     padding: '10px 28px',
+                    minHeight: 44,
                     backgroundColor: 'transparent',
-                    color: '#1F2937',
+                    color: '#C2762B',
                     borderRadius: 999,
-                    border: '1px solid #1F2937',
+                    border: '1px solid #C2762B',
                     fontSize: 13,
                     cursor: 'pointer',
                   }}
@@ -330,23 +333,23 @@ export default function DailyDetailAnalysis({ isLoggedIn, isVip, onLoginRequired
           {/* exhausted 态 */}
           {status === 'exhausted' && (
             <div>
-              <h3 style={{ fontSize: 17, fontWeight: 600, color: '#111827', fontFamily: 'Noto Serif SC, serif', margin: 0, marginBottom: 16 }}>
+              <h3 style={{ fontSize: 17, fontWeight: 600, color: '#1C1A16', fontFamily: 'Noto Serif SC, serif', margin: 0, marginBottom: 16 }}>
                 每日运势详细分析
               </h3>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                <span style={{ color: '#10B981', fontSize: 16 }}>✓</span>
+                <span style={{ color: '#C2762B', fontSize: 16 }}>✓</span>
                 <span style={{ fontSize: 14, color: 'rgba(28,26,22,0.7)' }}>今日已为您生成详细解读</span>
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button
                   onClick={() => { setStatus('done'); }}
-                  style={{ flex: 1, padding: '10px 0', backgroundColor: 'transparent', color: '#1C1A16', borderRadius: 999, border: '1px solid #E5E7EB', fontSize: 13, cursor: 'pointer' }}
+                  style={{ flex: 1, padding: '10px 0', minHeight: 44, backgroundColor: 'transparent', color: '#1C1A16', borderRadius: 999, border: '1px solid #E5E7EB', fontSize: 13, cursor: 'pointer' }}
                 >
                   查看今日解读
                 </button>
                 <button
                   onClick={() => { window.location.href = '/pricing'; }}
-                  style={{ flex: 1, padding: '10px 0', backgroundColor: '#1F2937', color: 'white', borderRadius: 999, border: 'none', fontSize: 13, cursor: 'pointer' }}
+                  style={{ flex: 1, padding: '10px 0', minHeight: 44, backgroundColor: '#C2762B', color: 'white', borderRadius: 999, border: 'none', fontSize: 13, cursor: 'pointer' }}
                 >
                   升级 Pro 重新生成
                 </button>
@@ -364,10 +367,10 @@ export default function DailyDetailAnalysis({ isLoggedIn, isVip, onLoginRequired
             style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.3)' }}
           />
           {/* 抽屉 */}
-          <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '85%', maxWidth: 380, backgroundColor: '#FFFFFF', boxShadow: '-4px 0 20px rgba(0,0,0,0.1)', padding: 24, overflowY: 'auto', animation: 'slideInRight 0.25s ease-out' }}>
+          <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '85%', maxWidth: 380, backgroundColor: '#FFFFFF', boxShadow: '-4px 0 20px rgba(0,0,0,0.1)', padding: 24, paddingTop: 'max(24px, env(safe-area-inset-top))', paddingBottom: 'max(24px, env(safe-area-inset-bottom))', overflowY: 'auto', animation: 'slideInRight 0.25s ease-out' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <h3 style={{ fontSize: 16, fontWeight: 600, color: '#1C1A16' }}>历史解读</h3>
-              <button onClick={() => { setShowHistory(false); setSelectedHistory(null); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
+              <button onClick={() => { setShowHistory(false); setSelectedHistory(null); }} aria-label="关闭" style={{ background: 'none', border: 'none', cursor: 'pointer', width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <X size={20} color="#6B7280" />
               </button>
             </div>
@@ -376,7 +379,7 @@ export default function DailyDetailAnalysis({ isLoggedIn, isVip, onLoginRequired
               <div style={{ textAlign: 'center', padding: 40, color: 'rgba(28,26,22,0.5)' }}>加载中...</div>
             ) : selectedHistory ? (
               <div>
-                <button onClick={() => setSelectedHistory(null)} style={{ fontSize: 13, color: '#1F2937', background: 'none', border: 'none', cursor: 'pointer', marginBottom: 16, padding: 0 }}>
+                <button onClick={() => setSelectedHistory(null)} style={{ fontSize: 13, color: '#C2762B', background: 'none', border: 'none', cursor: 'pointer', marginBottom: 16, padding: 0 }}>
                   ← 返回列表
                 </button>
                 <div style={{ fontSize: 14, fontWeight: 500, color: '#1C1A16', marginBottom: 12 }}>{selectedHistory.date}</div>
@@ -416,11 +419,11 @@ export default function DailyDetailAnalysis({ isLoggedIn, isVip, onLoginRequired
                       </button>
                     ))}
                     {!isVip && historyRecords.length >= 3 && (
-                      <div style={{ marginTop: 20, padding: 16, backgroundColor: '#F9FAFB', borderRadius: 12, textAlign: 'center' }}>
+                      <div style={{ marginTop: 20, padding: 16, backgroundColor: '#F9FAFB', borderRadius: 16, textAlign: 'center' }}>
                         <p style={{ fontSize: 13, color: 'rgba(28,26,22,0.6)', marginBottom: 12 }}>仅 Pro 用户可查看更多历史</p>
                         <button
                           onClick={() => { window.location.href = '/pricing'; }}
-                          style={{ padding: '8px 20px', backgroundColor: '#1F2937', color: 'white', borderRadius: 999, border: 'none', fontSize: 13, cursor: 'pointer' }}
+                          style={{ padding: '8px 20px', minHeight: 44, backgroundColor: '#C2762B', color: 'white', borderRadius: 999, border: 'none', fontSize: 13, cursor: 'pointer' }}
                         >
                           升级 Pro 解锁全部历史
                         </button>

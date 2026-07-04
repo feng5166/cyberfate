@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
+import { SegmentControl } from '@/components/ui/SegmentControl';
 import { getAge, getBirthYear, getGanZhi, getCurrentDayunIndex, STARTING_AGE, DAYUN_SPAN } from '@/lib/utils/dayun';
 
 interface DayunSwitcherProps {
@@ -128,28 +129,18 @@ export function DayunSwitcher({ birthDate, className }: DayunSwitcherProps) {
   return (
     <div className={cn('bg-white rounded-2xl shadow-sm border border-[#F0EDE8] p-5 sm:p-6', className)}>
       {/* 标题 + 切换 */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between gap-3 mb-4">
         <h3 className="font-display text-lg font-semibold text-[#1C1A16]">大运流年</h3>
-        <div className="flex rounded-lg bg-[#FAF9F6] border border-[#E8E4DD] p-0.5">
-          <button
-            onClick={() => setView('dayun')}
-            className={cn(
-              'px-3 py-1 text-xs rounded-md transition-all',
-              view === 'dayun' ? 'bg-white shadow-sm text-[#1C1A16] font-medium' : 'text-[#1C1A16]/50',
-            )}
-          >
-            大运
-          </button>
-          <button
-            onClick={() => setView('liunian')}
-            className={cn(
-              'px-3 py-1 text-xs rounded-md transition-all',
-              view === 'liunian' ? 'bg-white shadow-sm text-[#1C1A16] font-medium' : 'text-[#1C1A16]/50',
-            )}
-          >
-            流年
-          </button>
-        </div>
+        {/* 统一段控（激活态走强调色，触控目标 ≥44px） */}
+        <SegmentControl
+          className="w-auto shrink-0"
+          options={[
+            { value: 'dayun', label: '大运' },
+            { value: 'liunian', label: '流年' },
+          ]}
+          value={view}
+          onChange={(v) => setView(v as 'dayun' | 'liunian')}
+        />
       </div>
 
       {view === 'dayun' ? (
@@ -374,7 +365,7 @@ export function DayunSwitcher({ birthDate, className }: DayunSwitcherProps) {
                 </span>
               )}
               {currentDayunIndex >= 0 && activeIndex > currentDayunIndex && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-500 font-medium">
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full border border-[#E8E4DD] text-[#1C1A16]/40 font-medium">
                   未至
                 </span>
               )}

@@ -40,7 +40,7 @@ export function DashboardLayout({
   const sidebarWidth = collapsed ? 0 : 220;
 
   return (
-    <div className="min-h-[calc(100dvh-64px)]">
+    <div className="min-h-dvh">
       {resolvedShowSidebar && (
         <Sidebar
           collapsed={collapsed}
@@ -51,7 +51,7 @@ export function DashboardLayout({
         className="bg-brand-bg transition-all duration-300 ease md:ml-[var(--sidebar-width)] md:w-[calc(100%-var(--sidebar-width))]"
         style={{
           '--sidebar-width': resolvedShowSidebar ? `${sidebarWidth}px` : '0px',
-          minHeight: 'calc(100dvh - 64px)',
+          minHeight: '100dvh',
         } as React.CSSProperties}
       >
         {children}

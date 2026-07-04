@@ -44,10 +44,10 @@ export function ShenshaCard({ shensha }: { shensha?: ShenshaDisplay[] }) {
   return (
     <div>
       <h3 className="text-base font-semibold text-[#1C1A16] mb-1">神煞分析</h3>
-      <p className="text-xs text-[#1C1A16]/45 mb-4">命盘所带神煞，吉神助力、凶煞需防，中性者吉凶随用忌而定</p>
+      <p className="text-xs text-brand-gray mb-4">命盘所带神煞，吉神助力、凶煞需防，中性者吉凶随用忌而定</p>
 
       {items.length === 0 ? (
-        <p className="text-sm text-[#1C1A16]/45">命盘未见常用神煞</p>
+        <p className="text-sm text-brand-gray">命盘未见常用神煞</p>
       ) : (
         <div className="flex flex-wrap gap-2">
           {items.map((item) => (

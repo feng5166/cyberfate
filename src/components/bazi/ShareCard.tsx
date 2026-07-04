@@ -195,7 +195,7 @@ export function ShareCard({ pillars, dayMaster, zodiac, summary, hasHour = true,
           type="button"
           onClick={handleGenerate}
           disabled={isGenerating}
-          className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#1C1A16] text-white font-medium text-sm transition-all hover:bg-[#1C1A16]/90 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-1 inline-flex items-center justify-center gap-2 px-4 min-h-[44px] py-2.5 rounded-xl bg-brand-accent text-white font-medium text-sm transition-all hover:bg-brand-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Download className="w-4 h-4" />
           {isGenerating ? '生成中...' : '下载分享图'}
@@ -204,7 +204,7 @@ export function ShareCard({ pillars, dayMaster, zodiac, summary, hasHour = true,
           type="button"
           onClick={handleCopyImage}
           disabled={isGenerating}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-[#1C1A16]/15 text-[#1C1A16] font-medium text-sm transition-all hover:bg-[#1C1A16]/5 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex items-center justify-center gap-2 px-4 min-h-[44px] py-2.5 rounded-xl border border-[#1C1A16]/15 text-[#1C1A16] font-medium text-sm transition-all hover:bg-[#1C1A16]/5 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {copied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
           {copied ? '已复制' : '复制图片'}

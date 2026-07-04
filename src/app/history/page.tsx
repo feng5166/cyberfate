@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { History, Trash2 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { getNaYin } from '@/lib/bazi/helpers';
 import type { BaziHistoryRecord } from '@/lib/bazi/types';
 import { deleteRecord, loadRecords } from '@/lib/utils/history';
@@ -43,6 +44,7 @@ function getNaYinText(record: BaziHistoryRecord): string | null {
 export default function HistoryPage() {
   const [records, setRecords] = useState<BaziHistoryRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const refreshRecords = useCallback(() => {
     setRecords(loadRecords());
@@ -63,42 +65,38 @@ export default function HistoryPage() {
     };
   }, [refreshRecords]);
 
-  const handleDelete = (id: string) => {
-    if (!id) return;
-    if (!window.confirm('确定要删除这条记录吗？')) return;
-    deleteRecord(id);
+  const confirmDelete = () => {
+    if (!pendingDeleteId) return;
+    deleteRecord(pendingDeleteId);
     refreshRecords();
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#FAF9F6] px-4 py-10 text-[#1C1A16]">
+      <div className="min-h-dvh bg-brand-bg px-4 py-10 text-brand-ink">
         <div className="mx-auto max-w-4xl">
-          <h1 className="font-display text-3xl text-[#1C1A16]">测算历史</h1>
-          <p className="mt-4 text-sm text-[#1C1A16]/65">正在加载历史记录...</p>
+          <h1 className="font-display text-3xl text-brand-ink">测算历史</h1>
+          <p className="mt-4 text-sm text-brand-gray">正在加载历史记录...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] px-4 py-10 text-[#1C1A16]">
+    <div className="min-h-dvh bg-brand-bg px-4 py-10 text-brand-ink">
       <div className="mx-auto max-w-4xl">
         <div className="mb-8">
-          <h1 className="font-display text-3xl text-[#1C1A16]">测算历史</h1>
-          <p className="mt-2 text-sm text-[#1C1A16]/65">你的八字测算结果会自动保存在本地</p>
+          <h1 className="font-display text-3xl text-brand-ink">测算历史</h1>
+          <p className="mt-2 text-sm text-brand-gray">你的八字测算结果会自动保存在本地</p>
         </div>
 
         {records.length === 0 ? (
-          <Card
-            hover={false}
-            className="!rounded-2xl border border-[#1C1A16]/10 !bg-white !p-10 text-center shadow-none"
-          >
-            <History className="mx-auto mb-4 h-14 w-14 text-[#1C1A16]/45" />
-            <p className="text-lg font-medium text-[#1C1A16]">还没有测算记录</p>
-            <p className="mt-2 text-sm text-[#1C1A16]/65">完成八字测算后，结果会自动保存在这里</p>
+          <Card variant="flat" hover={false} className="p-10 text-center">
+            <History className="mx-auto mb-4 h-14 w-14 text-brand-light" />
+            <p className="text-lg font-medium text-brand-ink">还没有测算记录</p>
+            <p className="mt-2 text-sm text-brand-gray">完成八字测算后，结果会自动保存在这里</p>
             <Link href="/bazi" className="mt-6 inline-flex">
-              <Button className="rounded-2xl px-8">开始测算</Button>
+              <Button className="px-8">开始测算</Button>
             </Link>
           </Card>
         ) : (
@@ -106,52 +104,38 @@ export default function HistoryPage() {
             {records.map(record => {
               const naYin = getNaYinText(record);
               return (
-                <Card
-                  key={record.id}
-                  hover={false}
-                  className="!rounded-2xl border border-[#1C1A16]/10 !bg-white !p-6 shadow-none"
-                >
+                <Card key={record.id} variant="flat" hover={false} className="p-6">
                   <div className="flex items-start justify-between gap-4">
-                    <p className="text-sm text-[#1C1A16]/60">{formatCreatedAt(record.createdAt)}</p>
-                    <Button
+                    <p className="text-sm text-brand-gray">{formatCreatedAt(record.createdAt)}</p>
+                    <button
                       type="button"
-                      variant="secondary"
-                      size="sm"
-                      className="h-9 w-9 rounded-xl border-[#1C1A16]/20 px-0 py-0"
-                      onClick={() => handleDelete(record.id)}
+                      className="flex h-11 w-11 items-center justify-center rounded-xl text-brand-gray transition-colors hover:bg-brand-border-light hover:text-red-500"
+                      onClick={() => setPendingDeleteId(record.id)}
                       aria-label="删除记录"
                       title="删除记录"
                     >
                       <Trash2 className="h-4 w-4" />
-                    </Button>
+                    </button>
                   </div>
 
-                  <p className="mt-4 text-2xl font-semibold tracking-[0.08em] text-[#1C1A16]">
+                  <p className="mt-4 text-2xl font-semibold tracking-[0.08em] text-brand-ink">
                     {buildPillarText(record.pillars)}
                   </p>
 
-                  <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[#1C1A16]/72">
+                  <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-brand-gray">
                     <span>日主：{record.dayMaster || '—'}</span>
                     <span>生肖：{record.zodiac || '—'}</span>
                     {naYin ? <span>纳音：{naYin}</span> : null}
                   </div>
 
-                  <p className="mt-4 text-sm leading-relaxed text-[#1C1A16]/78">
+                  <p className="mt-4 text-sm leading-relaxed text-brand-ink/78">
                     {summarizeText(record.aiSummary, 120)}
                   </p>
 
-                  <div className="mt-6 flex flex-wrap gap-3">
+                  <div className="mt-6">
                     <Link href={`/bazi?record=${record.id}`} className="inline-flex">
-                      <Button className="rounded-2xl px-6">查看详情</Button>
+                      <Button className="px-6">查看详情</Button>
                     </Link>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      className="rounded-2xl border-[#1C1A16]/30 px-6"
-                      onClick={() => handleDelete(record.id)}
-                    >
-                      删除
-                    </Button>
                   </div>
                 </Card>
               );
@@ -159,6 +143,16 @@ export default function HistoryPage() {
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        isOpen={pendingDeleteId !== null}
+        onClose={() => setPendingDeleteId(null)}
+        onConfirm={confirmDelete}
+        title="删除记录"
+        message="确定要删除这条测算记录吗？此操作无法撤销。"
+        confirmText="删除"
+        danger
+      />
     </div>
   );
 }

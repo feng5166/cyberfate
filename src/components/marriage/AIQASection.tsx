@@ -186,7 +186,7 @@ export function AIQASection({
           type="button"
           onClick={() => submit()}
           disabled={loading || !input.trim()}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-[#C2762B] hover:bg-[#A86425] disabled:opacity-50 disabled:cursor-not-allowed px-4 h-11 text-sm font-medium text-white transition-colors"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-brand-accent hover:bg-brand-accent-hover disabled:opacity-50 disabled:cursor-not-allowed px-4 h-11 text-sm font-medium text-white transition-colors"
         >
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
           提问

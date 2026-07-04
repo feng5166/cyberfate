@@ -677,7 +677,7 @@ function ProfileFormModal({
                   maxLength={10}
                   onChange={(e) => setValues((v) => ({ ...v, name: e.target.value, label: e.target.value }))}
                   placeholder="如：妈妈、周峰"
-                  className="w-full h-10 rounded-lg border border-[#1C1A16]/15 bg-white px-4 text-sm text-[#1C1A16] placeholder:text-[#1C1A16]/40 focus:border-[#1C1A16]/30 focus:ring-2 focus:ring-[#1C1A16]/10 outline-none transition-all"
+                  className="w-full min-h-[44px] rounded-lg border border-[#1C1A16]/15 bg-white px-4 text-sm text-[#1C1A16] placeholder:text-[#1C1A16]/40 focus:border-[#1C1A16]/30 focus:ring-2 focus:ring-[#1C1A16]/10 outline-none transition-all"
                 />
               </div>
               <div className="space-y-1.5">
@@ -690,7 +690,7 @@ function ProfileFormModal({
                   ]}
                   value={values.gender}
                   onChange={(e) => setValues((v) => ({ ...v, gender: e.target.value }))}
-                  className="h-10 rounded-lg border border-[#1C1A16]/15 bg-white px-3 text-sm text-[#1C1A16]"
+                  className="min-h-[44px] rounded-lg border border-[#1C1A16]/15 bg-white px-3 text-sm text-[#1C1A16]"
                 />
               </div>
             </div>
@@ -706,7 +706,7 @@ function ProfileFormModal({
               value={values.birthDate}
               onChange={(value) => setValues((v) => ({ ...v, birthDate: value }))}
               className="space-y-1.5"
-              triggerClassName="h-10 rounded-lg"
+              triggerClassName="min-h-[44px] rounded-lg"
             />
           </div>
 
@@ -735,7 +735,7 @@ function ProfileFormModal({
                 value={values.birthHour}
                 disabled={!values.knowTime}
                 onChange={(e) => setValues((v) => ({ ...v, birthHour: e.target.value }))}
-                className={`h-10 rounded-lg border border-[#1C1A16]/15 bg-white px-3 text-sm text-[#1C1A16] ${
+                className={`min-h-[44px] rounded-lg border border-[#1C1A16]/15 bg-white px-3 text-sm text-[#1C1A16] ${
                   !values.knowTime ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
               />
@@ -764,7 +764,7 @@ function ProfileFormModal({
             type="button"
             loading={loading}
             onClick={() => onSubmit(values)}
-            className="w-full h-11 text-sm font-medium rounded-xl bg-[#1C1A16] text-white hover:bg-[#1C1A16]/85 transition-colors"
+            className="w-full min-h-[44px] text-sm font-medium rounded-xl bg-brand-accent text-white hover:bg-brand-accent-hover transition-colors"
           >
             {loading ? '正在保存...' : '开始解读'}
           </Button>
@@ -2059,12 +2059,12 @@ function BaziPageContent() {
   };
 
   const inputClass =
-    'w-full h-10 rounded-lg border border-[#1C1A16]/15 bg-white px-4 text-sm text-[#1C1A16] placeholder:text-[#1C1A16]/40 focus:border-[#1C1A16]/30 focus:ring-2 focus:ring-[#1C1A16]/10 outline-none transition-all';
+    'w-full min-h-[44px] rounded-lg border border-[#1C1A16]/15 bg-white px-4 text-sm text-[#1C1A16] placeholder:text-[#1C1A16]/40 focus:border-[#1C1A16]/30 focus:ring-2 focus:ring-[#1C1A16]/10 outline-none transition-all';
   const cardClass =
     'rounded-2xl border border-[#1C1A16]/8 shadow-none bg-white hover:shadow-card-hover transition-shadow duration-300';
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6]">
+    <div className="min-h-dvh bg-[#FAF9F6]">
       <div className="text-center pt-6 md:pt-12 pb-8">
         <h1 className="font-display text-h1 md:text-[44px] text-[#1C1A16]" style={{ letterSpacing: '10px' }}>
           八字分析
@@ -2104,7 +2104,7 @@ function BaziPageContent() {
                   className={`inline-flex items-center gap-1 h-8 px-3 rounded-lg text-sm font-medium transition-colors ${
                     disabled
                       ? 'bg-[#1C1A16]/8 text-[#1C1A16]/40 cursor-not-allowed'
-                      : 'bg-[#1C1A16] text-white hover:bg-[#1C1A16]/85'
+                      : 'bg-brand-accent text-white hover:bg-brand-accent-hover'
                   }`}
                 >
                   <Plus className="w-4 h-4" />
@@ -2197,7 +2197,7 @@ function BaziPageContent() {
                   ]}
                   value={formData.gender}
                   onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                  className="h-10 rounded-lg border border-[#1C1A16]/15 bg-white px-3 text-sm text-[#1C1A16]"
+                  className="min-h-[44px] rounded-lg border border-[#1C1A16]/15 bg-white px-3 text-sm text-[#1C1A16]"
                 />
               </div>
             </div>
@@ -2212,7 +2212,7 @@ function BaziPageContent() {
                 value={formData.birthDate}
                 onChange={(value) => setFormData({ ...formData, birthDate: value })}
                 className="space-y-1.5"
-                triggerClassName="h-10 rounded-lg"
+                triggerClassName="min-h-[44px] rounded-lg"
               />
               <hr className="border-[#1C1A16]/8" />
           {/* 时辰组 */}
@@ -2257,7 +2257,7 @@ function BaziPageContent() {
                               birthHour: hourToShichenCode(hour),
                             }));
                           }}
-                          className="h-10 rounded-lg border border-[#1C1A16]/15 bg-white px-3 text-sm text-[#1C1A16]"
+                          className="min-h-[44px] rounded-lg border border-[#1C1A16]/15 bg-white px-3 text-sm text-[#1C1A16]"
                         />
                       </div>
                       <div className="space-y-1.5">
@@ -2266,7 +2266,7 @@ function BaziPageContent() {
                           options={minuteOptions}
                           value={String(formData.birthMinute)}
                           onChange={(e) => setFormData({ ...formData, birthMinute: Number(e.target.value) })}
-                          className="h-10 rounded-lg border border-[#1C1A16]/15 bg-white px-3 text-sm text-[#1C1A16]"
+                          className="min-h-[44px] rounded-lg border border-[#1C1A16]/15 bg-white px-3 text-sm text-[#1C1A16]"
                         />
                       </div>
                     </>
@@ -2278,7 +2278,7 @@ function BaziPageContent() {
                         options={shichenOptions}
                         value={formData.birthHour}
                         onChange={(e) => setFormData({ ...formData, birthHour: e.target.value })}
-                        className="h-10 rounded-lg border border-[#1C1A16]/15 bg-white px-4 text-sm text-[#1C1A16]"
+                        className="min-h-[44px] rounded-lg border border-[#1C1A16]/15 bg-white px-4 text-sm text-[#1C1A16]"
                       />
                     </div>
                   )}
@@ -2321,7 +2321,7 @@ function BaziPageContent() {
               <Button
                 type="submit"
                 loading={loading}
-                className="w-full h-13 text-[14px] font-medium rounded-xl bg-[#1C1A16] text-white hover:bg-[#1C1A16]/85 transition-colors"
+                className="w-full min-h-[52px] text-[14px] font-medium rounded-xl bg-brand-accent text-white hover:bg-brand-accent-hover transition-colors"
               >
                 {loading ? '正在计算...' : '开始解读'}
               </Button>
@@ -2402,7 +2402,7 @@ function BaziPageContent() {
                           className="rounded-xl border border-amber-300/60 bg-[#FFFBF5] px-4 py-3"
                         >
                           <p className="text-sm font-semibold text-[#1C1A16]/90">{trait.label}</p>
-                          <p className="text-xs text-[#1C1A16]/45 mt-1.5 leading-relaxed">{trait.desc}</p>
+                          <p className="text-xs text-brand-gray mt-1.5 leading-relaxed">{trait.desc}</p>
                         </div>
                       ))}
                     </div>
@@ -2418,7 +2418,7 @@ function BaziPageContent() {
                     </div>
                   )}
                   <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em] mb-1">AI 解读</h2>
-                  <p className="text-xs text-[#1C1A16]/45 mb-4 flex items-center gap-2">
+                  <p className="text-xs text-brand-gray mb-4 flex items-center gap-2">
                     AI 命理解读 · 仅供参考
                     {!showAiButton && !aiStreaming && result.aiAnalysis && (
                       <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${
@@ -2506,7 +2506,7 @@ function BaziPageContent() {
                     <button
                       type="button"
                       onClick={handleStartAiReading}
-                      className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-[#C2762B] hover:bg-[#A86425] text-white font-medium text-sm transition-colors"
+                      className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-brand-accent hover:bg-brand-accent-hover text-white font-medium text-sm transition-colors"
                     >
                       <Sparkles className="w-4 h-4" />
                       开始 AI 解读
@@ -2654,21 +2654,21 @@ function BaziPageContent() {
                                   {/* 命理要素：天干十神 / 藏干 / 纳音 / 五行 */}
                                   <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-xs sm:grid-cols-4">
                                     <div>
-                                      <span className="text-[#1C1A16]/45">天干十神</span>
+                                      <span className="text-brand-gray">天干十神</span>
                                       <p className="mt-0.5 font-medium text-[#1C1A16]">{dayunDetailRich.ganShiShen}</p>
                                     </div>
                                     <div>
-                                      <span className="text-[#1C1A16]/45">大运五行</span>
+                                      <span className="text-brand-gray">大运五行</span>
                                       <p className="mt-0.5 font-medium text-[#1C1A16]">{dayunDetailRich.wuxing}</p>
                                     </div>
                                     <div>
-                                      <span className="text-[#1C1A16]/45">地支藏干</span>
+                                      <span className="text-brand-gray">地支藏干</span>
                                       <p className="mt-0.5 font-medium text-[#1C1A16]">
                                         {dayunDetailRich.hiddenGods.map(h => `${h.gan}·${h.shishen}`).join('，')}
                                       </p>
                                     </div>
                                     <div>
-                                      <span className="text-[#1C1A16]/45">纳音</span>
+                                      <span className="text-brand-gray">纳音</span>
                                       <p className="mt-0.5 font-medium text-[#1C1A16]">{dayunDetailRich.naYin}</p>
                                     </div>
                                   </div>
@@ -2735,7 +2735,7 @@ function BaziPageContent() {
                 {/* 排盘细节模块（确定性命盘数据，置于 AI 问答之后）：十神 / 神煞 / 流年流月 */}
                 <Card className={cardClass}>
                   <h3 className="text-base font-semibold text-[#1C1A16] mb-1">十神详解</h3>
-                  <p className="text-xs text-[#1C1A16]/45 mb-4">四柱天干十神与日主的关系及含义</p>
+                  <p className="text-xs text-brand-gray mb-4">四柱天干十神与日主的关系及含义</p>
                   <ShishenDetailTab pillars={result.pillars} dayGan={result.pillars.day.gan} />
                 </Card>
 
@@ -2776,7 +2776,7 @@ function BaziPageContent() {
                       }
                       window.location.href = '/bazi/marriage';
                     }}
-                    className="mt-6 w-full sm:w-auto px-8 py-3 rounded-xl bg-[#C2762B] hover:bg-[#A86425] text-white font-medium text-sm transition-colors"
+                    className="mt-6 w-full sm:w-auto px-8 py-3 rounded-xl bg-brand-accent hover:bg-brand-accent-hover text-white font-medium text-sm transition-colors"
                   >
                     输入对方生辰，立即测算 →
                   </button>
@@ -2804,7 +2804,7 @@ function BaziPageContent() {
                     <button
                       type="button"
                       onClick={() => { window.location.href = '/daily'; }}
-                      className="w-full sm:w-auto px-8 py-3 rounded-xl bg-[#C2762B] hover:bg-[#A86425] text-white font-medium text-sm transition-colors whitespace-nowrap"
+                      className="w-full sm:w-auto px-8 py-3 rounded-xl bg-brand-accent hover:bg-brand-accent-hover text-white font-medium text-sm transition-colors whitespace-nowrap"
                     >
                       查看今日 AI 运势 →
                     </button>
@@ -2922,7 +2922,7 @@ function BaziPageContent() {
 
 export default function BaziPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#FAF9F6] flex items-center justify-center"><BaguaSpinner size={48} /></div>}>
+    <Suspense fallback={<div className="min-h-dvh bg-[#FAF9F6] flex items-center justify-center"><BaguaSpinner size={48} /></div>}>
       <BaziPageContent />
     </Suspense>
   );

@@ -80,13 +80,13 @@ export function EmailLoginForm({
   }
 
   const inputBaseClass =
-    'w-full border rounded-lg px-4 py-3 text-sm placeholder:text-[#6B7280] focus:outline-none focus:ring-2 focus:ring-[#1C1A16]/10 focus:border-[#1C1A16] transition-colors'
+    'w-full min-h-[44px] border rounded-lg px-4 py-3 text-base text-brand-ink placeholder:text-brand-gray focus:outline-none focus:ring-2 focus:ring-brand-accent/25 focus:border-brand-accent transition-colors'
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* 邮箱 */}
       <div>
-        <label className="text-[#1C1A16] text-sm font-medium mb-2 block">
+        <label className="text-brand-ink text-sm font-medium mb-2 block">
           邮箱
         </label>
         <input
@@ -101,7 +101,7 @@ export function EmailLoginForm({
           className={`${inputBaseClass} ${
             errors.email
               ? 'border-red-500 focus:ring-red-500/10 focus:border-red-500'
-              : 'border-[#E5E2DD]'
+              : 'border-brand-border'
           }`}
         />
         {errors.email && (
@@ -111,7 +111,7 @@ export function EmailLoginForm({
 
       {/* 密码 */}
       <div>
-        <label className="text-[#1C1A16] text-sm font-medium mb-2 block">
+        <label className="text-brand-ink text-sm font-medium mb-2 block">
           密码
         </label>
         <div className="relative">
@@ -127,13 +127,14 @@ export function EmailLoginForm({
             className={`${inputBaseClass} pr-11 ${
               errors.password
                 ? 'border-red-500 focus:ring-red-500/10 focus:border-red-500'
-                : 'border-[#E5E2DD]'
+                : 'border-brand-border'
             }`}
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9590] hover:text-[#1C1A16] transition-colors"
+            aria-label={showPassword ? '隐藏密码' : '显示密码'}
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center text-brand-gray hover:text-brand-ink transition-colors"
             tabIndex={-1}
           >
             {showPassword ? (
@@ -149,7 +150,7 @@ export function EmailLoginForm({
           <button
             type="button"
             onClick={handleForgotPassword}
-            className="text-[#1C1A16] text-xs hover:underline cursor-pointer"
+            className="text-brand-gray text-xs hover:text-brand-ink hover:underline cursor-pointer"
           >
             忘记密码?
           </button>
@@ -169,16 +170,16 @@ export function EmailLoginForm({
             setAgreed(e.target.checked)
             if (errors.agreement) setErrors((prev) => ({ ...prev, agreement: undefined }))
           }}
-          className={`mt-0.5 w-4 h-4 flex-shrink-0 rounded border-[#D1D5DB] text-[#1C1A16] focus:ring-[#1C1A16]/10 ${
+          className={`mt-0.5 w-4 h-4 flex-shrink-0 rounded border-brand-border text-brand-accent focus:ring-brand-accent/25 ${
             errors.agreement ? 'border-red-500' : ''
           }`}
         />
-        <span className="text-[#6B6560] text-xs leading-relaxed">
+        <span className="text-brand-gray text-xs leading-relaxed">
           我已年满 18 岁，并已阅读并同意{' '}
           <a
             href="/terms"
             target="_blank"
-            className="text-[#1C1A16] underline hover:no-underline cursor-pointer"
+            className="text-brand-ink underline hover:no-underline cursor-pointer"
           >
             服务条款
           </a>{' '}
@@ -186,7 +187,7 @@ export function EmailLoginForm({
           <a
             href="/privacy"
             target="_blank"
-            className="text-[#1C1A16] underline hover:no-underline cursor-pointer"
+            className="text-brand-ink underline hover:no-underline cursor-pointer"
           >
             隐私政策
           </a>
@@ -205,7 +206,7 @@ export function EmailLoginForm({
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-[#C2762B] text-white rounded-lg py-3.5 px-4 font-medium text-sm hover:bg-[#A86425] transition-colors disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"
+        className="w-full min-h-[44px] bg-brand-accent text-white rounded-lg py-3.5 px-4 font-medium text-base hover:bg-brand-accent-hover transition-colors disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"
       >
         {loading && (
           <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">

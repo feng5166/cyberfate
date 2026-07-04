@@ -1,14 +1,7 @@
 'use client';
 
 import type { WuXing } from '@/lib/bazi/types';
-
-const WUXING_DOT_COLORS: Record<WuXing, string> = {
-  '金': '#F59E0B',
-  '木': '#22C55E',
-  '水': '#3B82F6',
-  '火': '#EF4444',
-  '土': '#EAB308',
-};
+import { wuxingColor } from '@/data/wuxing';
 
 interface MingGeDisplayInfo {
   geju: string;
@@ -31,7 +24,7 @@ function renderFallback(values: string[]): string {
 }
 
 function WuxingDot({ wuxing }: { wuxing: WuXing }) {
-  const color = WUXING_DOT_COLORS[wuxing] || '#6B7280';
+  const color = wuxingColor(wuxing).hex;
   return (
     <span
       className="inline-block w-2.5 h-2.5 rounded-full mr-1 align-middle"
@@ -50,7 +43,7 @@ export function DayMasterSummaryCard({
 }: DayMasterSummaryCardProps) {
   return (
     <section className="rounded-2xl bg-gradient-to-r from-[#FFF7EA] via-[#FFFCF5] to-[#FDF4E6] p-5 md:p-6">
-      <div className="border-l-4 border-[#1C1A16] pl-4">
+      <div className="border-l-4 border-brand-accent pl-4">
         <h3 className="text-lg font-semibold text-[#1C1A16] font-display">
           你是「{dayMaster || '—'}命人」
         </h3>

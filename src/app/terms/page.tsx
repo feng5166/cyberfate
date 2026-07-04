@@ -1,5 +1,5 @@
 import { FileText } from 'lucide-react';
-import { Container } from '@/components/ui/Container';
+import { PageShell } from '@/components/ui/PageShell';
 import { Card } from '@/components/ui/Card';
 import { Footer } from '@/components/layout/Footer';
 import type { Metadata } from 'next';
@@ -12,27 +12,26 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-[#FAF9F6] text-[#1C1A16]">
-      <Container className="py-12 md:py-16">
+    <div className="min-h-dvh bg-brand-bg text-brand-ink">
+      <PageShell width="page" className="py-12 md:py-16">
         {/* 页面标题 */}
         <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-[#1C1A16]/5 mb-4">
-            <FileText className="w-6 h-6 text-[#1C1A16]" />
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-brand-accent-soft mb-4">
+            <FileText className="w-6 h-6 text-brand-accent" />
           </div>
-          <h1 className="font-display text-3xl md:text-4xl text-[#1C1A16] tracking-[0.08em] mb-3">
+          <h1 className="font-display text-3xl md:text-4xl text-brand-ink tracking-[0.08em] mb-3">
             服务条款
           </h1>
-          <p className="text-sm text-[#1C1A16]/60">
+          <p className="text-sm text-brand-gray">
             最后更新：2026年3月6日
           </p>
         </div>
 
         {/* 内容区 */}
-        <div className="max-w-3xl mx-auto">
-          <Card className="p-6 md:p-10">
-            <div className="prose prose-gray max-w-none space-y-8 text-[#1C1A16]/80">
+        <Card className="p-6 md:p-10">
+            <div className="prose prose-gray max-w-none space-y-8 text-brand-ink/80">
               <section>
-                <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.06em] mb-4">
+                <h2 className="font-display text-xl text-brand-ink tracking-[0.06em] mb-4">
                   一、服务说明
                 </h2>
                 <p className="leading-relaxed">
@@ -41,7 +40,7 @@ export default function TermsPage() {
               </section>
 
               <section>
-                <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.06em] mb-4">
+                <h2 className="font-display text-xl text-brand-ink tracking-[0.06em] mb-4">
                   二、用户行为规范
                 </h2>
                 <p className="leading-relaxed mb-3">使用本站服务时，您同意：</p>
@@ -54,7 +53,7 @@ export default function TermsPage() {
               </section>
 
               <section>
-                <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.06em] mb-4">
+                <h2 className="font-display text-xl text-brand-ink tracking-[0.06em] mb-4">
                   三、知识产权
                 </h2>
                 <p className="leading-relaxed mb-3">
@@ -68,7 +67,7 @@ export default function TermsPage() {
               </section>
 
               <section>
-                <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.06em] mb-4">
+                <h2 className="font-display text-xl text-brand-ink tracking-[0.06em] mb-4">
                   四、免责声明
                 </h2>
                 <p className="leading-relaxed mb-3">
@@ -81,8 +80,8 @@ export default function TermsPage() {
                   <li>第三方服务（如支付平台）的问题</li>
                 </ul>
                 <div className="mt-5 p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-3 text-sm">
-                  <p className="font-semibold text-[#1C1A16]">重要声明（请仔细阅读）</p>
-                  <ul className="list-disc list-inside space-y-2 ml-2 text-[#1C1A16]/80 leading-relaxed">
+                  <p className="font-semibold text-brand-ink">重要声明（请仔细阅读）</p>
+                  <ul className="list-disc list-inside space-y-2 ml-2 text-brand-ink/80 leading-relaxed">
                     <li>本站所有命理内容（八字、塔罗、梅花易数、六爻等）<strong>仅供娱乐参考</strong>，不构成任何专业建议，包括但不限于医疗、法律、金融、心理健康方面的建议。</li>
                     <li>本站<strong>不承诺任何具体的人生结果</strong>，命理分析结果不代表用户未来的真实状况，用户应自行对自己的决策负责。</li>
                     <li>本站内容由 AI 生成，<strong>AI 生成内容可能存在不准确、不完整或误导性信息</strong>，请结合现实情况理性对待。</li>
@@ -94,7 +93,7 @@ export default function TermsPage() {
               </section>
 
               <section>
-                <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.06em] mb-4">
+                <h2 className="font-display text-xl text-brand-ink tracking-[0.06em] mb-4">
                   五、服务变更与终止
                 </h2>
                 <p className="leading-relaxed">
@@ -103,7 +102,7 @@ export default function TermsPage() {
               </section>
 
               <section>
-                <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.06em] mb-4">
+                <h2 className="font-display text-xl text-brand-ink tracking-[0.06em] mb-4">
                   六、争议解决
                 </h2>
                 <p className="leading-relaxed">
@@ -112,7 +111,7 @@ export default function TermsPage() {
               </section>
 
               <section>
-                <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.06em] mb-4">
+                <h2 className="font-display text-xl text-brand-ink tracking-[0.06em] mb-4">
                   七、联系我们
                 </h2>
                 <p className="leading-relaxed">
@@ -123,9 +122,8 @@ export default function TermsPage() {
                 </p>
               </section>
             </div>
-          </Card>
-        </div>
-      </Container>
+        </Card>
+      </PageShell>
       <Footer />
     </div>
   );

@@ -4,6 +4,8 @@ import { useState, useCallback, useMemo } from 'react';
 import { Sparkles, Copy, Check } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { getAge, getBirthYear, getGanZhi, getCurrentDayunIndex, STARTING_AGE, DAYUN_SPAN } from '@/lib/utils/dayun';
+import { SegmentControl } from '@/components/ui/SegmentControl';
+import { Badge } from '@/components/ui/Badge';
 import type { PalaceData } from './types';
 
 interface ZiweiAiOverviewProps {
@@ -164,28 +166,16 @@ export function ZiweiAiOverview({ palaces, birthDate, className }: ZiweiAiOvervi
         <div className="flex items-center gap-2 mb-4">
           <Sparkles className="w-5 h-5 text-amber-500" />
           <h3 className="font-display text-lg font-semibold text-[#1C1A16]">AI 命盘解读</h3>
+          {/* 该面板为静态示例内容，尚未接入实时 AI，明确标注避免误导 */}
+          <Badge variant="neutral">示例</Badge>
         </div>
 
-        {/* Tab 切换（SegmentedControl 样式） */}
-        <div className="flex rounded-xl bg-[#FAF9F6] border border-[#E8E4DD] p-1">
-          {TABS.map((tab) => (
-            <button
-              key={tab.key}
-              type="button"
-              onClick={() => setActiveTab(tab.key)}
-              className={cn(
-                'flex-1 px-4 py-2 text-sm rounded-lg transition-all duration-200',
-                activeTab === tab.key
-                  ? 'bg-white text-[#1C1A16] font-medium shadow-sm'
-                  : 'text-[#1C1A16]/50 hover:text-[#1C1A16]/70',
-              )}
-              aria-selected={activeTab === tab.key}
-              role="tab"
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        {/* Tab 切换（统一段控） */}
+        <SegmentControl
+          options={TABS.map((tab) => ({ value: tab.key, label: tab.label }))}
+          value={activeTab}
+          onChange={(v) => setActiveTab(v as TabKey)}
+        />
       </div>
 
       {/* Tab 内容区 */}

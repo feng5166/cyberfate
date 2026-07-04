@@ -4,92 +4,18 @@ import { useMemo, useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import clsx from 'clsx';
-import {
-  BarChart3,
-  Sun,
-  BookHeart,
-  Sparkles,
-  Layers,
-  Compass,
-  Star,
-  Music,
-  Calendar,
-  BookOpen,
-  LogOut,
-  Lock,
-  User,
-  PanelLeft,
-  PanelLeftClose,
-  type LucideIcon,
-} from 'lucide-react';
+import { LogOut, Lock, User } from 'lucide-react';
 import { useSession, signOut } from 'next-auth/react';
 import { SidebarMenuItem } from './SidebarMenuItem';
 import { SidebarGroup } from './SidebarGroup';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { UpgradeModal } from '@/components/pricing/UpgradeModal';
+import { MODULE_GROUPS, EXTRA_LINKS } from '@/data/modules';
 
 interface SidebarProps {
   collapsed?: boolean;
   onCollapseToggle?: (nextCollapsed: boolean) => void;
 }
-
-interface MenuItemConfig {
-  label: string;
-  href: string;
-  icon: LucideIcon;
-  paidOnly?: boolean;
-}
-
-interface MenuGroupConfig {
-  title: string;
-  showDivider?: boolean;
-  items: MenuItemConfig[];
-}
-
-const MENU_GROUPS: MenuGroupConfig[] = [
-  {
-    title: '八字命理',
-    items: [
-      { label: '八字分析', href: '/bazi', icon: BarChart3 },
-      { label: '八字合婚', href: '/bazi/marriage', icon: BookHeart, paidOnly: true },
-      { label: '每日运势', href: '/daily', icon: Sun },
-    ],
-  },
-  {
-    title: '紫微斗数',
-    items: [
-      { label: '紫微排盘', href: '/ziwei', icon: Star, paidOnly: true },
-      // { label: '紫微合婚', href: '/ziwei/marriage', icon: Compass, paidOnly: true },
-    ],
-  },
-  {
-    title: '周易占卜',
-    items: [
-      { label: '梅花易数', href: '/meihua', icon: Sparkles, paidOnly: true },
-      { label: '六爻占卜', href: '/liuyao', icon: Layers, paidOnly: true },
-    ],
-  },
-  {
-    title: '塔罗牌',
-    items: [
-      { label: '塔罗占卜', href: '/tarot', icon: BookOpen },
-    ],
-  },
-  {
-    title: '其他功能',
-    items: [
-      { label: '音乐运势签', href: '/music-oracle', icon: Music },
-      { label: 'AI老黄历', href: '/huangli', icon: Calendar, paidOnly: true },
-    ],
-  },
-  {
-    title: '个人中心',
-    showDivider: true,
-    items: [
-      { label: '知识库', href: '/knowledge', icon: BookOpen },
-    ],
-  },
-];
 
 const normalizePath = (path?: string) => {
   if (!path) return '/';
@@ -358,12 +284,12 @@ export function Sidebar({
       </div>
 
       <nav className="flex-1 overflow-y-auto pb-6 sidebar-scroll">
-        {MENU_GROUPS.map((group) => (
+        {/* 从 MODULES 唯一真源派生，与首页 Header / 手机抽屉 分组标签一致 */}
+        {MODULE_GROUPS.map((group) => (
           <SidebarGroup
-            key={group.title}
+            key={group.key}
             title={group.title}
             collapsed={isCollapsed}
-            showDivider={group.showDivider}
             className="mb-2"
           >
             {group.items.map((item) => (
@@ -379,6 +305,18 @@ export function Sidebar({
             ))}
           </SidebarGroup>
         ))}
+        <SidebarGroup collapsed={isCollapsed} showDivider className="mb-2">
+          {EXTRA_LINKS.map((item) => (
+            <SidebarMenuItem
+              key={item.href}
+              icon={item.icon}
+              label={item.label}
+              href={item.href}
+              collapsed={isCollapsed}
+              active={normalizedPath === normalizePath(item.href)}
+            />
+          ))}
+        </SidebarGroup>
       </nav>
 
       {renderBottomArea(isCollapsed)}

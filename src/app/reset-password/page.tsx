@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Eye, EyeOff } from 'lucide-react'
 
 type PageState = 'loading' | 'form' | 'success' | 'error'
@@ -232,13 +233,13 @@ function ResetPasswordContent() {
                 {loading ? '重置中...' : '重置密码'}
               </button>
 
-              {/* 返回登录 */}
-              <a
-                onClick={() => router.push('/')}
-                className="block text-center text-[#6B6560] text-sm underline mt-4 cursor-pointer"
+              {/* 返回登录 —— 真实链接，指向登录页而非首页 */}
+              <Link
+                href="/auth/login"
+                className="block text-center text-brand-gray text-sm underline mt-4 hover:text-brand-ink transition-colors"
               >
                 返回登录
-              </a>
+              </Link>
             </form>
           </>
         )}

@@ -26,7 +26,7 @@ interface InfoRow {
   secondaryValue?: string;
 }
 
-const mutedText = 'text-[rgba(28,26,22,0.42)]';
+const mutedText = 'text-brand-gray';
 
 function normalizeText(value: string): string {
   return value.trim() || '—';

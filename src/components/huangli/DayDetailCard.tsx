@@ -32,7 +32,7 @@ export function DayDetailCard({ data }: DayDetailCardProps) {
         <div className="flex items-center gap-1">
           <Tag className="bg-[#F0EDE8]/60 text-[#1C1A16]/70">{data.yearGanzhi}年</Tag>
           <Tag className="bg-[#F0EDE8]/60 text-[#1C1A16]/70">{data.monthGanzhi}月</Tag>
-          <Tag className="bg-amber-100 text-[#1C1A16] border border-amber-300 font-semibold">{data.dayGanzhi}日</Tag>
+          <Tag className="bg-brand-accent-soft text-brand-accent border border-brand-accent/40 font-semibold">{data.dayGanzhi}日</Tag>
         </div>
         <Tag className={`${zhiXingColor.bg} ${zhiXingColor.text}`}>
           {data.zhiXing}日

@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useAiGate, AiGateModals } from '@/components/ai/useAiGate';
 import { OracleLoading } from '@/components/ui/OracleLoading';
+import { inputRecipe } from '@/components/ui';
 import { HEXAGRAM_JUDGMENTS, getLineTexts, getLineTitle } from '@/lib/liuyao/data';
 import { track } from '@/lib/analytics';
 
@@ -336,9 +337,9 @@ function CoinPanel({ onComplete }: { onComplete: (lines: (0 | 1)[], movingLines:
             key={i}
             className={`h-3 w-3 rounded-full transition-all ${
               i < coinResults.length
-                ? 'bg-[#1C1A16]'
+                ? 'bg-brand-accent'
                 : i === coinResults.length && isFlipping
-                  ? 'bg-[#1C1A16]/40 animate-coin-pulse'
+                  ? 'bg-brand-accent/40 animate-coin-pulse'
                   : 'bg-[#1C1A16]/15'
             }`}
           />
@@ -346,8 +347,8 @@ function CoinPanel({ onComplete }: { onComplete: (lines: (0 | 1)[], movingLines:
         <span className="ml-2 text-xs text-[#1C1A16]/60">{coinResults.length}/6 已完成</span>
       </div>
 
-      {/* 铜钱展示区 */}
-      <div className="flex justify-center gap-4 my-4">
+      {/* 铜钱展示区（perspective 设在父容器，子元素 rotateY 才有 3D 立体翻转） */}
+      <div className="flex justify-center gap-4 my-4" style={{ perspective: '600px' }}>
         {[0, 1, 2].map((idx) => {
           const isBack = currentCoins ? currentCoins[idx] : null;
           const showFlip = isFlipping;
@@ -356,7 +357,8 @@ function CoinPanel({ onComplete }: { onComplete: (lines: (0 | 1)[], movingLines:
               key={`${flipKey}-${idx}`}
               className={`flex h-16 w-16 items-center justify-center rounded-full border-2 text-sm font-bold select-none ${showFlip ? 'animate-coin-flip' : ''}`}
               style={{
-                perspective: '600px',
+                // 三枚铜钱错峰翻转，避免同步整齐翻显得呆板
+                animationDelay: showFlip ? `${idx * 120}ms` : undefined,
                 backgroundColor: isBack === null ? '#E5E0D5' : isBack ? '#D4A574' : '#8B6914',
                 borderColor: isBack === null ? '#C4BFAF' : isBack ? '#B8894D' : '#6B5210',
                 color: isBack === null ? '#999' : '#FFF',
@@ -382,7 +384,7 @@ function CoinPanel({ onComplete }: { onComplete: (lines: (0 | 1)[], movingLines:
             type="button"
             onClick={throwCoins}
             disabled={isFlipping}
-            className="flex h-10 items-center justify-center rounded-lg bg-[#1C1A16] px-6 text-sm font-medium text-white transition-all hover:bg-[#2A2621] disabled:opacity-60"
+            className="flex min-h-[44px] items-center justify-center rounded-lg bg-brand-accent px-6 text-sm font-medium text-white transition-all hover:bg-brand-accent-hover disabled:opacity-60"
           >
             {isFlipping ? '铜钱翻转中...' : coinResults.length === 0 ? '开始抛币' : '抛下一爻的铜钱'}
           </button>
@@ -467,8 +469,8 @@ function TimePanel({ onComplete }: { onComplete: (lines: (0 | 1)[], movingLine: 
         <button
           type="button"
           onClick={() => { setMode('quick'); setIsDone(false); }}
-          className={`rounded-lg px-4 py-2 text-xs font-medium transition-all ${
-            mode === 'quick' ? 'bg-[#1C1A16] text-white' : 'border border-[#1C1A16]/10 text-[#1C1A16]/60 hover:border-[#1C1A16]/20'
+          className={`min-h-[44px] rounded-lg px-4 text-xs font-medium transition-all ${
+            mode === 'quick' ? 'bg-brand-accent text-white' : 'border border-[#1C1A16]/10 text-[#1C1A16]/60 hover:border-[#1C1A16]/20'
           }`}
         >
           快速模式
@@ -476,8 +478,8 @@ function TimePanel({ onComplete }: { onComplete: (lines: (0 | 1)[], movingLine: 
         <button
           type="button"
           onClick={() => { setMode('custom'); setIsDone(false); }}
-          className={`rounded-lg px-4 py-2 text-xs font-medium transition-all ${
-            mode === 'custom' ? 'bg-[#1C1A16] text-white' : 'border border-[#1C1A16]/10 text-[#1C1A16]/60 hover:border-[#1C1A16]/20'
+          className={`min-h-[44px] rounded-lg px-4 text-xs font-medium transition-all ${
+            mode === 'custom' ? 'bg-brand-accent text-white' : 'border border-[#1C1A16]/10 text-[#1C1A16]/60 hover:border-[#1C1A16]/20'
           }`}
         >
           自定义时间
@@ -511,7 +513,7 @@ function TimePanel({ onComplete }: { onComplete: (lines: (0 | 1)[], movingLine: 
             value={timeValue}
             max={getNowLocalString()}
             onChange={(e) => { setTimeValue(e.target.value); setIsDone(false); }}
-            className="h-10 w-full rounded-xl border border-gray-300 px-3 text-sm text-[#1C1A16] outline-none focus:border-[#1C1A16]/30 focus:ring-2 focus:ring-[#1C1A16]/10"
+            className="min-h-[44px] w-full rounded-xl border border-brand-border px-3 text-base text-[#1C1A16] outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/25"
           />
         </div>
       )}
@@ -532,7 +534,7 @@ function TimePanel({ onComplete }: { onComplete: (lines: (0 | 1)[], movingLine: 
         <button
           type="button"
           onClick={handleConfirm}
-          className="mt-4 flex h-[44px] w-full items-center justify-center rounded-xl bg-[#1C1A16] text-sm font-medium text-white transition-all hover:bg-[#2A2621]"
+          className="mt-4 flex min-h-[44px] w-full items-center justify-center rounded-xl bg-brand-accent text-sm font-medium text-white transition-all hover:bg-brand-accent-hover"
         >
           ⏰ 确认起卦
         </button>
@@ -628,7 +630,7 @@ function NumberPanel({ onComplete }: { onComplete: (lines: (0 | 1)[], movingLine
   const inputBorderClass = (error?: string) =>
     error
       ? 'border-red-400 focus:border-red-500 focus:ring-red-200'
-      : 'border-gray-300 focus:border-[#1C1A16]/30 focus:ring-[#1C1A16]/10';
+      : 'border-brand-border focus:border-brand-accent focus:ring-brand-accent/25';
 
   return (
     <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-4 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
@@ -725,7 +727,7 @@ function NumberPanel({ onComplete }: { onComplete: (lines: (0 | 1)[], movingLine
         <button
           type="button"
           onClick={handleConfirm}
-          className="flex h-[44px] w-full items-center justify-center rounded-xl bg-[#1C1A16] text-sm font-medium text-white transition-all hover:bg-[#2A2621]"
+          className="flex min-h-[44px] w-full items-center justify-center rounded-xl bg-brand-accent text-sm font-medium text-white transition-all hover:bg-brand-accent-hover"
         >
           确认起卦
         </button>
@@ -736,7 +738,7 @@ function NumberPanel({ onComplete }: { onComplete: (lines: (0 | 1)[], movingLine
           <button
             type="button"
             disabled
-            className="flex h-[44px] w-full items-center justify-center rounded-xl bg-[#1C1A16] text-sm font-medium text-white opacity-60 cursor-not-allowed"
+            className="flex min-h-[44px] w-full items-center justify-center rounded-xl bg-brand-accent text-sm font-medium text-white opacity-60 cursor-not-allowed"
           >
             确认起卦
           </button>
@@ -1216,7 +1218,7 @@ export default function LiuYaoPage() {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#FAF9F6] text-[#1C1A16]">
+    <div className="relative min-h-dvh bg-[#FAF9F6] text-[#1C1A16]">
       <div
         className="pointer-events-none fixed inset-0 -z-10 opacity-[0.025]"
         aria-hidden="true"
@@ -1230,7 +1232,7 @@ export default function LiuYaoPage() {
 
       <main className="px-4 pb-20 md:pb-24">
         {/* ① 标题区 */}
-        <section className="mx-auto max-w-page pt-24 pb-10 text-center animate-fadeIn">
+        <section className="mx-auto max-w-page pt-10 sm:pt-16 md:pt-24 pb-10 text-center animate-fadeIn">
           <div className="mx-auto mb-6 h-px w-9 bg-gradient-to-r from-transparent via-[#1C1A16] to-transparent opacity-15" />
           <h1 className="font-display text-[clamp(36px,5vw,56px)] leading-tight tracking-[0.08em] text-[#1C1A16]">
             AI 六爻占卜 · 智能解读分析
@@ -1253,7 +1255,7 @@ export default function LiuYaoPage() {
                 onChange={(e) => setQuestion(e.target.value.slice(0, 200))}
                 placeholder="最想咨询的问题或主题..."
                 maxLength={200}
-                className="min-h-[100px] max-h-[200px] w-full resize-y rounded-xl border border-gray-300 p-4 pb-7 text-sm text-[#1C1A16] outline-none transition-all placeholder:text-[#1C1A16]/35 focus:border-[#1C1A16]/30 focus:ring-2 focus:ring-[#1C1A16]/10"
+                className="min-h-[100px] max-h-[200px] w-full resize-y rounded-xl border border-brand-border p-4 pb-7 text-base text-[#1C1A16] outline-none transition-colors placeholder:text-[#1C1A16]/35 focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/25"
               />
               <span className="pointer-events-none absolute right-3 bottom-2 text-xs text-[#1C1A16]/45">
                 {question.length}/200
@@ -1286,7 +1288,7 @@ export default function LiuYaoPage() {
                     onClick={() => handleMethodChange(opt.value)}
                     className={`flex flex-col items-center gap-1 rounded-xl p-3 text-center transition-all duration-200 ${
                       isActive
-                        ? 'border-2 border-[#1C1A16] bg-[rgba(28,26,22,0.03)] text-[#1C1A16] shadow-sm'
+                        ? 'border-2 border-brand-accent bg-brand-accent-tint text-[#1C1A16] shadow-sm'
                         : 'border border-[#1C1A16]/10 bg-white text-[#1C1A16] hover:border-[#1C1A16]/20 hover:bg-[#FAF9F6]'
                     }`}
                   >
@@ -1318,9 +1320,9 @@ export default function LiuYaoPage() {
                           <button
                             type="button"
                             onClick={() => setLine(displayIdx, 0)}
-                            className={`flex h-8 items-center gap-1.5 rounded-lg border px-3 text-xs font-medium transition-all ${
+                            className={`flex min-h-[44px] items-center gap-1.5 rounded-lg border px-3 text-xs font-medium transition-all ${
                               value === 0
-                                ? 'border-[#1C1A16]/20 bg-[#1C1A16] text-white'
+                                ? 'border-brand-accent bg-brand-accent text-white'
                                 : 'border-[#1C1A16]/10 text-[#1C1A16]/60 hover:border-[#1C1A16]/20'
                             }`}
                           >
@@ -1334,9 +1336,9 @@ export default function LiuYaoPage() {
                           <button
                             type="button"
                             onClick={() => setLine(displayIdx, 1)}
-                            className={`flex h-8 items-center gap-1.5 rounded-lg border px-3 text-xs font-medium transition-all ${
+                            className={`flex min-h-[44px] items-center gap-1.5 rounded-lg border px-3 text-xs font-medium transition-all ${
                               value === 1
-                                ? 'border-[#1C1A16]/20 bg-[#1C1A16] text-white'
+                                ? 'border-brand-accent bg-brand-accent text-white'
                                 : 'border-[#1C1A16]/10 text-[#1C1A16]/60 hover:border-[#1C1A16]/20'
                             }`}
                           >
@@ -1423,7 +1425,7 @@ export default function LiuYaoPage() {
                   type="datetime-local"
                   value={divinationTime}
                   onChange={(e) => setDivinationTime(e.target.value)}
-                  className="h-10 w-full rounded-xl border border-gray-300 px-3 text-sm text-[#1C1A16] outline-none focus:border-[#1C1A16]/30 focus:ring-2 focus:ring-[#1C1A16]/10 md:w-auto"
+                  className="min-h-[44px] w-full rounded-xl border border-brand-border px-3 text-base text-[#1C1A16] outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/25 md:w-auto"
                 />
                 <p className="mt-1 text-xs text-[#1C1A16]/45">占卜时间会影响卦象的时效性参考</p>
               </div>
@@ -1435,7 +1437,7 @@ export default function LiuYaoPage() {
               type="button"
               onClick={handleSubmit}
               disabled={!allLinesSelected}
-              className="flex h-[44px] w-full items-center justify-center rounded-xl bg-[#1C1A16] text-sm font-medium text-white transition-all hover:bg-[#2A2621] disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex min-h-[44px] w-full items-center justify-center rounded-xl bg-brand-accent text-sm font-medium text-white transition-all hover:bg-brand-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
             >
               开始起卦 ✦
             </button>
@@ -1562,7 +1564,7 @@ export default function LiuYaoPage() {
                   <button
                     type="button"
                     onClick={handleAIAnalysis}
-                    className="inline-flex h-[44px] min-w-[180px] px-8 items-center justify-center rounded-xl bg-[#1C1A16] text-sm font-semibold text-white transition-all hover:bg-[#2A2621]"
+                    className="inline-flex min-h-[44px] min-w-[180px] px-8 items-center justify-center rounded-xl bg-brand-accent text-sm font-semibold text-white transition-all hover:bg-brand-accent-hover"
                   >
                     分析卦象含义 ✦
                   </button>
@@ -1647,10 +1649,10 @@ export default function LiuYaoPage() {
 
                   {result.actionAdvice.actions.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-medium text-blue-700 mb-1">💡 下一步行动</h4>
+                      <h4 className="text-sm font-medium text-brand-ink mb-1">💡 下一步行动</h4>
                       <div className="space-y-1">
                         {result.actionAdvice.actions.map((item, i) => (
-                          <p key={i} className="text-sm leading-relaxed text-blue-700">{item}</p>
+                          <p key={i} className="text-sm leading-relaxed text-brand-ink/80">{item}</p>
                         ))}
                       </div>
                     </div>
@@ -1741,12 +1743,12 @@ export default function LiuYaoPage() {
                     onChange={(e) => setQaInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && !qaLoading && handleQaSubmit()}
                     placeholder="例如：这个决定有什么风险？"
-                    className="flex-1 rounded-xl border border-[#E5E0D8] px-4 py-2.5 text-sm outline-none focus:border-[#1C1A16]/40"
+                    className={`${inputRecipe} flex-1`}
                   />
                   <button
                     onClick={handleQaSubmit}
                     disabled={!qaInput.trim() || qaLoading}
-                    className="flex items-center gap-1.5 rounded-xl bg-[#1C1A16] px-4 py-2.5 text-sm text-white disabled:opacity-50"
+                    className="flex min-h-[44px] items-center gap-1.5 rounded-xl bg-brand-accent px-4 text-sm text-white transition-colors hover:bg-brand-accent-hover disabled:opacity-50"
                   >
                     <Send size={14} /> 问题
                   </button>

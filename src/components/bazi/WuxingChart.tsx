@@ -4,6 +4,7 @@ import type { FC } from 'react';
 import type { WuxingCount, WuXing } from '@/lib/bazi/types';
 import type { LucideIcon } from 'lucide-react';
 import { Flame, Gem, Leaf, MountainSnow, Droplets } from 'lucide-react';
+import { WUXING } from '@/data/wuxing';
 import { WuxingDonutChart } from './WuxingDonutChart';
 
 interface WuxingChartProps {
@@ -19,12 +20,13 @@ interface WuxingConfigItem {
   icon: LucideIcon;
 }
 
+// 颜色统一取自五行配色真源（@/data/wuxing）：.hex 供图标实色、.bg 供浅底片。
 const wuxingConfig: ReadonlyArray<WuxingConfigItem> = [
-  { key: 'metal', label: '金', color: '#F59E0B', bg: '#FEF3C7', icon: Gem },
-  { key: 'wood', label: '木', color: '#22C55E', bg: '#D1FAE5', icon: Leaf },
-  { key: 'water', label: '水', color: '#3B82F6', bg: '#DBEAFE', icon: Droplets },
-  { key: 'fire', label: '火', color: '#EF4444', bg: '#FEE2E2', icon: Flame },
-  { key: 'earth', label: '土', color: '#EAB308', bg: '#FEF9E7', icon: MountainSnow },
+  { key: 'metal', label: '金', color: WUXING.metal.hex, bg: WUXING.metal.bg, icon: Gem },
+  { key: 'wood', label: '木', color: WUXING.wood.hex, bg: WUXING.wood.bg, icon: Leaf },
+  { key: 'water', label: '水', color: WUXING.water.hex, bg: WUXING.water.bg, icon: Droplets },
+  { key: 'fire', label: '火', color: WUXING.fire.hex, bg: WUXING.fire.bg, icon: Flame },
+  { key: 'earth', label: '土', color: WUXING.earth.hex, bg: WUXING.earth.bg, icon: MountainSnow },
 ];
 
 /**
@@ -66,7 +68,7 @@ export const WuxingChart: FC<WuxingChartProps> = ({ wuxing, dayMasterElement }) 
                 <Icon className="w-6 h-6" />
               </div>
               <div className="mt-2 text-sm font-medium text-[#1C1A16]">{label}</div>
-              <div className="text-xs text-[#1C1A16]/40">{value}个</div>
+              <div className="text-xs text-brand-gray">{value}个</div>
               <div className={`text-xs ${getStatusStyle(status)}`}>{status}</div>
             </div>
           );

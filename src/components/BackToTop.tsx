@@ -29,7 +29,7 @@ export function BackToTop() {
   return (
     <button
       onClick={scrollToTop}
-      className="fixed right-5 bottom-24 z-30 lg:hidden w-10 h-10 rounded-full bg-white shadow-lg border border-brand-border-light flex items-center justify-center text-brand-gray hover:text-[#1C1A16] hover:shadow-xl transition-all duration-200 active:scale-95"
+      className="fixed right-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-30 md:hidden w-11 h-11 rounded-full bg-white shadow-lg border border-brand-border-light flex items-center justify-center text-brand-gray hover:text-brand-ink hover:shadow-xl transition-all duration-200 active:scale-95"
       aria-label="回到顶部"
       style={{
         animation: 'fadeIn 200ms ease-out',

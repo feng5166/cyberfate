@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { ChevronRight, AlertTriangle, RefreshCw } from 'lucide-react';
 import { getLunarDate } from '@/lib/bazi/calculator';
 import { Footer } from '@/components/layout/Footer';
-import { Container } from '@/components/ui/Container';
+import { PageShell } from '@/components/ui/PageShell';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { SegmentControl } from '@/components/ui/SegmentControl';
 import { Button } from '@/components/ui/Button';
@@ -25,7 +25,7 @@ import { useAiGate, AiGateModals } from '@/components/ai/useAiGate';
 
 const _loadingSpinner = () => (
   <div className="flex justify-center py-8">
-    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-accent"></div>
   </div>
 );
 
@@ -344,9 +344,9 @@ export default function ZiweiPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6]">
+    <div className="min-h-dvh bg-[#FAF9F6]">
       {/* 标题区 */}
-      <Container className="!max-w-[1000px] pt-16 md:pt-24 pb-6 md:pb-8">
+      <PageShell width="wide" className=" pt-16 md:pt-24 pb-6 md:pb-8">
         <div className="text-center">
           <h1 className="font-display text-3xl md:text-[40px] font-bold text-[#1C1A16] leading-tight">
             AI 紫微斗数排盘
@@ -355,10 +355,10 @@ export default function ZiweiPage() {
             十二宫命盘 · 智能解读
           </p>
         </div>
-      </Container>
+      </PageShell>
 
       {/* 输入区 */}
-      <Container className="!max-w-[1000px] pb-6 md:pb-8">
+      <PageShell width="wide" className=" pb-6 md:pb-8">
         <div className="bg-white rounded-2xl shadow-sm border border-[#F0EDE8] p-4 sm:p-6">
           <div className="flex flex-col md:flex-row md:items-end gap-4">
             {/* 出生日期 */}
@@ -370,7 +370,7 @@ export default function ZiweiPage() {
                 triggerClassName={
                   errors.birthDate
                     ? 'border-red-400 focus:border-red-500 ring-1 ring-red-200'
-                    : 'border-[#E8E4DD] focus:border-[#1C1A16]'
+                    : 'border-[#E8E4DD] focus:border-brand-accent'
                 }
               />
               {errors.birthDate && (
@@ -389,7 +389,7 @@ export default function ZiweiPage() {
                 className={
                   errors.birthHour
                     ? 'border-red-400 focus:border-red-500 ring-1 ring-red-200'
-                    : 'border-[#E8E4DD] focus:border-[#1C1A16]'
+                    : 'border-[#E8E4DD] focus:border-brand-accent'
                 }
               />
               {errors.birthHour && (
@@ -421,11 +421,11 @@ export default function ZiweiPage() {
             </div>
           </div>
         </div>
-      </Container>
+      </PageShell>
 
       {/* 错误提示 */}
       {error && (
-        <Container className="!max-w-[1000px] pb-4">
+        <PageShell width="wide" className=" pb-4">
           <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
             <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />
             <span className="text-sm text-red-600 flex-1">{error}</span>
@@ -437,23 +437,23 @@ export default function ZiweiPage() {
               重试
             </button>
           </div>
-        </Container>
+        </PageShell>
       )}
 
       {/* 命盘加载态 */}
       {loading && (
-        <Container className="!max-w-[1000px] pb-10 md:pb-16">
+        <PageShell width="wide" className=" pb-10 md:pb-16">
           <div className="flex flex-col items-center justify-center py-20">
             <BaguaSpinner />
             <p className="mt-4 text-sm text-[#1C1A16]/50">正在排盘中...</p>
           </div>
-        </Container>
+        </PageShell>
       )}
 
       {/* 命盘区域 */}
       {showChart && !loading && palaces.length > 0 && (
         <>
-          <Container className="!max-w-[1000px] pb-4">
+          <PageShell width="wide" className=" pb-4">
             <div className="bg-white rounded-2xl shadow-sm border border-[#F0EDE8] p-4 sm:p-6">
               <div className="flex items-center justify-between mb-1">
                 <div />
@@ -506,55 +506,55 @@ export default function ZiweiPage() {
                 </div>
               </div>
             </div>
-          </Container>
+          </PageShell>
 
           {/* P2-4: 双人对比入口 */}
-          <Container className="!max-w-[1000px] pb-4">
+          <PageShell width="wide" className=" pb-4">
             <div className="flex justify-end">
               <DualChartCompare chartA={palaces} />
             </div>
-          </Container>
+          </PageShell>
 
           {/* P1-1: 宫位详情面板 */}
           {selectedPalace && (
-            <Container className="!max-w-[1000px] pb-4 md:pb-6">
+            <PageShell width="wide" className=" pb-4 md:pb-6">
               <PalaceDetailPanel
                 palace={selectedPalace}
                 onClose={() => setSelectedPalaceIndex(null)}
               />
-            </Container>
+            </PageShell>
           )}
 
           {/* P2-2: 四化飞星动画 */}
-          <Container className="!max-w-[1000px] pb-4 md:pb-6">
+          <PageShell width="wide" className=" pb-4 md:pb-6">
             <SihuaAnimation palaces={palaces} visible={showChart && !loading} />
-          </Container>
+          </PageShell>
 
           {/* P2-3: 大运流年切换器 */}
-          <Container className="!max-w-[1000px] pb-4 md:pb-6">
+          <PageShell width="wide" className=" pb-4 md:pb-6">
             <DayunSwitcher birthDate={birthDate} />
-          </Container>
+          </PageShell>
 
           {/* P1-2: AI 命盘总览解读 */}
-          <Container className="!max-w-[1000px] pb-6 md:pb-8">
+          <PageShell width="wide" className=" pb-6 md:pb-8">
             <ZiweiAiOverview palaces={palaces} birthDate={birthDate} />
-          </Container>
+          </PageShell>
         </>
       )}
 
       {/* P1-3: 底部功能区 */}
       <div className="bg-[#FAF9F6]">
-        <Container className="!max-w-[1000px] pb-6 md:pb-8">
+        <PageShell width="wide" className=" pb-6 md:pb-8">
           <ZiweiFeatures />
-        </Container>
+        </PageShell>
 
-        <Container className="!max-w-[1000px] pb-6 md:pb-8">
+        <PageShell width="wide" className=" pb-6 md:pb-8">
           <ZiweiGuide />
-        </Container>
+        </PageShell>
 
-        <Container className="!max-w-[1000px] pb-8 md:pb-12">
+        <PageShell width="wide" className=" pb-8 md:pb-12">
           <ZiweiFaq />
-        </Container>
+        </PageShell>
       </div>
 
       <AiGateModals gate={gate} callbackUrl="/ziwei" />

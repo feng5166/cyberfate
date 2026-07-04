@@ -4,58 +4,19 @@ import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
-import {
-  Menu, X, ChevronDown,
-  Sparkles, Star, Heart, Gem, Coins, Flower2, Sun, CalendarDays, Music, BookOpen, ArrowRight,
-  type LucideIcon,
-} from 'lucide-react';
+import { Menu, X, ChevronDown, Sparkles, BookOpen, ArrowRight } from 'lucide-react';
 import { AuthModal } from '@/components/auth/AuthModal';
+import { MODULES, MODULE_GROUPS } from '@/data/modules';
 
-interface NavItem {
-  label: string;
-  href: string;
-  desc?: string;
-  icon?: LucideIcon;
-}
-
-// 顶部主导航（高频入口，桌面端直接展示）
-const featuredNav: NavItem[] = [
+// 顶部主导航 + mega-menu 全部从 MODULES 唯一真源派生（与 Sidebar / 手机抽屉 / TabBar 一致）
+const pick = (id: string) => MODULES.find((m) => m.id === id)!;
+const featuredNav = [
   { label: '首页', href: '/' },
-  { label: '八字分析', href: '/bazi' },
-  { label: '每日运势', href: '/daily' },
-  { label: '塔罗占卜', href: '/tarot' },
+  ...[pick('bazi'), pick('daily'), pick('tarot')].map((m) => ({ label: m.label, href: m.href })),
 ];
 
-// "全部功能" mega-menu 分组
-const megaGroups: { title: string; items: NavItem[] }[] = [
-  {
-    title: '东方命理',
-    items: [
-      { label: '八字分析', href: '/bazi', desc: 'AI 排盘，解读命盘特质与运势', icon: Sparkles },
-      { label: '紫微斗数', href: '/ziwei', desc: '十二宫位与主星格局精解', icon: Star },
-      { label: '合婚配对', href: '/bazi/marriage', desc: '双方八字深度匹配度分析', icon: Heart },
-    ],
-  },
-  {
-    title: '占卜决策',
-    items: [
-      { label: '塔罗占卜', href: '/tarot', desc: 'AI 塔罗，多角度看清处境', icon: Gem },
-      { label: '六爻占卜', href: '/liuyao', desc: '传统六爻 + AI 深度解卦', icon: Coins },
-      { label: '梅花易数', href: '/meihua', desc: '随时起卦，助你做关键决策', icon: Flower2 },
-    ],
-  },
-  {
-    title: '每日开运',
-    items: [
-      { label: '每日运势', href: '/daily', desc: '每日吉凶与开运指引', icon: Sun },
-      { label: '2026生肖运势', href: '/2026', desc: '丙午马年十二生肖全解', icon: Sparkles },
-      { label: '黄历查询', href: '/huangli', desc: '宜忌吉日，AI 智能择日', icon: CalendarDays },
-      { label: '音乐运势签', href: '/music-oracle', desc: '抽一签，听见你的运势', icon: Music },
-    ],
-  },
-];
-
-const allMegaHrefs = megaGroups.flatMap(g => g.items.map(i => i.href)).concat('/knowledge');
+const megaGroups = MODULE_GROUPS;
+const allMegaHrefs = megaGroups.flatMap((g) => g.items.map((i) => i.href)).concat('/knowledge');
 
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -164,7 +125,7 @@ export function Header() {
                                   onClick={() => setMoreOpen(false)}
                                   className={`group flex items-start gap-3 rounded-xl p-2 transition-colors ${active ? 'bg-[#FAF9F6]' : 'hover:bg-[#FAF9F6]'}`}
                                 >
-                                  <span className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-[#FBEEDD] text-[#C2762B]">
+                                  <span className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-brand-accent-soft text-brand-accent">
                                     <Icon className="h-4 w-4" />
                                   </span>
                                   <span className="min-w-0">
@@ -181,14 +142,14 @@ export function Header() {
                     {/* 底部：知识库 + CTA */}
                     <div className="mt-4 flex items-center justify-between border-t border-brand-border-light pt-3">
                       <Link href="/knowledge" onClick={() => setMoreOpen(false)} className="flex items-center gap-2 text-sm text-brand-gray hover:text-[#1C1A16] transition-colors">
-                        <BookOpen className="h-4 w-4 text-[#C2762B]" />
+                        <BookOpen className="h-4 w-4 text-brand-accent" />
                         命理知识库
                         <span className="text-xs text-[#1C1A16]/40">术语图解与入门科普</span>
                       </Link>
                       <Link
                         href="/bazi"
                         onClick={() => setMoreOpen(false)}
-                        className="inline-flex items-center gap-1.5 rounded-full bg-[#C2762B] px-4 py-2 text-sm font-medium text-white hover:bg-[#A86425] transition-colors"
+                        className="inline-flex items-center gap-1.5 rounded-full bg-brand-accent px-4 py-2 text-sm font-medium text-white hover:bg-brand-accent-hover transition-colors"
                       >
                         免费测八字 <ArrowRight className="h-3.5 w-3.5" />
                       </Link>
@@ -207,7 +168,7 @@ export function Header() {
           <div className="hidden lg:flex items-center gap-4">
             <Link
               href="/bazi"
-              className="inline-flex items-center gap-1.5 rounded-full bg-[#C2762B] px-4 py-2 text-sm font-medium text-white hover:bg-[#A86425] transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-full bg-brand-accent px-4 py-2 text-sm font-medium text-white hover:bg-brand-accent-hover transition-colors"
             >
               <Sparkles className="h-3.5 w-3.5" />
               免费测八字
@@ -276,7 +237,7 @@ export function Header() {
             {/* CTA */}
             <Link
               href="/bazi"
-              className="mb-3 flex items-center justify-center gap-1.5 rounded-xl bg-[#C2762B] px-4 py-3 text-sm font-medium text-white active:bg-[#A86425] transition-colors"
+              className="mb-3 flex items-center justify-center gap-1.5 rounded-xl bg-brand-accent px-4 py-3 text-sm font-medium text-white active:bg-brand-accent-hover transition-colors"
               onClick={() => setMobileOpen(false)}
             >
               <Sparkles className="h-4 w-4" /> 免费测八字
@@ -309,7 +270,7 @@ export function Header() {
                       className="flex items-center gap-3 py-2.5 transition-colors active:bg-brand-bg"
                       onClick={() => setMobileOpen(false)}
                     >
-                      <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-[#FBEEDD] text-[#C2762B]">
+                      <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-brand-accent-soft text-brand-accent">
                         <Icon className="h-4 w-4" />
                       </span>
                       <span className="min-w-0">

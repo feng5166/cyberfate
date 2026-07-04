@@ -50,22 +50,29 @@ function PaymentSuccessHandler() {
   return null;
 }
 
+// 营销/法务/登录/生肖/支付类页面走“首页外壳”（顶部 Header + Footer，无模块侧栏/底栏），
+// 与模块 app 页面（侧栏 / MobileHeader+TabBar）区分开。首页也归此类，与营销页同壳。
+const MARKETING_PREFIXES = ['/about', '/pricing', '/privacy', '/terms', '/refund', '/2026', '/auth', '/reset-password', '/payment'];
+function isMarketingRoute(p: string): boolean {
+  return MARKETING_PREFIXES.some((pre) => p === pre || p.startsWith(pre + '/'));
+}
+
 export function LayoutWrapper({ children }: LayoutWrapperProps) {
   const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
   const pathname = usePathname();
   const isHomePage = pathname === '/';
-  const showSidebar = !isHomePage;
-  const layoutClasses = 'flex flex-col min-h-dvh';
+  // app 外壳：非首页、且非营销/法务/登录类路由 → 模块页
+  const useAppChrome = !isHomePage && !isMarketingRoute(pathname);
 
   return (
-    <div className={layoutClasses}>
-      {/* Header 在正常文档流中，随内容一起滚动（不再固定吸顶） */}
-      {!showSidebar && <Header />}
-      {showSidebar && (
+    <div className="flex flex-col min-h-dvh">
+      {/* 首页 + 营销/法务/登录页：站点级顶栏 */}
+      {!useAppChrome && <Header />}
+      {useAppChrome && (
         <button
           type="button"
           onClick={() => setSidebarCollapsed((v) => !v)}
-          className="fixed top-3 z-50 hidden h-9 w-9 items-center justify-center rounded-lg border border-[#1C1A16]/[0.08] bg-[#FAF9F6] transition-all duration-300 hover:bg-gray-100 cursor-pointer md:flex"
+          className="fixed top-3 z-50 hidden h-9 w-9 items-center justify-center rounded-lg border border-brand-ink/[0.08] bg-brand-bg transition-all duration-300 hover:bg-brand-border-light cursor-pointer md:flex"
           style={{ left: (isSidebarCollapsed ? 0 : 220) + 12 }}
           title={isSidebarCollapsed ? '展开导航' : '收起导航'}
           aria-label={isSidebarCollapsed ? '展开导航' : '收起导航'}
@@ -77,19 +84,22 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
           )}
         </button>
       )}
-      <main id="main-content" className="flex-1 pb-[calc(5rem_+_env(safe-area-inset-bottom))] md:pb-0" style={{ paddingTop: 0 }}>
+      <main
+        id="main-content"
+        className={`flex-1 ${useAppChrome ? 'pb-[calc(5rem_+_env(safe-area-inset-bottom))] md:pb-0' : ''}`}
+      >
         {/* 仅把用 useSearchParams 的处理器各自包进独立 Suspense，
             避免把 {children}(页面内容) 一起 bailout 到 CSR —— 保证首页等可 SSG/SSR */}
         <Suspense fallback={null}>
           <PaymentSuccessHandler />
         </Suspense>
         {/* 手机端内页顶栏（返回+Logo+全模块抽屉）；md+ 走 Sidebar，MobileHeader 自身 md:hidden */}
-        {showSidebar && <MobileHeader />}
-        {showSidebar ? (
+        {useAppChrome && <MobileHeader />}
+        {useAppChrome ? (
           <DashboardLayout
             collapsed={isSidebarCollapsed}
             onCollapseToggle={(next) => setSidebarCollapsed(next)}
-            showSidebar={showSidebar}
+            showSidebar={useAppChrome}
           >
             <Suspense fallback={null}>
               <SidebarController onExpand={() => setSidebarCollapsed(false)} />
@@ -100,8 +110,13 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
           <>{children}<Footer /></>
         )}
       </main>
-      <BackToTop />
-      <TabBar />
+      {/* 底部 chrome 仅模块页出现，避免营销/法务页出现命理模块底栏 */}
+      {useAppChrome && (
+        <>
+          <BackToTop />
+          <TabBar />
+        </>
+      )}
     </div>
   );
 }

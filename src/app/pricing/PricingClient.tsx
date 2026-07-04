@@ -98,17 +98,17 @@ export default function PricingClient({ currentPlan }: PricingClientProps) {
   }, [session, pendingPlan, isSubscribed, router, redirectToCheckout]);
 
   return (
-    <div className="bg-[#FAF9F6] min-h-screen">
-      <section className="px-4 pt-20 md:pt-28 pb-8">
+    <div className="bg-brand-bg min-h-dvh">
+      <section className="px-4 pt-16 sm:pt-20 md:pt-28 pb-8">
         <div className="max-w-[680px] mx-auto text-center">
-          <h1 className="font-display text-[32px] md:text-[40px] font-semibold text-[#1C1A16] tracking-[0.06em]">
+          <h1 className="font-display text-[28px] sm:text-[32px] md:text-h1 font-semibold text-brand-ink tracking-[0.06em]">
             选择您的方案
           </h1>
-          <p className="text-[15px] text-[#1C1A16]/55 mt-4 leading-relaxed">
+          <p className="text-body text-brand-gray mt-4 leading-relaxed">
             AI 智能八字助手，为您提供每日运势指引、人生重要决策参考、正缘测算等全方位服务。让智能化的命理分析，助您在人生的每个重要时刻做出明智选择。
           </p>
           {isSubscribed && (
-            <div className="mt-6 inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 text-sm font-medium px-5 py-2.5 rounded-full border border-emerald-200">
+            <div className="mt-6 inline-flex items-center gap-2 bg-brand-accent-soft text-brand-accent text-sm font-medium px-5 py-2.5 rounded-full border border-brand-accent/20">
               <span>您已是会员 ✨ 感谢支持</span>
             </div>
           )}
@@ -129,36 +129,36 @@ export default function PricingClient({ currentPlan }: PricingClientProps) {
 
       <section className="px-4 pb-6">
         <div className="max-w-[860px] mx-auto text-center">
-          <p className="inline-flex items-center gap-2 text-[13px] text-[#1C1A16]/55">
-            <ShieldCheck className="w-4 h-4 text-[#1C1A16]/45" strokeWidth={2} />
+          <p className="inline-flex items-center gap-2 text-[13px] text-brand-gray">
+            <ShieldCheck className="w-4 h-4 text-brand-gray" strokeWidth={2} />
             安全支付 · 数据加密 · 隐私保护
           </p>
-          <p className="text-[13px] text-[#1C1A16]/45 mt-2">
+          <p className="text-[13px] text-brand-gray mt-2">
             需要帮助？联系我们：
-            <a href="mailto:support@cyberfate.me" className="text-[#1C1A16]/70 hover:underline">support@cyberfate.me</a>
+            <a href="mailto:support@cyberfate.me" className="text-brand-accent hover:underline">support@cyberfate.me</a>
           </p>
         </div>
       </section>
 
       <section className="px-4 py-16 md:py-20">
         <div className="max-w-5xl mx-auto">
-          <h2 className="font-display text-[28px] font-semibold text-[#1C1A16] text-center mb-10">常见问题</h2>
-          <div className="max-w-[720px] mx-auto divide-y divide-[#1C1A16]/8">
+          <h2 className="font-display text-[26px] sm:text-h2 font-semibold text-brand-ink text-center mb-10">常见问题</h2>
+          <div className="max-w-[720px] mx-auto divide-y divide-brand-border-light">
             {faqs.map((faq, i) => (
               <div key={i} className="py-5">
                 <button
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  className="w-full flex items-center justify-between text-left"
+                  className="w-full min-h-[44px] flex items-center justify-between text-left"
                 >
-                  <span className="text-[15px] font-medium text-[#1C1A16] pr-4">{faq.q}</span>
+                  <span className="text-[15px] font-medium text-brand-ink pr-4">{faq.q}</span>
                   {openFaq === i ? (
-                    <ChevronUp className="w-4 h-4 text-[#1C1A16]/40 shrink-0" />
+                    <ChevronUp className="w-4 h-4 text-brand-gray shrink-0" />
                   ) : (
-                    <ChevronDown className="w-4 h-4 text-[#1C1A16]/40 shrink-0" />
+                    <ChevronDown className="w-4 h-4 text-brand-gray shrink-0" />
                   )}
                 </button>
                 {openFaq === i && (
-                  <p className="text-sm text-[#1C1A16]/55 leading-relaxed mt-3 pt-1 animate-fadeIn">
+                  <p className="text-body-sm text-brand-gray leading-relaxed mt-3 pt-1 animate-fadeIn">
                     {faq.a}
                   </p>
                 )}

@@ -1,6 +1,7 @@
 'use client';
 
 import type { PillarKey, PillarRecord } from '@/lib/bazi/types';
+import { wuxingColor } from '@/data/wuxing';
 import { cn } from '@/lib/utils/cn';
 
 interface BaziChartProps {
@@ -16,14 +17,6 @@ const pillarConfig: { key: PillarKey; label: string }[] = [
   { key: 'hour', label: '时柱' },
 ];
 
-const wuxingColorMap: Record<string, { bg: string; text: string }> = {
-  金: { bg: '#F3E8FF', text: '#7C3AED' },
-  木: { bg: '#D1FAE5', text: '#047857' },
-  水: { bg: '#DBEAFE', text: '#2563EB' },
-  火: { bg: '#FEE2E2', text: '#DC2626' },
-  土: { bg: '#FEF3C7', text: '#D97706' },
-};
-
 export function BaziChart({ pillars, hasHour = true }: BaziChartProps) {
   return (
     <section>
@@ -33,7 +26,7 @@ export function BaziChart({ pillars, hasHour = true }: BaziChartProps) {
           const pillar = pillars[key];
           const isDay = key === 'day';
           const isUnknownHour = key === 'hour' && !hasHour;
-          const wuxingStyle = wuxingColorMap[pillar.ganWuxing] ?? { bg: '#F3F4F6', text: '#4B5563' };
+          const wuxingStyle = wuxingColor(pillar.ganWuxing);
 
           return (
             <div
@@ -42,7 +35,7 @@ export function BaziChart({ pillars, hasHour = true }: BaziChartProps) {
                 'rounded-2xl border p-4 sm:p-5 transition-all duration-300',
                 'hover:-translate-y-0.5 hover:shadow-card-hover',
                 isDay
-                  ? 'border-[#1C1A16]/35 bg-[#FFF7E8]'
+                  ? 'border-brand-accent/40 bg-brand-accent-tint'
                   : isUnknownHour
                     ? 'border-dashed border-[#1C1A16]/20 bg-[#FAF9F6]'
                     : 'border-[#1C1A16]/10 bg-white'
@@ -62,8 +55,8 @@ export function BaziChart({ pillars, hasHour = true }: BaziChartProps) {
               </div>
               {isUnknownHour ? (
                 <>
-                  <div className="text-2xl font-bold text-[#1C1A16]/35 tracking-[0.08em]">未知</div>
-                  <div className="mt-2 text-xs text-[#1C1A16]/45">未提供出生时辰</div>
+                  <div className="text-2xl font-bold text-brand-gray tracking-[0.08em]">未知</div>
+                  <div className="mt-2 text-xs text-brand-gray">未提供出生时辰</div>
                 </>
               ) : (
                 <>
@@ -74,7 +67,7 @@ export function BaziChart({ pillars, hasHour = true }: BaziChartProps) {
                 </>
               )}
               {isDay && (
-                <span className="mt-3 inline-flex animate-pulse items-center rounded-full bg-[#1C1A16] px-2 py-0.5 text-[11px] font-medium text-white">
+                <span className="mt-3 inline-flex animate-pulse items-center rounded-full bg-brand-accent px-2 py-0.5 text-[11px] font-medium text-white">
                   日主
                 </span>
               )}

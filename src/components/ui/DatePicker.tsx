@@ -167,26 +167,30 @@ export function DatePicker({
   const weekDays = ['日', '一', '二', '三', '四', '五', '六']
 
   return (
-    <div className={cn("space-y-2", className)} ref={containerRef}>
+    <div className={cn("relative space-y-2", className)} ref={containerRef}>
       {label && (
-        <label className="block text-sm font-medium text-[#1C1A16]">{label}</label>
+        <label className="block text-sm font-medium text-brand-ink">{label}</label>
       )}
 
-      <div
+      {/* 触发器为真实 <button>：键盘可聚焦、读屏可达；焦点环走全局 focus-visible（古铜橙） */}
+      <button
+        type="button"
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
         className={cn(
-          "relative w-full h-12 px-4 rounded-xl bg-white border border-[#1C1A16]/15 text-[#1C1A16] cursor-pointer flex items-center justify-between",
+          "w-full min-h-[44px] px-4 rounded-xl bg-white border border-brand-ink/15 text-brand-ink cursor-pointer flex items-center justify-between text-base focus:border-brand-accent",
           triggerClassName
         )}
         onClick={() => setIsOpen(!isOpen)}
       >
-        <span className={displayValue ? 'text-[#1C1A16]' : 'text-[#1C1A16]/40'}>
+        <span className={displayValue ? 'text-brand-ink' : 'text-brand-light'}>
           {displayValue || placeholder}
         </span>
-        <Calendar className="w-5 h-5 text-[#1C1A16]/40" />
-      </div>
+        <Calendar className="w-5 h-5 text-brand-light" />
+      </button>
 
       {isOpen && (
-        <div className="absolute z-50 mt-1 bg-white border border-[#1C1A16]/15 rounded-xl shadow-card-hover p-4 w-[320px]">
+        <div className="absolute z-50 mt-1 bg-white border border-brand-ink/15 rounded-xl shadow-card-hover p-4 w-[320px] max-w-[calc(100vw-2rem)]">
           {!showYearPicker && !showMonthPicker ? (
             <>
               <div className="flex items-center justify-between mb-4">
@@ -241,7 +245,7 @@ export function DatePicker({
                           selectedDate.year === viewYear &&
                           selectedDate.month === viewMonth &&
                           selectedDate.day === day
-                          ? 'bg-[#1C1A16] text-white hover:bg-[#1C1A16]'
+                          ? 'bg-brand-accent text-white hover:bg-brand-accent-hover'
                           : '',
                       )}
                     >
@@ -273,7 +277,7 @@ export function DatePicker({
                             selectedDate.year === viewYear &&
                             selectedDate.month === viewMonth &&
                             selectedDate.day === day
-                              ? 'bg-[#1C1A16] text-white'
+                              ? 'bg-brand-accent text-white'
                               : ''}
                         `}
                       >
@@ -313,7 +317,7 @@ export function DatePicker({
                     className={`
                       w-full py-3 text-center rounded
                       ${year === viewYear
-                        ? 'bg-[#1C1A16] text-white font-medium'
+                        ? 'bg-brand-accent text-white font-medium'
                         : 'hover:bg-[#FAF9F6] text-[#1C1A16]/70'}
                     `}
                   >
@@ -351,7 +355,7 @@ export function DatePicker({
                     className={`
                       w-full py-3 text-center rounded
                       ${month === viewMonth
-                        ? 'bg-[#1C1A16] text-white font-medium'
+                        ? 'bg-brand-accent text-white font-medium'
                         : 'hover:bg-[#FAF9F6] text-[#1C1A16]/70'}
                     `}
                   >

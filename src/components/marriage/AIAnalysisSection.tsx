@@ -31,7 +31,6 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
   const [loading, setLoading] = useState(false);
   const [deepReportLoading, setDeepReportLoading] = useState(false);
   const [deepReportError, setDeepReportError] = useState('');
-  const [deepReportDebug, setDeepReportDebug] = useState('');
   const [error, setError] = useState('');
   const [data, setData] = useState<AIAnalysisData | null>(() => {
     if (!initialData) return null;
@@ -69,15 +68,11 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
       const decoder = new TextDecoder();
       let accumulated = '';
       let buffer = '';
-      let chunkCount = 0;
 
       while (true) {
         const { done, value } = await reader.read();
-        if (done) { console.log('[deepReport] reader done at chunk', chunkCount); break; }
-        chunkCount++;
-        const chunkStr = decoder.decode(value, { stream: true });
-        if (chunkCount <= 3) console.log('[deepReport] chunk', chunkCount, 'len:', chunkStr.length, 'preview:', chunkStr.slice(0, 80));
-        buffer += chunkStr;
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
         buffer = lines.pop() || '';
         for (const line of lines) {
@@ -93,9 +88,6 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
           } catch { /* ignore */ }
         }
       }
-      const dbg = `chunks:${chunkCount} acc:${accumulated.length} buf:${buffer.length} first50:${accumulated.slice(0,50)}`;
-      setDeepReportDebug(dbg);
-      console.log('[deepReport] stream done', dbg);
       if (accumulated && parsedRef.current) {
         const next: AIAnalysisData = { ...parsedRef.current, deepReport: accumulated };
         parsedRef.current = next;
@@ -201,7 +193,7 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
           {error && (
             <p className="text-xs text-[#B42318]">{error}</p>
           )}
-          <p className="text-[11px] text-[#1C1A16]/40">
+          <p className="text-[11px] text-brand-gray">
             首次解读约需 5-15 秒，结果会缓存以便复用
           </p>
         </div>
@@ -236,7 +228,7 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
           <div className="flex justify-end">
             <button
               onClick={() => setData(null)}
-              className="flex items-center gap-1.5 text-xs text-[#1C1A16]/40 hover:text-[#C2762B] transition-colors"
+              className="flex items-center gap-1.5 text-xs text-brand-gray hover:text-brand-accent transition-colors"
             >
               <RefreshCw className="w-3 h-3" />
               重新分析
@@ -305,11 +297,6 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
               </div>
             </div>
           )}
-
-          {/* temp debug */}
-          <div className="text-[10px] text-[#1C1A16]/30 bg-[#FAF9F6] border border-dashed border-[#1C1A16]/10 rounded px-2 py-1">
-            dr_len={data.deepReport?.length ?? 0} | drLoading={String(deepReportLoading)} | {deepReportDebug || 'no debug yet'}
-          </div>
 
           {!data.deepReport && deepReportLoading && (
             <div className="rounded-2xl border border-[#E5E0D8] bg-white p-6 flex items-center justify-center gap-2 text-sm text-[#1C1A16]/55">

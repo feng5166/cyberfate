@@ -1,5 +1,7 @@
 'use client';
 
+import { wuxingColor } from '@/data/wuxing';
+
 interface Pillar {
   gan: string;
   zhi: string;
@@ -18,14 +20,6 @@ interface PillarTableProps {
   subtitle?: string;
   className?: string;
 }
-
-const WUXING_COLOR: Record<string, string> = {
-  '木': '#3F8C5C',
-  '火': '#C2422C',
-  '土': '#A57842',
-  '金': '#A89A6F',
-  '水': '#3B6A8A',
-};
 
 const COLUMNS: Array<{ key: 'year' | 'month' | 'day' | 'hour'; label: string; stage: string }> = [
   { key: 'year', label: '年柱', stage: '童年到青年' },
@@ -61,14 +55,14 @@ export function PillarTable({ chart, title, subtitle, className = '' }: PillarTa
                       className="text-2xl md:text-[28px] font-semibold leading-none"
                       style={{
                         fontFamily: 'var(--font-cormorant), Cormorant Garamond, serif',
-                        color: WUXING_COLOR[pillar.ganWuxing] || '#1C1A16',
+                        color: wuxingColor(pillar.ganWuxing).text,
                       }}
                     >
                       {pillar.gan}
                     </div>
                     <div
                       className="text-[10px] mt-1.5"
-                      style={{ color: WUXING_COLOR[pillar.ganWuxing] || '#1C1A16' }}
+                      style={{ color: wuxingColor(pillar.ganWuxing).text }}
                     >
                       {pillar.ganWuxing}
                     </div>
@@ -78,14 +72,14 @@ export function PillarTable({ chart, title, subtitle, className = '' }: PillarTa
                       className="text-2xl md:text-[28px] font-semibold leading-none"
                       style={{
                         fontFamily: 'var(--font-cormorant), Cormorant Garamond, serif',
-                        color: WUXING_COLOR[pillar.zhiWuxing] || '#1C1A16',
+                        color: wuxingColor(pillar.zhiWuxing).text,
                       }}
                     >
                       {pillar.zhi}
                     </div>
                     <div
                       className="text-[10px] mt-1.5"
-                      style={{ color: WUXING_COLOR[pillar.zhiWuxing] || '#1C1A16' }}
+                      style={{ color: wuxingColor(pillar.zhiWuxing).text }}
                     >
                       {pillar.zhiWuxing}
                     </div>

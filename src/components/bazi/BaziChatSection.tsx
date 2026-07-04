@@ -320,7 +320,7 @@ export function BaziChatSection({ baziData, birthInput, isLoggedIn, isVip }: Baz
       <div className="flex items-start justify-between gap-2">
         <div>
           <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em]">AI 八字问答</h2>
-          <p className="text-xs text-[#1C1A16]/45 mt-1">基于您的命盘智能问答 · 仅供参考</p>
+          <p className="text-xs text-brand-gray mt-1">基于您的命盘智能问答 · 仅供参考</p>
         </div>
         <button
           type="button"
@@ -438,7 +438,7 @@ export function BaziChatSection({ baziData, birthInput, isLoggedIn, isVip }: Baz
           type="button"
           onClick={handleSubmit}
           disabled={submitting || !input.trim()}
-          className="inline-flex items-center justify-center h-11 px-5 rounded-xl bg-[#C2762B] hover:bg-[#A86425] text-white text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex items-center justify-center h-11 px-5 rounded-xl bg-brand-accent hover:bg-brand-accent-hover text-white text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Send className="w-4 h-4 mr-1.5" />
           提问
@@ -478,13 +478,13 @@ export function BaziChatSection({ baziData, birthInput, isLoggedIn, isVip }: Baz
               <button
                 type="button"
                 onClick={() => setShowSubModal(false)}
-                className="flex-1 h-10 rounded-xl border border-[#1C1A16]/15 text-sm text-[#1C1A16] hover:bg-[#FAF9F6] transition-colors"
+                className="flex-1 min-h-[44px] rounded-xl border border-[#1C1A16]/15 text-sm text-[#1C1A16] hover:bg-[#FAF9F6] transition-colors"
               >
                 稍后再说
               </button>
               <Link
                 href="/pricing"
-                className="flex-1 h-10 inline-flex items-center justify-center rounded-xl bg-[#C2762B] hover:bg-[#A86425] text-white text-sm font-medium transition-colors"
+                className="flex-1 min-h-[44px] inline-flex items-center justify-center rounded-xl bg-brand-accent hover:bg-brand-accent-hover text-white text-sm font-medium transition-colors"
               >
                 立即开通
               </Link>
@@ -530,7 +530,7 @@ export function BaziChatSection({ baziData, birthInput, isLoggedIn, isVip }: Baz
                     <MiniMarkdown text={item.answer} className="text-sm text-[#1C1A16]/75" />
 
                     <div className="mt-2 flex items-center justify-between">
-                      <span className="text-[11px] text-[#1C1A16]/40">
+                      <span className="text-[11px] text-brand-gray">
                         {new Date(item.timestamp).toLocaleString('zh-CN', {
                           year: 'numeric',
                           month: '2-digit',

@@ -28,9 +28,9 @@ export function PalaceMobileList({ palaces, selectedIndex, onSelect }: PalaceMob
               'w-full text-left bg-white border rounded-2xl min-h-[100px]',
               'px-4 py-3 transition-all duration-200',
               'active:scale-[0.98]',
-              'focus:outline-none focus:ring-2 focus:ring-[#1C1A16]/20',
+              'focus:outline-none focus:ring-2 focus:ring-brand-accent/30',
               isSelected
-                ? 'border-2 border-[#1C1A16] bg-[rgba(28,26,22,0.04)] shadow-md'
+                ? 'border-2 border-brand-accent bg-brand-accent-tint shadow-md'
                 : 'border border-[#E8EDE5] shadow-sm',
             )}
           >
@@ -41,17 +41,17 @@ export function PalaceMobileList({ palaces, selectedIndex, onSelect }: PalaceMob
                   {palace.name}
                 </span>
                 {palace.isLife && (
-                  <span className="text-[9px] px-1.5 py-[2px] rounded-full bg-amber-100 text-amber-700 font-medium leading-tight">
+                  <span className="text-[11px] px-1.5 py-[2px] rounded-full bg-brand-accent-soft text-brand-accent font-medium leading-tight">
                     命宫
                   </span>
                 )}
                 {isSelected && (
-                  <span className="text-[9px] px-1.5 py-[2px] rounded-full bg-[#1C1A16] text-white font-medium leading-tight">
+                  <span className="text-[11px] px-1.5 py-[2px] rounded-full bg-brand-accent text-white font-medium leading-tight">
                     查看中
                   </span>
                 )}
               </div>
-              <span className="text-xs text-[#1C1A16]/35 bg-[#FAF9F6] px-2 py-0.5 rounded-md">
+              <span className="text-xs text-[#1C1A16]/55 bg-[#FAF9F6] px-2 py-0.5 rounded-md">
                 {palace.stem}{palace.branch}
               </span>
             </div>
@@ -75,7 +75,7 @@ export function PalaceMobileList({ palaces, selectedIndex, onSelect }: PalaceMob
                 </div>
               ))}
               {(palace.majorStars?.length ?? 0) === 0 && (
-                <span className="text-xs text-[#1C1A16]/20 italic">无主星</span>
+                <span className="text-xs text-[#1C1A16]/40 italic">无主星</span>
               )}
             </div>
 
@@ -89,12 +89,12 @@ export function PalaceMobileList({ palaces, selectedIndex, onSelect }: PalaceMob
                       key={star.name}
                       className={cn(
                         'text-xs',
-                        star.type === 'evil' ? 'text-red-400/80' : 'text-[#1C1A16]/45',
+                        star.type === 'evil' ? 'text-red-500' : 'text-[#1C1A16]/55',
                       )}
                     >
                       {star.name}
                       {star.brightness && (
-                        <span className="text-[#1C1A16]/25 ml-0.5">{star.brightness}</span>
+                        <span className="text-[#1C1A16]/45 ml-0.5">{star.brightness}</span>
                       )}
                     </span>
                   ))}

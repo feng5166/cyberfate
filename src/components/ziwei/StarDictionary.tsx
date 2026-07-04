@@ -5,6 +5,7 @@ import { X } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { STAR_COLORS } from './types';
 import { StarIcon } from './StarIcon';
+import { wuxingColor } from '@/data/wuxing';
 
 interface StarDictionaryPopoverProps {
   starName: string;
@@ -322,6 +323,9 @@ export function StarDictionaryPopover({ starName, children, className }: StarDic
     return <span className={className}>{children}</span>;
   }
 
+  // 五行标签统一取自 WUXING 真源（单字命中即上色，复合/未知回退中性灰）
+  const elementColor = wuxingColor(entry.element);
+
   return (
     <span className={cn('relative inline-flex', className)} ref={triggerRef}>
       <span
@@ -337,7 +341,7 @@ export function StarDictionaryPopover({ starName, children, className }: StarDic
       {isOpen && (
         <div
           ref={popoverRef}
-          className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 sm:w-80 bg-white rounded-xl shadow-lg border border-[#F0EDE8] p-4 animate-in fade-in slide-in-from-bottom-2 duration-200"
+          className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 sm:w-80 bg-white rounded-xl shadow-lg border border-[#F0EDE8] p-4 animate-fadeIn"
           role="dialog"
           aria-label={`${starName}星曜详解`}
         >
@@ -367,13 +371,16 @@ export function StarDictionaryPopover({ starName, children, className }: StarDic
 
           {/* 属性 */}
           <div className="flex flex-wrap gap-1.5 mb-3">
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#FAF9F6] border border-[#E8E4DD] text-[#1C1A16]/50">
+            <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#FAF9F6] border border-[#E8E4DD] text-[#1C1A16]/60">
               {entry.category}
             </span>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#FAF9F6] border border-[#E8E4DD] text-[#1C1A16]/50">
+            <span
+              className="text-[11px] px-2 py-0.5 rounded-full font-medium"
+              style={{ backgroundColor: elementColor.bg, color: elementColor.text }}
+            >
               五行 {entry.element}
             </span>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#FAF9F6] border border-[#E8E4DD] text-[#1C1A16]/50">
+            <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#FAF9F6] border border-[#E8E4DD] text-[#1C1A16]/60">
               {entry.nature}性
             </span>
           </div>

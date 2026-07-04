@@ -4,15 +4,16 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Share2, RefreshCw, ChevronRight, Music } from 'lucide-react';
 import Link from 'next/link';
 import { toPng } from 'html-to-image';
+import { wuxingColor } from '@/data/wuxing';
 
-/** 五行渐变映射 */
-const WUXING_GRADIENTS: Record<string, { from: string; to: string; icon: string }> = {
-  木: { from: '#ecfdf5', to: '#dcfce7', icon: '🌿' },
-  火: { from: '#fff7ed', to: '#fee2e2', icon: '🔥' },
-  土: { from: '#fefce8', to: '#fef3c7', icon: '🏔' },
-  金: { from: '#f9fafb', to: '#f1f5f9', icon: '✨' },
-  水: { from: '#eff6ff', to: '#e0e7ff', icon: '💧' },
+/** 五行封面：图标为装饰 emoji，底色统一取自 @/data/wuxing 单一真源 */
+const WUXING_ICONS: Record<string, string> = {
+  木: '🌿', 火: '🔥', 土: '🏔', 金: '✨', 水: '💧',
 };
+
+function wuxingCover(cn: string) {
+  return { bg: wuxingColor(cn).bg, icon: WUXING_ICONS[cn] || WUXING_ICONS['木'] };
+}
 
 interface DailyMusicData {
   songName: string;
@@ -141,7 +142,7 @@ export default function DailyMusicCard() {
     );
   }
 
-  const gradient = WUXING_GRADIENTS[data.wuxing] || WUXING_GRADIENTS['木'];
+  const cover = wuxingCover(data.wuxing);
 
   return (
     <div
@@ -183,11 +184,9 @@ export default function DailyMusicCard() {
         {/* 封面占位（五行渐变） */}
         <div
           className="w-20 h-20 rounded-xl flex-shrink-0 flex items-center justify-center"
-          style={{
-            background: `linear-gradient(135deg, ${gradient.from}, ${gradient.to})`,
-          }}
+          style={{ background: cover.bg }}
         >
-          <span className="text-3xl">{gradient.icon}</span>
+          <span className="text-3xl">{cover.icon}</span>
         </div>
 
         <div className="flex-1 min-w-0">
@@ -214,7 +213,7 @@ export default function DailyMusicCard() {
       {/* 查看完整解读 */}
       <Link
         href="/music-oracle"
-        className="inline-flex items-center gap-0.5 text-xs text-[#C2762B] hover:text-[#A86425] mt-2 transition-colors"
+        className="inline-flex items-center gap-0.5 text-xs text-brand-accent hover:text-brand-accent-hover mt-2 transition-colors"
       >
         查看完整解读
         <ChevronRight className="w-3.5 h-3.5" />

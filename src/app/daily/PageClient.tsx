@@ -20,6 +20,7 @@ import DailyDetailAnalysis from '@/components/daily/DailyDetailAnalysis';
 import DailyFortuneQA from '@/components/daily/DailyFortuneQA';
 import html2canvas from 'html2canvas';
 import { track } from '@/lib/analytics';
+import { WUXING } from '@/data/wuxing';
 
 // 十二时辰选项
 const shichenOptions = [
@@ -125,13 +126,14 @@ const RATING_TEMPLATES: Record<string, Record<string, string>> = {
 };
 
 
-// 等级配色（语义色）
+// 等级配色（收敛为品牌序阶：强势=古铜橙强调，中性偏弱=墨灰；不用彩虹随机色）
+// 色值取自设计系统 token：accent-soft/accent/accent-hover 与 border-light/gray。
 const LEVEL_COLORS: Record<string, { bg: string; text: string }> = {
-  '旺': { bg: '#F3E8FF', text: '#9333EA' },
-  '强': { bg: '#DBEAFE', text: '#2563EB' },
-  '平': { bg: '#F3F4F6', text: '#6B7280' },
-  '弱': { bg: '#FEF3C7', text: '#D97706' },
-  '衰': { bg: '#FEE2E2', text: '#DC2626' },
+  '旺': { bg: '#FBEEDD', text: '#C2762B' }, // accent-soft / accent
+  '强': { bg: '#FAF3EC', text: '#A86425' }, // accent-tint / accent-hover
+  '平': { bg: '#F3F4F6', text: '#6B7280' }, // border-light / gray
+  '弱': { bg: '#F3F4F6', text: '#6B7280' },
+  '衰': { bg: '#F3F4F6', text: '#6B7280' },
 };
 
 // 分数→等级映射
@@ -160,7 +162,7 @@ function ProgressBar({ label, value, max = 100, color = 'bg-brand-black' }: { la
         <span className="text-sm text-brand-gray">{label}</span>
         <span className="text-sm font-medium text-brand-black">{pct}%</span>
       </div>
-      <div className="w-full h-2 rounded-full bg-gray-100 overflow-hidden">
+      <div className="w-full h-2 rounded-full bg-brand-border-light overflow-hidden">
         <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
       </div>
     </div>
@@ -236,22 +238,22 @@ function InlineCalendar({ selectedDate, onSelect }: { selectedDate: string; onSe
   const weekDayHeaders = ['日', '一', '二', '三', '四', '五', '六'];
 
   return (
-    <div className="mt-2 bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+    <div className="mt-2 bg-white rounded-card border border-brand-border-light shadow-card p-4">
       {/* 月份切换 */}
       <div className="flex items-center justify-between mb-3">
-        <button onClick={prevMonth} className="p-1 hover:bg-gray-100 rounded">
+        <button onClick={prevMonth} aria-label="上个月" className="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-brand-border-light rounded-lg text-brand-ink">
           <ChevronRight className="w-4 h-4 rotate-180" />
         </button>
-        <span className="text-sm font-semibold text-[#1C1A16]">{viewYear}年{viewMonth}月</span>
-        <button onClick={nextMonth} className="p-1 hover:bg-gray-100 rounded">
+        <span className="text-sm font-semibold text-brand-ink">{viewYear}年{viewMonth}月</span>
+        <button onClick={nextMonth} aria-label="下个月" className="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-brand-border-light rounded-lg text-brand-ink">
           <ChevronRight className="w-4 h-4" />
         </button>
       </div>
 
       {/* 星期头 */}
       <div className="grid grid-cols-7 mb-1">
-        {weekDayHeaders.map((w, i) => (
-          <div key={w} className={`text-center text-xs py-1 ${i === 0 || i === 6 ? 'text-red-400' : 'text-gray-400'}`}>{w}</div>
+        {weekDayHeaders.map((w) => (
+          <div key={w} className="text-center text-xs py-1 text-brand-gray">{w}</div>
         ))}
       </div>
 
@@ -268,12 +270,12 @@ function InlineCalendar({ selectedDate, onSelect }: { selectedDate: string; onSe
               onClick={() => onSelect(dateStr)}
               className={`
                 aspect-square flex items-center justify-center rounded-lg text-sm font-medium relative
-                ${isSelected ? 'bg-[#0F0F0F] text-white' : isToday ? 'bg-amber-50 text-[#1C1A16]' : 'hover:bg-gray-50 text-[#1C1A16]'}
+                ${isSelected ? 'bg-brand-accent text-white' : isToday ? 'bg-brand-accent-tint text-brand-ink' : 'hover:bg-brand-border-light text-brand-ink'}
               `}
             >
               {day}
               {isToday && !isSelected && (
-                <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-amber-500" />
+                <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-brand-accent" />
               )}
             </button>
           );
@@ -318,7 +320,7 @@ function WeekCalendar({
 
   return (
     <>
-      <div className="flex items-stretch bg-white rounded-xl border border-gray-200 shadow-sm">
+      <div className="flex items-stretch bg-white rounded-card border border-brand-border-light shadow-card">
         {/* 7天横向列表 */}
         <div className="flex flex-1 justify-around">
           {weekDays.map((date, i) => {
@@ -329,26 +331,20 @@ function WeekCalendar({
               <button
                 key={date}
                 onClick={() => onSelect(date)}
-                className={`flex-shrink-0 flex flex-col items-center py-2.5 gap-0.5 transition-colors w-10 ${isSelected ? '' : 'hover:bg-gray-50'}`}
-                style={isSelected ? { borderBottom: '2px solid #0F0F0F' } : undefined}
+                className={`flex-1 min-h-[44px] flex flex-col items-center justify-center py-2.5 gap-0.5 transition-colors ${isSelected ? 'border-b-2 border-brand-accent' : 'hover:bg-brand-border-light'}`}
               >
                 <span
-                  className={`text-[10px] font-medium`}
-                  style={{ color: isSelected ? '#0F0F0F' : isToday ? '#1C1A16' : '#6B7280' }}
+                  className={`text-xs font-medium ${isSelected ? 'text-brand-accent' : isToday ? 'text-brand-ink' : 'text-brand-gray'}`}
                 >
                   周{weekLabels[i]}
                 </span>
                 <span
-                  className={`relative text-sm font-semibold w-7 h-7 flex items-center justify-center rounded-full`}
-                  style={isSelected
-                    ? { backgroundColor: '#1C1A16', color: 'white' }
-                    : { color: '#1C1A16' }
-                  }
+                  className={`relative text-sm font-semibold w-7 h-7 flex items-center justify-center rounded-full ${isSelected ? 'bg-brand-accent text-white' : 'text-brand-ink'}`}
                 >
                   {dayNum}
                   {isToday && (
                     <span
-                      className={`absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-amber-500'}`}
+                      className={`absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-brand-accent'}`}
                     />
                   )}
                 </span>
@@ -358,12 +354,12 @@ function WeekCalendar({
         </div>
 
         {/* 分割线 */}
-        <div className="w-px bg-gray-200 flex-shrink-0 self-stretch" />
+        <div className="w-px bg-brand-border-light flex-shrink-0 self-stretch" />
 
         {/* 月历按钮 */}
         <button
           onClick={() => setShowMonthPicker(true)}
-          className="flex flex-col items-center justify-center px-4 gap-1 hover:bg-gray-50 transition-colors"
+          className="flex flex-col items-center justify-center px-4 gap-1 min-h-[44px] hover:bg-brand-border-light transition-colors"
         >
           <span className="text-xs text-brand-gray">月历</span>
           <span className="text-base">📅</span>
@@ -377,12 +373,13 @@ function WeekCalendar({
             className="absolute inset-0 bg-black/30"
             onClick={() => setShowMonthPicker(false)}
           />
-          <div className="relative w-[90%] max-w-sm bg-white rounded-2xl p-4 shadow-xl">
+          <div className="relative w-[90%] max-w-sm bg-white rounded-card p-4 shadow-pricing">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-base font-semibold text-[#1C1A16]">选择日期</h3>
+              <h3 className="text-base font-semibold text-brand-ink">选择日期</h3>
               <button
                 onClick={() => setShowMonthPicker(false)}
-                className="p-1 text-[#1C1A16]/40 hover:text-[#1C1A16]"
+                aria-label="关闭"
+                className="min-w-[44px] min-h-[44px] flex items-center justify-center -mr-1 text-brand-light hover:text-brand-ink"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -545,11 +542,11 @@ export default function DailyPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6]">
+    <div className="min-h-dvh bg-brand-bg">
       {/* 页面标题 */}
-      <div className="text-center pt-6 md:pt-12 pb-6">
-        <h1 className="font-display text-h1 md:text-[44px] text-[#1C1A16]" style={{ letterSpacing: '10px' }}>每日运势</h1>
-        <p className="text-body-sm text-[#1C1A16]/70 mt-3">
+      <div className="text-center pt-10 sm:pt-12 md:pt-16 pb-6">
+        <h1 className="font-display text-h1 md:text-[44px] text-brand-ink" style={{ letterSpacing: '10px' }}>每日运势</h1>
+        <p className="text-body-sm text-brand-gray mt-3">
           每日运势分析，是东方智慧的凝练，更是你掌握当下、规划未来的参照。
         </p>
       </div>
@@ -588,7 +585,7 @@ export default function DailyPage() {
                 value={formData.birthDate}
                 onChange={(value) => setFormData({ ...formData, birthDate: value })}
                 className="space-y-1.5"
-                triggerClassName="h-10 rounded-lg"
+                triggerClassName="min-h-[44px] rounded-lg"
               />
               <Select label="出生时辰" options={shichenOptions} value={formData.birthHour} onChange={(e) => setFormData({ ...formData, birthHour: e.target.value })} required />
               {error && <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">{error}</div>}
@@ -601,7 +598,7 @@ export default function DailyPage() {
         {hasSavedData && !result && !loading && !error && (
           <div className="text-center mb-8 py-4">
             <p className="text-sm text-brand-gray">已记住您的出生信息，正在加载运势...</p>
-            <button onClick={clearSavedData} className="text-xs text-brand-light hover:text-brand-black mt-2 underline">重新输入</button>
+            <button onClick={clearSavedData} className="text-xs text-brand-gray hover:text-brand-accent mt-2 underline min-h-[44px]">重新输入</button>
           </div>
         )}
 
@@ -612,11 +609,11 @@ export default function DailyPage() {
             <div className="flex items-center justify-center gap-4">
               <button
                 onClick={() => fetchFortune(formData.birthDate, formData.birthHour, today, formData.gender || undefined)}
-                className="text-sm text-brand-black hover:text-brand-light underline"
+                className="text-sm text-brand-ink hover:text-brand-accent underline min-h-[44px] px-2"
               >
                 重试
               </button>
-              <button onClick={clearSavedData} className="text-sm text-brand-light hover:text-brand-black underline">
+              <button onClick={clearSavedData} className="text-sm text-brand-gray hover:text-brand-accent underline min-h-[44px] px-2">
                 重新输入
               </button>
             </div>
@@ -635,60 +632,60 @@ export default function DailyPage() {
         {result && !loading && (
           <div className="max-w-page mx-auto px-4 space-y-5 pb-20 md:pb-26 animate-fadeIn">
 
-            {/* 今日核心速览 - 极简风 */}
-            <div style={{ backgroundColor: '#FFFFFF', borderRadius: 16, border: '1px solid rgba(28,26,22,0.06)', padding: '32px 24px' }}>
+            {/* 今日核心速览 - 极简风（Card + token） */}
+            <Card variant="flat" hover={false}>
               {/* 月份年份行 */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 16, borderBottom: '1px solid rgba(28,26,22,0.06)', marginBottom: 24 }}>
-                <span style={{ fontSize: 14, color: 'rgba(28,26,22,0.45)', letterSpacing: 2, fontFamily: 'Inter, sans-serif' }}>
+              <div className="flex items-center justify-between pb-4 mb-6 border-b border-brand-border-light">
+                <span className="text-body-sm text-brand-gray tracking-[2px]">
                   {(() => { const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC']; const d = new Date(today + 'T00:00:00'); d.setDate(d.getDate() + Number(dayOffset)); return months[d.getMonth()]; })()}
                 </span>
-                <span style={{ fontSize: 14, color: 'rgba(28,26,22,0.45)', letterSpacing: 2, fontFamily: 'Inter, sans-serif' }}>
+                <span className="text-body-sm text-brand-gray tracking-[2px]">
                   {(() => { const d = new Date(today + 'T00:00:00'); d.setDate(d.getDate() + Number(dayOffset)); return d.getFullYear(); })()}
                 </span>
               </div>
 
               {/* 大日期 */}
-              <div style={{ marginBottom: 20 }}>
-                <div style={{ fontSize: 80, fontWeight: 300, color: '#1C1A16', lineHeight: 1, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>
+              <div className="mb-5">
+                <div className="font-heading font-light text-brand-ink leading-none text-[72px] sm:text-[80px]">
                   {(() => { const d = new Date(today + 'T00:00:00'); d.setDate(d.getDate() + Number(dayOffset)); return d.getDate(); })()}
                 </div>
-                <div style={{ fontSize: 13, color: 'rgba(28,26,22,0.55)', marginTop: 8 }}>
+                <div className="text-[13px] text-brand-gray mt-2">
                   {(() => { const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']; const d = new Date(today + 'T00:00:00'); d.setDate(d.getDate() + Number(dayOffset)); return days[d.getDay()]; })()} · {result.dayGanzhi}日 · {result.lunarDate}
                 </div>
               </div>
 
               {/* 判词区 */}
-              <div style={{ marginBottom: 16 }}>
-                <span style={{ fontSize: 28, fontWeight: 600, color: '#1C1A16', letterSpacing: 4, fontFamily: 'Noto Serif SC, serif' }}>
+              <div className="mb-4">
+                <span className="font-serif font-semibold text-brand-ink text-[28px] tracking-[4px]">
                   {result.headline || (result.overall >= 4 ? '乘势而为' : result.overall >= 3 ? '守正待机' : '韬光养晦')}
                 </span>
-                <span style={{ fontSize: 28, color: 'rgba(28,26,22,0.35)', marginLeft: 8, letterSpacing: 6 }}>····</span>
+                <span className="text-[28px] text-brand-light ml-2 tracking-[6px]">····</span>
               </div>
 
               {/* 一句话解读 */}
-              <div style={{ marginBottom: 24 }}>
-                <p style={{ fontSize: 14, color: 'rgba(28,26,22,0.65)', lineHeight: 1.7, maxWidth: 480, margin: 0 }}>
+              <div className="mb-6">
+                <p className="text-body-sm text-brand-gray leading-relaxed max-w-[480px]">
                   {result.briefing || (result.advice || '').slice(0, 50)}
                 </p>
               </div>
 
               {/* 宜忌 - 极简双栏 */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1px 1fr', gap: 0, padding: 0, width: '100%', marginTop: 24, borderTop: '1px solid rgba(28,26,22,0.06)', paddingTop: 24 }}>
+              <div className="grid grid-cols-[1fr_1px_1fr] w-full mt-6 pt-6 border-t border-brand-border-light">
                 {/* 宜 */}
-                <div style={{ paddingRight: 16 }}>
-                  <div style={{ fontSize: 13, color: 'rgba(28,26,22,0.45)', letterSpacing: 2, marginBottom: 12 }}>宜 · DO</div>
-                  <div style={{ fontSize: 14, color: '#1C1A16', lineHeight: 2.0 }}>
+                <div className="pr-4">
+                  <div className="text-[13px] text-brand-gray tracking-[2px] mb-3">宜 · DO</div>
+                  <div className="text-body-sm text-brand-ink leading-loose">
                     {result.suitable.map((item, i) => (
                       <div key={i}>{item}</div>
                     ))}
                   </div>
                 </div>
                 {/* 分隔线 */}
-                <div style={{ backgroundColor: 'rgba(28,26,22,0.08)' }} />
+                <div className="bg-brand-border-light" />
                 {/* 忌 */}
-                <div style={{ paddingLeft: 16 }}>
-                  <div style={{ fontSize: 13, color: 'rgba(28,26,22,0.45)', letterSpacing: 2, marginBottom: 12 }}>忌 · DON&apos;T</div>
-                  <div style={{ fontSize: 14, color: '#1C1A16', lineHeight: 2.0 }}>
+                <div className="pl-4">
+                  <div className="text-[13px] text-brand-gray tracking-[2px] mb-3">忌 · DON&apos;T</div>
+                  <div className="text-body-sm text-brand-ink leading-loose">
                     {result.avoid.map((item, i) => (
                       <div key={i}>{item}</div>
                     ))}
@@ -697,32 +694,32 @@ export default function DailyPage() {
               </div>
 
               {/* 幸运信息极简条 */}
-              <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: 16, padding: '12px 0', marginTop: 8 }}>
-                <span style={{ fontSize: 12, color: 'rgba(28,26,22,0.55)' }}>幸运颜色 <span style={{ fontWeight: 500, color: '#1C1A16' }}>{result.lucky.color}</span></span>
-                <span style={{ width: 1, height: 12, backgroundColor: 'rgba(28,26,22,0.12)' }} />
-                <span style={{ fontSize: 12, color: 'rgba(28,26,22,0.55)' }}>幸运数字 <span style={{ fontWeight: 500, color: '#1C1A16' }}>{result.lucky.numbers.join('·')}</span></span>
-                <span style={{ width: 1, height: 12, backgroundColor: 'rgba(28,26,22,0.12)' }} />
-                <span style={{ fontSize: 12, color: 'rgba(28,26,22,0.55)' }}>方位 <span style={{ fontWeight: 500, color: '#1C1A16' }}>{result.lucky.direction}</span></span>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 py-3 mt-2">
+                <span className="text-caption text-brand-gray">幸运颜色 <span className="font-medium text-brand-ink">{result.lucky.color}</span></span>
+                <span className="w-px h-3 bg-brand-border" />
+                <span className="text-caption text-brand-gray">幸运数字 <span className="font-medium text-brand-ink">{result.lucky.numbers.join('·')}</span></span>
+                <span className="w-px h-3 bg-brand-border" />
+                <span className="text-caption text-brand-gray">方位 <span className="font-medium text-brand-ink">{result.lucky.direction}</span></span>
               </div>
 
               {/* 金句 / 品牌区 */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 24, borderTop: '1px solid rgba(28,26,22,0.06)', paddingTop: 20, marginTop: 24 }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="flex items-end justify-between gap-6 pt-5 mt-6 border-t border-brand-border-light">
+                <div className="flex-1 min-w-0">
                   {result.verse && (
-                    <p style={{ fontSize: 13, color: 'rgba(28,26,22,0.55)', fontStyle: 'italic', lineHeight: 1.7, margin: 0, whiteSpace: 'pre-line' }}>
+                    <p className="text-[13px] text-brand-gray italic leading-relaxed whitespace-pre-line">
                       「{result.verse}」
                     </p>
                   )}
                 </div>
-                <span style={{ alignSelf: 'flex-end', fontSize: 13, letterSpacing: 2, color: 'rgba(28,26,22,0.35)', fontFamily: 'Inter, sans-serif', whiteSpace: 'nowrap' }}>
+                <span className="self-end text-[13px] tracking-[2px] text-brand-gray whitespace-nowrap">
                   CYBERFATE
                 </span>
               </div>
 
-            </div>
+            </Card>
 
             {/* 今日五行强弱 */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
+            <div className="grid grid-cols-5 gap-2">
               {(() => {
                 const ganToWuxing: Record<string, string> = {
                   甲: 'wood', 乙: 'wood',
@@ -734,13 +731,6 @@ export default function DailyPage() {
                 const wuxingGenerates: Record<string, string> = {
                   wood: 'fire', fire: 'earth', earth: 'metal', metal: 'water', water: 'wood',
                 };
-                const wuxingColors: Record<string, { text: string; bg: string; border: string }> = {
-                  wood: { text: '#10B981', bg: '#D1FAE5', border: 'rgba(16,185,129,0.25)' },
-                  fire: { text: '#EF4444', bg: '#FEE2E2', border: 'rgba(239,68,68,0.25)' },
-                  earth: { text: '#D97706', bg: '#FEF0CD', border: 'rgba(217,119,6,0.25)' },
-                  metal: { text: '#F59E0B', bg: '#FEF3C7', border: 'rgba(245,158,11,0.25)' },
-                  water: { text: '#3B82F6', bg: '#DBEAFE', border: 'rgba(59,130,246,0.25)' },
-                };
                 const dayGan = result.dayGanzhi?.[0] || '';
                 const wangWuxing = ganToWuxing[dayGan] || null;
                 const secondaryWuxing = wangWuxing ? wuxingGenerates[wangWuxing] : null;
@@ -748,7 +738,8 @@ export default function DailyPage() {
                 return wuxingItems.map((item) => {
                   const isWang = item.key === wangWuxing;
                   const isSecondary = item.key === secondaryWuxing;
-                  const colors = wuxingColors[item.key];
+                  // 五行配色唯一真源：从 WUXING 取，不再本地手写每个元素的色值
+                  const colors = WUXING[item.variant];
                   let bgColor: string;
                   let textColor: string;
                   let opacity: number;
@@ -757,12 +748,12 @@ export default function DailyPage() {
                     bgColor = colors.bg;
                     textColor = colors.text;
                     opacity = 1;
-                    border = `2px solid ${colors.border}`;
+                    border = `2px solid ${colors.text}`;
                   } else if (isSecondary) {
                     bgColor = colors.bg;
                     textColor = colors.text;
                     opacity = 0.65;
-                    border = `1px solid ${colors.border}`;
+                    border = `1px solid ${colors.bg}`;
                   } else {
                     bgColor = 'rgba(28, 26, 22, 0.03)';
                     textColor = 'rgba(28, 26, 22, 0.25)';
@@ -786,14 +777,14 @@ export default function DailyPage() {
                   return (
                     <div
                       key={item.key}
-                      className="rounded-xl text-center"
+                      className="rounded-card text-center"
                       style={{ backgroundColor: bgColor, opacity, border, minHeight: 72, padding: '8px 6px' }}
                     >
                       <span style={{ fontSize: 22 }}>{item.icon}</span>
                       <span className="block mt-0.5" style={{ fontSize: 15, fontWeight: 600, color: textColor }}>{item.label}</span>
-                      <span className="block mt-1" style={{ fontSize: 11, fontWeight: 500, color: LEVEL_COLORS[levelLabel]?.text || '#6B7280', backgroundColor: LEVEL_COLORS[levelLabel]?.bg || '#F3F4F6', borderRadius: 999, padding: '2px 8px', display: 'inline-block' }}>{levelLabel}</span>
+                      <span className="block mt-1" style={{ fontSize: 12, fontWeight: 500, color: LEVEL_COLORS[levelLabel]?.text || '#6B7280', backgroundColor: LEVEL_COLORS[levelLabel]?.bg || '#F3F4F6', borderRadius: 999, padding: '2px 8px', display: 'inline-block' }}>{levelLabel}</span>
                       {hint && (
-                        <span className="block" style={{ fontSize: 10, color: 'rgba(28,26,22,0.4)', marginTop: 2, lineHeight: 1.3 }}>{hint}</span>
+                        <span className="block" style={{ fontSize: 12, color: 'rgba(28,26,22,0.4)', marginTop: 2, lineHeight: 1.3 }}>{hint}</span>
                       )}
                     </div>
                   );
@@ -803,28 +794,29 @@ export default function DailyPage() {
 
 
             {/* AI 运势建议 */}
-            <Card hover={false} className="bg-yellow-50 border-yellow-200">
-              <h4 className="font-medium text-yellow-700 mb-1 flex items-center gap-1.5" style={{ fontSize: 16 }}>
+            <div className="rounded-card border border-brand-border-light bg-brand-accent-soft p-6">
+              <h4 className="text-base font-medium text-brand-accent mb-1 flex items-center gap-1.5">
                 💡 今日指引
               </h4>
-              <p className="text-yellow-600/70 mb-2" style={{ fontSize: 13 }}>AI 综合分析 · 仅供参考</p>
+              <p className="text-[13px] text-brand-gray mb-2">AI 综合分析 · 仅供参考</p>
               {result.verse && (
-                <p style={{ fontSize: 14, color: '#92400E', fontStyle: 'italic', marginBottom: 8, lineHeight: 1.8 }}>
+                <p className="text-body-sm text-brand-ink italic mb-2 leading-loose">
                   「{result.verse}」
                 </p>
               )}
-              <p className="text-gray-700" style={{ fontSize: 15, lineHeight: 1.8 }}>{result.advice}</p>
-            </Card>
+              <p className="text-[15px] text-brand-ink leading-loose">{result.advice}</p>
+            </div>
 
             {/* 命理脉络（默认展开） */}
             {hasSavedData && (
               <div style={{ marginTop: 8 }}>
                 <button
                   onClick={() => setShowTimeline(!showTimeline)}
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', backgroundColor: 'white', border: '1px solid #E5E7EB', borderRadius: 12, cursor: 'pointer', marginBottom: showTimeline ? 12 : 0 }}
+                  className={`w-full flex items-center justify-between px-4 py-3 min-h-[44px] bg-white border border-brand-border-light rounded-card hover:bg-brand-bg transition-colors ${showTimeline ? 'mb-3' : ''}`}
+                  aria-expanded={showTimeline}
                 >
-                  <span style={{ fontSize: 14, fontWeight: 500, color: '#1C1A16' }}>📊 命理脉络（大运·流年·流月）</span>
-                  <span style={{ fontSize: 12, color: '#9CA3AF', transform: showTimeline ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', display: 'inline-block' }}>▾</span>
+                  <span className="text-body-sm font-medium text-brand-ink">📊 命理脉络（大运·流年·流月）</span>
+                  <span className="text-caption text-brand-gray inline-block transition-transform duration-200" style={{ transform: showTimeline ? 'rotate(180deg)' : 'none' }}>▾</span>
                 </button>
                 {showTimeline && (
                   <TimelineSection
@@ -868,35 +860,30 @@ export default function DailyPage() {
 
 
             {/* 八字深度分析卡片 */}
-            <Link href="/bazi">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', backgroundColor: 'white', borderRadius: 12, border: '1px solid #E5E7EB', cursor: 'pointer' }}>
-                <span style={{ fontSize: 24, flexShrink: 0 }}>☰</span>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 14, fontWeight: 500, color: '#1C1A16' }}>八字深度分析</div>
-                  <div style={{ fontSize: 12, color: 'rgba(28,26,22,0.55)', marginTop: 2 }}>解读完整命盘与流年大运</div>
-                </div>
-                <button style={{ backgroundColor: '#C8622A', color: 'white', padding: '6px 12px', borderRadius: 6, fontSize: 12, fontWeight: 500, border: 'none', cursor: 'pointer', flexShrink: 0 }}>查看</button>
+            <Link href="/bazi" className="flex items-center gap-3 px-4 py-3.5 min-h-[44px] bg-white rounded-card border border-brand-border-light hover:border-brand-accent/40 transition-colors">
+              <span className="text-2xl shrink-0">☰</span>
+              <div className="flex-1 min-w-0">
+                <div className="text-body-sm font-medium text-brand-ink">八字深度分析</div>
+                <div className="text-caption text-brand-gray mt-0.5">解读完整命盘与流年大运</div>
               </div>
+              <span className="shrink-0 bg-brand-accent text-white px-3 py-1.5 rounded-lg text-caption font-medium">查看</span>
             </Link>
 
             {/* 六爻起卦入口 - 保留 /liuyao 通道 */}
-            <Link href='/liuyao'>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', backgroundColor: 'white', borderRadius: 12, border: '1px solid #E5E7EB', cursor: 'pointer' }}>
-                <span style={{ fontSize: 24, flexShrink: 0 }}>☷</span>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 14, fontWeight: 500, color: '#1C1A16' }}>六爻起卦</div>
-                  <div style={{ fontSize: 12, color: 'rgba(28,26,22,0.55)', marginTop: 2 }}>AI 即时解卦，针对具体事项</div>
-                </div>
-                <button style={{ backgroundColor: '#1F2937', color: 'white', padding: '6px 12px', borderRadius: 6, fontSize: 12, fontWeight: 500, border: 'none', cursor: 'pointer', flexShrink: 0 }}>起卦</button>
+            <Link href='/liuyao' className="flex items-center gap-3 px-4 py-3.5 min-h-[44px] bg-white rounded-card border border-brand-border-light hover:border-brand-accent/40 transition-colors">
+              <span className="text-2xl shrink-0">☷</span>
+              <div className="flex-1 min-w-0">
+                <div className="text-body-sm font-medium text-brand-ink">六爻起卦</div>
+                <div className="text-caption text-brand-gray mt-0.5">AI 即时解卦，针对具体事项</div>
               </div>
+              <span className="shrink-0 bg-brand-accent text-white px-3 py-1.5 rounded-lg text-caption font-medium">起卦</span>
             </Link>
 
             {/* 分享今日运势 */}
-            <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #F3F4F6' }}>
+            <div className="mt-3 pt-3 border-t border-brand-border-light">
               <button
                 onClick={handleShare}
-                className="hover:bg-[rgba(28,26,22,0.04)] hover:border-[rgba(28,26,22,0.35)] transition-colors"
-                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', border: '1.5px solid rgba(28, 26, 22, 0.20)', borderRadius: 8, backgroundColor: 'transparent', fontSize: 13, color: '#1C1A16', cursor: 'pointer', width: '100%', justifyContent: 'center' }}
+                className="w-full flex items-center justify-center gap-1.5 px-4 py-2 min-h-[44px] rounded-lg border-[1.5px] border-brand-ink/20 text-[13px] text-brand-ink bg-transparent hover:bg-brand-accent-tint hover:border-brand-accent/40 transition-colors"
               >
                 📤 分享今日运势
               </button>
@@ -904,7 +891,7 @@ export default function DailyPage() {
 
             {/* 免责声明 */}
             <AiDisclaimer />
-            <div className="text-center text-xs text-brand-light py-3 bg-brand-bg rounded-lg">
+            <div className="text-center text-xs text-brand-gray py-3 bg-brand-bg rounded-lg">
               ⚠️ 免责声明：运势分析仅供娱乐参考，不构成任何决策建议。请理性对待。
             </div>
           </div>

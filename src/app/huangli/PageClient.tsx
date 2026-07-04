@@ -72,12 +72,13 @@ export default function HuangliPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6]"
-      onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
-      onTouchEnd={(e) => { handleSwipe(e.changedTouches[0].clientX - touchStartX.current); }}
-    >
-      {/* 移动端日期快捷条 - 置顶 */}
-      <div className="md:hidden px-4 pt-4">
+    <div className="min-h-dvh bg-[#FAF9F6]">
+      {/* 移动端日期快捷条 - 置顶（左右滑动切换日期，手势限制在此区域，避免与纵向滚动打架） */}
+      <div
+        className="md:hidden px-4 pt-4"
+        onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
+        onTouchEnd={(e) => { handleSwipe(e.changedTouches[0].clientX - touchStartX.current); }}
+      >
         <MobileDateBar
           selectedDate={selectedDate}
           onDateSelect={handleDateSelect}
@@ -134,7 +135,7 @@ export default function HuangliPage() {
                 <p className="text-red-600 text-sm mb-3">{error}</p>
                 <button
                   onClick={() => loadDate(selectedDate)}
-                  className="px-4 py-2 text-sm bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
+                  className="min-h-[44px] px-5 text-sm bg-brand-accent text-white rounded-lg hover:bg-brand-accent-hover transition-colors"
                 >
                   重试
                 </button>

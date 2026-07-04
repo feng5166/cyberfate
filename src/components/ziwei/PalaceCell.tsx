@@ -22,9 +22,9 @@ export function PalaceCell({ palace, selected = false, onClick, className }: Pal
         'relative flex flex-col text-left bg-white border rounded-xl p-3 min-h-[120px]',
         'transition-all duration-200 cursor-pointer',
         'hover:border-[#1C1A16] hover:shadow-sm',
-        'focus:outline-none focus:ring-2 focus:ring-[#1C1A16]/20',
+        'focus:outline-none focus:ring-2 focus:ring-brand-accent/30',
         selected
-          ? 'border-2 border-[#1C1A16] bg-[rgba(28,26,22,0.03)]'
+          ? 'border-2 border-brand-accent bg-brand-accent-tint'
           : 'border border-[#E8EDE5]',
         className,
       )}
@@ -36,12 +36,12 @@ export function PalaceCell({ palace, selected = false, onClick, className }: Pal
             {palace.name}
           </span>
           {palace.isLife && (
-            <span className="text-[8px] px-1 py-[1px] rounded bg-[#1C1A16]/8 text-[#1C1A16]/70 font-medium leading-tight">
+            <span className="text-[11px] px-1.5 py-[1px] rounded bg-brand-accent-soft text-brand-accent font-medium leading-tight">
               命
             </span>
           )}
         </div>
-        <span className="text-[11px] text-[#1C1A16]/35 leading-none">
+        <span className="text-[11px] text-[#1C1A16]/55 leading-none">
           {palace.stem && `${palace.stem}`}{palace.branch}
         </span>
       </div>
@@ -58,7 +58,7 @@ export function PalaceCell({ palace, selected = false, onClick, className }: Pal
               {star.name}
             </span>
             {star.brightness && (
-              <span className="text-[10px] text-[#1C1A16]/35 leading-none">{star.brightness}</span>
+              <span className="text-[11px] text-[#1C1A16]/50 leading-none">{star.brightness}</span>
             )}
           </div>
         ))}
@@ -76,8 +76,8 @@ export function PalaceCell({ palace, selected = false, onClick, className }: Pal
               <span
                 key={star.name}
                 className={cn(
-                  'text-[10px] leading-tight',
-                  star.type === 'evil' ? 'text-red-400/80' : 'text-[#1C1A16]/40',
+                  'text-[11px] leading-tight',
+                  star.type === 'evil' ? 'text-red-500' : 'text-[#1C1A16]/55',
                 )}
               >
                 {star.name}

@@ -54,11 +54,12 @@ export function AuthModal({ isOpen, onClose, callbackUrl = '/bazi', reason }: Au
   useEffect(() => {
     if (!isOpen) return
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') handleClose()
+      // 忘记密码弹层打开时，Esc 先关它，避免一次按键连带关掉登录弹窗
+      if (e.key === 'Escape' && !showForgotPwd) handleClose()
     }
     window.addEventListener('keydown', handleEsc)
     return () => window.removeEventListener('keydown', handleEsc)
-  }, [isOpen, handleClose])
+  }, [isOpen, handleClose, showForgotPwd])
 
   const handleGoogle = async () => {
     if (!agreed) {
@@ -134,19 +135,29 @@ export function AuthModal({ isOpen, onClose, callbackUrl = '/bazi', reason }: Au
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+    <div
+      className="fixed inset-0 z-[10000] flex items-center justify-center p-4"
+      style={{
+        paddingTop: 'max(1rem, env(safe-area-inset-top))',
+        paddingBottom: 'max(1rem, env(safe-area-inset-bottom))',
+      }}
+    >
       {/* 遮罩 */}
       <div
-        className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-200 ${
+        className={`absolute inset-0 bg-brand-ink/50 backdrop-blur-sm transition-opacity duration-200 ${
           visible ? 'opacity-100' : 'opacity-0'
         }`}
         onClick={handleClose}
+        aria-hidden="true"
       />
 
       {/* 弹窗 */}
       <div
         ref={focusTrapRef}
-        className={`relative w-full max-w-[420px] max-h-[90vh] overflow-y-auto bg-[#FAF9F6] rounded-2xl p-8 shadow-2xl transition-all duration-200 ease-out
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="auth-modal-title"
+        className={`relative w-full max-w-[420px] max-h-[calc(100dvh-2rem)] overflow-y-auto bg-brand-bg rounded-2xl p-8 shadow-2xl transition-all duration-200 ease-out
           max-sm:w-[90%] max-sm:max-w-[360px] max-sm:p-6
           ${visible ? 'opacity-100 scale-100' : 'opacity-0 scale-[0.95]'}
         `}
@@ -154,7 +165,8 @@ export function AuthModal({ isOpen, onClose, callbackUrl = '/bazi', reason }: Au
         {/* 关闭按钮 */}
         <button
           onClick={handleClose}
-          className="absolute top-4 right-4 text-[#9B9590] hover:text-[#1C1A16] transition-colors"
+          aria-label="关闭"
+          className="absolute top-2 right-2 flex h-11 w-11 items-center justify-center rounded-full text-brand-gray hover:bg-brand-border-light hover:text-brand-ink transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
@@ -175,10 +187,10 @@ export function AuthModal({ isOpen, onClose, callbackUrl = '/bazi', reason }: Au
 
         {/* 标题区 */}
         <div className="text-center mb-6">
-          <h2 className="text-[#1C1A16] text-2xl max-sm:text-xl font-semibold">
+          <h2 id="auth-modal-title" className="text-brand-ink text-2xl max-sm:text-xl font-semibold">
             登录 / 注册
           </h2>
-          <p className="text-[#9B9590] text-sm text-center mt-2">
+          <p className="text-brand-gray text-sm text-center mt-2">
             {reason ? '登录后每天可继续免费解读，并保存命盘' : '登录或创建账号以继续使用'}
           </p>
         </div>
@@ -190,11 +202,11 @@ export function AuthModal({ isOpen, onClose, callbackUrl = '/bazi', reason }: Au
 
         {/* 分割线 */}
         <div className="flex items-center gap-4 mb-6">
-          <div className="flex-1 h-px bg-[#E5E2DD]" />
-          <span className="text-[#9B9590] text-xs whitespace-nowrap">
+          <div className="flex-1 h-px bg-brand-border" />
+          <span className="text-brand-gray text-xs whitespace-nowrap">
             或使用邮箱登录
           </span>
-          <div className="flex-1 h-px bg-[#E5E2DD]" />
+          <div className="flex-1 h-px bg-brand-border" />
         </div>
 
         {/* 邮箱密码表单 */}

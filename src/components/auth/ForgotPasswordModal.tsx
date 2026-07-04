@@ -28,6 +28,15 @@ export function ForgotPasswordModal({ isOpen, onClose, initialEmail = '' }: Forg
   }, [isOpen, initialEmail])
 
   useEffect(() => {
+    if (!isOpen) return
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleEsc)
+    return () => window.removeEventListener('keydown', handleEsc)
+  }, [isOpen, onClose])
+
+  useEffect(() => {
     if (countdown <= 0) return
     const timer = setInterval(() => {
       setCountdown((prev) => {
@@ -89,27 +98,41 @@ export function ForgotPasswordModal({ isOpen, onClose, initialEmail = '' }: Forg
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-[110] flex items-center justify-center bg-brand-ink/50 p-4"
+      style={{
+        paddingTop: 'max(1rem, env(safe-area-inset-top))',
+        paddingBottom: 'max(1rem, env(safe-area-inset-bottom))',
+      }}
+      onClick={onClose}
+    >
       <div
         ref={focusTrapRef}
-        className="w-[480px] max-w-[90vw] bg-white rounded-2xl shadow-2xl p-8 relative"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="forgot-pwd-title"
+        className="w-[480px] max-w-[90vw] max-h-[calc(100dvh-2rem)] overflow-y-auto bg-white rounded-2xl shadow-2xl p-8 relative"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 标题行 */}
         <div className="flex justify-between items-center mb-2">
-          <h2 className="text-xl font-semibold text-[#1C1A16]">忘记密码</h2>
-          <button onClick={onClose} className="text-[#6B6560] hover:text-[#1C1A16] p-1">
+          <h2 id="forgot-pwd-title" className="text-xl font-semibold text-brand-ink">忘记密码</h2>
+          <button
+            onClick={onClose}
+            aria-label="关闭"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-brand-gray hover:bg-brand-border-light hover:text-brand-ink transition-colors"
+          >
             <X size={20} />
           </button>
         </div>
 
         {/* 副标题 */}
-        <p className="text-[#6B6560] text-sm leading-relaxed mb-6">
+        <p className="text-brand-gray text-sm leading-relaxed mb-6">
           请输入您的账号邮箱，我们将向您发送重置密码的链接。
         </p>
 
         {/* 邮箱输入 */}
-        <label className="text-sm font-medium text-[#1C1A16] mb-2 block">邮箱地址</label>
+        <label className="text-sm font-medium text-brand-ink mb-2 block">邮箱地址</label>
         <input
           type="email"
           autoFocus
@@ -125,19 +148,19 @@ export function ForgotPasswordModal({ isOpen, onClose, initialEmail = '' }: Forg
             }
           }}
           placeholder="example@example.com"
-          className="w-full px-4 py-3 rounded-xl border border-[#D1D5DB] bg-white text-[#1C1A16] placeholder:text-[#6B7280] text-sm focus:outline-none focus:ring-2 focus:ring-[#1C1A16]/10 focus:border-[#1C1A16]"
+          className="w-full min-h-[44px] px-4 py-3 rounded-xl border border-brand-border bg-white text-brand-ink placeholder:text-brand-gray text-base focus:outline-none focus:ring-2 focus:ring-brand-accent/25 focus:border-brand-accent"
         />
         {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
 
         {/* 提示 */}
-        <p className="text-[#6B7280] text-xs mt-3 mb-6">我们将向此邮箱发送重置密码的链接</p>
+        <p className="text-brand-gray text-xs mt-3 mb-6">我们将向此邮箱发送重置密码的链接</p>
 
         {/* 按钮区 */}
         <div className="flex justify-end gap-3 mt-2">
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2.5 rounded-xl border border-[#D1D5DB] text-[#1C1A16] text-sm font-medium hover:bg-[#F5F3EF] transition-colors"
+            className="min-h-[44px] px-5 py-2.5 rounded-xl border border-brand-border text-brand-ink text-sm font-medium hover:bg-brand-bg transition-colors"
           >
             取消
           </button>
@@ -145,10 +168,10 @@ export function ForgotPasswordModal({ isOpen, onClose, initialEmail = '' }: Forg
             type="button"
             onClick={handleSubmit}
             disabled={!email || !!error || loading || countdown > 0}
-            className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-colors flex items-center gap-2 disabled:opacity-50 disabled:pointer-events-none ${
+            className={`min-h-[44px] px-5 py-2.5 rounded-xl text-sm font-medium transition-colors flex items-center gap-2 disabled:opacity-50 disabled:pointer-events-none ${
               success
                 ? 'bg-green-600 text-white'
-                : 'bg-[#1C1A16] text-white hover:bg-[#1C1A16]/90'
+                : 'bg-brand-accent text-white hover:bg-brand-accent-hover'
             }`}
           >
             {loading && (

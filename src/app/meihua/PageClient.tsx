@@ -12,6 +12,7 @@ import {
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { OracleLoading } from '@/components/ui/OracleLoading';
+import { inputRecipe } from '@/components/ui';
 import { useAiGate, AiGateModals } from '@/components/ai/useAiGate';
 import { track } from '@/lib/analytics';
 
@@ -477,7 +478,7 @@ export default function MeihuaPage() {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#FAF9F6] text-[#1C1A16]">
+    <div className="relative min-h-dvh bg-[#FAF9F6] text-[#1C1A16]">
       <div
         className="pointer-events-none fixed inset-0 -z-10 opacity-[0.025]"
         aria-hidden="true"
@@ -490,7 +491,7 @@ export default function MeihuaPage() {
       />
 
       <main className="px-4 pb-20 md:pb-24">
-        <section className="mx-auto max-w-page pt-24 pb-12 text-center animate-fadeIn">
+        <section className="mx-auto max-w-page pt-10 sm:pt-16 md:pt-24 pb-12 text-center animate-fadeIn">
           <div className="mx-auto mb-6 h-px w-9 bg-gradient-to-r from-transparent via-[#1C1A16] to-transparent opacity-15" />
           <h1 className="font-display text-[clamp(36px,5vw,56px)] leading-tight text-[#1C1A16]">
             梅花易数 · 每日决策
@@ -516,22 +517,22 @@ export default function MeihuaPage() {
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 placeholder="例如：我是否应该接受这个工作机会？"
-                className="w-full rounded-xl border border-gray-300 p-4 text-sm text-[#1C1A16] outline-none transition-all placeholder:text-[#1C1A16]/45 focus:border-[#1C1A16] focus:ring-2 focus:ring-[#1C1A16]/10"
+                className={inputRecipe}
               />
             </div>
 
             <div className="mt-5">
-              <div className="flex items-center gap-1">
-                <span className="mr-2 text-xs text-[#1C1A16]/60">起卦方式</span>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="mr-1 text-xs text-[#1C1A16]/60">起卦方式</span>
                 {METHOD_OPTIONS.map((option) => (
                   <button
                     key={option.value}
                     type="button"
                     onClick={() => setMethod(option.value)}
-                    className={`rounded-full px-3 py-1 text-xs transition-colors ${
+                    className={`inline-flex min-h-[44px] items-center rounded-full px-4 text-xs transition-colors ${
                       method === option.value
-                        ? 'bg-[#1C1A16] text-white font-medium'
-                        : 'text-[#1C1A16]/60 hover:text-[#1C1A16]'
+                        ? 'bg-brand-accent text-white font-medium'
+                        : 'border border-brand-border text-brand-gray hover:border-brand-accent/40 hover:text-brand-ink'
                     }`}
                   >
                     {option.label}
@@ -555,14 +556,14 @@ export default function MeihuaPage() {
                   type="number"
                   value={numbers.num1}
                   onChange={(e) => setNumbers((prev) => ({ ...prev, num1: e.target.value }))}
-                  className="h-11 rounded-xl border border-gray-300 px-3 text-sm outline-none focus:border-[#1C1A16] focus:ring-2 focus:ring-[#1C1A16]/10"
+                  className={inputRecipe}
                   placeholder="第一个数字"
                 />
                 <input
                   type="number"
                   value={numbers.num2}
                   onChange={(e) => setNumbers((prev) => ({ ...prev, num2: e.target.value }))}
-                  className="h-11 rounded-xl border border-gray-300 px-3 text-sm outline-none focus:border-[#1C1A16] focus:ring-2 focus:ring-[#1C1A16]/10"
+                  className={inputRecipe}
                   placeholder="第二个数字"
                 />
               </div>
@@ -578,7 +579,7 @@ export default function MeihuaPage() {
               type="button"
               onClick={handleSubmit}
               disabled={loading || streaming || decisionLoading || !question.trim()}
-              className="mt-5 flex h-[44px] w-full items-center justify-center rounded-xl bg-[#1C1A16] text-sm font-medium text-white transition-all hover:bg-[#1C1A16]/85 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-[#1C1A16] disabled:opacity-70"
+              className="mt-5 flex min-h-[44px] w-full items-center justify-center rounded-xl bg-brand-accent text-sm font-medium text-white transition-all hover:bg-brand-accent-hover disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-[#1C1A16] disabled:opacity-70"
             >
               {loading || streaming || decisionLoading ? (
                 <>
@@ -674,7 +675,7 @@ export default function MeihuaPage() {
                 ) : result && !decision && !decisionLoading ? (
                   <button
                     onClick={triggerDecide}
-                    className="rounded-xl bg-[#1C1A16] px-8 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#1C1A16]/85"
+                    className="inline-flex min-h-[44px] items-center rounded-xl bg-brand-accent px-8 text-sm font-semibold text-white transition-colors hover:bg-brand-accent-hover"
                   >
                     分析卦象含义
                   </button>
@@ -720,8 +721,8 @@ export default function MeihuaPage() {
                     )}
                     {decision.nextSteps && decision.nextSteps.length > 0 && (
                       <div className="mt-4">
-                        <h4 className="text-sm font-medium text-blue-700">💡 下一步行动</h4>
-                        <div className="mt-2 space-y-2 text-sm leading-relaxed text-blue-700">
+                        <h4 className="text-sm font-medium text-brand-ink">💡 下一步行动</h4>
+                        <div className="mt-2 space-y-2 text-sm leading-relaxed text-brand-ink/80">
                           {decision.nextSteps.map((item: string, i: number) => <p key={i}>{item}</p>)}
                         </div>
                       </div>
@@ -791,12 +792,12 @@ export default function MeihuaPage() {
                   onChange={(e) => setQaInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && !qaLoading && handleQaSubmit()}
                   placeholder="例如：这个决定有什么风险？"
-                  className="flex-1 rounded-xl border border-[#E5E0D8] px-4 py-2.5 text-sm outline-none focus:border-[#1C1A16]/40"
+                  className={`${inputRecipe} flex-1`}
                 />
                 <button
                   onClick={handleQaSubmit}
                   disabled={!qaInput.trim() || qaLoading}
-                  className="flex items-center gap-1.5 rounded-xl bg-[#1C1A16] px-4 py-2.5 text-sm text-white disabled:opacity-50"
+                  className="flex min-h-[44px] items-center gap-1.5 rounded-xl bg-brand-accent px-4 text-sm text-white transition-colors hover:bg-brand-accent-hover disabled:opacity-50"
                 >
                   <Send size={14} /> 提问
                 </button>

@@ -142,7 +142,7 @@ export default async function KnowledgeDetailPage({
   }));
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6]">
+    <div className="min-h-dvh bg-brand-bg">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
@@ -153,16 +153,16 @@ export default async function KnowledgeDetailPage({
       />
       {/* ====== 面包屑导航 ====== */}
       <Container>
-        <nav className="flex items-center gap-2 text-sm py-6 text-[#1C1A16]/60">
-          <Link href="/" className="hover:text-[#1C1A16] transition-colors">
+        <nav className="flex items-center gap-2 text-sm py-6 text-brand-gray">
+          <Link href="/" className="hover:text-brand-accent transition-colors">
             首页
           </Link>
           <span>/</span>
-          <Link href="/knowledge" className="hover:text-[#1C1A16] transition-colors">
+          <Link href="/knowledge" className="hover:text-brand-accent transition-colors">
             知识库
           </Link>
           <span>/</span>
-          <span className="text-[#1C1A16] font-medium truncate max-w-[200px]">
+          <span className="text-brand-ink font-medium truncate max-w-[200px]">
             {article.title}
           </span>
         </nav>
@@ -173,17 +173,17 @@ export default async function KnowledgeDetailPage({
         <div className="max-w-3xl pb-8">
           <div className="flex items-center gap-3 mb-4">
             <span className="text-4xl">{article.emoji}</span>
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-[#1C1A16]/5 text-[#1C1A16]/70 border border-[#1C1A16]/10">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-brand-border-light text-brand-gray border border-brand-border">
               {article.categoryLabel}
             </span>
           </div>
-          <h1 className="font-serif text-3xl md:text-4xl font-bold text-[#1C1A16] leading-tight mb-4 tracking-wide">
+          <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-brand-ink leading-tight mb-4 tracking-wide">
             {article.title}
           </h1>
-          <p className="text-lg text-[#1C1A16]/70 leading-relaxed mb-6">
+          <p className="text-lg text-brand-gray leading-relaxed mb-6">
             {article.subtitle}
           </p>
-          <div className="flex items-center gap-4 text-sm text-[#1C1A16]/50">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-brand-gray">
             <time dateTime={article.date}>
               {new Date(article.date).toLocaleDateString('zh-CN', {
                 year: 'numeric',
@@ -194,18 +194,18 @@ export default async function KnowledgeDetailPage({
             <span>·</span>
             <span>{article.readTime}</span>
             <span>·</span>
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs bg-[#1C1A16]/5 text-[#1C1A16]/60">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs bg-brand-border-light text-brand-gray">
               {article.categoryLabel}
             </span>
           </div>
-          <div className="flex items-center gap-2 mt-4 pt-4 border-t border-[#1C1A16]/8">
-            <div className="w-7 h-7 rounded-full bg-[#C8956C]/15 flex items-center justify-center text-xs font-bold text-[#C8956C]">
+          <div className="flex items-center gap-2 mt-4 pt-4 border-t border-brand-border-light">
+            <div className="w-7 h-7 rounded-full bg-brand-accent-soft flex items-center justify-center text-xs font-bold text-brand-accent">
               CF
             </div>
             <div className="text-sm">
-              <span className="text-[#1C1A16]/80 font-medium">CyberFate 命理研究组</span>
-              <span className="text-[#1C1A16]/40 mx-2">·</span>
-              <span className="text-[#1C1A16]/50">融合传统命理典籍与现代 AI 分析，持续更新</span>
+              <span className="text-brand-ink font-medium">CyberFate 命理研究组</span>
+              <span className="text-brand-light mx-2">·</span>
+              <span className="text-brand-gray">融合传统命理典籍与现代 AI 分析，持续更新</span>
             </div>
           </div>
         </div>

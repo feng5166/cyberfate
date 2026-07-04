@@ -1,19 +1,12 @@
 import Link from 'next/link';
 import FeedbackSection from '@/components/feedback/FeedbackSection';
+import { MODULES } from '@/data/modules';
 
 const FOOTER_GROUPS = [
   {
-    title: '八字功能',
-    links: [
-      { label: '八字分析', href: '/bazi' },
-      { label: '合婚分析', href: '/bazi/marriage' },
-      { label: '每日运势', href: '/daily' },
-      { label: '紫微斗数', href: '/ziwei' },
-      { label: '梅花易数', href: '/meihua' },
-      { label: '塔罗占卜', href: '/tarot' },
-      { label: '音乐运势签', href: '/music-oracle' },
-      { label: 'AI老黄历', href: '/huangli' },
-    ],
+    title: '命理功能',
+    // 模块链接从 MODULES 唯一真源派生，标签与全站一致
+    links: MODULES.map((m) => ({ label: m.label, href: m.href })),
   },
   {
     title: '实用工具',

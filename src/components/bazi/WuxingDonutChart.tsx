@@ -2,18 +2,20 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import type { WuxingCount, WuXing } from '@/lib/bazi/types';
+import { WUXING } from '@/data/wuxing';
 
 interface WuxingDonutChartProps {
   wuxing: WuxingCount;
   dayMasterElement: WuXing;
 }
 
+// 圆环各段实色统一取自五行配色真源（@/data/wuxing 的 .hex）。
 const ELEMENT_COLORS: Record<keyof WuxingCount, string> = {
-  metal: '#A78BFA',
-  wood: '#34D399',
-  water: '#60A5FA',
-  fire: '#F87171',
-  earth: '#FBBF24',
+  metal: WUXING.metal.hex,
+  wood: WUXING.wood.hex,
+  water: WUXING.water.hex,
+  fire: WUXING.fire.hex,
+  earth: WUXING.earth.hex,
 };
 
 const RING_SIZE = 120;

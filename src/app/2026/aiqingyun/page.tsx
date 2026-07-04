@@ -1,9 +1,19 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { Container } from '@/components/ui/Container';
-import { Card } from '@/components/ui/Card';
+import { PageShell } from '@/components/ui/PageShell';
 import { Footer } from '@/components/layout/Footer';
 import { FaqJsonLd } from '@/components/seo/FaqJsonLd';
+import {
+  RankingHero,
+  SectionHead,
+  Top3Cards,
+  RankingTable,
+  ZodiacDetailList,
+  RelatedRankings,
+  BaziCtaCard,
+  FaqSection,
+  type ZodiacFortune,
+} from '../_shared';
 
 export const dynamic = 'force-static';
 
@@ -36,16 +46,6 @@ export const metadata: Metadata = {
     description: '2026丙午马年爱情运排行：羊、兔、蛇、马、虎桃花旺。',
   },
 };
-
-interface ZodiacFortune {
-  name: string;
-  emoji: string;
-  rank: number;
-  stars: number;
-  reason: string;
-  detail: string;
-  advice: string;
-}
 
 const zodiacs: ZodiacFortune[] = [
   {
@@ -219,18 +219,9 @@ const webPageSchema = {
   url: 'https://www.cyberfate.me/2026/aiqingyun',
 };
 
-function StarRating({ count }: { count: number }) {
-  return (
-    <span className="text-[#C8956C] tracking-wider" aria-label={`${count}星`}>
-      {'★'.repeat(count)}
-      <span className="text-[#1C1A16]/15">{'★'.repeat(5 - count)}</span>
-    </span>
-  );
-}
-
 export default function Page() {
   return (
-    <div className="min-h-screen bg-[#FAF9F6] text-[#1C1A16] font-serif">
+    <div className="min-h-dvh bg-brand-bg text-brand-ink">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }}
@@ -241,102 +232,43 @@ export default function Page() {
       />
       <FaqJsonLd items={faqJsonLd} />
 
-      <section className="pt-20 pb-10">
-        <Container>
-          <div className="max-w-page mx-auto text-center">
-            <p className="text-sm tracking-[0.3em] text-[#C8956C] mb-4">2026 · 丙午马年</p>
-            <h1 className="font-heading text-3xl sm:text-5xl text-[#1C1A16] mb-5 leading-tight">
-              2026年爱情运最旺的生肖排行
-            </h1>
-            <p className="text-base text-[#1C1A16]/75 leading-relaxed">
-              丙午马年，桃花星活跃。从十二地支的桃花关系与流年六合三合出发，看看哪些生肖在2026年爱情运最旺，哪些生肖需要更用心经营。
-            </p>
-          </div>
-        </Container>
-      </section>
+      <RankingHero
+        title="2026年爱情运最旺的生肖排行"
+        desc="丙午马年，桃花星活跃。从十二地支的桃花关系与流年六合三合出发，看看哪些生肖在2026年爱情运最旺，哪些生肖需要更用心经营。"
+      />
 
       <section className="pb-12">
         <Container>
-          <div className="text-center mb-8">
-            <p className="text-sm tracking-[0.2em] text-[#1C1A16]/60">TOP 3 · 桃花三甲</p>
-            <h2 className="font-heading text-2xl text-[#1C1A16] mt-2">2026 爱情运最旺三大生肖</h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {top3.map((z) => (
-              <Card
-                key={z.name}
-                hover={false}
-                className="relative overflow-hidden border-2 border-[#C8956C]/40 bg-gradient-to-br from-[#FFF6EC] via-[#FBE8D1] to-[#F5D6B0]"
-              >
-                <div className="absolute top-3 right-4 text-[#C8956C]/30 font-heading text-7xl leading-none select-none">
-                  {z.rank}
-                </div>
-                <div className="relative">
-                  <div className="text-5xl mb-3">{z.emoji}</div>
-                  <h3 className="font-heading text-2xl text-[#1C1A16] mb-1">{z.name}</h3>
-                  <div className="mb-3 text-base">
-                    <StarRating count={z.stars} />
-                  </div>
-                  <p className="font-heading text-base text-[#8B5A2B] mb-3">{z.reason}</p>
-                  <p className="text-sm text-[#1C1A16]/75 leading-relaxed">{z.detail}</p>
-                </div>
-              </Card>
-            ))}
-          </div>
+          <SectionHead eyebrow="TOP 3 · 桃花三甲" title="2026 爱情运最旺三大生肖" />
+          <Top3Cards items={top3} />
         </Container>
       </section>
 
       <section className="pb-16">
         <Container>
-          <div className="text-center mb-8">
-            <p className="text-sm tracking-[0.2em] text-[#1C1A16]/60">RANKING · 完整排行</p>
-            <h2 className="font-heading text-2xl text-[#1C1A16] mt-2">12生肖 2026 爱情运概览</h2>
-          </div>
-          <Card hover={false} className="bg-white/95 p-0 overflow-hidden">
-            <div className="divide-y divide-[#1C1A16]/8">
-              {zodiacs.map((z) => (
-                <div
-                  key={z.name}
-                  className="grid grid-cols-12 items-center gap-4 px-5 py-4 hover:bg-[#FAF6EE] transition-colors"
-                >
-                  <div className="col-span-1 text-xl text-[#1C1A16]/40 font-heading">{z.rank}</div>
-                  <div className="col-span-3 sm:col-span-2 flex items-center gap-2">
-                    <span className="text-2xl">{z.emoji}</span>
-                    <span className="font-heading text-base">{z.name}</span>
-                  </div>
-                  <div className="col-span-3 sm:col-span-2 text-sm">
-                    <StarRating count={z.stars} />
-                  </div>
-                  <div className="col-span-12 sm:col-span-7 text-sm text-[#1C1A16]/75 leading-relaxed">
-                    <span className="text-[#8B5A2B] font-medium">{z.reason}</span>
-                    <span className="text-[#1C1A16]/40"> — </span>
-                    <span>{z.advice}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
+          <SectionHead eyebrow="RANKING · 完整排行" title="12生肖 2026 爱情运概览" />
+          <RankingTable items={zodiacs} />
         </Container>
       </section>
 
       <section className="pb-16">
-        <Container>
-          <div className="max-w-page mx-auto space-y-10">
+        <PageShell>
+          <div className="space-y-10">
             <div>
-              <h2 className="font-heading text-2xl sm:text-3xl text-[#1C1A16] mb-4">
+              <h2 className="font-display text-2xl sm:text-3xl text-brand-ink mb-4">
                 2026 年桃花运为什么这样分布？
               </h2>
-              <div className="space-y-4 text-[#1C1A16]/80 leading-relaxed">
+              <div className="space-y-4 text-brand-gray leading-relaxed">
                 <p>
                   在传统命理学中，桃花运的强弱主要看四个方面：本命的桃花星、流年与本命的合冲关系、八字中夫妻宫的状态、
                   以及流年红鸾天喜星的位置。生肖运势主要看前两个维度。
                 </p>
                 <p>
-                  十二地支中，<span className="text-[#8B5A2B] font-medium">子午卯酉</span>是四大正桃花。
+                  十二地支中，<span className="text-brand-accent font-medium">子午卯酉</span>是四大正桃花。
                   其中"卯"对应生肖兔，本就是桃花气场最浓的生肖之一。2026年丙午年是火气当令，木生火的卯午相生关系让兔的桃花更上一层楼。
                 </p>
                 <p>
-                  地支六合中，<span className="text-[#8B5A2B] font-medium">午未六合</span>
+                  地支六合中，<span className="text-brand-accent font-medium">午未六合</span>
                   是和谐度最高的合局之一，所以生肖羊在2026年的桃花运表现最为突出。
                   巳午同气、寅午半合、午戌半合，分别让蛇、虎、狗的感情运得到不同程度的助力。
                 </p>
@@ -351,94 +283,40 @@ export default function Page() {
             </div>
 
             <div>
-              <h2 className="font-heading text-2xl sm:text-3xl text-[#1C1A16] mb-4">
+              <h2 className="font-display text-2xl sm:text-3xl text-brand-ink mb-4">
                 各生肖爱情运详解
               </h2>
-              <div className="space-y-6">
-                {zodiacs.map((z) => (
-                  <div key={z.name} className="border-l-2 border-[#C8956C]/40 pl-5">
-                    <h3 className="font-heading text-xl text-[#1C1A16] mb-2 flex items-center gap-3">
-                      <span className="text-2xl">{z.emoji}</span>
-                      <span>{z.name}</span>
-                      <span className="text-base"><StarRating count={z.stars} /></span>
-                    </h3>
-                    <p className="text-sm text-[#1C1A16]/75 leading-relaxed mb-2">{z.detail}</p>
-                    <p className="text-xs text-[#8B5A2B]">建议：{z.advice}</p>
-                  </div>
-                ))}
-              </div>
+              <ZodiacDetailList items={zodiacs} />
             </div>
           </div>
-        </Container>
+        </PageShell>
       </section>
 
       <section className="pb-12">
-        <Container>
-          <div className="max-w-page mx-auto">
-            <Card hover={false} className="bg-white/90">
-              <h3 className="font-heading text-xl text-[#1C1A16] mb-4">查看其他维度的2026年生肖运势</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
-                <Link
-                  href="/2026/caiyun"
-                  className="border border-[#1C1A16]/10 rounded-lg p-4 hover:border-[#C8956C] transition-colors"
-                >
-                  <div className="font-heading text-base mb-1">财运排行 →</div>
-                  <div className="text-[#1C1A16]/60 text-xs">2026 哪些生肖财运最旺</div>
-                </Link>
-                <Link
-                  href="/2026/shiyeyun"
-                  className="border border-[#1C1A16]/10 rounded-lg p-4 hover:border-[#C8956C] transition-colors"
-                >
-                  <div className="font-heading text-base mb-1">事业运排行 →</div>
-                  <div className="text-[#1C1A16]/60 text-xs">2026 哪些生肖事业上升最快</div>
-                </Link>
-                <Link
-                  href="/2026"
-                  className="border border-[#1C1A16]/10 rounded-lg p-4 hover:border-[#C8956C] transition-colors"
-                >
-                  <div className="font-heading text-base mb-1">2026 总览 →</div>
-                  <div className="text-[#1C1A16]/60 text-xs">完整的丙午马年运势导航</div>
-                </Link>
-              </div>
-            </Card>
-          </div>
-        </Container>
+        <PageShell>
+          <RelatedRankings
+            links={[
+              { href: '/2026/caiyun', title: '财运排行 →', desc: '2026 哪些生肖财运最旺' },
+              { href: '/2026/shiyeyun', title: '事业运排行 →', desc: '2026 哪些生肖事业上升最快' },
+              { href: '/2026', title: '2026 总览 →', desc: '完整的丙午马年运势导航' },
+            ]}
+          />
+        </PageShell>
       </section>
 
       <section className="pb-20">
-        <Container>
-          <Card
-            hover={false}
-            className="bg-gradient-to-br from-[#1C1A16] to-[#3A2F23] text-white border-0 shadow-xl text-center max-w-page mx-auto"
-          >
-            <h3 className="font-heading text-2xl sm:text-3xl mb-3">想看清2026年具体桃花期与正缘方向？</h3>
-            <p className="text-sm text-white/75 mb-6 leading-relaxed">
-              生肖只是宏观参考。完整八字才能定位夫妻宫的具体状态、桃花星的精确位置，看清2026年最佳的感情节点。
-            </p>
-            <Link
-              href="/bazi"
-              className="inline-block bg-[#C8956C] hover:bg-[#B5825B] text-white px-8 py-3 rounded-full font-heading transition-colors"
-            >
-              免费做八字详细分析 →
-            </Link>
-          </Card>
-        </Container>
+        <PageShell>
+          <BaziCtaCard
+            title="想看清2026年具体桃花期与正缘方向？"
+            desc="生肖只是宏观参考。完整八字才能定位夫妻宫的具体状态、桃花星的精确位置，看清2026年最佳的感情节点。"
+          />
+        </PageShell>
       </section>
 
       <section className="pb-20">
-        <Container>
-          <div className="max-w-page mx-auto">
-            <h2 className="font-heading text-2xl text-[#1C1A16] mb-6 text-center">常见问题</h2>
-            <div className="space-y-4">
-              {faqItems.map((it) => (
-                <Card key={it.question} hover={false} className="bg-white/90">
-                  <h3 className="font-heading text-base text-[#1C1A16] mb-2">{it.question}</h3>
-                  <p className="text-sm text-[#1C1A16]/70 leading-relaxed">{it.answer}</p>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </Container>
+        <PageShell>
+          <FaqSection items={faqItems} />
+        </PageShell>
       </section>
 
       <Footer />

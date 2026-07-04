@@ -88,7 +88,7 @@ export function KnowledgeDetailClient({
         <div className="flex flex-col lg:flex-row gap-10 pb-16">
           {/* 左侧正文 */}
           <main className="flex-1 min-w-0 max-w-3xl">
-            <article className="bg-white rounded-2xl border border-[#1C1A16]/8 p-7 md:p-10">
+            <article className="bg-white rounded-card border border-brand-border-light p-7 md:p-10">
               {/* 移动端目录 Tab */}
               <div className="lg:hidden mb-8 sticky top-4 z-10 -mx-7 md:-mx-10 px-7 md:px-10 pt-4 pb-2 bg-white rounded-b-2xl border-b border-[#1C1A16]/8">
                 <details className="group" open>
@@ -160,11 +160,11 @@ export function KnowledgeDetailClient({
                         <Link
                           key={tool.href}
                           href={tool.href}
-                          className="flex items-start gap-3 p-4 rounded-xl border border-[#1C1A16]/8 bg-white hover:border-[#C8956C]/40 hover:shadow-sm transition-all duration-200 group"
+                          className="flex items-start gap-3 p-4 rounded-xl border border-brand-border-light bg-white hover:border-brand-accent/40 hover:shadow-sm transition-all duration-200 group"
                         >
                           <span className="text-2xl mt-0.5">{tool.emoji}</span>
                           <div>
-                            <div className="text-sm font-medium text-[#1C1A16] group-hover:text-[#C8956C] transition-colors">{tool.name}</div>
+                            <div className="text-sm font-medium text-brand-ink group-hover:text-brand-accent transition-colors">{tool.name}</div>
                             <div className="text-xs text-[#1C1A16]/50 mt-0.5 leading-relaxed">{tool.desc}</div>
                           </div>
                         </Link>
@@ -175,7 +175,7 @@ export function KnowledgeDetailClient({
               })()}
 
               {/* CTA 卡片 */}
-              <div className="mt-12 p-6 md:p-8 rounded-2xl bg-gradient-to-br from-[#F5EFE6] to-[#EDE3D5] border border-[#C8956C]/20">
+              <div className="mt-12 p-6 md:p-8 rounded-card bg-brand-accent-soft border border-brand-accent/20">
                 <div className="flex items-start gap-4">
                   <span className="text-3xl">✦</span>
                   <div className="flex-1">
@@ -187,7 +187,7 @@ export function KnowledgeDetailClient({
                     </p>
                     <Link
                       href={article.cta.href}
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-[#C8956C] text-white rounded-lg font-medium text-sm hover:bg-[#B07D58] transition-colors"
+                      className="inline-flex items-center gap-2 min-h-[44px] px-6 py-3 bg-brand-accent text-white rounded-lg font-medium text-sm hover:bg-brand-accent-hover transition-colors"
                     >
                       {article.cta.btnText}
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -237,7 +237,7 @@ export function KnowledgeDetailClient({
           <aside className="hidden lg:block w-80 flex-shrink-0">
             <div className="sticky top-24 space-y-6">
               {/* 目录卡片 */}
-              <div className="bg-white rounded-2xl border border-[#1C1A16]/8 p-6 shadow-none">
+              <div className="bg-white rounded-card border border-brand-border-light p-6 shadow-none">
                 <h3 className="font-serif text-base font-semibold text-[#1C1A16] mb-4 tracking-wide">
                   📑 目录
                 </h3>
@@ -259,7 +259,7 @@ export function KnowledgeDetailClient({
 
               {/* 相关推荐 */}
               {relatedArticles.length > 0 && (
-                <div className="bg-white rounded-2xl border border-[#1C1A16]/8 p-6 shadow-none">
+                <div className="bg-white rounded-card border border-brand-border-light p-6 shadow-none">
                   <h3 className="font-serif text-base font-semibold text-[#1C1A16] mb-4 tracking-wide">
                     📚 相关文章
                   </h3>
@@ -288,7 +288,7 @@ export function KnowledgeDetailClient({
               {/* 返回知识库 */}
               <Link
                 href="/knowledge"
-                className="block bg-white rounded-2xl border border-[#1C1A16]/8 p-6 text-center text-sm text-[#1C1A16]/70 hover:text-[#1C1A16] hover:shadow-card-hover transition-all duration-300 shadow-none"
+                className="block bg-white rounded-card border border-brand-border-light p-6 text-center text-sm text-[#1C1A16]/70 hover:text-[#1C1A16] hover:shadow-card-hover transition-all duration-300 shadow-none"
               >
                 ← 返回知识库首页
               </Link>

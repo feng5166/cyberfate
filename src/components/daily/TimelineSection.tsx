@@ -63,8 +63,8 @@ const CARD_BASE_STYLE: React.CSSProperties = {
 };
 
 const HIGHLIGHT_STYLE: React.CSSProperties = {
-  border: '1px solid #1C1A16',
-  background: '#FAF8F4',
+  border: '1px solid #C2762B',
+  background: '#FAF3EC',
 };
 
 const NORMAL_STYLE: React.CSSProperties = {
@@ -74,7 +74,7 @@ const NORMAL_STYLE: React.CSSProperties = {
 };
 
 const SUB_LABEL_STYLE: React.CSSProperties = {
-  fontSize: 11,
+  fontSize: 12,
   color: '#9CA3AF',
   marginBottom: 4,
 };
@@ -88,13 +88,13 @@ const GANZHI_STYLE: React.CSSProperties = {
 };
 
 const RANGE_STYLE: React.CSSProperties = {
-  fontSize: 11,
+  fontSize: 12,
   color: '#6B7280',
   marginTop: 4,
 };
 
 const SHISHEN_DESC_STYLE: React.CSSProperties = {
-  fontSize: 10,
+  fontSize: 12,
   color: '#9CA3AF',
   marginTop: 2,
 };
@@ -102,11 +102,11 @@ const SHISHEN_DESC_STYLE: React.CSSProperties = {
 function shishenBadgeStyle(active: boolean): React.CSSProperties {
   return {
     display: 'inline-block',
-    fontSize: 11,
+    fontSize: 12,
     padding: '2px 6px',
     borderRadius: 4,
     marginTop: 6,
-    background: active ? '#1C1A16' : '#F3F4F6',
+    background: active ? '#C2762B' : '#F3F4F6',
     color: active ? '#FFFFFF' : '#6B7280',
   };
 }
@@ -167,13 +167,14 @@ function ScrollRow({
               }}
               style={{
                 marginTop: 4,
-                fontSize: 11,
+                fontSize: 14,
                 color: '#9CA3AF',
                 border: 'none',
                 background: 'none',
                 cursor: 'pointer',
-                padding: 0,
+                padding: 4,
               }}
+              aria-label="说明"
             >
               ⓘ
             </button>
@@ -228,7 +229,7 @@ function SkeletonRow({ width, count = 5 }: { width: number; count?: number }) {
         {Array.from({ length: count }).map((_, i) => (
           <div
             key={i}
-            className="animate-pulse bg-gray-100 rounded-xl flex-shrink-0"
+            className="animate-pulse bg-brand-border-light rounded-card flex-shrink-0"
             style={{ width, height: 96 }}
           />
         ))}
@@ -291,7 +292,7 @@ export default function TimelineSection({
     return (
       <div className="mb-8">
         <div
-          className="rounded-xl border border-gray-200 bg-white p-5 text-center text-sm"
+          className="rounded-card border border-brand-border-light bg-white p-5 text-center text-sm"
           style={{ color: '#6B7280' }}
         >
           📅 填写出生信息后查看完整命理脉络
@@ -318,7 +319,7 @@ export default function TimelineSection({
     return (
       <div className="mb-8">
         <div
-          className="rounded-xl border border-gray-200 bg-white p-5 text-center text-sm"
+          className="rounded-card border border-brand-border-light bg-white p-5 text-center text-sm"
           style={{ color: '#9CA3AF' }}
         >
           命理脉络加载失败，刷新重试
@@ -334,10 +335,7 @@ export default function TimelineSection({
 
   return (
     <div className="mb-8">
-      <div
-        className="rounded-xl border bg-white p-4"
-        style={{ borderColor: '#E5E7EB' }}
-      >
+      <div className="rounded-card border border-brand-border-light bg-white p-4">
         <div className="flex items-center justify-between mb-3">
           <div className="text-sm font-medium" style={{ color: '#1C1A16' }}>
             命理脉络
@@ -388,9 +386,9 @@ export default function TimelineSection({
                   return (
                     <div style={{ marginTop: 6, width: '100%' }}>
                       <div style={{ height: 2, backgroundColor: '#E5E7EB', borderRadius: 2 }}>
-                        <div style={{ height: '100%', width: progress + '%', backgroundColor: '#1C1A16', borderRadius: 2, transition: 'width 0.6s ease' }} />
+                        <div style={{ height: '100%', width: progress + '%', backgroundColor: '#C2762B', borderRadius: 2, transition: 'width 0.6s ease' }} />
                       </div>
-                      <p style={{ fontSize: 10, color: '#9CA3AF', marginTop: 2, textAlign: 'center' }}>已走 {progress}%</p>
+                      <p style={{ fontSize: 12, color: '#9CA3AF', marginTop: 2, textAlign: 'center' }}>已走 {progress}%</p>
                     </div>
                   );
                 })()}

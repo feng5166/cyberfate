@@ -8,15 +8,17 @@ import { Footer } from '@/components/layout/Footer';
 import { OracleLoading } from '@/components/ui/OracleLoading';
 import { Share2, RefreshCw, ChevronDown, ChevronUp, Sparkles, ExternalLink } from 'lucide-react';
 import { toPng } from 'html-to-image';
+import { wuxingColor } from '@/data/wuxing';
 
-/* ─── 五行渐变色 ─── */
-const WUXING_GRADIENTS: Record<string, { from: string; to: string; icon: string }> = {
-  木: { from: '#ecfdf5', to: '#dcfce7', icon: '🌿' },
-  火: { from: '#fff7ed', to: '#fee2e2', icon: '🔥' },
-  土: { from: '#fefce8', to: '#fef3c7', icon: '🏔' },
-  金: { from: '#f9fafb', to: '#f1f5f9', icon: '✨' },
-  水: { from: '#eff6ff', to: '#e0e7ff', icon: '💧' },
+/* ─── 五行封面：图标为装饰 emoji，底色统一取自 @/data/wuxing 单一真源 ─── */
+const WUXING_ICONS: Record<string, string> = {
+  木: '🌿', 火: '🔥', 土: '🏔', 金: '✨', 水: '💧',
 };
+
+/** 取五行封面样式：底色来自 wuxing 真源，禁止在组件内手写每个元素的色值 */
+function wuxingCover(cn: string) {
+  return { bg: wuxingColor(cn).bg, icon: WUXING_ICONS[cn] || WUXING_ICONS['木'] };
+}
 
 /* ─── 快捷话题标签 ─── */
 const QUICK_TAGS = ['感情', '事业', '财运', '人际', '健康'];
@@ -209,10 +211,10 @@ export default function MusicOraclePageClient() {
     }
   };
 
-  const gradient = result ? (WUXING_GRADIENTS[result.wuxing] || WUXING_GRADIENTS['木']) : WUXING_GRADIENTS['木'];
+  const cover = wuxingCover(result?.wuxing || '木');
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6]">
+    <div className="min-h-dvh bg-[#FAF9F6]">
       <Container className="pt-10 pb-6 md:pt-16 md:pb-10">
         {/* ① 标题区 */}
         <div className="text-center mb-8 md:mb-12">
@@ -244,7 +246,7 @@ export default function MusicOraclePageClient() {
               }}
               disabled={loading}
               placeholder='比如"要不要换工作？"、"他是真心的吗？"'
-              className="w-full bg-white border border-[#E5E0D8] rounded-xl px-4 py-3 text-[15px] text-[#1C1A16] placeholder-[#B5B0A8] resize-none max-h-[120px] focus:border-[#1C1A16] focus:ring-2 focus:ring-[#1C1A16]/10 outline-none transition-all disabled:opacity-50"
+              className="w-full bg-white border border-[#E5E0D8] rounded-xl px-4 py-3 text-[15px] text-[#1C1A16] placeholder-[#B5B0A8] resize-none max-h-[120px] focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/25 outline-none transition-all disabled:opacity-50"
               rows={2}
             />
             <span className="absolute bottom-2 right-3 text-xs text-[#9CA3AF]">
@@ -261,7 +263,7 @@ export default function MusicOraclePageClient() {
                 disabled={loading}
                 className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm border cursor-pointer transition-all disabled:opacity-50 ${
                   activeTag === tag
-                    ? 'border-[#1C1A16] bg-[#1C1A16] text-white'
+                    ? 'border-brand-accent bg-brand-accent text-white'
                     : 'border-[#E5E0D8] bg-white text-[#6B7280] hover:border-[#1C1A16] hover:text-[#1C1A16]'
                 }`}
               >
@@ -292,11 +294,11 @@ export default function MusicOraclePageClient() {
                 <div
                   className="w-[120px] h-[120px] rounded-2xl flex-shrink-0 flex items-center justify-center shadow-sm"
                   style={{
-                    background: `linear-gradient(135deg, ${WUXING_GRADIENTS['水'].from}, ${WUXING_GRADIENTS['水'].to})`,
+                    background: wuxingColor('水').bg,
                     boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
                   }}
                 >
-                  <span className="text-5xl">{WUXING_GRADIENTS['水'].icon}</span>
+                  <span className="text-5xl">{WUXING_ICONS['水']}</span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <h2 className="text-[22px] font-serif font-semibold text-[#1C1A16]">
@@ -377,7 +379,7 @@ export default function MusicOraclePageClient() {
               disabled={loading}
               placeholder="例如 1990"
               maxLength={4}
-              className="w-36 h-10 bg-white border border-[#E5E0D8] rounded-xl px-4 text-[15px] text-[#1C1A16] placeholder-[#B5B0A8] focus:border-[#1C1A16] focus:ring-2 focus:ring-[#1C1A16]/10 outline-none transition-all disabled:opacity-50"
+              className="w-36 h-11 bg-white border border-[#E5E0D8] rounded-xl px-4 text-[15px] text-[#1C1A16] placeholder-[#B5B0A8] focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/25 outline-none transition-all disabled:opacity-50"
             />
             <p className="text-xs text-[#9CA3AF] mt-1 flex items-center gap-1">
               🔒 用于计算你的日主五行，不填仅用当日天干推算
@@ -389,10 +391,10 @@ export default function MusicOraclePageClient() {
             <button
               onClick={handleSubmit}
               disabled={!question.trim() || loading}
-              className={`px-10 py-3.5 rounded-xl text-base font-medium transition-all ${
+              className={`min-h-[44px] px-10 py-3.5 rounded-xl text-base font-medium transition-all ${
                 !question.trim() || loading
                   ? 'bg-[#E5E0D8] text-[#B5B0A8] cursor-not-allowed'
-                  : 'bg-[#1C1A16] text-white hover:bg-[#2D2B26]'
+                  : 'bg-brand-accent text-white hover:bg-brand-accent-hover'
               }`}
             >
               {loading ? (
@@ -408,7 +410,19 @@ export default function MusicOraclePageClient() {
               )}
             </button>
             <p className="text-xs text-[#9CA3AF] mt-2 text-center">
-              免费用户每天 1 次 · <span className="underline cursor-pointer">登录后使用</span>
+              免费用户每天 1 次
+              {status !== 'authenticated' && (
+                <>
+                  {' · '}
+                  <button
+                    type="button"
+                    onClick={() => gate.openAuth()}
+                    className="underline cursor-pointer bg-transparent border-0 p-0 text-[#9CA3AF] hover:text-[#6B7280] transition-colors"
+                  >
+                    登录后使用
+                  </button>
+                </>
+              )}
             </p>
           </div>
         </div>
@@ -430,7 +444,7 @@ export default function MusicOraclePageClient() {
         {result && (
           <div
             ref={resultRef}
-            className="max-w-page mx-auto mt-8 bg-white border border-[#F0EDE8] rounded-2xl p-6 shadow-md animate-in fade-in slide-in-from-bottom-4 duration-400"
+            className="max-w-page mx-auto mt-8 bg-white border border-[#F0EDE8] rounded-2xl p-6 shadow-md animate-slide-up"
           >
             {/* 标题 */}
             <p className="text-[13px] font-medium text-[#9CA3AF] mb-5 text-center">
@@ -442,11 +456,11 @@ export default function MusicOraclePageClient() {
               <div
                 className="w-[120px] h-[120px] rounded-2xl flex-shrink-0 flex items-center justify-center shadow-sm"
                 style={{
-                  background: `linear-gradient(135deg, ${gradient.from}, ${gradient.to})`,
+                  background: cover.bg,
                   boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
                 }}
               >
-                <span className="text-5xl">{gradient.icon}</span>
+                <span className="text-5xl">{cover.icon}</span>
               </div>
               <div className="flex-1 min-w-0">
                 <h2 className="text-[22px] font-serif font-semibold text-[#1C1A16]">
@@ -524,7 +538,7 @@ export default function MusicOraclePageClient() {
               <button
                 onClick={handleShare}
                 disabled={sharing}
-                className="w-full sm:w-auto bg-[#1C1A16] text-white rounded-xl px-6 py-2.5 text-sm font-medium hover:bg-[#2D2B26] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full sm:w-auto min-h-[44px] bg-brand-accent text-white rounded-xl px-6 py-2.5 text-sm font-medium hover:bg-brand-accent-hover transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 <Share2 className="w-4 h-4" />
                 {sharing ? '生成中...' : '下载分享图'}
@@ -533,7 +547,7 @@ export default function MusicOraclePageClient() {
                 href={`https://music.163.com/#/search/m/?s=${encodeURIComponent(result.songName + ' ' + result.artist)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full sm:w-auto border border-[#E5E0D8] text-[#6B7280] rounded-xl px-6 py-2.5 text-sm font-medium hover:border-[#1C1A16] hover:text-[#1C1A16] transition-colors flex items-center justify-center gap-2"
+                className="w-full sm:w-auto min-h-[44px] border border-[#E5E0D8] text-[#6B7280] rounded-xl px-6 py-2.5 text-sm font-medium hover:border-[#1C1A16] hover:text-[#1C1A16] transition-colors flex items-center justify-center gap-2"
               >
                 <ExternalLink className="w-4 h-4" />
                 去听这首歌
@@ -548,14 +562,14 @@ export default function MusicOraclePageClient() {
                       setTimeout(() => setLinkCopied(false), 2000);
                     } catch {}
                   }}
-                  className="w-full sm:w-auto border border-[#E5E0D8] text-[#6B7280] rounded-xl px-6 py-2.5 text-sm font-medium hover:border-[#1C1A16] hover:text-[#1C1A16] transition-colors flex items-center justify-center gap-2"
+                  className="w-full sm:w-auto min-h-[44px] border border-[#E5E0D8] text-[#6B7280] rounded-xl px-6 py-2.5 text-sm font-medium hover:border-[#1C1A16] hover:text-[#1C1A16] transition-colors flex items-center justify-center gap-2"
                 >
                   {linkCopied ? '✅ 已复制' : '🔗 复制分享链接'}
                 </button>
               )}
               <button
                 onClick={handleReset}
-                className="w-full sm:w-auto border border-[#E5E0D8] text-[#6B7280] rounded-xl px-6 py-2.5 text-sm font-medium hover:border-[#1C1A16] hover:text-[#1C1A16] transition-colors flex items-center justify-center gap-2"
+                className="w-full sm:w-auto min-h-[44px] border border-[#E5E0D8] text-[#6B7280] rounded-xl px-6 py-2.5 text-sm font-medium hover:border-[#1C1A16] hover:text-[#1C1A16] transition-colors flex items-center justify-center gap-2"
               >
                 <RefreshCw className="w-4 h-4" />
                 重新求签
@@ -564,7 +578,7 @@ export default function MusicOraclePageClient() {
 
             {/* 历史记录入口 */}
             <div className="text-center mt-4">
-              <a href="/bazi" className="text-xs text-[#9CA3AF] hover:text-[#6B7280] underline transition-colors">
+              <a href="/history" className="text-xs text-[#9CA3AF] hover:text-[#6B7280] underline transition-colors">
                 查看我的命理历史记录 →
               </a>
             </div>

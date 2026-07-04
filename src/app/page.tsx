@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
 import { Container } from '@/components/ui/Container';
 import {
   ArrowRight,
@@ -189,35 +188,29 @@ export default function HomePage() {
             AI 驱动的八字命理 · 紫微斗数 · 塔罗占卜 · 每日运势
           </p>
 
-          {/* 按钮组 */}
+          {/* 按钮组 —— 用样式化 Link，避免 <a><button> 非法嵌套；主按钮走唯一强调色 */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8 mt-10">
             <div className="flex flex-col items-center gap-2.5">
-              <Link href="/bazi">
-                <Button
-                  variant="primary"
-                  size="lg"
-                  className="px-[40px] py-[15px] text-[17px] font-semibold tracking-[0.08em]"
-                >
-                  八字分析 →
-                </Button>
+              <Link
+                href="/bazi"
+                className="inline-flex items-center justify-center min-h-[52px] rounded-lg bg-brand-accent text-white hover:bg-brand-accent-hover transition-colors px-[40px] py-[15px] text-[17px] font-semibold tracking-[0.08em] shadow-sm"
+              >
+                八字分析 →
               </Link>
-              <span className="text-[13px] text-[#1C1A16]/40">生命密码解析</span>
+              <span className="text-[13px] text-brand-ink/45">生命密码解析</span>
             </div>
 
             {/* 竖直分隔线（仅桌面端横排时显示） */}
-            <span aria-hidden className="hidden sm:block w-px h-12 bg-[#1C1A16]/10" />
+            <span aria-hidden className="hidden sm:block w-px h-12 bg-brand-ink/10" />
 
             <div className="flex flex-col items-center gap-2.5">
-              <Link href="/meihua">
-                <Button
-                  variant="secondary"
-                  size="lg"
-                  className="px-[40px] py-[15px] text-[17px] font-semibold tracking-[0.08em] !text-[#1C1A16] !border-[#1C1A16]/30 hover:!border-[#1C1A16] hover:!bg-[#FDFBF7]"
-                >
-                  梅花易数 →
-                </Button>
+              <Link
+                href="/meihua"
+                className="inline-flex items-center justify-center min-h-[52px] rounded-lg bg-white text-brand-ink border border-brand-ink/30 hover:border-brand-ink hover:bg-[#FDFBF7] transition-colors px-[40px] py-[15px] text-[17px] font-semibold tracking-[0.08em]"
+              >
+                梅花易数 →
               </Link>
-              <span className="text-[13px] text-[#1C1A16]/40">智慧决策指南</span>
+              <span className="text-[13px] text-brand-ink/45">智慧决策指南</span>
             </div>
           </div>
 
@@ -251,11 +244,11 @@ export default function HomePage() {
                   hover={false}
                 >
                   <div className="flex flex-col items-center text-center">
-                    <div className="w-[52px] h-[52px] rounded-full bg-gray-100 flex items-center justify-center">
-                      <Icon className={`w-6 h-6 ${principle.iconColor}`} strokeWidth={1.5} />
+                    <div className="w-[52px] h-[52px] rounded-full bg-brand-accent-soft flex items-center justify-center">
+                      <Icon className="w-6 h-6 text-brand-accent" strokeWidth={1.5} />
                     </div>
-                    <h3 className="text-[19px] font-semibold text-[#1C1A16] mt-4">{principle.title}</h3>
-                    <p className="text-sm text-[#1C1A16]/70 mt-3 leading-relaxed">
+                    <h3 className="text-[19px] font-semibold text-brand-ink mt-4">{principle.title}</h3>
+                    <p className="text-sm text-brand-ink/70 mt-3 leading-relaxed">
                       {principle.description}
                     </p>
                   </div>
@@ -282,27 +275,24 @@ export default function HomePage() {
                   {group.features.map((feature) => {
                     const Icon = feature.icon;
                     return (
-                      <Card
+                      <Link
                         key={feature.title}
-                        hover={false}
-                        className="group flex flex-col items-start p-8 border-none shadow-none transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover"
+                        href={`${feature.href}?sidebar=open`}
+                        className="group flex flex-col items-start rounded-card bg-white p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover"
                       >
-                        <div className="w-[52px] h-[52px] rounded-full bg-gray-100 flex items-center justify-center">
-                          <Icon className={`w-6 h-6 ${feature.iconColor}`} strokeWidth={1.5} />
+                        <div className="w-[52px] h-[52px] rounded-full bg-brand-accent-soft flex items-center justify-center">
+                          <Icon className="w-6 h-6 text-brand-accent" strokeWidth={1.5} />
                         </div>
-                        <h4 className="text-lg font-semibold text-[#1C1A16] mt-4 mb-1">{feature.title}</h4>
+                        <h4 className="text-lg font-semibold text-brand-ink mt-4 mb-1">{feature.title}</h4>
                         {'subtitle' in feature && feature.subtitle && (
-                          <p className="text-[13px] text-[#1C1A16]/50 mb-3">{feature.subtitle}</p>
+                          <p className="text-[13px] text-brand-ink/55 mb-3">{feature.subtitle}</p>
                         )}
-                        <p className="text-[14px] text-[#1C1A16]/70 leading-relaxed flex-1">{feature.description}</p>
-                        <Link
-                          href={`${feature.href}?sidebar=open`}
-                          className="inline-flex items-center gap-1 text-[14px] text-[#1C1A16] mt-4 transition-all duration-300 group-hover:gap-2"
-                        >
+                        <p className="text-[14px] text-brand-ink/70 leading-relaxed flex-1">{feature.description}</p>
+                        <span className="inline-flex items-center gap-1 text-[14px] text-brand-accent mt-4 transition-all duration-300 group-hover:gap-2">
                           进入分析
                           <ArrowRight className="w-4 h-4" />
-                        </Link>
-                      </Card>
+                        </span>
+                      </Link>
                     );
                   })}
                 </div>
@@ -332,10 +322,10 @@ export default function HomePage() {
                 <Link
                   key={k.href}
                   href={k.href}
-                  className="group rounded-xl border border-[#1C1A16]/8 bg-white p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-card-hover"
+                  className="group rounded-xl border border-brand-ink/[0.08] bg-white p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-card-hover"
                 >
-                  <p className="text-sm font-semibold text-[#1C1A16] group-hover:text-[#C2762B] transition-colors">{k.name}</p>
-                  <p className="text-xs text-[#1C1A16]/55 mt-1 leading-relaxed">{k.desc}</p>
+                  <p className="text-sm font-semibold text-brand-ink group-hover:text-brand-accent transition-colors">{k.name}</p>
+                  <p className="text-xs text-brand-ink/55 mt-1 leading-relaxed">{k.desc}</p>
                 </Link>
               ))}
             </div>
@@ -360,18 +350,20 @@ export default function HomePage() {
               运用AI技术分析性格优势，为您的生涯规划提供科学参考
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mt-10">
-              <Link href="/bazi">
-                <button className="px-[38px] py-[14px] text-[13px] tracking-[0.08em] bg-[#1C1A16] text-white rounded-lg hover:bg-[#2C2924] transition-colors font-medium">
-                  八字分析 →
-                </button>
+              <Link
+                href="/bazi"
+                className="inline-flex items-center justify-center min-h-[46px] px-[38px] py-[14px] text-[13px] tracking-[0.08em] bg-brand-accent text-white rounded-lg hover:bg-brand-accent-hover transition-colors font-medium"
+              >
+                八字分析 →
               </Link>
-              <Link href="/meihua">
-                <button className="px-[38px] py-[14px] text-[13px] tracking-[0.08em] border border-[#1C1A16]/30 text-[#1C1A16] rounded-lg hover:border-[#1C1A16] transition-colors">
-                  梅花易数
-                </button>
+              <Link
+                href="/meihua"
+                className="inline-flex items-center justify-center min-h-[46px] px-[38px] py-[14px] text-[13px] tracking-[0.08em] border border-brand-ink/30 text-brand-ink rounded-lg hover:border-brand-ink transition-colors"
+              >
+                梅花易数
               </Link>
             </div>
-            <p className="text-[12px] text-[#1C1A16]/55 tracking-[0.05em] mt-6">
+            <p className="text-[12px] text-brand-ink/55 tracking-[0.05em] mt-6">
               <span>⚡</span> 免费使用 <span>·</span> 无需注册 <span>·</span> 即刻体验
             </p>
           </div>

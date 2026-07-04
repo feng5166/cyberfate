@@ -1,5 +1,7 @@
 'use client';
 
+import { WUXING } from '@/data/wuxing';
+
 interface WuxingCount {
   metal: number;
   wood: number;
@@ -14,12 +16,13 @@ interface RadarChartProps {
   className?: string;
 }
 
+// 轴标签配色统一取自五行配色真源（@/data/wuxing 的 .text，白底达 AA）。
 const AXES: Array<{ key: keyof WuxingCount; label: string; color: string }> = [
-  { key: 'wood', label: '木', color: '#3F8C5C' },
-  { key: 'fire', label: '火', color: '#C2422C' },
-  { key: 'earth', label: '土', color: '#A57842' },
-  { key: 'metal', label: '金', color: '#A89A6F' },
-  { key: 'water', label: '水', color: '#3B6A8A' },
+  { key: 'wood', label: '木', color: WUXING.wood.text },
+  { key: 'fire', label: '火', color: WUXING.fire.text },
+  { key: 'earth', label: '土', color: WUXING.earth.text },
+  { key: 'metal', label: '金', color: WUXING.metal.text },
+  { key: 'water', label: '水', color: WUXING.water.text },
 ];
 
 export function RadarChart({ wuxing, size = 220, className = '' }: RadarChartProps) {

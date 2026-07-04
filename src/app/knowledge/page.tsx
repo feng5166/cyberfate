@@ -34,19 +34,19 @@ export const metadata: Metadata = {
 
 export default function KnowledgePage() {
   return (
-    <div className="min-h-screen bg-[#FAF9F6]">
+    <div className="min-h-dvh bg-brand-bg">
       {/* 页面标题区 — Server Component，爬虫可抓 */}
       <section className="text-center pt-16 md:pt-20 pb-6">
         <div className="flex items-center justify-center gap-2 mb-2">
-          <Sparkles className="w-7 h-7 text-[#1C1A16]/40" />
+          <Sparkles className="w-7 h-7 text-brand-ink/40" />
           <h1
-            className="font-display text-h1 md:text-[44px] text-[#1C1A16]"
+            className="font-display text-h1 md:text-[44px] text-brand-ink"
             style={{ letterSpacing: '10px' }}
           >
             命理知识库
           </h1>
         </div>
-        <p className="text-body-sm text-[#1C1A16]/70 mt-3">
+        <p className="text-body-sm text-brand-gray mt-3">
           了解八字命理的理论基础，深入传统智慧
         </p>
         {/* 静态文章列表摘要 — 爬虫友好 */}
@@ -68,11 +68,11 @@ export default function KnowledgePage() {
           <KnowledgeListClient articles={knowledgeList} />
 
         {/* 说明区 — Server Component，爬虫可抓 */}
-        <div className="bg-white rounded-2xl border border-[#1C1A16]/8 p-7 mb-16">
-          <h2 className="font-display text-lg font-semibold text-[#1C1A16] tracking-[0.08em] mb-4">
+        <div className="bg-white rounded-card border border-brand-border-light p-7 mb-16">
+          <h2 className="font-display text-lg font-semibold text-brand-ink tracking-[0.08em] mb-4">
             💡 知识库说明
           </h2>
-          <ul className="space-y-2 text-sm text-[#1C1A16]/70 leading-relaxed">
+          <ul className="space-y-2 text-sm text-brand-gray leading-relaxed">
             <li>• 本知识库内容来源于传统命理典籍，结合现代通俗解读</li>
             <li>• 仅供学习参考，不代表本站观点或立场</li>
             <li>• 命理学是一种传统文化，建议理性看待，不要过度迷信</li>

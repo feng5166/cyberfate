@@ -2,6 +2,7 @@
 
 import { X, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
+import { Badge } from '@/components/ui/Badge';
 import { PalaceData, STAR_COLORS } from './types';
 import { StarIcon } from './StarIcon';
 
@@ -221,6 +222,8 @@ export function PalaceDetailPanel({ palace, onClose, className }: PalaceDetailPa
         <div className="flex items-center gap-2 mb-3">
           <Sparkles className="w-4 h-4 text-amber-500" />
           <h4 className="text-sm font-semibold text-[#1C1A16]">AI 宫位解读</h4>
+          {/* 静态示例解读，尚未接入实时 AI，明确标注避免误导 */}
+          <Badge variant="neutral">示例</Badge>
         </div>
         <p className="text-sm text-[#1C1A16]/70 leading-relaxed mb-4">
           {aiData.reading}

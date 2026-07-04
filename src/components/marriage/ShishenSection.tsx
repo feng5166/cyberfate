@@ -68,7 +68,7 @@ function ShishenCard({
             {god === '日主' ? '日主' : god}
           </span>
           {hiddenLabel && (
-            <span className="text-[10px] text-[#1C1A16]/45 px-1.5 py-0.5 rounded bg-[#F3EFE8]">
+            <span className="text-[10px] text-brand-gray px-1.5 py-0.5 rounded bg-[#F3EFE8]">
               {hiddenLabel}
             </span>
           )}
@@ -76,11 +76,11 @@ function ShishenCard({
         <span className="text-[10px] text-[#1C1A16]/55 tabular-nums">{ratio}%</span>
       </div>
       <p className="text-[11px] leading-5 text-[#1C1A16]/70 mb-1">
-        <span className="text-[#1C1A16]/45">代表：</span>
+        <span className="text-brand-gray">代表：</span>
         {represent}
       </p>
       <p className="text-[11px] leading-5 text-[#1C1A16]/70">
-        <span className="text-[#1C1A16]/45">表现特征：</span>
+        <span className="text-brand-gray">表现特征：</span>
         {trait}
       </p>
     </div>

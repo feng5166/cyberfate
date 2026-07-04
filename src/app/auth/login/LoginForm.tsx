@@ -87,14 +87,14 @@ export function LoginForm({ googleEnabled }: LoginFormProps) {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] flex items-center justify-center p-4">
+    <div className="flex min-h-[calc(100dvh-4rem)] md:min-h-[calc(100dvh-4.5rem)] items-center justify-center bg-brand-bg p-4">
       <div className="w-full max-w-[420px] bg-white rounded-2xl p-8 shadow-lg max-sm:max-w-[360px] max-sm:p-6">
         {/* 标题区 */}
         <div className="text-center mb-6">
-          <h1 className="text-[#1C1A16] text-2xl max-sm:text-xl font-semibold">
+          <h1 className="text-brand-ink text-2xl max-sm:text-xl font-semibold">
             免费开始
           </h1>
-          <p className="text-[#9B9590] text-sm text-center mt-2">
+          <p className="text-brand-gray text-sm text-center mt-2">
             登录或创建账号，立即体验 AI 命理解读
           </p>
         </div>
@@ -107,11 +107,11 @@ export function LoginForm({ googleEnabled }: LoginFormProps) {
             </div>
 
             <div className="flex items-center gap-4 mb-6">
-              <div className="flex-1 h-px bg-[#E5E2DD]" />
-              <span className="text-[#9B9590] text-xs whitespace-nowrap">
+              <div className="flex-1 h-px bg-brand-border" />
+              <span className="text-brand-gray text-xs whitespace-nowrap">
                 或使用邮箱登录
               </span>
-              <div className="flex-1 h-px bg-[#E5E2DD]" />
+              <div className="flex-1 h-px bg-brand-border" />
             </div>
           </>
         )}

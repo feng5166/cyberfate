@@ -51,7 +51,7 @@ const coreValues = [
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-[#FAF9F6] text-[#1C1A16]">
+    <div className="min-h-dvh bg-brand-bg text-brand-ink">
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none opacity-[0.03]" aria-hidden="true" style={{
           backgroundImage:
@@ -59,12 +59,12 @@ export default function AboutPage() {
           backgroundSize: '200px 200px',
         }} />
 
-        <section className="pt-24 pb-16 relative">
+        <section className="pt-16 sm:pt-20 md:pt-24 pb-16 relative">
           <Container>
             <div className="max-w-3xl mx-auto text-center">
-              <p className="text-sm tracking-[0.3em] text-[#1C1A16]/60 mb-4">CYBERFATE</p>
-              <h1 className="font-heading text-4xl sm:text-5xl text-[#1C1A16] mb-6">关于赛博命理师</h1>
-              <p className="text-base text-[#1C1A16]/75 leading-relaxed font-sans">
+              <p className="text-sm tracking-[0.3em] text-brand-gray mb-4">CYBERFATE</p>
+              <h1 className="font-heading text-4xl sm:text-5xl text-brand-ink mb-6">关于赛博命理师</h1>
+              <p className="text-base text-brand-gray leading-relaxed font-sans">
                 我们以 AI 推理框架重述八字、紫微、塔罗等传统学科，把每一次解读视作一次严谨的协作。品牌希望在暖白的空间里，陪伴你观察命运模式、梳理情绪与行动，找到兼具理性与诗意的生活节奏。
               </p>
             </div>
@@ -77,8 +77,8 @@ export default function AboutPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {brandHighlights.map((highlight) => (
               <Card key={highlight.title} className="bg-white/90 backdrop-blur">
-                <h2 className="font-heading text-2xl text-[#1C1A16] mb-3">{highlight.title}</h2>
-                <p className="text-sm text-[#1C1A16]/70 leading-relaxed">{highlight.description}</p>
+                <h2 className="font-heading text-2xl text-brand-ink mb-3">{highlight.title}</h2>
+                <p className="text-sm text-brand-gray leading-relaxed">{highlight.description}</p>
               </Card>
             ))}
           </div>
@@ -88,9 +88,9 @@ export default function AboutPage() {
       <section className="pb-20">
         <Container>
           <div className="text-center mb-10">
-            <p className="text-sm tracking-[0.2em] text-[#1C1A16]/60">CORE VALUES</p>
-            <h2 className="font-heading text-3xl text-[#1C1A16] mt-3">核心价值观</h2>
-            <p className="max-w-2xl mx-auto text-sm text-[#1C1A16]/70 mt-4 leading-relaxed">
+            <p className="text-sm tracking-[0.2em] text-brand-gray">CORE VALUES</p>
+            <h2 className="font-heading text-3xl text-brand-ink mt-3">核心价值观</h2>
+            <p className="max-w-2xl mx-auto text-sm text-brand-gray mt-4 leading-relaxed">
               每一条价值观都写进了产品体验：更透明的解释、更温柔的关照、更可执行的建议。
             </p>
           </div>
@@ -98,12 +98,12 @@ export default function AboutPage() {
             {coreValues.map(({ title, description, icon: Icon }) => (
               <Card key={title} className="flex flex-col gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-full bg-[#1C1A16] text-white flex items-center justify-center">
+                  <div className="h-12 w-12 rounded-full bg-brand-accent-soft text-brand-accent flex items-center justify-center">
                     <Icon size={22} />
                   </div>
                   <h3 className="font-heading text-2xl">{title}</h3>
                 </div>
-                <p className="text-sm text-[#1C1A16]/70 leading-relaxed">{description}</p>
+                <p className="text-sm text-brand-gray leading-relaxed">{description}</p>
               </Card>
             ))}
           </div>
@@ -112,15 +112,15 @@ export default function AboutPage() {
 
       <section className="pb-24">
         <Container>
-          <Card className="bg-gradient-to-br from-[#F5F3EE] to-[#EDE9E2] text-[#1C1A16] border border-[#1C1A16]/10 shadow-lg" hover={false}>
+          <Card className="bg-gradient-to-br from-[#F5F3EE] to-[#EDE9E2] text-brand-ink border border-brand-border-light shadow-card" hover={false}>
             <div className="grid md:grid-cols-2 gap-8 items-center">
               <div>
                 <h3 className="font-heading text-3xl mb-4">我们相信理性与感性的并行</h3>
-                <p className="text-sm text-[#1C1A16]/70 leading-relaxed">
+                <p className="text-sm text-brand-gray leading-relaxed">
                   当你与赛博命理师对话，我们提供的不只是结果，而是一套推理过程：背景假设、可执行的选择、以及必要的提醒。请携带你的经验与判断，与我们一起共创命运叙事。
                 </p>
               </div>
-              <div className="bg-white rounded-xl p-6 text-sm leading-relaxed text-[#1C1A16]/70 shadow-sm border border-[#1C1A16]/10">
+              <div className="bg-white rounded-card p-6 text-sm leading-relaxed text-brand-gray shadow-card border border-brand-border-light">
                 <p>联系方式：feng5166@gmail.com</p>
                 <p className="mt-2">办公地点：新加坡 · 远程协作团队</p>
                 <p className="mt-2">合作方向：AI 算法共创、东方文化内容、心理咨询与疗愈项目</p>

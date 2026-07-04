@@ -11,7 +11,7 @@ export function GoogleLoginButton({ onClick, loading }: GoogleLoginButtonProps) 
       type="button"
       onClick={onClick}
       disabled={loading}
-      className="w-full border border-[#E5E2DD] bg-[#F5F5F5] rounded-lg py-3 px-4 flex items-center justify-center gap-3 hover:bg-[#FAF9F6] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+      className="w-full min-h-[44px] border border-brand-border bg-white rounded-lg py-3 px-4 flex items-center justify-center gap-3 hover:bg-brand-bg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
     >
       <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
         <path
@@ -31,7 +31,7 @@ export function GoogleLoginButton({ onClick, loading }: GoogleLoginButtonProps) 
           d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
         />
       </svg>
-      <span className="text-[#1C1A16] text-sm font-medium">
+      <span className="text-brand-ink text-sm font-medium">
         {loading ? '跳转中...' : '使用 Google 登录'}
       </span>
     </button>
