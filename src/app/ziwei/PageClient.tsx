@@ -8,6 +8,7 @@ import { ChevronRight, AlertTriangle, RefreshCw } from 'lucide-react';
 import { getLunarDate } from '@/lib/bazi/calculator';
 import { Footer } from '@/components/layout/Footer';
 import { PageShell } from '@/components/ui/PageShell';
+import { SplitLayout } from '@/components/ui/SplitLayout';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { SegmentControl } from '@/components/ui/SegmentControl';
 import { Button } from '@/components/ui/Button';
@@ -450,96 +451,98 @@ export default function ZiweiPage() {
         </PageShell>
       )}
 
-      {/* 命盘区域 */}
+      {/* 命盘区域 — 桌面 lg+ master-detail：左命盘(sticky) | 右详情/四化/大运/AI；
+          <lg 竖向堆叠（asidePosition=left → aside 先 main 后），移动端顺序与间距保持原样 */}
       {showChart && !loading && palaces.length > 0 && (
-        <>
-          <PageShell width="wide" className=" pb-4">
-            <div className="bg-white rounded-2xl shadow-sm border border-[#F0EDE8] p-4 sm:p-6">
-              <div className="flex items-center justify-between mb-1">
-                <div />
-                <h2 className="font-display text-xl md:text-2xl font-semibold text-[#1C1A16] text-center flex-1">
-                  命盘
-                </h2>
-                {/* P2-1: 分享按钮 */}
-                <ChartShareButton
-                  palaces={palaces}
-                  birthInfo={{ date: birthDate, hour: birthHour, gender }}
-                />
-              </div>
-              <p className="text-xs text-[#1C1A16]/40 text-center mb-5">
-                点击宫格查看详情 · 点击星曜名查看解释
-              </p>
+        <PageShell width="chart" className=" pb-6 md:pb-8">
+          <SplitLayout
+            asidePosition="left"
+            asideWidth={400}
+            className="gap-4 lg:gap-8"
+            aside={
+              <div className="flex flex-col gap-4">
+                {/* 命盘卡片（内部桌面 4×4 网格 + 移动端信息卡/列表分支，整体原样搬迁，未改内部） */}
+                <div className="bg-white rounded-2xl shadow-sm border border-[#F0EDE8] p-4 sm:p-6">
+                  <div className="flex items-center justify-between mb-1">
+                    <div />
+                    <h2 className="font-display text-xl md:text-2xl font-semibold text-[#1C1A16] text-center flex-1">
+                      命盘
+                    </h2>
+                    {/* P2-1: 分享按钮 */}
+                    <ChartShareButton
+                      palaces={palaces}
+                      birthInfo={{ date: birthDate, hour: birthHour, gender }}
+                    />
+                  </div>
+                  <p className="text-xs text-[#1C1A16]/40 text-center mb-5">
+                    点击宫格查看详情 · 点击星曜名查看解释
+                  </p>
 
-              {/* P2-6: 入场动画 - 桌面端 */}
-              <div className="hidden md:block">
-                <div
-                  className={`transition-all duration-700 ${
-                    gridAnimated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-                  }`}
-                >
-                  <PalaceGrid
-                    palaces={palaces}
-                    selectedIndex={selectedPalaceIndex}
-                    onSelect={setSelectedPalaceIndex}
-                    userInfo={centerUserInfo}
-                  />
+                  {/* P2-6: 入场动画 - 桌面端 */}
+                  <div className="hidden md:block">
+                    <div
+                      className={`transition-all duration-700 ${
+                        gridAnimated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                      }`}
+                    >
+                      <PalaceGrid
+                        palaces={palaces}
+                        selectedIndex={selectedPalaceIndex}
+                        onSelect={setSelectedPalaceIndex}
+                        userInfo={centerUserInfo}
+                      />
+                    </div>
+                  </div>
+
+                  {/* 移动端：信息卡片 + 纵向列表 */}
+                  <div className="md:hidden">
+                    <div
+                      className={`transition-all duration-500 ${
+                        gridAnimated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+                      }`}
+                    >
+                      <CenterInfoCard
+                        userInfo={centerUserInfo}
+                        palaces={palaces}
+                        className="w-full mb-4"
+                      />
+                      <PalaceMobileList
+                        palaces={palaces}
+                        selectedIndex={selectedPalaceIndex}
+                        onSelect={setSelectedPalaceIndex}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* P2-4: 双人对比入口（属命盘簇，随左列 sticky） */}
+                <div className="flex justify-end">
+                  <DualChartCompare chartA={palaces} />
                 </div>
               </div>
+            }
+            main={
+              <div className="flex flex-col gap-4 md:gap-6">
+                {/* P1-1: 宫位详情面板（点宫格 → 右列即时渲染，视线不离命盘） */}
+                {selectedPalace && (
+                  <PalaceDetailPanel
+                    palace={selectedPalace}
+                    onClose={() => setSelectedPalaceIndex(null)}
+                  />
+                )}
 
-              {/* 移动端：信息卡片 + 纵向列表 */}
-              <div className="md:hidden">
-                <div
-                  className={`transition-all duration-500 ${
-                    gridAnimated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
-                  }`}
-                >
-                  <CenterInfoCard
-                    userInfo={centerUserInfo}
-                    palaces={palaces}
-                    className="w-full mb-4"
-                  />
-                  <PalaceMobileList
-                    palaces={palaces}
-                    selectedIndex={selectedPalaceIndex}
-                    onSelect={setSelectedPalaceIndex}
-                  />
-                </div>
+                {/* P2-2: 四化飞星动画 */}
+                <SihuaAnimation palaces={palaces} visible={showChart && !loading} />
+
+                {/* P2-3: 大运流年切换器 */}
+                <DayunSwitcher birthDate={birthDate} />
+
+                {/* P1-2: AI 命盘总览解读 */}
+                <ZiweiAiOverview palaces={palaces} birthDate={birthDate} />
               </div>
-            </div>
-          </PageShell>
-
-          {/* P2-4: 双人对比入口 */}
-          <PageShell width="wide" className=" pb-4">
-            <div className="flex justify-end">
-              <DualChartCompare chartA={palaces} />
-            </div>
-          </PageShell>
-
-          {/* P1-1: 宫位详情面板 */}
-          {selectedPalace && (
-            <PageShell width="wide" className=" pb-4 md:pb-6">
-              <PalaceDetailPanel
-                palace={selectedPalace}
-                onClose={() => setSelectedPalaceIndex(null)}
-              />
-            </PageShell>
-          )}
-
-          {/* P2-2: 四化飞星动画 */}
-          <PageShell width="wide" className=" pb-4 md:pb-6">
-            <SihuaAnimation palaces={palaces} visible={showChart && !loading} />
-          </PageShell>
-
-          {/* P2-3: 大运流年切换器 */}
-          <PageShell width="wide" className=" pb-4 md:pb-6">
-            <DayunSwitcher birthDate={birthDate} />
-          </PageShell>
-
-          {/* P1-2: AI 命盘总览解读 */}
-          <PageShell width="wide" className=" pb-6 md:pb-8">
-            <ZiweiAiOverview palaces={palaces} birthDate={birthDate} />
-          </PageShell>
-        </>
+            }
+          />
+        </PageShell>
       )}
 
       {/* P1-3: 底部功能区 */}

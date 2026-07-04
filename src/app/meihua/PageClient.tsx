@@ -12,7 +12,7 @@ import {
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { OracleLoading } from '@/components/ui/OracleLoading';
-import { inputRecipe } from '@/components/ui';
+import { inputRecipe, SplitLayout } from '@/components/ui';
 import { useAiGate, AiGateModals } from '@/components/ai/useAiGate';
 import { track } from '@/lib/analytics';
 
@@ -601,8 +601,13 @@ export default function MeihuaPage() {
           </div>
         </section>
 
+        {/* 结果区：桌面 lg+ 两列（左=卦象概览 sticky，右=AI 解读），移动端竖排顺序不变 */}
         {result && (
-          <section className="mx-auto mt-8 max-w-page animate-fadeIn">
+          <section className="mx-auto mt-8 max-w-6xl animate-fadeIn">
+            <SplitLayout
+              asidePosition="left"
+              asideWidth={360}
+              aside={
             <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 shadow-none">
               <div className="flex items-start justify-between mb-1">
                 <div>
@@ -682,10 +687,12 @@ export default function MeihuaPage() {
                 ) : null}
               </div>
             </div>
-
+              }
+              main={
+                <div className="space-y-4">
             {decision && (
               <>
-                <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                   {[
                     { icon: '🧠', title: '思考参考', content: decision.insights?.thinkingReference },
                     { icon: '✦', title: '卦象分析', content: decision.insights?.guaAnalysis },
@@ -700,7 +707,7 @@ export default function MeihuaPage() {
                 </div>
 
                 {isQuestionMode && decision.overallAdvice && (
-                  <div className="mt-4 rounded-2xl bg-white border border-[#1C1A16]/8 p-6">
+                  <div className="rounded-2xl bg-white border border-[#1C1A16]/8 p-6">
                     <h3 className="text-base font-bold text-[#1C1A16]">决策建议</h3>
                     <p className="mt-3 text-sm leading-relaxed text-[#1C1A16]/85 whitespace-pre-wrap">{decision.overallAdvice}</p>
                     {decision.favorable && decision.favorable.length > 0 && (
@@ -730,7 +737,7 @@ export default function MeihuaPage() {
                   </div>
                 )}
 
-                <div className="mt-4 rounded-2xl bg-white border border-[#1C1A16]/8 p-6">
+                <div className="rounded-2xl bg-white border border-[#1C1A16]/8 p-6">
                   <h3 className="text-base font-bold text-[#1C1A16]">{isQuestionMode ? '基础卦象解读' : '卦象解读'}</h3>
                   <p className="mt-1 text-xs text-[#1C1A16]/45 mb-3">AI 综合分析 · 仅供参考</p>
                   {streaming && !result.analysis ? (
@@ -746,11 +753,7 @@ export default function MeihuaPage() {
                 </div>
               </>
             )}
-          </section>
-        )}
 
-        {result && (
-          <section className="mx-auto mt-6 max-w-page animate-fadeIn">
             <div className="rounded-2xl border border-[#E5E0D8] bg-white p-6 md:p-8">
               <h3 className="text-lg font-bold text-[#1C1A16] mb-1">梅花易数问答</h3>
               <p className="text-sm text-[#1C1A16]/50 mb-4">针对卦象提出问题，获取详细解读</p>
@@ -803,6 +806,9 @@ export default function MeihuaPage() {
                 </button>
               </div>
             </div>
+                </div>
+              }
+            />
           </section>
         )}
 

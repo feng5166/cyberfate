@@ -2,7 +2,7 @@
 
 import { Footer } from '@/components/layout/Footer';
 import { OracleLoading } from '@/components/ui/OracleLoading';
-import { inputRecipe } from '@/components/ui';
+import { inputRecipe, SplitLayout } from '@/components/ui';
 import { Share2, X, Sparkles, RefreshCw, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { useSession } from 'next-auth/react';
@@ -729,14 +729,24 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
             </div>
           )}
 
-          {step === 'result' && result && (
-            <div className="space-y-4" aria-live="polite">
-              <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-5 md:p-6">
-                <h3 className="font-display text-xl tracking-[0.08em] text-[#1C1A16] text-center mb-5">✨ 您抽到了这些牌</h3>
-                <div>
-                  {renderCards()}
+        </section>
+
+        {/* 结果区：桌面 lg+ 两列（左=牌阵概览 sticky，右=AI 解读），移动端竖排顺序不变 */}
+        {step === 'result' && result && (
+          <section className="mx-auto max-w-6xl mt-4 animate-fadeIn" aria-live="polite">
+            <SplitLayout
+              asidePosition="left"
+              asideWidth={400}
+              aside={
+                <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-5 md:p-6">
+                  <h3 className="font-display text-xl tracking-[0.08em] text-[#1C1A16] text-center mb-5">✨ 您抽到了这些牌</h3>
+                  <div>
+                    {renderCards()}
+                  </div>
                 </div>
-              </div>
+              }
+              main={
+                <div className="space-y-4">
 
               <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 md:p-8">
                 <h3 className="font-display text-xl tracking-[0.08em] text-[#1C1A16] mb-4">✨ AI 解读</h3>
@@ -801,9 +811,11 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
                   再来一次
                 </button>
               </div>
-            </div>
-          )}
-        </section>
+                </div>
+              }
+            />
+          </section>
+        )}
 
         {seoContent}
       </main>

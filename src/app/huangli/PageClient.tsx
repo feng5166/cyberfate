@@ -8,6 +8,7 @@ import { ShenShaPanel } from '@/components/huangli/ShenShaPanel';
 import { AiAskSection } from '@/components/huangli/AiAskSection';
 import { FeaturesSection } from '@/components/huangli/FeaturesSection';
 import { Footer } from '@/components/layout/Footer';
+import { PageShell, SplitLayout } from '@/components/ui';
 import type { HuangliData } from '@/lib/huangli/calculator';
 import { track } from '@/lib/analytics';
 
@@ -95,68 +96,77 @@ export default function HuangliPage() {
         </p>
       </div>
 
-      <div className="max-w-page mx-auto px-4 pb-16">
-        {/* 单列：日历 → 内容 → 特性/使用指南 */}
-        <div className="space-y-5">
-            {/* 选择日期日历 - 置顶（移动端顶部为日期快捷条） */}
-            <div className="hidden md:block max-w-[380px] mx-auto">
+      {/* 桌面 master-detail：lg+ 左日历(sticky) | 右当日详情；<lg 竖向堆叠（移动端日历随 hidden md:block 隐藏，由顶部 MobileDateBar 承担切日）。
+          <SplitLayout> 在 <lg 按 DOM 顺序堆叠，aside 已 hidden md:block 故移动端不参与布局，视觉与原单列一致。 */}
+      <PageShell width="chart" className="pb-16">
+        <SplitLayout
+          asidePosition="left"
+          asideWidth={360}
+          asideClassName="hidden md:block"
+          aside={
+            /* 选择日期日历 - 桌面侧栏（移动端顶部为日期快捷条，故整块 hidden md:block） */
+            <div className="max-w-[380px] mx-auto">
               <CalendarPicker
                 selectedDate={selectedDate}
                 onDateSelect={handleDateSelect}
               />
             </div>
-
-            {/* 加载状态 */}
-            {loading && (
-              <div className="bg-white rounded-2xl shadow-sm border border-[#F0EDE8] p-6">
-                <div className="animate-pulse space-y-4">
-                  <div className="flex gap-2">
-                    <div className="h-6 w-28 bg-[#F0EDE8] rounded" />
-                    <div className="h-6 w-16 bg-[#F0EDE8] rounded" />
-                    <div className="h-6 w-20 bg-[#F0EDE8] rounded" />
-                  </div>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="h-20 bg-[#F0EDE8] rounded-xl" />
-                    <div className="h-20 bg-[#F0EDE8] rounded-xl" />
-                    <div className="h-20 bg-[#F0EDE8] rounded-xl" />
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {Array.from({ length: 6 }).map((_, i) => (
-                      <div key={i} className="h-7 w-16 bg-[#F0EDE8] rounded-full" />
-                    ))}
+          }
+          main={
+            <div className="space-y-5">
+              {/* 加载状态 */}
+              {loading && (
+                <div className="bg-white rounded-2xl shadow-sm border border-[#F0EDE8] p-6">
+                  <div className="animate-pulse space-y-4">
+                    <div className="flex gap-2">
+                      <div className="h-6 w-28 bg-[#F0EDE8] rounded" />
+                      <div className="h-6 w-16 bg-[#F0EDE8] rounded" />
+                      <div className="h-6 w-20 bg-[#F0EDE8] rounded" />
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="h-20 bg-[#F0EDE8] rounded-xl" />
+                      <div className="h-20 bg-[#F0EDE8] rounded-xl" />
+                      <div className="h-20 bg-[#F0EDE8] rounded-xl" />
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {Array.from({ length: 6 }).map((_, i) => (
+                        <div key={i} className="h-7 w-16 bg-[#F0EDE8] rounded-full" />
+                      ))}
+                    </div>
                   </div>
                 </div>
+              )}
+
+              {/* 错误状态 */}
+              {error && !loading && (
+                <div className="bg-white rounded-2xl shadow-sm border border-red-200 p-6 text-center">
+                  <p className="text-red-600 text-sm mb-3">{error}</p>
+                  <button
+                    onClick={() => loadDate(selectedDate)}
+                    className="min-h-[44px] px-5 text-sm bg-brand-accent text-white rounded-lg hover:bg-brand-accent-hover transition-colors"
+                  >
+                    重试
+                  </button>
+                </div>
+              )}
+
+              {/* 当日详情（随选中日期刷新） */}
+              {data && !loading && !error && (
+                <>
+                  <DayDetailCard data={data} />
+                  <ShenShaPanel data={data} />
+                  <AiAskSection date={selectedDate} />
+                </>
+              )}
+
+              {/* 底部特性介绍 + 使用指南 */}
+              <div className="mt-8">
+                <FeaturesSection />
               </div>
-            )}
-
-            {/* 错误状态 */}
-            {error && !loading && (
-              <div className="bg-white rounded-2xl shadow-sm border border-red-200 p-6 text-center">
-                <p className="text-red-600 text-sm mb-3">{error}</p>
-                <button
-                  onClick={() => loadDate(selectedDate)}
-                  className="min-h-[44px] px-5 text-sm bg-brand-accent text-white rounded-lg hover:bg-brand-accent-hover transition-colors"
-                >
-                  重试
-                </button>
-              </div>
-            )}
-
-            {/* 当日详情 */}
-            {data && !loading && !error && (
-              <>
-                <DayDetailCard data={data} />
-                <ShenShaPanel data={data} />
-                <AiAskSection date={selectedDate} />
-              </>
-            )}
-
-            {/* 底部特性介绍 + 使用指南 */}
-            <div className="mt-8">
-              <FeaturesSection />
             </div>
-        </div>
-      </div>
+          }
+        />
+      </PageShell>
     </div>
   );
 }

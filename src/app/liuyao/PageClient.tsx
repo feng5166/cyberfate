@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useAiGate, AiGateModals } from '@/components/ai/useAiGate';
 import { OracleLoading } from '@/components/ui/OracleLoading';
-import { inputRecipe } from '@/components/ui';
+import { inputRecipe, SplitLayout } from '@/components/ui';
 import { HEXAGRAM_JUDGMENTS, getLineTexts, getLineTitle } from '@/lib/liuyao/data';
 import { track } from '@/lib/analytics';
 
@@ -1451,7 +1451,7 @@ export default function LiuYaoPage() {
           </div>
 
           {/* 起卦结果区域：仅显示卦象信息（不含 AI 分析） */}
-          {hexagramDrawn && drawnHexagram && (
+          {hexagramDrawn && drawnHexagram && !result && (
             <div ref={hexagramResultRef} className="space-y-4 animate-fadeIn">
               {/* 起卦元信息 */}
               <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 transition-shadow duration-300 hover:shadow-card-hover">
@@ -1580,9 +1580,95 @@ export default function LiuYaoPage() {
             </div>
           )}
 
-          {/* ⑦ 解卦结果区（卦象信息已在起卦结果区展示，此处直接显示 AI 分析） */}
-          {result && (
-            <div className="space-y-4 animate-fadeIn">
+        </section>
+
+        {/* ⑦ 解卦结果区：桌面 lg+ 两列（左=卦象概览 sticky，右=AI 解读），移动端竖排顺序不变 */}
+        {result && (
+          <section className="mx-auto max-w-6xl mt-4 animate-fadeIn">
+            <SplitLayout
+              asidePosition="left"
+              asideWidth={360}
+              aside={
+                drawnHexagram ? (
+                  <div className="space-y-4">
+                    {/* 起卦元信息 */}
+                    <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 transition-shadow duration-300 hover:shadow-card-hover">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <h3 className="text-sm font-medium text-[#1C1A16]/60 mb-1">起卦时间</h3>
+                          {ganzhiInfo && <p className="text-sm text-[#1C1A16]">{ganzhiInfo.timeStr}</p>}
+                        </div>
+                        <span className="rounded-full bg-[#FAF9F6] px-3 py-1 text-xs text-[#1C1A16]/60">
+                          {METHOD_OPTIONS.find((m) => m.value === method)?.label}
+                        </span>
+                      </div>
+                      {question.trim() && (
+                        <div className="mt-4 rounded-xl bg-[#FAF9F6] p-4">
+                          <p className="text-xs text-[#1C1A16]/50 mb-1">您的问题</p>
+                          <p className="text-sm leading-relaxed text-[#1C1A16]/85">{question.trim()}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 卦象图示 */}
+                    <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 transition-shadow duration-300 hover:shadow-card-hover">
+                      <div className="flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="text-4xl leading-none">
+                            {drawnHexagram.upper.symbol}{drawnHexagram.lower.symbol}
+                          </div>
+                          <div>
+                            <h2 className="text-xl font-semibold text-[#1C1A16]">{drawnHexagram.name}</h2>
+                            <p className="mt-0.5 text-sm text-[#1C1A16]/60">
+                              上{drawnHexagram.upper.name}（{drawnHexagram.upper.nature}）·
+                              下{drawnHexagram.lower.name}（{drawnHexagram.lower.nature}）
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 flex flex-col items-center gap-8 md:flex-row md:justify-center">
+                        <div className="text-center">
+                          <p className="mb-2 text-xs text-[#1C1A16]/50">本卦</p>
+                          <HexagramFigure
+                            lines={drawnHexagram.lines as (0 | 1)[]}
+                            size="large"
+                            movingLineIdx={resolvedMovingLines.length === 1 ? resolvedMovingLines[0] : undefined}
+                          />
+                          <p className="mt-2 text-sm font-medium text-[#1C1A16]">{drawnHexagram.name}</p>
+                        </div>
+                        {drawnHexagram.hasMoving && drawnHexagram.transformedName !== drawnHexagram.name && (
+                          <div className="text-center">
+                            <p className="mb-2 text-xs text-[#1C1A16]/50">变卦</p>
+                            <HexagramFigure lines={drawnHexagram.transformedLines as (0 | 1)[]} size="large" />
+                            <p className="mt-2 text-sm font-medium text-[#1C1A16]">{drawnHexagram.transformedName}</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {drawnHexagram.hasMoving && (
+                        <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+                          <span className="text-xs text-[#1C1A16]/50">变爻位置：</span>
+                          {resolvedMovingLines.map((idx) => (
+                            <span
+                              key={idx}
+                              className="rounded-full bg-orange-100 px-2.5 py-0.5 text-[11px] font-medium text-orange-700"
+                            >
+                              第{idx + 1}爻
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      <p className="mt-5 text-sm leading-relaxed text-[#1C1A16]/70">
+                        <span className="font-medium text-[#1C1A16]">卦辞：</span>{drawnHexagram.judgment}
+                      </p>
+                    </div>
+                  </div>
+                ) : null
+              }
+              main={
+                <div className="space-y-4">
               <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 transition-shadow duration-300 hover:shadow-card-hover">
                 <h3 className="text-base font-semibold text-[#1C1A16] mb-4">各爻详解</h3>
                 <div className="space-y-0">
@@ -1754,9 +1840,11 @@ export default function LiuYaoPage() {
                   </button>
                 </div>
               </div>
-            </div>
-          )}
-        </section>
+                </div>
+              }
+            />
+          </section>
+        )}
 
         {/* ⑧⑨⑩ 介绍性模块：起卦后隐藏 */}
         {!hexagramDrawn && <>

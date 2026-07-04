@@ -36,6 +36,7 @@ import { track } from '@/lib/analytics';
 import { Tag } from '@/components/ui/Tag';
 import { Footer } from '@/components/layout/Footer';
 import { AiDisclaimer } from '@/components/ui/AiDisclaimer';
+import { PageShell, SplitLayout } from '@/components/ui';
 import {
   DAYMASTER_TRAITS,
   DIZHI_LIST,
@@ -2364,7 +2365,7 @@ function BaziPageContent() {
             )}
 
             {result && !loading && basicInfoData && dayMasterInsight && (
-              <div className="max-w-page mx-auto w-full">
+              <PageShell width="chart" className="px-0 sm:px-0">
               <div ref={resultRef} className="space-y-6 animate-fadeIn" aria-live="polite">
                 {result._source !== 'history' && !isMember && (
                   <div className="flex items-center justify-between gap-3 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 px-4 py-3">
@@ -2380,6 +2381,11 @@ function BaziPageContent() {
                     <p className="text-sm text-blue-700">AI 解读耗时较长，已为您准备基础解读（简化版解读，完整版需会员）</p>
                   </div>
                 )}
+                {/* lg+ 两列：左 aside(sticky)=紧凑命盘/五行/日主概览；右 main=解读长文。<lg 按 DOM 顺序竖堆(aside 先→main 后)，与旧单列一致。 */}
+                <SplitLayout
+                  asidePosition="left"
+                  aside={
+                    <div className="space-y-6">
                 <Card className={cardClass}>
                   <BaziChart pillars={result.pillars} hasHour={hasHourPillar} />
                 </Card>
@@ -2397,6 +2403,10 @@ function BaziPageContent() {
                     mingGe={result.mingGe}
                   />
                 </Card>
+                    </div>
+                  }
+                  main={
+                    <div className="space-y-6">
 
                 {result?.traits && result.traits.length > 0 && (
                   <Card className={cardClass}>
@@ -2718,6 +2728,9 @@ function BaziPageContent() {
 
                 </Card>
                 </div>
+                    </div>
+                  }
+                />
 
                 <BaziChatSection
                   baziData={{
@@ -2890,7 +2903,7 @@ function BaziPageContent() {
                   ⚠️ 免责声明：本站所有命理分析仅供娱乐参考，不构成任何决策建议。命运掌握在自己手中，请理性对待。
                 </div>
               </div>
-              </div>
+              </PageShell>
             )}
           </div>
         </div>

@@ -97,7 +97,8 @@ export function ShishenSection({ side, summary, title, subtitle }: ShishenSectio
         )}
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {/* 半宽并排下四柱走 2 列（=移动端 <md 的 2 列，不再 md:4 列避免拥挤） */}
+      <div className="grid grid-cols-2 gap-3">
         {PILLAR_COLS.map((col) => {
           const p = side[col.key];
           return (

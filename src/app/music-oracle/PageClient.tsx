@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useAiGate, AiGateModals } from '@/components/ai/useAiGate';
 import { Container } from '@/components/ui/Container';
+import { SplitLayout } from '@/components/ui/SplitLayout';
 import { Footer } from '@/components/layout/Footer';
 import { OracleLoading } from '@/components/ui/OracleLoading';
 import { Share2, RefreshCw, ChevronDown, ChevronUp, Sparkles, ExternalLink } from 'lucide-react';
@@ -444,144 +445,156 @@ export default function MusicOraclePageClient() {
         {result && (
           <div
             ref={resultRef}
-            className="max-w-page mx-auto mt-8 bg-white border border-[#F0EDE8] rounded-2xl p-6 shadow-md animate-slide-up"
+            className="max-w-page lg:max-w-5xl mx-auto mt-8 bg-white border border-[#F0EDE8] rounded-2xl p-6 shadow-md animate-slide-up"
           >
             {/* 标题 */}
             <p className="text-[13px] font-medium text-[#9CA3AF] mb-5 text-center">
               ✨ 命运为你选择了这首歌
             </p>
 
-            {/* 歌曲信息 */}
-            <div className="flex gap-4">
-              <div
-                className="w-[120px] h-[120px] rounded-2xl flex-shrink-0 flex items-center justify-center shadow-sm"
-                style={{
-                  background: cover.bg,
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
-                }}
-              >
-                <span className="text-5xl">{cover.icon}</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <h2 className="text-[22px] font-serif font-semibold text-[#1C1A16]">
-                  《{result.songName}》
-                </h2>
-                <p className="text-sm text-[#6B7280] mt-0.5">
-                  {result.artist}
-                </p>
-                {result.musicTags.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mt-1.5">
-                    {result.musicTags.map((tag, i) => (
-                      <span
-                        key={i}
-                        className="text-xs px-2 py-0.5 rounded-full bg-[#F5F2ED] text-[#6B7280]"
-                      >
-                        {tag}
-                      </span>
-                    ))}
+            {/* 桌面(lg+) 两列：左=歌曲/五行封面(sticky)，右=签文解读+五行分析+操作。
+                <lg 竖堆(封面→签文…) 与移动端原顺序一致；className gap-5 抵消基础 gap-6，
+                使堆叠间距与原 divider my-5 完全对齐，移动端零改动。 */}
+            <SplitLayout
+              asidePosition="left"
+              asideWidth={320}
+              className="gap-5"
+              aside={
+                <div className="flex gap-4">
+                  <div
+                    className="w-[120px] h-[120px] rounded-2xl flex-shrink-0 flex items-center justify-center shadow-sm"
+                    style={{
+                      background: cover.bg,
+                      boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+                    }}
+                  >
+                    <span className="text-5xl">{cover.icon}</span>
                   </div>
-                )}
-                <p className="text-base italic font-serif text-[#1C1A16] leading-relaxed mt-3">
-                  ❝ {result.lyricsQuote} ❞
-                </p>
-              </div>
-            </div>
-
-            {/* 分割线 + 命运签文 */}
-            <div className="relative my-5">
-              <div className="border-t border-[#F0EDE8]" />
-              <span className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-3 text-xs font-medium text-[#9CA3AF] tracking-[0.2em]">
-                命运签文
-              </span>
-            </div>
-
-            {/* 签文正文 */}
-            <div className="text-[15px] text-[#1C1A16] leading-[1.9] whitespace-pre-line min-h-[2rem]">
-              {!result.oracleText && streaming ? (
-                <OracleLoading />
-              ) : (
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-[22px] font-serif font-semibold text-[#1C1A16]">
+                      《{result.songName}》
+                    </h2>
+                    <p className="text-sm text-[#6B7280] mt-0.5">
+                      {result.artist}
+                    </p>
+                    {result.musicTags.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mt-1.5">
+                        {result.musicTags.map((tag, i) => (
+                          <span
+                            key={i}
+                            className="text-xs px-2 py-0.5 rounded-full bg-[#F5F2ED] text-[#6B7280]"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <p className="text-base italic font-serif text-[#1C1A16] leading-relaxed mt-3">
+                      ❝ {result.lyricsQuote} ❞
+                    </p>
+                  </div>
+                </div>
+              }
+              main={
                 <>
-                  {result.oracleText}
-                  {streaming && result.oracleText && (
-                    <span className="inline-block w-1.5 h-4 ml-0.5 bg-[#1C1A16]/40 align-middle animate-pulse" />
-                  )}
+                  {/* 分割线 + 命运签文（去顶部外边距，避免与列间距叠加） */}
+                  <div className="relative mb-5">
+                    <div className="border-t border-[#F0EDE8]" />
+                    <span className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-3 text-xs font-medium text-[#9CA3AF] tracking-[0.2em]">
+                      命运签文
+                    </span>
+                  </div>
+
+                  {/* 签文正文 */}
+                  <div className="text-[15px] text-[#1C1A16] leading-[1.9] whitespace-pre-line min-h-[2rem]">
+                    {!result.oracleText && streaming ? (
+                      <OracleLoading />
+                    ) : (
+                      <>
+                        {result.oracleText}
+                        {streaming && result.oracleText && (
+                          <span className="inline-block w-1.5 h-4 ml-0.5 bg-[#1C1A16]/40 align-middle animate-pulse" />
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  {/* 五行分析 */}
+                  <div className="bg-[#FAF9F6] rounded-xl p-4 mt-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <div>
+                        <span className="text-xs text-[#9CA3AF]">你的问题</span>
+                        <p className="text-[13px] text-[#4B5563] font-medium mt-0.5">
+                          {activeTag || '自由提问'} · {question.length > 15 ? question.slice(0, 15) + '...' : question}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-xs text-[#9CA3AF]">今日天干</span>
+                        <p className="text-[13px] text-[#4B5563] font-medium mt-0.5">
+                          {result.todayGanzhi}（{result.wuxingNote}）
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-xs text-[#9CA3AF]">情绪色彩</span>
+                        <p className="text-[13px] text-[#4B5563] font-medium mt-0.5">
+                          {result.musicTags.join(' · ')}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 操作按钮 */}
+                  <div className="flex flex-col sm:flex-row flex-wrap items-center gap-3 mt-6">
+                    <button
+                      onClick={handleShare}
+                      disabled={sharing}
+                      className="w-full sm:w-auto min-h-[44px] bg-brand-accent text-white rounded-xl px-6 py-2.5 text-sm font-medium hover:bg-brand-accent-hover transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      <Share2 className="w-4 h-4" />
+                      {sharing ? '生成中...' : '下载分享图'}
+                    </button>
+                    <a
+                      href={`https://music.163.com/#/search/m/?s=${encodeURIComponent(result.songName + ' ' + result.artist)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full sm:w-auto min-h-[44px] border border-[#E5E0D8] text-[#6B7280] rounded-xl px-6 py-2.5 text-sm font-medium hover:border-[#1C1A16] hover:text-[#1C1A16] transition-colors flex items-center justify-center gap-2"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      去听这首歌
+                    </a>
+                    {result.recordId && (
+                      <button
+                        onClick={async () => {
+                          const url = `${window.location.origin}/api/og/music-oracle/${result.recordId}`;
+                          try {
+                            await navigator.clipboard.writeText(url);
+                            setLinkCopied(true);
+                            setTimeout(() => setLinkCopied(false), 2000);
+                          } catch {}
+                        }}
+                        className="w-full sm:w-auto min-h-[44px] border border-[#E5E0D8] text-[#6B7280] rounded-xl px-6 py-2.5 text-sm font-medium hover:border-[#1C1A16] hover:text-[#1C1A16] transition-colors flex items-center justify-center gap-2"
+                      >
+                        {linkCopied ? '✅ 已复制' : '🔗 复制分享链接'}
+                      </button>
+                    )}
+                    <button
+                      onClick={handleReset}
+                      className="w-full sm:w-auto min-h-[44px] border border-[#E5E0D8] text-[#6B7280] rounded-xl px-6 py-2.5 text-sm font-medium hover:border-[#1C1A16] hover:text-[#1C1A16] transition-colors flex items-center justify-center gap-2"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                      重新求签
+                    </button>
+                  </div>
+
+                  {/* 历史记录入口 */}
+                  <div className="text-center mt-4">
+                    <a href="/history" className="text-xs text-[#9CA3AF] hover:text-[#6B7280] underline transition-colors">
+                      查看我的命理历史记录 →
+                    </a>
+                  </div>
                 </>
-              )}
-            </div>
-
-            {/* 五行分析 */}
-            <div className="bg-[#FAF9F6] rounded-xl p-4 mt-5">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <div>
-                  <span className="text-xs text-[#9CA3AF]">你的问题</span>
-                  <p className="text-[13px] text-[#4B5563] font-medium mt-0.5">
-                    {activeTag || '自由提问'} · {question.length > 15 ? question.slice(0, 15) + '...' : question}
-                  </p>
-                </div>
-                <div>
-                  <span className="text-xs text-[#9CA3AF]">今日天干</span>
-                  <p className="text-[13px] text-[#4B5563] font-medium mt-0.5">
-                    {result.todayGanzhi}（{result.wuxingNote}）
-                  </p>
-                </div>
-                <div>
-                  <span className="text-xs text-[#9CA3AF]">情绪色彩</span>
-                  <p className="text-[13px] text-[#4B5563] font-medium mt-0.5">
-                    {result.musicTags.join(' · ')}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* 操作按钮 */}
-            <div className="flex flex-col sm:flex-row items-center gap-3 mt-6">
-              <button
-                onClick={handleShare}
-                disabled={sharing}
-                className="w-full sm:w-auto min-h-[44px] bg-brand-accent text-white rounded-xl px-6 py-2.5 text-sm font-medium hover:bg-brand-accent-hover transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                <Share2 className="w-4 h-4" />
-                {sharing ? '生成中...' : '下载分享图'}
-              </button>
-              <a
-                href={`https://music.163.com/#/search/m/?s=${encodeURIComponent(result.songName + ' ' + result.artist)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full sm:w-auto min-h-[44px] border border-[#E5E0D8] text-[#6B7280] rounded-xl px-6 py-2.5 text-sm font-medium hover:border-[#1C1A16] hover:text-[#1C1A16] transition-colors flex items-center justify-center gap-2"
-              >
-                <ExternalLink className="w-4 h-4" />
-                去听这首歌
-              </a>
-              {result.recordId && (
-                <button
-                  onClick={async () => {
-                    const url = `${window.location.origin}/api/og/music-oracle/${result.recordId}`;
-                    try {
-                      await navigator.clipboard.writeText(url);
-                      setLinkCopied(true);
-                      setTimeout(() => setLinkCopied(false), 2000);
-                    } catch {}
-                  }}
-                  className="w-full sm:w-auto min-h-[44px] border border-[#E5E0D8] text-[#6B7280] rounded-xl px-6 py-2.5 text-sm font-medium hover:border-[#1C1A16] hover:text-[#1C1A16] transition-colors flex items-center justify-center gap-2"
-                >
-                  {linkCopied ? '✅ 已复制' : '🔗 复制分享链接'}
-                </button>
-              )}
-              <button
-                onClick={handleReset}
-                className="w-full sm:w-auto min-h-[44px] border border-[#E5E0D8] text-[#6B7280] rounded-xl px-6 py-2.5 text-sm font-medium hover:border-[#1C1A16] hover:text-[#1C1A16] transition-colors flex items-center justify-center gap-2"
-              >
-                <RefreshCw className="w-4 h-4" />
-                重新求签
-              </button>
-            </div>
-
-            {/* 历史记录入口 */}
-            <div className="text-center mt-4">
-              <a href="/history" className="text-xs text-[#9CA3AF] hover:text-[#6B7280] underline transition-colors">
-                查看我的命理历史记录 →
-              </a>
-            </div>
+              }
+            />
           </div>
         )}
 

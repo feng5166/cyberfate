@@ -517,9 +517,9 @@ export function MarriagePageClient() {
         </div>
 
         <Container>
-          <div className="max-w-page mx-auto space-y-12 px-4 md:px-0">
+          <div className="space-y-12 px-4 md:px-0">
             {!result && (
-              <form onSubmit={handleSubmit} className="space-y-10">
+              <form onSubmit={handleSubmit} className="space-y-10 max-w-page mx-auto w-full">
                 <div className="grid gap-6 md:grid-cols-2">
                   <SideForm sideKey="male" data={maleData} onChange={updateMale} />
                   <SideForm sideKey="female" data={femaleData} onChange={updateFemale} />
@@ -626,7 +626,7 @@ export function MarriagePageClient() {
             )}
 
             {result && (
-              <div className="space-y-8">
+              <div className="space-y-8 max-w-6xl mx-auto w-full">
                 {/* 重新填写入口 */}
                 <div className="flex justify-end">
                   <button
@@ -775,24 +775,30 @@ export function MarriagePageClient() {
                   </div>
                 )}
 
-                {/* 模块 C：男方十神分析 */}
-                {result.male?.shishen && result.male?.shishenSummary && (
-                  <ShishenSection
-                    title="男方十神分析"
-                    subtitle="男方八字中的主要十神关系（按四柱展开）"
-                    side={result.male.shishen}
-                    summary={result.male.shishenSummary}
-                  />
-                )}
+                {/* 模块 C/D：男女十神分析（桌面 md+ 男左女右并排，移动端竖堆不变） */}
+                {((result.male?.shishen && result.male?.shishenSummary) ||
+                  (result.female?.shishen && result.female?.shishenSummary)) && (
+                  <div className="grid gap-8 md:gap-4 md:grid-cols-2">
+                    {/* 模块 C：男方十神分析 */}
+                    {result.male?.shishen && result.male?.shishenSummary && (
+                      <ShishenSection
+                        title="男方十神分析"
+                        subtitle="男方八字中的主要十神关系（按四柱展开）"
+                        side={result.male.shishen}
+                        summary={result.male.shishenSummary}
+                      />
+                    )}
 
-                {/* 模块 D：女方十神分析 */}
-                {result.female?.shishen && result.female?.shishenSummary && (
-                  <ShishenSection
-                    title="女方十神分析"
-                    subtitle="女方八字中的主要十神关系（按四柱展开）"
-                    side={result.female.shishen}
-                    summary={result.female.shishenSummary}
-                  />
+                    {/* 模块 D：女方十神分析 */}
+                    {result.female?.shishen && result.female?.shishenSummary && (
+                      <ShishenSection
+                        title="女方十神分析"
+                        subtitle="女方八字中的主要十神关系（按四柱展开）"
+                        side={result.female.shishen}
+                        summary={result.female.shishenSummary}
+                      />
+                    )}
+                  </div>
                 )}
 
                 {/* 模块 E：AI 合婚分析（按需触发） */}
