@@ -6,7 +6,7 @@ import { refundQuota, checkBaziQuota } from '@/lib/quota';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { redis } from '@/lib/cache/redis';
 import { getEnvVar } from '@/lib/utils/api-wrapper';
-import { AI_BASE_URL, PRIMARY_MODEL } from '@/lib/ai/models';
+import { AI_BASE_URL, PRIMARY_MODEL, FALLBACK_MODEL } from '@/lib/ai/models';
 import { BAZI_STREAM_SYSTEM_PROMPT, buildBaziStreamPrompt } from '@/lib/ai/prompts';
 import { generateFallbackBaziAnalysis } from '@/lib/ai/client';
 import { formatAnalysis } from '@/lib/ai/formatAnalysis';
@@ -151,13 +151,12 @@ export async function POST(req: NextRequest) {
   );
   const facts = toolchainToPromptFacts(toolSteps);
 
-  // 3. 调 DeepSeek stream
+  // 3. 调 DeepSeek stream —— 主模型失败(网络错误/非2xx)先切更快的兜底模型，都不行才落本地降级
   const prompt = buildBaziStreamPrompt(baziResult as BaziResult, name, gender, dayunExtra, facts);
   const proxy = attachClientAbort(req);
 
-  let upstream: Response;
-  try {
-    upstream = await fetch(`${AI_BASE_URL}/chat/completions`, {
+  const openUpstream = (model: string) =>
+    fetch(`${AI_BASE_URL}/chat/completions`, {
       method: 'POST',
       signal: proxy.signal,
       headers: {
@@ -165,7 +164,7 @@ export async function POST(req: NextRequest) {
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: PRIMARY_MODEL,
+        model,
         max_tokens: 4000,
         temperature: 0.3,
         stream: true,
@@ -176,17 +175,28 @@ export async function POST(req: NextRequest) {
         ],
       }),
     });
-  } catch (err) {
-    logger.error(SERVICE, 'upstream fetch failed', err instanceof Error ? err : undefined);
+
+  const modelsToTry = PRIMARY_MODEL === FALLBACK_MODEL ? [PRIMARY_MODEL] : [PRIMARY_MODEL, FALLBACK_MODEL];
+  let upstream: Response | null = null;
+  for (const model of modelsToTry) {
+    if (proxy.signal.aborted) break;
+    try {
+      const res = await openUpstream(model);
+      if (res.ok && res.body) {
+        upstream = res;
+        break;
+      }
+      logger.error(SERVICE, `upstream non-ok ${res.status} (model=${model})`);
+    } catch (err) {
+      logger.error(SERVICE, `upstream fetch failed (model=${model})`, err instanceof Error ? err : undefined);
+    }
+  }
+
+  if (!upstream) {
     proxy.release();
     return streamFallback({ reason: 'upstream_error', baziResult, session, name, birthDate });
   }
-
-  if (!upstream.ok || !upstream.body) {
-    logger.error(SERVICE, `upstream non-ok ${upstream.status}`);
-    proxy.release();
-    return streamFallback({ reason: `upstream_${upstream.status}`, baziResult, session, name, birthDate });
-  }
+  const upstreamRes = upstream; // 收窄为非空，供下方闭包引用
 
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
@@ -203,7 +213,7 @@ export async function POST(req: NextRequest) {
         await sleep(120);
       }
 
-      upstreamReader = upstream.body!.getReader();
+      upstreamReader = upstreamRes.body!.getReader();
       let buffer = '';
       let fullText = '';
       let outputStarted = false; // 第一个「【」出现前丢弃思考过程
@@ -255,15 +265,16 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        // 流结束 — 内容是纯文本，长度过短认为失败走 fallback
-        if (fullText.trim().length < 100) {
+        // 流结束 — 未进入正文(从未出现「【」，fullText 仍是思考过程)或内容过短，都判失败走 fallback，
+        // 避免把思考过程当正文推给前端并污染永久缓存
+        if (!outputStarted || fullText.trim().length < 100) {
           await handleFallback(controller, encoder, baziResult, session, name, birthDate);
           return;
         }
 
-        // 写 Redis 缓存（存纯文本）
+        // 写 Redis 缓存（存纯文本，30 天 TTL：即便偶发脏内容也会自然过期，不会永久污染该命盘）
         try {
-          await redis.set(cacheKey, fullText);
+          await redis.set(cacheKey, fullText, { ex: 60 * 60 * 24 * 30 });
         } catch (err) {
           console.warn('[bazi stream] cache write error', err);
         }

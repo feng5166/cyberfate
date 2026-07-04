@@ -18,10 +18,10 @@ import {
 import type { BaziResult, BaziAnalysis } from '../bazi/types';
 import { callExternalAPI, getEnvVar } from '../utils/api-wrapper';
 import { redis } from '../cache/redis';
-import { AI_BASE_URL, PRIMARY_MODEL } from './models';
+import { AI_BASE_URL, PRIMARY_MODEL, FALLBACK_MODEL } from './models';
+import { withCircuitBreaker } from './circuitBreaker';
 
 const DEEPSEEK_BASE_URL = AI_BASE_URL;
-const DEEPSEEK_MODEL = PRIMARY_MODEL;
 
 const TIMEOUT_CONFIG: Record<string, number> = {
   bazi: 55000,
@@ -35,15 +35,47 @@ const TIMEOUT_CONFIG: Record<string, number> = {
   default: 15000,
 };
 
+// 按模块差异化温度：叙事类(塔罗/六爻/梅花)略高求文采与画面感，命理推演类(八字/每日)低温求稳定可复现
+const TEMPERATURE_CONFIG: Record<string, number> = {
+  bazi: 0.3,
+  daily: 0.3,
+  marriage: 0.4,
+  tarot: 0.6,
+  liuyao: 0.5,
+  meihua: 0.5,
+  default: 0.3,
+};
+
 function getTimeout(feature?: string): number {
   if (!feature) return TIMEOUT_CONFIG.default;
   return TIMEOUT_CONFIG[feature] ?? TIMEOUT_CONFIG.default;
 }
 
-async function callDeepSeek(systemPrompt: string, userPrompt: string, maxTokens = 800, feature?: string): Promise<string> {
-  const apiKey = getEnvVar('DEEPSEEK_API_KEY');
-  if (!apiKey) throw new Error('DEEPSEEK_API_KEY 未配置');
+function getTemperature(feature?: string): number {
+  if (!feature) return TEMPERATURE_CONFIG.default;
+  return TEMPERATURE_CONFIG[feature] ?? TEMPERATURE_CONFIG.default;
+}
 
+interface CallDeepSeekOptions {
+  /** 走 response_format: json_object，让网关强制返回合法 JSON（system prompt 必须含 "json" 字样） */
+  jsonMode?: boolean;
+}
+
+function isTimeoutError(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return msg.includes('AbortError') || msg.includes('aborted') || msg.includes('timed out');
+}
+
+/** 单个模型的调用：含网络错误与瞬时 5xx 的有限重试；超时/4xx 直接抛出不重试 */
+async function callModelOnce(
+  model: string,
+  apiKey: string,
+  systemPrompt: string,
+  userPrompt: string,
+  maxTokens: number,
+  feature: string | undefined,
+  opts: CallDeepSeekOptions,
+): Promise<string> {
   const maxRetries = 3;
   let lastError: unknown;
 
@@ -59,10 +91,11 @@ async function callDeepSeek(systemPrompt: string, userPrompt: string, maxTokens 
           'Authorization': `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: DEEPSEEK_MODEL,
+          model,
           max_tokens: maxTokens,
-          temperature: 0.3,
+          temperature: getTemperature(feature),
           enable_thinking: false,
+          ...(opts.jsonMode ? { response_format: { type: 'json_object' } } : {}),
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt },
@@ -73,7 +106,15 @@ async function callDeepSeek(systemPrompt: string, userPrompt: string, maxTokens 
       clearTimeout(timeoutId);
       if (!response.ok) {
         const err = await response.text();
-        throw new Error(`DeepSeek API error ${response.status}: ${err}`);
+        const apiError = new Error(`DeepSeek API error ${response.status}: ${err}`);
+        // 瞬时 5xx(网关抖动)值得再试；4xx 是请求本身有问题，直接抛
+        if (response.status >= 500 && attempt < maxRetries - 1) {
+          lastError = apiError;
+          console.warn(`[callDeepSeek:${model}] ${response.status}, retrying...`);
+          await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
+          continue;
+        }
+        throw apiError;
       }
 
       const data = await response.json();
@@ -89,9 +130,11 @@ async function callDeepSeek(systemPrompt: string, userPrompt: string, maxTokens 
       clearTimeout(timeoutId);
       lastError = err;
       const msg = err instanceof Error ? err.message : String(err);
-      // fetch failed = 网络错误，值得重试；AbortError = 超时，不重试
-      if (attempt < maxRetries - 1 && !msg.includes('AbortError') && !msg.includes('aborted') && !msg.includes('API error')) {
-        console.warn(`[callDeepSeek] attempt ${attempt + 1} failed (${msg}), retrying...`);
+      // 超时(AbortError)不重试；API error 已在上面按状态码决定过，这里不再重试；仅网络错误重试
+      const isAbort = msg.includes('AbortError') || msg.includes('aborted');
+      const isApiError = msg.includes('API error');
+      if (attempt < maxRetries - 1 && !isAbort && !isApiError) {
+        console.warn(`[callDeepSeek:${model}] attempt ${attempt + 1} failed (${msg}), retrying...`);
         await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
         continue;
       }
@@ -99,6 +142,32 @@ async function callDeepSeek(systemPrompt: string, userPrompt: string, maxTokens 
     }
   }
   throw lastError;
+}
+
+/**
+ * 调 DeepSeek：主模型失败 → 非超时错误再用更快的兜底模型试一次；全程走熔断保护。
+ * 超时说明本次预算已耗尽，不再追加兜底模型，直接抛给上层落本地降级。
+ */
+async function callDeepSeek(
+  systemPrompt: string,
+  userPrompt: string,
+  maxTokens = 800,
+  feature?: string,
+  opts: CallDeepSeekOptions = {},
+): Promise<string> {
+  const apiKey = getEnvVar('DEEPSEEK_API_KEY');
+  if (!apiKey) throw new Error('DEEPSEEK_API_KEY 未配置');
+
+  return withCircuitBreaker(`ai:${feature ?? 'default'}`, async () => {
+    try {
+      return await callModelOnce(PRIMARY_MODEL, apiKey, systemPrompt, userPrompt, maxTokens, feature, opts);
+    } catch (err) {
+      if (isTimeoutError(err) || PRIMARY_MODEL === FALLBACK_MODEL) throw err;
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn(`[callDeepSeek] 主模型 ${PRIMARY_MODEL} 失败 (${msg})，切兜底模型 ${FALLBACK_MODEL} 重试`);
+      return await callModelOnce(FALLBACK_MODEL, apiKey, systemPrompt, userPrompt, maxTokens, feature, opts);
+    }
+  });
 }
 
 /**
@@ -150,7 +219,7 @@ export async function generateBaziAnalysis(
 
   const apiResult = await callExternalAPI(
     async () => {
-      const text = await callDeepSeek(BAZI_SYSTEM_PROMPT, prompt, 4000, 'bazi');
+      const text = await callDeepSeek(BAZI_SYSTEM_PROMPT, prompt, 4000, 'bazi', { jsonMode: true });
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error('No JSON found in response');
@@ -245,7 +314,7 @@ export async function generateDailyFortune(
 
   const apiResult = await callExternalAPI(
     async () => {
-      const text = await callDeepSeek(DAILY_SYSTEM_PROMPT, prompt, 800, 'daily');
+      const text = await callDeepSeek(DAILY_SYSTEM_PROMPT, prompt, 800, 'daily', { jsonMode: true });
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error('No JSON found in response');
@@ -419,7 +488,7 @@ export async function generateTarotReading(
       spread: input.spread,
       spreadName: input.spreadName,
     });
-    const text = await callDeepSeek(systemPrompt, prompt, getTarotMaxTokens(input.spread), 'tarot');
+    const text = await callDeepSeek(systemPrompt, prompt, getTarotMaxTokens(input.spread), 'tarot', { jsonMode: true });
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       console.warn('[AI 塔罗解读] 无法提取 JSON，text:', text.slice(0, 200));
@@ -590,7 +659,7 @@ export async function generateMeihuaDecision(
 
   try {
     const prompt = buildMeihuaDecisionPrompt(input);
-    const text = await callDeepSeek(MEIHUA_DECISION_SYSTEM_PROMPT, prompt, 2000, 'meihua');
+    const text = await callDeepSeek(MEIHUA_DECISION_SYSTEM_PROMPT, prompt, 2000, 'meihua', { jsonMode: true });
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       return { ...fallback, _source: 'fallback' };
@@ -662,7 +731,7 @@ export async function generateLiuYaoReading(
 
   try {
     const prompt = buildLiuYaoPrompt(input);
-    const text = await callDeepSeek(LIUYAO_SYSTEM_PROMPT, prompt, 2400, 'liuyao');
+    const text = await callDeepSeek(LIUYAO_SYSTEM_PROMPT, prompt, 2400, 'liuyao', { jsonMode: true });
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       return { ...fallback, _source: 'fallback' };
