@@ -151,10 +151,11 @@ describe('getMonthLunarDays', () => {
 describe('time-dependent: calculating "today" with fake timers', () => {
   it('computing huangli for the faked current date works', () => {
     vi.useFakeTimers();
-    vi.setSystemTime(new Date('2026-06-17T10:00:00+08:00'));
+    // 用 UTC 正午 + getUTC* 派生日期，避免测试机时区（如 PDT）把「今天」滚到前一天，导致 flaky
+    vi.setSystemTime(new Date('2026-06-17T12:00:00Z'));
     const now = new Date();
-    const iso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
-      now.getDate(),
+    const iso = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(
+      now.getUTCDate(),
     ).padStart(2, '0')}`;
     const h = calculateHuangli(iso);
     expect(h.solarYear).toBe(2026);
