@@ -46,8 +46,29 @@ describe('proxyLLMDeltaStream', () => {
     expect(out).toContain('data: {"content":"你"}\n\n');
     expect(out).toContain('data: {"content":"好"}\n\n');
     expect(out.trim().endsWith('data: [DONE]')).toBe(true);
-    expect(onComplete).toHaveBeenCalledWith('你好');
+    expect(onComplete).toHaveBeenCalledWith('你好', false); // 完整答案 + 未中断
     expect(handle.release).toHaveBeenCalled();
+  });
+
+  it('contentFrame 可自定义帧形状（如 {type:"content"}）', async () => {
+    const upstream = upstreamFrom(['data: {"choices":[{"delta":{"content":"x"}}]}\n\n', 'data: [DONE]\n\n']);
+    const out = await collect(
+      proxyLLMDeltaStream(upstream, fakeHandle(), { contentFrame: (content) => ({ type: 'content', content }) }),
+    );
+    expect(out).toContain('data: {"type":"content","content":"x"}\n\n');
+  });
+
+  it('prefixFrames 在 delta 之前先发（工具链动画）', async () => {
+    const upstream = upstreamFrom(['data: {"choices":[{"delta":{"content":"a"}}]}\n\n', 'data: [DONE]\n\n']);
+    const out = await collect(
+      proxyLLMDeltaStream(upstream, fakeHandle(), {
+        prefixFrames: [{ frame: { type: 'step', name: 's1' } }],
+      }),
+    );
+    const stepIdx = out.indexOf('"type":"step"');
+    const contentIdx = out.indexOf('"content":"a"');
+    expect(stepIdx).toBeGreaterThanOrEqual(0);
+    expect(stepIdx).toBeLessThan(contentIdx); // 前置帧在内容帧之前
   });
 
   it('跳过空 delta / 非 data 行 / 坏 JSON；始终以 [DONE] 结尾', async () => {

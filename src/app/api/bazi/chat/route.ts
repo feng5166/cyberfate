@@ -7,6 +7,8 @@ import { checkRateLimit } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 import { PRIMARY_MODEL } from '@/lib/ai/models';
 import { getPrimaryProvider } from '@/lib/ai/provider';
+import { attachClientAbort, proxyLLMDeltaStream } from '@/lib/ai/streamProxy';
+import { SSE_HEADERS } from '@/lib/ai/sse';
 import { calculateBazi } from '@/lib/bazi/calculator';
 import { runBaziToolchain, toolchainToPromptFacts, type ToolStepResult } from '@/lib/bazi/tools';
 import { redis } from '@/lib/cache/redis';
@@ -390,14 +392,12 @@ ${answerRule}
         ? 3500
         : 800;
 
-    // H4: AbortController — 客户端断连立即关掉上游，避免烧 token
-    const ac = new AbortController();
-    const onClientAbort = () => ac.abort();
-    req.signal.addEventListener('abort', onClientAbort);
+    // 客户端断连立即关掉上游，避免烧 token
+    const abortHandle = attachClientAbort(req);
 
     const response = await fetch(`${provider.baseUrl}/chat/completions`, {
       method: 'POST',
-      signal: ac.signal,
+      signal: abortHandle.signal,
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${provider.apiKey}`,
@@ -416,81 +416,28 @@ ${answerRule}
     });
 
     if (!response.ok || !response.body) {
-      req.signal.removeEventListener('abort', onClientAbort);
+      abortHandle.release();
       logger.error(SERVICE, `DeepSeek API error: ${response.status}`);
       return Response.json({ error: '服务暂时不可用' }, { status: 502 });
     }
 
-    const encoder = new TextEncoder();
-    const upstreamBody = response.body;
-    const reader = upstreamBody.getReader();
-    const readable = new ReadableStream({
-      async start(controller) {
-        const decoder = new TextDecoder();
-        let buffer = '';
-
-        // 先逐条推送真实工具链步骤（带轻微节奏，纯展示节奏，结果均为真实计算）
-        for (const step of toolSteps) {
-          if (ac.signal.aborted) break;
-          controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify({ type: 'step', name: step.name, label: step.label, data: step.data })}\n\n`),
-          );
-          await sleep(150);
-        }
-
-        let fullAnswer = '';
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n');
-            buffer = lines.pop() || '';
-
-            for (const line of lines) {
-              const trimmed = line.trim();
-              if (!trimmed || !trimmed.startsWith('data:')) continue;
-              const data = trimmed.slice(5).trim();
-              if (data === '[DONE]') {
-                controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-                continue;
-              }
-              try {
-                const json = JSON.parse(data);
-                const content = json.choices?.[0]?.delta?.content;
-                if (content) {
-                  fullAnswer += content;
-                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'content', content })}\n\n`));
-                }
-              } catch {}
-            }
-          }
-          // 写结果缓存（TTL 7 天；仅缓存非空且未被中断的完整答案）
-          if (cacheKey && !ac.signal.aborted && fullAnswer.trim().length > 30) {
+    return new Response(
+      proxyLLMDeltaStream(response, abortHandle, {
+        // 工具链步骤先逐条推送作「推算中」动画（结果均为真实计算）
+        prefixFrames: toolSteps.map((step) => ({
+          frame: { type: 'step', name: step.name, label: step.label, data: step.data },
+          delayMs: 150,
+        })),
+        contentFrame: (content) => ({ type: 'content', content }),
+        // 流读完且未被中断的完整答案 → 写结果缓存（TTL 7 天）
+        onComplete: async (fullAnswer, aborted) => {
+          if (cacheKey && !aborted && fullAnswer.trim().length > 30) {
             try { await redis.set(cacheKey, fullAnswer, { ex: 604800 }); } catch {}
           }
-        } catch (err) {
-          logger.error(SERVICE, 'Stream error', err instanceof Error ? err : undefined);
-        } finally {
-          req.signal.removeEventListener('abort', onClientAbort);
-          controller.close();
-        }
-      },
-      async cancel() {
-        ac.abort();
-        try { await reader.cancel(); } catch {}
-        req.signal.removeEventListener('abort', onClientAbort);
-      },
-    });
-
-    return new Response(readable, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        Connection: 'keep-alive',
-      },
-    });
+        },
+      }),
+      { headers: SSE_HEADERS },
+    );
   } catch (error) {
     const errMsg = error instanceof Error ? error.message : String(error);
     const errStack = error instanceof Error ? error.stack : undefined;
