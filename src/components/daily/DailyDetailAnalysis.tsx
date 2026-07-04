@@ -253,12 +253,12 @@ export default function DailyDetailAnalysis({ isLoggedIn, isVip, onLoginRequired
               <button
                 className="ddap-cta"
                 onClick={handleGenerate}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#A86425')}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#C2762B')}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#3A352E')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#1C1A16')}
                 style={{
                   padding: '10px 28px',
                   minHeight: 44,
-                  backgroundColor: '#C2762B',
+                  backgroundColor: '#1C1A16',
                   color: 'white',
                   borderRadius: 999,
                   border: 'none',
@@ -283,7 +283,7 @@ export default function DailyDetailAnalysis({ isLoggedIn, isVip, onLoginRequired
               {content ? (
                 <div ref={contentRef} style={{ maxHeight: 400, overflowY: 'auto', paddingRight: 8 }}>
                   {renderContent(content)}
-                  <span className="animate-pulse" style={{ display: 'inline-block', width: 2, height: 16, backgroundColor: '#C2762B', marginLeft: 2, verticalAlign: 'middle' }} />
+                  <span className="animate-pulse" style={{ display: 'inline-block', width: 2, height: 16, backgroundColor: '#1C1A16', marginLeft: 2, verticalAlign: 'middle' }} />
                 </div>
               ) : (
                 <div style={{ textAlign: 'center', padding: '24px 0' }}>
@@ -292,7 +292,7 @@ export default function DailyDetailAnalysis({ isLoggedIn, isVip, onLoginRequired
                   </div>
                   <div style={{ marginTop: 12, display: 'flex', justifyContent: 'center', gap: 4 }}>
                     {[0, 1, 2].map(i => (
-                      <div key={i} className="animate-bounce" style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#C2762B', animationDelay: `${i * 0.15}s` }} />
+                      <div key={i} className="animate-bounce" style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#1C1A16', animationDelay: `${i * 0.15}s` }} />
                     ))}
                   </div>
                 </div>
@@ -319,9 +319,9 @@ export default function DailyDetailAnalysis({ isLoggedIn, isVip, onLoginRequired
                     padding: '10px 28px',
                     minHeight: 44,
                     backgroundColor: 'transparent',
-                    color: '#C2762B',
+                    color: '#1C1A16',
                     borderRadius: 999,
-                    border: '1px solid #C2762B',
+                    border: '1px solid #1C1A16',
                     fontSize: 13,
                     cursor: 'pointer',
                   }}
@@ -339,7 +339,7 @@ export default function DailyDetailAnalysis({ isLoggedIn, isVip, onLoginRequired
                 每日运势详细分析
               </h3>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                <span style={{ color: '#C2762B', fontSize: 16 }}>✓</span>
+                <span style={{ color: '#1C1A16', fontSize: 16 }}>✓</span>
                 <span style={{ fontSize: 14, color: 'rgba(28,26,22,0.7)' }}>今日已为您生成详细解读</span>
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
@@ -351,7 +351,7 @@ export default function DailyDetailAnalysis({ isLoggedIn, isVip, onLoginRequired
                 </button>
                 <button
                   onClick={() => { window.location.href = '/pricing'; }}
-                  style={{ flex: 1, padding: '10px 0', minHeight: 44, backgroundColor: '#C2762B', color: 'white', borderRadius: 999, border: 'none', fontSize: 13, cursor: 'pointer' }}
+                  style={{ flex: 1, padding: '10px 0', minHeight: 44, backgroundColor: '#1C1A16', color: 'white', borderRadius: 999, border: 'none', fontSize: 13, cursor: 'pointer' }}
                 >
                   升级 Pro 重新生成
                 </button>
@@ -381,7 +381,7 @@ export default function DailyDetailAnalysis({ isLoggedIn, isVip, onLoginRequired
               <div style={{ textAlign: 'center', padding: 40, color: 'rgba(28,26,22,0.5)' }}>加载中...</div>
             ) : selectedHistory ? (
               <div>
-                <button onClick={() => setSelectedHistory(null)} style={{ fontSize: 13, color: '#C2762B', background: 'none', border: 'none', cursor: 'pointer', marginBottom: 16, padding: 0 }}>
+                <button onClick={() => setSelectedHistory(null)} style={{ fontSize: 13, color: '#1C1A16', background: 'none', border: 'none', cursor: 'pointer', marginBottom: 16, padding: 0 }}>
                   ← 返回列表
                 </button>
                 <div style={{ fontSize: 14, fontWeight: 500, color: '#1C1A16', marginBottom: 12 }}>{selectedHistory.date}</div>
@@ -425,7 +425,7 @@ export default function DailyDetailAnalysis({ isLoggedIn, isVip, onLoginRequired
                         <p style={{ fontSize: 13, color: 'rgba(28,26,22,0.6)', marginBottom: 12 }}>仅 Pro 用户可查看更多历史</p>
                         <button
                           onClick={() => { window.location.href = '/pricing'; }}
-                          style={{ padding: '8px 20px', minHeight: 44, backgroundColor: '#C2762B', color: 'white', borderRadius: 999, border: 'none', fontSize: 13, cursor: 'pointer' }}
+                          style={{ padding: '8px 20px', minHeight: 44, backgroundColor: '#1C1A16', color: 'white', borderRadius: 999, border: 'none', fontSize: 13, cursor: 'pointer' }}
                         >
                           升级 Pro 解锁全部历史
                         </button>

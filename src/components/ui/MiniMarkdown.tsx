@@ -110,7 +110,7 @@ export function MiniMarkdown({ text, className }: { text: string; className?: st
         i++;
       }
       blocks.push(
-        <blockquote key={`q${key++}`} className="border-l-2 border-[#C2762B]/40 pl-3 my-2 text-[#1C1A16]/70">
+        <blockquote key={`q${key++}`} className="border-l-2 border-[#1C1A16]/40 pl-3 my-2 text-[#1C1A16]/70">
           {quote.map((q, qi) => <p key={qi}>{renderInline(q, `q${key}-${qi}`)}</p>)}
         </blockquote>,
       );

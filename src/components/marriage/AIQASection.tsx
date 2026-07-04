@@ -147,7 +147,7 @@ export function AIQASection({
           {history.map((h, i) => (
             <div key={i} className="space-y-2">
               <div className="flex items-start gap-2 justify-end">
-                <div className="rounded-2xl bg-[#FAF3EC] border border-[#C2762B]/15 px-4 py-2.5 max-w-[85%]">
+                <div className="rounded-2xl bg-[#F6F4F1] border border-[#1C1A16]/15 px-4 py-2.5 max-w-[85%]">
                   <p className="text-sm text-[#1C1A16] leading-relaxed">{h.question}</p>
                 </div>
               </div>
@@ -155,7 +155,7 @@ export function AIQASection({
                 <div className="rounded-2xl bg-[#FAF9F6] border border-[#E5E0D8] px-4 py-3 max-w-[90%]">
                   {h.pending ? (
                     <div className="flex items-center gap-2 text-xs text-[#1C1A16]/55">
-                      <Loader2 className="w-3.5 h-3.5 animate-spin text-[#C2762B]" />
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-[#1C1A16]" />
                       命理师正在解读…
                     </div>
                   ) : h.error ? (
@@ -180,7 +180,7 @@ export function AIQASection({
           onKeyDown={handleKey}
           placeholder="输入你的问题，例如：婚姻质量如何？"
           disabled={loading}
-          className="flex-1 h-11 rounded-lg border border-[#E5E0D8] bg-white px-4 text-sm text-[#1C1A16] placeholder:text-[#1C1A16]/40 focus:border-[#C2762B] focus:ring-2 focus:ring-[#C2762B]/15 outline-none transition-all"
+          className="flex-1 h-11 rounded-lg border border-[#E5E0D8] bg-white px-4 text-sm text-[#1C1A16] placeholder:text-[#1C1A16]/40 focus:border-[#1C1A16] focus:ring-2 focus:ring-[#1C1A16]/15 outline-none transition-all"
         />
         <button
           type="button"
@@ -202,7 +202,7 @@ export function AIQASection({
               type="button"
               onClick={() => submit(q)}
               disabled={loading}
-              className="text-xs px-3 py-1.5 rounded-full border border-[#E5E0D8] bg-white hover:bg-[#FAF9F6] hover:border-[#C2762B]/40 text-[#1C1A16]/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="text-xs px-3 py-1.5 rounded-full border border-[#E5E0D8] bg-white hover:bg-[#FAF9F6] hover:border-[#1C1A16]/40 text-[#1C1A16]/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {q}
             </button>

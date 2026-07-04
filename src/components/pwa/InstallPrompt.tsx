@@ -164,7 +164,7 @@ export function InstallPrompt() {
               <p className="text-sm font-semibold">添加到主屏幕</p>
               <p className="text-xs text-white/60">像 App 一样使用 · 离线可看历史</p>
             </div>
-            <button onClick={install} className="bg-[#C2762B] text-white text-sm px-4 py-2 rounded-xl">
+            <button onClick={install} className="bg-[#1C1A16] text-white text-sm px-4 py-2 rounded-xl">
               安装
             </button>
             <button onClick={dismissForever} aria-label="不再提示" className="text-white/40 text-xs px-1">
@@ -189,7 +189,7 @@ export function InstallPrompt() {
           </div>
           <p className="text-sm text-[#1C1A16]/70 mb-4">
             用 <b>Safari</b> 打开 → 点底部{' '}
-            <span className="inline-block px-1.5 py-0.5 bg-[#FAF3EC] rounded text-[#C2762B] font-medium">□↑ 分享</span>{' '}
+            <span className="inline-block px-1.5 py-0.5 bg-[#F6F4F1] rounded text-[#1C1A16] font-medium">□↑ 分享</span>{' '}
             → 选「添加到主屏幕」
           </p>
           <div className="flex items-center justify-between">

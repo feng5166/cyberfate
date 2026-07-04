@@ -129,8 +129,8 @@ const RATING_TEMPLATES: Record<string, Record<string, string>> = {
 // 等级配色（收敛为品牌序阶：强势=古铜橙强调，中性偏弱=墨灰；不用彩虹随机色）
 // 色值取自设计系统 token：accent-soft/accent/accent-hover 与 border-light/gray。
 const LEVEL_COLORS: Record<string, { bg: string; text: string }> = {
-  '旺': { bg: '#FBEEDD', text: '#C2762B' }, // accent-soft / accent
-  '强': { bg: '#FAF3EC', text: '#A86425' }, // accent-tint / accent-hover
+  '旺': { bg: '#EFEDEA', text: '#1C1A16' }, // accent-soft / accent
+  '强': { bg: '#F6F4F1', text: '#3A352E' }, // accent-tint / accent-hover
   '平': { bg: '#F3F4F6', text: '#6B7280' }, // border-light / gray
   '弱': { bg: '#F3F4F6', text: '#6B7280' },
   '衰': { bg: '#F3F4F6', text: '#6B7280' },

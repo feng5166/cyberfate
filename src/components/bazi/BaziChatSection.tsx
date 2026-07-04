@@ -403,12 +403,12 @@ export function BaziChatSection({ baziData, birthInput, isLoggedIn, isVip }: Baz
                         <button
                           type="button"
                           onClick={() => toggleFavorite(msg)}
-                          className="inline-flex items-center text-xs text-[#1C1A16]/50 hover:text-[#C2762B] transition-colors"
+                          className="inline-flex items-center text-xs text-[#1C1A16]/50 hover:text-[#1C1A16] transition-colors"
                           title={isFav ? '取消收藏' : '收藏'}
                           aria-label={isFav ? '取消收藏' : '收藏'}
                         >
                           {isFav ? (
-                            <BookmarkCheck className="w-4 h-4 text-[#C2762B]" />
+                            <BookmarkCheck className="w-4 h-4 text-[#1C1A16]" />
                           ) : (
                             <Bookmark className="w-4 h-4" />
                           )}

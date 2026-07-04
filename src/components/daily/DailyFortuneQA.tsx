@@ -250,7 +250,7 @@ export default function DailyFortuneQA({
               height: 18,
               padding: '0 5px',
               borderRadius: 999,
-              backgroundColor: '#C2762B',
+              backgroundColor: '#1C1A16',
               color: '#FFFFFF',
               fontSize: 12,
               fontWeight: 600,
@@ -292,7 +292,7 @@ export default function DailyFortuneQA({
                   {msg.role === 'user' && <span style={{ fontSize: 12, color: '#9CA3AF', display: 'block', marginBottom: 4 }}>你问：</span>}
                   {msg.content}
                   {msg.role === 'assistant' && isLoading && i === messages.length - 1 && (
-                    <span style={{ display: 'inline-block', width: 6, height: 14, backgroundColor: '#C2762B', marginLeft: 2, animation: 'blink 1s infinite' }} />
+                    <span style={{ display: 'inline-block', width: 6, height: 14, backgroundColor: '#1C1A16', marginLeft: 2, animation: 'blink 1s infinite' }} />
                   )}
                 </div>
               </div>
@@ -324,7 +324,7 @@ export default function DailyFortuneQA({
               outline: 'none',
               transition: 'border-color 0.2s',
             }}
-            onFocus={e => { e.currentTarget.style.borderColor = '#C2762B'; }}
+            onFocus={e => { e.currentTarget.style.borderColor = '#1C1A16'; }}
             onBlur={e => { e.currentTarget.style.borderColor = '#E5E7EB'; }}
           />
           <button
@@ -333,7 +333,7 @@ export default function DailyFortuneQA({
             style={{
               padding: '12px 24px',
               minHeight: 44,
-              backgroundColor: (!input.trim() || isLoading || limitReached) ? '#E5E7EB' : '#C2762B',
+              backgroundColor: (!input.trim() || isLoading || limitReached) ? '#E5E7EB' : '#1C1A16',
               color: (!input.trim() || isLoading || limitReached) ? '#9CA3AF' : '#FFFFFF',
               borderRadius: 10,
               fontSize: 14,
@@ -348,10 +348,10 @@ export default function DailyFortuneQA({
               whiteSpace: 'nowrap',
             }}
             onMouseEnter={e => {
-              if (input.trim() && !isLoading && !limitReached) e.currentTarget.style.backgroundColor = '#A86425';
+              if (input.trim() && !isLoading && !limitReached) e.currentTarget.style.backgroundColor = '#3A352E';
             }}
             onMouseLeave={e => {
-              if (input.trim() && !isLoading && !limitReached) e.currentTarget.style.backgroundColor = '#C2762B';
+              if (input.trim() && !isLoading && !limitReached) e.currentTarget.style.backgroundColor = '#1C1A16';
             }}
           >
             <Send size={15} />
@@ -411,13 +411,13 @@ export default function DailyFortuneQA({
           <div style={{
             marginTop: 16,
             padding: '12px 16px',
-            backgroundColor: '#FBEEDD',
+            backgroundColor: '#EFEDEA',
             borderRadius: 8,
             fontSize: 13,
-            color: '#A86425',
+            color: '#3A352E',
             textAlign: 'center',
           }}>
-            今日问答次数已用完，<a href="/pricing" style={{ color: '#C2762B', fontWeight: 500, textDecoration: 'underline' }}>升级 Pro</a> 无限提问 ✨
+            今日问答次数已用完，<a href="/pricing" style={{ color: '#1C1A16', fontWeight: 500, textDecoration: 'underline' }}>升级 Pro</a> 无限提问 ✨
           </div>
         )}
       </div>

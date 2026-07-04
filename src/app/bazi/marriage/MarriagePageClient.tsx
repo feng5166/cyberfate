@@ -206,7 +206,7 @@ function SideForm({ sideKey, data, onChange }: SideFormProps) {
   };
 
   const inputClass =
-    'w-full min-h-[44px] rounded-lg border border-[#E5E0D8] bg-white px-4 text-sm text-[#1C1A16] placeholder:text-[#1C1A16]/40 focus:border-[#C2762B] focus:ring-2 focus:ring-[#C2762B]/15 outline-none transition-all';
+    'w-full min-h-[44px] rounded-lg border border-[#E5E0D8] bg-white px-4 text-sm text-[#1C1A16] placeholder:text-[#1C1A16]/40 focus:border-[#1C1A16] focus:ring-2 focus:ring-[#1C1A16]/15 outline-none transition-all';
   const selectClass =
     'min-h-[44px] rounded-lg border border-[#E5E0D8] bg-white px-3 text-sm text-[#1C1A16]';
 
@@ -274,7 +274,7 @@ function SideForm({ sideKey, data, onChange }: SideFormProps) {
               />
               <span
                 aria-hidden
-                className="w-11 h-6 rounded-full bg-[#E5E0D8] transition-colors duration-200 peer-checked:bg-[#C2762B]"
+                className="w-11 h-6 rounded-full bg-[#E5E0D8] transition-colors duration-200 peer-checked:bg-[#1C1A16]"
               />
               <span
                 aria-hidden
@@ -331,7 +331,7 @@ function SideForm({ sideKey, data, onChange }: SideFormProps) {
             />
             <span
               aria-hidden
-              className="w-11 h-6 rounded-full bg-[#E5E0D8] transition-colors duration-200 peer-checked:bg-[#C2762B]"
+              className="w-11 h-6 rounded-full bg-[#E5E0D8] transition-colors duration-200 peer-checked:bg-[#1C1A16]"
             />
             <span
               aria-hidden
@@ -544,7 +544,7 @@ export function MarriagePageClient() {
                         className="rounded-2xl border border-[#E5E0D8] bg-white p-6"
                       >
                         <div className="w-10 h-10 rounded-xl bg-[#FAF9F6] border border-[#E5E0D8] flex items-center justify-center mb-3">
-                          <Icon className="w-5 h-5 text-[#C2762B]" />
+                          <Icon className="w-5 h-5 text-[#1C1A16]" />
                         </div>
                         <p className="text-base font-semibold text-[#1C1A16]">{card.title}</p>
                         <p className="mt-1.5 text-sm text-[#1C1A16]/65 leading-relaxed">
@@ -631,7 +631,7 @@ export function MarriagePageClient() {
                 <div className="flex justify-end">
                   <button
                     onClick={() => setResult(null)}
-                    className="flex items-center gap-1.5 text-sm text-[#1C1A16]/50 hover:text-[#C2762B] transition-colors"
+                    className="flex items-center gap-1.5 text-sm text-[#1C1A16]/50 hover:text-[#1C1A16] transition-colors"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                     重新填写
@@ -659,7 +659,7 @@ export function MarriagePageClient() {
                       >
                         <div className="flex items-center gap-2 pb-3 mb-3 border-b border-[#1C1A16]/8">
                           <span className="w-7 h-7 rounded-full bg-white border border-[#E5E0D8] flex items-center justify-center">
-                            <User className="w-3.5 h-3.5 text-[#C2762B]" />
+                            <User className="w-3.5 h-3.5 text-[#1C1A16]" />
                           </span>
                           <span className="text-sm font-semibold text-[#1C1A16] tracking-wide">
                             {sideLabel}
