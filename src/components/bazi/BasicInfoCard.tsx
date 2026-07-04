@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Check, Copy, Pencil, RefreshCw, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 interface BasicInfoCardProps {
   baziText: string;
@@ -48,6 +49,7 @@ export function BasicInfoCard({
   reanalyzing = false,
 }: BasicInfoCardProps) {
   const [copied, setCopied] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const rows: InfoRow[] = [
     { label: '姓名', value: isAuthenticated ? normalizeText(name) : '—' },
@@ -73,12 +75,10 @@ export function BasicInfoCard({
     }
   };
 
-  const handleDelete = () => {
-    if (!window.confirm('确认删除当前结果并返回空白态吗？')) return;
-    onDelete();
-  };
+  const handleDelete = () => setConfirmOpen(true);
 
   return (
+    <>
     <section className="rounded-2xl bg-white p-5 md:p-6">
       <div className="flex items-center justify-between">
         <h2 className="text-base font-semibold text-[#1C1A16]">基本信息</h2>
@@ -144,5 +144,15 @@ export function BasicInfoCard({
         ))}
       </div>
     </section>
+      <ConfirmDialog
+        isOpen={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={onDelete}
+        title="删除结果"
+        message="确认删除当前结果并返回空白态吗？删除后需重新测算。"
+        confirmText="删除"
+        danger
+      />
+    </>
   );
 }

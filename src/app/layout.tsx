@@ -4,6 +4,7 @@ import "./globals.css";
 import { SessionProvider } from "@/components/providers/SessionProvider";
 import { AuthProvider } from "@/stores/authStore";
 import { LayoutWrapper } from "@/components/layout/LayoutWrapper";
+import { ToastProvider } from "@/components/ui/Toast";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 import { PwaUpdatePrompt } from "@/components/pwa/PwaUpdatePrompt";
@@ -127,9 +128,11 @@ export default function RootLayout({
         <PostHogProvider>
           <SessionProvider>
             <AuthProvider>
-              <LayoutWrapper>
-                {children}
-              </LayoutWrapper>
+              <ToastProvider>
+                <LayoutWrapper>
+                  {children}
+                </LayoutWrapper>
+              </ToastProvider>
             </AuthProvider>
           </SessionProvider>
         </PostHogProvider>

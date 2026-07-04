@@ -5,6 +5,7 @@ import { Share2, Download, Check } from 'lucide-react';
 import QRCode from 'qrcode';
 import type { PillarRecord } from '@/lib/bazi/types';
 import { cn } from '@/lib/utils/cn';
+import { useToast } from '@/components/ui/Toast';
 
 interface ShareCardProps {
   pillars: PillarRecord;
@@ -113,6 +114,7 @@ async function buildCanvas(baziText: string, dayMaster: string, zodiac: string, 
 }
 
 export function ShareCard({ pillars, dayMaster, zodiac, summary, hasHour = true, className }: ShareCardProps) {
+  const toast = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
@@ -131,9 +133,9 @@ export function ShareCard({ pillars, dayMaster, zodiac, summary, hasHour = true,
   const fallbackCopyText = () => {
     const text = `我的八字命盘\n${baziText}\n日主：${dayMaster} | 生肖：${zodiac}\n\n${summary || ''}\n\n访问 CyberFate.me 查看你的命盘`;
     navigator.clipboard.writeText(text).then(() => {
-      alert('图片生成失败，已将命盘信息复制到剪贴板');
+      toast.error('图片生成失败，已将命盘信息复制到剪贴板');
     }).catch(() => {
-      alert('生成失败，请重试');
+      toast.error('生成失败，请重试');
     });
   };
 
@@ -176,7 +178,7 @@ export function ShareCard({ pillars, dayMaster, zodiac, summary, hasHour = true,
           setTimeout(() => setCopied(false), 2000);
         } catch {
           downloadBlob(blob);
-          alert('您的浏览器不支持复制图片，已为您下载');
+          toast.error('您的浏览器不支持复制图片，已为您下载');
         }
         setIsGenerating(false);
       }, 'image/png');

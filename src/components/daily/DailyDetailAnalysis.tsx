@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { X, History } from 'lucide-react';
+import { useToast } from '@/components/ui/Toast';
 
 interface HistoryRecord {
   id: string;
@@ -28,6 +29,7 @@ const LOADING_MESSAGES = [
 ];
 
 export default function DailyDetailAnalysis({ isLoggedIn, isVip, onLoginRequired, targetDate, hasBirthInfo }: DailyDetailAnalysisProps) {
+  const toast = useToast();
   const [status, setStatus] = useState<Status>('idle');
   const [content, setContent] = useState('');
   const [loadingMsg, setLoadingMsg] = useState(LOADING_MESSAGES[0].text);
@@ -88,7 +90,7 @@ export default function DailyDetailAnalysis({ isLoggedIn, isVip, onLoginRequired
       return;
     }
     if (!hasBirthInfo) {
-      alert('请先在个人中心填写出生信息');
+      toast.error('请先在个人中心填写出生信息');
       return;
     }
 
@@ -167,7 +169,7 @@ export default function DailyDetailAnalysis({ isLoggedIn, isVip, onLoginRequired
       console.error('Detail analysis error:', error);
       setStatus('idle');
       stopLoadingMessages();
-      alert(error.message || '分析生成失败，请稍后重试');
+      toast.error(error.message || '分析生成失败，请稍后重试');
     }
   };
 

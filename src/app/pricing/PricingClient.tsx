@@ -9,6 +9,7 @@ import { PricingCardList } from '@/components/pricing/PricingCardList';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { type PlanId, isValidPlanId, PLAN_NAME_TO_ID, getDefaultPlanId, PRICING_CONFIG } from '@/lib/pricing-config';
 import { track } from '@/lib/analytics';
+import { useToast } from '@/components/ui/Toast';
 
 const defaultPlanId = getDefaultPlanId();
 const dailyConfig = PRICING_CONFIG['daily'];
@@ -29,6 +30,7 @@ interface PricingClientProps {
 export default function PricingClient({ currentPlan }: PricingClientProps) {
   const { data: session } = useSession();
   const router = useRouter();
+  const toast = useToast();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [pendingPlan, setPendingPlan] = useState<{ planName: string; price: string } | null>(null);
@@ -56,7 +58,7 @@ export default function PricingClient({ currentPlan }: PricingClientProps) {
       if (!res.ok) {
         console.error('Checkout error response:', data);
         const errorMsg = data.details || data.error || '创建支付会话失败，请稍后重试';
-        alert(errorMsg);
+        toast.error(errorMsg);
         return;
       }
       const planConfig = PRICING_CONFIG[planId];
@@ -66,7 +68,7 @@ export default function PricingClient({ currentPlan }: PricingClientProps) {
     } catch (error) {
       console.error('Checkout network error:', error);
       const msg = error instanceof Error ? error.message : '网络错误';
-      alert(`请求失败: ${msg}`);
+      toast.error(`请求失败: ${msg}`);
     } finally {
       setCheckoutLoading(false);
     }

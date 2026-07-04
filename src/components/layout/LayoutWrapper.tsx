@@ -63,6 +63,10 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
   const isHomePage = pathname === '/';
   // app 外壳：非首页、且非营销/法务/登录类路由 → 模块页
   const useAppChrome = !isHomePage && !isMarketingRoute(pathname);
+  // 移动端底部 TabBar：首页 + 营销 + 模块页都保留（与原全站行为一致，App 感的底部导航），
+  // 仅登录/重置密码流程不显示（此时底部命理模块导航语境不当）。
+  const isAuthRoute = pathname.startsWith('/auth') || pathname.startsWith('/reset-password');
+  const showBottomNav = !isAuthRoute;
 
   return (
     <div className="flex flex-col min-h-dvh">
@@ -86,7 +90,7 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
       )}
       <main
         id="main-content"
-        className={`flex-1 ${useAppChrome ? 'pb-[calc(5rem_+_env(safe-area-inset-bottom))] md:pb-0' : ''}`}
+        className={`flex-1 ${showBottomNav ? 'pb-[calc(5rem_+_env(safe-area-inset-bottom))] md:pb-0' : ''}`}
       >
         {/* 仅把用 useSearchParams 的处理器各自包进独立 Suspense，
             避免把 {children}(页面内容) 一起 bailout 到 CSR —— 保证首页等可 SSG/SSR */}
@@ -110,8 +114,8 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
           <>{children}<Footer /></>
         )}
       </main>
-      {/* 底部 chrome 仅模块页出现，避免营销/法务页出现命理模块底栏 */}
-      {useAppChrome && (
+      {/* 移动端底部导航（TabBar/BackToTop 自身 md:hidden）：首页/营销/模块页均显示，登录流程除外 */}
+      {showBottomNav && (
         <>
           <BackToTop />
           <TabBar />

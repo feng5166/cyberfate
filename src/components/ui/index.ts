@@ -12,6 +12,7 @@ export { PageHeader } from './PageHeader';
 export { FormField, inputRecipe } from './FormField';
 export { Modal } from './Modal';
 export { ConfirmDialog } from './ConfirmDialog';
+export { ToastProvider, useToast } from './Toast';
 export { BaguaSpinner } from './BaguaSpinner';
 export { VipContentMask } from './VipContentMask';
 export { OracleLoading } from './OracleLoading';

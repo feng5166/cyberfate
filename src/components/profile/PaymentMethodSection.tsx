@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useToast } from '@/components/ui/Toast';
 
 interface PaymentMethodSectionProps {
   currentMethod: {
@@ -14,6 +15,7 @@ export function PaymentMethodSection({ currentMethod, onMethodUpdated }: Payment
   const [showModal, setShowModal] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const toast = useToast();
 
   const paymentMethods = [
     { id: 'alipay', name: '支付宝', icon: '支' },
@@ -35,13 +37,13 @@ export function PaymentMethodSection({ currentMethod, onMethodUpdated }: Payment
 
       // 模拟成功
       setTimeout(() => {
-        alert('支付方式已更新');
+        toast.success('支付方式已更新');
         setShowModal(false);
         onMethodUpdated();
         setLoading(false);
       }, 1000);
     } catch (err) {
-      alert('更新失败，请重试');
+      toast.error('更新失败，请重试');
       setLoading(false);
     }
   };

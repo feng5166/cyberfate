@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useToast } from '@/components/ui/Toast';
 
 interface CancelSectionProps {
   expireDate: string;
@@ -12,6 +13,7 @@ export function CancelSection({ expireDate, onCancelled }: CancelSectionProps) {
   const [feedback, setFeedback] = useState<string[]>([]);
   const [otherReason, setOtherReason] = useState('');
   const [loading, setLoading] = useState(false);
+  const toast = useToast();
 
   const handleCancel = async () => {
     setLoading(true);
@@ -27,14 +29,14 @@ export function CancelSection({ expireDate, onCancelled }: CancelSectionProps) {
       const data = await res.json();
       
       if (res.ok) {
-        alert(`订阅将在 ${expireDate} 到期后取消`);
+        toast.success(`订阅将在 ${expireDate} 到期后取消`);
         setShowModal(false);
         onCancelled();
       } else {
-        alert(data.error || '取消失败');
+        toast.error(data.error || '取消失败');
       }
     } catch (err) {
-      alert('网络错误，请重试');
+      toast.error('网络错误，请重试');
     } finally {
       setLoading(false);
     }

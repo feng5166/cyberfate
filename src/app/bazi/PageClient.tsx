@@ -2,6 +2,7 @@
 
 import { Fragment, type ReactNode, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
@@ -818,6 +819,7 @@ function BaziPageContent() {
   const [profiles, setProfiles] = useState<BaziProfileData[]>([]);
   const [selectedProfileId, setSelectedProfileId] = useState<string>('');
   const [showAddProfileModal, setShowAddProfileModal] = useState(false);
+  const [pendingDeleteProfile, setPendingDeleteProfile] = useState<{ id: string; label: string } | null>(null);
   const [editingProfile, setEditingProfile] = useState<BaziProfileData | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState('');
@@ -1612,15 +1614,19 @@ function BaziPageContent() {
     }
   };
 
-  const handleDeleteProfile = async () => {
+  const handleDeleteProfile = () => {
     const target = profiles.find((p) => p.id === selectedProfileId);
     if (!target) return;
     if (target.isPrimary) {
       setActionMessage('主档案不可删除');
       return;
     }
-    if (!window.confirm(`确认删除「${target.label}」的命盘档案？`)) return;
+    setPendingDeleteProfile({ id: target.id, label: target.label });
+  };
 
+  const confirmDeleteProfile = async () => {
+    const target = pendingDeleteProfile;
+    if (!target) return;
     try {
       if (status === 'authenticated') {
         const res = await fetch(`/api/bazi/profiles/${target.id}`, { method: 'DELETE' });
@@ -2899,6 +2905,16 @@ function BaziPageContent() {
         reason={authReason}
       />
       <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />
+
+      <ConfirmDialog
+        isOpen={pendingDeleteProfile !== null}
+        onClose={() => setPendingDeleteProfile(null)}
+        onConfirm={confirmDeleteProfile}
+        title="删除档案"
+        message={`确认删除「${pendingDeleteProfile?.label ?? ''}」的命盘档案？此操作无法撤销。`}
+        confirmText="删除"
+        danger
+      />
 
       {showAddProfileModal && (
         <ProfileFormModal

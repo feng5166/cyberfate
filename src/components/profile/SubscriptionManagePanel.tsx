@@ -6,6 +6,7 @@ import { PlanSwitcher } from './PlanSwitcher';
 import { InvoiceHistory } from './InvoiceHistory';
 import { CancelSection } from './CancelSection';
 import { getPlanName, getPlanDisplayName, isLifetimePlan } from '@/lib/pricing-config';
+import { useToast } from '@/components/ui/Toast';
 
 
 interface SubscriptionManagePanelProps {
@@ -25,6 +26,7 @@ export function SubscriptionManagePanel({ subscription, onBack }: SubscriptionMa
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showDowngradeModal, setShowDowngradeModal] = useState(false);
   const [targetPlan, setTargetPlan] = useState<string | null>(null);
+  const toast = useToast();
 
 
   const handlePlanChange = async (newPlan: string, isUpgrade: boolean) => {
@@ -52,11 +54,11 @@ export function SubscriptionManagePanel({ subscription, onBack }: SubscriptionMa
         // 直接跳转 Stripe 支付页面
         window.location.href = data.checkout_url;
       } else {
-        alert(data.error || '升级失败');
+        toast.error(data.error || '升级失败');
         setShowUpgradeModal(false);
       }
     } catch (err) {
-      alert('网络错误，请重试');
+      toast.error('网络错误，请重试');
       setShowUpgradeModal(false);
     }
   };
@@ -74,13 +76,13 @@ export function SubscriptionManagePanel({ subscription, onBack }: SubscriptionMa
       const data = await res.json();
 
       if (res.ok) {
-        alert(`新套餐将于 ${data.effective_date} 生效`);
+        toast.success(`新套餐将于 ${data.effective_date} 生效`);
         router.refresh();
       } else {
-        alert(data.error || '降级失败');
+        toast.error(data.error || '降级失败');
       }
     } catch (err) {
-      alert('网络错误，请重试');
+      toast.error('网络错误，请重试');
     } finally {
       setShowDowngradeModal(false);
     }

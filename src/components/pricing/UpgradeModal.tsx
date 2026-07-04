@@ -8,6 +8,7 @@ import { PricingCardList } from './PricingCardList';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { type PlanId, PLAN_NAME_TO_ID, PRICING_CONFIG, getDefaultPlanId, isValidPlanId } from '@/lib/pricing-config';
 import { track } from '@/lib/analytics';
+import { useToast } from '@/components/ui/Toast';
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -17,6 +18,7 @@ interface UpgradeModalProps {
 export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
   const { data: session } = useSession();
   const router = useRouter();
+  const toast = useToast();
   const isSubscribed = (session?.user as { isSubscribed?: boolean } | undefined)?.isSubscribed;
   const shouldShow = isOpen && !isSubscribed;
 
@@ -70,14 +72,14 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
       if (!res.ok) {
         console.error('Checkout error response:', data);
         const errorMsg = data.details || data.error || '创建支付会话失败，请稍后重试';
-        alert(errorMsg);
+        toast.error(errorMsg);
         return;
       }
       window.location.href = data.checkout_url;
     } catch (error) {
       console.error('Checkout network error:', error);
       const msg = error instanceof Error ? error.message : '网络错误';
-      alert(`请求失败: ${msg}`);
+      toast.error(`请求失败: ${msg}`);
     } finally {
       setCheckoutLoading(false);
     }

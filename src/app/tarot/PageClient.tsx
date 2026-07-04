@@ -8,6 +8,7 @@ import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { useState, useRef, useEffect } from 'react';
 import { track } from '@/lib/analytics';
+import { useToast } from '@/components/ui/Toast';
 import { useAiGate, AiGateModals } from '@/components/ai/useAiGate';
 
 const SAMPLE_PROMPTS = [
@@ -113,6 +114,7 @@ interface TarotDrawResult {
 
 export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode }) {
   const { data: session, status: authStatus } = useSession();
+  const toast = useToast();
   const isLoggedIn = authStatus === 'authenticated';
   const gate = useAiGate(isLoggedIn);
   const [step, setStep] = useState<Step>('question');
@@ -182,7 +184,7 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
         await navigator.share({ text: data.shareText });
       } else {
         await navigator.clipboard.writeText(data.shareText);
-        alert('分享内容已复制到剪贴板');
+        toast.success('分享内容已复制到剪贴板');
       }
     } catch (err) {
       console.error('分享失败:', err);

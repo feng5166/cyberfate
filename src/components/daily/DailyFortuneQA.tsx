@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from 'react';
 import { History, Send, X } from 'lucide-react';
+import { useToast } from '@/components/ui/Toast';
 
 interface QAMessage {
   role: 'user' | 'assistant';
@@ -37,6 +38,7 @@ export default function DailyFortuneQA({
   onLoginRequired,
   hasBirthInfo,
 }: DailyFortuneQAProps) {
+  const toast = useToast();
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<QAMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -71,7 +73,7 @@ export default function DailyFortuneQA({
     }
 
     if (!hasBirthInfo) {
-      alert('请先在个人中心填写出生信息');
+      toast.error('请先在个人中心填写出生信息');
       return;
     }
 
