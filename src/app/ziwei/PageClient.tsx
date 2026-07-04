@@ -8,7 +8,6 @@ import { ChevronRight, AlertTriangle, RefreshCw } from 'lucide-react';
 import { getLunarDate } from '@/lib/bazi/calculator';
 import { Footer } from '@/components/layout/Footer';
 import { PageShell } from '@/components/ui/PageShell';
-import { SplitLayout } from '@/components/ui/SplitLayout';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { SegmentControl } from '@/components/ui/SegmentControl';
 import { Button } from '@/components/ui/Button';
@@ -455,12 +454,10 @@ export default function ZiweiPage() {
           <lg 竖向堆叠（asidePosition=left → aside 先 main 后），移动端顺序与间距保持原样 */}
       {showChart && !loading && palaces.length > 0 && (
         <PageShell width="chart" className=" pb-6 md:pb-8">
-          <SplitLayout
-            asidePosition="left"
-            asideWidth={400}
-            className="gap-4 lg:gap-8"
-            aside={
-              <div className="flex flex-col gap-4">
+          {/* 桌面 master-detail：命盘占更宽一栏(sticky) | 详情右，避免 4×4 命盘被 400px 压窄。
+              <lg 竖向堆叠：命盘 → 详情，顺序与移动端一致；命盘内部 hidden md:block / md:hidden 分支未动。 */}
+          <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] lg:gap-8 lg:items-start">
+            <div className="flex flex-col gap-4 lg:sticky lg:top-24 lg:self-start">
                 {/* 命盘卡片（内部桌面 4×4 网格 + 移动端信息卡/列表分支，整体原样搬迁，未改内部） */}
                 <div className="bg-white rounded-2xl shadow-sm border border-[#F0EDE8] p-4 sm:p-6">
                   <div className="flex items-center justify-between mb-1">
@@ -520,9 +517,8 @@ export default function ZiweiPage() {
                   <DualChartCompare chartA={palaces} />
                 </div>
               </div>
-            }
-            main={
-              <div className="flex flex-col gap-4 md:gap-6">
+            {/* 详情/四化/大运/AI 右列（随右列滚动） */}
+            <div className="min-w-0 flex flex-col gap-4 md:gap-6">
                 {/* P1-1: 宫位详情面板（点宫格 → 右列即时渲染，视线不离命盘） */}
                 {selectedPalace && (
                   <PalaceDetailPanel
@@ -540,8 +536,7 @@ export default function ZiweiPage() {
                 {/* P1-2: AI 命盘总览解读 */}
                 <ZiweiAiOverview palaces={palaces} birthDate={birthDate} />
               </div>
-            }
-          />
+          </div>
         </PageShell>
       )}
 
