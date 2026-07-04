@@ -93,7 +93,10 @@ export async function POST(req: NextRequest) {
       input.name = sanitizeUserInput(input.name, 50);
     }
 
-    const gender = input.gender === 'unknown' ? 'male' : (input.gender || 'male');
+    // 四柱排盘不依赖性别；仅「大运」依赖阴阳性别定顺逆（阳男阴女顺行/阴男阳女逆行）。
+    // 性别未知时仍可排盘，但下面跳过大运计算——否则会给女命出一版方向相反的错误终身大运。
+    const genderKnown = input.gender === 'male' || input.gender === 'female';
+    const gender: 'male' | 'female' = input.gender === 'female' ? 'female' : 'male';
     const isBaziMode = !!input.pillars;
 
     let baziResult: ReturnType<typeof calculateBazi>;
@@ -143,26 +146,31 @@ export async function POST(req: NextRequest) {
 
       baziResult = calculateBazi(calcInput);
 
-      // 获取当前大运（精确节气数日法；提供精确时分时一并传入，起运更准）
-      const dayunHour = hasPrecise ? input.birthHourNum : undefined;
-      const dayunMinute = hasPrecise ? input.birthMinute : undefined;
-      const currentDayun = getCurrentDayun(input.birthDate, gender as 'male' | 'female', dayunHour, dayunMinute);
-      dayunTimeline = getDayunTimeline(input.birthDate, gender as 'male' | 'female', dayunHour, dayunMinute);
-      const currentDayunItem = dayunTimeline.find(item => item.isCurrent);
-      const nextDayunItem = currentDayunItem ? dayunTimeline.find(item => item.index === currentDayunItem.index + 1) : undefined;
+      // 大运顺逆依赖阴阳性别：性别未知时不计算（留空数组，前端据此隐藏「终身大运表」），
+      // 不出错误方向的大运。已知性别才走精确节气数日法。
+      if (genderKnown) {
+        const dayunHour = hasPrecise ? input.birthHourNum : undefined;
+        const dayunMinute = hasPrecise ? input.birthMinute : undefined;
+        const currentDayun = getCurrentDayun(input.birthDate, gender, dayunHour, dayunMinute);
+        dayunTimeline = getDayunTimeline(input.birthDate, gender, dayunHour, dayunMinute);
+        const currentDayunItem = dayunTimeline.find(item => item.isCurrent);
+        const nextDayunItem = currentDayunItem ? dayunTimeline.find(item => item.index === currentDayunItem.index + 1) : undefined;
 
-      Object.assign(baziResult, {
-        dayun: { current: currentDayun ? `${currentDayun.gan}${currentDayun.zhi}` : undefined },
-      });
+        Object.assign(baziResult, {
+          dayun: { current: currentDayun ? `${currentDayun.gan}${currentDayun.zhi}` : undefined },
+        });
 
-      dayunExtra = {
-        ageStart: currentDayunItem?.ageStart,
-        ageEnd: currentDayunItem?.ageEnd,
-        startYear: currentDayunItem?.yearStart,
-        endYear: currentDayunItem?.yearEnd,
-        nextGanZhi: nextDayunItem ? `${nextDayunItem.gan}${nextDayunItem.zhi}` : undefined,
-        nextStartYear: nextDayunItem?.yearStart,
-      };
+        dayunExtra = {
+          ageStart: currentDayunItem?.ageStart,
+          ageEnd: currentDayunItem?.ageEnd,
+          startYear: currentDayunItem?.yearStart,
+          endYear: currentDayunItem?.yearEnd,
+          nextGanZhi: nextDayunItem ? `${nextDayunItem.gan}${nextDayunItem.zhi}` : undefined,
+          nextStartYear: nextDayunItem?.yearStart,
+        };
+      } else {
+        Object.assign(baziResult, { dayun: { current: undefined } });
+      }
 
       keyMaterial = {
         birthDate: input.birthDate,
@@ -281,6 +289,8 @@ export async function POST(req: NextRequest) {
   }
 }
 
+// 注意：以下五维分数是「启发式娱乐化展示」，系数为经验拟合（如事业↔木/金），
+// 非严格命理推演。对外文案不应宣称为「命理评分」。真正的命理判断以 mingGe（格局/旺衰/用神）为准。
 function calculateFiveDimensions(pillars: PillarRecord, wuxing: WuxingCount): FiveDimensions {
   const total = Object.values(wuxing).reduce((sum, value) => sum + value, 0) || 1;
   const average = total / 5 || 1;
