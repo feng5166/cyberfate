@@ -18,6 +18,7 @@ import { withAiTimeout } from '@/lib/ai/withTimeout';
 import { applyChaos } from '@/lib/chaos-middleware';
 import { logger } from '@/lib/logger';
 import { SSE_HEADERS, typewriterStream } from '@/lib/ai/sse';
+import { isDebugRequest } from '@/lib/ai/debug';
 
 export const maxDuration = 120;
 
@@ -106,8 +107,7 @@ export async function POST(req: NextRequest) {
   const chaosRes = await applyChaos(req);
   if (chaosRes) return chaosRes;
 
-  const debugToken = req.headers.get('x-debug-token');
-  const isDebugMode = !!(debugToken && debugToken === process.env.TAROT_DEBUG_TOKEN);
+  const isDebugMode = isDebugRequest(req);
 
   const session = await getAuthSession(req);
   const userId = session?.user?.id;

@@ -7,6 +7,7 @@ import { drawRandomCards, getCardImageUrl } from '@/data/tarot';
 import { applyChaos } from '@/lib/chaos-middleware';
 import { SPREAD_CONFIG, resolveSpread, quotaLabel, peekTarotQuota } from '@/lib/tarot';
 import { getClientIp } from '@/lib/ip';
+import { isDebugRequest } from '@/lib/ai/debug';
 
 // 只负责抽牌（便宜、可反复重抽）。配额/限流的「真源」在 /api/tarot/draw（AI 生成处），
 // 这里仅做：轻量防刷 + 登录用户的只读配额预检（提前拦 UX），不扣任何额度。
@@ -14,8 +15,7 @@ export async function POST(req: NextRequest) {
   const chaosRes = await applyChaos(req);
   if (chaosRes) return chaosRes;
 
-  const debugToken = req.headers.get('x-debug-token');
-  const isDebugMode = !!(debugToken && debugToken === process.env.TAROT_DEBUG_TOKEN);
+  const isDebugMode = isDebugRequest(req);
 
   const session = await getServerSession(authOptions);
   const body = await req.json().catch(() => ({}));

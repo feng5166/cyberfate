@@ -3,6 +3,7 @@ import { generateCacheKey, getCache, setCache } from '@/lib/ai/cache';
 import { PRIMARY_MODEL } from '@/lib/ai/models';
 import { getPrimaryProvider } from '@/lib/ai/provider';
 import { type DrawMethod, buildPair, resolveDraw, getChangedPair } from '@/lib/meihua/draw';
+import { isDebugRequest } from '@/lib/ai/debug';
 
 function firstSentence(text: string): string {
   const normalized = text.replace(/\s+/g, ' ').trim();
@@ -15,8 +16,7 @@ const FALLBACK_ANALYSIS =
   '【卦象含义】当下处于变化交替期，宜先看清局势再推进。\n\n【吉凶判断】整体可为，但节奏不宜过急。\n\n【行动建议】先厘清目标，再按轻重缓急分步推进。';
 
 export async function POST(req: NextRequest) {
-  const debugToken = req.headers.get('x-debug-token');
-  const isDebugMode = !!(debugToken && debugToken === process.env.TAROT_DEBUG_TOKEN);
+  const isDebugMode = isDebugRequest(req);
 
   const { getAuthSession } = await import('@/lib/auth-session');
   const session = await getAuthSession(req);

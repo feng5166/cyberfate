@@ -7,6 +7,7 @@ import { withAiTimeout } from '@/lib/ai/withTimeout';
 import { applyChaos } from '@/lib/chaos-middleware';
 import { checkMeihuaDecideQuota, refundQuota } from '@/lib/quota';
 import { SSE_HEADERS, typewriterStream } from '@/lib/ai/sse';
+import { isDebugRequest } from '@/lib/ai/debug';
 
 function splitMeta(decision: MeihuaDecisionResult & { _source?: string }) {
   const { overallAdvice, ...rest } = decision;
@@ -65,8 +66,7 @@ export async function POST(req: NextRequest) {
   const chaosRes = await applyChaos(req);
   if (chaosRes) return chaosRes;
 
-  const debugToken = req.headers.get('x-debug-token');
-  const isDebugMode = !!(debugToken && debugToken === process.env.TAROT_DEBUG_TOKEN);
+  const isDebugMode = isDebugRequest(req);
 
   // Security Fix: SEC-012 — 添加登录检查
   const { getServerSession } = await import('next-auth');

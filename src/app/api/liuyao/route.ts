@@ -7,6 +7,7 @@ import { applyChaos } from '@/lib/chaos-middleware';
 import { log } from '@/lib/logger';
 import { checkLiuyaoQuota, refundQuota } from '@/lib/quota';
 import { SSE_HEADERS, typewriterStream } from '@/lib/ai/sse';
+import { isDebugRequest } from '@/lib/ai/debug';
 import {
   identifyTrigrams,
   getHexagramName,
@@ -107,8 +108,7 @@ export async function POST(req: NextRequest) {
   const chaosRes = await applyChaos(req);
   if (chaosRes) return chaosRes;
 
-  const debugToken = req.headers.get('x-debug-token');
-  const isDebugMode = !!(debugToken && debugToken === process.env.TAROT_DEBUG_TOKEN);
+  const isDebugMode = isDebugRequest(req);
 
   const { getAuthSession } = await import('@/lib/auth-session');
   const session = await getAuthSession(req);
