@@ -6,7 +6,8 @@ import { applyChaos } from '@/lib/chaos-middleware';
 import { logger } from '@/lib/logger';
 import { PRIMARY_MODEL } from '@/lib/ai/models';
 import { getPrimaryProvider } from '@/lib/ai/provider';
-import { attachClientAbort } from '@/lib/ai/streamProxy';
+import { attachClientAbort, proxyLLMDeltaStream } from '@/lib/ai/streamProxy';
+import { SSE_HEADERS } from '@/lib/ai/sse';
 
 const SERVICE = 'api/huangli/ask';
 
@@ -98,61 +99,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '服务暂时不可用' }, { status: 502 });
     }
 
-    const encoder = new TextEncoder();
-    const upstreamBody = apiResponse.body;
-    const reader = upstreamBody.getReader();
-    const readable = new ReadableStream({
-      async start(controller) {
-        const decoder = new TextDecoder();
-        let buffer = '';
-
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n');
-            buffer = lines.pop() || '';
-
-            for (const line of lines) {
-              const trimmed = line.trim();
-              if (!trimmed || !trimmed.startsWith('data:')) continue;
-              const data = trimmed.slice(5).trim();
-              if (data === '[DONE]') {
-                controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-                continue;
-              }
-              try {
-                const json = JSON.parse(data);
-                const content = json.choices?.[0]?.delta?.content;
-                if (content) {
-                  controller.enqueue(
-                    encoder.encode(`data: ${JSON.stringify({ content })}\n\n`)
-                  );
-                }
-              } catch {}
-            }
-          }
-        } catch (err) {
-          logger.error(SERVICE, 'Stream error', err instanceof Error ? err : undefined);
-        } finally {
-          abortHandle.release();
-          controller.close();
-        }
-      },
-      async cancel() {
-        await abortHandle.cancel(reader);
-      },
-    });
-
-    return new Response(readable, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        Connection: 'keep-alive',
-      },
-    });
+    return new Response(proxyLLMDeltaStream(apiResponse, abortHandle), { headers: SSE_HEADERS });
   } catch (err) {
     logger.error(SERVICE, 'Huangli ask error', err instanceof Error ? err : undefined);
     return NextResponse.json(
