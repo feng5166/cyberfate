@@ -1652,7 +1652,7 @@ export default function LiuYaoPage() {
                           {resolvedMovingLines.map((idx) => (
                             <span
                               key={idx}
-                              className="rounded-full bg-orange-100 px-2.5 py-0.5 text-[11px] font-medium text-orange-700"
+                              className="rounded-full bg-stone-200 px-2.5 py-0.5 text-[11px] font-medium text-[#1C1A16]"
                             >
                               第{idx + 1}爻
                             </span>
