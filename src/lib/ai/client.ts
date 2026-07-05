@@ -21,6 +21,7 @@ import { redis } from '../cache/redis';
 import { PRIMARY_MODEL } from './models';
 import { withCircuitBreaker } from './circuitBreaker';
 import { resolveProviders, hasAnyProviderKey } from './provider';
+import { observed } from './observe';
 
 const TIMEOUT_CONFIG: Record<string, number> = {
   bazi: 55000,
@@ -212,7 +213,7 @@ export async function generateBaziAnalysis(
       const cached = await redis.get(cacheKey);
       if (cached) {
         if (process.env.NODE_ENV !== 'production') console.log(`[Cache Hit] ${cacheKey}`);
-        return { ...(cached as BaziAnalysis), _source: 'cache' };
+        return observed('bazi', { ...(cached as BaziAnalysis), _source: 'cache' });
       }
     } catch (err) {
       console.warn('[Cache Read Error]', err);
@@ -221,7 +222,7 @@ export async function generateBaziAnalysis(
 
   if (!hasAnyProviderKey()) {
     console.warn('[AI] 未配置任何 LLM provider 的 API key，使用降级分析');
-    return { ...generateFallbackBaziAnalysis(result), _source: 'fallback' };
+    return observed('bazi', { ...generateFallbackBaziAnalysis(result), _source: 'fallback' });
   }
 
   const prompt = buildBaziPrompt(result, name, birthInfo?.gender, dayunExtra);
@@ -251,10 +252,10 @@ export async function generateBaziAnalysis(
         console.warn('[Cache Write Error]', err);
       }
     }
-    return { ...apiResult.data, _source: apiResult.fromFallback ? 'fallback' : 'deepseek' };
+    return observed('bazi', { ...apiResult.data, _source: apiResult.fromFallback ? 'fallback' : 'deepseek' });
   }
   
-  return { ...generateFallbackBaziAnalysis(result), _source: 'fallback' };
+  return observed('bazi', { ...generateFallbackBaziAnalysis(result), _source: 'fallback' });
 }
 
 export function generateFallbackBaziAnalysis(result: BaziResult): BaziAnalysis {
@@ -307,7 +308,7 @@ export async function generateDailyFortune(
     const cached = await redis.get(cacheKey);
     if (cached) {
       if (process.env.NODE_ENV !== 'production') console.log(`[Cache Hit] ${cacheKey}`);
-      return { ...(cached as ReturnType<typeof generateFallbackDailyFortune>), _source: 'cache' };
+      return observed('daily', { ...(cached as ReturnType<typeof generateFallbackDailyFortune>), _source: 'cache' });
     }
   } catch (err) {
     console.warn('[Cache Read Error]', err);
@@ -315,7 +316,7 @@ export async function generateDailyFortune(
 
   if (!hasAnyProviderKey()) {
     console.warn('[AI] 未配置任何 LLM provider 的 API key，使用降级运势');
-    return { ...generateFallbackDailyFortune(), _source: 'fallback' };
+    return observed('daily', { ...generateFallbackDailyFortune(), _source: 'fallback' });
   }
 
   const prompt = buildDailyPrompt(dayMaster, targetDate, dayGanzhi, dayun, liunian);
@@ -358,10 +359,10 @@ export async function generateDailyFortune(
         console.warn('[Cache Write Error]', err);
       }
     }
-    return { ...apiResult.data, _source: apiResult.fromFallback ? 'fallback' : 'deepseek' };
+    return observed('daily', { ...apiResult.data, _source: apiResult.fromFallback ? 'fallback' : 'deepseek' });
   }
   
-  return { ...generateFallbackDailyFortune(), _source: 'fallback' };
+  return observed('daily', { ...generateFallbackDailyFortune(), _source: 'fallback' });
 }
 
 function generateFallbackDailyFortune() {
@@ -485,7 +486,7 @@ export async function generateTarotReading(
 ): Promise<TarotReadingResult & { _source: 'deepseek' | 'fallback' }> {
   const fallback = buildFallbackTarotReading(input);
   if (!hasAnyProviderKey()) {
-    return { ...fallback, _source: 'fallback' };
+    return observed('tarot', { ...fallback, _source: 'fallback' });
   }
 
   try {
@@ -498,12 +499,12 @@ export async function generateTarotReading(
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       console.warn('[AI 塔罗解读] 无法提取 JSON，text:', text.slice(0, 200));
-      return { ...fallback, _source: 'fallback', _error: `no_json_match: ${text.slice(0, 100)}` } as TarotReadingResult & { _source: 'deepseek' | 'fallback'; _error?: string };
+      return observed('tarot', { ...fallback, _source: 'fallback', _error: `no_json_match: ${text.slice(0, 100)}` } as TarotReadingResult & { _source: 'deepseek' | 'fallback'; _error?: string });
     }
 
     const parsed = JSON.parse(jsonMatch[0]) as unknown;
     const normalized = normalizeTarotReading(parsed, fallback, input.cards.length, input.spread);
-    return { ...normalized, _source: 'deepseek' };
+    return observed('tarot', { ...normalized, _source: 'deepseek' });
   } catch (error) {
     const errMsg = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
     console.warn('[AI 塔罗解读] 生成失败，使用降级结果', errMsg);
@@ -519,7 +520,7 @@ export async function generateTarotReading(
       ...fallback,
       caution: `AI 解读失败（${friendlyReason}），以下为基础牌义参考。`,
     };
-    return { ...fallbackWithReason, _source: 'fallback', _error: errMsg } as TarotReadingResult & { _source: 'deepseek' | 'fallback'; _error?: string };
+    return observed('tarot', { ...fallbackWithReason, _source: 'fallback', _error: errMsg } as TarotReadingResult & { _source: 'deepseek' | 'fallback'; _error?: string });
   }
 }
 
@@ -658,7 +659,7 @@ export async function generateMeihuaDecision(
 ): Promise<MeihuaDecisionResult & { _source: 'deepseek' | 'fallback' }> {
   const fallback = buildFallbackMeihuaDecision(input);
   if (!hasAnyProviderKey()) {
-    return { ...fallback, _source: 'fallback' };
+    return observed('meihua', { ...fallback, _source: 'fallback' });
   }
 
   try {
@@ -666,15 +667,15 @@ export async function generateMeihuaDecision(
     const text = await callDeepSeek(MEIHUA_DECISION_SYSTEM_PROMPT, prompt, 2000, 'meihua', { jsonMode: true });
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      return { ...fallback, _source: 'fallback' };
+      return observed('meihua', { ...fallback, _source: 'fallback' });
     }
 
     const parsed = JSON.parse(jsonMatch[0]) as unknown;
     const normalized = normalizeMeihuaDecision(parsed, fallback);
-    return { ...normalized, _source: 'deepseek' };
+    return observed('meihua', { ...normalized, _source: 'deepseek' });
   } catch (error) {
     console.warn('[AI 梅花决策] 生成失败，使用降级结果', error);
-    return { ...fallback, _source: 'fallback' };
+    return observed('meihua', { ...fallback, _source: 'fallback' });
   }
 }
 
@@ -728,7 +729,7 @@ export async function generateLiuYaoReading(
 ): Promise<LiuYaoReadingResult & { _source: 'deepseek' | 'fallback'; _error?: string }> {
   const fallback = buildFallbackLiuYaoReading(input);
   if (!hasAnyProviderKey()) {
-    return { ...fallback, _source: 'fallback' };
+    return observed('liuyao', { ...fallback, _source: 'fallback' });
   }
 
   try {
@@ -736,15 +737,15 @@ export async function generateLiuYaoReading(
     const text = await callDeepSeek(LIUYAO_SYSTEM_PROMPT, prompt, 2400, 'liuyao', { jsonMode: true });
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      return { ...fallback, _source: 'fallback' };
+      return observed('liuyao', { ...fallback, _source: 'fallback' });
     }
 
     const parsed = JSON.parse(jsonMatch[0]) as unknown;
     const normalized = normalizeLiuYaoReading(parsed, fallback);
-    return { ...normalized, _source: 'deepseek' };
+    return observed('liuyao', { ...normalized, _source: 'deepseek' });
   } catch (error) {
     const errMsg = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
     console.warn('[AI 六爻解读] 生成失败，使用降级结果', errMsg);
-    return { ...fallback, _source: 'fallback', _error: errMsg };
+    return observed('liuyao', { ...fallback, _source: 'fallback', _error: errMsg });
   }
 }
