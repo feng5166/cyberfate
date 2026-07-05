@@ -130,8 +130,8 @@ export default function RefundPage() {
                 </div>
               </section>
 
-              <div className="mt-8 p-4 rounded-lg bg-amber-50 border border-amber-200">
-                <p className="text-sm text-amber-800">
+              <div className="mt-8 p-4 rounded-lg bg-stone-100 border border-stone-300">
+                <p className="text-sm text-[#1C1A16]">
                   <strong>温馨提示：</strong>
                   命理服务具有个性化、即时性的特点，购买前请仔细阅读服务说明。我们建议您先使用免费功能体验，确认满意后再购买会员。
                 </p>

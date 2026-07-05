@@ -58,11 +58,11 @@ export function DayDetailCard({ data }: DayDetailCardProps) {
           </span>
           <span className="text-xs md:text-sm text-[#1C1A16]/50 mt-1 block">年五行</span>
         </div>
-        <div className="rounded-xl p-3 md:p-4 text-center bg-orange-50">
-          <span className="text-lg md:text-xl font-bold block text-orange-700">
+        <div className="rounded-xl p-3 md:p-4 text-center bg-stone-100">
+          <span className="text-lg md:text-xl font-bold block text-[#1C1A16]">
             冲{data.chongShengxiao}
           </span>
-          <span className="text-xs md:text-sm text-orange-600/70 mt-1 block">
+          <span className="text-xs md:text-sm text-[#1C1A16]/70 mt-1 block">
             煞{data.sha}
           </span>
         </div>

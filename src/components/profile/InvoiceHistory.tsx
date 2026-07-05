@@ -65,7 +65,7 @@ export function InvoiceHistory() {
         return (
           <button
             onClick={() => setPayingInvoice(invoice)}
-            className="text-xs px-3 py-1 rounded-full bg-orange-50 text-orange-600 border border-orange-200 hover:bg-orange-100 hover:border-orange-300 transition-colors cursor-pointer font-medium"
+            className="text-xs px-3 py-1 rounded-full bg-stone-100 text-[#1C1A16] border border-stone-300 hover:bg-stone-200 hover:border-stone-400 transition-colors cursor-pointer font-medium"
           >
             去支付
           </button>

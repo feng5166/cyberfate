@@ -163,12 +163,12 @@ function HexagramDiagram({ upper, lower, movingLine }: {
           <div key={i} className={`flex items-center gap-1.5 ${isMoving ? 'opacity-60' : ''}`}>
             {isYin ? (
               <>
-                <div className={`h-3 flex-1 rounded-sm ${isMoving ? 'bg-amber-400' : 'bg-[#1C1A16]'}`} />
+                <div className={`h-3 flex-1 rounded-sm ${isMoving ? 'bg-stone-500' : 'bg-[#1C1A16]'}`} />
                 <div className="h-3 w-3 flex-shrink-0" />
-                <div className={`h-3 flex-1 rounded-sm ${isMoving ? 'bg-amber-400' : 'bg-[#1C1A16]'}`} />
+                <div className={`h-3 flex-1 rounded-sm ${isMoving ? 'bg-stone-500' : 'bg-[#1C1A16]'}`} />
               </>
             ) : (
-              <div className={`h-3 w-full rounded-sm ${isMoving ? 'bg-amber-400' : 'bg-[#1C1A16]'}`} />
+              <div className={`h-3 w-full rounded-sm ${isMoving ? 'bg-stone-500' : 'bg-[#1C1A16]'}`} />
             )}
           </div>
         );
@@ -713,8 +713,8 @@ export default function MeihuaPage() {
                     )}
                     {decision.cautions && decision.cautions.length > 0 && (
                       <div className="mt-4">
-                        <h4 className="text-sm font-medium text-amber-700">⚠ 需要注意</h4>
-                        <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm leading-relaxed text-amber-700">
+                        <h4 className="text-sm font-medium text-[#1C1A16]">⚠ 需要注意</h4>
+                        <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm leading-relaxed text-[#1C1A16]">
                           {decision.cautions.map((item: string, i: number) => <li key={i}>{item}</li>)}
                         </ol>
                       </div>

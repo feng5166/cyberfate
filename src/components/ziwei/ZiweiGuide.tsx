@@ -24,8 +24,8 @@ const STEPS = [
     step: 3,
     title: '点击宫位',
     description: '查看详细星曜列表',
-    color: 'text-amber-500',
-    bg: 'bg-amber-50',
+    color: 'text-[#1C1A16]',
+    bg: 'bg-stone-100',
   },
   {
     icon: Sparkles,

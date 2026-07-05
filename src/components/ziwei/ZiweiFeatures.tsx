@@ -21,8 +21,8 @@ const FEATURES = [
     icon: Sparkles,
     title: 'AI 分析',
     description: '智能解读命盘格局与运势，结合四化飞星给出个性化分析建议',
-    gradient: 'from-amber-50 to-yellow-50',
-    iconColor: 'text-amber-500',
+    gradient: 'from-stone-100 to-stone-100',
+    iconColor: 'text-[#1C1A16]',
   },
 ];
 

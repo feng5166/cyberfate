@@ -51,7 +51,7 @@ const corePrinciples = [
   },
   {
     icon: BookOpen,
-    iconColor: 'text-amber-600',
+    iconColor: 'text-stone-600',
     title: '文化传承理性态度',
     description: '尊重东方传统语境，在现代语境下复原术语、拆解象征，建立科学、节制的参考框架。',
   },
@@ -77,7 +77,7 @@ const featureGroups = [
       },
       {
         icon: Sun,
-        iconColor: 'text-orange-400',
+        iconColor: 'text-stone-500',
         title: '每日运势',
         subtitle: '今日五行宜忌 + 五维运势评分',
         description: '基于八字的每日运势分析，助你把握每日吉凶',

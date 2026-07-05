@@ -175,7 +175,7 @@ export function DayunSwitcher({ birthDate, className }: DayunSwitcherProps) {
                 />
                 {currentDayunIndex >= 0 && (
                   <div
-                    className="absolute top-[18px] left-4 h-[2px] bg-gradient-to-r from-amber-400 to-amber-300 transition-all duration-500"
+                    className="absolute top-[18px] left-4 h-[2px] bg-gradient-to-r from-stone-500 to-stone-400 transition-all duration-500"
                     style={{
                       width: `${((currentDayunIndex + 1) / dayunPeriods.length) * 100}%`,
                       maxWidth: 'calc(100% - 32px)',
@@ -202,18 +202,18 @@ export function DayunSwitcher({ birthDate, className }: DayunSwitcherProps) {
                         className={cn(
                           'relative w-4 h-4 rounded-full border-2 transition-all duration-300 z-10',
                           isActive
-                            ? 'w-6 h-6 border-amber-500 bg-amber-500 shadow-[0_0_0_4px_rgba(245,158,11,0.2)]'
+                            ? 'w-6 h-6 border-[#1C1A16] bg-[#1C1A16] shadow-[0_0_0_4px_rgba(28,26,22,0.2)]'
                             : isCurrent
-                              ? 'w-5 h-5 border-amber-400 bg-amber-400 shadow-[0_0_0_3px_rgba(251,191,36,0.25)]'
+                              ? 'w-5 h-5 border-stone-500 bg-stone-500 shadow-[0_0_0_3px_rgba(28,26,22,0.25)]'
                               : isPast
-                                ? 'border-amber-300 bg-amber-200'
+                                ? 'border-stone-400 bg-stone-300'
                                 : isFuture
                                   ? 'border-[#D4D0C8] bg-[#FAF9F6] opacity-60 group-hover:opacity-100'
                                   : 'border-[#D4D0C8] bg-white group-hover:border-[#1C1A16]/30',
                         )}
                       >
                         {isCurrent && !isActive && (
-                          <span className="absolute inset-0 rounded-full animate-ping bg-amber-400/30" />
+                          <span className="absolute inset-0 rounded-full animate-ping bg-stone-500/30" />
                         )}
                       </div>
 
@@ -221,9 +221,9 @@ export function DayunSwitcher({ birthDate, className }: DayunSwitcherProps) {
                         className={cn(
                           'mt-2 text-[10px] leading-tight whitespace-nowrap transition-colors',
                           isActive
-                            ? 'text-amber-700 font-bold'
+                            ? 'text-[#1C1A16] font-bold'
                             : isCurrent
-                              ? 'text-amber-600 font-medium'
+                              ? 'text-stone-600 font-medium'
                               : isPast
                                 ? 'text-[#1C1A16]/40'
                                 : 'text-[#1C1A16]/25 group-hover:text-[#1C1A16]/50',
@@ -235,9 +235,9 @@ export function DayunSwitcher({ birthDate, className }: DayunSwitcherProps) {
                         className={cn(
                           'text-[10px] leading-tight mt-0.5 whitespace-nowrap transition-colors',
                           isActive
-                            ? 'text-amber-600/80 font-medium'
+                            ? 'text-stone-600/80 font-medium'
                             : isCurrent
-                              ? 'text-amber-500/60'
+                              ? 'text-[#1C1A16]/60'
                               : isPast
                                 ? 'text-[#1C1A16]/25'
                                 : 'text-[#1C1A16]/15',
@@ -261,7 +261,7 @@ export function DayunSwitcher({ birthDate, className }: DayunSwitcherProps) {
               />
               {currentDayunIndex >= 0 && (
                 <div
-                  className="absolute left-[11px] top-0 w-[2px] bg-gradient-to-b from-amber-400 to-amber-300 transition-all duration-500"
+                  className="absolute left-[11px] top-0 w-[2px] bg-gradient-to-b from-stone-500 to-stone-400 transition-all duration-500"
                   style={{
                     height: `${((currentDayunIndex + 1) / dayunPeriods.length) * 100}%`,
                   }}
@@ -290,16 +290,16 @@ export function DayunSwitcher({ birthDate, className }: DayunSwitcherProps) {
                       className={cn(
                         'absolute left-[-21px] w-4 h-4 rounded-full border-2 transition-all duration-300 z-10',
                         isActive
-                          ? 'w-5 h-5 -ml-0.5 border-amber-500 bg-amber-500 shadow-[0_0_0_3px_rgba(245,158,11,0.2)]'
+                          ? 'w-5 h-5 -ml-0.5 border-[#1C1A16] bg-[#1C1A16] shadow-[0_0_0_3px_rgba(28,26,22,0.2)]'
                           : isCurrent
-                            ? 'border-amber-400 bg-amber-400 shadow-[0_0_0_2px_rgba(251,191,36,0.2)]'
+                            ? 'border-stone-500 bg-stone-500 shadow-[0_0_0_2px_rgba(28,26,22,0.2)]'
                             : isPast
-                              ? 'border-amber-300 bg-amber-200'
+                              ? 'border-stone-400 bg-stone-300'
                               : 'border-[#D4D0C8] bg-[#FAF9F6]',
                       )}
                     >
                       {isCurrent && !isActive && (
-                        <span className="absolute inset-0 rounded-full animate-ping bg-amber-400/30" />
+                        <span className="absolute inset-0 rounded-full animate-ping bg-stone-500/30" />
                       )}
                     </div>
 
@@ -307,27 +307,27 @@ export function DayunSwitcher({ birthDate, className }: DayunSwitcherProps) {
                       className={cn(
                         'flex-1 rounded-xl px-3 py-2 transition-all border',
                         isActive
-                          ? 'bg-amber-50 border-amber-200'
+                          ? 'bg-stone-100 border-stone-300'
                           : isCurrent
-                            ? 'bg-amber-50/50 border-amber-100'
+                            ? 'bg-stone-100/50 border-stone-200'
                             : 'bg-transparent border-transparent',
                       )}
                     >
                       <div className="flex items-center gap-2">
                         <span className={cn(
                           'text-xs font-semibold',
-                          isActive ? 'text-amber-700' : isCurrent ? 'text-amber-600' : isPast ? 'text-[#1C1A16]/50' : 'text-[#1C1A16]/30',
+                          isActive ? 'text-[#1C1A16]' : isCurrent ? 'text-stone-600' : isPast ? 'text-[#1C1A16]/50' : 'text-[#1C1A16]/30',
                         )}>
                           {period.ageRange}
                         </span>
                         <span className={cn(
                           'text-[10px] px-1.5 py-0.5 rounded-md',
-                          isActive ? 'bg-amber-100 text-amber-700' : 'bg-[#FAF9F6] text-[#1C1A16]/35',
+                          isActive ? 'bg-stone-200 text-[#1C1A16]' : 'bg-[#FAF9F6] text-[#1C1A16]/35',
                         )}>
                           {period.palace}
                         </span>
                         {isCurrent && (
-                          <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-200 text-amber-800 font-bold">
+                          <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-stone-300 text-[#1C1A16] font-bold">
                             当前
                           </span>
                         )}
@@ -355,7 +355,7 @@ export function DayunSwitcher({ birthDate, className }: DayunSwitcherProps) {
                 {dayunPeriods[activeIndex].ageRange}（{dayunPeriods[activeIndex].yearRange}年）
               </span>
               {activeIndex === currentDayunIndex && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium animate-pulse">
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-stone-200 text-[#1C1A16] font-medium animate-pulse">
                   当前（{currentAge}岁）
                 </span>
               )}
@@ -387,18 +387,18 @@ export function DayunSwitcher({ birthDate, className }: DayunSwitcherProps) {
               className={cn(
                 'flex items-center gap-4 px-4 py-3 rounded-xl border transition-all',
                 ly.year === currentYear
-                  ? 'border-2 border-amber-400 bg-amber-50/50 shadow-sm'
+                  ? 'border-2 border-stone-500 bg-stone-100/50 shadow-sm'
                   : 'border-[#E8E4DD]',
               )}
             >
               <span className={cn(
                 'text-sm font-semibold min-w-[48px]',
-                ly.year === currentYear ? 'text-amber-700' : 'text-[#1C1A16]',
+                ly.year === currentYear ? 'text-[#1C1A16]' : 'text-[#1C1A16]',
               )}>{ly.year}</span>
               <span className="text-xs text-[#1C1A16]/40 min-w-[36px]">{ly.stem}{ly.branch}年</span>
               <span className="text-sm text-[#1C1A16]/60 flex-1">{ly.summary}</span>
               {ly.year === currentYear && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium shrink-0">
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-stone-200 text-[#1C1A16] font-medium shrink-0">
                   今年
                 </span>
               )}

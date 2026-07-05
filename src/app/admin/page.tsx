@@ -112,7 +112,7 @@ function LoginPrompt() {
         <p className="text-gray-500 text-sm mb-6">请使用管理员账号登录后访问此页面</p>
         <button
           onClick={() => signIn()}
-          className="px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-lg transition-colors"
+          className="px-6 py-2.5 bg-[#1C1A16] hover:bg-stone-600 text-white font-medium rounded-lg transition-colors"
         >
           登录
         </button>
@@ -247,7 +247,7 @@ function UserListTab() {
           placeholder="搜索邮箱或昵称..."
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
-          className="flex-1 px-4 py-2 rounded-lg border border-gray-200 bg-white text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
+          className="flex-1 px-4 py-2 rounded-lg border border-gray-200 bg-white text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-[#1C1A16]/30 focus:border-[#1C1A16]"
         />
         <div className="flex gap-1 p-1 bg-gray-100 rounded-lg">
           {([
@@ -275,7 +275,7 @@ function UserListTab() {
             setSort(e.target.value as UserSort);
             setPage(1);
           }}
-          className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
+          className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-[#1C1A16]/30 focus:border-[#1C1A16]"
         >
           <option value="newest">注册时间倒序</option>
           <option value="oldest">注册时间正序</option>
@@ -356,7 +356,7 @@ function UserListTab() {
                         <button
                           onClick={() => setDrawerEmail(u.email || null)}
                           disabled={!u.email}
-                          className="px-3 py-1 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100 disabled:opacity-40 text-xs font-medium transition-colors"
+                          className="px-3 py-1 rounded-md bg-stone-100 text-stone-600 hover:bg-stone-200 disabled:opacity-40 text-xs font-medium transition-colors"
                         >
                           详情
                         </button>
@@ -577,7 +577,7 @@ function UserDetailDrawer({
                         <span className={`px-2 py-0.5 rounded-full font-medium ${planBadge(o.plan)}`}>{o.plan}</span>
                         <span className="text-gray-900">${(o.amount / 100).toFixed(2)}</span>
                         <span className="text-gray-400">{o.payMethod || '-'}</span>
-                        <span className={`font-medium ${o.status === 'paid' ? 'text-emerald-600' : 'text-amber-600'}`}>
+                        <span className={`font-medium ${o.status === 'paid' ? 'text-emerald-600' : 'text-stone-600'}`}>
                           {o.status}
                         </span>
                         <span className="text-gray-400 ml-auto">{new Date(o.createdAt).toLocaleDateString('zh-CN')}</span>
@@ -599,7 +599,7 @@ function UserDetailDrawer({
         <div className="px-5 py-3 border-t border-gray-100 flex gap-2">
           <button
             onClick={() => onAction('fix-vip')}
-            className="flex-1 px-4 py-2 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 text-sm font-medium transition-colors"
+            className="flex-1 px-4 py-2 rounded-lg bg-stone-100 text-[#1C1A16] hover:bg-stone-200 text-sm font-medium transition-colors"
           >
             🔧 修正VIP
           </button>
@@ -685,7 +685,7 @@ function ActionModal({
                   onClick={() => setPlan(p)}
                   className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                     plan === p
-                      ? (isFix ? 'bg-amber-500 text-white shadow-sm' : 'bg-blue-500 text-white shadow-sm')
+                      ? (isFix ? 'bg-[#1C1A16] text-white shadow-sm' : 'bg-blue-500 text-white shadow-sm')
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
@@ -710,7 +710,7 @@ function ActionModal({
               onClick={handleSubmit}
               disabled={loading}
               className={`flex-1 px-4 py-2 rounded-lg text-white text-sm font-medium transition-colors disabled:opacity-40 ${
-                isFix ? 'bg-amber-500 hover:bg-amber-600' : 'bg-blue-500 hover:bg-blue-600'
+                isFix ? 'bg-[#1C1A16] hover:bg-stone-600' : 'bg-blue-500 hover:bg-blue-600'
               }`}
             >
               {loading ? '处理中...' : '确认'}
@@ -759,12 +759,12 @@ function CheckUserTab() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleCheck()}
-          className="flex-1 px-4 py-2.5 rounded-lg border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
+          className="flex-1 px-4 py-2.5 rounded-lg border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1C1A16]/30 focus:border-[#1C1A16]"
         />
         <button
           onClick={handleCheck}
           disabled={loading || !email.trim()}
-          className="px-6 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:opacity-40 text-white font-medium rounded-lg transition-colors"
+          className="px-6 py-2.5 bg-[#1C1A16] hover:bg-stone-600 disabled:opacity-40 text-white font-medium rounded-lg transition-colors"
         >
           {loading ? '查询中...' : '查询'}
         </button>
@@ -878,7 +878,7 @@ function CheckUserTab() {
                         <td className="py-2.5 pr-4"><span className={`px-2 py-0.5 rounded-full text-xs font-medium ${planBadge(o.plan)}`}>{o.plan}</span></td>
                         <td className="py-2.5 pr-4 text-gray-900">${(o.amount / 100).toFixed(2)}</td>
                         <td className="py-2.5 pr-4 text-xs text-gray-400">{o.payMethod || '-'}</td>
-                        <td className="py-2.5 pr-4"><span className={`text-xs font-medium ${o.status === 'paid' ? 'text-emerald-600' : 'text-amber-600'}`}>{o.status}</span></td>
+                        <td className="py-2.5 pr-4"><span className={`text-xs font-medium ${o.status === 'paid' ? 'text-emerald-600' : 'text-stone-600'}`}>{o.status}</span></td>
                         <td className="py-2.5 text-xs text-gray-400">{new Date(o.createdAt).toLocaleString('zh-CN')}</td>
                       </tr>
                     ))}
@@ -928,7 +928,7 @@ function FixVipTab() {
 
   return (
     <div className="space-y-5">
-      <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-sm">
+      <div className="p-4 rounded-xl bg-stone-100 border border-stone-300 text-[#1C1A16] text-sm">
         ⚠️ 此操作会修改用户的订阅到期时间。请先在「查询用户」确认目标用户信息。
       </div>
 
@@ -940,7 +940,7 @@ function FixVipTab() {
             placeholder="user@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
+            className="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1C1A16]/30 focus:border-[#1C1A16]"
           />
         </div>
 
@@ -953,7 +953,7 @@ function FixVipTab() {
                 onClick={() => setPlan(p)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   plan === p
-                    ? 'bg-amber-500 text-white shadow-sm'
+                    ? 'bg-[#1C1A16] text-white shadow-sm'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
@@ -966,7 +966,7 @@ function FixVipTab() {
         <button
           onClick={handleFix}
           disabled={loading || !email.trim()}
-          className="w-full px-6 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:opacity-40 text-white font-medium rounded-lg transition-colors"
+          className="w-full px-6 py-2.5 bg-[#1C1A16] hover:bg-stone-600 disabled:opacity-40 text-white font-medium rounded-lg transition-colors"
         >
           {loading ? '处理中...' : '🔧 修正 VIP'}
         </button>
@@ -979,7 +979,7 @@ function FixVipTab() {
           <div className="font-medium text-emerald-700">✅ 修正成功</div>
           <div className="grid grid-cols-2 gap-2 text-gray-700">
             <div><span className="text-gray-400">邮箱：</span>{result.user?.email}</div>
-            <div><span className="text-gray-400">变更：</span>{result.user?.oldPlan} → <span className="text-amber-600 font-medium">{result.user?.newPlan}</span></div>
+            <div><span className="text-gray-400">变更：</span>{result.user?.oldPlan} → <span className="text-stone-600 font-medium">{result.user?.newPlan}</span></div>
             <div><span className="text-gray-400">旧到期：</span>{result.user?.oldExpiry ? new Date(result.user.oldExpiry).toLocaleString('zh-CN') : '-'}</div>
             <div><span className="text-gray-400">新到期：</span><span className="text-emerald-600 font-medium">{result.user?.newExpiry ? new Date(result.user.newExpiry).toLocaleString('zh-CN') : '-'}</span></div>
           </div>

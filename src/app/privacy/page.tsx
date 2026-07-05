@@ -42,7 +42,7 @@ export default function PrivacyPage() {
                   <li>您选填的姓名和性别信息</li>
                   <li>浏览器类型、设备信息等技术数据</li>
                 </ul>
-                <p className="mt-3 text-sm leading-relaxed p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <p className="mt-3 text-sm leading-relaxed p-3 bg-stone-100 border border-stone-300 rounded-lg">
                   <strong>重要提示：</strong>您提供的出生日期、时辰、性别等信息属于<strong>敏感个人信息</strong>，本站将按照最高标准保护此类信息，仅用于为您提供命理分析服务，不会用于其他目的。
                 </p>
               </section>

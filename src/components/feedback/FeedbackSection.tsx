@@ -125,7 +125,7 @@ export default function FeedbackSection() {
   const counterColor = isOverLimit
     ? 'text-red-500'
     : isNearLimit
-    ? 'text-orange-500'
+    ? 'text-[#1C1A16]'
     : 'text-[#6B7280]';
 
   return (

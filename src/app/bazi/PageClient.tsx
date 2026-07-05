@@ -394,7 +394,7 @@ function getZodiacByBirthDate(birthDate: string): string {
 
 function getScoreStyle(score: number): { barClass: string; textClass: string } {
   if (score >= 80) return { barClass: 'bg-emerald-500', textClass: 'text-emerald-600' };
-  if (score >= 60) return { barClass: 'bg-amber-500', textClass: 'text-amber-600' };
+  if (score >= 60) return { barClass: 'bg-[#1C1A16]', textClass: 'text-stone-600' };
   return { barClass: 'bg-rose-500', textClass: 'text-rose-600' };
 }
 
@@ -2316,7 +2316,7 @@ function BaziPageContent() {
                 )}
 
                 {!formData.knowTime && formData.birthHour === '-1' && (
-                  <p className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">
+                  <p className="rounded-lg bg-stone-100 border border-stone-300 px-3 py-2 text-xs text-[#1C1A16]">
                     ⚠️ 未提供出生时间将按无时辰排盘，时柱缺失会显著降低分析精度。
                   </p>
                 )}
@@ -2367,9 +2367,9 @@ function BaziPageContent() {
               <div className="max-w-page mx-auto w-full">
               <div ref={resultRef} className="space-y-6 animate-fadeIn" aria-live="polite">
                 {result._source !== 'history' && !isMember && (
-                  <div className="flex items-center justify-between gap-3 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 px-4 py-3">
-                    <p className="text-sm text-amber-800">✨ 解读已生成！开通会员可不限次解读，并解锁 AI 八字问答</p>
-                    <Link href="/pricing" className="shrink-0 text-xs font-medium text-amber-700 border border-amber-300 rounded-lg px-3 py-1.5 hover:bg-amber-100 transition-colors">
+                  <div className="flex items-center justify-between gap-3 rounded-xl bg-gradient-to-r from-stone-100 to-stone-100 border border-stone-300/60 px-4 py-3">
+                    <p className="text-sm text-[#1C1A16]">✨ 解读已生成！开通会员可不限次解读，并解锁 AI 八字问答</p>
+                    <Link href="/pricing" className="shrink-0 text-xs font-medium text-[#1C1A16] border border-stone-400 rounded-lg px-3 py-1.5 hover:bg-stone-200 transition-colors">
                       了解会员
                     </Link>
                   </div>
@@ -2405,7 +2405,7 @@ function BaziPageContent() {
                       {result.traits.map((trait: BaziTrait, index: number) => (
                         <div
                           key={`${trait.label}_${index}`}
-                          className="rounded-xl border border-amber-300/60 bg-[#FFFBF5] px-4 py-3"
+                          className="rounded-xl border border-stone-400/60 bg-[#FFFBF5] px-4 py-3"
                         >
                           <p className="text-sm font-semibold text-[#1C1A16]/90">{trait.label}</p>
                           <p className="text-xs text-brand-gray mt-1.5 leading-relaxed">{trait.desc}</p>

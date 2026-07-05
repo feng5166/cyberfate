@@ -164,7 +164,7 @@ export function ZiweiAiOverview({ palaces, birthDate, className }: ZiweiAiOvervi
       {/* 标题栏 */}
       <div className="px-5 sm:px-6 pt-5 pb-0">
         <div className="flex items-center gap-2 mb-4">
-          <Sparkles className="w-5 h-5 text-amber-500" />
+          <Sparkles className="w-5 h-5 text-[#1C1A16]" />
           <h3 className="font-display text-lg font-semibold text-[#1C1A16]">AI 命盘解读</h3>
           {/* 该面板为静态示例内容，尚未接入实时 AI，明确标注避免误导 */}
           <Badge variant="neutral">示例</Badge>
