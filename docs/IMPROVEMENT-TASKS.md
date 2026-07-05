@@ -54,4 +54,17 @@
 ### T12 ✅已核查—非 bug · geju 用神/忌神语义
 初判 `calculateYongShen` 把"克泄耗"的克写成了我克。复核后确认**实现正确**:"克泄耗"含克(官杀)、泄(食伤)、耗(财)三类,代码以"财(耗)= WUXING_CONTROL[日主]"作为代表项,财本就是克泄耗之一,属合法简化。身强用财(耗)、身弱忌财(耗),内部逻辑自洽。测试已改为明确断言正确行为(`geju.test.ts`),无需改源码。
 
-_任务清单 by Claude · 2026-06-16(测试进展 2026-06-17 追加)_
+---
+
+## 2026-07-04 收官进展
+
+- [x] **T5 配额维度统一** —— 核实已落地:`UsageQuota` 覆盖八字/塔罗/六爻/梅花(决策+起卦)/黄历/音乐签/合婚/各 QA/每日,11 个 check 函数均在对应路由启用,无缺口。
+- [x] **T6 紫微加 AI 解读** —— 核实已存在 `/api/ziwei`。
+- [x] **T8 时区一致性审计** —— 挖出真 bug:游客限流/daily-music 缓存 TTL 走 UTC 午夜(=北京 08:00)与北京日键错位 → 游客二次配额 + 缓存提前失效。新增 `timezone.getSecondsUntilBeijingMidnight()` 单一真源修两处 + admin/validate-bazi 默认日期;加 timezone 单测 6 例。(commit cd0497b)
+- [x] **T9 AI 回退可观测** —— 新增 `src/lib/ai/observe.ts`:按模块×北京日 Redis 累计 total/fallback,回退率>30%(样本≥20)飞书告警(1h 冷却、fire-and-forget);client.ts 5 个非流式解读函数 20 个返回点 `observed()` 接入;单测 7 例。(commit 8b56754)
+- [x] **T10 分享隐私审计** —— music-oracle 分享 JSON 移除用户原始 `question`(防 og→share 换 URL 读私密提问)+ 修 OG baseUrl 优先级 bug。分享均用 cuid 不可枚举、图/JSON 无 PII。(commit 5203354)
+- [x] **T11 配额竞态回归** —— 忠实模拟原子后端的并发不变量测试,断言恰好放行 limit 次、守住非原子回归。(commit 6edb4ba)
+- [~] **T7 每日运势模型统一** —— 已失效:全站现统一 DeepSeek v4-pro,深度分析不再走 Claude(见 CLAUDE.md)。
+- [ ] **T4 多币种/国内支付** —— 仍待产品决策(是否启用微信/支付宝 + CNY 定价 + 选支付商/对账),未动。
+
+_任务清单 by Claude · 2026-06-16(测试进展 2026-06-17;收官进展 2026-07-04 追加)_
