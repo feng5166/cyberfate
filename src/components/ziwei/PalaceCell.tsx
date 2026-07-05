@@ -19,7 +19,7 @@ export function PalaceCell({ palace, selected = false, onClick, className }: Pal
       aria-label={`${palace.name} - ${palace.branch}`}
       aria-pressed={selected}
       className={cn(
-        'relative flex flex-col text-left bg-white border rounded-xl p-3 min-h-[120px]',
+        'relative flex flex-col text-left bg-white border rounded-xl p-3 lg:p-4 min-h-[120px] lg:min-h-[150px] xl:min-h-[172px]',
         'transition-all duration-200 cursor-pointer',
         'hover:border-[#1C1A16] hover:shadow-sm',
         'focus:outline-none focus:ring-2 focus:ring-brand-accent/30',
@@ -52,7 +52,7 @@ export function PalaceCell({ palace, selected = false, onClick, className }: Pal
           <div key={star.name} className="flex items-center gap-1.5">
             <StarIcon starName={star.name} size={8} />
             <span
-              className="text-[13px] font-bold leading-tight"
+              className="text-[13px] lg:text-[15px] xl:text-[16px] font-bold leading-tight"
               style={{ color: STAR_COLORS[star.name] || '#1C1A16' }}
             >
               {star.name}

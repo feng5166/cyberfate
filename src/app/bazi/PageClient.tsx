@@ -2613,14 +2613,14 @@ function BaziPageContent() {
                           {isDayunSection && dayunTimeline.length > 0 && (
                             <div className="mt-4 rounded-2xl border border-[#1C1A16]/10 bg-[#FAF9F6] p-4 sm:p-5">
                               <p className="text-sm font-medium text-[#1C1A16] mb-3">大运时间轴</p>
-                              <div className="overflow-x-auto">
-                                <div className="flex gap-3 snap-x snap-mandatory pb-1">
+                              <div className="overflow-x-auto md:overflow-x-visible">
+                                <div className="flex gap-3 snap-x snap-mandatory pb-1 md:grid md:grid-cols-4 md:snap-none md:pb-0 lg:grid-cols-8">
                                   {dayunTimeline.map((item, idx) => (
                                     <button
                                       key={item.key}
                                       type="button"
                                       onClick={() => setSelectedDayunIndex(idx)}
-                                      className={`min-w-[160px] snap-start rounded-xl border p-3 text-left transition-colors ${
+                                      className={`min-w-[160px] md:min-w-0 snap-start rounded-xl border p-3 text-left transition-colors ${
                                         idx === selectedDayunIndex
                                           ? item.isCurrent
                                             ? 'border-[#1C1A16] bg-[#FFF6E8] text-[#1C1A16] ring-1 ring-[#1C1A16]/40'

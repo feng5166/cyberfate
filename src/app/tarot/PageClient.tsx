@@ -386,20 +386,15 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
     return (
       <div
         key={`${card.id}-${idx}`}
-        className="text-center"
-        onClick={() => {
-          if (isCeltic) {
-            setCelticModalIdx(idx);
-          }
-        }}
-        style={isCeltic ? { cursor: 'pointer' } : undefined}
+        className="group/card text-center md:cursor-pointer"
+        onClick={() => setCelticModalIdx(idx)}
       >
         <p className="mb-2 text-xs tracking-[0.16em] text-[#1C1A16]/55">
           {card.position || positions[idx]}
         </p>
         <div className="mx-auto" style={{ width: containerWidth, maxWidth: '100%' }}>
           <div
-            className="relative overflow-hidden rounded-[0.85rem] border border-[#1C1A16]/12 bg-[#FAF9F6]"
+            className="relative overflow-hidden rounded-[0.85rem] border border-[#1C1A16]/12 bg-[#FAF9F6] transition-all duration-300 md:group-hover/card:-translate-y-1 md:group-hover/card:shadow-card-hover"
             style={{ aspectRatio: '2 / 3' }}
           >
             <img
@@ -412,6 +407,10 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
                 transform: card.orientation === 'reversed' ? 'rotate(180deg)' : undefined,
               }}
             />
+            {/* 桌面 hover 提示：查看牌义 */}
+            <div className="pointer-events-none absolute inset-0 hidden items-end justify-center bg-gradient-to-t from-black/45 to-transparent opacity-0 transition-opacity duration-300 md:flex md:group-hover/card:opacity-100">
+              <span className="mb-2 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-[#1C1A16]">查看牌义</span>
+            </div>
           </div>
         </div>
         <h4 className={`mt-2 font-medium text-[#1C1A16] ${isCeltic ? 'text-[10px] sm:text-xs' : 'text-xs sm:text-sm'}`}>
@@ -849,7 +848,7 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
               </div>
               <div>
                 <p className="text-xs tracking-[0.16em] text-[#1C1A16]/55">
-                  {result.cards[celticModalIdx].position || CELTIC_POSITIONS[celticModalIdx]}
+                  {result.cards[celticModalIdx].position || getPositions((result.spread as TarotSpread) || currentSpread)[celticModalIdx]}
                 </p>
                 <h3 className="font-display text-lg text-[#1C1A16]">
                   {result.cards[celticModalIdx].name_zh}

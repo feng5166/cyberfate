@@ -168,7 +168,7 @@ export function DayunSwitcher({ birthDate, className }: DayunSwitcherProps) {
             </div>
 
             <div className="overflow-x-auto pb-2 -mx-1 px-1">
-              <div className="relative flex items-start min-w-max pt-2">
+              <div className="relative flex items-start min-w-max md:min-w-0 pt-2">
                 <div
                   className="absolute top-[18px] left-4 right-4 h-[2px] bg-[#E8E4DD]"
                   aria-hidden="true"
