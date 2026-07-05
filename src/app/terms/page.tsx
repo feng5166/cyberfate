@@ -79,7 +79,7 @@ export default function TermsPage() {
                   <li>因网络故障、系统维护等导致的服务中断</li>
                   <li>第三方服务（如支付平台）的问题</li>
                 </ul>
-                <div className="mt-5 p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-3 text-sm">
+                <div className="mt-5 p-4 bg-stone-100 border border-stone-300 rounded-xl space-y-3 text-sm">
                   <p className="font-semibold text-brand-ink">重要声明（请仔细阅读）</p>
                   <ul className="list-disc list-inside space-y-2 ml-2 text-brand-ink/80 leading-relaxed">
                     <li>本站所有命理内容（八字、塔罗、梅花易数、六爻等）<strong>仅供娱乐参考</strong>，不构成任何专业建议，包括但不限于医疗、法律、金融、心理健康方面的建议。</li>

@@ -390,7 +390,7 @@ export function StarDictionaryPopover({ starName, children, className }: StarDic
             {entry.keywords.map((kw) => (
               <span
                 key={kw}
-                className="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-100"
+                className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 text-[#1C1A16] border border-stone-200"
               >
                 {kw}
               </span>

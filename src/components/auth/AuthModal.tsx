@@ -173,12 +173,12 @@ export function AuthModal({ isOpen, onClose, callbackUrl = '/bazi', reason }: Au
 
         {/* 上下文说明（如游客次数用完）：解释为何登录 + 各档权益，降低理解成本 */}
         {reason && (
-          <div className="mb-5 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/70 px-4 py-3.5">
-            <p className="text-sm font-semibold text-amber-900">✨ {reason.title}</p>
-            <p className="text-xs text-amber-800/85 mt-1.5 leading-relaxed">{reason.desc}</p>
+          <div className="mb-5 rounded-xl bg-gradient-to-br from-stone-100 to-stone-100 border border-stone-300/70 px-4 py-3.5">
+            <p className="text-sm font-semibold text-[#1C1A16]">✨ {reason.title}</p>
+            <p className="text-xs text-[#1C1A16]/85 mt-1.5 leading-relaxed">{reason.desc}</p>
             <a
               href="/pricing"
-              className="inline-flex items-center gap-1 mt-2.5 text-xs font-medium text-amber-700 hover:text-amber-900 transition-colors"
+              className="inline-flex items-center gap-1 mt-2.5 text-xs font-medium text-[#1C1A16] hover:text-[#1C1A16] transition-colors"
             >
               开通会员不限次解读 + AI 八字问答 →
             </a>

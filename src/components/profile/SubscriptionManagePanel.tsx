@@ -113,7 +113,7 @@ export function SubscriptionManagePanel({ subscription, onBack }: SubscriptionMa
         <p className="text-[#1C1A16]/70 text-sm">${subscription.price}</p>
         <p className="text-[#1C1A16]/60 text-sm mt-2">{isLifetime ? '🎉 终身有效，无需续费' : `到期日期：${expireDate}`}</p>
         {subscription.cancel_at_period_end && (
-          <p className="text-orange-600 text-sm mt-1">⚠️ 将于到期后取消</p>
+          <p className="text-[#1C1A16] text-sm mt-1">⚠️ 将于到期后取消</p>
         )}
         {subscription.pending_plan && (
           <p className="text-blue-600 text-sm mt-1">

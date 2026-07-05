@@ -15,10 +15,10 @@ interface PalaceDetailPanelProps {
 const BRIGHTNESS_TAG_STYLES: Record<string, string> = {
   '庙': 'bg-emerald-50 text-emerald-700 border-emerald-200',
   '旺': 'bg-blue-50 text-blue-700 border-blue-200',
-  '得': 'bg-amber-50 text-amber-700 border-amber-200',
+  '得': 'bg-stone-100 text-[#1C1A16] border-stone-300',
   '利': 'bg-cyan-50 text-cyan-700 border-cyan-200',
   '平': 'bg-gray-50 text-gray-600 border-gray-200',
-  '不': 'bg-orange-50 text-orange-600 border-orange-200',
+  '不': 'bg-stone-100 text-[#1C1A16] border-stone-300',
   '陷': 'bg-red-50 text-red-600 border-red-200',
 };
 
@@ -189,7 +189,7 @@ export function PalaceDetailPanel({ palace, onClose, className }: PalaceDetailPa
               <div className="flex items-center gap-0.5">
                 {star.brightness
                   ? Array.from({ length: getBrightnessLevel(star.brightness) }).map((_, i) => (
-                      <span key={i} className="text-amber-400 text-xs">★</span>
+                      <span key={i} className="text-stone-500 text-xs">★</span>
                     ))
                   : <span className="text-[#1C1A16]/20 text-xs">—</span>}
               </div>
@@ -218,9 +218,9 @@ export function PalaceDetailPanel({ palace, onClose, className }: PalaceDetailPa
       </div>
 
       {/* 区块3: AI 宫位解读 */}
-      <div className="rounded-xl bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-100 p-5">
+      <div className="rounded-xl bg-gradient-to-r from-stone-100 to-stone-100 border border-stone-200 p-5">
         <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="w-4 h-4 text-amber-500" />
+          <Sparkles className="w-4 h-4 text-[#1C1A16]" />
           <h4 className="text-sm font-semibold text-[#1C1A16]">AI 宫位解读</h4>
           {/* 静态示例解读，尚未接入实时 AI，明确标注避免误导 */}
           <Badge variant="neutral">示例</Badge>
@@ -230,13 +230,13 @@ export function PalaceDetailPanel({ palace, onClose, className }: PalaceDetailPa
         </p>
         <div className="flex items-center gap-3">
           <span className="text-xs text-[#1C1A16]/40">综合评分</span>
-          <div className="flex-1 h-2 rounded-full bg-amber-100 overflow-hidden">
+          <div className="flex-1 h-2 rounded-full bg-stone-200 overflow-hidden">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-amber-400 to-yellow-400 transition-all duration-500"
+              className="h-full rounded-full bg-gradient-to-r from-stone-500 to-stone-500 transition-all duration-500"
               style={{ width: `${aiData.score}%` }}
             />
           </div>
-          <span className="text-sm font-bold text-amber-600">{aiData.score}/100</span>
+          <span className="text-sm font-bold text-stone-600">{aiData.score}/100</span>
         </div>
       </div>
     </div>

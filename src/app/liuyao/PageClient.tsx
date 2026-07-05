@@ -256,7 +256,7 @@ function HexagramPreviewCard({ upperKey, lowerKey, movingLine, label }: { upperK
           上{hex.upper.name}（{hex.upper.nature}）下{hex.lower.name}（{hex.lower.nature}）
         </p>
         {movingLine !== undefined && (
-          <p className="mt-1 text-xs text-orange-700">动爻：第{movingLine + 1}爻</p>
+          <p className="mt-1 text-xs text-[#1C1A16]">动爻：第{movingLine + 1}爻</p>
         )}
       </div>
     </div>
@@ -1514,7 +1514,7 @@ export default function LiuYaoPage() {
                     {resolvedMovingLines.map((idx) => (
                       <span
                         key={idx}
-                        className="rounded-full bg-orange-100 px-2.5 py-0.5 text-[11px] font-medium text-orange-700"
+                        className="rounded-full bg-stone-200 px-2.5 py-0.5 text-[11px] font-medium text-[#1C1A16]"
                       >
                         第{idx + 1}爻
                       </span>
@@ -1542,7 +1542,7 @@ export default function LiuYaoPage() {
                           {line.title}（第{line.index + 1}爻）
                         </span>
                         {line.isMoving && (
-                          <span className="rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-medium text-orange-700">动爻</span>
+                          <span className="rounded-full bg-stone-200 px-2 py-0.5 text-[10px] font-medium text-[#1C1A16]">动爻</span>
                         )}
                       </div>
                       <div className="mb-2">
@@ -1682,7 +1682,7 @@ export default function LiuYaoPage() {
                           {line.title}（第{line.index + 1}爻）
                         </span>
                         {resolvedMovingLines.includes(line.index) && (
-                          <span className="rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-medium text-orange-700">动爻</span>
+                          <span className="rounded-full bg-stone-200 px-2 py-0.5 text-[10px] font-medium text-[#1C1A16]">动爻</span>
                         )}
                       </div>
                       <div className="mb-2">
@@ -1724,10 +1724,10 @@ export default function LiuYaoPage() {
 
                   {result.actionAdvice.cautions.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-medium text-amber-700 mb-1">⚠ 注意事项</h4>
+                      <h4 className="text-sm font-medium text-[#1C1A16] mb-1">⚠ 注意事项</h4>
                       <ul className="space-y-1 pl-1">
                         {result.actionAdvice.cautions.map((item, i) => (
-                          <li key={i} className="text-sm leading-relaxed text-amber-700">· {item}</li>
+                          <li key={i} className="text-sm leading-relaxed text-[#1C1A16]">· {item}</li>
                         ))}
                       </ul>
                     </div>

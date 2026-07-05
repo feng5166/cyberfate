@@ -6,13 +6,13 @@ const NATURE_ORDER: Record<string, number> = { 吉: 0, 中: 1, 凶: 2 };
 
 const NATURE_STYLE: Record<string, string> = {
   吉: 'border-emerald-300/60 bg-emerald-50 text-emerald-700',
-  中: 'border-amber-300/50 bg-[#FFFBF5] text-[#B8791F]',
+  中: 'border-stone-400/50 bg-[#FFFBF5] text-[#B8791F]',
   凶: 'border-red-300/50 bg-red-50 text-red-600',
 };
 
 const NATURE_DOT: Record<string, string> = {
   吉: 'bg-emerald-500',
-  中: 'bg-amber-400',
+  中: 'bg-stone-500',
   凶: 'bg-red-400',
 };
 

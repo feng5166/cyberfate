@@ -35,7 +35,7 @@ const wuxingConfig: ReadonlyArray<WuxingConfigItem> = [
 function getStatusStyle(status: string): string {
   if (status === '旺') return 'text-emerald-600 font-medium';
   if (status === '强') return 'text-blue-600 font-medium';
-  if (status === '弱') return 'text-orange-500 font-medium';
+  if (status === '弱') return 'text-[#1C1A16] font-medium';
   if (status === '衰') return 'text-red-600 font-medium';
   return 'text-[#1C1A16]/50';
 }

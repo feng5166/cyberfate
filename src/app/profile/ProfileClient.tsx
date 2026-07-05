@@ -147,7 +147,7 @@ export default function ProfileClient({
                     </span>
                   )}
                   {subscriptionDetail.cancel_at_period_end && (
-                    <span className="text-[11px] font-medium bg-amber-100 text-amber-700 px-2 py-0.5 rounded">
+                    <span className="text-[11px] font-medium bg-stone-200 text-[#1C1A16] px-2 py-0.5 rounded">
                       到期取消
                     </span>
                   )}
