@@ -48,7 +48,8 @@ export async function GET(
         wuxingNote: record.wuxingNote,
         ganzhi: record.ganzhi,
         wuxing: record.wuxing,
-        question: record.question,
+        // 隐私(T10):不外泄用户原始提问。分享卡片/OG 图均不展示 question,
+        // 唯一消费者是 OG 图路由且不使用它;若前端分享页将来需回显,应改为登录态私有接口。
         createdAt: record.createdAt.toISOString(),
       },
     });
