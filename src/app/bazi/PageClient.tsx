@@ -2384,7 +2384,6 @@ function BaziPageContent() {
                 {/* lg+ 两列：左 aside(sticky)=紧凑命盘/五行/日主概览；右 main=解读长文。<lg 按 DOM 顺序竖堆(aside 先→main 后)，与旧单列一致。 */}
                 <SplitLayout
                   asidePosition="left"
-                  stickyAside={false}
                   aside={
                     <div className="space-y-6">
                 <Card className={cardClass}>
