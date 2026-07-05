@@ -181,23 +181,12 @@ export default function HomePage() {
             .cf-d1 { animation-delay: 0.05s; }
             .cf-d2 { animation-delay: 0.16s; }
             .cf-d3 { animation-delay: 0.28s; }
-            .cf-d4 { animation-delay: 0.40s; }
             @media (prefers-reduced-motion: reduce) { .cf-anim { opacity: 1; animation: none; } }
           `}</style>
 
-          {/* 标记（罗盘命星） */}
-          <img
-            src="/favicon.svg"
-            alt=""
-            aria-hidden="true"
-            width={68}
-            height={68}
-            className="cf-anim cf-d1 mx-auto mb-5 h-[60px] w-[60px] sm:h-[68px] sm:w-[68px] drop-shadow-sm"
-          />
-
           {/* 主标题 */}
           <h1
-            className="cf-anim cf-d2 font-display text-[36px] sm:text-[48px] md:text-[56px] font-[800] text-[#1C1A16] leading-tight flex items-center justify-center gap-2"
+            className="cf-anim cf-d1 font-display text-[36px] sm:text-[48px] md:text-[56px] font-[800] text-[#1C1A16] leading-tight flex items-center justify-center gap-2"
             style={{ letterSpacing: '0.06em' }}
           >
             <span><span className="font-normal text-[#1C1A16]/45">CYBER</span><span className="font-[800]">FATE</span></span>
@@ -206,14 +195,14 @@ export default function HomePage() {
 
           {/* Slogan —— 品牌一句 */}
           <p
-            className="cf-anim cf-d3 font-display text-[19px] sm:text-[22px] text-[#1C1A16] mt-5"
+            className="cf-anim cf-d2 font-display text-[19px] sm:text-[22px] text-[#1C1A16] mt-5"
             style={{ letterSpacing: '0.04em' }}
           >
             我不懂命理，<span className="text-brand-accent font-semibold">你说人话我就懂</span>
           </p>
 
           {/* 副标题（功能描述） */}
-          <p className="cf-anim cf-d4 text-[14px] sm:text-[15px] tracking-[0.05em] text-[#1C1A16]/55 text-center mt-3">
+          <p className="cf-anim cf-d3 text-[14px] sm:text-[15px] tracking-[0.05em] text-[#1C1A16]/55 text-center mt-3">
             AI 驱动的八字命理 · 紫微斗数 · 塔罗占卜 · 每日运势
           </p>
 
