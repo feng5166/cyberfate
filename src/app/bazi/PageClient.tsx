@@ -1114,13 +1114,13 @@ function BaziPageContent() {
     }
   }, [result]);
 
-  // 流式输出时自动滚到底部（容器内滚动）
+  // 流式输出时页面级跟随到底部（解读已在页面正常流内，非独立滚动容器）
   const streamContainerRef = useRef<HTMLDivElement>(null);
   const aiReadingRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!aiStreaming || !aiStreamText) return;
-    const el = streamContainerRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
+    // 把正在生成的解读底部滚入视野（整页滚动，四柱一并随页面移动）
+    streamContainerRef.current?.scrollIntoView({ block: 'end', behavior: 'auto' });
   }, [aiStreamText, aiStreaming]);
 
   useEffect(() => {
@@ -2384,6 +2384,7 @@ function BaziPageContent() {
                 {/* lg+ 两列：左 aside(sticky)=紧凑命盘/五行/日主概览；右 main=解读长文。<lg 按 DOM 顺序竖堆(aside 先→main 后)，与旧单列一致。 */}
                 <SplitLayout
                   asidePosition="left"
+                  stickyAside={false}
                   aside={
                     <div className="space-y-6">
                 <Card className={cardClass}>
@@ -2536,7 +2537,7 @@ function BaziPageContent() {
                         AI 正在解读中…
                       </div>
 
-                      <div ref={streamContainerRef} className="max-h-[60vh] overflow-y-auto pr-1">
+                      <div ref={streamContainerRef} className="pr-1">
                       {aiStreamText ? (() => {
                         const streamSections = [
                           { title: '一、日主强弱判断', content: parseSection(aiStreamText, ['日主分析']) },
