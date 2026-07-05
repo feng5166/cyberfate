@@ -453,11 +453,11 @@ export default function ZiweiPage() {
       {/* 命盘区域 — 桌面 lg+ master-detail：左命盘(sticky) | 右详情/四化/大运/AI；
           <lg 竖向堆叠（asidePosition=left → aside 先 main 后），移动端顺序与间距保持原样 */}
       {showChart && !loading && palaces.length > 0 && (
-        <PageShell width="chart" className=" pb-6 md:pb-8">
-          {/* 桌面 master-detail：命盘占更宽一栏(sticky) | 详情右，避免 4×4 命盘被 400px 压窄。
-              <lg 竖向堆叠：命盘 → 详情，顺序与移动端一致；命盘内部 hidden md:block / md:hidden 分支未动。 */}
-          <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] lg:gap-8 lg:items-start">
-            <div className="flex flex-col gap-4 lg:sticky lg:top-24 lg:self-start">
+        <PageShell width="wide" className=" pb-6 md:pb-8">
+          {/* 单栏：命盘在上、详情/四化/大运/AI 在下,整页自然滚动(桌面不再两栏 sticky,避免留白/停靠)。
+              命盘内部 hidden md:block / md:hidden 分支未动。 */}
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-4">
                 {/* 命盘卡片（内部桌面 4×4 网格 + 移动端信息卡/列表分支，整体原样搬迁，未改内部） */}
                 <div className="bg-white rounded-2xl shadow-sm border border-[#F0EDE8] p-4 sm:p-6">
                   <div className="flex items-center justify-between mb-1">
