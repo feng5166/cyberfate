@@ -74,6 +74,51 @@ describe('quota — atomic check & consume (baziAiCount)', () => {
     expect(res).toEqual({ hasQuota: false, limit: 1, isVip: false })
   })
 
+  // T11 · 竞态回归:updateMany 的条件自增(where {field: {lt: limit}} + increment)
+  // 是原子的,故并发下不会「双花」。这里用忠实模拟原子后端的 stateful mock
+  // (check+increment 在同一同步块内完成,无 await 缝隙 → 等价 DB 行锁),
+  // 验证调用方依赖 count>0 的判定在 N 并发下恰好放行 limit 次。
+  it('并发 N 次:原子扣减恰好放行 limit 次,计数不超发(不双花)', async () => {
+    let counter = 0
+    // 忠实模拟:仅当当前计数 < 传入 limit 时自增并 count:1,否则 count:0
+    updateMany.mockImplementation(async (arg: any) => {
+      const limit = arg.where.baziAiCount.lt as number // 真实 limit 来自被测代码
+      if (counter < limit) {
+        counter++
+        return { count: 1 }
+      }
+      return { count: 0 }
+    })
+
+    const N = 12
+    const results = await Promise.all(
+      Array.from({ length: N }, () => checkBaziQuota('user-race')),
+    )
+    const granted = results.filter((r) => r.hasQuota).length
+
+    expect(granted).toBe(1) // 八字 limit=1:并发 12 次只有 1 次拿到额度
+    expect(counter).toBe(1) // 计数严格不超发
+    expect(updateMany).toHaveBeenCalledTimes(N) // 每次并发都走了原子判定
+  })
+
+  it('并发同样保护高额度(模拟 limit=3 恰好放行 3 次)', async () => {
+    let counter = 0
+    const LIMIT = 3 // 模拟一个额度为 3 的原子后端,验证放行数=额度、通用不双花
+    updateMany.mockImplementation(async () => {
+      if (counter < LIMIT) {
+        counter++
+        return { count: 1 }
+      }
+      return { count: 0 }
+    })
+
+    const results = await Promise.all(
+      Array.from({ length: 10 }, () => checkBaziQuota('user-race-3')),
+    )
+    expect(results.filter((r) => r.hasQuota).length).toBe(LIMIT)
+    expect(counter).toBe(LIMIT)
+  })
+
   it('useBaziQuota mirrors checkBaziQuota.hasQuota', async () => {
     updateMany.mockResolvedValueOnce({ count: 1 })
     expect(await useBaziQuota('user-1')).toBe(true)
