@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getRedis } from '@/lib/cache/redis';
 import { generateDailyMusic, type DailyMusicResult } from '@/lib/music-oracle/generate';
 import { getTodayTiangan, getWuxingMusicProfile } from '@/lib/music-oracle/wuxing-music-map';
-import { getTodayBeijing } from '@/lib/timezone';
+import { getTodayBeijing, getSecondsUntilBeijingMidnight } from '@/lib/timezone';
 
 interface CachedData extends DailyMusicResult {
   /** 当前展示的索引：0=main, 1/2=alternates[0]/[1] */
@@ -23,10 +23,9 @@ function getTodayDateStr(): string {
 }
 
 function getSecondsUntilMidnight(): number {
-  const now = new Date();
-  const midnight = new Date(now);
-  midnight.setHours(24, 0, 0, 0);
-  return Math.floor((midnight.getTime() - now.getTime()) / 1000);
+  // 缓存键按北京日滚动(getTodayDateStr),TTL 也必须对齐北京午夜,
+  // 否则走 UTC 午夜=北京 08:00 提前失效、当天重复生成 + 丢「换一首」轮换状态。
+  return getSecondsUntilBeijingMidnight();
 }
 
 export async function GET(request: NextRequest) {

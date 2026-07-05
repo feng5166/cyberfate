@@ -29,9 +29,13 @@ export async function GET(
     const { recordId } = await params;
 
     // 通过内部 API 获取记录数据（edge runtime 不能直接用 Prisma）
-    const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL 
-      ? `https://${process.env.VERCEL_URL}` 
-      : 'http://localhost:3000';
+    // Vercel 上 VERCEL_URL 恒为当前部署域名(优先,保证同部署内取数);
+    // 非 Vercel 用 NEXTAUTH_URL(含协议);本地兜底 localhost。
+    // 旧写法 `(NEXTAUTH_URL || VERCEL_URL) ? https://${VERCEL_URL} : ...` 有优先级 bug,
+    // NEXTAUTH_URL 有值但 VERCEL_URL 无值时会得到 https://undefined。
+    const baseUrl = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : (process.env.NEXTAUTH_URL || 'http://localhost:3000');
     const shareRes = await fetch(`${baseUrl}/api/music-oracle/share/${recordId}`);
     const shareJson = await shareRes.json();
 

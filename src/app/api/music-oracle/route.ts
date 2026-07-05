@@ -17,7 +17,7 @@ import { PRIMARY_MODEL } from '@/lib/ai/models';
 import { getPrimaryProvider } from '@/lib/ai/provider';
 import { getAuthSession } from '@/lib/auth-session';
 import { isVip as checkIsVip } from '@/lib/subscription';
-import { getTodayBeijing } from '@/lib/timezone';
+import { getTodayBeijing, getSecondsUntilBeijingMidnight } from '@/lib/timezone';
 import { SSE_HEADERS, typewriterStream } from '@/lib/ai/sse';
 
 const DEEPSEEK_MODEL = PRIMARY_MODEL;
@@ -231,9 +231,9 @@ export async function POST(request: NextRequest) {
     // 更新限流计数（仅游客走 IP 计数；登录用户已在上方按账号扣减 DB 配额）
     if (redis && !isVip && !userId) {
       try {
-        const midnight = new Date();
-        midnight.setHours(24, 0, 0, 0);
-        const ttl = Math.floor((midnight.getTime() - Date.now()) / 1000);
+        // TTL 对齐北京午夜(限流键按北京日滚动)。旧写法 setHours(24,..) 走 UTC 午夜=北京 08:00,
+        // 会让 00:00–08:00 首抽的游客在 08:00 后拿到二次免费抽。
+        const ttl = getSecondsUntilBeijingMidnight();
         await redis.incr(rateLimitKey);
         await redis.expire(rateLimitKey, ttl);
       } catch (err) {

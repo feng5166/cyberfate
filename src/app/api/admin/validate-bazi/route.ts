@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { isAdminEmail } from '@/lib/admin';
+import { getTodayBeijing } from '@/lib/timezone';
 import {
   calculateBazi,
   getCurrentDayun,
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest) {
     const input = requestSchema.parse(body);
 
     const shichen = HOUR_TO_SHICHEN[input.birthHour] || '不知道';
-    const targetDate = input.targetDate ?? new Date().toISOString().split('T')[0];
+    const targetDate = input.targetDate ?? getTodayBeijing(); // 默认北京今日,勿用 UTC
 
     const baziResult = calculateBazi({
       gender: input.gender as Gender,
