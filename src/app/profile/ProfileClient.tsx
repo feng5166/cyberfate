@@ -75,7 +75,7 @@ export default function ProfileClient({
 
   return (
     <div className="min-h-dvh bg-brand-bg">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
 
         {/* 顶部标题 */}
         <div className="mb-8">
@@ -87,6 +87,9 @@ export default function ProfileClient({
           </button>
           <h1 className="text-2xl font-bold text-brand-ink">账户信息</h1>
         </div>
+
+        {/* 桌面双栏：个人资料 + 会员与用量；移动端保持单列堆叠 */}
+        <div className="md:grid md:grid-cols-2 md:gap-6 md:items-start">
 
         {/* 个人信息区块 */}
         <section className="mb-8">
@@ -120,8 +123,8 @@ export default function ProfileClient({
           </div>
         </section>
 
-        {/* 分隔线 */}
-        <hr className="border-brand-border-light mb-8" />
+        {/* 分隔线 — 仅移动端；桌面双栏改用列间距分隔 */}
+        <hr className="border-brand-border-light mb-8 md:hidden" />
 
         {/* 订阅信息区块 */}
         {vip && subscriptionDetail ? (
@@ -195,6 +198,8 @@ export default function ProfileClient({
             </div>
           </section>
         )}
+
+        </div>
 
         {/* 退出登录 */}
         <button

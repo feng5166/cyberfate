@@ -63,22 +63,22 @@ export default function KnowledgePage() {
       </section>
 
       <Container>
-        {/* 搜索 + 筛选 + 文章列表（交互部分用 Client Component） */}
-        <div className="max-w-page mx-auto">
-          <KnowledgeListClient articles={knowledgeList} />
+        {/* 搜索 + 筛选 + 文章列表（交互部分用 Client Component；网格内部自行放宽到 6xl） */}
+        <KnowledgeListClient articles={knowledgeList} />
 
-        {/* 说明区 — Server Component，爬虫可抓 */}
-        <div className="bg-white rounded-card border border-brand-border-light p-7 mb-16">
-          <h2 className="font-display text-lg font-semibold text-brand-ink tracking-[0.08em] mb-4">
-            💡 知识库说明
-          </h2>
-          <ul className="space-y-2 text-sm text-brand-gray leading-relaxed">
-            <li>• 本知识库内容来源于传统命理典籍，结合现代通俗解读</li>
-            <li>• 仅供学习参考，不代表本站观点或立场</li>
-            <li>• 命理学是一种传统文化，建议理性看待，不要过度迷信</li>
-            <li>• 知识内容持续更新中，欢迎反馈建议</li>
-          </ul>
-        </div>
+        {/* 说明区 — Server Component，爬虫可抓；保持窄居中(page) */}
+        <div className="max-w-page mx-auto">
+          <div className="bg-white rounded-card border border-brand-border-light p-7 mb-16">
+            <h2 className="font-display text-lg font-semibold text-brand-ink tracking-[0.08em] mb-4">
+              💡 知识库说明
+            </h2>
+            <ul className="space-y-2 text-sm text-brand-gray leading-relaxed">
+              <li>• 本知识库内容来源于传统命理典籍，结合现代通俗解读</li>
+              <li>• 仅供学习参考，不代表本站观点或立场</li>
+              <li>• 命理学是一种传统文化，建议理性看待，不要过度迷信</li>
+              <li>• 知识内容持续更新中，欢迎反馈建议</li>
+            </ul>
+          </div>
         </div>
       </Container>
 

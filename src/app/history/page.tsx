@@ -74,7 +74,7 @@ export default function HistoryPage() {
   if (loading) {
     return (
       <div className="min-h-dvh bg-brand-bg px-4 py-10 text-brand-ink">
-        <div className="mx-auto max-w-4xl">
+        <div className="mx-auto max-w-6xl">
           <h1 className="font-display text-3xl text-brand-ink">测算历史</h1>
           <p className="mt-4 text-sm text-brand-gray">正在加载历史记录...</p>
         </div>
@@ -84,7 +84,7 @@ export default function HistoryPage() {
 
   return (
     <div className="min-h-dvh bg-brand-bg px-4 py-10 text-brand-ink">
-      <div className="mx-auto max-w-4xl">
+      <div className="mx-auto max-w-6xl">
         <div className="mb-8">
           <h1 className="font-display text-3xl text-brand-ink">测算历史</h1>
           <p className="mt-2 text-sm text-brand-gray">你的八字测算结果会自动保存在本地</p>
@@ -100,44 +100,53 @@ export default function HistoryPage() {
             </Link>
           </Card>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-4 md:space-y-0 md:grid md:grid-cols-2 md:gap-4 xl:grid-cols-3">
             {records.map(record => {
               const naYin = getNaYinText(record);
               return (
-                <Card key={record.id} variant="flat" hover={false} className="p-6">
-                  <div className="flex items-start justify-between gap-4">
-                    <p className="text-sm text-brand-gray">{formatCreatedAt(record.createdAt)}</p>
-                    <button
-                      type="button"
-                      className="flex h-11 w-11 items-center justify-center rounded-xl text-brand-gray transition-colors hover:bg-brand-border-light hover:text-red-500"
-                      onClick={() => setPendingDeleteId(record.id)}
-                      aria-label="删除记录"
-                      title="删除记录"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
+                <Link
+                  key={record.id}
+                  href={`/bazi?record=${record.id}`}
+                  className="group block h-full"
+                >
+                  <Card variant="flat" interactive className="flex h-full flex-col p-6">
+                    <div className="flex items-start justify-between gap-4">
+                      <p className="text-sm text-brand-gray">{formatCreatedAt(record.createdAt)}</p>
+                      <button
+                        type="button"
+                        className="flex h-11 w-11 items-center justify-center rounded-xl text-brand-gray transition-colors hover:bg-brand-border-light hover:text-red-500"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setPendingDeleteId(record.id);
+                        }}
+                        aria-label="删除记录"
+                        title="删除记录"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
 
-                  <p className="mt-4 text-2xl font-semibold tracking-[0.08em] text-brand-ink">
-                    {buildPillarText(record.pillars)}
-                  </p>
+                    <p className="mt-4 text-2xl font-semibold tracking-[0.08em] text-brand-ink">
+                      {buildPillarText(record.pillars)}
+                    </p>
 
-                  <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-brand-gray">
-                    <span>日主：{record.dayMaster || '—'}</span>
-                    <span>生肖：{record.zodiac || '—'}</span>
-                    {naYin ? <span>纳音：{naYin}</span> : null}
-                  </div>
+                    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-brand-gray">
+                      <span>日主：{record.dayMaster || '—'}</span>
+                      <span>生肖：{record.zodiac || '—'}</span>
+                      {naYin ? <span>纳音：{naYin}</span> : null}
+                    </div>
 
-                  <p className="mt-4 text-sm leading-relaxed text-brand-ink/78">
-                    {summarizeText(record.aiSummary, 120)}
-                  </p>
+                    <p className="mt-4 flex-1 text-sm leading-relaxed text-brand-ink/78">
+                      {summarizeText(record.aiSummary, 120)}
+                    </p>
 
-                  <div className="mt-6">
-                    <Link href={`/bazi?record=${record.id}`} className="inline-flex">
-                      <Button className="px-6">查看详情</Button>
-                    </Link>
-                  </div>
-                </Card>
+                    <div className="mt-6 inline-flex items-center gap-1 text-sm font-medium text-brand-accent transition-colors group-hover:text-brand-accent-hover">
+                      查看详情
+                      <span aria-hidden="true">→</span>
+                    </div>
+                  </Card>
+                </Link>
               );
             })}
           </div>

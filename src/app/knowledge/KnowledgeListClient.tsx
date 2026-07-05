@@ -40,6 +40,8 @@ export function KnowledgeListClient({ articles }: { articles: KnowledgeListItem[
 
   return (
     <>
+      {/* 搜索 / 分类 / 计数 — 保持窄居中(page) */}
+      <div className="max-w-page mx-auto">
       {/* 搜索框 */}
       <div className="max-w-md mx-auto mb-8">
         <div className="relative">
@@ -97,9 +99,12 @@ export function KnowledgeListClient({ articles }: { articles: KnowledgeListItem[
         </span>
       </div>
 
-      {/* 文章网格 */}
+      </div>
+
+      {/* 文章网格 — 脱离 page 版心，放宽到 6xl */}
       {filteredArticles.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pb-12">
+        <div className="max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-12">
           {filteredArticles.map((article) => (
             <Link key={article.slug} href={`/knowledge/${article.slug}`} className="group">
               <Card interactive className="h-full flex flex-col">
@@ -122,6 +127,7 @@ export function KnowledgeListClient({ articles }: { articles: KnowledgeListItem[
               </Card>
             </Link>
           ))}
+        </div>
         </div>
       ) : (
         <div className="text-center py-20 pb-12">
