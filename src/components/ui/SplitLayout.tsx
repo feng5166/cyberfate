@@ -11,6 +11,9 @@ interface SplitLayoutProps {
   asideWidth?: 320 | 360 | 400;
   /** 桌面侧栏是否 sticky 跟随滚动（读解读时命盘/概览常驻视野）。默认 true。 */
   stickyAside?: boolean;
+  /** 强制单栏：任何视口都上下顺排(aside 先/后按 asidePosition)，不进两栏 grid。
+   *  用于「左短右长」内容(短概览 + 长文)，避免两栏留大片空白 / sticky 停靠。 */
+  singleColumn?: boolean;
   className?: string;
   asideClassName?: string;
 }
@@ -29,8 +32,17 @@ const COLS = {
 
 export function SplitLayout({
   main, aside, asidePosition = 'right', asideWidth = 360,
-  stickyAside = true, className = '', asideClassName = '',
+  stickyAside = true, singleColumn = false, className = '', asideClassName = '',
 }: SplitLayoutProps) {
+  // 强制单栏：上下顺排,不进 grid、无 sticky(彻底避免留白/停靠)
+  if (singleColumn) {
+    return (
+      <div className={cn('space-y-6', className)}>
+        {asidePosition === 'left' ? (<>{aside}{main}</>) : (<>{main}{aside}</>)}
+      </div>
+    );
+  }
+
   const cols = COLS[`${asidePosition}-${asideWidth}` as keyof typeof COLS];
 
   const asideEl = (

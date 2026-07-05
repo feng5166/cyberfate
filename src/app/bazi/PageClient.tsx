@@ -2365,7 +2365,7 @@ function BaziPageContent() {
             )}
 
             {result && !loading && basicInfoData && dayMasterInsight && (
-              <PageShell width="chart" className="px-0 sm:px-0">
+              <PageShell width="page" className="px-0 sm:px-0">
               <div ref={resultRef} className="space-y-6 animate-fadeIn" aria-live="polite">
                 {result._source !== 'history' && !isMember && (
                   <div className="flex items-center justify-between gap-3 rounded-xl bg-gradient-to-r from-stone-100 to-stone-100 border border-stone-300/60 px-4 py-3">
@@ -2381,9 +2381,10 @@ function BaziPageContent() {
                     <p className="text-sm text-blue-700">AI 解读耗时较长，已为您准备基础解读（简化版解读，完整版需会员）</p>
                   </div>
                 )}
-                {/* lg+ 两列：左 aside(sticky)=紧凑命盘/五行/日主概览；右 main=解读长文。<lg 按 DOM 顺序竖堆(aside 先→main 后)，与旧单列一致。 */}
+                {/* 桌面也走单栏：概览(四柱/五行/日主)在上、AI 解读长文在下,收窄到 page(840) 舒适阅读宽,避免两栏「左短右长」留白/停靠。 */}
                 <SplitLayout
                   asidePosition="left"
+                  singleColumn
                   aside={
                     <div className="space-y-6">
                 <Card className={cardClass}>
