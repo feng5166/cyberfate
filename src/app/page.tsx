@@ -9,7 +9,6 @@ import {
   BookOpen,
   Brain,
   Calendar,
-  CandlestickChart,
   Compass,
   Layers,
   Sparkles,
@@ -64,13 +63,15 @@ const corePrinciples = [
   },
 ];
 
+// 每个模块一组五行系点缀色（iconBg 淡底 / iconFg 图标与悬停色条），打破卡片同质化
 const featureGroups = [
   {
     title: '八字分析',
     features: [
       {
         icon: BarChart3,
-        iconColor: 'text-blue-500',
+        iconBg: '#DBEAFE',
+        iconFg: '#1D4ED8',
         title: '八字分析',
         subtitle: '输入生辰，AI 解读性格事业财运',
         description: 'AI智能八字分析系统，揭示个人命盘特质与发展规律',
@@ -78,7 +79,8 @@ const featureGroups = [
       },
       {
         icon: Sun,
-        iconColor: 'text-stone-500',
+        iconBg: '#FBF1D0',
+        iconFg: '#B0870F',
         title: '每日运势',
         subtitle: '今日五行宜忌 + 五维运势评分',
         description: '基于八字的每日运势分析，助你把握每日吉凶',
@@ -86,19 +88,12 @@ const featureGroups = [
       },
       {
         icon: BookHeart,
-        iconColor: 'text-pink-500',
+        iconBg: '#FCE7F3',
+        iconFg: '#BE185D',
         title: '合婚配对',
         subtitle: '双方八字匹配度深度分析',
         description: '基于八字的深度匹配分析，揭示双方关系契合度',
         href: '/bazi/marriage',
-      },
-      {
-        icon: CandlestickChart,
-        iconColor: 'text-emerald-600',
-        title: '人生K线',
-        subtitle: '百年运势可视化，K线看人生起伏',
-        description: '用金融K线的视角，直观呈现大运流年的起伏节奏',
-        href: '/life-kline',
       },
     ],
   },
@@ -107,7 +102,8 @@ const featureGroups = [
     features: [
       {
         icon: Sparkles,
-        iconColor: 'text-purple-500',
+        iconBg: '#DCFCE7',
+        iconFg: '#15803D',
         title: '梅花易数',
         subtitle: '数字起卦，解读命盘方向',
         description: '基于梅花易数的每日决策指导，助你做出重要选择',
@@ -115,7 +111,8 @@ const featureGroups = [
       },
       {
         icon: Layers,
-        iconColor: 'text-indigo-400',
+        iconBg: '#E0E7FF',
+        iconFg: '#4338CA',
         title: '塔罗占卜',
         subtitle: '抽牌问卦，解读当下困惑',
         description: '塔罗牌参考配合AI观察，从不同角度思考当前处境',
@@ -123,7 +120,8 @@ const featureGroups = [
       },
       {
         icon: Compass,
-        iconColor: 'text-emerald-500',
+        iconBg: '#F3E7D3',
+        iconFg: '#92400E',
         title: '六爻占卜',
         subtitle: '铜钱摇卦，解读卦象含义',
         description: '传统六爻解读，结合AI深度解析卦象变化',
@@ -136,7 +134,8 @@ const featureGroups = [
     features: [
       {
         icon: Star,
-        iconColor: 'text-yellow-500',
+        iconBg: '#F3E8FF',
+        iconFg: '#7E22CE',
         title: '紫微斗数',
         subtitle: '十二宫位命盘全面解析',
         description: '根据出生时间排出紫微命盘，分析十二宫位与主星格局',
@@ -144,7 +143,8 @@ const featureGroups = [
       },
       {
         icon: Calendar,
-        iconColor: 'text-red-400',
+        iconBg: '#FEE2E2',
+        iconFg: '#DC2626',
         title: '黄历查询',
         subtitle: '每日宜忌、吉时凶煞速查',
         description: '传统中国黄历，查询各类活动的吉日良辰',
@@ -152,7 +152,8 @@ const featureGroups = [
       },
       {
         icon: BarChart3,
-        iconColor: 'text-cyan-500',
+        iconBg: '#CFFAFE',
+        iconFg: '#0E7490',
         title: 'AI老黄历',
         subtitle: 'AI 智能黄历，场景化建议',
         description: 'AI驱动的智能黄历，结合现代生活场景给出建议',
@@ -160,6 +161,23 @@ const featureGroups = [
       },
     ],
   },
+];
+
+// 人生K线通栏卡的迷你K线插画数据（x, 开, 收, 高, 低；y 向下为跌）
+const MINI_KLINE: { x: number; o: number; c: number; h: number; l: number }[] = [
+  { x: 12, o: 96, c: 84, h: 79, l: 101 },
+  { x: 32, o: 84, c: 90, h: 80, l: 95 },
+  { x: 52, o: 90, c: 72, h: 68, l: 94 },
+  { x: 72, o: 72, c: 62, h: 56, l: 76 },
+  { x: 92, o: 62, c: 70, h: 58, l: 75 },
+  { x: 112, o: 70, c: 50, h: 45, l: 74 },
+  { x: 132, o: 50, c: 42, h: 36, l: 55 },
+  { x: 152, o: 42, c: 54, h: 39, l: 58 },
+  { x: 172, o: 54, c: 38, h: 33, l: 58 },
+  { x: 192, o: 38, c: 28, h: 22, l: 42 },
+  { x: 212, o: 28, c: 36, h: 24, l: 40 },
+  { x: 232, o: 36, c: 22, h: 16, l: 39 },
+  { x: 252, o: 22, c: 16, h: 10, l: 26 },
 ];
 
 export default function HomePage() {
@@ -190,8 +208,40 @@ export default function HomePage() {
             .cf-d1 { animation-delay: 0.05s; }
             .cf-d2 { animation-delay: 0.16s; }
             .cf-d3 { animation-delay: 0.28s; }
-            @media (prefers-reduced-motion: reduce) { .cf-anim { opacity: 1; animation: none; } }
+            @keyframes cfSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+            .cf-compass { animation: cfSpin 240s linear infinite; }
+            @media (prefers-reduced-motion: reduce) { .cf-anim { opacity: 1; animation: none; } .cf-compass { animation: none; } }
           `}</style>
+
+          {/* 罗盘装饰：细线圆环 + 十二地支刻度，缓慢旋转 */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute left-1/2 top-[54%] -translate-x-1/2 -translate-y-1/2 w-[440px] h-[440px] sm:w-[560px] sm:h-[560px] md:w-[700px] md:h-[700px] opacity-[0.055]"
+          >
+            <svg viewBox="0 0 400 400" className="cf-compass w-full h-full">
+              <circle cx="200" cy="200" r="196" fill="none" stroke="#1C1A16" strokeWidth="1" />
+              <circle cx="200" cy="200" r="162" fill="none" stroke="#1C1A16" strokeWidth="0.6" />
+              <circle cx="200" cy="200" r="118" fill="none" stroke="#1C1A16" strokeWidth="0.6" strokeDasharray="2 4" />
+              {Array.from({ length: 24 }, (_, i) => (
+                <line
+                  key={i}
+                  x1="200" y1="4" x2="200" y2={i % 2 === 0 ? 14 : 9}
+                  stroke="#1C1A16" strokeWidth="1"
+                  transform={`rotate(${i * 15} 200 200)`}
+                />
+              ))}
+              {['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'].map((z, i) => (
+                <text
+                  key={z}
+                  x="200" y="34"
+                  textAnchor="middle" fontSize="15" fill="#1C1A16"
+                  transform={`rotate(${i * 30} 200 200)`}
+                >
+                  {z}
+                </text>
+              ))}
+            </svg>
+          </div>
 
           {/* 主标题 */}
           <h1
@@ -240,6 +290,11 @@ export default function HomePage() {
               <span className="text-[13px] text-brand-ink/45">智慧决策指南</span>
             </div>
           </div>
+
+          {/* 信任条 */}
+          <p className="cf-anim cf-d3 mt-10 text-[12.5px] tracking-[0.08em] text-brand-ink/40">
+            10 大命理模块 · 本地确定性排盘 · 免费无需注册
+          </p>
 
         </div>
       </section>
@@ -305,10 +360,18 @@ export default function HomePage() {
                       <Link
                         key={feature.title}
                         href={`${feature.href}?sidebar=open`}
-                        className="group flex flex-col items-start rounded-card bg-white p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover"
+                        className="group relative flex flex-col items-start overflow-hidden rounded-card bg-white p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover"
                       >
-                        <div className="w-[52px] h-[52px] rounded-full bg-brand-accent-soft flex items-center justify-center">
-                          <Icon className="w-6 h-6 text-brand-accent" strokeWidth={1.5} />
+                        <span
+                          aria-hidden
+                          className="absolute inset-x-0 top-0 h-[3px] origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300"
+                          style={{ background: feature.iconFg }}
+                        />
+                        <div
+                          className="w-[52px] h-[52px] rounded-full flex items-center justify-center"
+                          style={{ background: feature.iconBg }}
+                        >
+                          <Icon className="w-6 h-6" strokeWidth={1.5} style={{ color: feature.iconFg }} />
                         </div>
                         <h4 className="text-lg font-semibold text-brand-ink mt-4 mb-1">{feature.title}</h4>
                         {'subtitle' in feature && feature.subtitle && (
@@ -323,6 +386,61 @@ export default function HomePage() {
                     );
                   })}
                 </div>
+
+                {/* 新功能推广位：人生K线通栏卡 */}
+                {group.title === '八字分析' && (
+                  <Link
+                    href="/life-kline?sidebar=open"
+                    className="group relative mt-6 flex flex-col md:flex-row items-stretch overflow-hidden rounded-card bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover"
+                  >
+                    <span
+                      aria-hidden
+                      className="absolute inset-x-0 top-0 h-[3px] origin-left scale-x-0 bg-emerald-600 group-hover:scale-x-100 transition-transform duration-300"
+                    />
+                    <div className="flex-1 p-8">
+                      <div className="flex items-center gap-2.5">
+                        <span className="rounded-full bg-emerald-600 text-white text-[11px] font-semibold tracking-[0.12em] px-2.5 py-0.5">NEW</span>
+                        <h4 className="text-lg font-semibold text-brand-ink">人生K线</h4>
+                      </div>
+                      <p className="text-[13px] text-brand-ink/55 mt-2">百年运势可视化 · 用金融K线看人生起伏</p>
+                      <p className="text-[14px] text-brand-ink/70 leading-relaxed mt-3 max-w-xl">
+                        把 1 岁到 100 岁的大运流年画成一张K线图，最佳十年、运势巅峰与低谷一眼看清，还可向 AI 命理师追问每一段行情。
+                      </p>
+                      <span className="inline-flex items-center gap-1 text-[14px] font-medium text-emerald-700 mt-4 transition-all duration-300 group-hover:gap-2">
+                        生成我的人生K线
+                        <ArrowRight className="w-4 h-4" />
+                      </span>
+                    </div>
+                    <div aria-hidden className="relative shrink-0 flex items-end justify-center px-8 md:w-[340px] md:pr-10">
+                      <svg viewBox="0 0 280 120" className="w-full max-w-[300px] h-auto">
+                        {[110, 80, 50, 20].map((y) => (
+                          <line key={y} x1="0" x2="280" y1={y} y2={y} stroke="#1C1A16" strokeOpacity="0.05" strokeWidth="1" />
+                        ))}
+                        {MINI_KLINE.map((k) => {
+                          const up = k.c <= k.o;
+                          const color = up ? '#059669' : '#DC2626';
+                          return (
+                            <g key={k.x}>
+                              <line x1={k.x} x2={k.x} y1={k.h} y2={k.l} stroke={color} strokeWidth="1.2" />
+                              <rect
+                                x={k.x - 4.5}
+                                y={Math.min(k.o, k.c)}
+                                width="9"
+                                height={Math.max(2, Math.abs(k.o - k.c))}
+                                fill={color}
+                                rx="1"
+                              />
+                            </g>
+                          );
+                        })}
+                        <polyline
+                          points="12,92 32,88 52,84 72,74 92,68 112,62 132,54 152,50 172,46 192,38 212,34 232,30 252,24"
+                          fill="none" stroke="#D97706" strokeWidth="1.6" strokeOpacity="0.85"
+                        />
+                      </svg>
+                    </div>
+                  </Link>
+                )}
               </div>
             ))}
           </div>
@@ -330,7 +448,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== 命理知识库 Section ===== */}
-      <section className="px-4 pb-4">
+      <section className="px-4 py-16 md:py-20 bg-[#F6F4F1]">
         <Container>
           <div className="max-w-page mx-auto">
             <div className="text-center mb-10">
@@ -349,8 +467,14 @@ export default function HomePage() {
                 <Link
                   key={k.href}
                   href={k.href}
-                  className="group rounded-xl border border-brand-ink/[0.08] bg-white p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-card-hover"
+                  className="group relative overflow-hidden rounded-xl border border-brand-ink/[0.08] bg-white p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-card-hover"
                 >
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute -right-1 -bottom-4 font-display text-[56px] leading-none text-brand-ink/[0.05] select-none"
+                  >
+                    {k.name.slice(0, 1)}
+                  </span>
                   <p className="text-sm font-semibold text-brand-ink group-hover:text-brand-accent transition-colors">{k.name}</p>
                   <p className="text-xs text-brand-ink/55 mt-1 leading-relaxed">{k.desc}</p>
                 </Link>
@@ -366,31 +490,36 @@ export default function HomePage() {
         </Container>
       </section>
 
-      {/* ===== CTA Section ===== */}
-      <section className="px-4 pb-24">
+      {/* ===== CTA Section（深色收尾块） ===== */}
+      <section className="px-4 py-20 md:py-24">
         <Container>
-          <div className="max-w-page mx-auto text-center py-16 px-10">
-            <h2 className="font-display text-3xl md:text-4xl tracking-wide text-[#1C1A16]">
+          <div className="relative max-w-page mx-auto overflow-hidden rounded-3xl bg-[#1C1A16] text-center py-16 md:py-20 px-10">
+            {/* 细线圆环装饰 */}
+            <span aria-hidden className="pointer-events-none absolute -right-24 -top-32 w-80 h-80 rounded-full border border-white/[0.07]" />
+            <span aria-hidden className="pointer-events-none absolute -right-10 -top-16 w-44 h-44 rounded-full border border-white/[0.05]" />
+            <span aria-hidden className="pointer-events-none absolute -left-20 -bottom-28 w-64 h-64 rounded-full border border-white/[0.06]" />
+
+            <h2 className="font-display text-3xl md:text-4xl tracking-wide text-[#FAF9F6]">
               AI 分析个人特质，洞察发展潜力
             </h2>
-            <p className="text-base md:text-lg text-[#1C1A16]/70 mt-4 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-base md:text-lg text-white/55 mt-4 max-w-2xl mx-auto leading-relaxed">
               运用AI技术分析性格优势，为您的生涯规划提供科学参考
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mt-10">
               <Link
                 href="/bazi"
-                className="inline-flex items-center justify-center min-h-[46px] px-[38px] py-[14px] text-[13px] tracking-[0.08em] bg-brand-accent text-white rounded-lg hover:bg-brand-accent-hover transition-colors font-medium"
+                className="inline-flex items-center justify-center min-h-[46px] px-[38px] py-[14px] text-[13px] tracking-[0.08em] bg-[#FAF9F6] text-[#1C1A16] rounded-lg hover:bg-white transition-colors font-semibold"
               >
                 八字分析 →
               </Link>
               <Link
                 href="/meihua"
-                className="inline-flex items-center justify-center min-h-[46px] px-[38px] py-[14px] text-[13px] tracking-[0.08em] border border-brand-ink/30 text-brand-ink rounded-lg hover:border-brand-ink transition-colors"
+                className="inline-flex items-center justify-center min-h-[46px] px-[38px] py-[14px] text-[13px] tracking-[0.08em] border border-white/30 text-white rounded-lg hover:border-white/70 transition-colors"
               >
                 梅花易数
               </Link>
             </div>
-            <p className="text-[12px] text-brand-ink/55 tracking-[0.05em] mt-6">
+            <p className="text-[12px] text-white/40 tracking-[0.05em] mt-6">
               <span>⚡</span> 免费使用 <span>·</span> 无需注册 <span>·</span> 即刻体验
             </p>
           </div>
