@@ -490,24 +490,24 @@ export default function HomePage() {
         </Container>
       </section>
 
-      {/* ===== CTA Section（深色收尾块：左文右钮 + 罗盘纹理半出血） ===== */}
+      {/* ===== CTA Section（白卡收尾：左文右钮 + 罗盘纹理半出血） ===== */}
       <section className="px-4 py-16 md:py-20">
         <Container>
-          <div className="relative max-w-page mx-auto overflow-hidden rounded-3xl bg-[#1C1A16] px-8 md:px-14 py-10 md:py-12">
+          <div className="relative max-w-page mx-auto overflow-hidden rounded-3xl bg-white border border-[#1C1A16]/8 px-8 md:px-14 py-10 md:py-12">
             {/* 罗盘纹理（与 Hero 呼应，右侧半出血） */}
             <div
               aria-hidden
-              className="pointer-events-none absolute -right-28 top-1/2 -translate-y-1/2 w-[320px] h-[320px] md:w-[420px] md:h-[420px] opacity-[0.09]"
+              className="pointer-events-none absolute -right-28 top-1/2 -translate-y-1/2 w-[320px] h-[320px] md:w-[420px] md:h-[420px] opacity-[0.06]"
             >
               <svg viewBox="0 0 400 400" className="w-full h-full">
-                <circle cx="200" cy="200" r="196" fill="none" stroke="#FAF9F6" strokeWidth="1" />
-                <circle cx="200" cy="200" r="150" fill="none" stroke="#FAF9F6" strokeWidth="0.6" />
-                <circle cx="200" cy="200" r="100" fill="none" stroke="#FAF9F6" strokeWidth="0.6" strokeDasharray="2 4" />
+                <circle cx="200" cy="200" r="196" fill="none" stroke="#1C1A16" strokeWidth="1" />
+                <circle cx="200" cy="200" r="150" fill="none" stroke="#1C1A16" strokeWidth="0.6" />
+                <circle cx="200" cy="200" r="100" fill="none" stroke="#1C1A16" strokeWidth="0.6" strokeDasharray="2 4" />
                 {Array.from({ length: 24 }, (_, i) => (
                   <line
                     key={i}
                     x1="200" y1="4" x2="200" y2={i % 2 === 0 ? 14 : 9}
-                    stroke="#FAF9F6" strokeWidth="1"
+                    stroke="#1C1A16" strokeWidth="1"
                     transform={`rotate(${i * 15} 200 200)`}
                   />
                 ))}
@@ -516,26 +516,26 @@ export default function HomePage() {
 
             <div className="relative flex flex-col md:flex-row md:items-center gap-8 md:gap-12">
               <div className="flex-1 text-center md:text-left">
-                <h2 className="font-display text-[24px] md:text-[32px] tracking-wide text-[#FAF9F6] leading-snug">
+                <h2 className="font-display text-[24px] md:text-[32px] tracking-wide text-[#1C1A16] leading-snug">
                   AI 分析个人特质，洞察发展潜力
                 </h2>
-                <p className="text-[14px] md:text-[15px] text-white/55 mt-3 leading-relaxed">
+                <p className="text-[14px] md:text-[15px] text-[#1C1A16]/60 mt-3 leading-relaxed">
                   运用AI技术分析性格优势，为您的生涯规划提供科学参考
                 </p>
-                <p className="text-[12px] text-white/35 tracking-[0.05em] mt-4">
+                <p className="text-[12px] text-[#1C1A16]/40 tracking-[0.05em] mt-4">
                   ⚡ 免费使用 · 无需注册 · 即刻体验
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row md:flex-col gap-3 justify-center shrink-0">
                 <Link
                   href="/bazi"
-                  className="inline-flex items-center justify-center min-h-[46px] min-w-[172px] px-8 py-3 text-[13px] tracking-[0.08em] bg-[#FAF9F6] text-[#1C1A16] rounded-lg hover:bg-white transition-colors font-semibold"
+                  className="inline-flex items-center justify-center min-h-[46px] min-w-[172px] px-8 py-3 text-[13px] tracking-[0.08em] bg-brand-accent text-white rounded-lg hover:bg-brand-accent-hover transition-colors font-semibold"
                 >
                   八字分析 →
                 </Link>
                 <Link
                   href="/meihua"
-                  className="inline-flex items-center justify-center min-h-[46px] min-w-[172px] px-8 py-3 text-[13px] tracking-[0.08em] border border-white/25 text-white rounded-lg hover:border-white/60 hover:bg-white/[0.04] transition-colors"
+                  className="inline-flex items-center justify-center min-h-[46px] min-w-[172px] px-8 py-3 text-[13px] tracking-[0.08em] border border-brand-ink/25 text-brand-ink rounded-lg hover:border-brand-ink hover:bg-[#FDFBF7] transition-colors"
                 >
                   梅花易数
                 </Link>
