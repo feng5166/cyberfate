@@ -90,14 +90,17 @@ export default function MarriagePage() {
         <p className="mb-3">CyberFate 的 AI 合婚分析整合了五行匹配度评分、十神关系解读、地支刑冲合害分析、男女命盘命宫/夫妻宫信息等多个维度，通过 AI 综合研判，生成结构化的合婚报告。报告涵盖整体契合度评分、性格磁场分析、财运互动、感情走势预测及婚后注意事项，帮助你从命理视角全面了解这段关系。</p>
 
         <h3 className="text-sm font-semibold text-[#1C1A16] mt-6 mb-3">常见问题</h3>
-        <dl className="space-y-3">
+        <div className="space-y-3">
           {FAQ_ITEMS.map((item) => (
-            <div key={item.question}>
-              <dt className="font-medium text-[#1C1A16]/80">{item.question}</dt>
-              <dd className="mt-1">{item.answer}</dd>
-            </div>
+            <details key={item.question} className="group rounded-xl border border-[#1C1A16]/8 bg-white px-5 py-4">
+              <summary className="cursor-pointer list-none flex items-center justify-between gap-3 text-sm font-medium text-[#1C1A16]">
+                {item.question}
+                <span aria-hidden className="text-[#1C1A16]/40 group-open:rotate-180 transition-transform">⌄</span>
+              </summary>
+              <p className="mt-3 text-sm leading-relaxed text-[#1C1A16]/65">{item.answer}</p>
+            </details>
           ))}
-        </dl>
+        </div>
       </section>
       </Footer>
     </>

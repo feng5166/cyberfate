@@ -45,7 +45,7 @@ export function MobileDateBar({ selectedDate, onDateSelect }: MobileDateBarProps
                 flex-shrink-0 min-h-[44px] px-4 py-2.5 rounded-full text-sm font-medium transition-all
                 ${isActive
                   ? 'bg-brand-accent-soft text-brand-accent border border-brand-accent'
-                  : 'bg-white text-[#1C1A16] border border-[#F0EDE8] hover:border-[#1C1A16]/30'
+                  : 'bg-white text-[#1C1A16] border border-[#1C1A16]/8 hover:border-[#1C1A16]/30'
                 }
               `}
             >

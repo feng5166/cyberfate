@@ -99,7 +99,7 @@ export default function DailyMusicCard() {
   // Loading skeleton
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl border border-[#F0EDE8] shadow-sm p-5 animate-pulse">
+      <div className="rounded-2xl border border-[#1C1A16]/8 bg-white p-5 animate-pulse">
         <div className="flex items-center justify-between mb-4">
           <div className="h-4 w-20 bg-gray-200 rounded" />
           <div className="h-3 w-16 bg-gray-200 rounded" />
@@ -112,7 +112,7 @@ export default function DailyMusicCard() {
             <div className="h-3 w-full bg-gray-200 rounded mt-2" />
           </div>
         </div>
-        <div className="mt-3 pt-3 border-t border-[#F0EDE8] space-y-2">
+        <div className="mt-3 pt-3 border-t border-[#1C1A16]/8 space-y-2">
           <div className="h-3 w-full bg-gray-200 rounded" />
           <div className="h-3 w-4/5 bg-gray-200 rounded" />
           <div className="h-3 w-3/5 bg-gray-200 rounded" />
@@ -124,9 +124,9 @@ export default function DailyMusicCard() {
   // Error state
   if (error || !data) {
     return (
-      <div className="bg-white rounded-2xl border border-[#F0EDE8] shadow-sm p-5">
+      <div className="rounded-2xl border border-[#1C1A16]/8 bg-white p-5">
         <div className="flex items-center gap-1.5 mb-4">
-          <Music className="w-4 h-4 text-[#1C1A16]" />
+          <Music className="w-4 h-4" strokeWidth={1.5} style={{ color: '#0E7490' }} />
           <span className="text-sm font-medium font-serif text-[#1C1A16]">今日之歌</span>
         </div>
         <div className="text-center py-6">
@@ -147,12 +147,17 @@ export default function DailyMusicCard() {
   return (
     <div
       ref={cardRef}
-      className="bg-white rounded-2xl border border-[#F0EDE8] shadow-sm p-5"
+      className="rounded-2xl border border-[#1C1A16]/8 bg-white p-5"
     >
       {/* 标题栏 */}
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-1.5">
-          <span className="text-base">🎵</span>
+        <div className="flex items-center gap-2">
+          <span
+            className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+            style={{ background: '#CFFAFE' }}
+          >
+            <Music className="w-3.5 h-3.5" strokeWidth={1.5} style={{ color: '#0E7490' }} />
+          </span>
           <span className="text-sm font-medium font-serif text-[#1C1A16]">今日之歌</span>
         </div>
         <div className="flex items-center gap-3">
@@ -203,7 +208,7 @@ export default function DailyMusicCard() {
       </div>
 
       {/* 分割线 */}
-      <div className="border-t border-[#F0EDE8] my-3" />
+      <div className="border-t border-[#1C1A16]/8 my-3" />
 
       {/* 签文摘要 */}
       <p className="text-[13px] text-[#4B5563] leading-relaxed line-clamp-3">

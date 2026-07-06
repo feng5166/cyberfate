@@ -57,7 +57,7 @@ function ShishenCard({
       className={`rounded-xl border p-3 transition-colors ${
         isMain
           ? 'bg-[#FAF9F6] border-[#1C1A16]/30'
-          : 'bg-white border-[#E5E0D8]'
+          : 'bg-white border-[#1C1A16]/8'
       }`}
     >
       <div className="flex items-center justify-between gap-2 mb-1.5">
@@ -89,7 +89,7 @@ function ShishenCard({
 
 export function ShishenSection({ side, summary, title, subtitle }: ShishenSectionProps) {
   return (
-    <div className="rounded-2xl border border-[#E5E0D8] bg-white p-5 md:p-6">
+    <div className="rounded-2xl border border-[#1C1A16]/8 bg-white p-5 md:p-6">
       <div className="mb-5">
         <h3 className="text-lg font-semibold text-[#1C1A16]">{title}</h3>
         {subtitle && (
@@ -103,7 +103,7 @@ export function ShishenSection({ side, summary, title, subtitle }: ShishenSectio
           const p = side[col.key];
           return (
             <div key={col.key} className="space-y-2">
-              <div className="text-center pb-2 border-b border-[#E5E0D8]">
+              <div className="text-center pb-2 border-b border-[#1C1A16]/8">
                 <p className="text-sm font-semibold text-[#1C1A16]">{col.label}</p>
                 <p className="text-[10px] text-[#1C1A16]/50 mt-0.5">{col.stage}</p>
               </div>
@@ -130,7 +130,7 @@ export function ShishenSection({ side, summary, title, subtitle }: ShishenSectio
                   ))}
                 </div>
               ) : (
-                <div className="rounded-xl border border-dashed border-[#E5E0D8] py-4 text-center text-xs text-[#1C1A16]/40">
+                <div className="rounded-xl border border-dashed border-[#1C1A16]/15 py-4 text-center text-xs text-[#1C1A16]/40">
                   时辰未提供
                 </div>
               )}
@@ -139,7 +139,7 @@ export function ShishenSection({ side, summary, title, subtitle }: ShishenSectio
         })}
       </div>
 
-      <div className="mt-5 rounded-xl bg-[#FAF9F6] border border-[#E5E0D8] p-4">
+      <div className="mt-5 rounded-xl bg-[#FAF9F6] border border-[#1C1A16]/6 p-4">
         <p className="text-sm font-semibold text-[#1C1A16] mb-2">总体特征分析</p>
         <p className="text-xs text-[#1C1A16]/70 leading-6">{summary.text}</p>
       </div>

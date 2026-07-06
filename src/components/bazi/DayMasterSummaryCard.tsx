@@ -44,7 +44,7 @@ export function DayMasterSummaryCard({
   mingGe,
 }: DayMasterSummaryCardProps) {
   return (
-    <section className="rounded-2xl bg-gradient-to-r from-[#FFF7EA] via-[#FFFCF5] to-[#FDF4E6] p-5 md:p-6">
+    <section className="rounded-2xl bg-[#FAF9F6] p-5 md:p-6">
       <div className="border-l-4 border-brand-accent pl-4">
         <h3 className="text-lg font-semibold text-[#1C1A16] font-display">
           你是「{dayMaster || '—'}命人」

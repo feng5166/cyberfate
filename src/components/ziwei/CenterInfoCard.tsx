@@ -16,7 +16,7 @@ function formatSolarBirthday(dateStr: string): string {
 export function CenterInfoCard({ userInfo, palaces, className = '' }: CenterInfoCardProps) {
   if (!userInfo) {
     return (
-      <div className={`flex flex-col items-center justify-center rounded-xl border border-dashed border-[#E8EDE5] bg-[#FAF9F6]/60 p-4 ${className}`}>
+      <div className={`flex flex-col items-center justify-center rounded-xl border border-dashed border-[#1C1A16]/10 bg-[#FAF9F6]/60 p-4 ${className}`}>
         <span className="text-2xl mb-1">☯</span>
         <span className="text-xs text-[#1C1A16]/40 tracking-widest">紫微斗数命盘</span>
       </div>
@@ -34,7 +34,7 @@ export function CenterInfoCard({ userInfo, palaces, className = '' }: CenterInfo
   ].filter(Boolean);
 
   return (
-    <div className={`bg-white rounded-2xl shadow-md border border-[#F0EDE8] p-6 text-center ${className}`}>
+    <div className={`bg-white rounded-2xl border border-[#1C1A16]/8 p-6 text-center ${className}`}>
       <div className="space-y-1.5">
         {/* 1. 标题行 */}
         <p className="text-lg font-semibold font-display text-[#1C1A16]">

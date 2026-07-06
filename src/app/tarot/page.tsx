@@ -46,7 +46,7 @@ const FAQ_ITEMS = [
 
 const SYSTEM_FEATURES = [
   { icon: '✶', title: 'AI 精准解读', desc: '人工智能分析塔罗牌象征意义,提供精准个性化的解读,激发您的直觉洞察力' },
-  { icon: '⚡', title: '即时占卜反馈', desc: '无需等待,AI 系统即时生成专业塔罗牌解读,随时随地获取命运指引' },
+  { icon: '↯', title: '即时占卜反馈', desc: '无需等待,AI 系统即时生成专业塔罗牌解读,随时随地获取命运指引' },
   { icon: '☆', title: '专业塔罗智慧', desc: '基于传统塔罗牌理论,结合 AI 分析能力,为您的人生关键决策提供深刻洞见' },
 ]
 
@@ -66,79 +66,110 @@ const TAROT_FAQ = [
 function TarotSeoSections() {
   return (
     <>
-      <section className="mx-auto mt-12 max-w-page animate-fadeIn">
+      <section className="mx-auto mt-16 max-w-page animate-fadeIn">
         <div className="text-center mb-10">
-          <h2 className="font-display text-[28px] tracking-[0.06em] text-[#1C1A16]">AI 塔罗牌解析系统</h2>
-          <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-[#6B7280]">
+          <h2 className="font-display text-2xl md:text-3xl font-bold text-[#1C1A16]">AI 塔罗牌解析系统</h2>
+          <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-[#1C1A16]/55">
             CyberFate AI 塔罗牌占卜系统结合了传统塔罗牌智慧与尖端人工智能技术,通过78张牌的图像符号和 AI 精准分析来揭示人生的真相和智慧。我们的 AI 塔罗牌解读不仅融合了传统塔罗牌占卜技巧,还结合现代心理学理论,为您提供深入且实用的人生指引。
           </p>
         </div>
         <div className="grid grid-cols-1 gap-5 md:grid-cols-3 mb-4">
           {SYSTEM_FEATURES.map((item) => (
-            <div key={item.title} className="flex flex-col items-center text-center rounded-2xl border border-[#E5E0D8] bg-white p-8">
-              <div className="w-14 h-14 rounded-full bg-[#F5F2ED] flex items-center justify-center text-2xl mb-5 flex-shrink-0">{item.icon}</div>
+            <div key={item.title} className="flex flex-col items-center text-center rounded-2xl border border-[#1C1A16]/8 bg-white p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover">
+              <div className="w-[52px] h-[52px] rounded-full flex items-center justify-center text-2xl mb-5 flex-shrink-0" style={{ background: '#E0E7FF', color: '#4338CA' }}>{item.icon}</div>
               <h3 className="text-base font-semibold text-[#1C1A16] mb-3">{item.title}</h3>
-              <p className="text-sm leading-relaxed text-[#6B7280]">{item.desc}</p>
+              <p className="text-sm leading-relaxed text-[#1C1A16]/70">{item.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
-      <section className="mx-auto mt-12 max-w-page animate-fadeIn">
-        <div className="text-center mb-10">
-          <h2 className="font-display text-[28px] tracking-[0.06em] text-[#1C1A16]">AI 塔罗牌占卜应用场景</h2>
-        </div>
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-          {USE_CASES.map((item) => (
-            <div key={item.title} className="rounded-2xl border border-[#E5E0D8] bg-white p-8">
-              <h3 className="text-base font-semibold text-[#1C1A16] mb-3">{item.title}</h3>
-              <p className="text-sm leading-relaxed text-[#6B7280]">{item.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="mx-auto mt-12 max-w-page animate-fadeIn">
-        <h2 className="font-display text-[28px] tracking-[0.06em] text-[#1C1A16] text-center mb-10">AI 塔罗牌占卜常见问题</h2>
-        <div className="space-y-4">
-          {TAROT_FAQ.map((item) => (
-            <div key={item.q} className="rounded-2xl border border-[#E5E0D8] bg-white p-7">
-              <h3 className="flex items-center gap-2 text-[15px] font-semibold text-[#1C1A16] mb-3">
-                <span className="text-[#6B7280] text-base">&#9432;</span>
-                {item.q}
-              </h3>
-              <p className="text-sm leading-relaxed text-[#6B7280]">{item.a}</p>
-            </div>
-          ))}
-        </div>
-        <div className="mt-6 rounded-2xl border border-[#E5E0D8] bg-white/60 p-4 text-center text-xs text-[#9CA3AF]">
-          ⚠️ 免责声明:本站塔罗占卜内容仅供娱乐与自我探索参考,不构成医疗、法律或投资建议。请结合现实信息理性判断。
-        </div>
-      </section>
-
-      <section className="mx-auto mt-12 max-w-page animate-fadeIn">
-        <div className="rounded-2xl bg-[#FAF9F6] border border-[#E5E0D8] p-10 text-center md:p-16">
-          <h2 className="font-display text-[32px] tracking-[0.06em] text-[#1C1A16] leading-tight">
-            开启你的<br />AI 塔罗占卜之旅
-          </h2>
-          <p className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-[#6B7280]">
-            赛博命理师的 AI 塔罗系统融合了传统塔罗智慧与现代 AI 技术,为你提供更准确、更有深度的解读。无论你是塔罗新手还是资深爱好者,都能从中获得启发。
-          </p>
-          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <a
-              href="#main-content"
-              className="rounded-xl bg-[#1C1A16] px-10 py-3.5 text-sm font-medium text-white transition-all hover:bg-[#2D2B26]"
-            >
-              开始 AI 塔罗占卜 →
-            </a>
-            <a
-              href="/bazi"
-              className="rounded-xl border border-[#E5E0D8] bg-white px-10 py-3.5 text-sm font-medium text-[#1C1A16] transition-all hover:bg-[#F5F2ED]"
-            >
-              八字分析 →
-            </a>
+      <section className="-mx-4 mt-16 bg-[#F6F4F1] px-4 py-12 md:py-16 animate-fadeIn">
+        <div className="mx-auto max-w-page">
+          <div className="text-center mb-10">
+            <h2 className="font-display text-2xl md:text-3xl font-bold text-[#1C1A16]">AI 塔罗牌占卜应用场景</h2>
           </div>
-          <p className="mt-4 text-xs text-[#9CA3AF]">免费体验,无需注册</p>
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+            {USE_CASES.map((item) => (
+              <div key={item.title} className="relative overflow-hidden rounded-2xl border border-[#1C1A16]/8 bg-white p-8">
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute -right-1 -bottom-4 font-display text-[56px] leading-none text-brand-ink/[0.05] select-none"
+                >
+                  {item.title.slice(0, 1)}
+                </span>
+                <h3 className="text-base font-semibold text-[#1C1A16] mb-3">{item.title}</h3>
+                <p className="text-sm leading-relaxed text-[#1C1A16]/70">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto mt-16 max-w-page animate-fadeIn">
+        <h2 className="font-display text-2xl md:text-3xl font-bold text-[#1C1A16] text-center mb-8">AI 塔罗牌占卜常见问题</h2>
+        <div className="space-y-3 max-w-3xl mx-auto">
+          {TAROT_FAQ.map((item) => (
+            <details key={item.q} className="group rounded-xl border border-[#1C1A16]/8 bg-white px-5 py-4">
+              <summary className="cursor-pointer list-none flex items-center justify-between gap-3 text-sm font-medium text-[#1C1A16]">
+                {item.q}
+                <span className="text-[#1C1A16]/40 group-open:rotate-180 transition-transform">⌄</span>
+              </summary>
+              <p className="mt-3 text-sm leading-relaxed text-[#1C1A16]/65">{item.a}</p>
+            </details>
+          ))}
+        </div>
+        <p className="mx-auto mt-6 max-w-3xl text-center text-xs text-[#1C1A16]/40">
+          ⚠️ 免责声明:本站塔罗占卜内容仅供娱乐与自我探索参考,不构成医疗、法律或投资建议。请结合现实信息理性判断。
+        </p>
+      </section>
+
+      <section className="mx-auto mt-16 max-w-page animate-fadeIn">
+        <div className="relative overflow-hidden rounded-3xl bg-white border border-[#1C1A16]/8 px-8 md:px-14 py-10 md:py-12">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -right-28 top-1/2 -translate-y-1/2 w-[320px] h-[320px] md:w-[420px] md:h-[420px] opacity-[0.06]"
+          >
+            <svg viewBox="0 0 400 400" className="w-full h-full">
+              <circle cx="200" cy="200" r="196" fill="none" stroke="#1C1A16" strokeWidth="1" />
+              <circle cx="200" cy="200" r="150" fill="none" stroke="#1C1A16" strokeWidth="0.6" />
+              <circle cx="200" cy="200" r="100" fill="none" stroke="#1C1A16" strokeWidth="0.6" strokeDasharray="2 4" />
+              {Array.from({ length: 24 }, (_, i) => (
+                <line
+                  key={i}
+                  x1="200" y1="4" x2="200" y2={i % 2 === 0 ? 14 : 9}
+                  stroke="#1C1A16" strokeWidth="1"
+                  transform={`rotate(${i * 15} 200 200)`}
+                />
+              ))}
+            </svg>
+          </div>
+
+          <div className="relative flex flex-col md:flex-row md:items-center gap-8 md:gap-12">
+            <div className="flex-1 text-center md:text-left">
+              <h2 className="font-display text-[24px] md:text-[32px] tracking-wide text-[#1C1A16] leading-snug">
+                开启你的 AI 塔罗占卜之旅
+              </h2>
+              <p className="mx-auto md:mx-0 mt-3 max-w-xl text-[14px] md:text-[15px] leading-relaxed text-[#1C1A16]/60">
+                赛博命理师的 AI 塔罗系统融合了传统塔罗智慧与现代 AI 技术,为你提供更准确、更有深度的解读。无论你是塔罗新手还是资深爱好者,都能从中获得启发。
+              </p>
+              <p className="text-[12px] text-[#1C1A16]/40 tracking-[0.05em] mt-4">免费体验 · 无需注册</p>
+            </div>
+            <div className="flex flex-col sm:flex-row md:flex-col gap-3 justify-center shrink-0">
+              <a
+                href="#main-content"
+                className="inline-flex items-center justify-center min-h-[46px] min-w-[172px] px-8 py-3 text-[13px] tracking-[0.08em] bg-brand-accent text-white rounded-lg hover:bg-brand-accent-hover transition-colors font-semibold"
+              >
+                开始 AI 塔罗占卜 →
+              </a>
+              <a
+                href="/bazi"
+                className="inline-flex items-center justify-center min-h-[46px] min-w-[172px] px-8 py-3 text-[13px] tracking-[0.08em] bg-white border border-brand-ink/25 text-brand-ink rounded-lg hover:border-brand-ink hover:bg-[#FDFBF7] transition-colors"
+              >
+                八字分析 →
+              </a>
+            </div>
+          </div>
         </div>
       </section>
     </>

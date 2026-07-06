@@ -251,24 +251,25 @@ export default function Page() {
         </Container>
       </section>
 
-      <section className="pb-16">
+      {/* 命理深度分析（#F6F4F1 色带区块，打破整页单色） */}
+      <section className="bg-[#F6F4F1] py-14 md:py-16 mb-12">
         <PageShell>
           <div className="space-y-10">
             <div>
               <h2 className="font-display text-2xl sm:text-3xl text-brand-ink mb-4">
                 2026 年桃花运为什么这样分布？
               </h2>
-              <div className="space-y-4 text-brand-gray leading-relaxed">
+              <div className="space-y-4 text-[14px] text-[#1C1A16]/70 leading-relaxed">
                 <p>
                   在传统命理学中，桃花运的强弱主要看四个方面：本命的桃花星、流年与本命的合冲关系、八字中夫妻宫的状态、
                   以及流年红鸾天喜星的位置。生肖运势主要看前两个维度。
                 </p>
                 <p>
-                  十二地支中，<span className="text-brand-accent font-medium">子午卯酉</span>是四大正桃花。
+                  十二地支中，<span className="font-medium text-[#B45309]">子午卯酉</span>是四大正桃花。
                   其中"卯"对应生肖兔，本就是桃花气场最浓的生肖之一。2026年丙午年是火气当令，木生火的卯午相生关系让兔的桃花更上一层楼。
                 </p>
                 <p>
-                  地支六合中，<span className="text-brand-accent font-medium">午未六合</span>
+                  地支六合中，<span className="font-medium text-[#B45309]">午未六合</span>
                   是和谐度最高的合局之一，所以生肖羊在2026年的桃花运表现最为突出。
                   巳午同气、寅午半合、午戌半合，分别让蛇、虎、狗的感情运得到不同程度的助力。
                 </p>

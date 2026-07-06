@@ -64,6 +64,7 @@ docs/             # PRD / 设计 / 运维
 
 ## 关键文档
 
+- **视觉设计系统(所有 UI 开发必须遵守):`docs/DESIGN-SYSTEM.md`**
 - 整体 PRD(逆向):`docs/PRD-REVERSE-ENGINEERED.md`
 - 模块级 PRD:`docs/PRD-MODULES-DETAILED.md`
 - 改进任务:`docs/IMPROVEMENT-TASKS.md`

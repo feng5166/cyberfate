@@ -93,7 +93,7 @@ export function PalaceDetailPanel({ palace, onClose, className }: PalaceDetailPa
 
   return (
     <div
-      className={cn('bg-white rounded-2xl shadow-sm border border-[#F0EDE8] p-5 sm:p-6 relative', className)}
+      className={cn('bg-white rounded-2xl border border-[#1C1A16]/8 p-5 sm:p-6 relative', className)}
       role="region"
       aria-label={`${palace.name}详情`}
     >
@@ -218,9 +218,9 @@ export function PalaceDetailPanel({ palace, onClose, className }: PalaceDetailPa
       </div>
 
       {/* 区块3: AI 宫位解读 */}
-      <div className="rounded-xl bg-gradient-to-r from-stone-100 to-stone-100 border border-stone-200 p-5">
+      <div className="rounded-xl bg-[#FAF9F6] border border-[#1C1A16]/6 p-5">
         <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="w-4 h-4 text-[#1C1A16]" />
+          <Sparkles className="w-4 h-4" strokeWidth={1.5} style={{ color: '#7E22CE' }} />
           <h4 className="text-sm font-semibold text-[#1C1A16]">AI 宫位解读</h4>
           {/* 静态示例解读，尚未接入实时 AI，明确标注避免误导 */}
           <Badge variant="neutral">示例</Badge>
@@ -230,13 +230,13 @@ export function PalaceDetailPanel({ palace, onClose, className }: PalaceDetailPa
         </p>
         <div className="flex items-center gap-3">
           <span className="text-xs text-[#1C1A16]/40">综合评分</span>
-          <div className="flex-1 h-2 rounded-full bg-stone-200 overflow-hidden">
+          <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: '#F3E8FF' }}>
             <div
-              className="h-full rounded-full bg-gradient-to-r from-stone-500 to-stone-500 transition-all duration-500"
-              style={{ width: `${aiData.score}%` }}
+              className="h-full rounded-full transition-all duration-500"
+              style={{ width: `${aiData.score}%`, background: '#7E22CE' }}
             />
           </div>
-          <span className="text-sm font-bold text-stone-600">{aiData.score}/100</span>
+          <span className="text-sm font-bold" style={{ color: '#7E22CE' }}>{aiData.score}/100</span>
         </div>
       </div>
     </div>

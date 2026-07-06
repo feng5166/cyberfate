@@ -2,38 +2,34 @@
 
 import { PenLine, LayoutGrid, MousePointerClick, Sparkles, ArrowRight } from 'lucide-react';
 
+// 紫微斗数模块点缀色（设计系统 §2.2）：淡底 #F3E8FF / 主色 #7E22CE
+const ZIWEI_BG = '#F3E8FF';
+const ZIWEI_FG = '#7E22CE';
+
 const STEPS = [
   {
     icon: PenLine,
     step: 1,
     title: '输入信息',
     description: '日期 + 时辰 + 性别',
-    color: 'text-blue-500',
-    bg: 'bg-blue-50',
   },
   {
     icon: LayoutGrid,
     step: 2,
     title: '查看命盘',
     description: '十二宫星曜分布',
-    color: 'text-emerald-500',
-    bg: 'bg-emerald-50',
   },
   {
     icon: MousePointerClick,
     step: 3,
     title: '点击宫位',
     description: '查看详细星曜列表',
-    color: 'text-[#1C1A16]',
-    bg: 'bg-stone-100',
   },
   {
     icon: Sparkles,
     step: 4,
     title: 'AI 分析',
     description: '获取个性化解读',
-    color: 'text-purple-500',
-    bg: 'bg-purple-50',
   },
 ];
 
@@ -46,9 +42,12 @@ export function ZiweiGuide() {
       <div className="flex flex-col sm:flex-row items-stretch gap-3 sm:gap-0">
         {STEPS.map((step, index) => (
           <div key={step.step} className="flex items-center flex-1">
-            <div className="flex-1 bg-white rounded-2xl border border-[#F0EDE8] p-4 sm:p-5 text-center">
-              <div className={`inline-flex items-center justify-center w-10 h-10 rounded-xl ${step.bg} mb-3`}>
-                <step.icon className={`w-5 h-5 ${step.color}`} />
+            <div className="flex-1 bg-white rounded-2xl border border-[#1C1A16]/8 p-4 sm:p-5 text-center">
+              <div
+                className="inline-flex items-center justify-center w-10 h-10 rounded-full mb-3"
+                style={{ background: ZIWEI_BG }}
+              >
+                <step.icon className="w-5 h-5" strokeWidth={1.5} style={{ color: ZIWEI_FG }} />
               </div>
               <div className="text-[10px] text-[#1C1A16]/30 font-medium mb-1">
                 Step {step.step}

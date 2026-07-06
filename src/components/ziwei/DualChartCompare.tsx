@@ -40,7 +40,7 @@ export function DualChartCompare({ chartA, className }: DualChartCompareProps) {
       <button
         onClick={() => setShowCompare(true)}
         className={cn(
-          'inline-flex items-center gap-2 text-sm text-[#1C1A16]/50 hover:text-[#1C1A16] transition-colors px-4 py-2.5 rounded-xl border border-[#E8E4DD] hover:border-[#1C1A16]/20',
+          'inline-flex items-center gap-2 text-sm bg-white border border-brand-ink/25 text-brand-ink hover:border-brand-ink hover:bg-[#FDFBF7] transition-colors px-4 py-2.5 rounded-lg',
           className,
         )}
         aria-label="双人命盘对比"
@@ -52,7 +52,7 @@ export function DualChartCompare({ chartA, className }: DualChartCompareProps) {
   }
 
   return (
-    <div className={cn('bg-white rounded-2xl shadow-sm border border-[#F0EDE8] p-5 sm:p-6', className)}>
+    <div className={cn('bg-white rounded-2xl border border-[#1C1A16]/8 p-5 sm:p-6', className)}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Users className="w-5 h-5 text-[#1C1A16]/50" />

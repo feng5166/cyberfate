@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
-import { History, Send, X } from 'lucide-react';
+import { History, Send, Sparkles, X } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
 
 interface QAMessage {
@@ -186,30 +186,35 @@ export default function DailyFortuneQA({
       <div style={{
         position: 'relative',
         backgroundColor: '#FFFFFF',
-        border: '1px solid #E5E7EB',
+        border: '1px solid rgba(28, 26, 22, 0.08)',
         borderRadius: 16,
         padding: '24px 28px',
       }}>
         {/* 标题区 */}
-        <div style={{ marginBottom: 20 }}>
-          <h3 style={{
-            fontSize: 17,
-            fontWeight: 600,
-            color: '#1C1A16',
-            fontFamily: "'Noto Serif SC', serif",
-            margin: 0,
-          }}>
-            AI 运势问答
-          </h3>
-          <p style={{
-            fontSize: 13,
-            color: '#9CA3AF',
-            lineHeight: 1.6,
-            marginTop: 6,
-            margin: '6px 0 0',
-          }}>
-            基于您的八字和近期天干地支信息，AI 可以为您提供更全面的运势分析和建议
-          </p>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 20, paddingRight: 52 }}>
+          <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#FBF1D0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Sparkles size={18} color="#B0870F" strokeWidth={1.5} />
+          </div>
+          <div>
+            <h3 style={{
+              fontSize: 17,
+              fontWeight: 600,
+              color: '#1C1A16',
+              fontFamily: "'Noto Serif SC', serif",
+              margin: 0,
+            }}>
+              AI 运势问答
+            </h3>
+            <p style={{
+              fontSize: 13,
+              color: '#9CA3AF',
+              lineHeight: 1.6,
+              marginTop: 6,
+              margin: '6px 0 0',
+            }}>
+              基于您的八字和近期天干地支信息，AI 可以为您提供更全面的运势分析和建议
+            </p>
+          </div>
         </div>
 
         {/* 右上角历史按钮 */}
@@ -225,17 +230,17 @@ export default function DailyFortuneQA({
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: '#FFFFFF',
-            border: '1px solid #E5E7EB',
+            border: '1px solid rgba(28, 26, 22, 0.15)',
             borderRadius: 8,
             cursor: 'pointer',
             transition: 'all 0.2s',
           }}
           onMouseEnter={e => {
-            e.currentTarget.style.borderColor = '#9CA3AF';
-            e.currentTarget.style.backgroundColor = '#F9FAFB';
+            e.currentTarget.style.borderColor = 'rgba(28, 26, 22, 0.45)';
+            e.currentTarget.style.backgroundColor = '#FDFBF7';
           }}
           onMouseLeave={e => {
-            e.currentTarget.style.borderColor = '#E5E7EB';
+            e.currentTarget.style.borderColor = 'rgba(28, 26, 22, 0.15)';
             e.currentTarget.style.backgroundColor = '#FFFFFF';
           }}
           aria-label="查看历史问答"
@@ -282,8 +287,8 @@ export default function DailyFortuneQA({
                   maxWidth: '85%',
                   padding: '10px 14px',
                   borderRadius: 10,
-                  backgroundColor: msg.role === 'user' ? '#F3F4F6' : '#FFFFFF',
-                  border: msg.role === 'assistant' ? '1px solid #E5E7EB' : 'none',
+                  backgroundColor: msg.role === 'user' ? '#F6F4F1' : '#FFFFFF',
+                  border: msg.role === 'assistant' ? '1px solid rgba(28, 26, 22, 0.08)' : 'none',
                   fontSize: 14,
                   color: '#374151',
                   lineHeight: 1.8,
@@ -318,14 +323,14 @@ export default function DailyFortuneQA({
               flex: 1,
               padding: '12px 16px',
               minHeight: 44,
-              border: '1px solid #E5E7EB',
+              border: '1px solid rgba(28, 26, 22, 0.15)',
               borderRadius: 10,
               fontSize: 16,
               outline: 'none',
               transition: 'border-color 0.2s',
             }}
             onFocus={e => { e.currentTarget.style.borderColor = '#1C1A16'; }}
-            onBlur={e => { e.currentTarget.style.borderColor = '#E5E7EB'; }}
+            onBlur={e => { e.currentTarget.style.borderColor = 'rgba(28, 26, 22, 0.15)'; }}
           />
           <button
             onClick={() => handleSubmit()}
@@ -377,7 +382,7 @@ export default function DailyFortuneQA({
                   disabled={isLoading}
                   style={{
                     padding: '14px 16px',
-                    border: '1px solid #E5E7EB',
+                    border: '1px solid rgba(28, 26, 22, 0.08)',
                     borderRadius: 10,
                     backgroundColor: '#FFFFFF',
                     cursor: 'pointer',
@@ -390,15 +395,15 @@ export default function DailyFortuneQA({
                     transition: 'all 0.2s',
                   }}
                   onMouseEnter={e => {
-                    e.currentTarget.style.borderColor = '#9CA3AF';
-                    e.currentTarget.style.backgroundColor = '#F9FAFB';
+                    e.currentTarget.style.borderColor = '#B0870F';
+                    e.currentTarget.style.backgroundColor = '#FDFBF7';
                   }}
                   onMouseLeave={e => {
-                    e.currentTarget.style.borderColor = '#E5E7EB';
+                    e.currentTarget.style.borderColor = 'rgba(28, 26, 22, 0.08)';
                     e.currentTarget.style.backgroundColor = '#FFFFFF';
                   }}
                 >
-                  <Send size={14} color="#9CA3AF" style={{ flexShrink: 0 }} />
+                  <Send size={14} color="#B0870F" style={{ flexShrink: 0 }} />
                   {q}
                 </button>
               ))}
@@ -470,8 +475,8 @@ export default function DailyFortuneQA({
                 {historyRecords.map(record => (
                   <div key={record.id} style={{
                     padding: '14px 16px',
-                    border: '1px solid #E5E7EB',
-                    borderRadius: 10,
+                    border: '1px solid rgba(28, 26, 22, 0.08)',
+                    borderRadius: 12,
                   }}>
                     <div style={{ fontSize: 14, fontWeight: 500, color: '#1C1A16', marginBottom: 6 }}>
                       {record.question}
@@ -489,8 +494,8 @@ export default function DailyFortuneQA({
                 {!isVip && historyCount > 3 && (
                   <div style={{
                     padding: '14px 16px',
-                    backgroundColor: '#F9FAFB',
-                    borderRadius: 10,
+                    backgroundColor: '#F6F4F1',
+                    borderRadius: 12,
                     textAlign: 'center',
                     fontSize: 13,
                     color: '#6B7280',

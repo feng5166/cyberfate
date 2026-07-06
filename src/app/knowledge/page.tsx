@@ -36,17 +36,29 @@ export default function KnowledgePage() {
   return (
     <div className="min-h-dvh bg-brand-bg">
       {/* 页面标题区 — Server Component，爬虫可抓 */}
-      <section className="text-center pt-16 md:pt-20 pb-6">
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <Sparkles className="w-7 h-7 text-brand-ink/40" />
-          <h1
-            className="font-display text-h1 md:text-[44px] text-brand-ink"
-            style={{ letterSpacing: '10px' }}
-          >
-            命理知识库
-          </h1>
+      <section className="relative overflow-hidden text-center pt-16 md:pt-20 pb-6">
+        {/* 罗盘细线装饰（品牌母题，克制） */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[360px] h-[360px] md:w-[440px] md:h-[440px] opacity-[0.05]"
+        >
+          <svg viewBox="0 0 400 400" className="w-full h-full">
+            <circle cx="200" cy="200" r="196" fill="none" stroke="#1C1A16" strokeWidth="1" />
+            <circle cx="200" cy="200" r="150" fill="none" stroke="#1C1A16" strokeWidth="0.6" strokeDasharray="2 4" />
+            {Array.from({ length: 24 }, (_, i) => (
+              <line
+                key={i}
+                x1="200" y1="4" x2="200" y2={i % 2 === 0 ? 14 : 9}
+                stroke="#1C1A16" strokeWidth="1"
+                transform={`rotate(${i * 15} 200 200)`}
+              />
+            ))}
+          </svg>
         </div>
-        <p className="text-body-sm text-brand-gray mt-3">
+        <h1 className="relative font-display text-3xl md:text-[40px] font-bold text-brand-ink tracking-[0.08em]">
+          命理知识库
+        </h1>
+        <p className="relative text-sm md:text-base text-[#1C1A16]/55 tracking-wider mt-3">
           了解八字命理的理论基础，深入传统智慧
         </p>
         {/* 静态文章列表摘要 — 爬虫友好 */}
@@ -65,22 +77,26 @@ export default function KnowledgePage() {
       <Container>
         {/* 搜索 + 筛选 + 文章列表（交互部分用 Client Component；网格内部自行放宽到 6xl） */}
         <KnowledgeListClient articles={knowledgeList} />
-
-        {/* 说明区 — Server Component，爬虫可抓；保持窄居中(page) */}
-        <div className="max-w-page mx-auto">
-          <div className="bg-white rounded-card border border-brand-border-light p-7 mb-16">
-            <h2 className="font-display text-lg font-semibold text-brand-ink tracking-[0.08em] mb-4">
-              💡 知识库说明
-            </h2>
-            <ul className="space-y-2 text-sm text-brand-gray leading-relaxed">
-              <li>• 本知识库内容来源于传统命理典籍，结合现代通俗解读</li>
-              <li>• 仅供学习参考，不代表本站观点或立场</li>
-              <li>• 命理学是一种传统文化，建议理性看待，不要过度迷信</li>
-              <li>• 知识内容持续更新中，欢迎反馈建议</li>
-            </ul>
-          </div>
-        </div>
       </Container>
+
+      {/* 说明区 — Server Component，爬虫可抓；色带区块打破单色 */}
+      <section className="bg-[#F6F4F1] py-12 md:py-16">
+        <Container>
+          <div className="max-w-page mx-auto">
+            <div className="bg-white rounded-2xl border border-[#1C1A16]/8 p-7">
+              <h2 className="font-display text-lg font-semibold text-brand-ink tracking-[0.08em] mb-4">
+                💡 知识库说明
+              </h2>
+              <ul className="space-y-2 text-sm text-[#1C1A16]/70 leading-relaxed">
+                <li>• 本知识库内容来源于传统命理典籍，结合现代通俗解读</li>
+                <li>• 仅供学习参考，不代表本站观点或立场</li>
+                <li>• 命理学是一种传统文化，建议理性看待，不要过度迷信</li>
+                <li>• 知识内容持续更新中，欢迎反馈建议</li>
+              </ul>
+            </div>
+          </div>
+        </Container>
+      </section>
 
       <Footer />
     </div>

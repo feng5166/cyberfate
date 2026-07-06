@@ -127,7 +127,7 @@ export function DayunSwitcher({ birthDate, className }: DayunSwitcherProps) {
   }, [currentDayunIndex]);
 
   return (
-    <div className={cn('bg-white rounded-2xl shadow-sm border border-[#F0EDE8] p-5 sm:p-6', className)}>
+    <div className={cn('bg-white rounded-2xl border border-[#1C1A16]/8 p-5 sm:p-6', className)}>
       {/* 标题 + 切换 */}
       <div className="flex items-center justify-between gap-3 mb-4">
         <h3 className="font-display text-lg font-semibold text-[#1C1A16]">大运流年</h3>
@@ -360,7 +360,7 @@ export function DayunSwitcher({ birthDate, className }: DayunSwitcherProps) {
                 </span>
               )}
               {currentDayunIndex >= 0 && activeIndex < currentDayunIndex && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 font-medium">
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F6F4F1] text-[#1C1A16]/45 font-medium">
                   已过
                 </span>
               )}

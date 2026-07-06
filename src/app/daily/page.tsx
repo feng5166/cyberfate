@@ -54,20 +54,25 @@ export default function DailyPage() {
       <FaqJsonLd items={FAQ_ITEMS} />
       <PageClient />
       <Footer>
-      <section aria-label="关于每日运势" className="mx-auto max-w-3xl px-4 py-12 text-brand-gray text-sm leading-relaxed border-t border-brand-border-light mt-8">
-        <h2 className="text-base font-semibold text-brand-ink mb-4">关于每日运势</h2>
+      <section aria-label="关于每日运势" className="bg-[#F6F4F1] mt-8">
+      <div className="mx-auto max-w-3xl px-4 py-12 md:py-16 text-brand-gray text-sm leading-relaxed">
+        <h2 className="font-display text-2xl text-brand-ink text-center mb-2">关于每日运势</h2>
+        <p className="text-sm text-[#1C1A16]/55 text-center tracking-wider mb-8">日运推算原理 · 五维能量地图</p>
         <p className="mb-3">每日运势的推算原理建立在八字命理体系之上。命主的日干（日主）代表自身能量，而每一天都有对应的天干地支组合，两者之间通过五行的生克制化形成动态关系。当日干支与命主喜用神契合时，运势趋于顺畅；与忌神冲克时，运势则相对低迷。这是日运区别于通俗星座运势的根本所在。</p>
         <p className="mb-3">CyberFate 每日运势从五个维度呈现当日状态：综合运势反映整体能量趋势，事业运指向工作决策与人际协作的吉凶，财运提示求财方向与投资风险，感情运涉及人际亲密关系的互动质量，健康运则关注身心状态的微妙变化。五维指标共同构建出一日内可参考的能量地图。</p>
         <p className="mb-3">与依据出生月份的星座运势不同，八字日运基于精确到日的命主信息进行个性化推算，每个人在同一天的运势可以截然不同。AI 结合日主特征、当日干支、五行平衡等多重因素综合分析，让每日运势真正"千人千面"，为你的当日决策与行动提供更具针对性的参考。</p>
-        <h3 className="text-sm font-semibold text-brand-ink mt-6 mb-3">常见问题</h3>
-        <dl className="space-y-3">
+        <h3 className="text-sm font-semibold text-brand-ink mt-8 mb-3">常见问题</h3>
+        <div className="space-y-3">
           {FAQ_ITEMS.map((item) => (
-            <div key={item.question}>
-              <dt className="font-medium text-brand-ink">{item.question}</dt>
-              <dd className="mt-1">{item.answer}</dd>
-            </div>
+            <details key={item.question} className="group rounded-2xl border border-[#1C1A16]/8 bg-white px-5 py-4">
+              <summary className="flex items-center justify-between gap-4 cursor-pointer list-none text-sm font-medium text-brand-ink">
+                {item.question}
+                <span aria-hidden className="shrink-0 text-[#1C1A16]/40 transition-transform duration-200 group-open:rotate-45">＋</span>
+              </summary>
+              <p className="mt-3 text-sm text-[#1C1A16]/70 leading-relaxed">{item.answer}</p>
+            </details>
           ))}
-        </dl>
+        </div>
 
         <div className="mt-8 pt-6 border-t border-brand-border-light">
           <p className="text-xs font-medium text-brand-gray mb-3">相关工具</p>
@@ -78,7 +83,7 @@ export default function DailyPage() {
               { name: '老黄历', href: '/huangli' },
               { name: '合婚测算', href: '/bazi/marriage' },
             ].map((t) => (
-              <a key={t.href} href={t.href} className="text-xs px-3 py-1.5 rounded-full border border-brand-border text-brand-gray hover:text-brand-ink hover:border-brand-border transition-colors">
+              <a key={t.href} href={t.href} className="text-xs px-3 py-1.5 rounded-full border border-[#1C1A16]/10 bg-white text-brand-gray hover:text-brand-ink hover:border-[#1C1A16]/30 transition-colors">
                 {t.name}
               </a>
             ))}
@@ -96,12 +101,13 @@ export default function DailyPage() {
               { name: '大运理论', href: '/knowledge/dayun' },
               { name: '神煞大全', href: '/knowledge/shensha' },
             ].map((t) => (
-              <a key={t.href} href={t.href} className="text-xs px-3 py-1.5 rounded-full border border-brand-border text-brand-gray hover:text-brand-ink hover:border-brand-border transition-colors">
+              <a key={t.href} href={t.href} className="text-xs px-3 py-1.5 rounded-full border border-[#1C1A16]/10 bg-white text-brand-gray hover:text-brand-ink hover:border-[#1C1A16]/30 transition-colors">
                 {t.name}
               </a>
             ))}
           </div>
         </div>
+      </div>
       </section>
       </Footer>
     </>

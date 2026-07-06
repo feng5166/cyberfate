@@ -102,7 +102,7 @@ export function CalendarPicker({ selectedDate, onDateSelect }: CalendarPickerPro
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-[#F0EDE8] p-4">
+    <div className="bg-white rounded-2xl border border-[#1C1A16]/8 p-4">
       {/* 年份切换 */}
       <div className="flex items-center justify-center gap-3 mb-2">
         <button
@@ -138,7 +138,7 @@ export function CalendarPicker({ selectedDate, onDateSelect }: CalendarPickerPro
           {(viewYear !== today.getFullYear() || viewMonth !== today.getMonth() + 1) && (
             <button
               onClick={goToToday}
-              className="text-xs text-[#4A7C9B] hover:text-[#1C1A16] transition-colors flex items-center gap-0.5"
+              className="text-xs text-[#DC2626]/80 hover:text-[#DC2626] transition-colors flex items-center gap-0.5"
             >
               <CalendarDays className="w-3 h-3" />
               今天
@@ -158,7 +158,7 @@ export function CalendarPicker({ selectedDate, onDateSelect }: CalendarPickerPro
       <div className="grid grid-cols-7 mb-1">
         {WEEKDAY_HEADERS.map((w, i) => (
           <div key={w} className={`text-center text-xs py-1 ${
-            i === 0 || i === 6 ? 'text-[#C75B4B]/60' : 'text-[#1C1A16]/35'
+            i === 0 || i === 6 ? 'text-[#DC2626]/50' : 'text-[#1C1A16]/35'
           }`}>
             {w}
           </div>
@@ -203,7 +203,7 @@ export function CalendarPicker({ selectedDate, onDateSelect }: CalendarPickerPro
               </span>
               <span className={`text-[9px] leading-none mt-0.5 ${
                 cell.hasJieqi
-                  ? isToday ? 'text-[#4A7C9B]' : 'text-[#4A7C9B]'
+                  ? 'text-[#DC2626]/70'
                   : isToday ? 'text-[#1C1A16]/50' : 'text-[#1C1A16]/35'
               }`}>
                 {cell.lunarDay}
@@ -212,7 +212,7 @@ export function CalendarPicker({ selectedDate, onDateSelect }: CalendarPickerPro
                 <div className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-brand-accent" />
               )}
               {cell.hasJieqi && !isToday && (
-                <div className="absolute top-0.5 right-0.5 w-1 h-1 rounded-full bg-[#4A7C9B]" />
+                <div className="absolute top-0.5 right-0.5 w-1 h-1 rounded-full bg-[#DC2626]/60" />
               )}
             </button>
           );

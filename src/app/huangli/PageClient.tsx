@@ -87,12 +87,37 @@ export default function HuangliPage() {
       </div>
 
       {/* 标题区 */}
-      <div className="text-center py-6 md:py-10 px-4">
-        <h1 className="font-display text-2xl md:text-3xl font-semibold text-[#1C1A16]">
+      <div className="relative overflow-hidden text-center py-8 md:py-12 px-4">
+        {/* 罗盘细线装饰（品牌母题，克制） */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[360px] h-[360px] md:w-[460px] md:h-[460px] opacity-[0.05]"
+        >
+          <svg viewBox="0 0 400 400" className="w-full h-full">
+            <circle cx="200" cy="200" r="196" fill="none" stroke="#1C1A16" strokeWidth="1" />
+            <circle cx="200" cy="200" r="150" fill="none" stroke="#1C1A16" strokeWidth="0.6" />
+            <circle cx="200" cy="200" r="100" fill="none" stroke="#1C1A16" strokeWidth="0.6" strokeDasharray="2 4" />
+            {Array.from({ length: 24 }, (_, i) => (
+              <line
+                key={i}
+                x1="200" y1="4" x2="200" y2={i % 2 === 0 ? 14 : 9}
+                stroke="#1C1A16" strokeWidth="1"
+                transform={`rotate(${i * 15} 200 200)`}
+              />
+            ))}
+          </svg>
+        </div>
+        <span
+          className="relative inline-flex items-center rounded-full px-3 py-1 text-xs font-medium tracking-[0.08em]"
+          style={{ background: '#FEE2E2', color: '#DC2626' }}
+        >
+          传统历法 · 智能择吉
+        </span>
+        <h1 className="relative font-display text-3xl md:text-[40px] font-bold text-[#1C1A16] tracking-[0.08em] mt-4">
           AI 老黄历
         </h1>
-        <p className="text-sm md:text-base text-[#1C1A16]/45 mt-2">
-          智能择吉 · 避忌提醒
+        <p className="relative text-sm md:text-base text-[#1C1A16]/55 tracking-wider mt-3">
+          每日宜忌 · 吉神凶煞 · 智能问事
         </p>
       </div>
 
@@ -116,7 +141,7 @@ export default function HuangliPage() {
             <div className="space-y-5">
               {/* 加载状态 */}
               {loading && (
-                <div className="bg-white rounded-2xl shadow-sm border border-[#F0EDE8] p-6">
+                <div className="bg-white rounded-2xl border border-[#1C1A16]/8 p-6">
                   <div className="animate-pulse space-y-4">
                     <div className="flex gap-2">
                       <div className="h-6 w-28 bg-[#F0EDE8] rounded" />
@@ -139,7 +164,7 @@ export default function HuangliPage() {
 
               {/* 错误状态 */}
               {error && !loading && (
-                <div className="bg-white rounded-2xl shadow-sm border border-red-200 p-6 text-center">
+                <div className="bg-white rounded-2xl border border-red-200 p-6 text-center">
                   <p className="text-red-600 text-sm mb-3">{error}</p>
                   <button
                     onClick={() => loadDate(selectedDate)}
@@ -159,8 +184,8 @@ export default function HuangliPage() {
                 </>
               )}
 
-              {/* 底部特性介绍 + 使用指南 */}
-              <div className="mt-8">
+              {/* 底部特性介绍 + 使用指南（色带区块，打破整页单色） */}
+              <div className="mt-8 rounded-2xl bg-[#F6F4F1] px-5 py-8 md:px-8 md:py-10">
                 <FeaturesSection />
               </div>
             </div>

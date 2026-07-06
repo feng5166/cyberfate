@@ -1,11 +1,10 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Container } from '@/components/ui/Container';
-import { Card } from '@/components/ui/Card';
 import { PageShell } from '@/components/ui/PageShell';
 import { Footer } from '@/components/layout/Footer';
 import { FaqJsonLd } from '@/components/seo/FaqJsonLd';
-import { BaziCtaCard, FaqSection } from './_shared';
+import { BaziCtaCard, FaqSection, RankingHero, SectionHead, Y2026_FG } from './_shared';
 
 export const dynamic = 'force-static';
 
@@ -58,19 +57,19 @@ const dimensions = [
   },
 ];
 
-// tagColor：强调色=受益生肖，墨灰=中性，红=风险（冲/害/本命年）。红色为语义状态标记，非装饰。
+// tagColor：模块点缀色=受益生肖，墨灰=中性，红=风险（冲/害/本命年）。红色为语义状态标记，非装饰。
 const allZodiacs = [
   { name: '生肖鼠', emoji: '🐭', slug: 'shengxiao-rat-2026', tag: '冲太岁', tagColor: 'text-red-700' },
-  { name: '生肖牛', emoji: '🐮', slug: 'shengxiao-ox-2026', tag: '稳健积累', tagColor: 'text-brand-gray' },
-  { name: '生肖虎', emoji: '🐯', slug: 'shengxiao-tiger-2026', tag: '事业上升', tagColor: 'text-brand-accent' },
-  { name: '生肖兔', emoji: '🐰', slug: 'shengxiao-rabbit-2026', tag: '桃花旺', tagColor: 'text-brand-accent' },
-  { name: '生肖龙', emoji: '🐲', slug: 'shengxiao-dragon-2026', tag: '厚积薄发', tagColor: 'text-brand-gray' },
-  { name: '生肖蛇', emoji: '🐍', slug: 'shengxiao-snake-2026', tag: '同气相求', tagColor: 'text-brand-accent' },
+  { name: '生肖牛', emoji: '🐮', slug: 'shengxiao-ox-2026', tag: '稳健积累', tagColor: 'text-[#1C1A16]/55' },
+  { name: '生肖虎', emoji: '🐯', slug: 'shengxiao-tiger-2026', tag: '事业上升', tagColor: 'text-[#B45309] font-medium' },
+  { name: '生肖兔', emoji: '🐰', slug: 'shengxiao-rabbit-2026', tag: '桃花旺', tagColor: 'text-[#B45309] font-medium' },
+  { name: '生肖龙', emoji: '🐲', slug: 'shengxiao-dragon-2026', tag: '厚积薄发', tagColor: 'text-[#1C1A16]/55' },
+  { name: '生肖蛇', emoji: '🐍', slug: 'shengxiao-snake-2026', tag: '同气相求', tagColor: 'text-[#B45309] font-medium' },
   { name: '生肖马', emoji: '🐴', slug: 'shengxiao-horse-2026', tag: '本命年', tagColor: 'text-red-700' },
-  { name: '生肖羊', emoji: '🐏', slug: 'shengxiao-goat-2026', tag: '六合最佳', tagColor: 'text-brand-accent' },
-  { name: '生肖猴', emoji: '🐵', slug: 'shengxiao-monkey-2026', tag: '保守过渡', tagColor: 'text-brand-gray' },
-  { name: '生肖鸡', emoji: '🐔', slug: 'shengxiao-rooster-2026', tag: '稳守为主', tagColor: 'text-brand-gray' },
-  { name: '生肖狗', emoji: '🐶', slug: 'shengxiao-dog-2026', tag: '贵人提携', tagColor: 'text-brand-accent' },
+  { name: '生肖羊', emoji: '🐏', slug: 'shengxiao-goat-2026', tag: '六合最佳', tagColor: 'text-[#B45309] font-medium' },
+  { name: '生肖猴', emoji: '🐵', slug: 'shengxiao-monkey-2026', tag: '保守过渡', tagColor: 'text-[#1C1A16]/55' },
+  { name: '生肖鸡', emoji: '🐔', slug: 'shengxiao-rooster-2026', tag: '稳守为主', tagColor: 'text-[#1C1A16]/55' },
+  { name: '生肖狗', emoji: '🐶', slug: 'shengxiao-dog-2026', tag: '贵人提携', tagColor: 'text-[#B45309] font-medium' },
   { name: '生肖猪', emoji: '🐷', slug: 'shengxiao-pig-2026', tag: '亥午相害', tagColor: 'text-red-700' },
 ];
 
@@ -123,41 +122,31 @@ export default function Page() {
       <FaqJsonLd items={faqJsonLd} />
 
       {/* Hero */}
-      <section className="pt-12 sm:pt-16 md:pt-20 pb-12">
-        <PageShell className="text-center">
-          <p className="text-sm tracking-[0.3em] text-brand-accent mb-4">2026 · 丙午马年</p>
-          <h1 className="font-display text-3xl sm:text-5xl text-brand-ink mb-5 leading-tight">
-            2026年生肖运势总览
-          </h1>
-          <p className="text-base text-brand-gray leading-relaxed">
-            丙午年，火气当令。从财运、事业、爱情三个维度，看看12生肖在丙午马年的运势分布。每个生肖都有专属深度解读，找到属于你的开运方向。
-          </p>
-        </PageShell>
-      </section>
+      <RankingHero
+        title="2026年生肖运势总览"
+        desc="丙午年，火气当令。从财运、事业、爱情三个维度，看看12生肖在丙午马年的运势分布。每个生肖都有专属深度解读，找到属于你的开运方向。"
+      />
 
       {/* 三大维度 */}
-      <section className="pb-16">
+      <section className="pt-2 pb-16">
         <Container>
-          <div className="text-center mb-10">
-            <p className="text-sm tracking-[0.2em] text-brand-gray">RANKINGS · 三大维度排行</p>
-            <h2 className="font-display text-2xl sm:text-3xl text-brand-ink mt-2">
-              2026 财运 · 事业 · 爱情
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <SectionHead eyebrow="RANKINGS · 三大维度排行" title="2026 财运 · 事业 · 爱情" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
             {dimensions.map((d) => (
-              <Link key={d.title} href={d.href} className="block group h-full">
-                <Card
-                  hover={true}
-                  className="h-full bg-brand-accent-soft border border-brand-accent/20"
-                >
-                  <h3 className="font-display text-2xl text-brand-ink mb-2">{d.title}</h3>
-                  <p className="text-sm text-brand-accent font-medium mb-3">{d.summary}</p>
-                  <p className="text-sm text-brand-gray leading-relaxed mb-4">{d.desc}</p>
-                  <span className="text-sm text-brand-ink group-hover:text-brand-accent transition-colors">
-                    查看完整排行 →
-                  </span>
-                </Card>
+              <Link
+                key={d.title}
+                href={d.href}
+                className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-[#1C1A16]/8 bg-white p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover"
+              >
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-x-0 top-0 h-[3px] origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300"
+                  style={{ background: Y2026_FG }}
+                />
+                <h3 className="font-display text-2xl text-brand-ink mb-2">{d.title}</h3>
+                <p className="text-sm font-medium mb-3" style={{ color: Y2026_FG }}>{d.summary}</p>
+                <p className="text-sm text-[#1C1A16]/70 leading-relaxed mb-4 flex-1">{d.desc}</p>
+                <span className="text-sm text-brand-ink">查看完整排行 →</span>
               </Link>
             ))}
           </div>
@@ -168,57 +157,61 @@ export default function Page() {
       <section className="pb-16">
         <Container>
           <div className="text-center mb-8">
-            <p className="text-sm tracking-[0.2em] text-brand-gray">DEEP DIVE · 个人生肖解读</p>
-            <h2 className="font-display text-2xl sm:text-3xl text-brand-ink mt-2">
-              12生肖 2026 完整运势
-            </h2>
-            <p className="text-sm text-brand-gray mt-3 max-w-xl mx-auto">
+            <SectionHead eyebrow="DEEP DIVE · 个人生肖解读" title="12生肖 2026 完整运势" />
+            <p className="text-sm text-[#1C1A16]/55 -mt-4 max-w-xl mx-auto">
               每个生肖都有独立的丙午年深度解读，覆盖事业、财运、感情、健康四个维度。
             </p>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {allZodiacs.map((z) => (
-              <Link key={z.slug} href={`/knowledge/${z.slug}`} className="block group">
-                <Card hover={true} className="text-center p-5">
-                  <div className="text-4xl mb-2">{z.emoji}</div>
-                  <h3 className="font-display text-base text-brand-ink mb-1">{z.name}</h3>
-                  <p className={`text-xs ${z.tagColor}`}>{z.tag}</p>
-                </Card>
+              <Link
+                key={z.slug}
+                href={`/knowledge/${z.slug}`}
+                className="group relative block overflow-hidden rounded-2xl border border-[#1C1A16]/8 bg-white p-5 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover"
+              >
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-x-0 top-0 h-[3px] origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300"
+                  style={{ background: Y2026_FG }}
+                />
+                <div className="text-4xl mb-2">{z.emoji}</div>
+                <h3 className="font-display text-base text-brand-ink mb-1">{z.name}</h3>
+                <p className={`text-xs ${z.tagColor}`}>{z.tag}</p>
               </Link>
             ))}
           </div>
         </Container>
       </section>
 
-      {/* 命理总论 */}
-      <section className="pb-16">
+      {/* 命理总论（#F6F4F1 色带区块，打破整页单色） */}
+      <section className="bg-[#F6F4F1] py-14 md:py-16 mb-16">
         <PageShell>
-          <Card hover={false}>
+          <div className="rounded-2xl border border-[#1C1A16]/8 bg-white p-7">
             <h2 className="font-display text-2xl text-brand-ink mb-4">
               丙午年的命理总论
             </h2>
-            <div className="space-y-4 text-sm text-brand-gray leading-relaxed">
+            <div className="space-y-4 text-sm text-[#1C1A16]/70 leading-relaxed">
               <p>
-                2026年农历为<span className="text-brand-accent font-medium">丙午年</span>，
+                2026年农历为<span className="font-medium text-[#B45309]">丙午年</span>，
                 天干"丙"为太阳之火，地支"午"为正午之火，构成"火气当令"的强势格局。
               </p>
               <p>
-                从十二地支的关系看，"午"与"未"形成<span className="text-brand-accent font-medium">六合</span>，
-                与"寅、戌"形成<span className="text-brand-accent font-medium">三合火局</span>，
+                从十二地支的关系看，"午"与"未"形成<span className="font-medium text-[#B45309]">六合</span>，
+                与"寅、戌"形成<span className="font-medium text-[#B45309]">三合火局</span>，
                 与"巳"同气，与"卯"相生。这五个生肖（羊、虎、狗、蛇、兔）整体运势最为受益。
               </p>
               <p>
-                反之，"午"与"子"<span className="text-brand-accent font-medium">相冲</span>，
-                与"亥"形成"<span className="text-brand-accent font-medium">亥午害</span>"，
+                反之，"午"与"子"<span className="font-medium text-[#B45309]">相冲</span>，
+                与"亥"形成"<span className="font-medium text-[#B45309]">亥午害</span>"，
                 与"申、酉"金被火克。这四个生肖（鼠、猪、猴、鸡）需要更加谨慎。
               </p>
               <p>
-                生肖马自身遇到马年，构成"<span className="text-brand-accent font-medium">午午自刑伏吟</span>"，
+                生肖马自身遇到马年，构成"<span className="font-medium text-[#B45309]">午午自刑伏吟</span>"，
                 是典型的本命年现象，机遇与风险并存。生肖龙、牛则是相对中性的稳健年份。
               </p>
             </div>
-            <div className="mt-6 pt-5 border-t border-brand-border-light">
-              <p className="text-xs font-medium text-brand-gray mb-3">延伸阅读 · 命理知识</p>
+            <div className="mt-6 pt-5 border-t border-[#1C1A16]/6">
+              <p className="text-xs font-medium text-[#1C1A16]/55 mb-3">延伸阅读 · 命理知识</p>
               <div className="flex flex-wrap gap-2">
                 {[
                   { name: '刑冲会合', href: '/knowledge/xingchong' },
@@ -228,13 +221,13 @@ export default function Page() {
                   { name: '神煞大全', href: '/knowledge/shensha' },
                   { name: '大运理论', href: '/knowledge/dayun' },
                 ].map((t) => (
-                  <Link key={t.href} href={t.href} className="text-xs px-3 py-1.5 rounded-full border border-brand-border text-brand-gray hover:text-brand-ink hover:border-brand-ink/30 transition-colors">
+                  <Link key={t.href} href={t.href} className="text-xs px-3 py-1.5 rounded-full border border-[#1C1A16]/15 text-[#1C1A16]/60 hover:text-brand-ink hover:border-brand-ink/40 transition-colors bg-white">
                     {t.name}
                   </Link>
                 ))}
               </div>
             </div>
-          </Card>
+          </div>
         </PageShell>
       </section>
 

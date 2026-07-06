@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import dynamic from 'next/dynamic';
-import { AlertTriangle, Download, RefreshCw, TrendingUp, Sparkles, Link2, ClipboardList, LineChart, MessageCircleQuestion } from 'lucide-react';
+import { AlertTriangle, ChevronDown, Download, RefreshCw, TrendingUp, Sparkles, Link2, ClipboardList, LineChart, MessageCircleQuestion } from 'lucide-react';
 import { PageShell } from '@/components/ui/PageShell';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Select } from '@/components/ui/Select';
@@ -267,7 +267,14 @@ export default function LifeKlinePage() {
       {/* 标题区 */}
       <PageShell width="wide" className="pt-16 md:pt-24 pb-6 md:pb-8">
         <div className="text-center">
-          <h1 className="font-display text-3xl md:text-[40px] font-bold text-[#1C1A16] leading-tight">
+          <span
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium tracking-[0.08em]"
+            style={{ background: '#D1FAE5', color: '#059669' }}
+          >
+            <TrendingUp className="w-3.5 h-3.5" strokeWidth={1.5} />
+            百年运势可视化
+          </span>
+          <h1 className="mt-4 font-display text-3xl md:text-[40px] font-bold text-[#1C1A16] leading-tight">
             人生K线
           </h1>
           <p className="mt-3 text-sm md:text-base text-[#1C1A16]/55 tracking-wider">
@@ -278,7 +285,7 @@ export default function LifeKlinePage() {
 
       {/* 输入区 */}
       <PageShell width="wide" className="pb-6 md:pb-8">
-        <div className="bg-white rounded-2xl shadow-sm border border-[#F0EDE8] p-4 sm:p-6">
+        <div className="rounded-2xl border border-[#1C1A16]/8 bg-white p-4 sm:p-6">
           <div className="flex flex-col md:flex-row md:items-end gap-4">
             <div className="flex-1 relative">
               <DatePicker
@@ -396,7 +403,10 @@ export default function LifeKlinePage() {
             <div ref={chartCardRef}>
               <Card className={cardClass}>
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em]">运势K线</h2>
+                  <div className="flex items-center gap-2">
+                    <span aria-hidden className="pointer-events-none w-1 h-4 rounded inline-block" style={{ background: '#059669' }} />
+                    <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em]">运势K线</h2>
+                  </div>
                   <button
                     type="button"
                     onClick={handleExport}
@@ -418,7 +428,7 @@ export default function LifeKlinePage() {
             {currentPoint && (
               <Card className={cardClass}>
                 <div className="flex items-center gap-2 mb-4">
-                  <span className="w-1 h-4 rounded bg-brand-accent inline-block" />
+                  <span aria-hidden className="pointer-events-none w-1 h-4 rounded inline-block" style={{ background: '#059669' }} />
                   <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em]">当前坐标</h2>
                   <span className="text-sm text-[#1C1A16]/50">
                     {currentPoint.year}年 · {currentPoint.age}岁
@@ -464,7 +474,10 @@ export default function LifeKlinePage() {
 
             {/* 运势概览 */}
             <Card className={cardClass}>
-              <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em] mb-4">运势概览</h2>
+              <div className="flex items-center gap-2 mb-4">
+                <span aria-hidden className="pointer-events-none w-1 h-4 rounded inline-block" style={{ background: '#059669' }} />
+                <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em]">运势概览</h2>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-5">
                 <div>
                   <p className="text-xs text-[#1C1A16]/50">最佳十年</p>
@@ -531,8 +544,18 @@ export default function LifeKlinePage() {
         <p className="mt-2 text-sm text-[#1C1A16]/50 text-center">将传统命理与现代数据可视化结合，用金融K线的方式呈现一生运势节奏</p>
         <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
           {FEATURES.map((f) => (
-            <div key={f.title} className="rounded-2xl border border-[#1C1A16]/8 bg-white p-6">
-              <f.icon className="w-6 h-6 text-brand-accent" />
+            <div
+              key={f.title}
+              className="group relative overflow-hidden rounded-2xl border border-[#1C1A16]/8 bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover"
+            >
+              <span
+                aria-hidden
+                className="pointer-events-none absolute inset-x-0 top-0 h-[3px] origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300"
+                style={{ background: '#059669' }}
+              />
+              <div className="w-[52px] h-[52px] rounded-full flex items-center justify-center" style={{ background: '#D1FAE5' }}>
+                <f.icon className="w-6 h-6" strokeWidth={1.5} style={{ color: '#059669' }} />
+              </div>
               <h3 className="mt-4 font-medium text-[#1C1A16]">{f.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-[#1C1A16]/60">{f.desc}</p>
             </div>
@@ -540,32 +563,39 @@ export default function LifeKlinePage() {
         </div>
       </PageShell>
 
-      {/* 如何使用 */}
-      <PageShell width="wide" className="pb-10 md:pb-14">
-        <h2 className="font-display text-2xl md:text-3xl font-bold text-[#1C1A16] text-center">如何使用人生K线</h2>
-        <p className="mt-2 text-sm text-[#1C1A16]/50 text-center">三步即可查看您的百年运势图</p>
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-          {STEPS.map((s, i) => (
-            <div key={s.title} className="rounded-2xl border border-[#1C1A16]/8 bg-white p-6">
-              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-brand-accent text-white text-sm font-medium">
-                {i + 1}
-              </span>
-              <h3 className="mt-4 font-medium text-[#1C1A16]">{s.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-[#1C1A16]/60">{s.desc}</p>
-            </div>
-          ))}
-        </div>
-      </PageShell>
+      {/* 如何使用（#F6F4F1 色带区块） */}
+      <div className="bg-[#F6F4F1]">
+        <PageShell width="wide" className="py-10 md:py-14">
+          <h2 className="font-display text-2xl md:text-3xl font-bold text-[#1C1A16] text-center">如何使用人生K线</h2>
+          <p className="mt-2 text-sm text-[#1C1A16]/50 text-center">三步即可查看您的百年运势图</p>
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+            {STEPS.map((s, i) => (
+              <div key={s.title} className="rounded-2xl border border-[#1C1A16]/8 bg-white p-6">
+                <div className="flex items-center justify-between">
+                  <div className="w-[52px] h-[52px] rounded-full flex items-center justify-center" style={{ background: '#D1FAE5' }}>
+                    <s.icon className="w-6 h-6" strokeWidth={1.5} style={{ color: '#059669' }} />
+                  </div>
+                  <span className="font-display text-xs font-semibold tracking-[0.12em]" style={{ color: '#059669' }}>
+                    STEP {i + 1}
+                  </span>
+                </div>
+                <h3 className="mt-4 font-medium text-[#1C1A16]">{s.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-[#1C1A16]/60">{s.desc}</p>
+              </div>
+            ))}
+          </div>
+        </PageShell>
+      </div>
 
       {/* 常见问题 */}
-      <PageShell width="wide" className="pb-12 md:pb-16">
+      <PageShell width="wide" className="pt-10 md:pt-14 pb-12 md:pb-16">
         <h2 className="font-display text-2xl md:text-3xl font-bold text-[#1C1A16] text-center mb-8">常见问题</h2>
         <div className="space-y-3 max-w-3xl mx-auto">
           {FAQ_ITEMS.map((item) => (
-            <details key={item.q} className="group rounded-xl border border-[#1C1A16]/8 bg-white px-5 py-4">
-              <summary className="cursor-pointer list-none flex items-center justify-between text-sm font-medium text-[#1C1A16]">
+            <details key={item.q} className="group rounded-xl border border-[#1C1A16]/8 bg-white px-5 py-4 transition-colors hover:border-[#1C1A16]/20">
+              <summary className="cursor-pointer list-none flex items-center justify-between gap-3 text-sm font-medium text-[#1C1A16]">
                 {item.q}
-                <span className="text-[#1C1A16]/40 group-open:rotate-180 transition-transform">⌄</span>
+                <ChevronDown className="w-4 h-4 shrink-0 text-[#1C1A16]/40 group-open:rotate-180 transition-transform" strokeWidth={1.5} />
               </summary>
               <p className="mt-3 text-sm leading-relaxed text-[#1C1A16]/65">{item.a}</p>
             </details>

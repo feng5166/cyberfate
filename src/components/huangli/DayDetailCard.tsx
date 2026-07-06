@@ -21,18 +21,30 @@ export function DayDetailCard({ data }: DayDetailCardProps) {
   const yearWuxingColor = WUXING_COLORS[data.yearWuxing];
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-[#F0EDE8] p-5 md:p-7">
+    <div className="relative overflow-hidden bg-white rounded-2xl border border-[#1C1A16]/8 p-5 md:p-7">
+      {/* 干支水印装饰 */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute -right-1 -bottom-5 font-display text-[64px] leading-none text-[#1C1A16]/[0.05] select-none tracking-[0.12em]"
+      >
+        {data.dayGanzhi}
+      </span>
       {/* 区块A: 基础信息 */}
       <div className="flex flex-wrap items-center gap-2 mb-5">
         <span className="text-lg font-semibold text-[#1C1A16]">{data.solar}</span>
-        <Tag className="bg-[#F0EDE8]/60 text-[#1C1A16]/70">{data.weekday}</Tag>
-        <Tag className="bg-[#F0EDE8]/60 text-[#1C1A16]/70">
+        <Tag className="bg-[#F6F4F1] text-[#1C1A16]/70">{data.weekday}</Tag>
+        <Tag className="bg-[#F6F4F1] text-[#1C1A16]/70">
           {data.lunarMonthName}月{data.lunarDayName}
         </Tag>
         <div className="flex items-center gap-1">
-          <Tag className="bg-[#F0EDE8]/60 text-[#1C1A16]/70">{data.yearGanzhi}年</Tag>
-          <Tag className="bg-[#F0EDE8]/60 text-[#1C1A16]/70">{data.monthGanzhi}月</Tag>
-          <Tag className="bg-brand-accent-soft text-brand-accent border border-brand-accent/40 font-semibold">{data.dayGanzhi}日</Tag>
+          <Tag className="bg-[#F6F4F1] text-[#1C1A16]/70">{data.yearGanzhi}年</Tag>
+          <Tag className="bg-[#F6F4F1] text-[#1C1A16]/70">{data.monthGanzhi}月</Tag>
+          <span
+            className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold"
+            style={{ background: '#FEE2E2', color: '#DC2626' }}
+          >
+            {data.dayGanzhi}日
+          </span>
         </div>
         <Tag className={`${zhiXingColor.bg} ${zhiXingColor.text}`}>
           {data.zhiXing}日
@@ -58,7 +70,7 @@ export function DayDetailCard({ data }: DayDetailCardProps) {
           </span>
           <span className="text-xs md:text-sm text-[#1C1A16]/50 mt-1 block">年五行</span>
         </div>
-        <div className="rounded-xl p-3 md:p-4 text-center bg-stone-100">
+        <div className="rounded-xl p-3 md:p-4 text-center bg-[#FAF9F6] border border-[#1C1A16]/6">
           <span className="text-lg md:text-xl font-bold block text-[#1C1A16]">
             冲{data.chongShengxiao}
           </span>
@@ -76,7 +88,7 @@ export function DayDetailCard({ data }: DayDetailCardProps) {
             {data.yi.map((item, i) => (
               <span
                 key={i}
-                className="px-3 py-1 rounded-full text-sm bg-green-50 text-green-700 border border-green-200"
+                className="px-3 py-1 rounded-full text-sm bg-emerald-50 text-emerald-700 border border-emerald-200"
               >
                 {item}
               </span>

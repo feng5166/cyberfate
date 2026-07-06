@@ -8,6 +8,7 @@ import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import {
   ArrowRight,
+  BarChart3,
   ChevronDown,
   ChevronUp,
   History,
@@ -2073,10 +2074,17 @@ function BaziPageContent() {
   return (
     <div className="min-h-dvh bg-[#FAF9F6]">
       <div className="text-center pt-6 md:pt-12 pb-8">
-        <h1 className="font-display text-h1 md:text-[44px] text-[#1C1A16]" style={{ letterSpacing: '10px' }}>
+        <span
+          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium tracking-[0.08em]"
+          style={{ background: '#DBEAFE', color: '#1D4ED8' }}
+        >
+          <BarChart3 className="w-3.5 h-3.5" strokeWidth={1.5} />
+          AI 四柱推算
+        </span>
+        <h1 className="mt-4 font-display text-3xl md:text-[40px] font-bold text-[#1C1A16] leading-tight tracking-[0.08em]">
           八字分析
         </h1>
-        <p className="text-body-sm text-[#1C1A16]/70 mt-3">精准解析生辰八字，揭示命盘奥秘</p>
+        <p className="mt-3 text-sm md:text-base text-[#1C1A16]/55 tracking-wider">精准解析生辰八字，揭示命盘奥秘</p>
       </div>
 
       <Container>
@@ -2348,8 +2356,8 @@ function BaziPageContent() {
 
             {!result && !loading && (
               <Card className={`flex flex-col items-center justify-center py-20 text-center ${cardClass}`}>
-                <div className="w-16 h-16 rounded-full bg-[#F2EEE6] flex items-center justify-center mb-4">
-                  <Sparkles className="w-8 h-8 text-[#6B7280]" />
+                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: '#DBEAFE' }}>
+                  <Sparkles className="w-8 h-8" strokeWidth={1.5} style={{ color: '#1D4ED8' }} />
                 </div>
                 <p className="text-[#1C1A16] font-medium text-lg">开始您的命盘解读</p>
                 <p className="text-sm text-[#6B7280] mt-2 max-w-[260px]">填写上方出生信息，AI 将生成专属八字解读</p>
@@ -2357,7 +2365,7 @@ function BaziPageContent() {
                   <p className="text-xs font-medium text-[#1C1A16]/60 mb-2">填写提示</p>
                   <ul className="space-y-1.5 text-xs text-[#1C1A16]/55">
                     <li>• 出生日期：如 1990-01-15</li>
-                    <li>• 时辰不确定可选"不知道"</li>
+                    <li>• 时辰不确定可选&ldquo;不知道&rdquo;</li>
                     <li>• 出生地影响真太阳时计算</li>
                   </ul>
                 </div>
@@ -2368,7 +2376,7 @@ function BaziPageContent() {
               <PageShell width="page" className="px-0 sm:px-0">
               <div ref={resultRef} className="space-y-6 animate-fadeIn" aria-live="polite">
                 {result._source !== 'history' && !isMember && (
-                  <div className="flex items-center justify-between gap-3 rounded-xl bg-gradient-to-r from-stone-100 to-stone-100 border border-stone-300/60 px-4 py-3">
+                  <div className="flex items-center justify-between gap-3 rounded-xl bg-[#F6F4F1] border border-[#1C1A16]/10 px-4 py-3">
                     <p className="text-sm text-[#1C1A16]">✨ 解读已生成！开通会员可不限次解读，并解锁 AI 八字问答</p>
                     <Link href="/pricing" className="shrink-0 text-xs font-medium text-[#1C1A16] border border-stone-400 rounded-lg px-3 py-1.5 hover:bg-stone-200 transition-colors">
                       了解会员
@@ -2416,7 +2424,7 @@ function BaziPageContent() {
                       {result.traits.map((trait: BaziTrait, index: number) => (
                         <div
                           key={`${trait.label}_${index}`}
-                          className="rounded-xl border border-stone-400/60 bg-[#FFFBF5] px-4 py-3"
+                          className="rounded-xl border border-[#1C1A16]/6 bg-[#FAF9F6] px-4 py-3"
                         >
                           <p className="text-sm font-semibold text-[#1C1A16]/90">{trait.label}</p>
                           <p className="text-xs text-brand-gray mt-1.5 leading-relaxed">{trait.desc}</p>
@@ -2553,7 +2561,7 @@ function BaziPageContent() {
                             {streamSections.map((section, index) => (
                               <div key={section.title}>
                                 {index > 0 && <hr className="border-[#1C1A16]/8 my-6" />}
-                                <h4 className="border-l-4 border-[#1C1A16] pl-3 text-base font-semibold mb-3 text-[#8B3A2A]">
+                                <h4 className="border-l-4 pl-3 text-base font-semibold mb-3 text-[#1C1A16]" style={{ borderColor: '#1D4ED8' }}>
                                   {section.title}
                                 </h4>
                                 <div className="text-sm leading-loose text-[#1C1A16]/85">
@@ -2602,11 +2610,12 @@ function BaziPageContent() {
                         <div key={section.title}>
                           {index > 0 && <hr className="border-[#1C1A16]/8 my-8" />}
                           <h4
-                            className={`border-l-4 border-[#1C1A16] pl-3 font-semibold mb-3 text-[#8B3A2A] ${
+                            className={`border-l-4 pl-3 font-semibold mb-3 text-[#1C1A16] ${
                               isDayunSection
-                                ? 'text-lg pb-2 border-b border-[#1C1A16]/30'
+                                ? 'text-lg pb-2 border-b border-b-[#1C1A16]/30'
                                 : 'text-base'
                             }`}
+                            style={{ borderLeftColor: '#1D4ED8' }}
                           >
                             {section.title}
                           </h4>
@@ -2769,8 +2778,19 @@ function BaziPageContent() {
                   </Card>
                 )}
 
-                <div className="rounded-2xl bg-[#FDF6F0] p-6 md:p-8">
-                  <h3 className="text-lg font-semibold text-[#1C1A16]">情侣缘分测算</h3>
+                <div className="group relative overflow-hidden rounded-2xl border border-[#1C1A16]/8 bg-[#F6F4F1] p-6 md:p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover">
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute inset-x-0 top-0 h-[3px] origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300"
+                    style={{ background: '#BE185D' }}
+                  />
+                  <span
+                    className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium tracking-[0.08em]"
+                    style={{ background: '#FCE7F3', color: '#BE185D' }}
+                  >
+                    合婚配对
+                  </span>
+                  <h3 className="mt-3 text-lg font-semibold text-[#1C1A16]">情侣缘分测算</h3>
                   <p className="text-sm text-[#1C1A16]/60 mt-1">AI 智能正缘匹配系统</p>
                   <div className="mt-4 space-y-2">
                     <p className="text-sm text-[#1C1A16]/75">你们的五行相合还是相克？</p>
@@ -2803,8 +2823,19 @@ function BaziPageContent() {
                 </div>
 
                 {/* 模块C: AI每日运势引流 */}
-                <div className="rounded-2xl border-l-4 border-[#1C1A16] bg-white p-6 md:p-8">
-                  <h3 className="text-lg font-semibold text-[#1C1A16]">✨ AI 每日运势分析</h3>
+                <div className="group relative overflow-hidden rounded-2xl border border-[#1C1A16]/8 bg-white p-6 md:p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover">
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute inset-x-0 top-0 h-[3px] origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300"
+                    style={{ background: '#B0870F' }}
+                  />
+                  <span
+                    className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium tracking-[0.08em]"
+                    style={{ background: '#FBF1D0', color: '#B0870F' }}
+                  >
+                    每日运势
+                  </span>
+                  <h3 className="mt-3 text-lg font-semibold text-[#1C1A16]">AI 每日运势分析</h3>
                   <p className="text-sm text-[#1C1A16]/60 mt-1">基于你的八字命盘，AI 为你解读今日运势</p>
                   <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <ul className="space-y-2">
@@ -2833,12 +2864,15 @@ function BaziPageContent() {
 
                 <Card className={cardClass}>
                   <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em] mb-5 text-center">八字常见问题</h2>
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {faqItems.map((item) => (
-                      <div key={item.question} className="rounded-2xl border border-[#1C1A16]/8 bg-white px-5 py-4">
-                        <p className="text-sm font-semibold text-[#1C1A16] mb-2">{item.question}</p>
-                        <p className="text-sm leading-relaxed text-[#1C1A16]/60">{item.answer}</p>
-                      </div>
+                      <details key={item.question} className="group rounded-xl border border-[#1C1A16]/8 bg-white px-5 py-4">
+                        <summary className="cursor-pointer list-none flex items-center justify-between gap-3 text-sm font-semibold text-[#1C1A16]">
+                          {item.question}
+                          <span aria-hidden className="text-[#1C1A16]/40 group-open:rotate-180 transition-transform">⌄</span>
+                        </summary>
+                        <p className="mt-3 text-sm leading-relaxed text-[#1C1A16]/65">{item.answer}</p>
+                      </details>
                     ))}
                   </div>
                 </Card>
@@ -2850,7 +2884,7 @@ function BaziPageContent() {
                       type="button"
                       variant="ghost"
                       onClick={handleSaveCurrentRecord}
-                      className="justify-center border border-[#1C1A16]/20 bg-transparent text-[#1C1A16] hover:bg-[#1C1A16]/5"
+                      className="justify-center border border-[#1C1A16]/25 bg-white text-[#1C1A16] hover:border-[#1C1A16] hover:bg-[#FDFBF7]"
                     >
                       <Save className="w-4 h-4 mr-2" />
                       保存命盘
@@ -2859,7 +2893,7 @@ function BaziPageContent() {
                       type="button"
                       variant="ghost"
                       onClick={handleSharePlaceholder}
-                      className="justify-center border border-[#1C1A16]/20 bg-transparent text-[#1C1A16] hover:bg-[#1C1A16]/5"
+                      className="justify-center border border-[#1C1A16]/25 bg-white text-[#1C1A16] hover:border-[#1C1A16] hover:bg-[#FDFBF7]"
                     >
                       <Share2 className="w-4 h-4 mr-2" />
                       分享
@@ -2868,7 +2902,7 @@ function BaziPageContent() {
                       type="button"
                       variant="ghost"
                       onClick={handleReset}
-                      className="justify-center border border-[#1C1A16]/20 bg-transparent text-[#1C1A16] hover:bg-[#1C1A16]/5"
+                      className="justify-center border border-[#1C1A16]/25 bg-white text-[#1C1A16] hover:border-[#1C1A16] hover:bg-[#FDFBF7]"
                     >
                       <RefreshCw className="w-4 h-4 mr-2" />
                       重新测算
@@ -2877,7 +2911,7 @@ function BaziPageContent() {
                       <Button
                         type="button"
                         variant="ghost"
-                        className="w-full justify-center border border-[#1C1A16]/20 bg-transparent text-[#1C1A16] hover:bg-[#1C1A16]/5"
+                        className="w-full justify-center border border-[#1C1A16]/25 bg-white text-[#1C1A16] hover:border-[#1C1A16] hover:bg-[#FDFBF7]"
                       >
                         <History className="w-4 h-4 mr-2" />
                         查看历史

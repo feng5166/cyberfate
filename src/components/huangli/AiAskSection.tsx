@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { useSession } from 'next-auth/react';
-import { Send } from 'lucide-react';
+import { Send, Sparkles } from 'lucide-react';
 import { OracleLoading } from '@/components/ui/OracleLoading';
 import { useAiGate, AiGateModals } from '@/components/ai/useAiGate';
 
@@ -132,10 +132,24 @@ export function AiAskSection({ date }: AiAskSectionProps) {
   };
 
   return (
-    <div className="bg-brand-accent-soft rounded-2xl p-5 md:p-6 border border-brand-accent/20">
-      <h3 className="font-display text-lg font-medium text-[#1C1A16] mb-3">
-        💡 AI老黄历助手
-      </h3>
+    <div className="bg-white rounded-2xl p-5 md:p-6 border border-[#1C1A16]/8">
+      <div className="flex items-center gap-3 mb-4">
+        <div
+          className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
+          style={{ background: '#FEE2E2' }}
+        >
+          <Sparkles className="w-4.5 h-4.5" strokeWidth={1.5} style={{ color: '#DC2626' }} />
+        </div>
+        <h3 className="font-display text-lg font-semibold text-[#1C1A16]">
+          AI老黄历助手
+        </h3>
+        <span
+          className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium tracking-[0.08em]"
+          style={{ background: '#FEE2E2', color: '#DC2626' }}
+        >
+          智能问事
+        </span>
+      </div>
 
       {messages.length === 0 && (
         <div className="flex flex-wrap gap-2 mb-4 md:overflow-visible overflow-x-auto">
@@ -143,7 +157,7 @@ export function AiAskSection({ date }: AiAskSectionProps) {
             <button
               key={q}
               onClick={() => sendQuestion(q)}
-              className="flex-shrink-0 px-3 py-1.5 rounded-full text-sm bg-white text-[#1C1A16]/70 border border-brand-accent/30 hover:border-[#1C1A16]/30 hover:text-[#1C1A16] transition-all"
+              className="flex-shrink-0 px-3 py-1.5 rounded-full text-sm bg-[#FAF9F6] text-[#1C1A16]/70 border border-[#1C1A16]/10 hover:border-[#1C1A16]/30 hover:text-[#1C1A16] transition-all"
             >
               {q}
             </button>
@@ -159,7 +173,7 @@ export function AiAskSection({ date }: AiAskSectionProps) {
               className={`rounded-xl px-4 py-3 text-sm leading-relaxed ${
                 msg.role === 'user'
                   ? 'bg-brand-accent-tint text-[#1C1A16] ml-8 border border-brand-accent/20'
-                  : 'bg-white text-[#1C1A16]/80 mr-8 border border-[#F0EDE8]'
+                  : 'bg-[#FAF9F6] text-[#1C1A16]/80 mr-8 border border-[#1C1A16]/6'
               }`}
             >
               {msg.role === 'ai' && msg.streaming && !msg.content ? (
@@ -185,7 +199,7 @@ export function AiAskSection({ date }: AiAskSectionProps) {
           onChange={(e) => setInput(e.target.value)}
           placeholder="今天适合搬家吗？"
           disabled={loading}
-          className="flex-1 bg-white rounded-xl px-4 py-3 text-sm text-[#1C1A16] border border-[#D1D5DB] focus:ring-2 focus:ring-brand-accent/25 focus:border-brand-accent focus:outline-none transition-colors placeholder:text-[#1C1A16]/40 disabled:opacity-50"
+          className="flex-1 bg-white rounded-xl px-4 py-3 text-sm text-[#1C1A16] border border-[#1C1A16]/15 focus:ring-2 focus:ring-brand-accent/25 focus:border-brand-accent focus:outline-none transition-colors placeholder:text-[#1C1A16]/40 disabled:opacity-50"
         />
         <button
           type="submit"
@@ -203,7 +217,7 @@ export function AiAskSection({ date }: AiAskSectionProps) {
             <button
               key={q}
               onClick={() => sendQuestion(q)}
-              className="flex-shrink-0 px-2.5 py-1 rounded-full text-xs bg-white/60 text-[#1C1A16]/50 border border-brand-accent/20 hover:text-[#1C1A16] hover:border-brand-accent/50 transition-all"
+              className="flex-shrink-0 px-2.5 py-1 rounded-full text-xs bg-[#FAF9F6] text-[#1C1A16]/50 border border-[#1C1A16]/10 hover:text-[#1C1A16] hover:border-[#1C1A16]/30 transition-all"
             >
               {q}
             </button>

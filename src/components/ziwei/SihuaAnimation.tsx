@@ -82,7 +82,7 @@ export function SihuaAnimation({ palaces, visible = true, className }: SihuaAnim
   const active = SIHUA_LINKS[activeLink];
 
   return (
-    <div className={cn('bg-white rounded-2xl shadow-sm border border-[#F0EDE8] p-5 sm:p-6', className)}>
+    <div className={cn('bg-white rounded-2xl border border-[#1C1A16]/8 p-5 sm:p-6', className)}>
       <h3 className="font-display text-lg font-semibold text-[#1C1A16] mb-5 text-center">
         四化飞星
       </h3>

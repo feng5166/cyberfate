@@ -28,7 +28,7 @@ export function PricingCard({
   const buttonLabel = ctaText ?? plan.ctaText;
 
   return (
-    <div className="relative cursor-pointer" onClick={onClick}>
+    <div className="group relative cursor-pointer" onClick={onClick}>
       {/* 角标：早鸟优惠 */}
       {plan.badge && !isCurrentPlan && (
         <div className="absolute top-0 right-0 z-10">
@@ -46,16 +46,20 @@ export function PricingCard({
       )}
 
       <div
-        className={`flex flex-col p-6 md:p-9 bg-white rounded-card transition-all duration-300 ${
-          isCurrentPlan
-            ? 'ring-2 ring-brand-accent shadow-card'
-            : isSelected
-              ? 'ring-2 ring-brand-accent shadow-card'
-              : highlighted
-                ? 'ring-1 ring-brand-accent/50 shadow-card hover:shadow-card-hover'
-                : 'ring-1 ring-brand-border shadow-card hover:shadow-card-hover'
+        className={`relative overflow-hidden flex flex-col p-6 md:p-9 bg-white rounded-2xl transition-all duration-300 ${
+          isCurrentPlan || isSelected
+            ? 'ring-2 ring-brand-accent'
+            : highlighted
+              ? 'ring-1 ring-brand-accent/50 hover:shadow-card-hover'
+              : 'ring-1 ring-[#1C1A16]/8 hover:shadow-card-hover'
         }`}
       >
+        {/* hover 顶部墨色色条（可点击卡统一语言） */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-[3px] origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300"
+          style={{ background: '#1C1A16' }}
+        />
         {/* 标题 + 副标题 */}
         <h2 className="text-h3 font-semibold text-brand-ink">
           {highlighted ? (
@@ -121,12 +125,12 @@ export function PricingCard({
             if (!isCurrentPlan) onCTAClick();
           }}
           disabled={isCurrentPlan}
-          className={`w-full min-h-[48px] rounded-lg text-body-sm font-medium transition-colors mt-7 ${
+          className={`w-full min-h-[48px] rounded-lg text-body-sm transition-colors mt-7 ${
             isCurrentPlan
-              ? 'bg-brand-accent-soft text-brand-accent border border-brand-accent/30 cursor-default'
+              ? 'bg-brand-accent-soft text-brand-accent border border-brand-accent/30 font-medium cursor-default'
               : highlighted && !isSubscribed
-                ? 'bg-brand-accent text-white hover:bg-brand-accent-hover'
-                : 'border border-brand-border text-brand-ink hover:border-brand-accent hover:bg-brand-accent-tint'
+                ? 'bg-brand-accent text-white hover:bg-brand-accent-hover font-semibold tracking-[0.08em]'
+                : 'bg-white border border-brand-ink/25 text-brand-ink hover:border-brand-ink hover:bg-[#FDFBF7] font-medium'
           }`}
         >
           {buttonLabel}

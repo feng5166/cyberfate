@@ -62,13 +62,14 @@ const CARD_BASE_STYLE: React.CSSProperties = {
   transition: 'all 0.2s ease',
 };
 
+// 当前柱高亮走模块点缀色（每日运势 #FBF1D0/#B0870F，见 docs/DESIGN-SYSTEM.md §2.2）
 const HIGHLIGHT_STYLE: React.CSSProperties = {
-  border: '1px solid #1C1A16',
-  background: '#F6F4F1',
+  border: '1px solid #B0870F',
+  background: '#FBF1D0',
 };
 
 const NORMAL_STYLE: React.CSSProperties = {
-  border: '1px solid #E5E7EB',
+  border: '1px solid rgba(28, 26, 22, 0.08)',
   background: '#FFFFFF',
   opacity: 0.8,
 };
@@ -106,7 +107,7 @@ function shishenBadgeStyle(active: boolean): React.CSSProperties {
     padding: '2px 6px',
     borderRadius: 4,
     marginTop: 6,
-    background: active ? '#1C1A16' : '#F3F4F6',
+    background: active ? '#B0870F' : '#F3F4F6',
     color: active ? '#FFFFFF' : '#6B7280',
   };
 }
@@ -292,7 +293,7 @@ export default function TimelineSection({
     return (
       <div className="mb-8">
         <div
-          className="rounded-card border border-brand-border-light bg-white p-5 text-center text-sm"
+          className="rounded-2xl border border-[#1C1A16]/8 bg-white p-5 text-center text-sm"
           style={{ color: '#6B7280' }}
         >
           📅 填写出生信息后查看完整命理脉络
@@ -319,7 +320,7 @@ export default function TimelineSection({
     return (
       <div className="mb-8">
         <div
-          className="rounded-card border border-brand-border-light bg-white p-5 text-center text-sm"
+          className="rounded-2xl border border-[#1C1A16]/8 bg-white p-5 text-center text-sm"
           style={{ color: '#9CA3AF' }}
         >
           命理脉络加载失败，刷新重试
@@ -335,7 +336,7 @@ export default function TimelineSection({
 
   return (
     <div className="mb-8">
-      <div className="rounded-card border border-brand-border-light bg-white p-4">
+      <div className="rounded-2xl border border-[#1C1A16]/8 bg-white p-4">
         <div className="flex items-center justify-between mb-3">
           <div className="text-sm font-medium" style={{ color: '#1C1A16' }}>
             命理脉络
@@ -386,7 +387,7 @@ export default function TimelineSection({
                   return (
                     <div style={{ marginTop: 6, width: '100%' }}>
                       <div style={{ height: 2, backgroundColor: '#E5E7EB', borderRadius: 2 }}>
-                        <div style={{ height: '100%', width: progress + '%', backgroundColor: '#1C1A16', borderRadius: 2, transition: 'width 0.6s ease' }} />
+                        <div style={{ height: '100%', width: progress + '%', backgroundColor: '#B0870F', borderRadius: 2, transition: 'width 0.6s ease' }} />
                       </div>
                       <p style={{ fontSize: 12, color: '#9CA3AF', marginTop: 2, textAlign: 'center' }}>已走 {progress}%</p>
                     </div>

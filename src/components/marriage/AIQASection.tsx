@@ -128,13 +128,10 @@ export function AIQASection({
   };
 
   return (
-    <div className="rounded-2xl border border-[#E5E0D8] bg-white p-6 md:p-8">
+    <div className="rounded-2xl border border-[#1C1A16]/8 bg-white p-6 md:p-8">
       <div className="text-center mb-6">
 
-        <h3
-          className="text-2xl md:text-3xl font-semibold text-[#1C1A16]"
-          style={{ fontFamily: 'var(--font-cormorant), Cormorant Garamond, serif' }}
-        >
+        <h3 className="font-display text-2xl md:text-3xl font-semibold text-[#1C1A16]">
           AI 问答
         </h3>
         <p className="text-sm text-[#1C1A16]/60 mt-2">
@@ -152,7 +149,7 @@ export function AIQASection({
                 </div>
               </div>
               <div className="flex items-start gap-2">
-                <div className="rounded-2xl bg-[#FAF9F6] border border-[#E5E0D8] px-4 py-3 max-w-[90%]">
+                <div className="rounded-2xl bg-[#FAF9F6] border border-[#1C1A16]/6 px-4 py-3 max-w-[90%]">
                   {h.pending ? (
                     <div className="flex items-center gap-2 text-xs text-[#1C1A16]/55">
                       <Loader2 className="w-3.5 h-3.5 animate-spin text-[#1C1A16]" />
@@ -202,7 +199,7 @@ export function AIQASection({
               type="button"
               onClick={() => submit(q)}
               disabled={loading}
-              className="text-xs px-3 py-1.5 rounded-full border border-[#E5E0D8] bg-white hover:bg-[#FAF9F6] hover:border-[#1C1A16]/40 text-[#1C1A16]/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="text-xs px-3 py-1.5 rounded-full border border-[#1C1A16]/15 bg-white hover:bg-[#FAF9F6] hover:border-[#1C1A16]/40 text-[#1C1A16]/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {q}
             </button>

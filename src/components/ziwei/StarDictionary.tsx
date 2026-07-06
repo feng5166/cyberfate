@@ -341,12 +341,12 @@ export function StarDictionaryPopover({ starName, children, className }: StarDic
       {isOpen && (
         <div
           ref={popoverRef}
-          className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 sm:w-80 bg-white rounded-xl shadow-lg border border-[#F0EDE8] p-4 animate-fadeIn"
+          className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 sm:w-80 bg-white rounded-xl shadow-lg border border-[#1C1A16]/8 p-4 animate-fadeIn"
           role="dialog"
           aria-label={`${starName}星曜详解`}
         >
           {/* 箭头 */}
-          <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white border-r border-b border-[#F0EDE8] rotate-45" />
+          <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white border-r border-b border-[#1C1A16]/8 rotate-45" />
 
           {/* 关闭 */}
           <button

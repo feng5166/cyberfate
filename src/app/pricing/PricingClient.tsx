@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Footer } from '@/components/layout/Footer';
-import { ChevronDown, ChevronUp, ShieldCheck } from 'lucide-react';
+import { ChevronDown, ShieldCheck } from 'lucide-react';
 import { PricingCardList } from '@/components/pricing/PricingCardList';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { type PlanId, isValidPlanId, PLAN_NAME_TO_ID, getDefaultPlanId, PRICING_CONFIG } from '@/lib/pricing-config';
@@ -31,7 +31,6 @@ export default function PricingClient({ currentPlan }: PricingClientProps) {
   const { data: session } = useSession();
   const router = useRouter();
   const toast = useToast();
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [pendingPlan, setPendingPlan] = useState<{ planName: string; price: string } | null>(null);
 
@@ -101,12 +100,30 @@ export default function PricingClient({ currentPlan }: PricingClientProps) {
 
   return (
     <div className="bg-brand-bg min-h-dvh">
-      <section className="px-4 pt-16 sm:pt-20 md:pt-28 pb-8">
-        <div className="max-w-[680px] mx-auto text-center">
-          <h1 className="font-display text-[28px] sm:text-[32px] md:text-h1 font-semibold text-brand-ink tracking-[0.06em]">
+      <section className="relative overflow-hidden px-4 pt-16 sm:pt-20 md:pt-28 pb-8">
+        {/* 罗盘细线装饰（品牌母题，克制） */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[360px] h-[360px] md:w-[440px] md:h-[440px] opacity-[0.05]"
+        >
+          <svg viewBox="0 0 400 400" className="w-full h-full">
+            <circle cx="200" cy="200" r="196" fill="none" stroke="#1C1A16" strokeWidth="1" />
+            <circle cx="200" cy="200" r="150" fill="none" stroke="#1C1A16" strokeWidth="0.6" strokeDasharray="2 4" />
+            {Array.from({ length: 24 }, (_, i) => (
+              <line
+                key={i}
+                x1="200" y1="4" x2="200" y2={i % 2 === 0 ? 14 : 9}
+                stroke="#1C1A16" strokeWidth="1"
+                transform={`rotate(${i * 15} 200 200)`}
+              />
+            ))}
+          </svg>
+        </div>
+        <div className="relative max-w-[680px] mx-auto text-center">
+          <h1 className="font-display text-3xl md:text-[40px] font-bold text-brand-ink tracking-[0.08em]">
             选择您的方案
           </h1>
-          <p className="text-body text-brand-gray mt-4 leading-relaxed">
+          <p className="text-sm md:text-base text-[#1C1A16]/55 tracking-wider mt-3 leading-relaxed">
             AI 智能八字助手，为您提供每日运势指引、人生重要决策参考、正缘测算等全方位服务。让智能化的命理分析，助您在人生的每个重要时刻做出明智选择。
           </p>
           {isSubscribed && (
@@ -142,29 +159,18 @@ export default function PricingClient({ currentPlan }: PricingClientProps) {
         </div>
       </section>
 
-      <section className="px-4 py-16 md:py-20">
+      <section className="px-4 py-16 md:py-20 bg-[#F6F4F1]">
         <div className="max-w-5xl mx-auto">
-          <h2 className="font-display text-[26px] sm:text-h2 font-semibold text-brand-ink text-center mb-10">常见问题</h2>
-          <div className="max-w-[720px] mx-auto divide-y divide-brand-border-light">
-            {faqs.map((faq, i) => (
-              <div key={i} className="py-5">
-                <button
-                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  className="w-full min-h-[44px] flex items-center justify-between text-left"
-                >
-                  <span className="text-[15px] font-medium text-brand-ink pr-4">{faq.q}</span>
-                  {openFaq === i ? (
-                    <ChevronUp className="w-4 h-4 text-brand-gray shrink-0" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4 text-brand-gray shrink-0" />
-                  )}
-                </button>
-                {openFaq === i && (
-                  <p className="text-body-sm text-brand-gray leading-relaxed mt-3 pt-1 animate-fadeIn">
-                    {faq.a}
-                  </p>
-                )}
-              </div>
+          <h2 className="font-display text-2xl md:text-3xl font-bold text-brand-ink text-center mb-8">常见问题</h2>
+          <div className="max-w-[720px] mx-auto space-y-3">
+            {faqs.map((faq) => (
+              <details key={faq.q} className="group rounded-xl border border-[#1C1A16]/8 bg-white px-5 py-4 transition-colors hover:border-[#1C1A16]/20">
+                <summary className="cursor-pointer list-none min-h-[44px] flex items-center justify-between gap-3 text-[15px] font-medium text-brand-ink">
+                  {faq.q}
+                  <ChevronDown className="w-4 h-4 shrink-0 text-[#1C1A16]/40 group-open:rotate-180 transition-transform" strokeWidth={1.5} />
+                </summary>
+                <p className="mt-3 text-sm leading-relaxed text-[#1C1A16]/65">{faq.a}</p>
+              </details>
             ))}
           </div>
         </div>

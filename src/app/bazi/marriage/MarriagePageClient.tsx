@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { Sparkles, ScrollText, Compass, History, ChevronDown, User } from 'lucide-react';
+import { Sparkles, ScrollText, Compass, History, ChevronDown, User, BookHeart } from 'lucide-react';
 import { useAiGate, AiGateModals } from '@/components/ai/useAiGate';
 import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
@@ -507,11 +507,36 @@ export function MarriagePageClient() {
   return (
     <div className="bg-[#FAF9F6] flex flex-col">
       <div className="pb-20">
-        <div className="pt-12 pb-10 text-center px-4">
-          <h1 className="font-display text-h1 md:text-[44px] text-[#1C1A16]" style={{ letterSpacing: '10px' }}>
+        <div className="relative overflow-hidden pt-12 pb-10 text-center px-4">
+          {/* 罗盘装饰（细线圆环，≤6% 透明度） */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[360px] h-[360px] md:w-[440px] md:h-[440px] opacity-[0.05]"
+          >
+            <svg viewBox="0 0 400 400" className="w-full h-full">
+              <circle cx="200" cy="200" r="196" fill="none" stroke="#1C1A16" strokeWidth="1" />
+              <circle cx="200" cy="200" r="150" fill="none" stroke="#1C1A16" strokeWidth="0.6" strokeDasharray="2 4" />
+              {Array.from({ length: 24 }, (_, i) => (
+                <line
+                  key={i}
+                  x1="200" y1="4" x2="200" y2={i % 2 === 0 ? 14 : 9}
+                  stroke="#1C1A16" strokeWidth="1"
+                  transform={`rotate(${i * 15} 200 200)`}
+                />
+              ))}
+            </svg>
+          </div>
+          <span
+            className="relative inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium tracking-[0.08em]"
+            style={{ background: '#FCE7F3', color: '#BE185D' }}
+          >
+            <BookHeart className="w-3.5 h-3.5" strokeWidth={1.5} />
+            八字合婚配对
+          </span>
+          <h1 className="relative mt-4 font-display text-3xl md:text-[40px] font-bold text-[#1C1A16] leading-tight tracking-[0.08em]">
             八字合婚
           </h1>
-          <p className="mt-3 text-base text-[#1C1A16]/70">
+          <p className="relative mt-3 text-sm md:text-base text-[#1C1A16]/55 tracking-wider">
             智能分析双方八字契合度，提供姻缘参考
           </p>
         </div>
@@ -541,10 +566,15 @@ export function MarriagePageClient() {
                     return (
                       <div
                         key={card.title}
-                        className="rounded-2xl border border-[#E5E0D8] bg-white p-6"
+                        className="group relative overflow-hidden rounded-2xl border border-[#1C1A16]/8 bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover"
                       >
-                        <div className="w-10 h-10 rounded-xl bg-[#FAF9F6] border border-[#E5E0D8] flex items-center justify-center mb-3">
-                          <Icon className="w-5 h-5 text-[#1C1A16]" />
+                        <span
+                          aria-hidden
+                          className="pointer-events-none absolute inset-x-0 top-0 h-[3px] origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300"
+                          style={{ background: '#BE185D' }}
+                        />
+                        <div className="w-[52px] h-[52px] rounded-full flex items-center justify-center mb-3" style={{ background: '#FCE7F3' }}>
+                          <Icon className="w-6 h-6" strokeWidth={1.5} style={{ color: '#BE185D' }} />
                         </div>
                         <p className="text-base font-semibold text-[#1C1A16]">{card.title}</p>
                         <p className="mt-1.5 text-sm text-[#1C1A16]/65 leading-relaxed">
@@ -556,7 +586,7 @@ export function MarriagePageClient() {
                 </div>
 
                 <div className="grid gap-6 md:grid-cols-2">
-                  <div className="rounded-2xl border border-[#E5E0D8] bg-white p-6 md:p-7">
+                  <div className="rounded-2xl border border-[#1C1A16]/8 bg-white p-6 md:p-7">
                     <h3 className="text-lg font-semibold text-[#1C1A16] text-center mb-5">
                       ✨ AI 智能合婚系统
                     </h3>
@@ -580,7 +610,7 @@ export function MarriagePageClient() {
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-[#E5E0D8] bg-[#F7F3EC]/60 p-6 md:p-7">
+                  <div className="rounded-2xl border border-[#1C1A16]/8 bg-[#F6F4F1] p-6 md:p-7">
                     <h3 className="text-lg font-semibold text-[#1C1A16] text-center mb-5">
                       📊 合婚分析维度
                     </h3>
@@ -588,7 +618,7 @@ export function MarriagePageClient() {
                       {dimensionList.map(item => (
                         <div
                           key={item.title}
-                          className="rounded-xl bg-white/70 px-4 py-3"
+                          className="rounded-xl bg-white border border-[#1C1A16]/6 px-4 py-3"
                         >
                           <p className="font-semibold text-[#1C1A16]">{item.title}</p>
                           <p className="text-[#1C1A16]/65 mt-1">{item.desc}</p>
@@ -600,7 +630,7 @@ export function MarriagePageClient() {
 
                 <Card
                   hover={false}
-                  className="rounded-2xl border border-[#E5E0D8] bg-white shadow-none p-6 md:p-8"
+                  className="rounded-2xl border border-[#1C1A16]/8 bg-white shadow-none p-6 md:p-8"
                 >
                   <h3 className="text-lg font-semibold text-[#1C1A16] text-center mb-7">
                     📝 分析流程
@@ -613,7 +643,7 @@ export function MarriagePageClient() {
                       { title: '获取完整报告', desc: '查看匹配度、八字与建议' },
                     ].map((step, index) => (
                       <div key={step.title} className="flex flex-1 flex-col items-center text-center">
-                        <div className="w-9 h-9 rounded-full border border-[#D8D2C8] text-[#1C1A16]/40 flex items-center justify-center mb-3 text-sm font-medium">
+                        <div className="w-9 h-9 rounded-full bg-brand-accent text-white flex items-center justify-center mb-3 text-sm font-medium">
                           {index + 1}
                         </div>
                         <p className="text-base text-[#1C1A16] font-medium">{step.title}</p>
@@ -638,13 +668,15 @@ export function MarriagePageClient() {
                   </button>
                 </div>
                 {/* 双方信息确认卡 */}
-                <Card hover={false} className="rounded-2xl border border-[#E5E0D8] bg-white shadow-none p-6 md:p-8">
+                <Card hover={false} className="rounded-2xl border border-[#1C1A16]/8 bg-white shadow-none p-6 md:p-8">
                   <div className="text-center mb-6">
-                    <p className="text-xs text-[#1C1A16]/55 tracking-wide">✓ 已提交分析信息</p>
-                    <h3
-                      className="text-xl md:text-2xl font-semibold text-[#1C1A16] mt-1.5"
-                      style={{ fontFamily: 'var(--font-cormorant), Cormorant Garamond, serif' }}
+                    <span
+                      className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium tracking-wide"
+                      style={{ background: '#FCE7F3', color: '#BE185D' }}
                     >
+                      ✓ 已提交分析信息
+                    </span>
+                    <h3 className="font-display text-xl md:text-2xl font-semibold text-[#1C1A16] mt-1.5">
                       合婚信息确认
                     </h3>
                   </div>
@@ -655,11 +687,11 @@ export function MarriagePageClient() {
                     ].map(({ side, sideLabel }) => (
                       <div
                         key={sideLabel}
-                        className="rounded-xl border border-[#E5E0D8] bg-[#FAF9F6]/70 p-5"
+                        className="rounded-xl border border-[#1C1A16]/6 bg-[#FAF9F6] p-5"
                       >
                         <div className="flex items-center gap-2 pb-3 mb-3 border-b border-[#1C1A16]/8">
-                          <span className="w-7 h-7 rounded-full bg-white border border-[#E5E0D8] flex items-center justify-center">
-                            <User className="w-3.5 h-3.5 text-[#1C1A16]" />
+                          <span className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: '#FCE7F3' }}>
+                            <User className="w-3.5 h-3.5" strokeWidth={1.5} style={{ color: '#BE185D' }} />
                           </span>
                           <span className="text-sm font-semibold text-[#1C1A16] tracking-wide">
                             {sideLabel}
@@ -723,10 +755,7 @@ export function MarriagePageClient() {
                 {result.male?.pillars && result.female?.pillars && (
                   <div className="space-y-4">
                     <div className="text-center">
-                      <h2
-                        className="text-2xl md:text-3xl font-semibold text-[#1C1A16]"
-                        style={{ fontFamily: 'var(--font-cormorant), Cormorant Garamond, serif' }}
-                      >
+                      <h2 className="font-display text-2xl md:text-3xl font-semibold text-[#1C1A16]">
                         八字命盘
                       </h2>
                       <p className="text-xs text-[#1C1A16]/55 mt-1">双方四柱天干地支与五行属性</p>
@@ -750,22 +779,19 @@ export function MarriagePageClient() {
                 {result.male?.wuxing && result.female?.wuxing && (
                   <div className="space-y-4">
                     <div className="text-center">
-                      <h2
-                        className="text-2xl md:text-3xl font-semibold text-[#1C1A16]"
-                        style={{ fontFamily: 'var(--font-cormorant), Cormorant Garamond, serif' }}
-                      >
+                      <h2 className="font-display text-2xl md:text-3xl font-semibold text-[#1C1A16]">
                         五行分布
                       </h2>
                       <p className="text-xs text-[#1C1A16]/55 mt-1">木火土金水五维结构对照</p>
                     </div>
                     <div className="grid gap-4 md:grid-cols-2">
-                      <div className="rounded-2xl border border-[#E5E0D8] bg-white p-5 md:p-6 flex flex-col items-center">
+                      <div className="rounded-2xl border border-[#1C1A16]/8 bg-white p-5 md:p-6 flex flex-col items-center">
                         <p className="text-sm font-semibold text-[#1C1A16] mb-3">
                           男方 · {result.male.name || '男方'}
                         </p>
                         <RadarChart wuxing={result.male.wuxing} size={240} />
                       </div>
-                      <div className="rounded-2xl border border-[#E5E0D8] bg-white p-5 md:p-6 flex flex-col items-center">
+                      <div className="rounded-2xl border border-[#1C1A16]/8 bg-white p-5 md:p-6 flex flex-col items-center">
                         <p className="text-sm font-semibold text-[#1C1A16] mb-3">
                           女方 · {result.female.name || '女方'}
                         </p>

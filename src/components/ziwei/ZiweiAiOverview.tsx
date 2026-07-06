@@ -157,14 +157,14 @@ export function ZiweiAiOverview({ palaces, birthDate, className }: ZiweiAiOvervi
 
   return (
     <div
-      className={cn('bg-white rounded-2xl shadow-sm border border-[#F0EDE8] overflow-hidden', className)}
+      className={cn('bg-white rounded-2xl border border-[#1C1A16]/8 overflow-hidden', className)}
       role="region"
       aria-label="AI 命盘解读"
     >
       {/* 标题栏 */}
       <div className="px-5 sm:px-6 pt-5 pb-0">
         <div className="flex items-center gap-2 mb-4">
-          <Sparkles className="w-5 h-5 text-[#1C1A16]" />
+          <Sparkles className="w-5 h-5" strokeWidth={1.5} style={{ color: '#7E22CE' }} />
           <h3 className="font-display text-lg font-semibold text-[#1C1A16]">AI 命盘解读</h3>
           {/* 该面板为静态示例内容，尚未接入实时 AI，明确标注避免误导 */}
           <Badge variant="neutral">示例</Badge>

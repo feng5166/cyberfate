@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { ChevronDown } from 'lucide-react'
 import PageClient from './PageClient'
 import { FaqJsonLd } from '@/components/seo/FaqJsonLd'
 import { Footer } from '@/components/layout/Footer'
@@ -57,17 +58,20 @@ export default function HuangliPage() {
       <section aria-label="关于老黄历" className="mx-auto max-w-3xl px-4 py-12 text-[#1C1A16]/60 text-sm leading-relaxed border-t border-[#1C1A16]/8 mt-8">
         <h2 className="text-base font-semibold text-[#1C1A16] mb-4">关于老黄历</h2>
         <p className="mb-3">老黄历又称通书、皇历，是中国传统社会用于指导日常决策的择日文化集大成者。其根基是干支纪时体系——天干地支六十甲子循环，配合二十四节气、七十二候、二十八星宿、建除十二神等多重历法元素。清乾隆年间编纂的《协纪辨方书》是现代黄历的重要规范来源。</p>
-        <p className="mb-3">黄历宜忌的判断依据相当复杂。建除十二神按照"建除满平定执破危成收开闭"的顺序每日轮值，配合当日的天干地支、神煞分布（如天德、月德、岁破、月破等）、值日星宿等要素，综合得出当日适宜与忌讳的事项。一些重要事件如嫁娶、安葬、动土，还要进一步避开冲煞自身生肖与命主的日子。</p>
-        <p className="mb-3">CyberFate 的 AI 老黄历不仅展示每日完整的宜忌、吉神、凶煞、冲煞、吉时信息，还融入了 AI 智能问事功能。当你面对一个具体决策时，比如"今天适合签合同吗"、"明天出行可以吗"，AI 会综合当日黄历能量与你的问题情境，给出更贴合实际的判断建议，让传统择日智慧更易于被现代生活所用。</p>
+        <p className="mb-3">黄历宜忌的判断依据相当复杂。建除十二神按照&ldquo;建除满平定执破危成收开闭&rdquo;的顺序每日轮值，配合当日的天干地支、神煞分布（如天德、月德、岁破、月破等）、值日星宿等要素，综合得出当日适宜与忌讳的事项。一些重要事件如嫁娶、安葬、动土，还要进一步避开冲煞自身生肖与命主的日子。</p>
+        <p className="mb-3">CyberFate 的 AI 老黄历不仅展示每日完整的宜忌、吉神、凶煞、冲煞、吉时信息，还融入了 AI 智能问事功能。当你面对一个具体决策时，比如&ldquo;今天适合签合同吗&rdquo;、&ldquo;明天出行可以吗&rdquo;，AI 会综合当日黄历能量与你的问题情境，给出更贴合实际的判断建议，让传统择日智慧更易于被现代生活所用。</p>
         <h3 className="text-sm font-semibold text-[#1C1A16] mt-6 mb-3">常见问题</h3>
-        <dl className="space-y-3">
+        <div className="space-y-3">
           {FAQ_ITEMS.map((item) => (
-            <div key={item.question}>
-              <dt className="font-medium text-[#1C1A16]/80">{item.question}</dt>
-              <dd className="mt-1">{item.answer}</dd>
-            </div>
+            <details key={item.question} className="group rounded-xl border border-[#1C1A16]/8 bg-white px-5 py-4 transition-colors hover:border-[#1C1A16]/20">
+              <summary className="cursor-pointer list-none flex items-center justify-between gap-3 text-sm font-medium text-[#1C1A16]">
+                {item.question}
+                <ChevronDown className="w-4 h-4 shrink-0 text-[#1C1A16]/40 group-open:rotate-180 transition-transform" strokeWidth={1.5} />
+              </summary>
+              <p className="mt-3 text-sm leading-relaxed text-[#1C1A16]/65">{item.answer}</p>
+            </details>
           ))}
-        </dl>
+        </div>
 
         <div className="mt-8 pt-6 border-t border-[#1C1A16]/8">
           <p className="text-xs font-medium text-[#1C1A16]/50 mb-3">相关工具</p>

@@ -255,32 +255,32 @@ export default function Page() {
         </Container>
       </section>
 
-      {/* 命理深度分析 */}
-      <section className="pb-16">
+      {/* 命理深度分析（#F6F4F1 色带区块，打破整页单色） */}
+      <section className="bg-[#F6F4F1] py-14 md:py-16 mb-12">
         <PageShell>
           <div className="space-y-10">
             <div>
               <h2 className="font-display text-2xl sm:text-3xl text-brand-ink mb-4">
                 2026 年为什么是这些生肖财运旺？
               </h2>
-              <div className="space-y-4 text-brand-gray leading-relaxed">
+              <div className="space-y-4 text-[14px] text-[#1C1A16]/70 leading-relaxed">
                 <p>
                   2026 年的天干为"丙"，地支为"午"，组合为"丙午"。丙为太阳之火，午为正午之火，
                   天干地支同属火行，构成"火气当令"的强势格局。这一年的财运分布，本质上取决于每个生肖的本命地支与
                   "午"火之间的关系——是相生、相合、相冲、相害，还是相刑。
                 </p>
                 <p>
-                  在十二地支中，"午"与"未"形成<span className="text-brand-accent font-medium">六合</span>
-                  ，与"寅、戌"形成<span className="text-brand-accent font-medium">三合火局</span>
+                  在十二地支中，"午"与"未"形成<span className="font-medium text-[#B45309]">六合</span>
+                  ，与"寅、戌"形成<span className="font-medium text-[#B45309]">三合火局</span>
                   ，与"巳"同为火气，与"卯"形成"卯木生午火"的相生关系，与"戌"还有半合关系。这五种关系都是有利的财运配置。
                 </p>
                 <p>
-                  反之，"午"与"子"<span className="text-brand-accent font-medium">相冲</span>
-                  ，与"亥"形成"<span className="text-brand-accent font-medium">亥午害</span>"，与"申、酉"金被火克。
+                  反之，"午"与"子"<span className="font-medium text-[#B45309]">相冲</span>
+                  ，与"亥"形成"<span className="font-medium text-[#B45309]">亥午害</span>"，与"申、酉"金被火克。
                   这些不利配置的生肖，在2026年需要更加谨慎，做好风险防御。
                 </p>
                 <p>
-                  而生肖马自身遇到马年，构成"<span className="text-brand-accent font-medium">午午自刑伏吟</span>"，
+                  而生肖马自身遇到马年，构成"<span className="font-medium text-[#B45309]">午午自刑伏吟</span>"，
                   能量过载反而带来波动，是典型的"本命年"现象。需要通过红色饰物、太岁符等方式调节。
                 </p>
               </div>

@@ -30,7 +30,7 @@ const COLUMNS: Array<{ key: 'year' | 'month' | 'day' | 'hour'; label: string; st
 
 export function PillarTable({ chart, title, subtitle, className = '' }: PillarTableProps) {
   return (
-    <div className={`rounded-2xl border border-[#E5E0D8] bg-white p-5 md:p-6 ${className}`}>
+    <div className={`rounded-2xl border border-[#1C1A16]/8 bg-white p-5 md:p-6 ${className}`}>
       {(title || subtitle) && (
         <div className="mb-4">
           {title && <h4 className="text-base font-semibold text-[#1C1A16]">{title}</h4>}
@@ -50,7 +50,7 @@ export function PillarTable({ chart, title, subtitle, className = '' }: PillarTa
 
               {pillar ? (
                 <div className="space-y-2">
-                  <div className="rounded-lg border border-[#E5E0D8] bg-[#FAF9F6] py-3">
+                  <div className="rounded-lg border border-[#1C1A16]/6 bg-[#FAF9F6] py-3">
                     <div
                       className="text-2xl md:text-[28px] font-semibold leading-none"
                       style={{
@@ -67,7 +67,7 @@ export function PillarTable({ chart, title, subtitle, className = '' }: PillarTa
                       {pillar.ganWuxing}
                     </div>
                   </div>
-                  <div className="rounded-lg border border-[#E5E0D8] bg-[#FAF9F6] py-3">
+                  <div className="rounded-lg border border-[#1C1A16]/6 bg-[#FAF9F6] py-3">
                     <div
                       className="text-2xl md:text-[28px] font-semibold leading-none"
                       style={{
@@ -87,10 +87,10 @@ export function PillarTable({ chart, title, subtitle, className = '' }: PillarTa
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <div className="rounded-lg border border-dashed border-[#E5E0D8] py-3 text-[#1C1A16]/30 text-sm">
+                  <div className="rounded-lg border border-dashed border-[#1C1A16]/15 py-3 text-[#1C1A16]/30 text-sm">
                     —
                   </div>
-                  <div className="rounded-lg border border-dashed border-[#E5E0D8] py-3 text-[#1C1A16]/30 text-sm">
+                  <div className="rounded-lg border border-dashed border-[#1C1A16]/15 py-3 text-[#1C1A16]/30 text-sm">
                     —
                   </div>
                 </div>

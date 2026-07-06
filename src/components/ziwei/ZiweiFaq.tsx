@@ -1,9 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-import { ChevronDown } from 'lucide-react';
-import { cn } from '@/lib/utils/cn';
-
 const FAQ_ITEMS = [
   {
     question: '什么是紫微斗数？',
@@ -33,51 +29,24 @@ const FAQ_ITEMS = [
 ];
 
 export function ZiweiFaq() {
-  // 默认全部展开，可单独折叠
-  const [openIndices, setOpenIndices] = useState<number[]>(() => FAQ_ITEMS.map((_, i) => i));
-
-  const toggle = (index: number) => {
-    setOpenIndices((prev) => (prev.includes(index) ? prev.filter((x) => x !== index) : [...prev, index]));
-  };
-
   return (
     <section aria-label="常见问题">
       <h2 className="font-display text-xl md:text-2xl font-semibold text-[#1C1A16] text-center mb-6">
         常见问题
       </h2>
-      <div className="space-y-2">
-        {FAQ_ITEMS.map((item, index) => (
-          <div
-            key={index}
-            className="bg-white rounded-xl border border-[#F0EDE8] overflow-hidden"
+      <div className="space-y-3">
+        {FAQ_ITEMS.map((item) => (
+          <details
+            key={item.question}
+            open
+            className="group rounded-xl border border-[#1C1A16]/8 bg-white px-5 py-4"
           >
-            <button
-              type="button"
-              onClick={() => toggle(index)}
-              className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-[#FAF9F6] transition-colors"
-              aria-expanded={openIndices.includes(index)}
-              aria-controls={`faq-answer-${index}`}
-            >
-              <span className="text-sm font-medium text-[#1C1A16] pr-4">{item.question}</span>
-              <ChevronDown
-                className={cn(
-                  'w-4 h-4 text-[#1C1A16]/40 shrink-0 transition-transform duration-200',
-                  openIndices.includes(index) && 'rotate-180',
-                )}
-              />
-            </button>
-            <div
-              id={`faq-answer-${index}`}
-              className={cn(
-                'overflow-hidden transition-all duration-300 ease-in-out',
-                openIndices.includes(index) ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0',
-              )}
-            >
-              <p className="px-5 pb-4 text-sm text-[#1C1A16]/60 leading-relaxed">
-                {item.answer}
-              </p>
-            </div>
-          </div>
+            <summary className="cursor-pointer list-none flex items-center justify-between text-sm font-medium text-[#1C1A16]">
+              <span className="pr-4">{item.question}</span>
+              <span aria-hidden className="text-[#1C1A16]/40 shrink-0 group-open:rotate-180 transition-transform">⌄</span>
+            </summary>
+            <p className="mt-3 text-sm leading-relaxed text-[#1C1A16]/60">{item.answer}</p>
+          </details>
         ))}
       </div>
     </section>

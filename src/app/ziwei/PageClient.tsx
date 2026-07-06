@@ -346,20 +346,47 @@ export default function ZiweiPage() {
   return (
     <div className="min-h-dvh bg-[#FAF9F6]">
       {/* 标题区 */}
-      <PageShell width="wide" className=" pt-16 md:pt-24 pb-6 md:pb-8">
-        <div className="text-center">
-          <h1 className="font-display text-3xl md:text-[40px] font-bold text-[#1C1A16] leading-tight">
-            AI 紫微斗数排盘
-          </h1>
-          <p className="mt-3 text-sm md:text-base text-[#1C1A16]/55 tracking-wider">
-            十二宫命盘 · 智能解读
-          </p>
+      <div className="relative overflow-hidden">
+        {/* 罗盘细线装饰（品牌母题，≤6% 透明度） */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[380px] h-[380px] md:w-[460px] md:h-[460px] opacity-[0.05]"
+        >
+          <svg viewBox="0 0 400 400" className="w-full h-full">
+            <circle cx="200" cy="200" r="196" fill="none" stroke="#1C1A16" strokeWidth="1" />
+            <circle cx="200" cy="200" r="150" fill="none" stroke="#1C1A16" strokeWidth="0.6" />
+            <circle cx="200" cy="200" r="100" fill="none" stroke="#1C1A16" strokeWidth="0.6" strokeDasharray="2 4" />
+            {Array.from({ length: 24 }, (_, i) => (
+              <line
+                key={i}
+                x1="200" y1="4" x2="200" y2={i % 2 === 0 ? 14 : 9}
+                stroke="#1C1A16" strokeWidth="1"
+                transform={`rotate(${i * 15} 200 200)`}
+              />
+            ))}
+          </svg>
         </div>
-      </PageShell>
+        <PageShell width="wide" className=" pt-16 md:pt-24 pb-6 md:pb-8">
+          <div className="relative text-center">
+            <span
+              className="inline-flex items-center rounded-full px-3 py-1 text-[12px] font-medium tracking-[0.08em]"
+              style={{ background: '#F3E8FF', color: '#7E22CE' }}
+            >
+              紫微斗数
+            </span>
+            <h1 className="mt-4 font-display text-3xl md:text-[40px] font-bold text-[#1C1A16] leading-tight">
+              AI 紫微斗数排盘
+            </h1>
+            <p className="mt-3 text-sm md:text-base text-[#1C1A16]/55 tracking-wider">
+              十二宫命盘 · 智能解读
+            </p>
+          </div>
+        </PageShell>
+      </div>
 
       {/* 输入区 */}
       <PageShell width="wide" className=" pb-6 md:pb-8">
-        <div className="bg-white rounded-2xl shadow-sm border border-[#F0EDE8] p-4 sm:p-6">
+        <div className="bg-white rounded-2xl border border-[#1C1A16]/8 p-4 sm:p-6">
           <div className="flex flex-col md:flex-row md:items-end gap-4">
             {/* 出生日期 */}
             <div className="flex-1 relative">
@@ -459,7 +486,7 @@ export default function ZiweiPage() {
           <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-4">
                 {/* 命盘卡片（内部桌面 4×4 网格 + 移动端信息卡/列表分支，整体原样搬迁，未改内部） */}
-                <div className="bg-white rounded-2xl shadow-sm border border-[#F0EDE8] p-4 sm:p-6">
+                <div className="bg-white rounded-2xl border border-[#1C1A16]/8 p-4 sm:p-6">
                   <div className="flex items-center justify-between mb-1">
                     <div />
                     <h2 className="font-display text-xl md:text-2xl font-semibold text-[#1C1A16] text-center flex-1">
@@ -540,12 +567,13 @@ export default function ZiweiPage() {
         </PageShell>
       )}
 
-      {/* P1-3: 底部功能区 */}
-      <div className="bg-[#FAF9F6]">
-        <PageShell width="wide" className=" pb-6 md:pb-8">
+      {/* P1-3: 底部功能区（特性区用 #F6F4F1 色带打破单色） */}
+      <div className="bg-[#F6F4F1] py-10 md:py-14 mt-2">
+        <PageShell width="wide">
           <ZiweiFeatures />
         </PageShell>
-
+      </div>
+      <div className="bg-[#FAF9F6] pt-10 md:pt-14">
         <PageShell width="wide" className=" pb-6 md:pb-8">
           <ZiweiGuide />
         </PageShell>

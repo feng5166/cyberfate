@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { X, History } from 'lucide-react';
+import { X, History, Sun } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
 
 interface HistoryRecord {
@@ -211,7 +211,7 @@ export default function DailyDetailAnalysis({ isLoggedIn, isVip, onLoginRequired
   return (
     <>
       {/* 入口卡片 - 黑白极简 */}
-      <div style={{ background: '#FFFFFF', borderRadius: 16, padding: '24px 28px', border: '1px solid #E5E7EB', position: 'relative' }}>
+      <div style={{ background: '#FFFFFF', borderRadius: 16, padding: '24px 28px', border: '1px solid rgba(28, 26, 22, 0.08)', position: 'relative' }}>
         {/* 历史按钮 - 右上角绝对定位方框 */}
         <button
           onClick={openHistory}
@@ -224,8 +224,8 @@ export default function DailyDetailAnalysis({ isLoggedIn, isVip, onLoginRequired
             right: 16,
             width: 44,
             height: 44,
-            backgroundColor: historyBtnHover ? '#F9FAFB' : '#FFFFFF',
-            border: `1px solid ${historyBtnHover ? '#9CA3AF' : '#E5E7EB'}`,
+            backgroundColor: historyBtnHover ? '#FDFBF7' : '#FFFFFF',
+            border: `1px solid ${historyBtnHover ? 'rgba(28, 26, 22, 0.45)' : 'rgba(28, 26, 22, 0.15)'}`,
             borderRadius: 8,
             cursor: 'pointer',
             display: 'flex',
@@ -242,13 +242,19 @@ export default function DailyDetailAnalysis({ isLoggedIn, isVip, onLoginRequired
         {/* idle 态 - 横向布局 */}
           {status === 'idle' && (
             <div className="ddap-idle-row" style={{ display: 'flex', flexDirection: 'row', gap: 16, alignItems: 'center' }}>
-              <div style={{ flex: 1, minWidth: 200, paddingRight: 52 }}>
-                <h3 style={{ fontSize: 17, fontWeight: 600, color: '#1C1A16', fontFamily: 'Noto Serif SC, serif', margin: 0 }}>
-                  每日运势详细分析
-                </h3>
-                <p style={{ fontSize: 13, color: '#9CA3AF', margin: 0, marginTop: 6, lineHeight: 1.5 }}>
-                  基于八字命盘与今日干支，为你深度解析运势走向
-                </p>
+              <div style={{ flex: 1, minWidth: 200, paddingRight: 52, display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                <div aria-hidden style={{ width: 40, height: 40, borderRadius: '50%', background: '#FBF1D0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Sun size={18} color="#B0870F" strokeWidth={1.5} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: 17, fontWeight: 600, color: '#1C1A16', fontFamily: 'Noto Serif SC, serif', margin: 0, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    每日运势详细分析
+                    <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: '#B0870F', background: '#FBF1D0', borderRadius: 999, padding: '2px 8px' }}>AI 深度解读</span>
+                  </h3>
+                  <p style={{ fontSize: 13, color: '#9CA3AF', margin: 0, marginTop: 6, lineHeight: 1.5 }}>
+                    基于八字命盘与今日干支，为你深度解析运势走向
+                  </p>
+                </div>
               </div>
               <button
                 className="ddap-cta"
@@ -260,7 +266,7 @@ export default function DailyDetailAnalysis({ isLoggedIn, isVip, onLoginRequired
                   minHeight: 44,
                   backgroundColor: '#1C1A16',
                   color: 'white',
-                  borderRadius: 999,
+                  borderRadius: 8,
                   border: 'none',
                   fontSize: 14,
                   fontWeight: 500,
@@ -320,7 +326,7 @@ export default function DailyDetailAnalysis({ isLoggedIn, isVip, onLoginRequired
                     minHeight: 44,
                     backgroundColor: 'transparent',
                     color: '#1C1A16',
-                    borderRadius: 999,
+                    borderRadius: 8,
                     border: '1px solid #1C1A16',
                     fontSize: 13,
                     cursor: 'pointer',
@@ -345,13 +351,13 @@ export default function DailyDetailAnalysis({ isLoggedIn, isVip, onLoginRequired
               <div style={{ display: 'flex', gap: 8 }}>
                 <button
                   onClick={() => { setStatus('done'); }}
-                  style={{ flex: 1, padding: '10px 0', minHeight: 44, backgroundColor: 'transparent', color: '#1C1A16', borderRadius: 999, border: '1px solid #E5E7EB', fontSize: 13, cursor: 'pointer' }}
+                  style={{ flex: 1, padding: '10px 0', minHeight: 44, backgroundColor: '#FFFFFF', color: '#1C1A16', borderRadius: 8, border: '1px solid rgba(28, 26, 22, 0.25)', fontSize: 13, cursor: 'pointer' }}
                 >
                   查看今日解读
                 </button>
                 <button
                   onClick={() => { window.location.href = '/pricing'; }}
-                  style={{ flex: 1, padding: '10px 0', minHeight: 44, backgroundColor: '#1C1A16', color: 'white', borderRadius: 999, border: 'none', fontSize: 13, cursor: 'pointer' }}
+                  style={{ flex: 1, padding: '10px 0', minHeight: 44, backgroundColor: '#1C1A16', color: 'white', borderRadius: 8, border: 'none', fontSize: 13, cursor: 'pointer' }}
                 >
                   升级 Pro 重新生成
                 </button>
@@ -405,7 +411,7 @@ export default function DailyDetailAnalysis({ isLoggedIn, isVip, onLoginRequired
                           textAlign: 'left',
                           padding: '14px 12px',
                           borderBottom: '1px solid #F3F4F6',
-                          background: hoveredRecordId === record.id ? '#F9FAFB' : 'none',
+                          background: hoveredRecordId === record.id ? '#FDFBF7' : 'none',
                           border: 'none',
                           borderBottomWidth: 1,
                           borderBottomStyle: 'solid',
@@ -421,11 +427,11 @@ export default function DailyDetailAnalysis({ isLoggedIn, isVip, onLoginRequired
                       </button>
                     ))}
                     {!isVip && historyRecords.length >= 3 && (
-                      <div style={{ marginTop: 20, padding: 16, backgroundColor: '#F9FAFB', borderRadius: 16, textAlign: 'center' }}>
+                      <div style={{ marginTop: 20, padding: 16, backgroundColor: '#F6F4F1', borderRadius: 16, textAlign: 'center' }}>
                         <p style={{ fontSize: 13, color: 'rgba(28,26,22,0.6)', marginBottom: 12 }}>仅 Pro 用户可查看更多历史</p>
                         <button
                           onClick={() => { window.location.href = '/pricing'; }}
-                          style={{ padding: '8px 20px', minHeight: 44, backgroundColor: '#1C1A16', color: 'white', borderRadius: 999, border: 'none', fontSize: 13, cursor: 'pointer' }}
+                          style={{ padding: '8px 20px', minHeight: 44, backgroundColor: '#1C1A16', color: 'white', borderRadius: 8, border: 'none', fontSize: 13, cursor: 'pointer' }}
                         >
                           升级 Pro 解锁全部历史
                         </button>

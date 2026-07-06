@@ -491,18 +491,42 @@ export default function MeihuaPage() {
       />
 
       <main className="px-4 pb-20 md:pb-24">
-        <section className="mx-auto max-w-page pt-10 sm:pt-16 md:pt-24 pb-12 text-center animate-fadeIn">
-          <div className="mx-auto mb-6 h-px w-9 bg-gradient-to-r from-transparent via-[#1C1A16] to-transparent opacity-15" />
-          <h1 className="font-display text-[clamp(36px,5vw,56px)] leading-tight text-[#1C1A16]">
+        <section className="relative mx-auto max-w-page overflow-hidden pt-10 sm:pt-16 md:pt-24 pb-12 text-center animate-fadeIn">
+          {/* 罗盘细线装饰（品牌母题，克制） */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[360px] h-[360px] md:w-[480px] md:h-[480px] opacity-[0.05]"
+          >
+            <svg viewBox="0 0 400 400" className="w-full h-full">
+              <circle cx="200" cy="200" r="196" fill="none" stroke="#1C1A16" strokeWidth="1" />
+              <circle cx="200" cy="200" r="150" fill="none" stroke="#1C1A16" strokeWidth="0.6" />
+              <circle cx="200" cy="200" r="100" fill="none" stroke="#1C1A16" strokeWidth="0.6" strokeDasharray="2 4" />
+              {Array.from({ length: 24 }, (_, i) => (
+                <line
+                  key={i}
+                  x1="200" y1="4" x2="200" y2={i % 2 === 0 ? 14 : 9}
+                  stroke="#1C1A16" strokeWidth="1"
+                  transform={`rotate(${i * 15} 200 200)`}
+                />
+              ))}
+            </svg>
+          </div>
+          <span
+            className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium tracking-[0.08em]"
+            style={{ background: '#DCFCE7', color: '#15803D' }}
+          >
+            周易占卜 · 心易起卦
+          </span>
+          <h1 className="mt-4 font-display text-3xl md:text-[40px] font-bold leading-tight tracking-[0.08em] text-[#1C1A16]">
             梅花易数 · 每日决策
           </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-sm text-[#1C1A16]/70 md:text-base">
+          <p className="mx-auto mt-3 max-w-2xl text-sm md:text-base tracking-wider text-[#1C1A16]/55">
             结合古老的梅花易数和现代 AI 分析，为您的日常决策提供参考。
           </p>
         </section>
 
         <section className="mx-auto max-w-page animate-fadeIn">
-          <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 shadow-none transition-shadow duration-300 hover:shadow-card-hover md:p-8">
+          <div className="rounded-2xl border border-[#1C1A16]/8 bg-white p-6 md:p-8">
             <div className="flex items-center justify-between">
               <h2 className="font-display text-xl text-[#1C1A16]">提出您的决策问题</h2>
               <Clock className="h-4 w-4 text-[#1C1A16]/40 cursor-pointer hover:text-[#1C1A16]/60" />
@@ -579,7 +603,7 @@ export default function MeihuaPage() {
               type="button"
               onClick={handleSubmit}
               disabled={loading || streaming || decisionLoading || !question.trim()}
-              className="mt-5 flex min-h-[44px] w-full items-center justify-center rounded-xl bg-brand-accent text-sm font-medium text-white transition-all hover:bg-brand-accent-hover disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-[#1C1A16] disabled:opacity-70"
+              className="mt-5 flex min-h-[44px] w-full items-center justify-center rounded-lg bg-brand-accent text-sm font-semibold tracking-[0.08em] text-white transition-all hover:bg-brand-accent-hover disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-[#1C1A16] disabled:opacity-70"
             >
               {loading || streaming || decisionLoading ? (
                 <>
@@ -608,7 +632,13 @@ export default function MeihuaPage() {
               asidePosition="left"
               asideWidth={360}
               aside={
-            <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 shadow-none">
+            <div className="relative overflow-hidden rounded-2xl border border-[#1C1A16]/8 bg-white p-6 shadow-none">
+              <span
+                aria-hidden
+                className="pointer-events-none absolute -right-1 -bottom-4 font-display text-[56px] leading-none text-brand-ink/[0.05] select-none"
+              >
+                梅
+              </span>
               <div className="flex items-start justify-between mb-1">
                 <div>
                   <h3 className="text-lg font-bold text-[#1C1A16]">卦象分析结果</h3>
@@ -628,7 +658,7 @@ export default function MeihuaPage() {
               </div>
 
               {question.trim() && (
-                <div className="mt-4 rounded-xl bg-[#F5F5F3] px-4 py-3">
+                <div className="mt-4 rounded-xl bg-[#FAF9F6] border border-[#1C1A16]/6 px-4 py-3">
                   <p className="text-xs font-medium text-[#1C1A16]/50 mb-1">您的问题：</p>
                   <p className="text-sm text-[#1C1A16]">{question.trim()}</p>
                 </div>
@@ -636,7 +666,7 @@ export default function MeihuaPage() {
 
               <div className="mt-6 grid grid-cols-2 gap-4">
                 <div className="flex flex-col items-center gap-3">
-                  <span className="rounded-full bg-[#1C1A16] px-3 py-0.5 text-xs font-medium text-white">本卦</span>
+                  <span className="rounded-full px-3 py-0.5 text-xs font-medium text-white" style={{ background: '#15803D' }}>本卦</span>
                   {result.primary ? (
                     <HexagramDiagram
                       upper={result.primary.upper}
@@ -663,7 +693,7 @@ export default function MeihuaPage() {
               </div>
 
               {result.movingLine !== undefined && (
-                <div className="mt-5 rounded-xl border border-[#1C1A16]/8 bg-[#FAFAF8] px-4 py-3">
+                <div className="mt-5 rounded-xl border border-[#1C1A16]/6 bg-[#FAF9F6] px-4 py-3">
                   <p className="text-xs font-medium text-[#1C1A16]/50 mb-2">● 变爻位置</p>
                   <span className="inline-flex items-center gap-1.5 rounded-lg bg-white border border-[#1C1A16]/10 px-3 py-1.5 text-sm text-[#1C1A16]">
                     <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#1C1A16] text-xs text-white font-bold">{result.movingLine}</span>
@@ -680,7 +710,7 @@ export default function MeihuaPage() {
                 ) : result && !decision && !decisionLoading ? (
                   <button
                     onClick={triggerDecide}
-                    className="inline-flex min-h-[44px] items-center rounded-xl bg-brand-accent px-8 text-sm font-semibold text-white transition-colors hover:bg-brand-accent-hover"
+                    className="inline-flex min-h-[44px] items-center rounded-lg bg-brand-accent px-8 text-sm font-semibold tracking-[0.08em] text-white transition-colors hover:bg-brand-accent-hover"
                   >
                     分析卦象含义
                   </button>
@@ -698,8 +728,13 @@ export default function MeihuaPage() {
                     { icon: '✦', title: '卦象分析', content: decision.insights?.guaAnalysis },
                     { icon: '⏰', title: '时机参考', content: decision.insights?.timingReference },
                   ].filter(item => item.content).map(item => (
-                    <div key={item.title} className="rounded-xl bg-white border border-[#1C1A16]/8 p-5">
-                      <span className="text-xl">{item.icon}</span>
+                    <div key={item.title} className="rounded-2xl bg-white border border-[#1C1A16]/8 p-5">
+                      <span
+                        className="flex h-10 w-10 items-center justify-center rounded-full text-lg"
+                        style={{ background: '#DCFCE7', color: '#15803D' }}
+                      >
+                        {item.icon}
+                      </span>
                       <h4 className="mt-3 text-sm font-bold text-[#1C1A16]">{item.title}</h4>
                       <p className="mt-2 text-xs leading-relaxed text-[#1C1A16]/70">{item.content}</p>
                     </div>
@@ -754,7 +789,7 @@ export default function MeihuaPage() {
               </>
             )}
 
-            <div className="rounded-2xl border border-[#E5E0D8] bg-white p-6 md:p-8">
+            <div className="rounded-2xl border border-[#1C1A16]/8 bg-white p-6 md:p-8">
               <h3 className="text-lg font-bold text-[#1C1A16] mb-1">梅花易数问答</h3>
               <p className="text-sm text-[#1C1A16]/50 mb-4">针对卦象提出问题，获取详细解读</p>
               <p className="text-sm text-[#1C1A16]/70 leading-relaxed mb-1">基于您的卦象解读，您可以就具体问题进行深入询问。</p>
@@ -768,7 +803,7 @@ export default function MeihuaPage() {
                       <button
                         key={q}
                         onClick={() => setQaInput(q)}
-                        className="flex items-center gap-1.5 rounded-xl border border-[#E5E0D8] px-3 py-2 text-left text-xs text-[#1C1A16]/65 hover:border-[#1C1A16]/30 hover:text-[#1C1A16]"
+                        className="flex items-center gap-1.5 rounded-xl border border-[#1C1A16]/10 px-3 py-2 text-left text-xs text-[#1C1A16]/65 hover:border-[#1C1A16]/30 hover:text-[#1C1A16]"
                       >
                         <Send size={10} className="shrink-0" /> {q}
                       </button>
@@ -783,7 +818,7 @@ export default function MeihuaPage() {
                     <div key={i}>
                       <p className="text-sm font-medium text-[#1C1A16] mb-2">{item.q}</p>
                       <p className="text-sm leading-relaxed text-[#1C1A16]/65 whitespace-pre-wrap">{item.a}{i === qaHistory.length - 1 && qaStreaming ? '▋' : ''}</p>
-                      {i < qaHistory.length - 1 && <div className="mt-4 border-t border-[#E5E0D8]" />}
+                      {i < qaHistory.length - 1 && <div className="mt-4 border-t border-[#1C1A16]/8" />}
                     </div>
                   ))}
                 </div>
@@ -800,7 +835,7 @@ export default function MeihuaPage() {
                 <button
                   onClick={handleQaSubmit}
                   disabled={!qaInput.trim() || qaLoading}
-                  className="flex min-h-[44px] items-center gap-1.5 rounded-xl bg-brand-accent px-4 text-sm text-white transition-colors hover:bg-brand-accent-hover disabled:opacity-50"
+                  className="flex min-h-[44px] items-center gap-1.5 rounded-lg bg-brand-accent px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-accent-hover disabled:opacity-50"
                 >
                   <Send size={14} /> 提问
                 </button>
@@ -814,13 +849,16 @@ export default function MeihuaPage() {
 
         <section className="mx-auto mt-12 max-w-page animate-fadeIn">
           <div className="text-center mb-8">
-            <h2 className="font-display text-2xl tracking-[0.08em] text-[#1C1A16] mb-6">AI 辅助观察</h2>
-            <p className="mt-2 text-base text-[#1C1A16]/60 max-w-2xl mx-auto">我们的系统将古老的占卜文化与现代 AI 技术结合，为您的思考提供不同角度的参考观点。</p>
+            <h2 className="font-display text-2xl md:text-3xl tracking-[0.08em] text-[#1C1A16]">AI 辅助观察</h2>
+            <p className="mt-3 text-sm md:text-base text-[#1C1A16]/55 tracking-wider max-w-2xl mx-auto">我们的系统将古老的占卜文化与现代 AI 技术结合，为您的思考提供不同角度的参考观点。</p>
           </div>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             {AI_INSIGHT_ITEMS.map((item) => (
-              <div key={item.title} className="flex flex-col items-center rounded-2xl border border-[#1C1A16]/10 bg-white p-8 py-10 text-center shadow-none transition-shadow duration-300 hover:shadow-card-hover">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#FAF9F6] text-3xl mb-6">
+              <div key={item.title} className="flex flex-col items-center rounded-2xl border border-[#1C1A16]/8 bg-white p-8 py-10 text-center shadow-none transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover">
+                <div
+                  className="flex h-[52px] w-[52px] items-center justify-center rounded-full text-2xl mb-6"
+                  style={{ background: '#DCFCE7', color: '#15803D' }}
+                >
                   {item.icon}
                 </div>
                 <h3 className="text-lg font-bold text-[#1C1A16] mb-3">{item.title}</h3>
@@ -830,39 +868,44 @@ export default function MeihuaPage() {
           </div>
         </section>
 
-        <section className="mx-auto mt-12 max-w-page animate-fadeIn">
-          <h2 className="font-display text-2xl tracking-[0.08em] text-[#1C1A16] text-center">特色功能</h2>
-          <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-            {FEATURE_ITEMS.map((item) => (
-              <div key={item.title} className="flex items-start gap-4 p-4">
-                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-[#FAF9F6] text-xl">
-                  {item.icon}
+        <section className="-mx-4 mt-12 bg-[#F6F4F1] px-4 py-12 md:py-14 animate-fadeIn">
+          <div className="mx-auto max-w-page">
+            <h2 className="font-display text-2xl md:text-3xl tracking-[0.08em] text-[#1C1A16] text-center">特色功能</h2>
+            <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2">
+              {FEATURE_ITEMS.map((item) => (
+                <div key={item.title} className="flex items-start gap-4 rounded-2xl border border-[#1C1A16]/8 bg-white p-5">
+                  <div
+                    className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full text-xl"
+                    style={{ background: '#DCFCE7', color: '#15803D' }}
+                  >
+                    {item.icon}
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-[#1C1A16]">{item.title}</h3>
+                    <p className="mt-1 text-sm leading-relaxed text-[#1C1A16]/70">{item.desc}</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-base font-bold text-[#1C1A16]">{item.title}</h3>
-                  <p className="mt-1 text-sm leading-relaxed text-[#1C1A16]/70">{item.desc}</p>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </section>
 
         <section className="mx-auto mt-12 max-w-page pb-4 animate-fadeIn">
-          <h2 className="font-display text-2xl tracking-[0.08em] text-[#1C1A16] text-center">常见问题</h2>
-          <div className="mt-8 space-y-5">
+          <h2 className="font-display text-2xl md:text-3xl tracking-[0.08em] text-[#1C1A16] text-center">常见问题</h2>
+          <div className="mt-8 space-y-3 max-w-3xl mx-auto">
             {FAQ_ITEMS.map((item) => (
-              <div key={item.question} className="rounded-2xl border border-[#1C1A16]/10 bg-white px-6 py-6">
-                <p className="flex items-start gap-2 text-base font-medium text-[#1C1A16]">
-                  <span className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-[#1C1A16]/30 text-sm text-[#1C1A16]/60">?</span>
+              <details key={item.question} className="group rounded-xl border border-[#1C1A16]/8 bg-white px-5 py-4">
+                <summary className="cursor-pointer list-none flex items-center justify-between gap-3 text-sm font-medium text-[#1C1A16]">
                   {item.question}
-                </p>
-                <p className="mt-3 text-sm leading-loose text-[#1C1A16]/70">{item.answer}</p>
-              </div>
+                  <span className="text-[#1C1A16]/40 group-open:rotate-180 transition-transform">⌄</span>
+                </summary>
+                <p className="mt-3 text-sm leading-relaxed text-[#1C1A16]/65">{item.answer}</p>
+              </details>
             ))}
           </div>
 
           <AiDisclaimer />
-          <div className="mt-4 rounded-2xl border border-[#1C1A16]/10 bg-white p-3 text-center text-xs text-[#6B7280]">
+          <div className="mt-4 rounded-2xl border border-[#1C1A16]/8 bg-white p-3 text-center text-xs text-[#1C1A16]/45">
             ⚠️ 免责声明：本站所有命理分析仅供娱乐参考，不构成任何决策建议。命运掌握在自己手中，请理性对待。
           </div>
         </section>

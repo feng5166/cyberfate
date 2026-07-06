@@ -158,13 +158,10 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
   };
 
   return (
-    <div className="rounded-2xl border border-[#E5E0D8] bg-white p-6 md:p-8">
+    <div className="rounded-2xl border border-[#1C1A16]/8 bg-white p-6 md:p-8">
       <div className="text-center mb-6">
 
-        <h3
-          className="text-2xl md:text-3xl font-semibold text-[#1C1A16]"
-          style={{ fontFamily: 'var(--font-cormorant), Cormorant Garamond, serif' }}
-        >
+        <h3 className="font-display text-2xl md:text-3xl font-semibold text-[#1C1A16]">
           AI 合婚分析
         </h3>
         <p className="text-sm text-[#1C1A16]/60 mt-2">
@@ -243,16 +240,13 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
                 return (
                   <div
                     key={dim.key || idx}
-                    className={`rounded-2xl border border-[#E5E0D8] ${altBg} p-5 md:p-6`}
+                    className={`rounded-2xl border border-[#1C1A16]/8 ${altBg} p-5 md:p-6`}
                   >
                     <div className="flex items-center gap-2.5 mb-4">
-                      <span className="w-9 h-9 rounded-full bg-[#F6F4F1] border border-[#1C1A16]/20 flex items-center justify-center">
-                        <Icon className="w-4 h-4 text-[#1C1A16]" />
+                      <span className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: '#FCE7F3' }}>
+                        <Icon className="w-4 h-4" strokeWidth={1.5} style={{ color: '#BE185D' }} />
                       </span>
-                      <h4
-                        className="text-base md:text-lg font-medium text-[#1C1A16]"
-                        style={{ fontFamily: 'var(--font-cormorant), Cormorant Garamond, serif' }}
-                      >
+                      <h4 className="font-display text-base md:text-lg font-medium text-[#1C1A16]">
                         {dim.title}
                       </h4>
                     </div>
@@ -266,17 +260,20 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
           )}
 
           {data.advices.length > 0 && (
-            <div className="rounded-2xl border border-[#E5E0D8] bg-white p-5 md:p-6">
+            <div className="rounded-2xl border border-[#1C1A16]/8 bg-white p-5 md:p-6">
               <div className="flex items-center gap-2 mb-4">
-                <span className="w-8 h-8 rounded-full bg-[#F6F4F1] border border-[#1C1A16]/20 flex items-center justify-center">
-                  <Check className="w-4 h-4 text-[#1C1A16]" />
+                <span className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#FCE7F3' }}>
+                  <Check className="w-4 h-4" strokeWidth={1.5} style={{ color: '#BE185D' }} />
                 </span>
                 <h4 className="text-base md:text-lg font-semibold text-[#1C1A16]">相处建议</h4>
               </div>
               <ul className="space-y-3">
                 {data.advices.map((advice, i) => (
                   <li key={i} className="flex items-start gap-3">
-                    <span className="shrink-0 mt-0.5 inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#F6F4F1] border border-[#1C1A16]/25 text-xs font-semibold text-[#1C1A16]">
+                    <span
+                      className="shrink-0 mt-0.5 inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold"
+                      style={{ background: '#FCE7F3', color: '#BE185D' }}
+                    >
                       {i + 1}
                     </span>
                     <p className="text-sm text-[#1C1A16]/85 leading-relaxed">{advice}</p>
@@ -287,9 +284,12 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
           )}
 
           {data.highlight && (
-            <div className="rounded-2xl bg-[#F6F4F1] border-l-4 border-[#1C1A16] border-y border-r border-y-[#1C1A16]/15 border-r-[#1C1A16]/15 p-5 md:p-6">
+            <div
+              className="rounded-2xl bg-[#F6F4F1] border-l-4 border-y border-r border-y-[#1C1A16]/15 border-r-[#1C1A16]/15 p-5 md:p-6"
+              style={{ borderLeftColor: '#BE185D' }}
+            >
               <div className="flex items-start gap-3">
-                <HeartPulse className="w-5 h-5 text-[#1C1A16] shrink-0 mt-0.5" />
+                <HeartPulse className="w-5 h-5 shrink-0 mt-0.5" strokeWidth={1.5} style={{ color: '#BE185D' }} />
                 <div className="flex-1">
                   <p className="text-xs text-[#1C1A16] font-medium tracking-wider mb-1.5">亮点总结</p>
                   <p className="text-sm md:text-base text-[#1C1A16]/85 leading-7">{data.highlight}</p>
@@ -299,14 +299,14 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
           )}
 
           {!data.deepReport && deepReportLoading && (
-            <div className="rounded-2xl border border-[#E5E0D8] bg-white p-6 flex items-center justify-center gap-2 text-sm text-[#1C1A16]/55">
+            <div className="rounded-2xl border border-[#1C1A16]/8 bg-white p-6 flex items-center justify-center gap-2 text-sm text-[#1C1A16]/55">
               <Loader2 className="w-4 h-4 animate-spin text-[#1C1A16]" />
               深度命理报告生成中…
             </div>
           )}
 
           {!data.deepReport && !deepReportLoading && (
-            <div className="rounded-2xl border border-[#E5E0D8] bg-white p-5 space-y-2">
+            <div className="rounded-2xl border border-[#1C1A16]/8 bg-white p-5 space-y-2">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 text-sm text-[#1C1A16]/60">
                   <ScrollText className="w-4 h-4 text-[#1C1A16]/30" />
@@ -315,7 +315,7 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
                 <button
                   type="button"
                   onClick={handleDeepReport}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#F6F4F1] border border-[#1C1A16]/20 px-3 py-1.5 text-xs text-[#1C1A16] hover:bg-[#F5EAD8] transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-white border border-brand-ink/25 px-3 py-1.5 text-xs text-brand-ink hover:border-brand-ink hover:bg-[#FDFBF7] transition-colors"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   生成报告
@@ -328,11 +328,11 @@ export function AIAnalysisSection({ payload, totalScore, initialData, onAnalysis
           )}
 
           {data.deepReport && (
-            <div className="rounded-2xl border border-[#E5E0D8] bg-white overflow-hidden">
-              <div className="flex items-center justify-between px-5 md:px-6 py-4 border-b border-[#E5E0D8] bg-[#FAF9F6]">
+            <div className="rounded-2xl border border-[#1C1A16]/8 bg-white overflow-hidden">
+              <div className="flex items-center justify-between px-5 md:px-6 py-4 border-b border-[#1C1A16]/8 bg-[#FAF9F6]">
                 <div className="flex items-center gap-2">
-                  <span className="w-7 h-7 rounded-full bg-[#F6F4F1] border border-[#1C1A16]/20 flex items-center justify-center">
-                    <ScrollText className="w-3.5 h-3.5 text-[#1C1A16]" />
+                  <span className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: '#FCE7F3' }}>
+                    <ScrollText className="w-3.5 h-3.5" strokeWidth={1.5} style={{ color: '#BE185D' }} />
                   </span>
                   <h4 className="text-base font-semibold text-[#1C1A16]">深度命理报告</h4>
                 </div>

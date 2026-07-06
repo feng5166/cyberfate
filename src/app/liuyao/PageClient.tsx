@@ -166,7 +166,7 @@ function numberToHexagram(upperNum: number, lowerNum: number) {
 // ─── 辅助组件 ─────────────────────────────────────
 
 function YaoLine({ type, height = 6, width = '80%', isMoving = false }: { type: 'yin' | 'yang'; height?: number; width?: string; isMoving?: boolean }) {
-  const color = isMoving ? '#C2410C' : '#1C1A16';
+  const color = isMoving ? '#92400E' : '#1C1A16';
   if (type === 'yang') {
     return (
       <div className="flex justify-center">
@@ -326,7 +326,7 @@ function CoinPanel({ onComplete }: { onComplete: (lines: (0 | 1)[], movingLines:
   };
 
   return (
-    <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-4 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
+    <div className="rounded-2xl border border-[#1C1A16]/8 bg-white p-4 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
       <h3 className="text-base font-semibold text-[#1C1A16] mb-1">🪙 铜钱起卦</h3>
       <p className="text-xs text-[#1C1A16]/55 mb-4">模拟传统三枚铜钱起卦，从初爻开始依次抛6次</p>
 
@@ -460,7 +460,7 @@ function TimePanel({ onComplete }: { onComplete: (lines: (0 | 1)[], movingLine: 
   }, [hexData, onComplete]);
 
   return (
-    <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-4 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
+    <div className="rounded-2xl border border-[#1C1A16]/8 bg-white p-4 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
       <h3 className="text-base font-semibold text-[#1C1A16] mb-1">⏰ 时间起卦</h3>
       <p className="text-xs text-[#1C1A16]/55 mb-4">基于年月日时数字按易数规律自动生成卦象</p>
 
@@ -493,12 +493,12 @@ function TimePanel({ onComplete }: { onComplete: (lines: (0 | 1)[], movingLine: 
               type="datetime-local"
               value={timeValue}
               readOnly
-              className="h-10 flex-1 rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm text-[#1C1A16] outline-none"
+              className="h-10 flex-1 rounded-xl border border-[#1C1A16]/10 bg-[#FAF9F6] px-3 text-sm text-[#1C1A16] outline-none"
             />
             <button
               type="button"
               onClick={handleQuickTime}
-              className="shrink-0 rounded-lg border border-[#1C1A16]/15 px-3 py-2 text-xs text-[#1C1A16]/70 transition-colors hover:bg-gray-50"
+              className="shrink-0 rounded-lg border border-[#1C1A16]/15 px-3 py-2 text-xs text-[#1C1A16]/70 transition-colors hover:bg-[#FDFBF7]"
             >
               刷新当前时间
             </button>
@@ -534,7 +534,7 @@ function TimePanel({ onComplete }: { onComplete: (lines: (0 | 1)[], movingLine: 
         <button
           type="button"
           onClick={handleConfirm}
-          className="mt-4 flex min-h-[44px] w-full items-center justify-center rounded-xl bg-brand-accent text-sm font-medium text-white transition-all hover:bg-brand-accent-hover"
+          className="mt-4 flex min-h-[44px] w-full items-center justify-center rounded-lg bg-brand-accent text-sm font-semibold tracking-[0.08em] text-white transition-all hover:bg-brand-accent-hover"
         >
           ⏰ 确认起卦
         </button>
@@ -633,7 +633,7 @@ function NumberPanel({ onComplete }: { onComplete: (lines: (0 | 1)[], movingLine
       : 'border-brand-border focus:border-brand-accent focus:ring-brand-accent/25';
 
   return (
-    <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-4 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
+    <div className="rounded-2xl border border-[#1C1A16]/8 bg-white p-4 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
       <h3 className="text-base font-semibold text-[#1C1A16] mb-1">🔢 数字起卦</h3>
       <p className="text-xs text-[#1C1A16]/55 mb-4">输入数字来生成卦象，适合有特定数字灵感时使用</p>
 
@@ -707,7 +707,7 @@ function NumberPanel({ onComplete }: { onComplete: (lines: (0 | 1)[], movingLine
       <button
         type="button"
         onClick={handleRandomize}
-        className="mb-4 flex h-10 w-full items-center justify-center rounded-lg border border-[#1C1A16]/15 text-sm text-[#1C1A16]/70 transition-colors hover:bg-gray-50"
+        className="mb-4 flex h-10 w-full items-center justify-center rounded-lg border border-[#1C1A16]/15 text-sm text-[#1C1A16]/70 transition-colors hover:bg-[#FDFBF7]"
       >
         🎲 随机生成
       </button>
@@ -727,7 +727,7 @@ function NumberPanel({ onComplete }: { onComplete: (lines: (0 | 1)[], movingLine
         <button
           type="button"
           onClick={handleConfirm}
-          className="flex min-h-[44px] w-full items-center justify-center rounded-xl bg-brand-accent text-sm font-medium text-white transition-all hover:bg-brand-accent-hover"
+          className="flex min-h-[44px] w-full items-center justify-center rounded-lg bg-brand-accent text-sm font-semibold tracking-[0.08em] text-white transition-all hover:bg-brand-accent-hover"
         >
           确认起卦
         </button>
@@ -738,7 +738,7 @@ function NumberPanel({ onComplete }: { onComplete: (lines: (0 | 1)[], movingLine
           <button
             type="button"
             disabled
-            className="flex min-h-[44px] w-full items-center justify-center rounded-xl bg-brand-accent text-sm font-medium text-white opacity-60 cursor-not-allowed"
+            className="flex min-h-[44px] w-full items-center justify-center rounded-lg bg-brand-accent text-sm font-semibold tracking-[0.08em] text-white opacity-60 cursor-not-allowed"
           >
             确认起卦
           </button>
@@ -1232,12 +1232,36 @@ export default function LiuYaoPage() {
 
       <main className="px-4 pb-20 md:pb-24">
         {/* ① 标题区 */}
-        <section className="mx-auto max-w-page pt-10 sm:pt-16 md:pt-24 pb-10 text-center animate-fadeIn">
-          <div className="mx-auto mb-6 h-px w-9 bg-gradient-to-r from-transparent via-[#1C1A16] to-transparent opacity-15" />
-          <h1 className="font-display text-[clamp(36px,5vw,56px)] leading-tight tracking-[0.08em] text-[#1C1A16]">
+        <section className="relative mx-auto max-w-page overflow-hidden pt-10 sm:pt-16 md:pt-24 pb-10 text-center animate-fadeIn">
+          {/* 罗盘装饰（细线母题，≤6% 透明度） */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute left-1/2 top-1/2 h-[340px] w-[340px] -translate-x-1/2 -translate-y-1/2 opacity-[0.05]"
+          >
+            <svg viewBox="0 0 400 400" className="h-full w-full">
+              <circle cx="200" cy="200" r="196" fill="none" stroke="#1C1A16" strokeWidth="1" />
+              <circle cx="200" cy="200" r="150" fill="none" stroke="#1C1A16" strokeWidth="0.6" />
+              <circle cx="200" cy="200" r="100" fill="none" stroke="#1C1A16" strokeWidth="0.6" strokeDasharray="2 4" />
+              {Array.from({ length: 24 }, (_, i) => (
+                <line
+                  key={i}
+                  x1="200" y1="4" x2="200" y2={i % 2 === 0 ? 14 : 9}
+                  stroke="#1C1A16" strokeWidth="1"
+                  transform={`rotate(${i * 15} 200 200)`}
+                />
+              ))}
+            </svg>
+          </div>
+          <span
+            className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium tracking-[0.12em]"
+            style={{ background: '#F3E7D3', color: '#92400E' }}
+          >
+            六爻占卜
+          </span>
+          <h1 className="mt-5 font-display text-3xl font-bold leading-tight tracking-[0.08em] text-[#1C1A16] md:text-[40px]">
             AI 六爻占卜 · 智能解读分析
           </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-sm text-[#1C1A16]/55 md:text-base">
+          <p className="mx-auto mt-3 max-w-2xl text-sm text-[#1C1A16]/55 tracking-wider md:text-base">
             融合传统六爻占卜与人工智能技术，为你提供更深度的卦象分析和趋势预测。
           </p>
         </section>
@@ -1246,7 +1270,7 @@ export default function LiuYaoPage() {
           {/* 起卦表单区域：起卦完成后隐藏 */}
           <div className={hexagramDrawn ? 'hidden' : 'space-y-4'}>
           {/* ② 问题输入区 */}
-          <div ref={questionSectionRef} className="rounded-2xl border border-[#1C1A16]/10 bg-white p-4 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
+          <div ref={questionSectionRef} className="rounded-2xl border border-[#1C1A16]/8 bg-white p-4 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
             <label htmlFor="liuyao-question" className="mb-2 block text-sm text-[#1C1A16]/75">你的问题</label>
             <div className="relative">
               <textarea
@@ -1267,7 +1291,7 @@ export default function LiuYaoPage() {
                   key={item}
                   type="button"
                   onClick={() => setQuestion(item)}
-                  className="cursor-pointer rounded-full bg-gray-50 px-3 py-1 text-xs text-[#1C1A16]/70 transition-colors hover:bg-gray-100"
+                  className="cursor-pointer rounded-full border border-[#1C1A16]/6 bg-[#FAF9F6] px-3 py-1 text-xs text-[#1C1A16]/70 transition-colors hover:bg-[#F6F4F1]"
                 >
                   {item}
                 </button>
@@ -1276,7 +1300,7 @@ export default function LiuYaoPage() {
           </div>
 
           {/* ③ 起卦方式选择 */}
-          <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-4 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
+          <div className="rounded-2xl border border-[#1C1A16]/8 bg-white p-4 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
             <h3 className="text-base font-semibold text-[#1C1A16] mb-3">起卦方式</h3>
             <div className="grid grid-cols-4 gap-2">
               {METHOD_OPTIONS.map((opt) => {
@@ -1289,7 +1313,7 @@ export default function LiuYaoPage() {
                     className={`flex flex-col items-center gap-1 rounded-xl p-3 text-center transition-all duration-200 ${
                       isActive
                         ? 'border-2 border-brand-accent bg-brand-accent-tint text-[#1C1A16] shadow-sm'
-                        : 'border border-[#1C1A16]/10 bg-white text-[#1C1A16] hover:border-[#1C1A16]/20 hover:bg-[#FAF9F6]'
+                        : 'border border-[#1C1A16]/8 bg-white text-[#1C1A16] hover:border-[#1C1A16]/20 hover:bg-[#FAF9F6]'
                     }`}
                   >
                     <span className="text-lg">{opt.icon}</span>
@@ -1304,7 +1328,7 @@ export default function LiuYaoPage() {
 
           {/* ④-a 手动起卦面板 */}
           {method === 'manual' && (
-            <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-4 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
+            <div className="rounded-2xl border border-[#1C1A16]/8 bg-white p-4 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
               <h3 className="text-base font-semibold text-[#1C1A16] mb-1">手动起卦</h3>
               <p className="text-xs text-[#1C1A16]/55 mb-4">请从上到下依次选择六爻的阴阳</p>
 
@@ -1416,7 +1440,7 @@ export default function LiuYaoPage() {
           )}
 
           {/* ⑤ 占卜时间 + ⑥ 解卦按钮 */}
-          <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-4 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
+          <div className="rounded-2xl border border-[#1C1A16]/8 bg-white p-4 transition-shadow duration-300 hover:shadow-card-hover md:p-6">
             {method !== 'time' && (
               <div className="mb-4">
                 <label htmlFor="liuyao-divination-time" className="mb-1 block text-sm text-[#1C1A16]/75">占卜时间</label>
@@ -1437,7 +1461,7 @@ export default function LiuYaoPage() {
               type="button"
               onClick={handleSubmit}
               disabled={!allLinesSelected}
-              className="flex min-h-[44px] w-full items-center justify-center rounded-xl bg-brand-accent text-sm font-medium text-white transition-all hover:bg-brand-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex min-h-[44px] w-full items-center justify-center rounded-lg bg-brand-accent text-sm font-semibold tracking-[0.08em] text-white transition-all hover:bg-brand-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
             >
               开始起卦 ✦
             </button>
@@ -1454,7 +1478,7 @@ export default function LiuYaoPage() {
           {hexagramDrawn && drawnHexagram && !result && (
             <div ref={hexagramResultRef} className="space-y-4 animate-fadeIn">
               {/* 起卦元信息 */}
-              <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 transition-shadow duration-300 hover:shadow-card-hover">
+              <div className="rounded-2xl border border-[#1C1A16]/8 bg-white p-6 transition-shadow duration-300 hover:shadow-card-hover">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <h3 className="text-sm font-medium text-[#1C1A16]/60 mb-1">起卦时间</h3>
@@ -1473,7 +1497,7 @@ export default function LiuYaoPage() {
               </div>
 
               {/* 卦象图示 */}
-              <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 transition-shadow duration-300 hover:shadow-card-hover">
+              <div className="rounded-2xl border border-[#1C1A16]/8 bg-white p-6 transition-shadow duration-300 hover:shadow-card-hover">
                 <div className="flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
                   <div className="flex items-center gap-4">
                     <div className="text-4xl leading-none">
@@ -1514,7 +1538,7 @@ export default function LiuYaoPage() {
                     {resolvedMovingLines.map((idx) => (
                       <span
                         key={idx}
-                        className="rounded-full bg-stone-200 px-2.5 py-0.5 text-[11px] font-medium text-[#1C1A16]"
+                        className="rounded-full px-2.5 py-0.5 text-[11px] font-medium" style={{ background: '#F3E7D3', color: '#92400E' }}
                       >
                         第{idx + 1}爻
                       </span>
@@ -1529,20 +1553,20 @@ export default function LiuYaoPage() {
 
               {/* 爻辞列表：有 AI 结果后隐藏，避免与「各爻详解」重复 */}
               {!result && (
-              <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 transition-shadow duration-300 hover:shadow-card-hover">
+              <div className="rounded-2xl border border-[#1C1A16]/8 bg-white p-6 transition-shadow duration-300 hover:shadow-card-hover">
                 <h3 className="text-base font-semibold text-[#1C1A16] mb-4">爻辞</h3>
                 <div className="space-y-0">
                   {[...drawnHexagram.lineDetails].reverse().map((line, displayIdx) => (
                     <div
                       key={line.index}
-                      className={`p-4 ${displayIdx % 2 === 0 ? 'bg-gray-50' : 'bg-white'} ${displayIdx === 0 ? 'rounded-t-xl' : ''} ${displayIdx === drawnHexagram.lineDetails.length - 1 ? 'rounded-b-xl' : ''}`}
+                      className={`p-4 ${displayIdx % 2 === 0 ? 'bg-[#FAF9F6]' : 'bg-white'} ${displayIdx === 0 ? 'rounded-t-xl' : ''} ${displayIdx === drawnHexagram.lineDetails.length - 1 ? 'rounded-b-xl' : ''}`}
                     >
                       <div className="flex items-center gap-3 mb-2">
                         <span className="text-sm font-semibold text-[#1C1A16]">
                           {line.title}（第{line.index + 1}爻）
                         </span>
                         {line.isMoving && (
-                          <span className="rounded-full bg-stone-200 px-2 py-0.5 text-[10px] font-medium text-[#1C1A16]">动爻</span>
+                          <span className="rounded-full px-2 py-0.5 text-[10px] font-medium" style={{ background: '#F3E7D3', color: '#92400E' }}>动爻</span>
                         )}
                       </div>
                       <div className="mb-2">
@@ -1564,7 +1588,7 @@ export default function LiuYaoPage() {
                   <button
                     type="button"
                     onClick={handleAIAnalysis}
-                    className="inline-flex min-h-[44px] min-w-[180px] px-8 items-center justify-center rounded-xl bg-brand-accent text-sm font-semibold text-white transition-all hover:bg-brand-accent-hover"
+                    className="inline-flex min-h-[44px] min-w-[180px] px-8 items-center justify-center rounded-lg bg-brand-accent text-sm font-semibold tracking-[0.08em] text-white transition-all hover:bg-brand-accent-hover"
                   >
                     分析卦象含义 ✦
                   </button>
@@ -1592,7 +1616,7 @@ export default function LiuYaoPage() {
                 drawnHexagram ? (
                   <div className="space-y-4">
                     {/* 起卦元信息 */}
-                    <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 transition-shadow duration-300 hover:shadow-card-hover">
+                    <div className="rounded-2xl border border-[#1C1A16]/8 bg-white p-6 transition-shadow duration-300 hover:shadow-card-hover">
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
                           <h3 className="text-sm font-medium text-[#1C1A16]/60 mb-1">起卦时间</h3>
@@ -1611,7 +1635,7 @@ export default function LiuYaoPage() {
                     </div>
 
                     {/* 卦象图示 */}
-                    <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 transition-shadow duration-300 hover:shadow-card-hover">
+                    <div className="rounded-2xl border border-[#1C1A16]/8 bg-white p-6 transition-shadow duration-300 hover:shadow-card-hover">
                       <div className="flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
                         <div className="flex items-center gap-4">
                           <div className="text-4xl leading-none">
@@ -1652,7 +1676,7 @@ export default function LiuYaoPage() {
                           {resolvedMovingLines.map((idx) => (
                             <span
                               key={idx}
-                              className="rounded-full bg-stone-200 px-2.5 py-0.5 text-[11px] font-medium text-[#1C1A16]"
+                              className="rounded-full px-2.5 py-0.5 text-[11px] font-medium" style={{ background: '#F3E7D3', color: '#92400E' }}
                             >
                               第{idx + 1}爻
                             </span>
@@ -1669,20 +1693,20 @@ export default function LiuYaoPage() {
               }
               main={
                 <div className="space-y-4">
-              <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 transition-shadow duration-300 hover:shadow-card-hover">
+              <div className="rounded-2xl border border-[#1C1A16]/8 bg-white p-6 transition-shadow duration-300 hover:shadow-card-hover">
                 <h3 className="text-base font-semibold text-[#1C1A16] mb-4">各爻详解</h3>
                 <div className="space-y-0">
                   {result.lines.map((line, idx) => (
                     <div
                       key={line.index}
-                      className={`p-4 ${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'} ${idx === 0 ? 'rounded-t-xl' : ''} ${idx === result.lines.length - 1 ? 'rounded-b-xl' : ''}`}
+                      className={`p-4 ${idx % 2 === 0 ? 'bg-[#FAF9F6]' : 'bg-white'} ${idx === 0 ? 'rounded-t-xl' : ''} ${idx === result.lines.length - 1 ? 'rounded-b-xl' : ''}`}
                     >
                       <div className="flex items-center gap-3 mb-2">
                         <span className="text-sm font-semibold text-[#1C1A16]">
                           {line.title}（第{line.index + 1}爻）
                         </span>
                         {resolvedMovingLines.includes(line.index) && (
-                          <span className="rounded-full bg-stone-200 px-2 py-0.5 text-[10px] font-medium text-[#1C1A16]">动爻</span>
+                          <span className="rounded-full px-2 py-0.5 text-[10px] font-medium" style={{ background: '#F3E7D3', color: '#92400E' }}>动爻</span>
                         )}
                       </div>
                       <div className="mb-2">
@@ -1704,7 +1728,7 @@ export default function LiuYaoPage() {
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 transition-shadow duration-300 hover:shadow-card-hover">
+              <div className="rounded-2xl border border-[#1C1A16]/8 bg-white p-6 transition-shadow duration-300 hover:shadow-card-hover">
                 <h3 className="text-base font-semibold text-[#1C1A16] mb-3">💡 六爻指引</h3>
                 <p className="text-sm leading-relaxed text-[#1C1A16]/85 mb-4">
                   {result.actionAdvice.summary}
@@ -1746,7 +1770,7 @@ export default function LiuYaoPage() {
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-[#1C1A16]/10 bg-white p-6 transition-shadow duration-300 hover:shadow-card-hover">
+              <div className="rounded-2xl border border-[#1C1A16]/8 bg-white p-6 transition-shadow duration-300 hover:shadow-card-hover">
                 <h3 className="text-base font-semibold text-[#1C1A16] mb-1">综合分析</h3>
                 <p className="text-xs text-[#1C1A16]/45 mb-3">
                   AI 综合分析 · 仅供参考
@@ -1778,14 +1802,14 @@ export default function LiuYaoPage() {
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="rounded-xl border border-[#1C1A16]/15 bg-transparent px-8 py-3 text-sm text-[#1C1A16] transition-all hover:-translate-y-1 hover:shadow-card-hover"
+                  className="rounded-lg border border-brand-ink/25 bg-white px-8 py-3 text-sm text-brand-ink transition-colors hover:border-brand-ink hover:bg-[#FDFBF7]"
                 >
                   再来一卦
                 </button>
               </div>
 
               {/* 六爻占卜问答 */}
-              <div className="rounded-2xl border border-[#E5E0D8] bg-white p-6 md:p-8">
+              <div className="rounded-2xl border border-[#1C1A16]/8 bg-white p-6 md:p-8">
                 <h3 className="text-lg font-bold text-[#1C1A16] mb-1">六爻占卜问答</h3>
                 <p className="text-sm text-[#1C1A16]/50 mb-4">针对卦象提出问题，获取详细解读</p>
                 <p className="text-sm text-[#1C1A16]/70 leading-relaxed mb-1">基于您的六爻卦象解读，您可以就具体问题进行深入询问。</p>
@@ -1800,7 +1824,7 @@ export default function LiuYaoPage() {
                         <button
                           key={q}
                           onClick={() => setQaInput(q)}
-                          className="flex items-center gap-1.5 rounded-xl border border-[#E5E0D8] px-3 py-2 text-left text-xs text-[#1C1A16]/65 hover:border-[#1C1A16]/30 hover:text-[#1C1A16]"
+                          className="flex items-center gap-1.5 rounded-xl border border-[#1C1A16]/8 px-3 py-2 text-left text-xs text-[#1C1A16]/65 hover:border-[#1C1A16]/30 hover:text-[#1C1A16]"
                         >
                           <Send size={10} className="shrink-0" /> {q}
                         </button>
@@ -1816,7 +1840,7 @@ export default function LiuYaoPage() {
                       <div key={i}>
                         <p className="text-sm font-medium text-[#1C1A16] mb-2">{item.q}</p>
                         <p className="text-sm leading-relaxed text-[#1C1A16]/65 whitespace-pre-wrap">{item.a}{i === qaHistory.length - 1 && qaStreaming ? '▋' : ''}</p>
-                        {i < qaHistory.length - 1 && <div className="mt-4 border-t border-[#E5E0D8]" />}
+                        {i < qaHistory.length - 1 && <div className="mt-4 border-t border-[#1C1A16]/8" />}
                       </div>
                     ))}
                   </div>
@@ -1834,7 +1858,7 @@ export default function LiuYaoPage() {
                   <button
                     onClick={handleQaSubmit}
                     disabled={!qaInput.trim() || qaLoading}
-                    className="flex min-h-[44px] items-center gap-1.5 rounded-xl bg-brand-accent px-4 text-sm text-white transition-colors hover:bg-brand-accent-hover disabled:opacity-50"
+                    className="flex min-h-[44px] items-center gap-1.5 rounded-lg bg-brand-accent px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-accent-hover disabled:opacity-50"
                   >
                     <Send size={14} /> 问题
                   </button>
@@ -1852,7 +1876,7 @@ export default function LiuYaoPage() {
         {/* ⑧ 特色功能介绍 */}
         <section className="mx-auto mt-10 max-w-page animate-fadeIn">
           <div className="text-center mb-8">
-            <h2 className="font-display text-2xl tracking-[0.06em] text-[#1C1A16] mb-4">AI 六爻占卜分析</h2>
+            <h2 className="font-display text-2xl md:text-3xl tracking-[0.06em] text-[#1C1A16] mb-4">AI 六爻占卜分析</h2>
             <p className="text-sm leading-relaxed text-[#1C1A16]/55 max-w-2xl mx-auto">
               六爻占卜是中国传统易学的核心预测方法，源于古代蓍草占卜，后由汉代京房发展为铜钱起卦法，历经千年传承。我们融合现代 AI 技术对传统六爻卦象进行深度解析，结合纳甲体系、六神理论，为您提供更加精准、客观的占卜结果，助您在人生重要抉择中获得智慧指引。
             </p>
@@ -1861,7 +1885,7 @@ export default function LiuYaoPage() {
             {[
               {
                 icon: (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <circle cx="12" cy="12" r="9" />
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3" />
                   </svg>
@@ -1871,7 +1895,7 @@ export default function LiuYaoPage() {
               },
               {
                 icon: (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
                     <path strokeLinecap="round" strokeLinejoin="round" d="M18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
                   </svg>
@@ -1881,7 +1905,7 @@ export default function LiuYaoPage() {
               },
               {
                 icon: (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
                   </svg>
                 ),
@@ -1891,9 +1915,14 @@ export default function LiuYaoPage() {
             ].map((item) => (
               <div
                 key={item.title}
-                className="flex flex-col items-center text-center rounded-2xl bg-white p-8 shadow-sm"
+                className="group relative flex flex-col items-center overflow-hidden rounded-2xl border border-[#1C1A16]/8 bg-white p-8 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover"
               >
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#F5F5F5] text-[#666] mb-5">{item.icon}</div>
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-x-0 top-0 h-[3px] origin-left scale-x-0 transition-transform duration-300 group-hover:scale-x-100"
+                  style={{ background: '#92400E' }}
+                />
+                <div className="mb-5 flex h-[52px] w-[52px] items-center justify-center rounded-full" style={{ background: '#F3E7D3', color: '#92400E' }}>{item.icon}</div>
                 <h3 className="text-base font-bold text-[#1C1A16] mb-3">{item.title}</h3>
                 <p className="text-sm leading-relaxed text-[#1C1A16]/55">{item.desc}</p>
               </div>
@@ -1901,14 +1930,15 @@ export default function LiuYaoPage() {
           </div>
         </section>
 
-        {/* ⑨ 特色功能 */}
-        <section className="mx-auto mt-10 max-w-page animate-fadeIn">
-          <h2 className="font-display text-2xl tracking-[0.06em] text-[#1C1A16] text-center mb-10">AI 六爻占卜的特色功能</h2>
+        {/* ⑨ 特色功能（色带区块） */}
+        <section className="-mx-4 mt-14 bg-[#F6F4F1] px-4 py-14 animate-fadeIn">
+          <div className="mx-auto max-w-page">
+          <h2 className="font-display text-2xl md:text-3xl tracking-[0.06em] text-[#1C1A16] text-center mb-10">AI 六爻占卜的特色功能</h2>
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
             {[
               {
                 icon: (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-9 h-9 text-[#1C1A16]/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" style={{ color: '#92400E' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <rect x="3" y="3" width="18" height="18" rx="3" />
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h2m2 0h4M8 8h8M8 16h5" />
                   </svg>
@@ -1918,7 +1948,7 @@ export default function LiuYaoPage() {
               },
               {
                 icon: (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-9 h-9 text-[#1C1A16]/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" style={{ color: '#92400E' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
                   </svg>
                 ),
@@ -1927,7 +1957,7 @@ export default function LiuYaoPage() {
               },
               {
                 icon: (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-9 h-9 text-[#1C1A16]/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" style={{ color: '#92400E' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                   </svg>
                 ),
@@ -1936,7 +1966,7 @@ export default function LiuYaoPage() {
               },
               {
                 icon: (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-9 h-9 text-[#1C1A16]/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" style={{ color: '#92400E' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
                   </svg>
                 ),
@@ -1945,7 +1975,7 @@ export default function LiuYaoPage() {
               },
             ].map((item) => (
               <div key={item.title} className="flex items-start gap-5">
-                <div className="flex-shrink-0 mt-0.5">{item.icon}</div>
+                <div className="mt-0.5 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full" style={{ background: '#F3E7D3' }}>{item.icon}</div>
                 <div>
                   <h3 className="text-base font-bold text-[#1C1A16] mb-2">{item.title}</h3>
                   <p className="text-sm leading-relaxed text-[#1C1A16]/55">{item.desc}</p>
@@ -1953,22 +1983,23 @@ export default function LiuYaoPage() {
               </div>
             ))}
           </div>
+          </div>
         </section>
 
         {/* ⑩ FAQ */}
-        <section className="mx-auto mt-10 max-w-page animate-fadeIn">
-          <h2 className="font-display text-2xl tracking-[0.06em] text-[#1C1A16] text-center mb-8">常见问题</h2>
+        <section className="mx-auto mt-14 max-w-page animate-fadeIn">
+          <h2 className="font-display text-2xl md:text-3xl tracking-[0.06em] text-[#1C1A16] text-center mb-8">常见问题</h2>
           <div className="space-y-4">
             {FAQ_ITEMS.map((item, index) => {
               const expanded = expandedFaq === index;
               return (
-                <div key={item.q} className="rounded-2xl border border-[#E5E0D8] bg-white p-6">
+                <div key={item.q} className="rounded-2xl border border-[#1C1A16]/8 bg-white p-6">
                   <button
                     type="button"
                     className="flex w-full items-start gap-3 text-left"
                     onClick={() => setExpandedFaq((prev) => (prev === index ? null : index))}
                   >
-                    <svg className="mt-0.5 h-5 w-5 shrink-0 text-[#1C1A16]/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <svg className="mt-0.5 h-5 w-5 shrink-0" style={{ color: '#92400E' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                       <circle cx="12" cy="12" r="9" />
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v0m0 4v4" />
                     </svg>
@@ -1986,7 +2017,7 @@ export default function LiuYaoPage() {
             })}
           </div>
           <AiDisclaimer />
-          <div className="mt-4 rounded-2xl border border-[#1C1A16]/10 bg-white p-3 text-center text-xs text-[#1C1A16]/45">
+          <div className="mt-4 rounded-2xl border border-[#1C1A16]/8 bg-white p-3 text-center text-xs text-[#1C1A16]/45">
             ⚠️ 免责声明：本站六爻占卜内容仅供娱乐与自我探索参考，不构成医疗、法律或投资建议。请结合现实信息理性判断。
           </div>
         </section>

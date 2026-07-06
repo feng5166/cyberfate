@@ -251,22 +251,23 @@ export default function Page() {
         </Container>
       </section>
 
-      <section className="pb-16">
+      {/* 命理深度分析（#F6F4F1 色带区块，打破整页单色） */}
+      <section className="bg-[#F6F4F1] py-14 md:py-16 mb-12">
         <PageShell>
           <div className="space-y-10">
             <div>
               <h2 className="font-display text-2xl sm:text-3xl text-brand-ink mb-4">
                 2026 年事业运为什么这样分布？
               </h2>
-              <div className="space-y-4 text-brand-gray leading-relaxed">
+              <div className="space-y-4 text-[14px] text-[#1C1A16]/70 leading-relaxed">
                 <p>
                   事业运在命理学中对应"官星"与"印星"的力量。官代表权威、地位、平台；印代表能力、学习、贵人。2026丙午年火气当令，
                   对于以火为喜用的人来说，官印之气自然旺盛；对于以火为忌的人来说，则容易遇到压力和瓶颈。
                 </p>
                 <p>
-                  从地支关系看，<span className="text-brand-accent font-medium">寅午戌三合火局</span>
+                  从地支关系看，<span className="font-medium text-[#B45309]">寅午戌三合火局</span>
                   让生肖虎、马、狗形成强势的事业铁三角。其中虎是发起者，马是承载者，狗是收纳者。
-                  生肖羊与马形成<span className="text-brand-accent font-medium">六合</span>，
+                  生肖羊与马形成<span className="font-medium text-[#B45309]">六合</span>，
                   在合作型事业中表现突出。
                 </p>
                 <p>
