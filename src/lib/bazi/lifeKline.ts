@@ -4,6 +4,7 @@ import { calculateBazi, getDayunStart, getDayunTimeline } from './calculator';
 import { analyzeMingGe, type MingGeAnalysis } from './geju';
 import { analyzeLiunian, type FlowAnalysis } from './liunian';
 import { describeDayun, type DayunFortune } from './dayunDetail';
+import { shenshaNature } from './shensha';
 import type { TenGod } from './helpers';
 import { TIANGAN_WUXING, DIZHI_WUXING } from './constants';
 
@@ -133,6 +134,26 @@ const WUXING_GENERATE: Record<WuXing, WuXing> = {
   木: '火', 火: '土', 土: '金', 金: '水', 水: '木',
 };
 
+const WUXING_CONTROL: Record<WuXing, WuXing> = {
+  木: '土', 土: '水', 水: '火', 火: '金', 金: '木',
+};
+
+// 三合局：申子辰水、亥卯未木、寅午戌火、巳酉丑金（旺神 子/卯/午/酉）
+const SAN_HE: { branches: [DiZhi, DiZhi, DiZhi]; wang: DiZhi; hua: WuXing }[] = [
+  { branches: ['申', '子', '辰'], wang: '子', hua: '水' },
+  { branches: ['亥', '卯', '未'], wang: '卯', hua: '木' },
+  { branches: ['寅', '午', '戌'], wang: '午', hua: '火' },
+  { branches: ['巳', '酉', '丑'], wang: '酉', hua: '金' },
+];
+
+// 三会方：寅卯辰木、巳午未火、申酉戌金、亥子丑水
+const SAN_HUI: { branches: [DiZhi, DiZhi, DiZhi]; hua: WuXing }[] = [
+  { branches: ['寅', '卯', '辰'], hua: '木' },
+  { branches: ['巳', '午', '未'], hua: '火' },
+  { branches: ['申', '酉', '戌'], hua: '金' },
+  { branches: ['亥', '子', '丑'], hua: '水' },
+];
+
 /** 某五行相对用神/忌神的分值：正=助用神，负=助忌神 */
 function scoreWuxing(
   wx: WuXing,
@@ -178,7 +199,69 @@ interface FlowScore {
   brief: string[];
 }
 
-function scoreFlow(flow: FlowAnalysis, mingGe: MingGeAnalysis): FlowScore {
+interface FlowContext {
+  /** 命局真实存在的地支 */
+  chartBranches: DiZhi[];
+  /** 日柱 */
+  dayGan: TianGan;
+  dayZhi: DiZhi;
+  /** 当前所处大运（童限期为 null） */
+  dayun: { gan: TianGan; zhi: DiZhi } | null;
+  /** 当前大运的五行分（用于岁运并临的吉凶放大方向） */
+  dayunScore: number;
+}
+
+/** 流年支引动的三合局/三会方（流年支补全命局中已有的两支） */
+function detectFlowCombos(
+  flowZhi: DiZhi,
+  chartBranches: DiZhi[],
+  mingGe: MingGeAnalysis,
+): { score: number; volatility: number; brief: string[] } {
+  let score = 0;
+  let volatility = 0;
+  const brief: string[] = [];
+
+  const comboScore = (hua: WuXing, direct: number, indirect: number) =>
+    scoreWuxing(hua, mingGe, direct, indirect);
+
+  for (const { branches, wang, hua } of SAN_HE) {
+    if (!branches.includes(flowZhi)) continue;
+    const others = branches.filter((z) => z !== flowZhi);
+    const fullMatch = others.every((z) => chartBranches.includes(z));
+    if (fullMatch) {
+      const s = comboScore(hua, 8, 4);
+      score += s;
+      volatility += 2;
+      brief.push(`三合${hua}局${s < 0 ? '(助忌)' : ''}`);
+      continue;
+    }
+    // 半三合：流年支与命局一支配成含旺神的半合
+    const half = others.find(
+      (z) => chartBranches.includes(z) && (z === wang || flowZhi === wang),
+    );
+    if (half) {
+      const s = comboScore(hua, 3, 2);
+      score += s;
+      volatility += 1;
+      if (s !== 0) brief.push(`半三合${hua}${s < 0 ? '(助忌)' : ''}`);
+    }
+  }
+
+  for (const { branches, hua } of SAN_HUI) {
+    if (!branches.includes(flowZhi)) continue;
+    const others = branches.filter((z) => z !== flowZhi);
+    if (others.every((z) => chartBranches.includes(z))) {
+      const s = comboScore(hua, 9, 5);
+      score += s;
+      volatility += 2;
+      brief.push(`三会${hua}方${s < 0 ? '(助忌)' : ''}`);
+    }
+  }
+
+  return { score, volatility, brief };
+}
+
+function scoreFlow(flow: FlowAnalysis, mingGe: MingGeAnalysis, ctx: FlowContext): FlowScore {
   let score = 0;
   let volatility = 0;
   const brief: string[] = [];
@@ -187,8 +270,12 @@ function scoreFlow(flow: FlowAnalysis, mingGe: MingGeAnalysis): FlowScore {
   score += scoreWuxing(TIANGAN_WUXING[flow.gan], mingGe, 7, 4);
   score += scoreWuxing(DIZHI_WUXING[flow.zhi], mingGe, 5, 3);
 
-  // 流年天干十神取向
+  // 流年天干十神取向 + 地支藏干本气十神（半权重）
   score += TEN_GOD_SCORE[mingGe.rizhuStrength][flow.ganTenGod] ?? 0;
+  const mainHidden = flow.zhiHiddenTenGods[0];
+  if (mainHidden) {
+    score += (TEN_GOD_SCORE[mingGe.rizhuStrength][mainHidden.tenGod] ?? 0) * 0.5;
+  }
 
   // 与命局四柱的刑冲会合害（作用于日支加重）
   const PILLAR_LABEL: Record<string, string> = { year: '年支', month: '月支', day: '日支', hour: '时支' };
@@ -203,7 +290,73 @@ function scoreFlow(flow: FlowAnalysis, mingGe: MingGeAnalysis): FlowScore {
     }
   }
 
+  // 流年支引动三合局/三会方（聚变之年，吉凶皆放大）
+  const combos = detectFlowCombos(flow.zhi, ctx.chartBranches, mingGe);
+  score += combos.score;
+  volatility += combos.volatility;
+  brief.push(...combos.brief);
+
+  // 流年与日柱伏吟 / 天克地冲（支冲日支已在上面计过，这里补天干层）
+  if (flow.gan === ctx.dayGan && flow.zhi === ctx.dayZhi) {
+    score -= 3;
+    volatility += 2;
+    brief.push('伏吟日柱');
+  } else if (
+    WUXING_CONTROL[TIANGAN_WUXING[flow.gan]] === TIANGAN_WUXING[ctx.dayGan] &&
+    RELATION_EFFECT['六冲'] &&
+    flow.interactions.some((it) => it.pillar === 'day' && it.relations.some((r) => r.type === '六冲'))
+  ) {
+    score -= 3;
+    volatility += 2;
+    brief.push('天克地冲日柱');
+  }
+
+  // 岁运互动（童限期无大运则跳过）
+  if (ctx.dayun) {
+    if (flow.gan === ctx.dayun.gan && flow.zhi === ctx.dayun.zhi) {
+      // 岁运并临：大事之年，顺势放大吉凶
+      const direction = ctx.dayunScore + score >= 0 ? 1 : -1;
+      score += direction * 4;
+      volatility += 4;
+      brief.push('岁运并临');
+    } else {
+      const ganClash =
+        WUXING_CONTROL[TIANGAN_WUXING[flow.gan]] === TIANGAN_WUXING[ctx.dayun.gan] ||
+        WUXING_CONTROL[TIANGAN_WUXING[ctx.dayun.gan]] === TIANGAN_WUXING[flow.gan];
+      const zhiChong = relatesChong(flow.zhi, ctx.dayun.zhi);
+      if (ganClash && zhiChong) {
+        score -= 6;
+        volatility += 4;
+        brief.push('天克地冲大运');
+      } else if (zhiChong) {
+        score -= 3;
+        volatility += 2;
+        brief.push('冲大运支');
+      }
+    }
+  }
+
+  // 流年引动神煞：吉神小幅加分，凶煞小幅减分（封顶 ±4）
+  let shenshaScore = 0;
+  for (const s of flow.shensha) {
+    const nature = shenshaNature(s.name);
+    if (nature === '吉') shenshaScore += 1.5;
+    else if (nature === '凶') shenshaScore -= 1.5;
+  }
+  shenshaScore = Math.max(-4, Math.min(4, shenshaScore));
+  score += shenshaScore;
+  volatility += Math.min(2, flow.shensha.length * 0.5);
+
   return { score, volatility, brief };
+}
+
+// 六冲对照（岁运互查用）
+const CHONG_PAIRS: [DiZhi, DiZhi][] = [
+  ['子', '午'], ['丑', '未'], ['寅', '申'],
+  ['卯', '酉'], ['辰', '戌'], ['巳', '亥'],
+];
+function relatesChong(a: DiZhi, b: DiZhi): boolean {
+  return CHONG_PAIRS.some(([x, y]) => (a === x && b === y) || (a === y && b === x));
 }
 
 // ---------------------------------------------------------------------------
@@ -324,6 +477,10 @@ export function computeLifeKline(input: BaziInput, options: LifeKlineOptions = {
   /** [-1,1) 的确定性噪声 */
   const noise = () => rng() * 2 - 1;
 
+  const chartBranches = [chart.year, chart.month, chart.day, chart.hour]
+    .filter((p): p is NonNullable<typeof p> => p !== null)
+    .map((p) => p.zhi);
+
   const points: LifeKlineYearPoint[] = [];
   let prevClose: number | null = null;
 
@@ -331,13 +488,19 @@ export function computeLifeKline(input: BaziInput, options: LifeKlineOptions = {
     const year = birthYear + age - 1;
     const flow = analyzeLiunian(chart, year);
     const dayun = findDayun(age);
-    const flowScore = scoreFlow(flow, mingGe);
-
     const dayunScore = dayun ? (dayunScoreByIndex.get(dayun.index) ?? 0) : childhoodScore;
+    const flowScore = scoreFlow(flow, mingGe, {
+      chartBranches,
+      dayGan,
+      dayZhi: chart.day.zhi,
+      dayun: dayun ? { gan: dayun.gan, zhi: dayun.zhi } : null,
+      dayunScore,
+    });
+
     const isDayunStart = dayun ? age === dayun.ageStart : false;
 
-    // 目标运势分：命局基准 50 + 大运 + 流年（放大 1.35 拉开动态范围）
-    const target = clamp(50 + (dayunScore + flowScore.score) * 1.35 + noise() * 2, 22, 96);
+    // 目标运势分：命局基准 50 + 大运 + 流年（放大 1.2 拉开动态范围）
+    const target = clamp(50 + (dayunScore + flowScore.score) * 1.2 + noise() * 2, 22, 96);
 
     // 收盘价向目标缓动，模拟运势的连续性（年度变化幅度有限）
     let close: number;
@@ -347,7 +510,9 @@ export function computeLifeKline(input: BaziInput, options: LifeKlineOptions = {
       open = clamp(Math.round(target + noise() * 3));
     } else {
       const delta = target - prevClose;
-      const step = Math.sign(delta) * Math.min(Math.abs(delta), 12) * 0.7 + noise() * 2.5;
+      // 平常年份单年变化有限；刑冲聚变/岁运并临之年（振幅大）允许更大跳变
+      const maxStep = 12 + flowScore.volatility * 1.5;
+      const step = Math.sign(delta) * Math.min(Math.abs(delta), maxStep) * 0.7 + noise() * 2.5;
       close = Math.round(clamp(prevClose + step));
       open = Math.round(clamp(prevClose + noise() * 1.5));
     }
