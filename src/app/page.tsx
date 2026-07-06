@@ -490,38 +490,57 @@ export default function HomePage() {
         </Container>
       </section>
 
-      {/* ===== CTA Section（深色收尾块） ===== */}
-      <section className="px-4 py-20 md:py-24">
+      {/* ===== CTA Section（深色收尾块：左文右钮 + 罗盘纹理半出血） ===== */}
+      <section className="px-4 py-16 md:py-20">
         <Container>
-          <div className="relative max-w-page mx-auto overflow-hidden rounded-3xl bg-[#1C1A16] text-center py-16 md:py-20 px-10">
-            {/* 细线圆环装饰 */}
-            <span aria-hidden className="pointer-events-none absolute -right-24 -top-32 w-80 h-80 rounded-full border border-white/[0.07]" />
-            <span aria-hidden className="pointer-events-none absolute -right-10 -top-16 w-44 h-44 rounded-full border border-white/[0.05]" />
-            <span aria-hidden className="pointer-events-none absolute -left-20 -bottom-28 w-64 h-64 rounded-full border border-white/[0.06]" />
-
-            <h2 className="font-display text-3xl md:text-4xl tracking-wide text-[#FAF9F6]">
-              AI 分析个人特质，洞察发展潜力
-            </h2>
-            <p className="text-base md:text-lg text-white/55 mt-4 max-w-2xl mx-auto leading-relaxed">
-              运用AI技术分析性格优势，为您的生涯规划提供科学参考
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mt-10">
-              <Link
-                href="/bazi"
-                className="inline-flex items-center justify-center min-h-[46px] px-[38px] py-[14px] text-[13px] tracking-[0.08em] bg-[#FAF9F6] text-[#1C1A16] rounded-lg hover:bg-white transition-colors font-semibold"
-              >
-                八字分析 →
-              </Link>
-              <Link
-                href="/meihua"
-                className="inline-flex items-center justify-center min-h-[46px] px-[38px] py-[14px] text-[13px] tracking-[0.08em] border border-white/30 text-white rounded-lg hover:border-white/70 transition-colors"
-              >
-                梅花易数
-              </Link>
+          <div className="relative max-w-page mx-auto overflow-hidden rounded-3xl bg-[#1C1A16] px-8 md:px-14 py-10 md:py-12">
+            {/* 罗盘纹理（与 Hero 呼应，右侧半出血） */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -right-28 top-1/2 -translate-y-1/2 w-[320px] h-[320px] md:w-[420px] md:h-[420px] opacity-[0.09]"
+            >
+              <svg viewBox="0 0 400 400" className="w-full h-full">
+                <circle cx="200" cy="200" r="196" fill="none" stroke="#FAF9F6" strokeWidth="1" />
+                <circle cx="200" cy="200" r="150" fill="none" stroke="#FAF9F6" strokeWidth="0.6" />
+                <circle cx="200" cy="200" r="100" fill="none" stroke="#FAF9F6" strokeWidth="0.6" strokeDasharray="2 4" />
+                {Array.from({ length: 24 }, (_, i) => (
+                  <line
+                    key={i}
+                    x1="200" y1="4" x2="200" y2={i % 2 === 0 ? 14 : 9}
+                    stroke="#FAF9F6" strokeWidth="1"
+                    transform={`rotate(${i * 15} 200 200)`}
+                  />
+                ))}
+              </svg>
             </div>
-            <p className="text-[12px] text-white/40 tracking-[0.05em] mt-6">
-              <span>⚡</span> 免费使用 <span>·</span> 无需注册 <span>·</span> 即刻体验
-            </p>
+
+            <div className="relative flex flex-col md:flex-row md:items-center gap-8 md:gap-12">
+              <div className="flex-1 text-center md:text-left">
+                <h2 className="font-display text-[24px] md:text-[32px] tracking-wide text-[#FAF9F6] leading-snug">
+                  AI 分析个人特质，洞察发展潜力
+                </h2>
+                <p className="text-[14px] md:text-[15px] text-white/55 mt-3 leading-relaxed">
+                  运用AI技术分析性格优势，为您的生涯规划提供科学参考
+                </p>
+                <p className="text-[12px] text-white/35 tracking-[0.05em] mt-4">
+                  ⚡ 免费使用 · 无需注册 · 即刻体验
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row md:flex-col gap-3 justify-center shrink-0">
+                <Link
+                  href="/bazi"
+                  className="inline-flex items-center justify-center min-h-[46px] min-w-[172px] px-8 py-3 text-[13px] tracking-[0.08em] bg-[#FAF9F6] text-[#1C1A16] rounded-lg hover:bg-white transition-colors font-semibold"
+                >
+                  八字分析 →
+                </Link>
+                <Link
+                  href="/meihua"
+                  className="inline-flex items-center justify-center min-h-[46px] min-w-[172px] px-8 py-3 text-[13px] tracking-[0.08em] border border-white/25 text-white rounded-lg hover:border-white/60 hover:bg-white/[0.04] transition-colors"
+                >
+                  梅花易数
+                </Link>
+              </div>
+            </div>
           </div>
         </Container>
       </section>
