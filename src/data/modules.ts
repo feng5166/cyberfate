@@ -4,7 +4,7 @@
 // 此处收敛为唯一注册表，所有导航面从这里派生 —— 标签/分组/图标/收费标记改一处全站生效。
 import {
   BarChart3, Star, BookHeart, Layers, Coins, Flower2,
-  Sun, Sparkles, CalendarDays, Music, BookOpen, Gem,
+  Sun, Sparkles, CalendarDays, Music, BookOpen, Gem, CandlestickChart,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -32,6 +32,7 @@ export const MODULES: ModuleItem[] = [
   { id: 'bazi',     href: '/bazi',           label: '八字分析',   short: '八字', desc: 'AI 排盘，解读命盘特质与运势',   icon: BarChart3,   group: 'mingli', featured: true },
   { id: 'ziwei',    href: '/ziwei',          label: '紫微斗数',   short: '紫微', desc: '十二宫位与主星格局精解',       icon: Star,        group: 'mingli', paidOnly: true },
   { id: 'marriage', href: '/bazi/marriage',  label: '合婚配对',   short: '合婚', desc: '双方八字深度匹配度分析',       icon: BookHeart,   group: 'mingli', paidOnly: true },
+  { id: 'lifekline',href: '/life-kline',     label: '人生K线',    short: 'K线', desc: '百年运势可视化，K线看人生起伏', icon: CandlestickChart, group: 'mingli' },
 
   { id: 'tarot',    href: '/tarot',          label: '塔罗占卜',   short: '塔罗', desc: 'AI 塔罗，多角度看清处境',      icon: Layers,      group: 'zhanbu', featured: true },
   { id: 'liuyao',   href: '/liuyao',         label: '六爻占卜',   short: '六爻', desc: '传统六爻 + AI 深度解卦',       icon: Coins,       group: 'zhanbu', paidOnly: true },

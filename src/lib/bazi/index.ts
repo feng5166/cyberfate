@@ -8,3 +8,4 @@ export * from './interactions';
 export * from './shensha';
 export * from './liunian';
 export * from './tools';
+export * from './lifeKline';

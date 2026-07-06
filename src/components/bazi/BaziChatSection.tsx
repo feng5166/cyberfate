@@ -50,15 +50,20 @@ interface BirthInput {
 
 interface BaziChatSectionProps {
   baziData: {
-    pillars: PillarRecord;
-    wuxing: WuxingCount;
-    aiAnalysis: string;
+    pillars?: Partial<PillarRecord>;
+    wuxing?: WuxingCount;
+    aiAnalysis?: string;
+    dayMaster?: string;
     mingGe?: MingGeInfo;
     traits?: BaziTrait[];
   };
   birthInput?: BirthInput;
   isLoggedIn: boolean;
   isVip: boolean;
+  /** 覆盖默认标题/副标题/预设问题（人生K线等场景复用） */
+  title?: string;
+  subtitle?: string;
+  presetQuestions?: string[];
 }
 
 const cardClass =
@@ -128,7 +133,15 @@ function ThinkingSteps({
   );
 }
 
-export function BaziChatSection({ baziData, birthInput, isLoggedIn, isVip }: BaziChatSectionProps) {
+export function BaziChatSection({
+  baziData,
+  birthInput,
+  isLoggedIn,
+  isVip,
+  title = 'AI 八字问答',
+  subtitle = '基于您的命盘智能问答 · 仅供参考',
+  presetQuestions = PRESET_QUESTIONS,
+}: BaziChatSectionProps) {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [favorites, setFavorites] = useState<FavoriteRecord[]>([]);
@@ -319,8 +332,8 @@ export function BaziChatSection({ baziData, birthInput, isLoggedIn, isVip }: Baz
     <Card className={cardClass}>
       <div className="flex items-start justify-between gap-2">
         <div>
-          <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em]">AI 八字问答</h2>
-          <p className="text-xs text-brand-gray mt-1">基于您的命盘智能问答 · 仅供参考</p>
+          <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em]">{title}</h2>
+          <p className="text-xs text-brand-gray mt-1">{subtitle}</p>
         </div>
         <button
           type="button"
@@ -339,7 +352,7 @@ export function BaziChatSection({ baziData, birthInput, isLoggedIn, isVip }: Baz
       </div>
 
       <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-        {PRESET_QUESTIONS.map(q => (
+        {presetQuestions.map(q => (
           <button
             key={q}
             type="button"

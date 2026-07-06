@@ -19,6 +19,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/`, lastModified: STATIC_LAST_MODIFIED, changeFrequency: "weekly", priority: 1 },
     { url: `${baseUrl}/bazi`, lastModified: STATIC_LAST_MODIFIED, changeFrequency: "weekly", priority: 0.9 },
     { url: `${baseUrl}/bazi/marriage`, lastModified: STATIC_LAST_MODIFIED, changeFrequency: "weekly", priority: 0.8 },
+    { url: `${baseUrl}/life-kline`, lastModified: new Date("2026-07-06"), changeFrequency: "weekly", priority: 0.8 },
     { url: `${baseUrl}/daily`, lastModified: new Date(), changeFrequency: "daily", priority: 0.9 },
     { url: `${baseUrl}/tarot`, lastModified: STATIC_LAST_MODIFIED, changeFrequency: "weekly", priority: 0.8 },
     { url: `${baseUrl}/ziwei`, lastModified: STATIC_LAST_MODIFIED, changeFrequency: "weekly", priority: 0.8 },
