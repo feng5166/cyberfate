@@ -1,6 +1,6 @@
 // 2026 生肖运势子页共享渲染层。
 // 说明：财/事业/爱情三个子页原为 ~448 行复制克隆，此文件抽出其重复的展示组件，
-// 统一走站点视觉设计系统（docs/DESIGN-SYSTEM.md）：标准白卡 + 2026 模块点缀色。
+// 统一走站点视觉设计系统（docs/必读/DESIGN-SYSTEM.md）：标准白卡 + 2026 模块点缀色。
 // 这是 2026 域内部模块，非 UI 原子层；仅承载展示，不含任何业务逻辑与数据。
 import Link from 'next/link';
 import { PageShell } from '@/components/ui/PageShell';

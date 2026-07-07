@@ -22,13 +22,13 @@
 | 部署 | Vercel · PWA |
 | 移动端 | Expo(React Native)+ expo-router,薄 UI 复用 Web API,见 `apps/mobile`(方案 `docs/MOBILE-APP-PLAN.md`) |
 
-> ⚠️ 模型归属:命理解读主链路一律走 DeepSeek v4-pro(经 ModelVerse)。早期误导性命名(如 `callClaudeAPI`)已统一改为 `callDeepSeek*`(见 `docs/IMPROVEMENT-TASKS.md` T3)。**已无任何真实 Claude 调用**:`src/app/api/daily/detail-analysis` 的异常兜底原走 Claude Sonnet,现已改为重试 DeepSeek v4-pro。改动 AI 逻辑前仍以 `src/lib/ai/models.ts` 的实际端点为准。
+> ⚠️ 模型归属:命理解读主链路一律走 DeepSeek v4-pro(经 ModelVerse)。早期误导性命名(如 `callClaudeAPI`)已统一改为 `callDeepSeek*`(见 `docs/必读/IMPROVEMENT-TASKS.md` T3)。**已无任何真实 Claude 调用**:`src/app/api/daily/detail-analysis` 的异常兜底原走 Claude Sonnet,现已改为重试 DeepSeek v4-pro。改动 AI 逻辑前仍以 `src/lib/ai/models.ts` 的实际端点为准。
 
 ## 功能模块
 
 八字 / 合婚 / 紫微斗数 / 六爻 / 梅花易数 / 黄历 / 塔罗 / 音乐运势签 / 每日运势;
 另有 2026 生肖运势、知识库、认证、个人中心、历史、定价支付、Admin 后台。
-详见 `docs/PRD-MODULES-DETAILED.md`。
+详见 `docs/必读/PRD-MODULES-DETAILED.md`。
 
 ## 商业化与配额
 
@@ -58,18 +58,20 @@ src/
 ├── lib/          # 命理算法 + AI + 支付/配额
 └── hooks/ stores/ data/ types/
 apps/mobile/      # Expo 移动端（薄 UI 层，复用后端 API）
-docs/             # PRD / 设计 / 运维
+docs/必读/        # 权威文档区(持续维护);docs/ 其余多为历史过程稿,可能过期
 .claude/agents/   # 子代理配置
 ```
 
 ## 关键文档
 
-- **视觉设计系统(所有 UI 开发必须遵守):`docs/DESIGN-SYSTEM.md`**
-- 整体 PRD(逆向):`docs/PRD-REVERSE-ENGINEERED.md`
-- 模块级 PRD:`docs/PRD-MODULES-DETAILED.md`
-- 改进任务:`docs/IMPROVEMENT-TASKS.md`
-- AI 成本模型:`docs/AI_COST_MODEL.md`
-- 部署/运维:`DEPLOY_GUIDE.md` · `docs/DEPLOYMENT.md` · `docs/RUNBOOK.md`
+> 权威文档统一放在 `docs/必读/`(索引见其 README);该目录外的 docs/ 文档多为历史过程稿,不作为开发依据。
+
+- **视觉设计系统(所有 UI 开发必须遵守):`docs/必读/DESIGN-SYSTEM.md`**
+- 整体 PRD(逆向):`docs/必读/PRD-REVERSE-ENGINEERED.md`
+- 模块级 PRD:`docs/必读/PRD-MODULES-DETAILED.md`
+- 改进任务:`docs/必读/IMPROVEMENT-TASKS.md`
+- AI 成本模型:`docs/必读/AI_COST_MODEL.md`
+- 部署/运维:`DEPLOY_GUIDE.md` · `docs/必读/DEPLOYMENT.md` · `docs/必读/RUNBOOK.md`
 
 ---
 

@@ -85,10 +85,10 @@ cyberfate/
 
 ## 文档
 
-- 整体 PRD(逆向):`docs/PRD-REVERSE-ENGINEERED.md`
-- 模块级 PRD:`docs/PRD-MODULES-DETAILED.md`
-- 改进任务:`docs/IMPROVEMENT-TASKS.md`
-- 部署:`DEPLOY_GUIDE.md` · `docs/DEPLOYMENT.md`
+- 整体 PRD(逆向):`docs/必读/PRD-REVERSE-ENGINEERED.md`
+- 模块级 PRD:`docs/必读/PRD-MODULES-DETAILED.md`
+- 改进任务:`docs/必读/IMPROVEMENT-TASKS.md`
+- 部署:`DEPLOY_GUIDE.md` · `docs/必读/DEPLOYMENT.md`
 
 ---
 

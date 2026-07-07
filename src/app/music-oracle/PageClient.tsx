@@ -48,7 +48,7 @@ const FAQ_LIST = [
   },
 ];
 
-/* ─── 模块点缀色（音乐运势签，见 docs/DESIGN-SYSTEM.md §2.2） ─── */
+/* ─── 模块点缀色（音乐运势签，见 docs/必读/DESIGN-SYSTEM.md §2.2） ─── */
 const MUSIC_BG = '#CFFAFE';
 const MUSIC_FG = '#0E7490';
 

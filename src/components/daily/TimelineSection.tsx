@@ -62,7 +62,7 @@ const CARD_BASE_STYLE: React.CSSProperties = {
   transition: 'all 0.2s ease',
 };
 
-// 当前柱高亮走模块点缀色（每日运势 #FBF1D0/#B0870F，见 docs/DESIGN-SYSTEM.md §2.2）
+// 当前柱高亮走模块点缀色（每日运势 #FBF1D0/#B0870F，见 docs/必读/DESIGN-SYSTEM.md §2.2）
 const HIGHLIGHT_STYLE: React.CSSProperties = {
   border: '1px solid #B0870F',
   background: '#FBF1D0',
