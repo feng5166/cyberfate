@@ -140,10 +140,13 @@ export default function LifeKlinePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  // 有结果后表单默认收起，点「重算」再展开
+  const [showForm, setShowForm] = useState(false);
 
   const { status } = useSession();
   const [isMember, setIsMember] = useState(false);
   const chartCardRef = useRef<HTMLDivElement>(null);
+  const formRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (status !== 'authenticated') {
@@ -185,6 +188,7 @@ export default function LifeKlinePage() {
       const body = await res.json().catch(() => ({}));
       if (!res.ok || !body.success) throw new Error(body.error || `请求失败 (${res.status})`);
       setResult(body.data as LifeKlineResult);
+      setShowForm(false);
       saveBirthInfo({ birthDate: d, birthHour: h, gender: g });
       track('tool_ai_complete', { tool: 'life_kline', duration_ms: Date.now() - startTime });
     } catch (err) {
@@ -283,9 +287,10 @@ export default function LifeKlinePage() {
         </div>
       </PageShell>
 
-      {/* 输入区 */}
+      {/* 输入区：无结果时常显；有结果后收起，点「重算」展开 */}
+      {(!result || showForm) && (
       <PageShell width="wide" className="pb-6 md:pb-8">
-        <div className="rounded-2xl border border-[#1C1A16]/8 bg-white p-4 sm:p-6">
+        <div ref={formRef} className="rounded-2xl border border-[#1C1A16]/8 bg-white p-4 sm:p-6">
           <div className="flex flex-col md:flex-row md:items-end gap-4">
             <div className="flex-1 relative">
               <DatePicker
@@ -331,6 +336,7 @@ export default function LifeKlinePage() {
           <p className="mt-3 text-xs text-[#1C1A16]/40">性别影响大运顺逆排法；不知道时辰也可生成，精度略降。</p>
         </div>
       </PageShell>
+      )}
 
       {/* 错误提示 */}
       {error && (
@@ -396,6 +402,22 @@ export default function LifeKlinePage() {
                     {currentPoint?.ganzhi ?? ''}
                   </p>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowForm((v) => {
+                      const next = !v;
+                      if (next) {
+                        setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+                      }
+                      return next;
+                    });
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-[#1C1A16]/25 bg-white px-3.5 py-2 text-sm text-[#1C1A16] hover:border-[#1C1A16] hover:bg-[#FDFBF7] transition-colors"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  {showForm ? '收起' : '重算'}
+                </button>
               </div>
             </Card>
 
