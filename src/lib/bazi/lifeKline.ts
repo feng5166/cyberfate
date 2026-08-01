@@ -1,11 +1,12 @@
 import { Lunar, Solar } from 'lunar-javascript';
-import type { BaziInput, DayunTimelineItem, DiZhi, TianGan, WuXing } from './types';
-import { calculateBazi, getDayunStart, getDayunTimeline } from './calculator';
+import type { BaziInput, DayunTimelineItem, DiZhi, Gender, TianGan, WuXing } from './types';
+import { calculateBazi, getDayunStart, getDayunTimeline, getMonthGanzhi } from './calculator';
 import { analyzeMingGe, type MingGeAnalysis } from './geju';
 import { analyzeLiunian, type FlowAnalysis } from './liunian';
 import { describeDayun, type DayunFortune } from './dayunDetail';
 import { shenshaNature } from './shensha';
-import type { TenGod } from './helpers';
+import { getTenGod, type TenGod } from './helpers';
+import { relateBranches } from './interactions';
 import { TIANGAN_WUXING, DIZHI_WUXING } from './constants';
 
 /**
@@ -21,6 +22,22 @@ import { TIANGAN_WUXING, DIZHI_WUXING } from './constants';
  */
 
 export type LifeKlineLevel = '极盛' | '上佳' | '平稳' | '承压' | '低谷';
+
+/** 分维度运势分（P1-A：财/事业/感情/健康，仅收盘线） */
+export interface DimScores {
+  wealth: number;
+  career: number;
+  love: number;
+  health: number;
+}
+export type DimKey = keyof DimScores;
+
+/** 年内最佳/最差流月（P1-B 影线归真的副产物） */
+export interface MonthExtreme {
+  /** 公历月 1-12（按该月 15 日所在节气月取干支） */
+  month: number;
+  ganzhi: string;
+}
 
 export interface LifeKlineYearPoint {
   /** 虚岁 */
@@ -46,6 +63,12 @@ export interface LifeKlineYearPoint {
   isDayunStart: boolean;
   /** 刑冲会合摘要（如 "冲日支午"），无则空数组 */
   interactionsBrief: string[];
+  /** 分维度收盘分（VIP 能力；API 对非 VIP 剥除此字段） */
+  dims?: DimScores;
+  /** 年内最佳流月（影线上沿的来源） */
+  bestMonth: MonthExtreme;
+  /** 年内最差流月（影线下沿的来源） */
+  worstMonth: MonthExtreme;
 }
 
 export interface LifeKlineDayun {
@@ -197,6 +220,8 @@ interface FlowScore {
   score: number;
   volatility: number;
   brief: string[];
+  /** 分维度原始增量（相对命局基准的偏移） */
+  dims: DimScores;
 }
 
 interface FlowContext {
@@ -209,7 +234,25 @@ interface FlowContext {
   dayun: { gan: TianGan; zhi: DiZhi } | null;
   /** 当前大运的五行分（用于岁运并临的吉凶放大方向） */
   dayunScore: number;
+  /** 性别决定配偶星（男以财星、女以官杀为感情线主星） */
+  gender: Gender;
 }
+
+/** 十神对四维的权重分布（乘以该十神的取向分值，正负号随之） */
+const TEN_GOD_DIMS: Partial<Record<TenGod, Partial<DimScores>>> = {
+  正财: { wealth: 1 },
+  偏财: { wealth: 1 },
+  正官: { career: 1 },
+  七杀: { career: 0.8, health: 0.4 },
+  正印: { career: 0.5, health: 0.7 },
+  偏印: { career: 0.3, health: 0.4 },
+  食神: { wealth: 0.5, health: 0.5 },
+  伤官: { wealth: 0.4, career: 0.3 },
+  比肩: { wealth: 0.4, career: 0.3 },
+  劫财: { wealth: 0.7, career: 0.2 },
+};
+
+const LOVE_SHENSHA = ['桃花', '红鸾', '天喜'];
 
 /** 流年支引动的三合局/三会方（流年支补全命局中已有的两支） */
 function detectFlowCombos(
@@ -265,19 +308,40 @@ function scoreFlow(flow: FlowAnalysis, mingGe: MingGeAnalysis, ctx: FlowContext)
   let score = 0;
   let volatility = 0;
   const brief: string[] = [];
+  const dims: DimScores = { wealth: 0, career: 0, love: 0, health: 0 };
+
+  /** 十神分值按维度权重分摊（含配偶星入感情线） */
+  const spreadTenGod = (tg: TenGod, v: number) => {
+    for (const [k, w] of Object.entries(TEN_GOD_DIMS[tg] ?? {})) {
+      dims[k as DimKey] += v * (w as number);
+    }
+    const spouseWeight =
+      ctx.gender === 'male'
+        ? tg === '正财' ? 0.7 : tg === '偏财' ? 0.35 : 0
+        : tg === '正官' ? 0.7 : tg === '七杀' ? 0.35 : 0;
+    if (spouseWeight) dims.love += v * spouseWeight;
+  };
 
   // 流年干支五行对用神/忌神
-  score += scoreWuxing(TIANGAN_WUXING[flow.gan], mingGe, 7, 4);
-  score += scoreWuxing(DIZHI_WUXING[flow.zhi], mingGe, 5, 3);
+  const wxScore =
+    scoreWuxing(TIANGAN_WUXING[flow.gan], mingGe, 7, 4) +
+    scoreWuxing(DIZHI_WUXING[flow.zhi], mingGe, 5, 3);
+  score += wxScore;
+  // 五行喜忌是所有维度共同的底色
+  for (const k of Object.keys(dims) as DimKey[]) dims[k] += wxScore * 0.35;
 
   // 流年天干十神取向 + 地支藏干本气十神（半权重）
-  score += TEN_GOD_SCORE[mingGe.rizhuStrength][flow.ganTenGod] ?? 0;
+  const ganTgScore = TEN_GOD_SCORE[mingGe.rizhuStrength][flow.ganTenGod] ?? 0;
+  score += ganTgScore;
+  spreadTenGod(flow.ganTenGod, ganTgScore);
   const mainHidden = flow.zhiHiddenTenGods[0];
   if (mainHidden) {
-    score += (TEN_GOD_SCORE[mingGe.rizhuStrength][mainHidden.tenGod] ?? 0) * 0.5;
+    const hiddenScore = (TEN_GOD_SCORE[mingGe.rizhuStrength][mainHidden.tenGod] ?? 0) * 0.5;
+    score += hiddenScore;
+    spreadTenGod(mainHidden.tenGod, hiddenScore);
   }
 
-  // 与命局四柱的刑冲会合害（作用于日支加重）
+  // 与命局四柱的刑冲会合害（作用于日支加重；日支=婚姻宫入感情线，月支=事业宫入事业线）
   const PILLAR_LABEL: Record<string, string> = { year: '年支', month: '月支', day: '日支', hour: '时支' };
   for (const it of flow.interactions) {
     const dayWeight = it.pillar === 'day' ? 1.5 : 1;
@@ -287,6 +351,9 @@ function scoreFlow(flow: FlowAnalysis, mingGe: MingGeAnalysis, ctx: FlowContext)
       score += effect.score * dayWeight;
       volatility += effect.volatility;
       if (effect.score < 0) brief.push(`${rel.type}${PILLAR_LABEL[it.pillar] ?? it.pillar}${it.with}`);
+      dims.love += effect.score * (it.pillar === 'day' ? 1.8 : 0.2);
+      dims.career += effect.score * (it.pillar === 'month' ? 0.8 : 0.2);
+      dims.health += effect.score * 0.4;
     }
   }
 
@@ -295,12 +362,15 @@ function scoreFlow(flow: FlowAnalysis, mingGe: MingGeAnalysis, ctx: FlowContext)
   score += combos.score;
   volatility += combos.volatility;
   brief.push(...combos.brief);
+  for (const k of Object.keys(dims) as DimKey[]) dims[k] += combos.score * 0.3;
 
   // 流年与日柱伏吟 / 天克地冲（支冲日支已在上面计过，这里补天干层）
   if (flow.gan === ctx.dayGan && flow.zhi === ctx.dayZhi) {
     score -= 3;
     volatility += 2;
     brief.push('伏吟日柱');
+    dims.love -= 2;
+    dims.health -= 1.5;
   } else if (
     WUXING_CONTROL[TIANGAN_WUXING[flow.gan]] === TIANGAN_WUXING[ctx.dayGan] &&
     RELATION_EFFECT['六冲'] &&
@@ -309,6 +379,8 @@ function scoreFlow(flow: FlowAnalysis, mingGe: MingGeAnalysis, ctx: FlowContext)
     score -= 3;
     volatility += 2;
     brief.push('天克地冲日柱');
+    dims.love -= 2;
+    dims.health -= 1.5;
   }
 
   // 岁运互动（童限期无大运则跳过）
@@ -319,6 +391,8 @@ function scoreFlow(flow: FlowAnalysis, mingGe: MingGeAnalysis, ctx: FlowContext)
       score += direction * 4;
       volatility += 4;
       brief.push('岁运并临');
+      for (const k of Object.keys(dims) as DimKey[]) dims[k] += direction * 1.5;
+      dims.health -= 1;
     } else {
       const ganClash =
         WUXING_CONTROL[TIANGAN_WUXING[flow.gan]] === TIANGAN_WUXING[ctx.dayun.gan] ||
@@ -328,26 +402,89 @@ function scoreFlow(flow: FlowAnalysis, mingGe: MingGeAnalysis, ctx: FlowContext)
         score -= 6;
         volatility += 4;
         brief.push('天克地冲大运');
+        dims.career -= 2;
+        dims.health -= 1;
       } else if (zhiChong) {
         score -= 3;
         volatility += 2;
         brief.push('冲大运支');
+        dims.career -= 1;
       }
     }
   }
 
-  // 流年引动神煞：吉神小幅加分，凶煞小幅减分（封顶 ±4）
+  // 流年引动神煞：吉神小幅加分，凶煞小幅减分（封顶 ±4）；桃花类入感情线
   let shenshaScore = 0;
+  let loveShensha = 0;
   for (const s of flow.shensha) {
     const nature = shenshaNature(s.name);
     if (nature === '吉') shenshaScore += 1.5;
     else if (nature === '凶') shenshaScore -= 1.5;
+    if (LOVE_SHENSHA.some((n) => s.name.includes(n))) loveShensha += 1.5;
   }
   shenshaScore = Math.max(-4, Math.min(4, shenshaScore));
   score += shenshaScore;
   volatility += Math.min(2, flow.shensha.length * 0.5);
+  dims.health += shenshaScore * 0.5;
+  dims.love += Math.min(3, loveShensha);
 
-  return { score, volatility, brief };
+  return { score, volatility, brief, dims };
+}
+
+// ---------------------------------------------------------------------------
+// 流月轻量计分（P1-B：影线归真 + 流月下钻共用）
+// ---------------------------------------------------------------------------
+
+interface MonthScore {
+  month: number;
+  ganzhi: string;
+  gan: TianGan;
+  zhi: DiZhi;
+  /** 相对当年基准的原始偏移分 */
+  delta: number;
+}
+
+/**
+ * 某公历月的轻量运势计分：月干支五行对用神 + 月干十神取向 +
+ * 月支与命局/流年支的刑冲会合。不计神煞（性能考量，年层已计）。
+ */
+function scoreMonth(
+  chartBranches: DiZhi[],
+  dayGan: TianGan,
+  mingGe: MingGeAnalysis,
+  yearZhi: DiZhi,
+  year: number,
+  month: number,
+): MonthScore {
+  const ganzhi = getMonthGanzhi(`${year}-${String(month).padStart(2, '0')}-15`);
+  const gan = ganzhi[0] as TianGan;
+  const zhi = ganzhi[1] as DiZhi;
+
+  let delta = scoreWuxing(TIANGAN_WUXING[gan], mingGe, 5, 3) + scoreWuxing(DIZHI_WUXING[zhi], mingGe, 4, 2);
+  delta += (TEN_GOD_SCORE[mingGe.rizhuStrength][getTenGod(dayGan, gan)] ?? 0) * 0.8;
+
+  for (const branch of chartBranches) {
+    for (const rel of relateBranches(zhi, branch)) {
+      delta += (RELATION_EFFECT[rel.type]?.score ?? 0) * 0.6;
+    }
+  }
+  for (const rel of relateBranches(zhi, yearZhi)) {
+    delta += (RELATION_EFFECT[rel.type]?.score ?? 0) * 0.5;
+  }
+
+  return { month, ganzhi, gan, zhi, delta };
+}
+
+function scoreYearMonths(
+  chartBranches: DiZhi[],
+  dayGan: TianGan,
+  mingGe: MingGeAnalysis,
+  yearZhi: DiZhi,
+  year: number,
+): MonthScore[] {
+  const out: MonthScore[] = [];
+  for (let m = 1; m <= 12; m++) out.push(scoreMonth(chartBranches, dayGan, mingGe, yearZhi, year, m));
+  return out;
 }
 
 // 六冲对照（岁运互查用）
@@ -516,6 +653,7 @@ export function computeLifeKline(input: BaziInput, options: LifeKlineOptions = {
 
   const points: LifeKlineYearPoint[] = [];
   let prevClose: number | null = null;
+  let prevDims: DimScores | null = null;
 
   for (let age = 1; age <= span; age++) {
     const year = birthYear + age - 1;
@@ -528,6 +666,7 @@ export function computeLifeKline(input: BaziInput, options: LifeKlineOptions = {
       dayZhi: chart.day.zhi,
       dayun: dayun ? { gan: dayun.gan, zhi: dayun.zhi } : null,
       dayunScore,
+      gender: input.gender,
     });
 
     const isDayunStart = dayun ? age === dayun.ageStart : false;
@@ -550,10 +689,25 @@ export function computeLifeKline(input: BaziInput, options: LifeKlineOptions = {
       open = Math.round(clamp(prevClose + noise() * 1.5));
     }
 
-    // 振幅：基础 3 + 刑冲贡献 + 换大运之年波动加大
-    const vol = 3 + flowScore.volatility * 1.2 + (isDayunStart ? 3 : 0);
-    const high = Math.round(clamp(Math.max(open, close) + 1 + rng() * vol * 0.7, CLAMP_MIN, 100));
-    const low = Math.round(clamp(Math.min(open, close) - 1 - rng() * vol * 0.7, 12, CLAMP_MAX));
+    // 影线归真（P1-B）：上下影锚定当年 12 流月的真实极值，每根影线可解释
+    const months = scoreYearMonths(chartBranches, dayGan, mingGe, flow.zhi, year);
+    const bestM = months.reduce((a, b) => (b.delta > a.delta ? b : a));
+    const worstM = months.reduce((a, b) => (b.delta < a.delta ? b : a));
+    const high = Math.round(clamp(Math.max(open, close) + 1 + Math.max(0, bestM.delta) * 0.55, CLAMP_MIN, 100));
+    const low = Math.round(clamp(Math.min(open, close) - 1 - Math.max(0, -worstM.delta) * 0.55, 12, CLAMP_MAX));
+
+    // 分维度收盘线（P1-A）：各维度独立缓动，确定性无噪声
+    const dims: DimScores = { wealth: 0, career: 0, love: 0, health: 0 };
+    for (const k of Object.keys(dims) as DimKey[]) {
+      const dimTarget = clamp(50 + (dayunScore * 0.8 + flowScore.dims[k]) * 1.2, 22, 96);
+      if (prevDims === null) {
+        dims[k] = Math.round(dimTarget);
+      } else {
+        const dDelta = dimTarget - prevDims[k];
+        const dStep = Math.sign(dDelta) * Math.min(Math.abs(dDelta), 10 + flowScore.volatility) * 0.7;
+        dims[k] = Math.round(clamp(prevDims[k] + dStep));
+      }
+    }
 
     points.push({
       age,
@@ -570,9 +724,13 @@ export function computeLifeKline(input: BaziInput, options: LifeKlineOptions = {
       dayunIndex: dayun ? dayun.index : -1,
       isDayunStart,
       interactionsBrief: flowScore.brief,
+      dims,
+      bestMonth: { month: bestM.month, ganzhi: bestM.ganzhi },
+      worstMonth: { month: worstM.month, ganzhi: worstM.ganzhi },
     });
 
     prevClose = close;
+    prevDims = dims;
   }
 
   // MA10
@@ -649,4 +807,132 @@ export function computeLifeKline(input: BaziInput, options: LifeKlineOptions = {
       birthYear,
     },
   };
+}
+
+// ---------------------------------------------------------------------------
+// 流月K线（P1-B 下钻：某一年的 12 根月K线）
+// ---------------------------------------------------------------------------
+
+export interface LiuyueKlinePoint {
+  /** 公历月 1-12 */
+  month: number;
+  ganzhi: string;
+  /** 月干对日主的十神 */
+  tenGod: TenGod;
+  open: number;
+  close: number;
+  high: number;
+  low: number;
+  level: LifeKlineLevel;
+  comment: string;
+}
+
+export interface LiuyueKlineResult {
+  year: number;
+  age: number;
+  yearGanzhi: string;
+  /** 当年收盘分（月线围绕此基准展开） */
+  yearClose: number;
+  points: LiuyueKlinePoint[];
+}
+
+/** 某一年的流月K线：月线围绕当年收盘分展开，确定性可复现。年份不在跨度内返回 null。 */
+export function computeLiuyueKline(
+  input: BaziInput,
+  year: number,
+  options: LifeKlineOptions = {},
+): LiuyueKlineResult | null {
+  const result = computeLifeKline(input, options);
+  const yearPoint = result.points.find((p) => p.year === year);
+  if (!yearPoint) return null;
+
+  const chart = calculateBazi(input).chart;
+  const mingGe = analyzeMingGe(chart);
+  const chartBranches = [chart.year, chart.month, chart.day, chart.hour]
+    .filter((p): p is NonNullable<typeof p> => p !== null)
+    .map((p) => p.zhi);
+  const flowZhi = yearPoint.ganzhi[1] as DiZhi;
+
+  const months = scoreYearMonths(chartBranches, chart.day.gan, mingGe, flowZhi, year);
+  const anchor = yearPoint.close;
+  let prev = yearPoint.open;
+  const points: LiuyueKlinePoint[] = months.map((m) => {
+    const close = Math.round(clamp(anchor + m.delta * 0.9, 12, 98));
+    const open = prev;
+    const spread = 1 + Math.abs(m.delta) * 0.2;
+    const high = Math.round(Math.min(100, Math.max(open, close) + spread));
+    const low = Math.round(Math.max(10, Math.min(open, close) - spread));
+    const tenGod = getTenGod(chart.day.gan, m.gan);
+    prev = close;
+    return {
+      month: m.month,
+      ganzhi: m.ganzhi,
+      tenGod,
+      open,
+      close,
+      high,
+      low,
+      level: levelFromScore(close),
+      comment: commentFor(tenGod, close),
+    };
+  });
+
+  return { year, age: yearPoint.age, yearGanzhi: yearPoint.ganzhi, yearClose: yearPoint.close, points };
+}
+
+// ---------------------------------------------------------------------------
+// 叙事化人生剧本（P2-A：模板拼接，零 AI 成本）
+// ---------------------------------------------------------------------------
+
+/**
+ * 把 summary/meta/points 翻译成一段有起承转合的白话叙事（3-4 句）。
+ * 边界命盘（低龄/当前年超跨度/无时辰）自动降级，不产生空槽位。
+ */
+export function buildNarrative(result: LifeKlineResult): string[] {
+  const { meta, summary, points, dayuns } = result;
+  const out: string[] = [];
+
+  out.push(
+    `你是${meta.dayMaster}命，${meta.mingGe.geju}、日主${meta.mingGe.rizhuStrength}，喜${meta.mingGe.yongShen}而忌${meta.mingGe.jiShen}——这是这条K线与生俱来的底色。`,
+  );
+
+  const ca = summary.currentAge;
+  if (ca === null) {
+    out.push(
+      `纵观百年，${summary.bestDecade.ageStart}-${summary.bestDecade.ageEnd} 岁是平均最高的十年，${summary.peak.year} 年（${summary.peak.age}岁）为全程巅峰。`,
+    );
+    return out;
+  }
+
+  const past = points.filter((p) => p.age >= 10 && p.age < ca);
+  if (past.length >= 3) {
+    const pastPeak = past.reduce((a, b) => (b.close > a.close ? b : a));
+    out.push(`回望来路，${pastPeak.year} 年（${pastPeak.age}岁）是你已经走过的一段高点——${pastPeak.comment}。`);
+  }
+
+  const curDayun = dayuns.find((d) => d.isCurrent);
+  if (curDayun) {
+    const left = Math.max(1, curDayun.ageEnd - ca + 1);
+    out.push(
+      `此刻你行至 ${curDayun.ganZhi} 大运（${curDayun.tenGod}），整体处于${summary.currentPhase}，这步大运还余约 ${left} 年。`,
+    );
+  } else {
+    out.push(`此刻你整体处于${summary.currentPhase}。`);
+  }
+
+  const nextRise = points.find((p) => p.age > ca && (p.level === '上佳' || p.level === '极盛'));
+  if (nextRise) {
+    const bestAhead = summary.bestDecade.ageStart > ca;
+    out.push(
+      `往前看，下一段明显的上坡从 ${nextRise.year} 年（${nextRise.age}岁）铺开${
+        bestAhead ? `，而你的最佳十年（${summary.bestDecade.ageStart}-${summary.bestDecade.ageEnd}岁）尚未到来` : '，届时宜乘势而上'
+      }。`,
+    );
+  } else {
+    out.push(
+      `往前看，${summary.bestDecade.ageStart}-${summary.bestDecade.ageEnd} 岁是全程平均最高的十年，眼下宜蓄势打底。`,
+    );
+  }
+
+  return out;
 }

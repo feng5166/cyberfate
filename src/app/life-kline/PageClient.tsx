@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import dynamic from 'next/dynamic';
-import { AlertTriangle, ChevronDown, Share2, RefreshCw, TrendingUp, Sparkles, Link2, ClipboardList, LineChart, MessageCircleQuestion } from 'lucide-react';
+import { AlertTriangle, BellRing, ChevronDown, Share2, RefreshCw, ScrollText, TrendingUp, Sparkles, Link2, ClipboardList, LineChart, Lock, MessageCircleQuestion, Users } from 'lucide-react';
+import Link from 'next/link';
 import { PageShell } from '@/components/ui/PageShell';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Select } from '@/components/ui/Select';
@@ -11,12 +12,23 @@ import { SegmentControl } from '@/components/ui/SegmentControl';
 import { Button } from '@/components/ui/Button';
 import { BaguaSpinner } from '@/components/ui/BaguaSpinner';
 import { Card } from '@/components/ui/Card';
+import { Modal } from '@/components/ui/Modal';
 import { LifeKlineChart } from '@/components/life-kline/LifeKlineChart';
 import { BacktestCard, type BacktestKind, type BacktestVote } from '@/components/life-kline/BacktestCard';
 import { LifeKlineShareDialog } from '@/components/life-kline/LifeKlineShareCard';
+import { MonthDrill } from '@/components/life-kline/MonthDrill';
 import { loadBirthInfo, saveBirthInfo } from '@/lib/utils/storage';
 import { track } from '@/lib/analytics';
-import { selectBacktestYears, type LifeKlineResult, type LifeKlineLevel, type LifeKlineYearPoint } from '@/lib/bazi/lifeKline';
+import {
+  buildNarrative,
+  selectBacktestYears,
+  type DimKey,
+  type LifeKlineResult,
+  type LifeKlineLevel,
+  type LifeKlineYearPoint,
+  type LiuyueKlineResult,
+} from '@/lib/bazi/lifeKline';
+import { adviceForYear } from '@/lib/bazi/adviceTemplates';
 
 const _loadingSpinner = () => (
   <div className="flex justify-center py-8">
@@ -147,6 +159,14 @@ export default function LifeKlinePage() {
   const [shareOpen, setShareOpen] = useState(false);
   // 当前结果对应的输入（表单可能被编辑而未提交，回测/分享须锚定已计算的命盘）
   const [computedFor, setComputedFor] = useState<{ d: string; h: string; g: string } | null>(null);
+  // VIP 分维度/流月解锁状态（以服务端返回为准）
+  const [vipUnlocked, setVipUnlocked] = useState(false);
+  const [paywall, setPaywall] = useState<'dims' | 'months' | null>(null);
+  const [monthDrill, setMonthDrill] = useState<{ loading: boolean; data: LiuyueKlineResult | null }>({ loading: false, data: null });
+  const [chatInject, setChatInject] = useState<{ text: string; nonce: number } | undefined>(undefined);
+  const [remindState, setRemindState] = useState<'idle' | 'saving' | 'done' | 'need-login'>('idle');
+  const [newYearBanner, setNewYearBanner] = useState<string | null>(null);
+  const chatSectionRef = useRef<HTMLDivElement>(null);
 
   const { status } = useSession();
   const [isMember, setIsMember] = useState(false);
@@ -188,13 +208,29 @@ export default function LifeKlinePage() {
           knowTime: hourNum !== undefined,
           birthHourNum: hourNum,
           birthMinute: hourNum !== undefined ? 0 : undefined,
+          withDims: true,
         }),
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok || !body.success) throw new Error(body.error || `请求失败 (${res.status})`);
-      setResult(body.data as LifeKlineResult);
+      const data = body.data as LifeKlineResult;
+      setResult(data);
+      setVipUnlocked(Boolean(body.vipDims));
       setComputedFor({ d, h, g });
       setShowForm(false);
+      setMonthDrill({ loading: false, data: null });
+      setRemindState('idle');
+      // 跨流年横幅（P2-B）：上次访问的流年与本次不同则提示报告已更新
+      try {
+        const seenKey = 'kline_seen_flow_year';
+        const seen = localStorage.getItem(seenKey);
+        const nowYear = String(data.summary.currentYear);
+        if (seen && seen !== nowYear && data.summary.currentAge !== null) {
+          const cur = data.points[data.summary.currentAge - 1];
+          setNewYearBanner(cur ? `你的 ${cur.ganzhi} 流年K线已更新，看看新一年的走势与宜忌。` : null);
+        }
+        localStorage.setItem(seenKey, nowYear);
+      } catch { /* ignore */ }
       saveBirthInfo({ birthDate: d, birthHour: h, gender: g });
       track('tool_ai_complete', { tool: 'life_kline', duration_ms: Date.now() - startTime });
     } catch (err) {
@@ -281,7 +317,102 @@ export default function LifeKlinePage() {
     chartCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
+  // ── P1-A/P1-B：付费墙 ──
+  const handlePaywall = (feature: 'dims' | 'months') => {
+    track(feature === 'dims' ? 'kline_dim_paywall_show' : 'kline_month_paywall_show', {});
+    setPaywall(feature);
+  };
+
+  // ── P1-B：流月下钻 ──
+  const handleYearClick = async (point: LifeKlineYearPoint) => {
+    if (!computedFor) return;
+    track('kline_month_drill', { year: point.year, is_vip: vipUnlocked });
+    setMonthDrill({ loading: true, data: null });
+    try {
+      const hourNum = shichenToHour(Number(computedFor.h));
+      const res = await fetch('/api/life-kline/months', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          gender: computedFor.g,
+          birthDate: computedFor.d,
+          knowTime: hourNum !== undefined,
+          birthHourNum: hourNum,
+          birthMinute: hourNum !== undefined ? 0 : undefined,
+          year: point.year,
+        }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok || !body.success) throw new Error(body.error || '加载失败');
+      setMonthDrill({ loading: false, data: body.data as LiuyueKlineResult });
+    } catch {
+      setMonthDrill({ loading: false, data: null });
+    }
+  };
+
+  // ── P1-C：场景化 AI 入口 ──
+  const injectChatQuestion = (text: string, from: string) => {
+    track('kline_advice_to_chat', { from });
+    setChatInject({ text, nonce: Date.now() });
+    setTimeout(() => chatSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+  };
+
+  const handleAskAiYear = (point: LifeKlineYearPoint) => {
+    if (!result) return;
+    const advice = adviceForYear({
+      level: point.level,
+      yongShen: result.meta.mingGe.yongShen,
+      jiShen: result.meta.mingGe.jiShen,
+      tenGod: point.ganTenGod,
+    });
+    injectChatQuestion(
+      `我 ${point.year} 年（${point.ganzhi} 年，${point.level}）宜${advice.yi.join('、')}，忌${advice.ji.join('、')}——这一年具体该怎么安排？`,
+      point.level,
+    );
+  };
+
+  // ── P2-B：换大运提醒意向 ──
+  const handleRemind = async (targetYear: number, dayunGanZhi: string) => {
+    if (status !== 'authenticated') {
+      setRemindState('need-login');
+      return;
+    }
+    if (!computedFor || remindState === 'saving' || remindState === 'done') return;
+    setRemindState('saving');
+    track('kline_remind_subscribe', { target_year: targetYear });
+    try {
+      const res = await fetch('/api/life-kline/remind', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          birthDate: computedFor.d,
+          gender: computedFor.g,
+          birthHourNum: shichenToHour(Number(computedFor.h)),
+          targetYear,
+          dayunGanZhi,
+        }),
+      });
+      const body = await res.json().catch(() => ({}));
+      setRemindState(res.ok && body.success ? 'done' : 'idle');
+    } catch {
+      setRemindState('idle');
+    }
+  };
+
   const currentDayun = result?.dayuns.find((d) => d.isCurrent) ?? null;
+  const nextDayun =
+    result && currentDayun ? result.dayuns.find((d) => d.index === currentDayun.index + 1) ?? null : null;
+
+  // 换运倒计时：以下一步大运起始年的生日为近似换运锚点（起运有月数零头，标注「约」）
+  const dayunCountdownDays = (() => {
+    if (!nextDayun || !computedFor) return null;
+    const [, m, day] = computedFor.d.split('-').map(Number);
+    const target = new Date(nextDayun.yearStart, (m || 1) - 1, day || 1);
+    const days = Math.ceil((target.getTime() - Date.now()) / 86400000);
+    return days > 0 ? days : null;
+  })();
+
+  const narrative = useMemo(() => (result ? buildNarrative(result) : []), [result]);
   const currentPoint =
     result && result.summary.currentAge !== null
       ? result.points[result.summary.currentAge - 1] ?? null
@@ -408,6 +539,21 @@ export default function LifeKlinePage() {
       {result && (
         <PageShell width="wide" className="pb-6 md:pb-8">
           <div className="flex flex-col gap-4 md:gap-6">
+            {/* 新流年横幅（P2-B） */}
+            {newYearBanner && (
+              <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+                <Sparkles className="w-4 h-4 shrink-0" style={{ color: '#059669' }} strokeWidth={1.5} />
+                <span className="text-sm text-emerald-800 flex-1">{newYearBanner}</span>
+                <button
+                  type="button"
+                  onClick={() => setNewYearBanner(null)}
+                  className="text-xs text-emerald-700/70 hover:text-emerald-800 px-2 py-1"
+                >
+                  知道了
+                </button>
+              </div>
+            )}
+
             {/* 命盘信息条 */}
             <Card className={cardClass}>
               <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
@@ -426,14 +572,59 @@ export default function LifeKlinePage() {
                 </div>
                 <div className="flex-1" />
                 {currentDayun && (
-                  <div className="rounded-xl bg-[#F6F4F1] border border-[#1C1A16]/8 px-4 py-2.5">
-                    <p className="text-[11px] text-[#1C1A16]/50">当前大运</p>
-                    <p className="text-sm font-medium text-[#1C1A16] mt-0.5">
+                  <div className="rounded-xl bg-[#F6F4F1] border border-[#1C1A16]/8 px-4 py-2.5 min-w-[260px]">
+                    <div className="flex items-center gap-2">
+                      <p className="text-[11px] text-[#1C1A16]/50">当前大运</p>
+                      {result.summary.currentAge !== null && (
+                        <div className="flex-1 h-1 rounded-full bg-[#1C1A16]/8 overflow-hidden" aria-hidden>
+                          <div
+                            className="h-full rounded-full"
+                            style={{
+                              background: '#059669',
+                              width: `${Math.round(
+                                (Math.min(
+                                  Math.max(result.summary.currentAge - currentDayun.ageStart, 0),
+                                  currentDayun.ageEnd - currentDayun.ageStart,
+                                ) /
+                                  (currentDayun.ageEnd - currentDayun.ageStart + 1)) *
+                                  100,
+                              )}%`,
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-sm font-medium text-[#1C1A16] mt-1">
                       {currentDayun.tenGod} · {currentDayun.ganZhi}
                       <span className="ml-2 text-[#1C1A16]/55 font-normal">
                         {currentDayun.ageStart}-{currentDayun.ageEnd}岁（{currentDayun.yearStart}-{currentDayun.yearEnd}）
                       </span>
                     </p>
+                    {nextDayun && (
+                      <div className="mt-1 flex items-center gap-2 text-[11px] text-[#1C1A16]/55">
+                        <span>
+                          {dayunCountdownDays !== null
+                            ? `距换 ${nextDayun.ganZhi} 大运（${nextDayun.tenGod}）约 ${dayunCountdownDays} 天`
+                            : `下一步 ${nextDayun.ganZhi} 大运（${nextDayun.tenGod}），${nextDayun.yearStart} 年起`}
+                        </span>
+                        {remindState === 'done' ? (
+                          <span className="text-emerald-700">已订阅提醒 ✓</span>
+                        ) : remindState === 'need-login' ? (
+                          <span className="text-amber-700">登录后可订阅提醒</span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleRemind(nextDayun.yearStart, nextDayun.ganZhi)}
+                            disabled={remindState === 'saving'}
+                            className="inline-flex items-center gap-1 font-medium hover:gap-1.5 transition-all disabled:opacity-50"
+                            style={{ color: '#059669' }}
+                          >
+                            <BellRing className="w-3 h-3" strokeWidth={1.5} />
+                            换运时提醒我
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
                 <div className="text-right">
@@ -481,20 +672,52 @@ export default function LifeKlinePage() {
                     <span aria-hidden className="pointer-events-none w-1 h-4 rounded inline-block" style={{ background: '#059669' }} />
                     <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em]">运势K线</h2>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShareOpen(true);
-                      track('share_card_open', { tool: 'life_kline' });
-                    }}
-                    disabled={exporting}
-                    className="inline-flex items-center gap-1.5 text-xs text-[#1C1A16]/60 hover:text-[#1C1A16] border border-[#1C1A16]/15 rounded-lg px-3 py-1.5 transition-colors disabled:opacity-50"
-                  >
-                    <Share2 className="w-3.5 h-3.5" />
-                    {exporting ? '导出中...' : '分享'}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href="/life-kline/compare"
+                      className="inline-flex items-center gap-1.5 text-xs text-[#1C1A16]/60 hover:text-[#1C1A16] border border-[#1C1A16]/15 rounded-lg px-3 py-1.5 transition-colors"
+                    >
+                      <Users className="w-3.5 h-3.5" />
+                      合盘对比
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShareOpen(true);
+                        track('share_card_open', { tool: 'life_kline' });
+                      }}
+                      disabled={exporting}
+                      className="inline-flex items-center gap-1.5 text-xs text-[#1C1A16]/60 hover:text-[#1C1A16] border border-[#1C1A16]/15 rounded-lg px-3 py-1.5 transition-colors disabled:opacity-50"
+                    >
+                      <Share2 className="w-3.5 h-3.5" />
+                      {exporting ? '导出中...' : '分享'}
+                    </button>
+                  </div>
                 </div>
-                <LifeKlineChart points={result.points} currentAge={result.summary.currentAge} />
+                <LifeKlineChart
+                  points={result.points}
+                  currentAge={result.summary.currentAge}
+                  mingGe={{ yongShen: result.meta.mingGe.yongShen, jiShen: result.meta.mingGe.jiShen }}
+                  vipUnlocked={vipUnlocked}
+                  onPaywall={handlePaywall}
+                  onYearClick={handleYearClick}
+                  onAskAi={handleAskAiYear}
+                  onDimSwitch={(dim: DimKey, active: boolean) => track('kline_dim_switch', { dim, active })}
+                />
+                {monthDrill.loading && (
+                  <div className="mt-4 flex items-center justify-center gap-2 py-6 text-sm text-[#1C1A16]/50">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-brand-accent" />
+                    正在推演流月...
+                  </div>
+                )}
+                {monthDrill.data && (
+                  <MonthDrill
+                    data={monthDrill.data}
+                    mingGe={{ yongShen: result.meta.mingGe.yongShen, jiShen: result.meta.mingGe.jiShen }}
+                    onAskAi={(q) => injectChatQuestion(q, 'month_drill')}
+                    onClose={() => setMonthDrill({ loading: false, data: null })}
+                  />
+                )}
                 <p className="mt-4 text-[11px] leading-relaxed text-[#1C1A16]/40">
                   本分析基于传统命理推算，仅供参考与娱乐。人生走向取决于个人的选择、努力和际遇，运势只是参考的风向，而你才是掌舵的人。
                 </p>
@@ -549,6 +772,24 @@ export default function LifeKlinePage() {
               </Card>
             )}
 
+            {/* 人生剧本（P2-A：叙事化包装） */}
+            {narrative.length > 0 && (
+              <Card className={cardClass}>
+                <div className="flex items-center gap-2 mb-3">
+                  <span aria-hidden className="pointer-events-none w-1 h-4 rounded inline-block" style={{ background: '#059669' }} />
+                  <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em]">人生剧本</h2>
+                  <ScrollText className="w-4 h-4 text-[#1C1A16]/30" strokeWidth={1.5} />
+                </div>
+                <div className="space-y-2">
+                  {narrative.map((s) => (
+                    <p key={s} className="text-sm leading-relaxed text-[#1C1A16]/75">
+                      {s}
+                    </p>
+                  ))}
+                </div>
+              </Card>
+            )}
+
             {/* 运势概览 */}
             <Card className={cardClass}>
               <div className="flex items-center gap-2 mb-4">
@@ -592,25 +833,28 @@ export default function LifeKlinePage() {
             </Card>
 
             {/* AI 问答 */}
-            <BaziChatSection
-              baziData={{
-                dayMaster: result.meta.dayMaster,
-                mingGe: result.meta.mingGe,
-                aiAnalysis: klineSummary,
-              }}
-              birthInput={{
-                birthDate,
-                gender: gender === 'female' ? 'female' : 'male',
-                knowTime: shichenToHour(Number(birthHour)) !== undefined,
-                birthHourNum: shichenToHour(Number(birthHour)),
-                birthMinute: 0,
-              }}
-              isLoggedIn={status === 'authenticated'}
-              isVip={isMember}
-              title="AI 问答"
-              subtitle="对K线有疑问？问问 AI 命理师"
-              presetQuestions={KLINE_PRESET_QUESTIONS}
-            />
+            <div ref={chatSectionRef}>
+              <BaziChatSection
+                baziData={{
+                  dayMaster: result.meta.dayMaster,
+                  mingGe: result.meta.mingGe,
+                  aiAnalysis: klineSummary,
+                }}
+                birthInput={{
+                  birthDate,
+                  gender: gender === 'female' ? 'female' : 'male',
+                  knowTime: shichenToHour(Number(birthHour)) !== undefined,
+                  birthHourNum: shichenToHour(Number(birthHour)),
+                  birthMinute: 0,
+                }}
+                isLoggedIn={status === 'authenticated'}
+                isVip={isMember}
+                title="AI 问答"
+                subtitle="对K线有疑问？问问 AI 命理师"
+                presetQuestions={KLINE_PRESET_QUESTIONS}
+                injectQuestion={chatInject}
+              />
+            </div>
           </div>
 
           {/* 分享弹层（P0-B）：分享卡为主，完整图导出为次级入口 */}
@@ -621,6 +865,36 @@ export default function LifeKlinePage() {
             birthDate={computedFor?.d ?? birthDate}
             onExportFull={handleExport}
           />
+
+          {/* 付费墙（P1-A/P1-B）：深度与颗粒度付费，信任与传播免费 */}
+          <Modal
+            isOpen={paywall !== null}
+            onClose={() => setPaywall(null)}
+            title={paywall === 'dims' ? '解锁四维运势曲线' : '解锁流月下钻'}
+            size="sm"
+          >
+            <div className="text-center">
+              <div className="mx-auto w-[52px] h-[52px] rounded-full flex items-center justify-center" style={{ background: '#D1FAE5' }}>
+                <Lock className="w-6 h-6" strokeWidth={1.5} style={{ color: '#059669' }} />
+              </div>
+              <p className="mt-4 text-sm leading-relaxed text-[#1C1A16]/70">
+                {paywall === 'dims'
+                  ? '财运、事业、感情、健康四条独立曲线——同一年可以利财不利婚，总运一条线说不清的，四维给你拆开看。'
+                  : '点开任意一年，看 12 根流月K线：哪个月宜进、哪个月宜守，把节奏精确到月。'}
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  track('kline_dim_paywall_click', { feature: paywall });
+                  window.location.href = '/pricing';
+                }}
+                className="mt-5 w-full rounded-lg bg-brand-accent text-white font-semibold tracking-[0.08em] text-sm px-4 py-2.5 hover:bg-brand-accent-hover transition-colors"
+              >
+                升级专业版解锁
+              </button>
+              <p className="mt-2 text-[11px] text-[#1C1A16]/40">专业版 $49/年 · 全站 AI 与深度功能不限量</p>
+            </div>
+          </Modal>
         </PageShell>
       )}
 

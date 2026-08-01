@@ -64,6 +64,8 @@ interface BaziChatSectionProps {
   title?: string;
   subtitle?: string;
   presetQuestions?: string[];
+  /** 外部注入问题（场景化入口：nonce 变化时填充输入框） */
+  injectQuestion?: { text: string; nonce: number };
 }
 
 const cardClass =
@@ -141,6 +143,7 @@ export function BaziChatSection({
   title = 'AI 八字问答',
   subtitle = '基于您的命盘智能问答 · 仅供参考',
   presetQuestions = PRESET_QUESTIONS,
+  injectQuestion,
 }: BaziChatSectionProps) {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -154,6 +157,12 @@ export function BaziChatSection({
   useEffect(() => {
     setFavorites(loadFavorites());
   }, []);
+
+  // 场景化入口注入问题（如K线某年的「问 AI」）
+  useEffect(() => {
+    if (injectQuestion && injectQuestion.text) setInput(injectQuestion.text);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [injectQuestion?.nonce]);
 
   useEffect(() => {
     if (!toast) return;

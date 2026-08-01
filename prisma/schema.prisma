@@ -323,3 +323,17 @@ model KlineBacktestVote {
   @@index([createdAt])
   @@map("kline_backtest_votes")
 }
+
+// 换大运提醒意向（PRD-LIFE-KLINE-V2 P2-B：V2 仅落库意向，通道 V2.1 选型后触达）
+model KlineRemindIntent {
+  id          String   @id @default(cuid())
+  userId      String
+  birthHash   String   // 与回测投票同规则的命盘哈希
+  targetYear  Int      // 换运公历年
+  dayunGanZhi String   // 下一步大运干支，如 "甲午"
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, birthHash, targetYear])
+  @@index([targetYear])
+  @@map("kline_remind_intents")
+}
