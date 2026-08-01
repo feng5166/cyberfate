@@ -11,6 +11,7 @@
 | [PRD-REVERSE-ENGINEERED.md](./PRD-REVERSE-ENGINEERED.md) | 整体产品 PRD（逆向梳理） |
 | [PRD-MODULES-DETAILED.md](./PRD-MODULES-DETAILED.md) | 模块级 PRD（10 大命理模块） |
 | [PRD-LIFE-KLINE-V2.md](./PRD-LIFE-KLINE-V2.md) | 人生K线 V2 PRD（回测/分享/分维度/流月/合盘） |
+| [PRD-BAZI-V2.md](./PRD-BAZI-V2.md) | 八字分析 V2 PRD（速读/议题式AI/应期/刑冲可视化/档案合盘） |
 | [IMPROVEMENT-TASKS.md](./IMPROVEMENT-TASKS.md) | 改进任务清单 |
 | [AI_COST_MODEL.md](./AI_COST_MODEL.md) | AI 成本模型 |
 | [DEPLOYMENT.md](./DEPLOYMENT.md) | 部署说明 |
