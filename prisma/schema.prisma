@@ -304,3 +304,22 @@ model DailyFortuneQaHistory {
   @@index([userId])
   @@map("daily_fortune_qa_history")
 }
+
+// 人生K线回测投票（PRD-LIFE-KLINE-V2 P0-A：「准」占比是传播推广的护栏指标）
+model KlineBacktestVote {
+  id        String   @id @default(cuid())
+  userId    String
+  birthHash String   // sha256(出生信息) 截断，同一用户同一命盘同一年份唯一
+  year      Int      // 被投票的公历年
+  age       Int      // 当年虚岁
+  score     Int      // 当年收盘运势分
+  level     String   // 等级：极盛/上佳/平稳/承压/低谷
+  kind      String   // peak（高分年）| trough（低分年）
+  vote      String   // yes（准）| no（不准）
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, birthHash, year])
+  @@index([createdAt])
+  @@map("kline_backtest_votes")
+}

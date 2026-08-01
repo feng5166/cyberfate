@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeLifeKline, levelFromScore } from './lifeKline';
+import { computeLifeKline, levelFromScore, selectBacktestYears } from './lifeKline';
 import type { BaziInput } from './types';
 
 const SAMPLE: BaziInput = {
@@ -117,5 +117,54 @@ describe('levelFromScore', () => {
     expect(levelFromScore(60)).toBe('平稳');
     expect(levelFromScore(50)).toBe('承压');
     expect(levelFromScore(40)).toBe('低谷');
+  });
+});
+
+describe('selectBacktestYears', () => {
+  it('虚岁 ≥20：返回过去区间内的高分年与低分年，且两年拉开距离', () => {
+    const result = computeLifeKline(SAMPLE, { currentYear: 2026 }); // 1983 年生，虚岁 44
+    const pick = selectBacktestYears(result);
+    expect(pick).not.toBeNull();
+    const { peak, trough } = pick!;
+    const currentAge = result.summary.currentAge!;
+    for (const p of [peak, trough]) {
+      expect(p.age).toBeGreaterThanOrEqual(18);
+      expect(p.age).toBeLessThanOrEqual(currentAge - 1);
+    }
+    expect(peak.close).toBeGreaterThan(trough.close);
+    // 区间内没有比 peak 更高的年份
+    const past = result.points.filter((p) => p.age >= 18 && p.age <= currentAge - 1);
+    expect(Math.max(...past.map((p) => p.close))).toBe(peak.close);
+  });
+
+  it('相邻极值年时低分年取次低，保证间隔 >2 年（或退化为绝对最低）', () => {
+    const result = computeLifeKline(SAMPLE, { currentYear: 2026 });
+    const pick = selectBacktestYears(result)!;
+    const currentAge = result.summary.currentAge!;
+    const past = result.points.filter((p) => p.age >= 18 && p.age <= currentAge - 1);
+    const absoluteLow = Math.min(...past.map((p) => p.close));
+    const gapOk = Math.abs(pick.trough.year - pick.peak.year) > 2;
+    expect(gapOk || pick.trough.close === absoluteLow).toBe(true);
+  });
+
+  it('虚岁 <20 不出回测（可回忆区间太短）', () => {
+    const young = computeLifeKline(
+      { gender: 'female', birthDate: '2010-05-01', knowTime: false },
+      { currentYear: 2026 },
+    );
+    expect(selectBacktestYears(young)).toBeNull();
+  });
+
+  it('当前年超出百年跨度（currentAge=null）不出回测', () => {
+    const result = computeLifeKline(SAMPLE, { currentYear: 2100 });
+    expect(result.summary.currentAge).toBeNull();
+    expect(selectBacktestYears(result)).toBeNull();
+  });
+
+  it('确定性：同一命盘两次选择结果一致', () => {
+    const a = selectBacktestYears(computeLifeKline(SAMPLE, { currentYear: 2026 }))!;
+    const b = selectBacktestYears(computeLifeKline(SAMPLE, { currentYear: 2026 }))!;
+    expect(a.peak.year).toBe(b.peak.year);
+    expect(a.trough.year).toBe(b.trough.year);
   });
 });

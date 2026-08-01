@@ -392,6 +392,39 @@ function commentFor(tenGod: TenGod, score: number): string {
 }
 
 // ---------------------------------------------------------------------------
+// 回测年份选择（P0-A：从已经历的年份中选极值年做「准/不准」投票）
+// ---------------------------------------------------------------------------
+
+/** 回测区间下限：太小的年纪没有可回忆的「运势」 */
+const BACKTEST_MIN_AGE = 18;
+/** 虚岁低于此值不出回测模块（可回忆区间太短） */
+const BACKTEST_MIN_CURRENT_AGE = 20;
+
+export interface BacktestPick {
+  peak: LifeKlineYearPoint;
+  trough: LifeKlineYearPoint;
+}
+
+/**
+ * 从用户已经历的区间（虚岁 [18, 当前-1]）选收盘最高与最低各一年。
+ * 两年相隔 ≤2 年时低分年取次低，保证回忆能拉开；选不出两个不同年份返回 null。
+ */
+export function selectBacktestYears(result: LifeKlineResult): BacktestPick | null {
+  const { currentAge } = result.summary;
+  if (currentAge === null || currentAge < BACKTEST_MIN_CURRENT_AGE) return null;
+
+  const past = result.points.filter((p) => p.age >= BACKTEST_MIN_AGE && p.age <= currentAge - 1);
+  if (past.length < 2) return null;
+
+  const peak = past.reduce((a, b) => (b.close > a.close ? b : a));
+  const ascending = [...past].sort((a, b) => a.close - b.close);
+  const trough = ascending.find((p) => Math.abs(p.year - peak.year) > 2) ?? ascending[0];
+  if (trough.age === peak.age) return null;
+
+  return { peak, trough };
+}
+
+// ---------------------------------------------------------------------------
 // 主入口
 // ---------------------------------------------------------------------------
 

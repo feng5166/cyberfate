@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import dynamic from 'next/dynamic';
-import { AlertTriangle, ChevronDown, Download, RefreshCw, TrendingUp, Sparkles, Link2, ClipboardList, LineChart, MessageCircleQuestion } from 'lucide-react';
+import { AlertTriangle, ChevronDown, Share2, RefreshCw, TrendingUp, Sparkles, Link2, ClipboardList, LineChart, MessageCircleQuestion } from 'lucide-react';
 import { PageShell } from '@/components/ui/PageShell';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Select } from '@/components/ui/Select';
@@ -12,9 +12,11 @@ import { Button } from '@/components/ui/Button';
 import { BaguaSpinner } from '@/components/ui/BaguaSpinner';
 import { Card } from '@/components/ui/Card';
 import { LifeKlineChart } from '@/components/life-kline/LifeKlineChart';
+import { BacktestCard, type BacktestKind, type BacktestVote } from '@/components/life-kline/BacktestCard';
+import { LifeKlineShareDialog } from '@/components/life-kline/LifeKlineShareCard';
 import { loadBirthInfo, saveBirthInfo } from '@/lib/utils/storage';
 import { track } from '@/lib/analytics';
-import type { LifeKlineResult, LifeKlineLevel } from '@/lib/bazi/lifeKline';
+import { selectBacktestYears, type LifeKlineResult, type LifeKlineLevel, type LifeKlineYearPoint } from '@/lib/bazi/lifeKline';
 
 const _loadingSpinner = () => (
   <div className="flex justify-center py-8">
@@ -142,6 +144,9 @@ export default function LifeKlinePage() {
   const [exporting, setExporting] = useState(false);
   // 有结果后表单默认收起，点「重算」再展开
   const [showForm, setShowForm] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  // 当前结果对应的输入（表单可能被编辑而未提交，回测/分享须锚定已计算的命盘）
+  const [computedFor, setComputedFor] = useState<{ d: string; h: string; g: string } | null>(null);
 
   const { status } = useSession();
   const [isMember, setIsMember] = useState(false);
@@ -188,6 +193,7 @@ export default function LifeKlinePage() {
       const body = await res.json().catch(() => ({}));
       if (!res.ok || !body.success) throw new Error(body.error || `请求失败 (${res.status})`);
       setResult(body.data as LifeKlineResult);
+      setComputedFor({ d, h, g });
       setShowForm(false);
       saveBirthInfo({ birthDate: d, birthHour: h, gender: g });
       track('tool_ai_complete', { tool: 'life_kline', duration_ms: Date.now() - startTime });
@@ -238,6 +244,41 @@ export default function LifeKlinePage() {
     } finally {
       setExporting(false);
     }
+  };
+
+  // 回测卡（P0-A）：从已经历区间选高光/承压各一年
+  const backtest = useMemo(() => (result ? selectBacktestYears(result) : null), [result]);
+  const backtestBirthKey = computedFor ? `${computedFor.d}|${computedFor.h}|${computedFor.g}` : '';
+
+  const handleBacktestVote = (kind: BacktestKind, point: LifeKlineYearPoint, vote: BacktestVote) => {
+    track('kline_backtest_vote', {
+      vote,
+      kind,
+      level: point.level,
+      year_offset: (result?.summary.currentYear ?? point.year) - point.year,
+    });
+    // 仅登录用户落库（护栏指标数据源）；游客只打埋点
+    if (status === 'authenticated' && computedFor) {
+      fetch('/api/life-kline/backtest-vote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          birthDate: computedFor.d,
+          gender: computedFor.g,
+          birthHourNum: shichenToHour(Number(computedFor.h)),
+          year: point.year,
+          age: point.age,
+          score: point.close,
+          level: point.level,
+          kind,
+          vote,
+        }),
+      }).catch(() => {});
+    }
+  };
+
+  const scrollToChart = () => {
+    chartCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
   const currentDayun = result?.dayuns.find((d) => d.isCurrent) ?? null;
@@ -421,6 +462,17 @@ export default function LifeKlinePage() {
               </div>
             </Card>
 
+            {/* 回测卡：先验过去，再看未来 */}
+            {backtest && (
+              <BacktestCard
+                pick={backtest}
+                birthKey={backtestBirthKey}
+                className={cardClass}
+                onVote={handleBacktestVote}
+                onExploreFuture={scrollToChart}
+              />
+            )}
+
             {/* 运势K线 */}
             <div ref={chartCardRef}>
               <Card className={cardClass}>
@@ -431,12 +483,15 @@ export default function LifeKlinePage() {
                   </div>
                   <button
                     type="button"
-                    onClick={handleExport}
+                    onClick={() => {
+                      setShareOpen(true);
+                      track('share_card_open', { tool: 'life_kline' });
+                    }}
                     disabled={exporting}
                     className="inline-flex items-center gap-1.5 text-xs text-[#1C1A16]/60 hover:text-[#1C1A16] border border-[#1C1A16]/15 rounded-lg px-3 py-1.5 transition-colors disabled:opacity-50"
                   >
-                    <Download className="w-3.5 h-3.5" />
-                    {exporting ? '导出中...' : '导出'}
+                    <Share2 className="w-3.5 h-3.5" />
+                    {exporting ? '导出中...' : '分享'}
                   </button>
                 </div>
                 <LifeKlineChart points={result.points} currentAge={result.summary.currentAge} />
@@ -557,6 +612,15 @@ export default function LifeKlinePage() {
               presetQuestions={KLINE_PRESET_QUESTIONS}
             />
           </div>
+
+          {/* 分享弹层（P0-B）：分享卡为主，完整图导出为次级入口 */}
+          <LifeKlineShareDialog
+            open={shareOpen}
+            onClose={() => setShareOpen(false)}
+            result={result}
+            birthDate={computedFor?.d ?? birthDate}
+            onExportFull={handleExport}
+          />
         </PageShell>
       )}
 
