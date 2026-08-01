@@ -1392,7 +1392,11 @@ function BaziPageContent() {
           return false;
         }
         if (response.status === 401) {
-          setError('请登录后使用');
+          setAuthReason({
+            title: '登录后即可使用',
+            desc: '登录或注册账号即可免费体验 AI 解读；开通会员不限次并解锁更多权益。',
+          });
+          setShowAuthModal(true);
           setShowAiButton(true);
           return false;
         }

@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { Bookmark, BookmarkCheck, ChevronDown, ChevronUp, Clock, Send, Wrench, X } from 'lucide-react';
 import Link from 'next/link';
+import { useAiGate, AiGateModals } from '@/components/ai/useAiGate';
 import { Card } from '@/components/ui/Card';
 import { OracleLoading } from '@/components/ui/OracleLoading';
 import { MiniMarkdown } from '@/components/ui/MiniMarkdown';
@@ -145,6 +147,8 @@ export function BaziChatSection({
   presetQuestions = PRESET_QUESTIONS,
   injectQuestion,
 }: BaziChatSectionProps) {
+  const pathname = usePathname();
+  const gate = useAiGate(isLoggedIn);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [favorites, setFavorites] = useState<FavoriteRecord[]>([]);
@@ -205,7 +209,11 @@ export function BaziChatSection({
     if (submitting) return;
 
     if (!isLoggedIn) {
-      setToast('请登录后使用');
+      // 统一门禁：游客提问直接弹登录框（而非 toast）
+      gate.openAuth({
+        title: '登录后即可使用 AI 问答',
+        desc: '登录或注册账号即可向 AI 命理师提问；开通会员不限次并解锁更多权益。',
+      });
       return;
     }
     if (!isVip) {
@@ -241,7 +249,10 @@ export function BaziChatSection({
       });
 
       if (res.status === 401) {
-        setToast('请登录后使用');
+        gate.openAuth({
+          title: '登录后即可使用 AI 问答',
+          desc: '登录或注册账号即可向 AI 命理师提问；开通会员不限次并解锁更多权益。',
+        });
         setMessages(prev => prev.filter(m => m.id !== id));
         return;
       }
@@ -594,6 +605,9 @@ export function BaziChatSection({
           </div>
         </div>
       )}
+
+      {/* 游客提问 → 登录引导（全站 AI 问答统一行为） */}
+      <AiGateModals gate={gate} callbackUrl={pathname ?? '/bazi'} />
     </Card>
   );
 }
