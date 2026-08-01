@@ -46,8 +46,19 @@ describe('proxyLLMDeltaStream', () => {
     expect(out).toContain('data: {"content":"你"}\n\n');
     expect(out).toContain('data: {"content":"好"}\n\n');
     expect(out.trim().endsWith('data: [DONE]')).toBe(true);
-    expect(onComplete).toHaveBeenCalledWith('你好', false); // 完整答案 + 未中断
+    expect(onComplete).toHaveBeenCalledWith('你好', false, false); // 完整答案 + 未中断 + 未截断
     expect(handle.release).toHaveBeenCalled();
+  });
+
+  it('上游 finish_reason=length 时以 truncated=true 回调 onComplete', async () => {
+    const upstream = upstreamFrom([
+      'data: {"choices":[{"delta":{"content":"半截"}}]}\n\n',
+      'data: {"choices":[{"delta":{},"finish_reason":"length"}]}\n\n',
+      'data: [DONE]\n\n',
+    ]);
+    const onComplete = vi.fn();
+    await collect(proxyLLMDeltaStream(upstream, fakeHandle(), { onComplete }));
+    expect(onComplete).toHaveBeenCalledWith('半截', false, true);
   });
 
   it('contentFrame 可自定义帧形状（如 {type:"content"}）', async () => {

@@ -487,7 +487,7 @@ ${details.join('\n')}
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${provider.apiKey}` },
       body: JSON.stringify({
         model: PRIMARY_MODEL,
-        max_tokens: 3000,
+        max_tokens: 6000,
         temperature: 0.4,
         enable_thinking: false,
         response_format: { type: 'json_object' },
@@ -650,7 +650,7 @@ async function runDeepReport(params: {
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${provider.apiKey}` },
       body: JSON.stringify({
         model: PRIMARY_MODEL,
-        max_tokens: 5000,
+        max_tokens: 6000,
         temperature: 0.5,
         enable_thinking: false,
         messages: [
@@ -906,7 +906,7 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         model: PRIMARY_MODEL,
-        max_tokens: 5000,
+        max_tokens: 6000,
         temperature: 0.5,
         enable_thinking: false,
         stream: true,

@@ -56,6 +56,9 @@ function getTemperature(feature?: string): number {
   return TEMPERATURE_CONFIG[feature] ?? TEMPERATURE_CONFIG.default;
 }
 
+// DeepSeek chat 系列输出上限 8k；截断重试的提升上限不超过它，避免网关 400
+const MAX_OUTPUT_TOKENS_CAP = 8000;
+
 interface CallDeepSeekOptions {
   /** 走 response_format: json_object，让网关强制返回合法 JSON（system prompt 必须含 "json" 字样） */
   jsonMode?: boolean;
@@ -79,6 +82,9 @@ async function callModelOnce(
 ): Promise<string> {
   const maxRetries = 3;
   let lastError: unknown;
+  // 回复完整性优先：finish_reason=length 说明被 max_tokens 截断，提升上限重试一次
+  let effectiveMaxTokens = maxTokens;
+  let lengthRetried = false;
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     const controller = new AbortController();
@@ -93,7 +99,7 @@ async function callModelOnce(
         },
         body: JSON.stringify({
           model,
-          max_tokens: maxTokens,
+          max_tokens: effectiveMaxTokens,
           temperature: getTemperature(feature),
           enable_thinking: false,
           ...(opts.jsonMode ? { response_format: { type: 'json_object' } } : {}),
@@ -119,6 +125,16 @@ async function callModelOnce(
       }
 
       const data = await response.json();
+      const finishReason = data.choices?.[0]?.finish_reason;
+      if (finishReason === 'length' && !lengthRetried && attempt < maxRetries - 1) {
+        lengthRetried = true;
+        effectiveMaxTokens = Math.min(effectiveMaxTokens * 2, MAX_OUTPUT_TOKENS_CAP);
+        console.warn(`[callDeepSeek:${model}] ${feature ?? 'default'} 回复被 max_tokens 截断，提升至 ${effectiveMaxTokens} 重试`);
+        continue;
+      }
+      if (finishReason === 'length') {
+        console.warn(`[callDeepSeek:${model}] ${feature ?? 'default'} 回复仍被 max_tokens(${effectiveMaxTokens}) 截断`);
+      }
       const content = data.choices?.[0]?.message?.content || data.choices?.[0]?.message?.reasoning_content || '';
       if (content.length < 10) {
         const reasoningContent = data.choices?.[0]?.message?.reasoning_content || '';
@@ -153,7 +169,7 @@ async function callModelOnce(
 async function callDeepSeek(
   systemPrompt: string,
   userPrompt: string,
-  maxTokens = 800,
+  maxTokens = 2000,
   feature?: string,
   opts: CallDeepSeekOptions = {},
 ): Promise<string> {
@@ -229,7 +245,7 @@ export async function generateBaziAnalysis(
 
   const apiResult = await callExternalAPI(
     async () => {
-      const text = await callDeepSeek(BAZI_SYSTEM_PROMPT, prompt, 4000, 'bazi', { jsonMode: true });
+      const text = await callDeepSeek(BAZI_SYSTEM_PROMPT, prompt, 6000, 'bazi', { jsonMode: true });
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error('No JSON found in response');
@@ -323,7 +339,7 @@ export async function generateDailyFortune(
 
   const apiResult = await callExternalAPI(
     async () => {
-      const text = await callDeepSeek(DAILY_SYSTEM_PROMPT, prompt, 800, 'daily', { jsonMode: true });
+      const text = await callDeepSeek(DAILY_SYSTEM_PROMPT, prompt, 1500, 'daily', { jsonMode: true });
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error('No JSON found in response');
@@ -475,10 +491,10 @@ function getTarotTextLimits(spread: TarotSpread): ReadingLimits {
 }
 
 function getTarotMaxTokens(spread: TarotSpread): number {
-  if (spread === 'celtic') return 5000;
-  if (spread === 'mirror') return 4000;
-  if (spread === 'relationship') return 4500;
-  return 3500;
+  if (spread === 'celtic') return 8000;
+  if (spread === 'mirror') return 6000;
+  if (spread === 'relationship') return 6000;
+  return 5000;
 }
 
 export async function generateTarotReading(
@@ -664,7 +680,7 @@ export async function generateMeihuaDecision(
 
   try {
     const prompt = buildMeihuaDecisionPrompt(input);
-    const text = await callDeepSeek(MEIHUA_DECISION_SYSTEM_PROMPT, prompt, 2000, 'meihua', { jsonMode: true });
+    const text = await callDeepSeek(MEIHUA_DECISION_SYSTEM_PROMPT, prompt, 3000, 'meihua', { jsonMode: true });
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       return observed('meihua', { ...fallback, _source: 'fallback' });
@@ -734,7 +750,7 @@ export async function generateLiuYaoReading(
 
   try {
     const prompt = buildLiuYaoPrompt(input);
-    const text = await callDeepSeek(LIUYAO_SYSTEM_PROMPT, prompt, 2400, 'liuyao', { jsonMode: true });
+    const text = await callDeepSeek(LIUYAO_SYSTEM_PROMPT, prompt, 4000, 'liuyao', { jsonMode: true });
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       return observed('liuyao', { ...fallback, _source: 'fallback' });

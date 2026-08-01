@@ -385,12 +385,13 @@ ${answerRule}
 - 涉及投资/疾病/死亡等敏感话题时，给出温和提醒
 - 本产品为文化娱乐，分析仅供参考`;
 
+    // 上限只作安全兜底，实际长度由 prompt 控制；宁可给足余量，不让回复因 max_tokens 截断
     const maxTokens =
       intent === 'trend'
-        ? (liuyueMonths >= 10 ? 4000 : liuyueMonths >= 6 ? 3500 : liuyueMonths >= 3 ? 2800 : 1800)
+        ? (liuyueMonths >= 10 ? 6000 : liuyueMonths >= 6 ? 5000 : liuyueMonths >= 3 ? 4000 : 3000)
         : intent === 'analysis'
-        ? 3500
-        : 800;
+        ? 6000
+        : 2000;
 
     // 客户端断连立即关掉上游，避免烧 token
     const abortHandle = attachClientAbort(req);
@@ -429,9 +430,10 @@ ${answerRule}
           delayMs: 150,
         })),
         contentFrame: (content) => ({ type: 'content', content }),
-        // 流读完且未被中断的完整答案 → 写结果缓存（TTL 7 天）
-        onComplete: async (fullAnswer, aborted) => {
-          if (cacheKey && !aborted && fullAnswer.trim().length > 30) {
+        label: 'bazi/chat',
+        // 流读完且未被中断、未被截断的完整答案 → 写结果缓存（TTL 7 天）
+        onComplete: async (fullAnswer, aborted, truncated) => {
+          if (cacheKey && !aborted && !truncated && fullAnswer.trim().length > 30) {
             try { await redis.set(cacheKey, fullAnswer, { ex: 604800 }); } catch {}
           }
         },

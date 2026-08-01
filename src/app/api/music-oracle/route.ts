@@ -177,7 +177,7 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify({
         model: DEEPSEEK_MODEL,
-        max_tokens: 800,
+        max_tokens: 2000,
         temperature: 0.85,
         enable_thinking: false,
         messages: [

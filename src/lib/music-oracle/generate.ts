@@ -101,7 +101,7 @@ async function callDeepSeekAPI(systemPrompt: string, userPrompt: string): Promis
       },
       body: JSON.stringify({
         model: DEEPSEEK_MODEL,
-        max_tokens: 2000,
+        max_tokens: 3000,
         temperature: 0.85,
         enable_thinking: false,
         messages: [

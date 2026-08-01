@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
             { role: 'system', content: systemPrompt },
             { role: 'user', content: question.trim() },
           ],
-          max_tokens: 1200,
+          max_tokens: 2500,
           temperature: 0.7,
           enable_thinking: false,
           stream: true,
@@ -114,6 +114,7 @@ export async function POST(req: NextRequest) {
 
     return new Response(
       proxyLLMDeltaStream(response, abortHandle, {
+        label: 'daily/fortune-qa',
         // 流读完后落库历史（onComplete 内部错误被 helper 吞，不影响出流）
         onComplete: async (fullAnswer) => {
           try {

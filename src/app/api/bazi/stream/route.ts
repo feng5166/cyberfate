@@ -169,7 +169,7 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         model: PRIMARY_MODEL,
-        max_tokens: 4000,
+        max_tokens: 6000,
         temperature: 0.3,
         stream: true,
         enable_thinking: false,
