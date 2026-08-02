@@ -718,7 +718,7 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
                   type="button"
                   onClick={handleDrawCards}
                   disabled={loading}
-                  className="mt-4 flex h-[54px] w-full items-center justify-center gap-2 rounded-lg bg-brand-accent text-[15px] font-semibold tracking-[0.08em] text-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-brand-accent-hover active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
+                  className="mt-4 mx-auto flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand-accent px-10 text-[15px] font-semibold tracking-[0.08em] text-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-brand-accent-hover active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 sm:w-auto sm:min-w-[260px]"
                 >
                   {loading ? (
                     <><Loader2 className="h-4 w-4 animate-spin" /> 正在抽牌…</>
@@ -890,7 +890,7 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
                     void handleAIReading(drawnCards);
                   }}
                   disabled={loading}
-                  className={`inline-flex items-center gap-3 h-[52px] px-8 rounded-lg bg-brand-accent text-base font-semibold tracking-[0.08em] text-white transition-all hover:bg-brand-accent-hover disabled:cursor-not-allowed disabled:opacity-60 ${
+                  className={`inline-flex items-center gap-2.5 h-12 px-10 rounded-xl bg-brand-accent text-[15px] font-semibold tracking-[0.08em] text-white transition-all hover:-translate-y-0.5 hover:bg-brand-accent-hover disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 ${
                     allFlipped ? 'ring-4 ring-[#1C1A16]/15' : ''
                   }`}
                 >

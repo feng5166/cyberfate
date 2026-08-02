@@ -2446,7 +2446,7 @@ function BaziPageContent() {
               <Button
                 type="submit"
                 loading={loading}
-                className="w-full min-h-[52px] text-[14px] font-medium rounded-xl bg-brand-accent text-white hover:bg-brand-accent-hover transition-colors"
+                className="mx-auto flex w-full sm:w-auto sm:min-w-[260px] sm:px-12 min-h-[48px] items-center justify-center text-[14px] font-medium rounded-xl bg-brand-accent text-white hover:bg-brand-accent-hover transition-colors"
               >
                 {loading ? '正在计算...' : '开始解读'}
               </Button>

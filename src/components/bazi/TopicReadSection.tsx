@@ -306,7 +306,7 @@ export function TopicReadSection({
         <button
           type="button"
           onClick={handleFullReadClick}
-          className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium transition-colors ${
+          className={`mx-auto flex w-full sm:w-auto sm:px-8 items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium transition-colors ${
             isVip
               ? 'bg-brand-accent text-white hover:bg-brand-accent-hover'
               : 'border border-[#1C1A16]/15 bg-white text-[#1C1A16]/70 hover:border-[#1C1A16]/30'

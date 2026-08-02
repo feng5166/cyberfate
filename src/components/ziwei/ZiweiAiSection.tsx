@@ -311,7 +311,7 @@ export function ZiweiAiSection({
         onClick={handleFullRead}
         disabled={Boolean(streaming)}
         className={cn(
-          'mt-4 w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium transition-colors',
+          'mt-4 mx-auto flex w-full sm:w-auto sm:px-8 items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium transition-colors',
           isVip
             ? 'bg-brand-accent text-white hover:bg-brand-accent-hover'
             : 'border border-[#1C1A16]/15 bg-white text-[#1C1A16]/70 hover:border-[#1C1A16]/30',
