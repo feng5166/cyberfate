@@ -51,14 +51,23 @@ export async function POST(req: NextRequest) {
   const chaosRes = await applyChaos(req);
   if (chaosRes) return chaosRes;
 
-  // Security Fix: SEC-012 — 添加登录检查
+  // PRD-ZIWEI-V2 P0-C：排盘为零成本确定性计算，游客放行（IP 限流），
+  // 修复漏斗顶端卡死；AI 解读（/api/ziwei/stream）仍要求登录。
   const { getAuthSession } = await import('@/lib/auth-session');
   const session = await getAuthSession(req);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: '请先登录' }, { status: 401 });
+  if (session?.user?.id) {
+    const rl = await checkRateLimit('ai_ziwei', session.user.id, 10, 60);
+    if (!rl.allowed) return NextResponse.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
+  } else {
+    const { getClientIp } = await import('@/lib/ip');
+    const rl = await checkRateLimit('ziwei_guest_paipan', getClientIp(req), 10, 86400);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: 'GUEST_LIMIT_REACHED', message: '游客每日排盘次数已用完，登录后可继续使用' },
+        { status: 429 },
+      );
+    }
   }
-  const rl = await checkRateLimit('ai_ziwei', session.user.id, 10, 60);
-  if (!rl.allowed) return NextResponse.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
 
   try {
     const body = await req.json();

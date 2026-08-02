@@ -22,6 +22,9 @@ import {
 import type { PalaceData, CenterUserInfo } from '@/components/ziwei';
 import { track } from '@/lib/analytics';
 import { useAiGate, AiGateModals } from '@/components/ai/useAiGate';
+import { calcZiweiDayun, juNumberFromName } from '@/lib/ziwei/dayun';
+import { buildZiweiQuickRead, buildSihuaNarrative } from '@/lib/ziwei/quickRead';
+import type { TianGan } from '@/lib/ziwei/types';
 
 const _loadingSpinner = () => (
   <div className="flex justify-center py-8">
@@ -33,11 +36,12 @@ const PalaceGrid = dynamic(() => import('@/components/ziwei/PalaceGrid').then(m 
 const PalaceMobileList = dynamic(() => import('@/components/ziwei/PalaceMobileList').then(m => m.PalaceMobileList), { ssr: false, loading: _loadingSpinner });
 const PalaceDetailPanel = dynamic(() => import('@/components/ziwei/PalaceDetailPanel').then(m => m.PalaceDetailPanel), { ssr: false, loading: _loadingSpinner });
 const CenterInfoCard = dynamic(() => import('@/components/ziwei/CenterInfoCard').then(m => m.CenterInfoCard), { ssr: false, loading: _loadingSpinner });
-const ZiweiAiOverview = dynamic(() => import('@/components/ziwei/ZiweiAiOverview').then(m => m.ZiweiAiOverview), { ssr: false, loading: _loadingSpinner });
 const ChartShareButton = dynamic(() => import('@/components/ziwei/ChartShareButton').then(m => m.ChartShareButton), { ssr: false, loading: _loadingSpinner });
-const SihuaAnimation = dynamic(() => import('@/components/ziwei/SihuaAnimation').then(m => m.SihuaAnimation), { ssr: false, loading: _loadingSpinner });
 const DayunSwitcher = dynamic(() => import('@/components/ziwei/DayunSwitcher').then(m => m.DayunSwitcher), { ssr: false, loading: _loadingSpinner });
-const DualChartCompare = dynamic(() => import('@/components/ziwei/DualChartCompare').then(m => m.DualChartCompare), { ssr: false, loading: _loadingSpinner });
+// —— V2 新增（PRD-ZIWEI-V2）：真实解读组件，替换 V1 静态假 AI（ZiweiAiOverview/SihuaAnimation/DualChartCompare 已删） ——
+const ZiweiQuickReadCard = dynamic(() => import('@/components/ziwei/ZiweiQuickReadCard').then(m => m.ZiweiQuickReadCard), { ssr: false, loading: _loadingSpinner });
+const SihuaNarrativeCard = dynamic(() => import('@/components/ziwei/SihuaNarrativeCard').then(m => m.SihuaNarrativeCard), { ssr: false, loading: _loadingSpinner });
+const ZiweiAiSection = dynamic(() => import('@/components/ziwei/ZiweiAiSection').then(m => m.ZiweiAiSection), { ssr: false, loading: _loadingSpinner });
 
 interface ApiPalace {
   name: string;
@@ -76,6 +80,7 @@ function convertApiPalaces(apiPalaces: ApiPalace[]): PalaceData[] {
       name: s.name,
       type: s.type as PalaceData['majorStars'][number]['type'],
       brightness: s.brightness as PalaceData['majorStars'][number]['brightness'],
+      sihua: s.sihua as PalaceData['majorStars'][number]['sihua'], // V2：透传生年四化
     })),
     minorStars: [
       ...(p.minorStars || []),
@@ -84,8 +89,10 @@ function convertApiPalaces(apiPalaces: ApiPalace[]): PalaceData[] {
       name: s.name,
       type: s.type as PalaceData['minorStars'][number]['type'],
       brightness: s.brightness as PalaceData['minorStars'][number]['brightness'],
+      sihua: s.sihua as PalaceData['minorStars'][number]['sihua'],
     })),
     isLife: p.isLife,
+    isBody: p.isBody, // V2：身宫（速读/详情面板用）
   }));
 }
 
@@ -102,12 +109,14 @@ const SHICHEN_TIME_MAP: Record<string, string> = {
 };
 
 const CACHE_KEY = 'cyberfate_ziwei_cache';
-const CACHE_VERSION = '2.0'; // 版本号，修改后自动清除旧缓存
+const CACHE_VERSION = '3.0'; // 版本号，修改后自动清除旧缓存（3.0：V2 增加 yearGanZhi/sihua/isBody）
 
 interface ChartMeta {
   wuxingju: string;
   mingzhu: string;
   shenzhu: string;
+  /** 生年干支（排盘 debug 口径，立春为界），大限/四化推算依赖 */
+  yearGanZhi?: string;
 }
 
 interface CachedResult {
@@ -180,9 +189,68 @@ export default function ZiweiPage() {
   // 入场动画
   const [gridAnimated, setGridAnimated] = useState(false);
 
+  // 是否为首屏默认示例盘（P0-C：明确标注，输入自己生日排盘后消失）
+  const [isSampleChart, setIsSampleChart] = useState(false);
+
   // AI 统一门禁（游客 401 弹登录 / 未订阅弹升级）
   const { status } = useSession();
   const gate = useAiGate(status === 'authenticated');
+
+  // 会员态（全盘详批 VIP 专属入口的展示分层；服务端仍是最终裁决）
+  const [isMember, setIsMember] = useState(false);
+  useEffect(() => {
+    if (status !== 'authenticated') { setIsMember(false); return; }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/user/quota');
+        if (!res.ok) return;
+        const data = (await res.json()) as { isMember?: boolean };
+        if (!cancelled) setIsMember(Boolean(data?.isMember));
+      } catch { /* ignore */ }
+    })();
+    return () => { cancelled = true; };
+  }, [status]);
+
+  // 宫位详情「AI 深读此宫」→ 触发下方 AI 区生成
+  const [requestPalace, setRequestPalace] = useState<{ name: string; nonce: number } | null>(null);
+
+  // —— V2 派生数据（全部本地确定性计算，零 AI 成本）——
+  const dayunList = useMemo(() => {
+    if (!palaces.length || !chartMeta?.yearGanZhi || !chartMeta?.wuxingju) return [];
+    const ju = juNumberFromName(chartMeta.wuxingju);
+    const birthYear = Number(birthDate?.slice(0, 4));
+    if (!ju || !birthYear) return [];
+    try {
+      return calcZiweiDayun(palaces, {
+        yearGan: chartMeta.yearGanZhi[0] as TianGan,
+        gender: gender === 'female' ? 'female' : 'male',
+        birthYear,
+        juNumber: ju,
+        currentYear: new Date().getFullYear(),
+      });
+    } catch { return []; }
+  }, [palaces, chartMeta, birthDate, gender]);
+
+  const quickReadLines = useMemo(() => {
+    if (!palaces.length) return [];
+    try {
+      return buildZiweiQuickRead({
+        palaces,
+        mingzhu: chartMeta?.mingzhu,
+        shenzhu: chartMeta?.shenzhu,
+        wuxingJu: chartMeta?.wuxingju,
+        dayunList,
+      });
+    } catch { return []; }
+  }, [palaces, chartMeta, dayunList]);
+
+  const sihuaItems = useMemo(() => {
+    if (!palaces.length || !chartMeta?.yearGanZhi) return [];
+    try {
+      return buildSihuaNarrative(palaces, chartMeta.yearGanZhi[0] as TianGan);
+    } catch { return []; }
+  }, [palaces, chartMeta]);
 
   const selectedPalace = useMemo(() => {
     if (selectedPalaceIndex === null || !palaces[selectedPalaceIndex]) return null;
@@ -238,7 +306,8 @@ export default function ZiweiPage() {
         if (cancelled) return;
         const result = convertApiPalaces(data.palaces);
         setPalaces(result);
-        setChartMeta({ wuxingju: data.wuxingju, mingzhu: data.mingzhu, shenzhu: data.shenzhu });
+        setChartMeta({ wuxingju: data.wuxingju, mingzhu: data.mingzhu, shenzhu: data.shenzhu, yearGanZhi: data.lunar?.year });
+        setIsSampleChart(true); // 默认参数排出的示例盘
         setShowChart(true);
         setSelectedPalaceIndex(0);
         setTimeout(() => setGridAnimated(true), 100);
@@ -297,10 +366,12 @@ export default function ZiweiPage() {
         wuxingju: data.wuxingju,
         mingzhu: data.mingzhu,
         shenzhu: data.shenzhu,
+        yearGanZhi: data.lunar?.year,
       };
 
       setPalaces(result);
       setChartMeta(meta);
+      setIsSampleChart(false); // 用户主动排盘，不再是示例
       setShowChart(true);
       setSelectedPalaceIndex(0);
 
@@ -316,6 +387,7 @@ export default function ZiweiPage() {
 
       setTimeout(() => setGridAnimated(true), 100);
       track('tool_ai_complete', { tool: 'ziwei', duration_ms: Date.now() - startTime });
+      track('ziwei_paipan_complete'); // V2 漏斗起点（P0-C）
     } catch (err) {
       const cached = loadCachedResult();
       if (cached) {
@@ -334,6 +406,11 @@ export default function ZiweiPage() {
       setLoading(false);
     }
   };
+
+  const handlePalaceSelect = useCallback((idx: number | null) => {
+    setSelectedPalaceIndex(idx);
+    if (idx !== null && palaces[idx]) track('ziwei_palace_click', { palace: palaces[idx].name });
+  }, [palaces]);
 
   const clearFieldError = (field: string) => {
     setErrors((prev) => {
@@ -491,6 +568,14 @@ export default function ZiweiPage() {
                     <div />
                     <h2 className="font-display text-xl md:text-2xl font-semibold text-[#1C1A16] text-center flex-1">
                       命盘
+                      {isSampleChart && (
+                        <span
+                          className="ml-2 align-middle inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium tracking-normal"
+                          style={{ background: '#F3E8FF', color: '#7E22CE' }}
+                        >
+                          示例盘 · 输入你的生日排自己的盘
+                        </span>
+                      )}
                     </h2>
                     {/* P2-1: 分享按钮 */}
                     <ChartShareButton
@@ -512,7 +597,7 @@ export default function ZiweiPage() {
                       <PalaceGrid
                         palaces={palaces}
                         selectedIndex={selectedPalaceIndex}
-                        onSelect={setSelectedPalaceIndex}
+                        onSelect={handlePalaceSelect}
                         userInfo={centerUserInfo}
                       />
                     </div>
@@ -533,35 +618,48 @@ export default function ZiweiPage() {
                       <PalaceMobileList
                         palaces={palaces}
                         selectedIndex={selectedPalaceIndex}
-                        onSelect={setSelectedPalaceIndex}
+                        onSelect={handlePalaceSelect}
                       />
                     </div>
                   </div>
                 </div>
 
-                {/* P2-4: 双人对比入口（属命盘簇，随左列 sticky） */}
-                <div className="flex justify-end">
-                  <DualChartCompare chartA={palaces} />
-                </div>
               </div>
-            {/* 详情/四化/大运/AI 右列（随右列滚动） */}
+            {/* 详情/速读/四化/大限/AI（V2：全部真实数据，假 AI 已清零） */}
             <div className="min-w-0 flex flex-col gap-4 md:gap-6">
-                {/* P1-1: 宫位详情面板（点宫格 → 右列即时渲染，视线不离命盘） */}
+                {/* 命盘速读（P0-A）：三句话读懂盘面/身宫/当前大限 */}
+                {quickReadLines.length > 0 && <ZiweiQuickReadCard lines={quickReadLines} />}
+
+                {/* 宫位详情面板（点宫格 → 即时渲染，附「AI 深读此宫」真入口） */}
                 {selectedPalace && (
                   <PalaceDetailPanel
                     palace={selectedPalace}
                     onClose={() => setSelectedPalaceIndex(null)}
+                    onAiRead={(name) => setRequestPalace({ name, nonce: Date.now() })}
                   />
                 )}
 
-                {/* P2-2: 四化飞星动画 */}
-                <SihuaAnimation palaces={palaces} visible={showChart && !loading} />
+                {/* 生年四化叙事（P1-A）：真实四化落宫 + 确定性模板 */}
+                {sihuaItems.length > 0 && <SihuaNarrativeCard items={sihuaItems} />}
 
-                {/* P2-3: 大运流年切换器 */}
-                <DayunSwitcher birthDate={birthDate} />
+                {/* 大限流年切换器（P0-A）：真实起限与行进方向 */}
+                <DayunSwitcher
+                  palaces={palaces}
+                  birthDate={birthDate}
+                  yearGanZhi={chartMeta?.yearGanZhi}
+                  gender={gender === 'female' ? 'female' : 'male'}
+                  wuxingJu={chartMeta?.wuxingju}
+                />
 
-                {/* P1-2: AI 命盘总览解读 */}
-                <ZiweiAiOverview palaces={palaces} birthDate={birthDate} />
+                {/* 逐宫议题式 AI + 全盘详批（P0-B）：真 AI，免费 3 宫/日 */}
+                <ZiweiAiSection
+                  birthDate={birthDate}
+                  birthHour={birthHour}
+                  gender={gender}
+                  isVip={isMember}
+                  gate={gate}
+                  requestPalace={requestPalace}
+                />
               </div>
           </div>
         </PageShell>

@@ -2,6 +2,8 @@ export interface StarInfo {
   name: string;
   type: 'major' | 'minor' | 'auxiliary' | 'evil';
   brightness?: '庙' | '旺' | '得' | '利' | '平' | '不' | '陷';
+  /** 生年四化（化禄/化权/化科/化忌），引擎已算，V2 起透传展示 */
+  sihua?: '化禄' | '化权' | '化科' | '化忌';
 }
 
 export interface PalaceData {
@@ -11,6 +13,7 @@ export interface PalaceData {
   majorStars: StarInfo[];
   minorStars: StarInfo[];
   isLife?: boolean;      // 是否为命宫
+  isBody?: boolean;      // 是否为身宫（V2 速读用）
 }
 
 export interface CenterUserInfo {
