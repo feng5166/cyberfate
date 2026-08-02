@@ -125,6 +125,56 @@ const SHUFFLE_MIN_MS = 1600;
 const STREAM_ANSWER_RE = /【一句话答案】\s*([\s\S]*?)(?=\n*【|$)/;
 const STREAM_READING_RE = /【解读】\s*([\s\S]*?)(?=\n*【(?:逐牌点睛|行动建议|提醒)】|$)/;
 
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** 解读正文排版：牌名 + 正/逆位自动高亮（墨色加重，正文降透明形成层次） */
+function highlightReadingTerms(text: string, cardNames: string[]): React.ReactNode {
+  if (!text) return text;
+  const terms = [...new Set([...cardNames.filter(Boolean), '正位', '逆位'])];
+  if (!terms.length) return text;
+  const re = new RegExp(`(${terms.map(escapeRegExp).join('|')})`, 'g');
+  const parts = text.split(re);
+  return parts.map((piece, i) =>
+    terms.includes(piece) ? (
+      <span key={i} className="font-medium text-[#1C1A16]">{piece}</span>
+    ) : (
+      piece
+    ),
+  );
+}
+
+/** 解读正文（流式与完成态统一渲染）：首段定调强调、段间留白、无首行缩进 */
+function ReadingBody({ text, cardNames, streaming }: { text: string; cardNames: string[]; streaming?: boolean }) {
+  const paras = text
+    .split(/\n{1,}/)
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0);
+  return (
+    <div className="space-y-5">
+      {paras.map((para, i) => (
+        <p
+          key={i}
+          className={
+            i === 0
+              ? 'text-[15.5px] leading-loose text-[#1C1A16]/90' // 开篇定调段：略重
+              : 'text-[15px] leading-loose text-[#1C1A16]/70'
+          }
+        >
+          {highlightReadingTerms(para, cardNames)}
+          {streaming && i === paras.length - 1 && (
+            <span className="ml-0.5 inline-block h-4 w-0.5 animate-pulse bg-[#1C1A16] align-middle" />
+          )}
+        </p>
+      ))}
+      {streaming && paras.length === 0 && (
+        <span className="inline-block h-4 w-0.5 animate-pulse bg-[#1C1A16]" />
+      )}
+    </div>
+  );
+}
+
 export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode }) {
   const { data: session, status: authStatus } = useSession();
   const toast = useToast();
@@ -892,41 +942,40 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
 
               {/* 一句话答案（P0-B）：情绪峰值承接，先给结论 */}
               {result.oneLineAnswer && (
-                <div className="relative overflow-hidden rounded-2xl border border-[#1C1A16]/20 bg-white p-5 md:p-6">
+                <div className="relative overflow-hidden rounded-2xl border border-[#1C1A16]/10 bg-white p-6 md:p-7">
                   {/* 模块色 3px 顶条为唯一彩色点缀 */}
                   <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[3px]" style={{ background: '#4338CA' }} />
-                  <p className="text-xs font-medium tracking-[0.12em] mb-2 text-[#1C1A16]/55">
-                    一句话答案
+                  {/* 大引号水印（品牌水印语言，≤5% 墨色） */}
+                  <span
+                    aria-hidden
+                    className="pointer-events-none select-none absolute -right-1 -bottom-7 font-display text-[96px] leading-none text-[#1C1A16]/[0.05]"
+                  >
+                    ”
+                  </span>
+                  <p className="text-[11px] font-medium tracking-[0.2em] text-[#1C1A16]/45">
+                    ✦ 一句话答案
                   </p>
-                  <p className="text-lg md:text-xl font-semibold leading-relaxed text-[#1C1A16]">
+                  {/* 签文式引言：衬线体、常规字重、宽行距——是神谕不是标题 */}
+                  <p className="mt-3 font-display text-[17px] md:text-[19px] leading-[1.9] tracking-[0.02em] text-[#1C1A16]/85">
                     {result.oneLineAnswer}
                   </p>
-                  {question && <p className="mt-2 text-xs text-[#1C1A16]/45">你的问题：{question}</p>}
+                  {question && (
+                    <p className="mt-4 border-t border-[#1C1A16]/8 pt-3 text-xs text-[#1C1A16]/40">
+                      问：{question}
+                    </p>
+                  )}
                 </div>
               )}
 
               <div className="rounded-2xl border border-[#1C1A16]/8 bg-white p-6 md:p-8">
-                <h3 className="font-display text-xl tracking-[0.08em] text-[#1C1A16] mb-4">✨ AI 解读</h3>
-                <div className="text-[#3D3A35] text-[15px] leading-[1.9]">
-                  {streaming ? (
-                    <>
-                      <p className="whitespace-pre-wrap">
-                        {result.reading}
-                        <span className="inline-block w-0.5 h-4 bg-[#1C1A16] ml-0.5 animate-pulse" />
-                      </p>
-                      <div ref={streamEndRef} />
-                    </>
-                  ) : (
-                    <div className="space-y-5">
-                      {result.reading
-                        .split(/\n{1,}/)
-                        .map(p => p.trim())
-                        .filter(p => p.length > 0)
-                        .map((para, i) => (
-                          <p key={i} className="indent-[2em]">{para}</p>
-                        ))}
-                    </div>
-                  )}
+                <h3 className="font-display text-xl tracking-[0.08em] text-[#1C1A16] mb-5">✨ AI 解读</h3>
+                <div>
+                  <ReadingBody
+                    text={result.reading}
+                    cardNames={result.cards.map((c) => c.name_zh)}
+                    streaming={streaming}
+                  />
+                  {streaming && <div ref={streamEndRef} />}
                 </div>
                 {!streaming && result._source === 'fallback' && (
                   <div className="mt-6 rounded-xl border border-stone-300 bg-stone-100 p-4">
