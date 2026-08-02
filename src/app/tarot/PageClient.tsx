@@ -121,6 +121,10 @@ interface TarotDrawResult {
 /** 洗牌动画最短时长（ms）；prefers-reduced-motion 时跳过 */
 const SHUFFLE_MIN_MS = 1600;
 
+// 真流式（V2）：标记分段增量解析——一句话答案先到先显示，解读随 token 展开
+const STREAM_ANSWER_RE = /【一句话答案】\s*([\s\S]*?)(?=\n*【|$)/;
+const STREAM_READING_RE = /【解读】\s*([\s\S]*?)(?=\n*【(?:逐牌点睛|行动建议|提醒)】|$)/;
+
 export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode }) {
   const { data: session, status: authStatus } = useSession();
   const toast = useToast();
@@ -370,6 +374,7 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
       let buffer = '';
       let metaSet = false;
       let acc = '';
+      let answerTracked = false;
 
       setStreaming(true);
 
@@ -400,12 +405,59 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
                 _source: json.meta._source,
                 _error: json.meta._error,
               };
-              if (json.meta.oneLineAnswer) track('tarot_answer_view', { spread: currentSpread });
+              if (json.meta.oneLineAnswer) {
+                answerTracked = true;
+                track('tarot_answer_view', { spread: currentSpread });
+              }
               setResult(initial);
               setStep('result');
             } else if (json.content) {
               acc += json.content;
-              setResult((prev) => (prev ? { ...prev, reading: acc } : prev));
+              if (acc.includes('【')) {
+                // 真流式：标记分段增量解析（答案先显、解读段随流展开）
+                const ans = STREAM_ANSWER_RE.exec(acc)?.[1]?.trim();
+                const read = STREAM_READING_RE.exec(acc)?.[1]?.replace(/^\n+/, '') ?? '';
+                if (ans && !answerTracked) {
+                  answerTracked = true;
+                  track('tarot_answer_view', { spread: currentSpread });
+                }
+                setResult((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        ...(ans ? { oneLineAnswer: ans } : {}),
+                        ...(read ? { reading: read } : {}),
+                      }
+                    : prev,
+                );
+              } else {
+                // 缓存/兜底回放：纯正文，无标记
+                setResult((prev) => (prev ? { ...prev, reading: acc } : prev));
+              }
+            } else if (json.final) {
+              // 流式收尾：结构化字段兜底补齐（答案/建议/提醒/逐牌点睛）
+              const fin = json.final as {
+                oneLineAnswer?: string;
+                reading?: string;
+                actions?: string[];
+                caution?: string;
+                cardMeanings?: string[];
+              };
+              setResult((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      reading: fin.reading || prev.reading,
+                      oneLineAnswer: fin.oneLineAnswer ?? prev.oneLineAnswer,
+                      actions: fin.actions ?? prev.actions,
+                      caution: fin.caution || prev.caution,
+                      cards:
+                        Array.isArray(fin.cardMeanings) && fin.cardMeanings.length
+                          ? prev.cards.map((c, i) => ({ ...c, meaning: fin.cardMeanings![i] || c.meaning }))
+                          : prev.cards,
+                    }
+                  : prev,
+              );
             }
           } catch {}
         }

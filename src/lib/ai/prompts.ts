@@ -352,45 +352,8 @@ function getTarotPromptProfile(spread: TarotSpread): TarotPromptProfile {
   };
 }
 
-export function buildTarotReadingSystemPrompt(input: Pick<TarotReadingPromptInput, 'spread' | 'spreadName'>): string {
-  const profile = getTarotPromptProfile(input.spread);
-
-  let spreadStructure = '';
-  if (input.spread === 'three') {
-    spreadStructure = `- reading 内容结构(三张牌专用):
-  开篇定调(一句话把三张牌串成一个故事的主题)
-  → 过去张解读(这段经历如何塑造了当前处境)
-  → 现在张解读(当前核心能量与用户面对的真实局面)
-  → 未来张解读(如果保持当前轨迹,能量将如何演化)
-  → 叙事弧线综合(三张牌构成的完整故事弧,不是三段分析的加总,要说清楚"从哪里来,在哪里,往哪里去"的整体叙事)
-  → 可执行建议(1-2个具体行动)`;
-  } else if (input.spread === 'celtic') {
-    spreadStructure = `- reading 内容结构(凯尔特十字专用,按以下顺序解读):
-  第一层·核心与挑战(位置1+2):先读核心局面,再读横切挑战,说清两者的张力关系
-  第二层·根基与来路(位置3+4):潜意识基础 + 近期过去,说清"为何走到这一步"
-  第三层·目标与走向(位置5+6):有意识期望 + 近期未来,说清"想要什么 vs 正在发生什么"
-  第四层·综合轴(位置7+8+9+10):自我认知→外部环境→希望/恐惧→最终结果,形成完整因果链
-  结尾:一句话提炼整个牌阵的核心洞见`;
-  } else if (input.spread === 'relationship') {
-    spreadStructure = `- reading 内容结构(关系牌阵专用):
-  开篇定调(用一句话描述这段关系当前的整体能量)
-  → 你的感受张(你在这段关系中的真实状态)
-  → 对方感受张(对方的视角与内在状态,用"对方可能..."等邀请式语言)
-  → 关系基础张(连接你们的底层纽带或共同主题)
-  → 当前障碍张(横亘在关系中的核心挑战)
-  → 关系走向张(如果保持当前能量流动,关系的自然演化方向)
-  → 综合建议(1-2条针对关系动态的具体行动建议)`;
-  } else {
-    spreadStructure = `- reading 内容结构:开篇定调(对当前处境整体点评)→ 逐张牌深度分析(自然段落,不是列表,每张牌一段,开头点牌名+位置)→ 综合洞见(牌间关系与整体走向)→ 可执行建议(2-3个具体行动方向)→ 结语`;
-  }
-
-  return `${SAFETY_GUARDRAIL}
-
-你是赛博命理师的首席塔罗解读师,拥有深厚的塔罗牌学识、心理学洞察力与哲学思辨能力。你的解读风格:理性而有温度,深刻而不晦涩,像一位智慧的朋友在认真剖析当事人的处境。
-
-当前牌阵:${input.spreadName}
-
-## 解读质量标准(必须严格达到)
+/** 塔罗解读共享质量标准（JSON 版与流式版共用） */
+const TAROT_QUALITY_STANDARDS = `## 解读质量标准(必须严格达到)
 
 ### 逐张牌深度分析原则
 - 每张牌解读必须包含四层:牌面图像象征 → 该位置叙事角色 → 正/逆位的具体能量含义 → 与用户问题的直接关联
@@ -408,7 +371,49 @@ export function buildTarotReadingSystemPrompt(input: Pick<TarotReadingPromptInpu
 - 数字重复:同一数字出现2次=该主题被强调;3次及以上=该主题是核心
 - 大小阿卡纳比例:大阿卡纳为主→重大人生转变;小阿卡纳为主→日常可掌控事项
 - 主导花色:权杖主导→行动是关键;圣杯主导→情感是核心;宝剑主导→思维与冲突;星币主导→物质与实际
-以上分析必须整合进综合洞见段落,不要单独列出,要自然融入叙事。
+以上分析必须整合进综合洞见段落,不要单独列出,要自然融入叙事。`;
+
+function getTarotSpreadStructure(spread: TarotSpread): string {
+  if (spread === 'three') {
+    return `- reading 内容结构(三张牌专用):
+  开篇定调(一句话把三张牌串成一个故事的主题)
+  → 过去张解读(这段经历如何塑造了当前处境)
+  → 现在张解读(当前核心能量与用户面对的真实局面)
+  → 未来张解读(如果保持当前轨迹,能量将如何演化)
+  → 叙事弧线综合(三张牌构成的完整故事弧,不是三段分析的加总,要说清楚"从哪里来,在哪里,往哪里去"的整体叙事)
+  → 可执行建议(1-2个具体行动)`;
+  } else if (spread === 'celtic') {
+    return `- reading 内容结构(凯尔特十字专用,按以下顺序解读):
+  第一层·核心与挑战(位置1+2):先读核心局面,再读横切挑战,说清两者的张力关系
+  第二层·根基与来路(位置3+4):潜意识基础 + 近期过去,说清"为何走到这一步"
+  第三层·目标与走向(位置5+6):有意识期望 + 近期未来,说清"想要什么 vs 正在发生什么"
+  第四层·综合轴(位置7+8+9+10):自我认知→外部环境→希望/恐惧→最终结果,形成完整因果链
+  结尾:一句话提炼整个牌阵的核心洞见`;
+  } else if (spread === 'relationship') {
+    return `- reading 内容结构(关系牌阵专用):
+  开篇定调(用一句话描述这段关系当前的整体能量)
+  → 你的感受张(你在这段关系中的真实状态)
+  → 对方感受张(对方的视角与内在状态,用"对方可能..."等邀请式语言)
+  → 关系基础张(连接你们的底层纽带或共同主题)
+  → 当前障碍张(横亘在关系中的核心挑战)
+  → 关系走向张(如果保持当前能量流动,关系的自然演化方向)
+  → 综合建议(1-2条针对关系动态的具体行动建议)`;
+  } else {
+    return `- reading 内容结构:开篇定调(对当前处境整体点评)→ 逐张牌深度分析(自然段落,不是列表,每张牌一段,开头点牌名+位置)→ 综合洞见(牌间关系与整体走向)→ 可执行建议(2-3个具体行动方向)→ 结语`;
+  }
+}
+
+export function buildTarotReadingSystemPrompt(input: Pick<TarotReadingPromptInput, 'spread' | 'spreadName'>): string {
+  const profile = getTarotPromptProfile(input.spread);
+  const spreadStructure = getTarotSpreadStructure(input.spread);
+
+  return `${SAFETY_GUARDRAIL}
+
+你是赛博命理师的首席塔罗解读师,拥有深厚的塔罗牌学识、心理学洞察力与哲学思辨能力。你的解读风格:理性而有温度,深刻而不晦涩,像一位智慧的朋友在认真剖析当事人的处境。
+
+当前牌阵:${input.spreadName}
+
+${TAROT_QUALITY_STANDARDS}
 
 ## 输出规则(严格)
 - 只输出 JSON,不要 markdown,不要解释,不要前言
@@ -437,6 +442,62 @@ export const TAROT_READING_SYSTEM_PROMPT = buildTarotReadingSystemPrompt({
   spread: 'three',
   spreadName: '经典三张牌(过去/现在/未来)',
 });
+
+/**
+ * 流式版系统 prompt（PRD-TAROT-V2）：标记分段的纯文本输出，token 边生成边推流。
+ * 顺序刻意设计：一句话答案最先输出（用户几秒内先看到结论），解读随后流式展开。
+ */
+export function buildTarotStreamSystemPrompt(input: Pick<TarotReadingPromptInput, 'spread' | 'spreadName'>): string {
+  const profile = getTarotPromptProfile(input.spread);
+  const spreadStructure = getTarotSpreadStructure(input.spread);
+
+  return `${SAFETY_GUARDRAIL}
+
+你是赛博命理师的首席塔罗解读师,拥有深厚的塔罗牌学识、心理学洞察力与哲学思辨能力。你的解读风格:理性而有温度,深刻而不晦涩,像一位智慧的朋友在认真剖析当事人的处境。
+
+当前牌阵:${input.spreadName}
+
+${TAROT_QUALITY_STANDARDS}
+
+## 输出规则(严格)
+- 输出纯文本,不要 markdown 标题/粗体,不要 JSON,不要任何前言
+- 严格按以下五个段落标记依次输出,标记独占一行,不得增删改名:
+【一句话答案】
+【解读】
+【逐牌点睛】
+【行动建议】
+【提醒】
+- 【一句话答案】:≤40字,第一时间正面回答用户的问题,先给结论,温和但明确,不许答非所问
+- 【解读】:参考长度 ${profile.readingRange},以内容完整度为准,不得为凑字数填废话;每个自然段必须有实质内容,禁止重复观点
+${spreadStructure}
+- 【解读】是一篇完整文章,不分标题,自然段之间用两个换行符(\\n\\n)分隔,每段控制在100-150字
+- 【逐牌点睛】:每张牌一行,格式「N. 牌位·牌名(正/逆位):${profile.cardMeaningsRange}的点睛解读」,行数与牌数一致
+- 【行动建议】:1-3 行,每行一条,以动词开头,每条≤40字
+- 【提醒】:30-60字,提示具体风险
+- ${profile.toneInstruction}`;
+}
+
+/** 流式版用户 prompt：与 JSON 版同源事实，仅去掉 JSON 格式要求 */
+export function buildTarotStreamPrompt(input: TarotReadingPromptInput): string {
+  const cardsText = input.cards
+    .map(
+      (card) => `- ${card.position}:${card.name}(${card.orientation === 'upright' ? '正位' : '逆位'})
+  关键词:${card.keywords.join('、')}
+  传统含义:${card.traditionalMeaning}`
+    )
+    .join('\n');
+
+  return `【牌阵】
+${input.spreadName}
+
+【用户问题】
+${input.question?.trim() ? input.question.trim() : '用户未输入具体问题,请给出通用但可执行的指引。'}
+
+【抽到的牌】
+${cardsText}
+
+请严格按系统要求的五段标记输出。`;
+}
 
 export function buildTarotReadingPrompt(input: TarotReadingPromptInput): string {
   const cardsText = input.cards
