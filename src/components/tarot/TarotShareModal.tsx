@@ -248,23 +248,38 @@ export function TarotShareModal({ open, onClose, cards, spread, question, oneLin
     }
   };
 
+  // 文字分享：客户端同步拼接（不 await 接口——异步后用户手势激活过期，
+  // Safari 等会拒绝 navigator.share / clipboard 导致「点了没反应」）
+  const SPREAD_SHARE_NAMES: Record<string, string> = {
+    single: '单张牌', three: '经典三张牌', celtic: '凯尔特十字',
+    moonlight: '月光模式', mirror: '镜像模式', relationship: '关系牌阵',
+  };
+
+  const buildShareText = () =>
+    `🔮 塔罗占卜结果\n\n` +
+    `${withQuestion && question ? `问题：${question}\n` : ''}` +
+    `牌阵：${SPREAD_SHARE_NAMES[spread] ?? '塔罗牌阵'}\n\n` +
+    `抽到的牌：\n${cards.map((c) => `${c.name_zh}（${c.orientation === 'upright' ? '正位' : '逆位'}）`).join('\n')}` +
+    `${oneLineAnswer ? `\n\n一句话答案：${oneLineAnswer}` : ''}` +
+    `\n\n来自赛博命理师 - https://cyberfate.me/tarot`;
+
   const shareText = async () => {
     track('tarot_share_export', { mode: 'text', spread });
-    try {
-      const res = await fetch('/api/tarot/share', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cards, question: withQuestion ? question : '', spread }),
-      });
-      const data = await res.json();
-      if (navigator.share) {
-        await navigator.share({ text: data.shareText });
-      } else {
-        await navigator.clipboard.writeText(data.shareText);
-        toast.success('分享内容已复制到剪贴板');
+    const text = buildShareText();
+    // 优先系统分享面板；用户取消则结束，不可用/被拒则回落剪贴板
+    if (navigator.share) {
+      try {
+        await navigator.share({ text });
+        return;
+      } catch (err) {
+        if ((err as Error)?.name === 'AbortError') return; // 用户主动取消
       }
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success('分享内容已复制到剪贴板');
     } catch {
-      // 用户取消系统分享等，静默
+      toast.error('复制失败，请截图或手动复制');
     }
   };
 
