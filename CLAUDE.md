@@ -71,6 +71,7 @@ docs/必读/        # 权威文档区(持续维护);docs/ 其余多为历史过�
 - 模块级 PRD:`docs/必读/PRD-MODULES-DETAILED.md`
 - 人生K线 V2 PRD:`docs/必读/PRD-LIFE-KLINE-V2.md`
 - 八字分析 V2 PRD:`docs/必读/PRD-BAZI-V2.md`
+- 紫微斗数 V2 PRD:`docs/必读/PRD-ZIWEI-V2.md`
 - 改进任务:`docs/必读/IMPROVEMENT-TASKS.md`
 - AI 成本模型:`docs/必读/AI_COST_MODEL.md`
 - 部署/运维:`DEPLOY_GUIDE.md` · `docs/必读/DEPLOYMENT.md` · `docs/必读/RUNBOOK.md`
