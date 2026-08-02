@@ -804,12 +804,12 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
 
         </section>
 
-        {/* 结果区：桌面 lg+ 两列（左=牌阵概览 sticky，右=AI 解读），移动端竖排顺序不变 */}
+        {/* 结果区：单栏舒适阅读（牌阵在上、答案与解读在下），与八字/紫微结果页一致 */}
         {step === 'result' && result && (
-          <section className="mx-auto max-w-6xl mt-4 animate-fadeIn" aria-live="polite">
+          <section className="mx-auto max-w-page mt-4 animate-fadeIn" aria-live="polite">
             <SplitLayout
               asidePosition="left"
-              asideWidth={400}
+              singleColumn
               aside={
                 <div className="rounded-2xl border border-[#1C1A16]/8 bg-white p-5 md:p-6">
                   <h3 className="font-display text-xl tracking-[0.08em] text-[#1C1A16] text-center mb-5">✨ 您抽到了这些牌</h3>
