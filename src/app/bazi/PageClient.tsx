@@ -1096,16 +1096,27 @@ function BaziPageContent() {
   // 仅当用户停留在底部附近时跟随；上滚即停跟随（不抢滚动条），滚回底部自动恢复。
   const streamContainerRef = useRef<HTMLDivElement>(null);
   const aiReadingRef = useRef<HTMLDivElement>(null);
+  // 按「滚动方向」判定用户意图：向上滚（只可能来自用户）→ 立即停跟随；
+  // 滚回底部附近 → 恢复。距离阈值判定与高频 token 更新存在竞态（刚上滚就被拽回），弃用。
   const streamFollowRef = useRef(true);
+  const prevScrollYRef = useRef(0);
   useEffect(() => {
     if (!aiStreaming) {
       streamFollowRef.current = true;
       return;
     }
+    prevScrollYRef.current = window.scrollY;
     const onScroll = () => {
-      const el = streamContainerRef.current;
-      if (!el) return;
-      streamFollowRef.current = el.getBoundingClientRect().bottom < window.innerHeight + 160;
+      const y = window.scrollY;
+      if (y < prevScrollYRef.current - 2) {
+        streamFollowRef.current = false;
+      } else if (!streamFollowRef.current) {
+        const el = streamContainerRef.current;
+        if (el && el.getBoundingClientRect().bottom < window.innerHeight + 80) {
+          streamFollowRef.current = true;
+        }
+      }
+      prevScrollYRef.current = y;
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);

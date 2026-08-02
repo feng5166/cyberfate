@@ -222,19 +222,30 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
 
   const [celticModalIdx, setCelticModalIdx] = useState<number | null>(null);
 
-  // 流式自动跟随：仅当用户停留在底部附近时跟随；用户上滚立即停跟随（不抢滚动条），
-  // 滚回底部自动恢复。修复「流式期间无法手动滚动」。
+  // 流式自动跟随：按「滚动方向」判定用户意图——一旦向上滚（滚轮/触摸/拖滚动条皆可检测），
+  // 立即停跟随，滚动条完全归用户；滚回底部附近自动恢复跟随。
+  // 注：不能按「距底距离」判定——token 更新极快，用户刚上滚一点就被程序滚回，形成竞态死锁。
   const streamFollowRef = useRef(true);
+  const prevScrollYRef = useRef(0);
   useEffect(() => {
     if (!streaming) {
       streamFollowRef.current = true;
       return;
     }
+    prevScrollYRef.current = window.scrollY;
     const onScroll = () => {
-      const el = streamEndRef.current;
-      if (!el) return;
-      // 底部锚点距视口底 ≤160px 视为「在底部」→ 跟随；否则用户在回看 → 停跟随
-      streamFollowRef.current = el.getBoundingClientRect().top < window.innerHeight + 160;
+      const y = window.scrollY;
+      if (y < prevScrollYRef.current - 2) {
+        // 向上滚动只可能来自用户（程序化跟随始终向下）→ 立即停跟随
+        streamFollowRef.current = false;
+      } else if (!streamFollowRef.current) {
+        // 已停跟随时，用户自己滚回底部附近 → 恢复跟随
+        const el = streamEndRef.current;
+        if (el && el.getBoundingClientRect().top < window.innerHeight + 80) {
+          streamFollowRef.current = true;
+        }
+      }
+      prevScrollYRef.current = y;
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);

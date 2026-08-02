@@ -176,8 +176,12 @@ export function BaziChatSection({
   }, [toast]);
 
   useEffect(() => {
-    if (listRef.current) {
-      listRef.current.scrollTop = listRef.current.scrollHeight;
+    const el = listRef.current;
+    if (!el) return;
+    // 仅当用户停在列表底部附近时才自动置底；用户上滚回看时不抢滚动条
+    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+    if (nearBottom) {
+      el.scrollTop = el.scrollHeight;
     }
   }, [messages]);
 
