@@ -39,7 +39,7 @@ export function FlipCard({ card, flipped, onFlip, positionLabel, width, compact 
           disabled={flipped}
           aria-label={flipped ? `${card.name_zh}（${card.orientation === 'upright' ? '正位' : '逆位'}）` : `翻开${positionLabel ?? '这张牌'}`}
           className={cn(
-            'block w-full [perspective:800px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4338CA]/50 rounded-[0.85rem]',
+            'block w-full [perspective:800px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1C1A16]/40 rounded-[0.85rem]',
             !flipped && 'cursor-pointer',
           )}
           style={{ aspectRatio: '2 / 3' }}

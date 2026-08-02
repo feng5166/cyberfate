@@ -647,19 +647,19 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
                     onClick={() => handleModeSelect(item.id)}
                     className={`group relative flex flex-col items-center text-center overflow-hidden rounded-2xl border p-4 py-6 transition-all duration-300 ${
                       active
-                        ? 'bg-brand-accent-tint shadow-sm'
+                        ? 'border-[#1C1A16] bg-[#FAF9F6] ring-1 ring-[#1C1A16]/25 shadow-sm'
                         : 'border-[#1C1A16]/8 bg-white hover:-translate-y-1 hover:shadow-card-hover'
                     }`}
-                    style={active ? { borderColor: '#4338CA', boxShadow: '0 0 0 1px #4338CA' } : undefined}
                   >
+                    {/* 模块色仅保留 3px 顶条点缀（设计系统 §2.2/§9：彩色不大面积铺） */}
                     <span
                       aria-hidden
                       className={`pointer-events-none absolute inset-x-0 top-0 h-[3px] origin-left transition-transform duration-300 ${active ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`}
                       style={{ background: '#4338CA' }}
                     />
                     <div
-                      className={`w-12 h-12 rounded-full flex items-center justify-center text-xl mb-3 flex-shrink-0 transition-all duration-300 ${active ? 'text-white' : ''}`}
-                      style={active ? { background: '#4338CA' } : { background: '#E0E7FF', color: '#4338CA' }}
+                      className="w-12 h-12 rounded-full flex items-center justify-center text-xl mb-3 flex-shrink-0 transition-all duration-300"
+                      style={{ background: '#E0E7FF', color: '#4338CA' }}
                     >
                       {item.icon}
                     </div>
@@ -667,10 +667,7 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
                       {item.name}
                     </p>
                     <p className="text-xs text-[#1C1A16]/60 leading-relaxed flex-1">{item.desc}</p>
-                    <p
-                      className={`text-xs mt-3 font-medium ${active ? '' : 'text-[#1C1A16]/40'}`}
-                      style={active ? { color: '#4338CA' } : undefined}
-                    >
+                    <p className={`text-xs mt-3 font-medium ${active ? 'text-[#1C1A16]' : 'text-[#1C1A16]/40'}`}>
                       {active ? '✓ 当前风格' : '选择此风格 →'}
                     </p>
                   </button>
@@ -728,8 +725,7 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
                     <button
                       type="button"
                       onClick={handleFlipAll}
-                      className="text-xs font-medium underline-offset-2 hover:underline"
-                      style={{ color: '#4338CA' }}
+                      className="text-xs font-medium text-[#1C1A16]/70 underline underline-offset-2 decoration-[#1C1A16]/30 hover:text-[#1C1A16] transition-colors"
                     >
                       一键全部翻开
                     </button>
@@ -796,7 +792,7 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
                   }}
                   disabled={loading}
                   className={`inline-flex items-center gap-3 h-[52px] px-8 rounded-lg bg-brand-accent text-base font-semibold tracking-[0.08em] text-white transition-all hover:bg-brand-accent-hover disabled:cursor-not-allowed disabled:opacity-60 ${
-                    allFlipped ? 'ring-4 ring-[#4338CA]/25' : ''
+                    allFlipped ? 'ring-4 ring-[#1C1A16]/15' : ''
                   }`}
                 >
                   <span className="text-lg">✦</span>
@@ -827,12 +823,10 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
 
               {/* 一句话答案（P0-B）：情绪峰值承接，先给结论 */}
               {result.oneLineAnswer && (
-                <div
-                  className="relative overflow-hidden rounded-2xl border bg-white p-5 md:p-6"
-                  style={{ borderColor: 'rgba(67,56,202,0.35)' }}
-                >
+                <div className="relative overflow-hidden rounded-2xl border border-[#1C1A16]/20 bg-white p-5 md:p-6">
+                  {/* 模块色 3px 顶条为唯一彩色点缀 */}
                   <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[3px]" style={{ background: '#4338CA' }} />
-                  <p className="text-xs font-medium tracking-[0.12em] mb-2" style={{ color: '#4338CA' }}>
+                  <p className="text-xs font-medium tracking-[0.12em] mb-2 text-[#1C1A16]/55">
                     一句话答案
                   </p>
                   <p className="text-lg md:text-xl font-semibold leading-relaxed text-[#1C1A16]">
@@ -880,8 +874,8 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
                       {result.actions.map((action, i) => (
                         <li key={i} className="flex items-start gap-2.5 text-sm text-[#1C1A16]/80 leading-relaxed">
                           <span
-                            className="mt-0.5 flex-shrink-0 inline-flex h-4.5 w-4.5 items-center justify-center rounded border text-[10px]"
-                            style={{ borderColor: 'rgba(67,56,202,0.4)', color: '#4338CA', width: 18, height: 18 }}
+                            className="mt-0.5 flex-shrink-0 inline-flex items-center justify-center rounded border border-[#1C1A16]/30 text-[10px] font-medium text-[#1C1A16]/70"
+                            style={{ width: 18, height: 18 }}
                             aria-hidden
                           >
                             {i + 1}
