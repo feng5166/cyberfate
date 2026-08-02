@@ -1092,11 +1092,26 @@ function BaziPageContent() {
     }
   }, [result]);
 
-  // 流式输出时页面级跟随到底部（解读已在页面正常流内，非独立滚动容器）
+  // 流式输出时页面级跟随到底部（解读已在页面正常流内，非独立滚动容器）。
+  // 仅当用户停留在底部附近时跟随；上滚即停跟随（不抢滚动条），滚回底部自动恢复。
   const streamContainerRef = useRef<HTMLDivElement>(null);
   const aiReadingRef = useRef<HTMLDivElement>(null);
+  const streamFollowRef = useRef(true);
   useEffect(() => {
-    if (!aiStreaming || !aiStreamText) return;
+    if (!aiStreaming) {
+      streamFollowRef.current = true;
+      return;
+    }
+    const onScroll = () => {
+      const el = streamContainerRef.current;
+      if (!el) return;
+      streamFollowRef.current = el.getBoundingClientRect().bottom < window.innerHeight + 160;
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [aiStreaming]);
+  useEffect(() => {
+    if (!aiStreaming || !aiStreamText || !streamFollowRef.current) return;
     // 把正在生成的解读底部滚入视野（整页滚动，四柱一并随页面移动）
     streamContainerRef.current?.scrollIntoView({ block: 'end', behavior: 'auto' });
   }, [aiStreamText, aiStreaming]);

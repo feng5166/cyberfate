@@ -173,10 +173,27 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
 
   const [celticModalIdx, setCelticModalIdx] = useState<number | null>(null);
 
-  // 流式输出时随内容增加自动向下滚动
+  // 流式自动跟随：仅当用户停留在底部附近时跟随；用户上滚立即停跟随（不抢滚动条），
+  // 滚回底部自动恢复。修复「流式期间无法手动滚动」。
+  const streamFollowRef = useRef(true);
   useEffect(() => {
-    if (streaming && streamEndRef.current) {
-      streamEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    if (!streaming) {
+      streamFollowRef.current = true;
+      return;
+    }
+    const onScroll = () => {
+      const el = streamEndRef.current;
+      if (!el) return;
+      // 底部锚点距视口底 ≤160px 视为「在底部」→ 跟随；否则用户在回看 → 停跟随
+      streamFollowRef.current = el.getBoundingClientRect().top < window.innerHeight + 160;
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [streaming]);
+
+  useEffect(() => {
+    if (streaming && streamFollowRef.current && streamEndRef.current) {
+      streamEndRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
     }
   }, [streaming, result?.reading]);
 
