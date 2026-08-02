@@ -184,6 +184,10 @@ const baziDataSchema = z.object({
     rizhuStrength: z.string().max(100).optional(),
     yongShen: z.union([z.string().max(100), z.array(z.string().max(50))]).optional(),
     jiShen: z.union([z.string().max(100), z.array(z.string().max(50))]).optional(),
+    // analyzeMingGe 完整输出（V2 起客户端会补算 mingGe，携带以下合法字段）
+    strengthScore: z.number().optional(),
+    yongShenAll: z.array(z.string().max(50)).max(10).optional(),
+    jiShenAll: z.array(z.string().max(50)).max(10).optional(),
   }).strict().partial().optional(),
   zodiac: z.string().max(20).optional(),
   dayMaster: z.string().max(20).optional(),

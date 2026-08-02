@@ -2948,9 +2948,10 @@ function BaziPageContent() {
                       }
                       window.location.href = '/bazi/marriage';
                     }}
-                    className="mt-6 w-full sm:w-auto px-8 py-3 rounded-xl bg-brand-accent hover:bg-brand-accent-hover text-white font-medium text-sm transition-colors"
+                    className="mt-6 w-full sm:w-auto inline-flex items-center justify-center gap-1 hover:gap-2 px-8 py-3 rounded-xl bg-white border border-[#1C1A16]/25 text-[#1C1A16] font-medium text-sm hover:border-[#1C1A16] hover:bg-[#FDFBF7] transition-all"
                   >
-                    输入对方生辰，立即测算 →
+                    输入对方生辰，立即测算
+                    <ArrowRight className="w-4 h-4" style={{ color: '#BE185D' }} />
                   </button>
                 </div>
 
@@ -2987,9 +2988,10 @@ function BaziPageContent() {
                     <button
                       type="button"
                       onClick={() => { window.location.href = '/daily'; }}
-                      className="w-full sm:w-auto px-8 py-3 rounded-xl bg-brand-accent hover:bg-brand-accent-hover text-white font-medium text-sm transition-colors whitespace-nowrap"
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-1 hover:gap-2 px-8 py-3 rounded-xl bg-white border border-[#1C1A16]/25 text-[#1C1A16] font-medium text-sm hover:border-[#1C1A16] hover:bg-[#FDFBF7] transition-all whitespace-nowrap"
                     >
-                      查看今日 AI 运势 →
+                      查看今日 AI 运势
+                      <ArrowRight className="w-4 h-4" style={{ color: '#B0870F' }} />
                     </button>
                   </div>
                 </div>
@@ -3026,10 +3028,11 @@ function BaziPageContent() {
                         track('bazi_to_kline_click');
                         window.location.href = '/life-kline';
                       }}
-                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3 rounded-xl bg-brand-accent hover:bg-brand-accent-hover text-white font-medium text-sm transition-colors whitespace-nowrap"
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-1 hover:gap-2 px-8 py-3 rounded-xl bg-white border border-[#1C1A16]/25 text-[#1C1A16] font-medium text-sm hover:border-[#1C1A16] hover:bg-[#FDFBF7] transition-all whitespace-nowrap"
                     >
-                      <TrendingUp className="w-4 h-4" />
-                      生成我的人生K线 →
+                      <TrendingUp className="w-4 h-4 mr-1" style={{ color: '#059669' }} />
+                      生成我的人生K线
+                      <ArrowRight className="w-4 h-4" style={{ color: '#059669' }} />
                     </button>
                   </div>
                 </div>
