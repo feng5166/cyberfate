@@ -28,6 +28,9 @@ interface CachedTarotReading {
   cardMeanings: string[];
   reading: string;
   caution: string;
+  /** V2 新增（可缺失，旧缓存兼容） */
+  oneLineAnswer?: string;
+  actions?: string[];
 }
 
 type DerivedCard = {
@@ -174,6 +177,8 @@ export async function POST(req: NextRequest) {
   let cardMeanings: string[];
   let readingText: string;
   let caution: string;
+  let oneLineAnswer: string | undefined;
+  let actions: string[] | undefined;
   let source: 'deepseek' | 'fallback' | 'cache';
   let readError: string | undefined;
 
@@ -182,6 +187,8 @@ export async function POST(req: NextRequest) {
     cardMeanings = cached.cardMeanings;
     readingText = cached.reading;
     caution = cached.caution;
+    oneLineAnswer = cached.oneLineAnswer;
+    actions = cached.actions;
     source = 'cache';
   } else {
     const promptInput: TarotReadingPromptInput = {
@@ -217,6 +224,8 @@ export async function POST(req: NextRequest) {
     cardMeanings = reading.cardMeanings;
     readingText = reading.reading;
     caution = reading.caution;
+    oneLineAnswer = reading.oneLineAnswer;
+    actions = reading.actions;
     source = reading._source;
     readError = reading._error;
 
@@ -224,7 +233,7 @@ export async function POST(req: NextRequest) {
       // AI 没出真解读 → 退还刚扣的配额（与八字/每日/六爻一致）
       await refundIfCharged();
     } else {
-      await setCache(cacheKey, { cardMeanings, reading: readingText, caution }, 12 * 60 * 60);
+      await setCache(cacheKey, { cardMeanings, reading: readingText, caution, oneLineAnswer, actions }, 12 * 60 * 60);
     }
   }
 
@@ -252,6 +261,9 @@ export async function POST(req: NextRequest) {
       meaning: cardMeanings[index] || (card.orientation === 'upright' ? card.upright : card.reversed),
     })),
     caution,
+    // V2（PRD-TAROT-V2 P0-B）：一句话答案置顶 + 行动清单（可缺失，前端降级）
+    oneLineAnswer,
+    actions,
     _source: source,
     _debug: isDebugMode ? true : undefined,
     _error: isDebugMode ? readError : undefined,

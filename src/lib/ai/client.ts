@@ -399,6 +399,10 @@ export interface TarotReadingResult {
   cardMeanings: string[];
   reading: string;
   caution: string;
+  /** 一句话答案（PRD-TAROT-V2 P0-B）：直接回答用户的问题，置顶展示。可缺失（旧缓存/兜底） */
+  oneLineAnswer?: string;
+  /** 行动清单：1-3 条可执行建议。可缺失 */
+  actions?: string[];
 }
 
 function buildFallbackTarotReading(input: TarotReadingPromptInput): TarotReadingResult {
@@ -441,10 +445,24 @@ function normalizeTarotReading(
   const normalizedCardMeanings =
     cardMeanings.length === cardCount ? cardMeanings : fallback.cardMeanings.slice(0, cardCount);
 
+  // 一句话答案 / 行动清单（V2 新增，可缺失——前端按缺失降级不渲染）
+  const oneLineAnswer =
+    typeof data.oneLineAnswer === 'string' && data.oneLineAnswer.trim()
+      ? data.oneLineAnswer.replace(/\s+/g, ' ').trim().slice(0, 60)
+      : undefined;
+  const actions = Array.isArray(data.actions)
+    ? data.actions
+        .map((a) => (typeof a === 'string' ? a.replace(/\s+/g, ' ').trim().slice(0, 60) : ''))
+        .filter(Boolean)
+        .slice(0, 3)
+    : undefined;
+
   return {
     cardMeanings: normalizedCardMeanings,
     reading: safeText(data.reading, fallback.reading, limits.reading),
     caution: safeText(data.caution, fallback.caution, limits.caution),
+    ...(oneLineAnswer ? { oneLineAnswer } : {}),
+    ...(actions && actions.length ? { actions } : {}),
   };
 }
 

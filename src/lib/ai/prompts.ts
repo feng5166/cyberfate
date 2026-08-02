@@ -423,10 +423,14 @@ ${spreadStructure}
 
 ## 输出格式
 {
+  "oneLineAnswer": "用一句话直接回答用户的问题(≤40字,先给结论;用户未提问时给整个牌阵的核心讯息)",
   "cardMeanings": ["...", "...", "..."],
   "reading": "完整连贯的解读文章...",
+  "actions": ["可执行建议1(≤40字)", "可执行建议2"],
   "caution": "..."
-}`;
+}
+- oneLineAnswer 必须正面回应问题本身,不许答非所问或含糊其辞;温和但明确。
+- actions 为 1-3 条,与 reading 结尾建议一致,每条以动词开头。`;
 }
 
 export const TAROT_READING_SYSTEM_PROMPT = buildTarotReadingSystemPrompt({
