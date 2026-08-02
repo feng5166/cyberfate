@@ -8,10 +8,10 @@ import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { useState, useRef, useEffect } from 'react';
 import { track } from '@/lib/analytics';
-import { useToast } from '@/components/ui/Toast';
 import { useAiGate, AiGateModals } from '@/components/ai/useAiGate';
 import { FlipCard } from '@/components/tarot/FlipCard';
 import { ShuffleDeck } from '@/components/tarot/ShuffleDeck';
+import { TarotShareModal } from '@/components/tarot/TarotShareModal';
 
 const SAMPLE_PROMPTS = [
   '创业还是留在大公司更适合我？',
@@ -177,7 +177,6 @@ function ReadingBody({ text, cardNames, streaming }: { text: string; cardNames: 
 
 export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode }) {
   const { data: session, status: authStatus } = useSession();
-  const toast = useToast();
   const isLoggedIn = authStatus === 'authenticated';
   const gate = useAiGate(isLoggedIn);
   const [step, setStep] = useState<Step>('question');
@@ -250,31 +249,12 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
   const currentSpread = MODE_TO_SPREAD[mode];
   const isDebug = !!process.env.NEXT_PUBLIC_TAROT_DEBUG_TOKEN;
 
-  const handleShare = async () => {
+  // 分享（P1-A）：先弹预览窗（牌阵分享卡），确认后再导出/分享
+  const [showShareModal, setShowShareModal] = useState(false);
+  const handleShare = () => {
     if (!result) return;
     track('tarot_share_open', { spread: result.spread || currentSpread });
-
-    try {
-      const res = await fetch('/api/tarot/share', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          cards: result.cards,
-          question,
-          spread: result.spread || currentSpread,
-        }),
-      });
-      const data = await res.json();
-
-      if (navigator.share) {
-        await navigator.share({ text: data.shareText });
-      } else {
-        await navigator.clipboard.writeText(data.shareText);
-        toast.success('分享内容已复制到剪贴板');
-      }
-    } catch (err) {
-      console.error('分享失败:', err);
-    }
+    setShowShareModal(true);
   };
 
   const handleModeSelect = (targetMode: ModeId) => {
@@ -1046,6 +1026,18 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
         {seoContent}
       </main>
 
+
+      {/* 分享预览弹窗（P1-A：牌阵分享卡） */}
+      {result && (
+        <TarotShareModal
+          open={showShareModal}
+          onClose={() => setShowShareModal(false)}
+          cards={result.cards}
+          spread={result.spread || currentSpread}
+          question={question.trim()}
+          oneLineAnswer={result.oneLineAnswer}
+        />
+      )}
 
       {/* 凯尔特十字牌面详情 Modal */}
       {celticModalIdx !== null && result && result.cards[celticModalIdx] && (
