@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { getAuthSession } from '@/lib/auth-session';
-import { isUserVip } from '@/lib/quota';
+import { isUserVip, atomicCheckAndConsume, refundQuota } from '@/lib/quota';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 import { PRIMARY_MODEL } from '@/lib/ai/models';
@@ -224,8 +224,15 @@ export async function POST(req: NextRequest) {
       console.error('[bazi/chat] isUserVip error:', msg);
       return Response.json({ error: '服务暂时不可用，请稍后重试' }, { status: 503 });
     }
+    // 三层门禁（PRD-BAZI-V2 P1-A）：VIP 不限；免费登录 1 次/日；超限引导订阅
     if (!isVip) {
-      return Response.json({ error: 'SUBSCRIPTION_REQUIRED', message: '此功能需要订阅会员' }, { status: 403 });
+      const quota = await atomicCheckAndConsume(session.user.id, 'baziChatCount', 1, false);
+      if (!quota.hasQuota) {
+        return Response.json(
+          { error: 'SUBSCRIPTION_REQUIRED', message: '今日 1 次免费追问已用完，会员不限次' },
+          { status: 403 },
+        );
+      }
     }
 
     try {
@@ -328,6 +335,10 @@ export async function POST(req: NextRequest) {
       const cached = await redis.get(cacheKey);
       const cachedText = typeof cached === 'string' ? cached : (cached == null ? '' : String(cached));
       if (cachedText && cachedText.trim().length > 30) {
+        // 缓存命中不应消耗免费追问次数（与 stream 路由「缓存命中不扣配额」策略一致）
+        if (!isVip) {
+          try { await refundQuota(session.user.id, 'baziChatCount'); } catch {}
+        }
         const enc = new TextEncoder();
         const replay = new ReadableStream({
           async start(controller) {
@@ -430,6 +441,10 @@ ${answerRule}
           delayMs: 150,
         })),
         contentFrame: (content) => ({ type: 'content', content }),
+        // 免费追问（1 次/日）回答尾部追加升级引导（PRD-BAZI-V2 P1-A，仅非 VIP）
+        suffixFrames: isVip
+          ? undefined
+          : [{ type: 'content', content: '\n\n---\n今日免费追问已用完，[会员不限次继续问 →](/pricing)' }],
         label: 'bazi/chat',
         // 流读完且未被中断、未被截断的完整答案 → 写结果缓存（TTL 7 天）
         onComplete: async (fullAnswer, aborted, truncated) => {

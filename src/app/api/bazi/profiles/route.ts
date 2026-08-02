@@ -4,8 +4,10 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { sanitizeUserInput } from '@/lib/utils/sanitize';
+import { isUserVip } from '@/lib/quota';
 
 const MAX_PROFILES = 5;
+const MAX_PROFILES_VIP = 20; // PRD-BAZI-V2 P1-B：修复「VIP 无限」假承诺，真实上限 20
 
 const createSchema = z.object({
   label: z.string().min(1, '请填写显示名称').max(10, '显示名称最多10字'),
@@ -105,9 +107,11 @@ export async function POST(req: NextRequest) {
   const count = await prisma.baziProfile.count({
     where: { userId: session.user.id },
   });
-  if (count >= MAX_PROFILES) {
+  const vip = await isUserVip(session.user.id);
+  const cap = vip ? MAX_PROFILES_VIP : MAX_PROFILES;
+  if (count >= cap) {
     return NextResponse.json(
-      { error: `免费版最多保存${MAX_PROFILES}个命盘，升级 VIP 无限制` },
+      { error: vip ? `最多可保存${MAX_PROFILES_VIP}个命盘` : `免费版最多保存${MAX_PROFILES}个命盘，升级 VIP 可存 ${MAX_PROFILES_VIP} 个` },
       { status: 403 }
     );
   }

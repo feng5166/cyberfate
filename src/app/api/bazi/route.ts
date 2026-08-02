@@ -3,7 +3,8 @@ import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { sanitizeUserInput } from '@/lib/utils/sanitize';
 import { getAuthSession } from '@/lib/auth-session';
-import { calculateBazi, calculateBaziFromPillars, WUXING_KEYS, analyzeMingGe, getCurrentDayun, getDayunTimeline, analyzeShensha, shenshaNature, analyzeLiunian, analyzeLiuyueRange } from '@/lib/bazi';
+import { calculateBazi, calculateBaziFromPillars, WUXING_KEYS, analyzeMingGe, getCurrentDayun, getDayunTimeline, analyzeShensha, shenshaNature, analyzeLiunian, analyzeLiuyueRange, analyzeInteractions, scanYingqi } from '@/lib/bazi';
+import { isUserVip } from '@/lib/quota';
 import type { ShenshaDisplay } from '@/lib/bazi/types';
 import { checkRateLimit } from '@/lib/rate-limit';
 import type { FiveDimensions, MingGeInfo, PillarRecord, WuxingCount } from '@/lib/bazi/types';
@@ -248,6 +249,22 @@ export async function POST(req: NextRequest) {
     const liunian = analyzeLiunian(baziResult.chart, curYear);
     const liuyue = analyzeLiuyueRange(baziResult.chart, curYear, 1, 12);
 
+    // —— V2 新增（PRD-BAZI-V2）——
+    // 刑冲会合害（P1-C 可视化）：命局四柱地支两两关系，免费展示
+    const interactions = analyzeInteractions(baziResult.chart);
+    // 关键应期（P1-D）：未来 10 年扫描；VIP 全表，非 VIP 服务端只放最近 1 条（权益服务端校验）
+    const yingqiAll = scanYingqi(baziResult.chart, gender, curYear, 10);
+    let yingqiVip = false;
+    try {
+      const session = await getAuthSession(req);
+      if (session?.user?.id) yingqiVip = await isUserVip(session.user.id);
+    } catch { /* 会话/VIP 查询失败按非 VIP 处理，不阻断排盘 */ }
+    const yingqi = {
+      vip: yingqiVip,
+      total: yingqiAll.length,
+      items: yingqiVip ? yingqiAll : yingqiAll.slice(0, 1),
+    };
+
     // 生成 cacheKey（与 /api/bazi/stream 共用）。keyMaterial 已在上方按
     // 日期/八字两种模式分别构造，涵盖全部影响排盘的字段，避免串档共享 AI 解读。
     const hash = crypto.createHash('sha256')
@@ -275,6 +292,9 @@ export async function POST(req: NextRequest) {
       liunian,
       liuyue,
       dayunTimeline,
+      // V2：刑冲会合害 + 关键应期（PRD-BAZI-V2）
+      interactions,
+      yingqi,
     });
   } catch (error) {
     logger.error(SERVICE, 'Bazi API error', error instanceof Error ? error : undefined);

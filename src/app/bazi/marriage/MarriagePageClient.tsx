@@ -396,6 +396,70 @@ export function MarriagePageClient() {
   const { status } = useSession();
   const gate = useAiGate(status === 'authenticated');
 
+  // 八字页跳转预填（PRD-BAZI-V2 P1-B）：selfBaziData = 当前命盘，otherBaziData = 合盘对象。
+  // 时辰为粗略时辰码（'0'-'11'，-1 = 不知道），换算为该时辰起始小时。
+  useEffect(() => {
+    const SHICHEN_START: Record<string, number> = {
+      '0': 23, '1': 1, '2': 3, '3': 5, '4': 7, '5': 9,
+      '6': 11, '7': 13, '8': 15, '9': 17, '10': 19, '11': 21,
+    };
+    const toSide = (raw: string): Partial<SideData> | null => {
+      try {
+        const d = JSON.parse(raw) as {
+          name?: string; gender?: string; birthDate?: string;
+          birthHour?: string; birthPlace?: string; isLunar?: boolean;
+        };
+        if (!d?.birthDate) return null;
+        const hourCode = d.birthHour ?? '-1';
+        const knowTime = hourCode !== '-1' && hourCode !== '';
+        return {
+          name: d.name || '',
+          gender: d.gender === 'female' ? 'female' : 'male',
+          isLunar: Boolean(d.isLunar),
+          birthDate: d.birthDate,
+          knowTime,
+          birthHourNum: knowTime ? (SHICHEN_START[hourCode] ?? 12) : 12,
+          birthMinute: 0,
+          birthPlace: d.birthPlace || '',
+        };
+      } catch {
+        return null;
+      }
+    };
+    try {
+      const selfRaw = sessionStorage.getItem('selfBaziData');
+      const otherRaw = sessionStorage.getItem('otherBaziData');
+      if (!selfRaw && !otherRaw) return;
+      const sides = [selfRaw, otherRaw]
+        .map((r) => (r ? toSide(r) : null))
+        .filter((s): s is Partial<SideData> => Boolean(s));
+      if (!sides.length) return;
+      // 按性别归位；同性别时后到的落在另一侧（合婚表单固定男/女两栏）
+      let maleTaken = false;
+      let femaleTaken = false;
+      for (const side of sides) {
+        const preferFemale = side.gender === 'female';
+        if (preferFemale && !femaleTaken) {
+          setFemaleData((prev) => ({ ...prev, ...side, gender: 'female' }));
+          femaleTaken = true;
+        } else if (!preferFemale && !maleTaken) {
+          setMaleData((prev) => ({ ...prev, ...side, gender: 'male' }));
+          maleTaken = true;
+        } else if (!maleTaken) {
+          setMaleData((prev) => ({ ...prev, ...side, gender: 'male' }));
+          maleTaken = true;
+        } else if (!femaleTaken) {
+          setFemaleData((prev) => ({ ...prev, ...side, gender: 'female' }));
+          femaleTaken = true;
+        }
+      }
+      sessionStorage.removeItem('selfBaziData');
+      sessionStorage.removeItem('otherBaziData');
+    } catch {
+      // sessionStorage 不可用时静默跳过
+    }
+  }, []);
+
   const updateMale = (patch: Partial<SideData>) => setMaleData(prev => ({ ...prev, ...patch }));
   const updateFemale = (patch: Partial<SideData>) => setFemaleData(prev => ({ ...prev, ...patch }));
 

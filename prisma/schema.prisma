@@ -213,6 +213,7 @@ model UsageQuota {
   liuyaoQaCount     Int    @default(0) // 六爻问答
   meihuaQaCount     Int    @default(0) // 梅花问答
   marriageQaCount   Int    @default(0) // 合婚问答
+  baziChatCount     Int    @default(0) // 八字 AI 追问（PRD-BAZI-V2：免费 1 次/日）
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

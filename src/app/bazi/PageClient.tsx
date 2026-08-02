@@ -11,6 +11,7 @@ import {
   BarChart3,
   ChevronDown,
   ChevronUp,
+  Heart,
   History,
   Pencil,
   Plus,
@@ -19,6 +20,7 @@ import {
   Share2,
   Sparkles,
   Trash2,
+  TrendingUp,
   Wrench,
 } from 'lucide-react';
 import { saveBirthInfo, loadBirthInfo } from '@/lib/utils/storage';
@@ -54,8 +56,13 @@ import {
   analyzeLiuyueRange,
   analyzeShensha,
   shenshaNature,
+  analyzeInteractions,
+  analyzeMingGe,
+  buildQuickRead,
+  personaFor,
+  scanYingqi,
 } from '@/lib/bazi';
-import type { DayunDetail } from '@/lib/bazi';
+import type { DayunDetail, GejuName, TianGan } from '@/lib/bazi';
 import type {
   BaziApiResult,
   BaziHistoryRecord,
@@ -83,17 +90,14 @@ const WuxingChart = dynamic(() => import('@/components/bazi/WuxingChart').then(m
 const ShenshaCard = dynamic(() => import('@/components/bazi/ShenshaCard').then(m => m.ShenshaCard), { ssr: false, loading: _loadingSpinner });
 const LiunianLiuyueCard = dynamic(() => import('@/components/bazi/LiunianLiuyueCard').then(m => m.LiunianLiuyueCard), { ssr: false, loading: _loadingSpinner });
 const BaziChatSection = dynamic(() => import('@/components/bazi/BaziChatSection').then(m => m.BaziChatSection), { ssr: false, loading: _loadingSpinner });
+const QuickReadCard = dynamic(() => import('@/components/bazi/QuickReadCard').then(m => m.QuickReadCard), { ssr: false, loading: _loadingSpinner });
+const TopicReadSection = dynamic(() => import('@/components/bazi/TopicReadSection').then(m => m.TopicReadSection), { ssr: false, loading: _loadingSpinner });
+const InteractionsCard = dynamic(() => import('@/components/bazi/InteractionsCard').then(m => m.InteractionsCard), { ssr: false, loading: _loadingSpinner });
+const YingqiCard = dynamic(() => import('@/components/bazi/YingqiCard').then(m => m.YingqiCard), { ssr: false, loading: _loadingSpinner });
 
-type ResultTab = '性格特质' | '事业财运' | '婚姻健康' | '十神详解' | '大运流年';
 type AiSectionKey = 'dayMaster' | 'personality' | 'career' | 'wealth' | 'relationship' | 'health' | 'dayun';
 
 type TagVariant = 'metal' | 'wood' | 'water' | 'fire' | 'earth';
-
-interface TabContent {
-  scores: Array<{ label: string; value: number }>;
-  points: string[];
-  detail: string;
-}
 
 interface FaqItem {
   question: string;
@@ -136,6 +140,7 @@ interface BaziProfileData {
 }
 
 const MAX_LOGGED_IN_PROFILES = 5;
+const MAX_VIP_PROFILES = 20; // PRD-BAZI-V2 P1-B：与服务端 profiles/route.ts 保持一致
 const MAX_GUEST_PROFILES = 2;
 
 const shichenOptions = [
@@ -314,7 +319,9 @@ function withFreshModules(result: BaziPageResult): BaziPageResult {
       ...d,
       isCurrent: year >= d.yearStart && year <= d.yearEnd,
     }));
-    return { ...result, shensha, liunian, liuyue, ...(dayunTimeline ? { dayunTimeline } : {}) };
+    // 旧历史/档案记录未存 mingGe：从四柱补算，速读卡/人设分享卡才有数据（V2）
+    const mingGe = result.mingGe ?? analyzeMingGe(chart);
+    return { ...result, shensha, liunian, liuyue, mingGe, ...(dayunTimeline ? { dayunTimeline } : {}) };
   } catch {
     return result;
   }
@@ -329,22 +336,6 @@ function firstSentence(text: string): string {
     .filter(Boolean);
   if (!sentences.length) return trimmed;
   return `${sentences[0]}。`;
-}
-
-function buildPoints(sourceText: string, fallback: string): string[] {
-  const pieces = sourceText
-    .replace(/[\t\r]/g, ' ')
-    .split(/[。！？\n]/)
-    .map(line => line.replace(/^[-•*\s]+/, '').trim())
-    .filter(Boolean);
-
-  const selected = (pieces.length ? pieces : [fallback]).slice(0, 5);
-  while (selected.length < 3) {
-    selected.push(fallback);
-  }
-
-  const prefixes = ['✓', '⚠', '💡', '✓', '💡'];
-  return selected.map((item, index) => `${prefixes[index]} ${item}`);
 }
 
 function getAge(birthDate: string): number {
@@ -392,12 +383,6 @@ function getZodiacByBirthDate(birthDate: string): string {
   if (!year) return '未提供';
   const zodiac = ['鼠', '牛', '虎', '兔', '龙', '蛇', '马', '羊', '猴', '鸡', '狗', '猪'];
   return zodiac[(year - 4 + 1200) % 12] || '未提供';
-}
-
-function getScoreStyle(score: number): { barClass: string; textClass: string } {
-  if (score >= 80) return { barClass: 'bg-emerald-500', textClass: 'text-emerald-600' };
-  if (score >= 60) return { barClass: 'bg-[#1C1A16]', textClass: 'text-stone-600' };
-  return { barClass: 'bg-rose-500', textClass: 'text-rose-600' };
 }
 
 function buildDayunTimeline(
@@ -451,28 +436,6 @@ function extractDayunAiText(item: DayunTimelineItem | null, aiSections: Record<A
     }
   }
   return captured.join('\n').trim();
-}
-
-/** 组合纯文本版大运详情（供通用 Tab 模板 / buildPoints 使用） */
-function buildDayunDetail(
-  item: DayunTimelineItem | null,
-  aiSections: Record<AiSectionKey, string>,
-  birthDate: string
-): string {
-  if (!item) return '暂无大运信息';
-  const yearGanzhi = getYearGanzhi(getDateString(new Date()));
-  const parts = [
-    `${item.gan}${item.zhi}大运（${item.ageStart}-${item.ageEnd}岁）。${getDayunPhaseText(item, birthDate)}`,
-    `当前流年：${yearGanzhi}。`,
-  ];
-  const aiText = extractDayunAiText(item, aiSections);
-  if (aiText) parts.push(aiText);
-  return parts.join('\n');
-}
-
-function scoreValue(score?: number): number {
-  if (typeof score !== 'number' || Number.isNaN(score)) return 0;
-  return Math.max(0, Math.min(100, Math.round(score)));
 }
 
 const BAZI_TERMS_LIST = [
@@ -705,12 +668,24 @@ function ProfileFormModal({
           <div className="space-y-3">
             <p className="text-sm font-semibold text-[#1C1A16]/50 tracking-wide">时间信息</p>
             <DatePicker
-              label="出生日期（阳历）"
+              label={values.isLunar ? '出生日期（农历）' : '出生日期（阳历）'}
               value={values.birthDate}
               onChange={(value) => setValues((v) => ({ ...v, birthDate: value }))}
               className="space-y-1.5"
               triggerClassName="min-h-[44px] rounded-lg"
             />
+            <label className="flex items-start gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={values.isLunar}
+                onChange={(e) => setValues((v) => ({ ...v, isLunar: e.target.checked }))}
+                className="mt-1 w-4 h-4 accent-[#1C1A16]"
+              />
+              <div>
+                <p className="text-sm font-medium text-[#1C1A16]">这是农历生日</p>
+                <p className="text-xs text-[#1C1A16]/55 mt-0.5">只记得农历生日就勾选，系统会自动换算（闰月自动处理）。</p>
+              </div>
+            </label>
           </div>
 
           <hr className="border-[#1C1A16]/8" />
@@ -803,6 +778,8 @@ function BaziPageContent() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authReason, setAuthReason] = useState<{ title: string; desc: string } | undefined>(undefined);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showHepanPicker, setShowHepanPicker] = useState(false);
   const [fullReadExpanded, setFullReadExpanded] = useState(false);
   const [expandedFaqIndex, setExpandedFaqIndex] = useState<number | null>(0);
   const [selectedDayunIndex, setSelectedDayunIndex] = useState(2);
@@ -1135,10 +1112,6 @@ function BaziPageContent() {
     return () => clearTimeout(timer);
   }, [loading]);
 
-  const dayunDetail = useMemo(() => {
-    return buildDayunDetail(selectedDayun, aiSections, formData.birthDate);
-  }, [selectedDayun, aiSections, formData.birthDate]);
-
   // 选中大运的确定性结构化详情（十神 / 藏干 / 纳音 / 吉凶 / 四维），不依赖 AI
   const dayunDetailRich = useMemo<DayunDetail | null>(() => {
     if (!selectedDayun || !result) return null;
@@ -1202,61 +1175,65 @@ function BaziPageContent() {
     };
   }, [formData.birthDate, formData.birthHour, formData.gender, formData.name, formData.knowTime, formData.birthMinute, chatBirthHourNum, result, hasHourPillar]);
 
-  const tabContent = useMemo<Record<ResultTab, TabContent>>(() => {
-    const dimensions = result?.fiveDimensions;
-    const careerScore = dimensions ? scoreValue((dimensions.career + dimensions.wealth) / 2) : 0;
-    const relationScore = dimensions ? scoreValue((dimensions.relationship + dimensions.health) / 2) : 0;
-    const personalityScore = dimensions ? scoreValue((dimensions.studies + dimensions.health) / 2) : 0;
+  // —— V2 派生数据（PRD-BAZI-V2）：全部本地确定性计算，零 AI 成本 ——
 
-    return {
-      性格特质: {
-        scores: dimensions
-          ? [
-              { label: '性格稳定度', value: personalityScore },
-              { label: '学习成长', value: scoreValue(dimensions.studies) },
-            ]
-          : [],
-        points: buildPoints(aiSections.personality || aiSections.dayMaster, '保持稳定节奏，持续优化自我表达'),
-        detail: aiSections.personality || aiSections.dayMaster || result?.aiAnalysis || '暂无详细解读。',
-      },
-      事业财运: {
-        scores: dimensions
-          ? [
-              { label: '事业', value: scoreValue(dimensions.career) },
-              { label: '财运', value: scoreValue(dimensions.wealth) },
-              { label: '综合', value: careerScore },
-            ]
-          : [],
-        points: buildPoints(`${aiSections.career}\n${aiSections.wealth}`, '稳健行动，先做确定性更高的选择'),
-        detail: `${aiSections.career || '暂无事业解读。'}\n\n${aiSections.wealth || '暂无财运解读。'}`,
-      },
-      婚姻健康: {
-        scores: dimensions
-          ? [
-              { label: '关系', value: scoreValue(dimensions.relationship) },
-              { label: '健康', value: scoreValue(dimensions.health) },
-              { label: '综合', value: relationScore },
-            ]
-          : [],
-        points: buildPoints(`${aiSections.relationship}\n${aiSections.health}`, '关注沟通质量与作息管理，减少内耗'),
-        detail: `${aiSections.relationship || '暂无婚姻关系解读。'}\n\n${aiSections.health || '暂无健康解读。'}`,
-      },
-      十神详解: {
-        scores: [],
-        points: [],
-        detail: '十神详解通过独立组件渲染，不使用通用模板。',
-      },
-      大运流年: {
-        scores: dimensions
-          ? [
-              { label: '阶段节奏', value: scoreValue((dimensions.career + dimensions.relationship) / 2) },
-            ]
-          : [],
-        points: buildPoints(`${aiSections.dayun}\n${dayunDetail}`, '以十年为周期制定目标，按年度滚动调整'),
-        detail: `${aiSections.dayun || '暂无大运流年专项解读。'}\n\n${dayunDetail}`,
-      },
-    };
-  }, [aiSections, dayunDetail, result]);
+  /** 命盘速读三句话（P0-A）：盘面定性 / 当下处境 / 今年流年 */
+  const quickReadLines = useMemo<string[]>(() => {
+    if (!result?.mingGe) return [];
+    try {
+      return buildQuickRead({
+        dayGan: result.pillars.day.gan as TianGan,
+        mingGe: {
+          geju: result.mingGe.geju as GejuName,
+          rizhuStrength: result.mingGe.rizhuStrength,
+          yongShen: result.mingGe.yongShen,
+          jiShen: result.mingGe.jiShen,
+        },
+        dayunTimeline: result.dayunTimeline ?? [],
+        liunian: result.liunian ?? null,
+        currentYear: beijingYear(),
+      });
+    } catch {
+      return [];
+    }
+  }, [result]);
+
+  /** 命格人设（P0-B）：分享卡主文案 */
+  const persona = useMemo(() => {
+    if (!result?.mingGe) return undefined;
+    try {
+      return personaFor(result.mingGe.geju as GejuName, result.pillars.day.gan as TianGan);
+    } catch {
+      return undefined;
+    }
+  }, [result]);
+
+  /** 刑冲会合害（P1-C）：API 已带则直用；历史/档案记录按四柱现算 */
+  const interactionsData = useMemo(() => {
+    if (result?.interactions) return result.interactions;
+    const chart = result ? chartFromResult(result) : null;
+    if (!chart) return [];
+    try {
+      return analyzeInteractions(chart);
+    } catch {
+      return [];
+    }
+  }, [result]);
+
+  /** 关键应期（P1-D）：优先 API（服务端 VIP 分层）；缓存记录本地补算，按会员态分层 */
+  const yingqiData = useMemo(() => {
+    const api = result?.yingqi;
+    // API 数据已是全表（VIP），或本地也非会员（截断口径一致）→ 直用
+    if (api && (api.items.length === api.total || !isMember)) return api;
+    const chart = result ? chartFromResult(result) : null;
+    if (!chart) return api ?? null;
+    try {
+      const all = scanYingqi(chart, formData.gender === 'female' ? 'female' : 'male', beijingYear(), 10);
+      return { vip: isMember, total: all.length, items: isMember ? all : all.slice(0, 1) };
+    } catch {
+      return api ?? null;
+    }
+  }, [result, formData.gender, isMember]);
 
   const summaryPoints = useMemo(() => {
     const sections = [
@@ -1374,6 +1351,13 @@ function BaziPageContent() {
         // 配额用尽（免费用户）→ 升级引导弹窗
         if (response.status === 403 && errCode === 'QUOTA_EXCEEDED') {
           setShowQuotaModal(true);
+          setShowAiButton(true);
+          return false;
+        }
+        // 全盘详批为 VIP 专属（V2）：会员态过期/未同步时兜底弹升级
+        if (response.status === 403 && errCode === 'SUBSCRIPTION_REQUIRED') {
+          track('bazi_full_paywall_show', { from: 'stream_403' });
+          setShowUpgradeModal(true);
           setShowAiButton(true);
           return false;
         }
@@ -1521,6 +1505,80 @@ function BaziPageContent() {
     void runAiStream(false);
   };
 
+  /** 组装 /api/bazi/stream 请求体（不含 topic）。与 runAiStream 保持同一字段口径 */
+  const buildStreamBody = (r: BaziPageResult): Record<string, unknown> => ({
+    cacheKey: r.cacheKey,
+    baziResult: r.baziResult,
+    name: formData.name || '缘主',
+    gender: formData.gender || 'unknown',
+    birthDate: formData.birthDate,
+    birthHour: parseInt(formData.birthHour, 10),
+    knowTime: formData.knowTime,
+    birthHourNum: formData.knowTime ? formData.birthHourNum : undefined,
+    birthMinute: formData.knowTime ? formData.birthMinute : undefined,
+    dayunExtra: r.dayunExtra,
+  });
+
+  /** 议题式 AI（P0-A）：历史/档案记录缺 cacheKey 时先静默重算排盘补齐 */
+  const ensureTopicPayload = async (): Promise<Record<string, unknown> | null> => {
+    if (result?.cacheKey && result?.baziResult) return buildStreamBody(result);
+    try {
+      const baseResp = await fetch('/api/bazi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name || '缘主',
+          gender: formData.gender || 'unknown',
+          birthDate: formData.birthDate,
+          birthHour: parseInt(formData.birthHour, 10),
+          birthPlace: formData.birthPlace,
+          isLunar: formData.isLunar,
+          knowTime: formData.knowTime,
+          birthHourNum: formData.knowTime ? formData.birthHourNum : undefined,
+          birthMinute: formData.knowTime ? formData.birthMinute : undefined,
+          lateZiShi: formData.knowTime ? formData.lateZiShi : undefined,
+        }),
+      });
+      const baseData = (await baseResp.json()) as BaziPageResult & { error?: string };
+      if (!baseResp.ok) return null;
+      // 合并而非覆盖：保留历史记录里已有的完整 AI 长文
+      setResult(prev =>
+        prev
+          ? { ...baseData, aiAnalysis: prev.aiAnalysis || baseData.aiAnalysis, _source: prev._source }
+          : baseData,
+      );
+      return buildStreamBody(baseData);
+    } catch {
+      return null;
+    }
+  };
+
+  /** 命格人设分享（P0-B）：接通 ShareCard 弹层 */
+  const handleShare = () => {
+    track('bazi_share_open', { persona: Boolean(persona) });
+    setShowShareModal(true);
+  };
+
+  /** 档案一键合盘（P1-B）：双方出生信息经 sessionStorage 传给合婚页 */
+  const handleHepanPick = (other: BaziProfileData) => {
+    const self = profiles.find((p) => p.id === selectedProfileId);
+    if (!self) return;
+    try {
+      const pack = (p: BaziProfileData) => JSON.stringify({
+        name: p.name,
+        gender: p.gender,
+        birthDate: p.birthDate,
+        birthHour: p.birthHour,
+        birthPlace: p.birthPlace || '',
+        isLunar: Boolean(p.isLunar),
+      });
+      sessionStorage.setItem('selfBaziData', pack(self));
+      sessionStorage.setItem('otherBaziData', pack(other));
+    } catch {}
+    track('bazi_profile_hepan_click');
+    window.location.href = '/bazi/marriage';
+  };
+
   const applyProfileToForm = (profile: BaziProfileData) => {
     setFormData((prev) => ({
       ...prev,
@@ -1546,6 +1604,7 @@ function BaziPageContent() {
   };
 
   const handleSelectProfile = (profileId: string) => {
+    track('bazi_profile_switch');
     setSelectedProfileId(profileId);
     const profile = profiles.find((p) => p.id === profileId);
     if (profile) applyProfileToForm(profile);
@@ -1683,10 +1742,15 @@ function BaziPageContent() {
       const isAuth = status === 'authenticated';
       const isEditing = Boolean(editingProfile);
 
-      // 上限校验（仅新建）
+      // 上限校验（仅新建）；服务端为最终裁决
       if (!isEditing) {
-        if (isAuth && profiles.length >= MAX_LOGGED_IN_PROFILES) {
-          setProfileError(`免费版最多保存${MAX_LOGGED_IN_PROFILES}个命盘，升级 VIP 无限制`);
+        const authCap = isMember ? MAX_VIP_PROFILES : MAX_LOGGED_IN_PROFILES;
+        if (isAuth && profiles.length >= authCap) {
+          setProfileError(
+            isMember
+              ? `最多可保存${MAX_VIP_PROFILES}个命盘`
+              : `免费版最多保存${MAX_LOGGED_IN_PROFILES}个命盘，升级 VIP 可存 ${MAX_VIP_PROFILES} 个`,
+          );
           setProfileLoading(false);
           return;
         }
@@ -1919,6 +1983,7 @@ function BaziPageContent() {
       setResult(data);
       setShowAiButton(true);
       track('tool_result_view', { tool: 'bazi' });
+      track('bazi_paipan_complete'); // V2 漏斗起点（P0-C）
       setFullReadExpanded(false);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : '未知错误');
@@ -1953,10 +2018,6 @@ function BaziPageContent() {
 
     const saved = saveRecord(toSave);
     setActionMessage(saved ? '命盘已保存到历史记录（最多保留3条）' : '保存失败，请重试');
-  };
-
-  const handleSharePlaceholder = () => {
-    setActionMessage('分享功能开发中，敬请期待。');
   };
 
   const clearResultState = (message: string) => {
@@ -2107,11 +2168,13 @@ function BaziPageContent() {
             />
             {(() => {
               const isAuth = status === 'authenticated';
-              const cap = isAuth ? MAX_LOGGED_IN_PROFILES : MAX_GUEST_PROFILES;
+              const cap = isAuth ? (isMember ? MAX_VIP_PROFILES : MAX_LOGGED_IN_PROFILES) : MAX_GUEST_PROFILES;
               const disabled = profiles.length >= cap;
               const tip = disabled
                 ? isAuth
-                  ? `免费版最多保存${cap}个命盘，升级 VIP 无限制`
+                  ? isMember
+                    ? `最多可保存${MAX_VIP_PROFILES}个命盘`
+                    : `免费版最多保存${cap}个命盘，升级 VIP 可存 ${MAX_VIP_PROFILES} 个`
                   : `未登录最多保存${cap}个命盘，请登录后使用`
                 : '新增八字';
               return (
@@ -2136,6 +2199,18 @@ function BaziPageContent() {
               if (!current) return null;
               return (
                 <div className="flex items-center gap-1">
+                  {profiles.length >= 2 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowHepanPicker(true)}
+                      title="与其他档案合盘"
+                      className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg border border-[#1C1A16]/15 text-[#1C1A16]/70 hover:bg-[#FCE7F3]/60 hover:text-[#BE185D] hover:border-[#BE185D]/30 transition-colors text-xs font-medium"
+                      aria-label="与其他档案合盘"
+                    >
+                      <Heart className="w-3.5 h-3.5" />
+                      合盘
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={handleOpenEditProfile}
@@ -2227,12 +2302,28 @@ function BaziPageContent() {
           <p className="text-sm font-semibold text-[#1C1A16]/50 tracking-wide">时间信息</p>
 
               <DatePicker
-                label="出生日期（阳历）"
+                label={formData.isLunar ? '出生日期（农历）' : '出生日期（阳历）'}
                 value={formData.birthDate}
                 onChange={(value) => setFormData({ ...formData, birthDate: value })}
                 className="space-y-1.5"
                 triggerClassName="min-h-[44px] rounded-lg"
               />
+
+              {/* 农历输入（P2-B）：isLunar 全链路已通，此处只是开关 */}
+              <label className="flex items-start gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.isLunar}
+                  onChange={(e) => setFormData({ ...formData, isLunar: e.target.checked })}
+                  className="mt-1 w-4 h-4 accent-[#1C1A16]"
+                />
+                <div>
+                  <p className="text-sm font-medium text-[#1C1A16]">这是农历生日</p>
+                  <p className="text-xs text-[#1C1A16]/55 mt-0.5">
+                    只记得农历生日就勾选，系统会自动换算（闰月自动处理）。
+                  </p>
+                </div>
+              </label>
               <hr className="border-[#1C1A16]/8" />
           {/* 时辰组 */}
               <fieldset className="space-y-4">
@@ -2393,6 +2484,9 @@ function BaziPageContent() {
                     <p className="text-sm text-blue-700">AI 解读耗时较长，已为您准备基础解读（简化版解读，完整版需会员）</p>
                   </div>
                 )}
+                {/* 命盘速读（P0-A）：置顶三句话，3 秒读懂盘面/大运/流年，零 AI 成本 */}
+                {quickReadLines.length > 0 && <QuickReadCard lines={quickReadLines} />}
+
                 {/* 桌面也走单栏：概览(四柱/五行/日主)在上、AI 解读长文在下,收窄到 page(840) 舒适阅读宽,避免两栏「左短右长」留白/停靠。 */}
                 <SplitLayout
                   asidePosition="left"
@@ -2531,15 +2625,23 @@ function BaziPageContent() {
                     </div>
                   )}
 
-                  {showAiButton && (
-                    <button
-                      type="button"
-                      onClick={handleStartAiReading}
-                      className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-brand-accent hover:bg-brand-accent-hover text-white font-medium text-sm transition-colors"
-                    >
-                      <Sparkles className="w-4 h-4" />
-                      开始 AI 解读
-                    </button>
+                  {/* 议题式 AI（P0-A）：六议题入口替代单一「开始AI解读」按钮；全盘详批改 VIP 专属 */}
+                  {!aiStreaming && (
+                    <div className={showAiButton ? '' : 'mb-5'}>
+                      <TopicReadSection
+                        cacheKey={result.cacheKey ?? null}
+                        ensurePayload={ensureTopicPayload}
+                        isVip={isMember}
+                        hasFullAnalysis={!showAiButton && Boolean(result.aiAnalysis)}
+                        onStartFullRead={handleStartAiReading}
+                        onQuotaExceeded={() => setShowQuotaModal(true)}
+                        onNeedAuth={(reason) => {
+                          setAuthReason(reason);
+                          setShowAuthModal(true);
+                        }}
+                        onNeedVip={() => setShowUpgradeModal(true)}
+                      />
+                    </div>
                   )}
 
                   {aiStreaming && (
@@ -2772,6 +2874,20 @@ function BaziPageContent() {
                   <ShishenDetailTab pillars={result.pillars} dayGan={result.pillars.day.gan} />
                 </Card>
 
+                {/* 刑冲会合害可视化（P1-C）：全站独有的专业感视觉，置于神煞卡之前 */}
+                <Card className={cardClass}>
+                  <InteractionsCard
+                    interactions={interactionsData}
+                    branches={{
+                      year: result.pillars.year.zhi,
+                      month: result.pillars.month.zhi,
+                      day: result.pillars.day.zhi,
+                      hour: hasHourPillar ? result.pillars.hour.zhi : null,
+                    }}
+                    hasHour={hasHourPillar}
+                  />
+                </Card>
+
                 <Card className={cardClass}>
                   <ShenshaCard shensha={result.shensha} />
                 </Card>
@@ -2779,6 +2895,18 @@ function BaziPageContent() {
                 {(result.liunian || (result.liuyue && result.liuyue.length > 0)) && (
                   <Card className={cardClass}>
                     <LiunianLiuyueCard liunian={result.liunian} liuyue={result.liuyue} />
+                  </Card>
+                )}
+
+                {/* 关键应期（P1-D）：免费最近 1 条 + 模糊占位；VIP 全表 */}
+                {yingqiData && (
+                  <Card className={cardClass}>
+                    <YingqiCard
+                      items={yingqiData.items}
+                      total={yingqiData.total}
+                      isVip={isMember}
+                      onUnlockClick={() => setShowUpgradeModal(true)}
+                    />
                   </Card>
                 )}
 
@@ -2866,6 +2994,46 @@ function BaziPageContent() {
                   </div>
                 </div>
 
+                {/* 人生K线引流（P2-A）：出生信息已在本地 storage，K线页自动出图 */}
+                <div className="group relative overflow-hidden rounded-2xl border border-[#1C1A16]/8 bg-white p-6 md:p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover">
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute inset-x-0 top-0 h-[3px] origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300"
+                    style={{ background: '#059669' }}
+                  />
+                  <span
+                    className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium tracking-[0.08em]"
+                    style={{ background: '#D1FAE5', color: '#059669' }}
+                  >
+                    人生K线
+                  </span>
+                  <h3 className="mt-3 text-lg font-semibold text-[#1C1A16]">把这个命盘画成百年运势曲线</h3>
+                  <p className="text-sm text-[#1C1A16]/60 mt-1">大运流年逐年打分，一眼看到人生的高点与蓄力期</p>
+                  <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <ul className="space-y-2">
+                      <li className="text-sm text-[#1C1A16]/75 flex items-start gap-2">
+                        <span className="text-[#1C1A16] mt-0.5">•</span>
+                        0-100 岁运势曲线，K线式呈现
+                      </li>
+                      <li className="text-sm text-[#1C1A16]/75 flex items-start gap-2">
+                        <span className="text-[#1C1A16] mt-0.5">•</span>
+                        出生信息自动带入，无需重填
+                      </li>
+                    </ul>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        track('bazi_to_kline_click');
+                        window.location.href = '/life-kline';
+                      }}
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3 rounded-xl bg-brand-accent hover:bg-brand-accent-hover text-white font-medium text-sm transition-colors whitespace-nowrap"
+                    >
+                      <TrendingUp className="w-4 h-4" />
+                      生成我的人生K线 →
+                    </button>
+                  </div>
+                </div>
+
                 <Card className={cardClass}>
                   <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em] mb-5 text-center">八字常见问题</h2>
                   <div className="space-y-3">
@@ -2896,11 +3064,11 @@ function BaziPageContent() {
                     <Button
                       type="button"
                       variant="ghost"
-                      onClick={handleSharePlaceholder}
+                      onClick={handleShare}
                       className="justify-center border border-[#1C1A16]/25 bg-white text-[#1C1A16] hover:border-[#1C1A16] hover:bg-[#FDFBF7]"
                     >
                       <Share2 className="w-4 h-4 mr-2" />
-                      分享
+                      分享命格人设卡
                     </Button>
                     <Button
                       type="button"
@@ -2926,17 +3094,6 @@ function BaziPageContent() {
                   {actionMessage && <p className="mt-3 text-sm text-[#6B7280]">{actionMessage}</p>}
                 </Card>
 
-                <Card className={cardClass}>
-                  <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em] mb-5">分享卡片</h2>
-                  <ShareCard
-                    pillars={result.pillars}
-                    dayMaster={dayMasterInsight.title}
-                    zodiac={result.zodiac || '未知'}
-                    summary={dayMasterInsight.personality.split('。')[0] + '。'}
-                    hasHour={hasHourPillar}
-                  />
-                </Card>
-
                 <AiDisclaimer />
                 <div className="text-center text-xs text-[#6B7280] p-3 bg-white rounded-2xl border border-[#1C1A16]/10">
                   ⚠️ 免责声明：本站所有命理分析仅供娱乐参考，不构成任何决策建议。命运掌握在自己手中，请理性对待。
@@ -2957,6 +3114,79 @@ function BaziPageContent() {
         reason={authReason}
       />
       <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />
+
+      {/* 命格人设分享弹层（P0-B） */}
+      {showShareModal && result && dayMasterInsight && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowShareModal(false)} />
+          <div className="relative bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-xl border border-[#1C1A16]/10">
+            <div className="sticky top-0 z-10 bg-white border-b border-[#1C1A16]/8 px-5 py-4 flex items-center justify-between">
+              <h3 className="text-base font-semibold text-[#1C1A16]">分享命格人设卡</h3>
+              <button
+                type="button"
+                onClick={() => setShowShareModal(false)}
+                className="text-[#1C1A16]/50 hover:text-[#1C1A16] transition-colors"
+                aria-label="关闭"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-5">
+              <ShareCard
+                pillars={result.pillars}
+                dayMaster={dayMasterInsight.title}
+                zodiac={result.zodiac || '未知'}
+                summary={dayMasterInsight.personality.split('。')[0] + '。'}
+                hasHour={hasHourPillar}
+                persona={persona}
+                wuxing={result.wuxing}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 档案合盘选择弹层（P1-B） */}
+      {showHepanPicker && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowHepanPicker(false)} />
+          <div className="relative bg-white rounded-2xl w-full max-w-sm shadow-xl border border-[#1C1A16]/10">
+            <div className="border-b border-[#1C1A16]/8 px-5 py-4 flex items-center justify-between">
+              <h3 className="text-base font-semibold text-[#1C1A16]">选择与谁合盘</h3>
+              <button
+                type="button"
+                onClick={() => setShowHepanPicker(false)}
+                className="text-[#1C1A16]/50 hover:text-[#1C1A16] transition-colors"
+                aria-label="关闭"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-3 max-h-[50vh] overflow-y-auto space-y-1">
+              {profiles.filter((p) => p.id !== selectedProfileId).map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => {
+                    setShowHepanPicker(false);
+                    handleHepanPick(p);
+                  }}
+                  className="w-full text-left rounded-xl px-4 py-3 hover:bg-[#FAF9F6] border border-transparent hover:border-[#1C1A16]/10 transition-colors"
+                >
+                  <p className="text-sm font-medium text-[#1C1A16]">
+                    {p.label || p.name}
+                    <span className="ml-2 text-xs text-[#1C1A16]/50">{p.gender === 'female' ? '女' : p.gender === 'male' ? '男' : ''}</span>
+                  </p>
+                  <p className="text-xs text-[#1C1A16]/55 mt-0.5">{p.birthDate || '未填生日'}</p>
+                </button>
+              ))}
+            </div>
+            <p className="px-5 pb-4 text-[11px] text-[#1C1A16]/45">
+              将带上双方出生信息跳转合婚页自动测算（合婚配额另计）。
+            </p>
+          </div>
+        </div>
+      )}
 
       <ConfirmDialog
         isOpen={pendingDeleteProfile !== null}

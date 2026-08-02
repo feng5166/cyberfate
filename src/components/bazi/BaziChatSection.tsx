@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Bookmark, BookmarkCheck, ChevronDown, ChevronUp, Clock, Send, Wrench, X } from 'lucide-react';
 import Link from 'next/link';
 import { useAiGate, AiGateModals } from '@/components/ai/useAiGate';
+import { track } from '@/lib/analytics';
 import { Card } from '@/components/ui/Card';
 import { OracleLoading } from '@/components/ui/OracleLoading';
 import { MiniMarkdown } from '@/components/ui/MiniMarkdown';
@@ -216,10 +217,8 @@ export function BaziChatSection({
       });
       return;
     }
-    if (!isVip) {
-      setShowSubModal(true);
-      return;
-    }
+    // PRD-BAZI-V2 P1-A：非 VIP 不再客户端预拦截——放行请求（免费 1 次/日），
+    // 由服务端三层门禁判定，超限 403 时再弹升级。
     if (trimmed.length > 200) {
       setToast('问题不得超过200字');
       return;
@@ -240,6 +239,7 @@ export function BaziChatSection({
     setMessages(prev => [...prev, newMsg]);
     setInput('');
     setSubmitting(true);
+    track('bazi_chat_try', { is_vip: isVip });
 
     try {
       const res = await fetch('/api/bazi/chat', {
@@ -257,6 +257,7 @@ export function BaziChatSection({
         return;
       }
       if (res.status === 403) {
+        track('bazi_chat_paywall_show');
         setShowSubModal(true);
         setMessages(prev => prev.filter(m => m.id !== id));
         return;

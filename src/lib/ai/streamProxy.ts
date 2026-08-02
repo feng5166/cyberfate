@@ -53,6 +53,8 @@ export interface ProxyLLMOptions {
   contentFrame?: (content: string) => object;
   /** delta 流开始前先发的帧序列（可带 delayMs 节奏，用于工具链「推算中」动画等）。 */
   prefixFrames?: Array<{ frame: object; delayMs?: number }>;
+  /** delta 流正常读完后、[DONE] 前追加的帧（如免费用户回答尾部的升级提示行）。客户端中断时不发。 */
+  suffixFrames?: object[];
 }
 
 export function proxyLLMDeltaStream(
@@ -104,6 +106,11 @@ export function proxyLLMDeltaStream(
         }
         if (truncated) {
           console.warn(`[proxyLLMDeltaStream${opts.label ? `:${opts.label}` : ''}] 回复被 max_tokens 截断（已输出 ${fullText.length} 字），需上调该路由的 max_tokens`);
+        }
+        if (!handle.signal.aborted) {
+          for (const frame of opts.suffixFrames ?? []) {
+            controller.enqueue(encodeSse(frame));
+          }
         }
         if (opts.onComplete) {
           try { await opts.onComplete(fullText, handle.signal.aborted, truncated); } catch (e) { console.error('[proxyLLMDeltaStream] onComplete failed:', e); }
