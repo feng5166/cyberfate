@@ -2,6 +2,7 @@
   "name": "cyberfate-init",
   "version": "0.1.0",
   "private": true,
+  "sideEffects": ["*.css"],
   "scripts": {
     "dev": "next dev",
     "build": "node scripts/run-build.js",
@@ -16,11 +17,8 @@
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",
     "@prisma/client": "^5.22.0",
-    "@stripe/stripe-js": "^8.9.0",
-    "@types/qrcode": "^1.5.6",
     "@upstash/redis": "^1.37.0",
     "@vercel/og": "^0.11.1",
-    "ai": "^6.0.116",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
@@ -47,6 +45,7 @@
     "@types/bcryptjs": "^2.4.6",
     "@types/dompurify": "^3.0.5",
     "@types/node": "^20",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitest/coverage-v8": "^4.1.9",

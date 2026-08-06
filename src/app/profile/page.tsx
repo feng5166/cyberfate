@@ -2,7 +2,7 @@ import { Suspense } from 'react'
 import { getServerSession } from 'next-auth'
 import { redirect } from 'next/navigation'
 import { authOptions } from '@/lib/auth'
-import { getSubscription, checkQuota } from '@/lib/subscription'
+import { FREE_BAZI_AI_LIMIT, getSubscription, getBaziUsage } from '@/lib/subscription'
 import { PRICING_CONFIG, type PlanId } from '@/lib/pricing-config'
 import ProfileClient from './ProfileClient'
 
@@ -15,9 +15,11 @@ export default async function ProfilePage() {
 
   const email = session.user.email ?? ''
 
-  const [subscription, quota] = await Promise.all([
+  // 原来 checkQuota 内部还会再查一次 subscription（isVip），与 getSubscription 完全重复；
+  // 改成只取用量，VIP 直接由已查到的 subscription 判定 —— 三次查询降为两次并行
+  const [subscription, usage] = await Promise.all([
     getSubscription(session.user.id),
-    checkQuota(session.user.id),
+    getBaziUsage(session.user.id),
   ])
 
   const vip = subscription !== null
@@ -49,8 +51,8 @@ export default async function ProfilePage() {
         subscriptionPlan={subscription?.plan ?? null}
         subscriptionDetail={subscriptionDetail}
         expireAt={subscription?.expireAt?.toISOString().slice(0, 10) ?? null}
-        baziAiCount={quota.baziAiCount}
-        limit={vip ? null : quota.limit}
+        baziAiCount={usage.baziAiCount}
+        limit={vip ? null : FREE_BAZI_AI_LIMIT}
         subscriptionStart={subscription?.startAt?.toISOString() ?? null}
       />
     </Suspense>

@@ -52,7 +52,11 @@ export async function getAuthSession(req: NextRequest): Promise<AuthSession | nu
               id: payload.id as string,
               name: (payload.nickname as string | undefined) ?? null,
               image: (payload.avatar as string | undefined) ?? null,
-              isSubscribed: (payload.isSubscribed as boolean | undefined) ?? false,
+              // 移动端 token MAX_AGE 30 天，且这里只 decode 不查库：payload 里的
+              // isSubscribed:true 可能是订阅早已到期的陈旧值，不能作为 VIP 放行凭证透传，
+              // 一律降级为 undefined（= 未知）交给 quota/subscription 层真查 DB 复核。
+              // false 是保守方向可以透传，仍能给配额层省掉常规免费用户的那次订阅查询。
+              isSubscribed: payload.isSubscribed === true ? undefined : false,
             },
           }
         }

@@ -38,24 +38,25 @@ import { Tag } from '@/components/ui/Tag';
 import { Footer } from '@/components/layout/Footer';
 import { AiDisclaimer } from '@/components/ui/AiDisclaimer';
 import { PageShell, SplitLayout } from '@/components/ui';
+// 直引具体子模块而非 '@/lib/bazi' barrel：barrel 会把 tools/lifeKline 等无关模块连带进客户端包
 import {
   DAYMASTER_TRAITS,
   DIZHI_LIST,
   TIANGAN_LIST,
   TIANGAN_WUXING,
   WUXING_KEYS,
+} from '@/lib/bazi/constants';
+import {
   getCurrentDayun,
   getDayunStart,
   getDayunTimeline,
   getLunarDate,
   getYearGanzhi,
-  describeDayun,
-  analyzeLiunian,
-  analyzeLiuyueRange,
-  analyzeShensha,
-  shenshaNature,
-} from '@/lib/bazi';
-import type { DayunDetail } from '@/lib/bazi';
+} from '@/lib/bazi/calculator';
+import { describeDayun } from '@/lib/bazi/dayunDetail';
+import type { DayunDetail } from '@/lib/bazi/dayunDetail';
+import { analyzeLiunian, analyzeLiuyueRange } from '@/lib/bazi/liunian';
+import { analyzeShensha, shenshaNature } from '@/lib/bazi/shensha';
 import type {
   BaziApiResult,
   BaziHistoryRecord,
@@ -777,12 +778,136 @@ function ProfileFormModal({
   );
 }
 
+interface StreamingReportProps {
+  /** 父组件把「节流后的流式全文」经此 ref 注入的 setter 推进来（详见组件头注释） */
+  flushRef: { current: ((text: string) => void) | null };
+  /** 父级累积缓冲：挂载时同步一次，防 delta 早于挂载导致丢字 */
+  bufRef: { current: string };
+}
+
+/**
+ * 流式解读的「渲染下沉」组件：SSE delta 高频到达时只重渲染这一小块，
+ * 而不是整棵 ~3000 行的 BaziPageContent 树（低端安卓上曾把主线程打满）。
+ * 数据流：父级把全文累积在 ref、150ms 节流后调用 flushRef.current(text)，
+ * 本组件用自己的 state 接住；7 处 parseSection 全文正则也随之只按 flush 频率重算。
+ */
+function StreamingReport({ flushRef, bufRef }: StreamingReportProps) {
+  // 初值置空、由挂载 effect 从 bufRef 同步（render 期间不许读 ref）
+  const [text, setText] = useState('');
+  const containerRef = useRef<HTMLDivElement>(null);
+  const streamEndRef = useRef<HTMLDivElement>(null);
+  // stick-to-bottom：默认跟随到底；用户主动上滚离底 >80px 解除，回到底部附近自动恢复
+  const followRef = useRef(true);
+  const lastFollowAtRef = useRef(0);
+
+  useEffect(() => {
+    flushRef.current = setText;
+    setText(bufRef.current);
+    return () => {
+      flushRef.current = null;
+    };
+  }, [flushRef, bufRef]);
+
+  useEffect(() => {
+    // 只监听用户输入（wheel/touchmove）判定跟随意图，避免把程序滚动误判为用户离开
+    const updateFollow = () => {
+      // rAF 后再量：等本次滚动落位，拿到的距底距离才准确
+      requestAnimationFrame(() => {
+        const distToBottom =
+          document.documentElement.scrollHeight - window.innerHeight - window.scrollY;
+        followRef.current = distToBottom <= 80;
+      });
+    };
+    const onWheel = (e: WheelEvent) => {
+      // 上滚立即解除跟随：不等落位，防止下一次 flush 又把用户拽回底部
+      if (e.deltaY < 0) {
+        followRef.current = false;
+        return;
+      }
+      updateFollow();
+    };
+    const onTouchMove = () => updateFollow();
+    window.addEventListener('wheel', onWheel, { passive: true });
+    window.addEventListener('touchmove', onTouchMove, { passive: true });
+    return () => {
+      window.removeEventListener('wheel', onWheel);
+      window.removeEventListener('touchmove', onTouchMove);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!text || !followRef.current) return;
+    // 跟随节流 250ms + behavior:'auto'：smooth 连发会互相打断且更耗主线程
+    const follow = () => {
+      lastFollowAtRef.current = Date.now();
+      containerRef.current?.scrollIntoView({ block: 'end', behavior: 'auto' });
+    };
+    const wait = 250 - (Date.now() - lastFollowAtRef.current);
+    if (wait <= 0) {
+      follow();
+      return;
+    }
+    // 被节流掉的这次补一个尾随定时器：否则末尾一段文字可能永远滚不进视野
+    const timer = setTimeout(() => {
+      if (followRef.current) follow();
+    }, wait);
+    return () => clearTimeout(timer);
+  }, [text]);
+
+  // parseSection 是全文正则扫描：memo 后只随 flush（150ms 一次）重算，不再每 delta × 7 次
+  const streamSections = useMemo(
+    () =>
+      [
+        { title: '一、日主强弱判断', content: parseSection(text, ['日主分析']) },
+        { title: '二、性格特征分析', content: parseSection(text, ['性格特点', '性格特质']) },
+        { title: '三、事业发展方向', content: parseSection(text, ['事业运势', '事业分析']) },
+        { title: '四、财运分析', content: parseSection(text, ['财运分析', '财富分析']) },
+        { title: '五、感情婚姻分析', content: parseSection(text, ['感情运势', '婚姻分析']) },
+        { title: '六、健康提示', content: parseSection(text, ['健康提示', '健康分析']) },
+        { title: '七、当前运势重点', content: parseSection(text, ['大运流年', '流年趋势', '当前运势重点', '当前运势']) },
+      ].filter((s) => s.content.trim()),
+    [text],
+  );
+
+  return (
+    <div ref={containerRef} className="pr-1">
+      {text ? (
+        streamSections.length > 0 ? (
+          <div>
+            {streamSections.map((section, index) => (
+              <div key={section.title}>
+                {index > 0 && <hr className="border-[#1C1A16]/8 my-6" />}
+                <h4 className="border-l-4 pl-3 text-base font-semibold mb-3 text-[#1C1A16]" style={{ borderColor: '#1D4ED8' }}>
+                  {section.title}
+                </h4>
+                <div className="text-sm leading-loose text-[#1C1A16]/85">
+                  {renderSectionContent(section.content)}
+                </div>
+              </div>
+            ))}
+            <div ref={streamEndRef} />
+          </div>
+        ) : (
+          <div className="text-sm leading-loose text-[#1C1A16]/75 whitespace-pre-wrap">
+            {text}
+            <span className="inline-block w-1.5 h-4 ml-0.5 align-middle bg-[#1C1A16] animate-pulse" />
+            <div ref={streamEndRef} />
+          </div>
+        )
+      ) : (
+        <div className="py-6 flex justify-center">
+          <RefreshCw className="w-6 h-6 text-[#1C1A16] animate-spin" />
+        </div>
+      )}
+    </div>
+  );
+}
+
 function BaziPageContent() {
   const { status } = useSession();
   const searchParams = useSearchParams();
   const recordId = searchParams.get('record');
   const resultRef = useRef<HTMLDivElement>(null);
-  const streamEndRef = useRef<HTMLDivElement>(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -811,7 +936,34 @@ function BaziPageContent() {
   const [actionMessage, setActionMessage] = useState('');
   const [isMember, setIsMember] = useState(false);
   const [aiStreaming, setAiStreaming] = useState(false);
-  const [aiStreamText, setAiStreamText] = useState('');
+  // 流式文本不进顶层 state：SSE delta 每秒 10-30 次，若直接 setState 会让整棵组件树
+  // 以同频重渲染 30-60s。改为 ref 累积 + 150ms 节流 flush 到下沉的 StreamingReport。
+  const aiStreamBufRef = useRef('');
+  const aiStreamFlushRef = useRef<((text: string) => void) | null>(null);
+  const aiStreamTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 仅在首个非空 delta 时翻转一次（推算步骤标题从「推算中」切「已完成」用），代替原 aiStreamText 真值判断
+  const [aiStreamStarted, setAiStreamStarted] = useState(false);
+
+  const pushAiStreamDelta = useCallback((fullText: string) => {
+    aiStreamBufRef.current = fullText;
+    if (!aiStreamTimerRef.current) {
+      // 150ms 一批：肉眼仍是连续打字，但渲染频率从「每 delta 一次」降到约 6.7 次/秒
+      aiStreamTimerRef.current = setTimeout(() => {
+        aiStreamTimerRef.current = null;
+        aiStreamFlushRef.current?.(aiStreamBufRef.current);
+      }, 150);
+    }
+  }, []);
+
+  const resetAiStream = useCallback(() => {
+    if (aiStreamTimerRef.current) {
+      clearTimeout(aiStreamTimerRef.current);
+      aiStreamTimerRef.current = null;
+    }
+    aiStreamBufRef.current = '';
+    aiStreamFlushRef.current?.('');
+    setAiStreamStarted(false);
+  }, []);
   const [aiSteps, setAiSteps] = useState<string[]>([]); // 工具链推算步骤（首屏「推算中」动画）
   const [stepsExpanded, setStepsExpanded] = useState(false); // 推算步骤折叠态：默认折叠（含流式中），点击展开看推算链条
   const [showAiButton, setShowAiButton] = useState(false);
@@ -1115,14 +1267,8 @@ function BaziPageContent() {
     }
   }, [result]);
 
-  // 流式输出时页面级跟随到底部（解读已在页面正常流内，非独立滚动容器）
-  const streamContainerRef = useRef<HTMLDivElement>(null);
+  // 流式跟随滚动已下沉进 StreamingReport（随 flush 节流跟随，用户上滚即解除）
   const aiReadingRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!aiStreaming || !aiStreamText) return;
-    // 把正在生成的解读底部滚入视野（整页滚动，四柱一并随页面移动）
-    streamContainerRef.current?.scrollIntoView({ block: 'end', behavior: 'auto' });
-  }, [aiStreamText, aiStreaming]);
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
@@ -1339,7 +1485,7 @@ function BaziPageContent() {
 
     setShowAiButton(false);
     setAiStreaming(true);
-    setAiStreamText('');
+    resetAiStream();
     setAiSteps([]);
     setStepsExpanded(false); // 流式中也默认折叠，仅标题显示进度，点击可展开
 
@@ -1442,8 +1588,9 @@ function BaziPageContent() {
                 setAiSteps(prev => [...prev, obj.label]);
               }
               if (typeof obj.delta === 'string') {
+                if (!fullText && obj.delta) setAiStreamStarted(true); // 首个非空 delta：只翻转一次
                 fullText += obj.delta;
-                setAiStreamText(fullText);
+                pushAiStreamDelta(fullText);
               }
               if (obj.done) {
                 finalSource = obj.source || 'deepseek';
@@ -1473,6 +1620,12 @@ function BaziPageContent() {
       setShowAiButton(true);
       return false;
     } finally {
+      // 撤掉未触发的节流 flush：随 aiStreaming=false 流式区整体卸载，
+      // 完整文本已通过 setResult(aiAnalysis) 走正常渲染，不会丢内容
+      if (aiStreamTimerRef.current) {
+        clearTimeout(aiStreamTimerRef.current);
+        aiStreamTimerRef.current = null;
+      }
       setAiStreaming(false);
       setStepsExpanded(false); // 推算完成默认折叠，保留可展开
     }
@@ -1837,7 +1990,7 @@ function BaziPageContent() {
     setActionMessage('');
     setShowAiButton(false);
     setAiStreaming(false);
-    setAiStreamText('');
+    resetAiStream();
 
     if (!formData.gender) {
       setError('请选择性别');
@@ -2504,7 +2657,7 @@ function BaziPageContent() {
                       >
                         <Wrench className="w-3.5 h-3.5 text-[#1C1A16] flex-shrink-0" />
                         <span className="text-xs text-[#1C1A16]/60 flex-1">
-                          {aiStreaming && !aiStreamText
+                          {aiStreaming && !aiStreamStarted
                             ? `正在排盘推算 · 已完成 ${aiSteps.length} 步…`
                             : `命理推算完成 · 共 ${aiSteps.length} 步真实排盘`}
                         </span>
@@ -2545,45 +2698,8 @@ function BaziPageContent() {
                         AI 正在解读中…
                       </div>
 
-                      <div ref={streamContainerRef} className="pr-1">
-                      {aiStreamText ? (() => {
-                        const streamSections = [
-                          { title: '一、日主强弱判断', content: parseSection(aiStreamText, ['日主分析']) },
-                          { title: '二、性格特征分析', content: parseSection(aiStreamText, ['性格特点', '性格特质']) },
-                          { title: '三、事业发展方向', content: parseSection(aiStreamText, ['事业运势', '事业分析']) },
-                          { title: '四、财运分析', content: parseSection(aiStreamText, ['财运分析', '财富分析']) },
-                          { title: '五、感情婚姻分析', content: parseSection(aiStreamText, ['感情运势', '婚姻分析']) },
-                          { title: '六、健康提示', content: parseSection(aiStreamText, ['健康提示', '健康分析']) },
-                          { title: '七、当前运势重点', content: parseSection(aiStreamText, ['大运流年', '流年趋势', '当前运势重点', '当前运势']) },
-                        ].filter(s => s.content.trim());
-                        return streamSections.length > 0 ? (
-                          <div>
-                            {streamSections.map((section, index) => (
-                              <div key={section.title}>
-                                {index > 0 && <hr className="border-[#1C1A16]/8 my-6" />}
-                                <h4 className="border-l-4 pl-3 text-base font-semibold mb-3 text-[#1C1A16]" style={{ borderColor: '#1D4ED8' }}>
-                                  {section.title}
-                                </h4>
-                                <div className="text-sm leading-loose text-[#1C1A16]/85">
-                                  {renderSectionContent(section.content)}
-                                </div>
-                              </div>
-                            ))}
-                            <div ref={streamEndRef} />
-                          </div>
-                        ) : (
-                          <div className="text-sm leading-loose text-[#1C1A16]/75 whitespace-pre-wrap">
-                            {aiStreamText}
-                            <span className="inline-block w-1.5 h-4 ml-0.5 align-middle bg-[#1C1A16] animate-pulse" />
-                            <div ref={streamEndRef} />
-                          </div>
-                        );
-                      })() : (
-                        <div className="py-6 flex justify-center">
-                          <RefreshCw className="w-6 h-6 text-[#1C1A16] animate-spin" />
-                        </div>
-                      )}
-                      </div>
+                      {/* 渲染下沉：delta 只驱动 StreamingReport 重渲染，父树在流式期间保持静止 */}
+                      <StreamingReport flushRef={aiStreamFlushRef} bufRef={aiStreamBufRef} />
                     </div>
                   )}
 

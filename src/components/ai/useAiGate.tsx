@@ -1,8 +1,31 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { AuthModal } from '@/components/auth/AuthModal';
-import { QuotaLimitModal } from '@/components/QuotaLimitModal';
+import dynamic from 'next/dynamic';
+
+// chunk 拉取期占位：弱网下 dynamic 默认渲染 null，被门禁拦住时会像什么都没发生。
+// 先铺一层与弹窗同款的遮罩 + 墨色 spinner，让拦截立刻可见（设计系统「墨色纸面」）。
+function ModalChunkLoading() {
+  return (
+    <div
+      className="fixed inset-0 z-[10000] flex items-center justify-center bg-brand-ink/50 backdrop-blur-sm"
+      role="status"
+      aria-label="加载中"
+    >
+      <div className="animate-spin motion-reduce:animate-none w-7 h-7 rounded-full border-2 border-[#FAF9F6]/30 border-t-[#FAF9F6]" />
+    </div>
+  );
+}
+
+// 门禁弹窗只在被拦截时出现，懒加载避免随各模块 PageClient 进首屏 chunk
+const AuthModal = dynamic(
+  () => import('@/components/auth/AuthModal').then((m) => m.AuthModal),
+  { ssr: false, loading: ModalChunkLoading },
+);
+const QuotaLimitModal = dynamic(
+  () => import('@/components/QuotaLimitModal').then((m) => m.QuotaLimitModal),
+  { ssr: false, loading: ModalChunkLoading },
+);
 
 /**
  * AI 门禁统一处理（跨模块一致）：
@@ -105,7 +128,10 @@ export function useAiGate(isLoggedIn: boolean): AiGate {
 export function AiGateModals({ gate, callbackUrl }: { gate: AiGate; callbackUrl?: string }) {
   return (
     <>
-      <AuthModal isOpen={gate.authOpen} onClose={gate.closeAuth} callbackUrl={callbackUrl} reason={gate.authReason} />
+      {/* 仅 open 时挂载：配合 dynamic 实现被拦截时才拉取 chunk；关闭动画由 AuthModal 内部 setTimeout(onClose) 保证先播完再卸载 */}
+      {gate.authOpen && (
+        <AuthModal isOpen={gate.authOpen} onClose={gate.closeAuth} callbackUrl={callbackUrl} reason={gate.authReason} />
+      )}
       {gate.quotaOpen && <QuotaLimitModal onClose={gate.closeQuota} />}
     </>
   );

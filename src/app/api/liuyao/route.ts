@@ -115,29 +115,18 @@ export async function POST(req: NextRequest) {
   if (!isDebugMode && !session?.user?.id) {
     return NextResponse.json({ error: '请先登录' }, { status: 401 });
   }
+  // 限流必须在缓存查询之前：缓存命中虽然零 AI 成本，但仍要跑 typewriterStream（约 2.9s 占住函数），
+  // 放到缓存之后等于同一份 body 可无限重放，单账号就能打满并发额度。
+  // 它只是同区 Redis 一次往返，不是本轮想省掉的跨区 DB 往返
   if (!isDebugMode) {
     const rl = await checkRateLimit('ai_liuyao', session!.user!.id, 10, 60);
     if (!rl.allowed) return NextResponse.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
-  }
-
-  // 配额：免费 1 次/天（FREE_DAILY_LIMIT），VIP 不限
-  let quotaConsumed = false;
-  if (!isDebugMode) {
-    const quota = await checkLiuyaoQuota(session!.user!.id);
-    if (!quota.hasQuota) {
-      return NextResponse.json({
-        error: 'QUOTA_EXCEEDED',
-        message: `今日六爻解读已达上限（${quota.limit} 次），请升级 VIP 解锁不限次数。`,
-      }, { status: 403 });
-    }
-    quotaConsumed = !quota.isVip;
   }
 
   const body = await req.json().catch(() => ({}));
   const validation = validateRequest(body);
 
   if (!validation.valid) {
-    if (quotaConsumed) await refundQuota(session!.user!.id, 'liuyaoCount');
     return NextResponse.json({ error: validation.error }, { status: 400 });
   }
 
@@ -166,11 +155,11 @@ export async function POST(req: NextRequest) {
     moving: movingSuffix,
   });
 
+  // 缓存优先：命中即零 AI 成本，故不扣配额（原顺序是先扣再退，白白多两次跨区 DB 往返）
   const cached = isDebugMode ? null : await getCache(cacheKey);
   if (cached && typeof cached === 'object') {
     const c = cached as Record<string, unknown>;
     if (Array.isArray(c.lineInterpretations) && typeof c.overallNarrative === 'string') {
-      if (quotaConsumed) await refundQuota(session!.user!.id, 'liuyaoCount');
       const cachedLines = linesData.map((l, i) => ({
         ...l,
         interpretation: (c.lineInterpretations as string[])[i] || '',
@@ -195,6 +184,21 @@ export async function POST(req: NextRequest) {
 
       return new Response(typewriterStream(meta, c.overallNarrative as string), { headers: SSE_HEADERS });
     }
+  }
+
+  // 缓存未命中 → 真要花 AI 钱，此时才扣配额
+  let quotaConsumed = false;
+  if (!isDebugMode) {
+    // 配额：免费 1 次/天（FREE_DAILY_LIMIT），VIP 不限。
+    // JWT 里的 isSubscribed 只作提示传入，真实会员态由 quota 内部查 DB 认定
+    const quota = await checkLiuyaoQuota(session!.user!.id, session!.user!.isSubscribed);
+    if (!quota.hasQuota) {
+      return NextResponse.json({
+        error: 'QUOTA_EXCEEDED',
+        message: `今日六爻解读已达上限（${quota.limit} 次），请升级 VIP 解锁不限次数。`,
+      }, { status: 403 });
+    }
+    quotaConsumed = !quota.isVip;
   }
 
   const movingLineDescriptions = movingLines.length > 0

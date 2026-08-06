@@ -53,10 +53,7 @@ export function PillarTable({ chart, title, subtitle, className = '' }: PillarTa
                   <div className="rounded-lg border border-[#1C1A16]/6 bg-[#FAF9F6] py-3">
                     <div
                       className="text-2xl md:text-[28px] font-semibold leading-none"
-                      style={{
-                        fontFamily: 'var(--font-cormorant), Cormorant Garamond, serif',
-                        color: wuxingColor(pillar.ganWuxing).text,
-                      }}
+                      style={{ color: wuxingColor(pillar.ganWuxing).text }}
                     >
                       {pillar.gan}
                     </div>
@@ -70,10 +67,7 @@ export function PillarTable({ chart, title, subtitle, className = '' }: PillarTa
                   <div className="rounded-lg border border-[#1C1A16]/6 bg-[#FAF9F6] py-3">
                     <div
                       className="text-2xl md:text-[28px] font-semibold leading-none"
-                      style={{
-                        fontFamily: 'var(--font-cormorant), Cormorant Garamond, serif',
-                        color: wuxingColor(pillar.zhiWuxing).text,
-                      }}
+                      style={{ color: wuxingColor(pillar.zhiWuxing).text }}
                     >
                       {pillar.zhi}
                     </div>

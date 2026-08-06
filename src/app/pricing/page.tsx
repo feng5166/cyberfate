@@ -1,9 +1,6 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
-import { getSubscription } from '@/lib/subscription'
-import PricingClient from './PricingClient'
+import PricingPageClient from '@/components/pricing/PricingPageClient'
 
 export const metadata: Metadata = {
   title: '会员定价 | 赛博命理师 CyberFate — 解锁全部 AI 命理功能',
@@ -13,21 +10,14 @@ export const metadata: Metadata = {
   openGraph: { title: '会员定价 | CyberFate', description: '解锁全部 AI 命理功能，月付年付随心选。', type: 'website', url: 'https://www.cyberfate.me/pricing' },
 }
 
-export default async function PricingPage() {
-  const session = await getServerSession(authOptions)
-
-  let currentPlan: string | undefined
-
-  if (session?.user) {
-    const subscription = await getSubscription(session.user.id)
-    if (subscription?.plan) {
-      currentPlan = subscription.plan // plan id（与卡片 plan.id 比对）
-    }
-  }
-
+// 性能：定价页是纯营销页，原先页级 getServerSession + getSubscription 只为算一个
+// 「当前套餐」角标，却把整页拖成全动态渲染（每次访问都要跑 JWT 解密 + 一次 PG 查询）。
+// 会话依赖已下沉到 PricingPageClient（useSession + 按需拉 /api/subscription/current），
+// 本页遂恢复静态渲染，首屏直接走 CDN。
+export default function PricingPage() {
   return (
     <Suspense>
-      <PricingClient currentPlan={currentPlan} />
+      <PricingPageClient />
     </Suspense>
   )
 }

@@ -83,9 +83,10 @@ export async function POST(req: NextRequest) {
   const rl = await checkRateLimit('ai_meihua_qa', session.user.id, 5, 60);
   if (!rl.allowed) return NextResponse.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
 
-  // 统一配额策略 v1：AI 问答免费 1 次/天，VIP 不限
+  // 统一配额策略 v1：AI 问答免费 1 次/天，VIP 不限。
+  // 会员态取自 JWT（isSubscribed），省一次跨区 DB 往返；「刚付费未刷新」由 quota 内部兜底复核
   const { checkMeihuaQaQuota } = await import('@/lib/quota');
-  const qaQuota = await checkMeihuaQaQuota(session.user.id);
+  const qaQuota = await checkMeihuaQaQuota(session.user.id, session.user.isSubscribed);
   if (!qaQuota.hasQuota) {
     return NextResponse.json({ error: 'QUOTA_EXCEEDED', message: '今日免费问答次数已用完，升级 VIP 不限量' }, { status: 429 });
   }

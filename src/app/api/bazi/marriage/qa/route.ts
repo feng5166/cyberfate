@@ -18,9 +18,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '请先登录' }, { status: 401 });
   }
 
-  // 统一配额策略 v1：合婚问答免费 1 次/天，VIP 不限
+  // 统一配额策略 v1：合婚问答免费 1 次/天，VIP 不限。
+  // 会员态取自 JWT（isSubscribed），省一次跨区 DB 往返；「刚付费未刷新」由 quota 内部兜底复核
   const { checkMarriageQaQuota } = await import('@/lib/quota');
-  const qaQuota = await checkMarriageQaQuota(session.user.id);
+  const qaQuota = await checkMarriageQaQuota(session.user.id, session.user.isSubscribed);
   if (!qaQuota.hasQuota) {
     return NextResponse.json({ error: 'QUOTA_EXCEEDED', message: '今日免费问答次数已用完，升级 VIP 不限量' }, { status: 429 });
   }

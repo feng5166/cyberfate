@@ -13,6 +13,14 @@ import {
   type ShishenSummary,
 } from '@/lib/marriage/shishen';
 
+// ── AI 缓存参数 ─────────────────────────────────────
+// 键版本集中在此：prompt/输出结构一变就改版本号，旧缓存自然失效，不必手动清库。
+const MARRIAGE_STRUCT_CACHE_PREFIX = 'marriage:ai:struct:v1';
+const MARRIAGE_DEEP_CACHE_PREFIX = 'marriage:ai:deep:v4';
+// 合婚结果按双方八字定型、终身不变，但仍给 90 天 TTL：
+// 原来 set 不带 TTL 会让 Redis 里的长文报告只增不减，最终撑爆内存配额
+const MARRIAGE_CACHE_TTL = 90 * 24 * 60 * 60;
+
 // ── 八字计算 ───────────────────────────────────────
 
 interface WuxingCount { metal: number; wood: number; water: number; fire: number; earth: number; }
@@ -417,7 +425,7 @@ async function runAIAnalysis(params: {
     maleSide, femaleSide, maleBazi, femaleBazi, score, level, details, provider,
   } = params;
 
-  const cacheKey = generateCacheKey('marriage:ai:struct:v1', { male: maleBazi, female: femaleBazi });
+  const cacheKey = generateCacheKey(MARRIAGE_STRUCT_CACHE_PREFIX, { male: maleBazi, female: femaleBazi });
   const cached = await getCache(cacheKey);
   if (cached && cached.dimensions && Array.isArray(cached.dimensions)) {
     return {
@@ -538,7 +546,7 @@ ${details.join('\n')}
       advices: structured.advices,
       highlight: structured.highlight,
       analysis: rawText,
-    });
+    }, MARRIAGE_CACHE_TTL);
   }
 
   return { structured, rawText, aiSource };
@@ -562,7 +570,7 @@ async function runDeepReport(params: {
     effectiveMaleDate, effectiveFemaleDate, maleBazi, femaleBazi, score, level, provider,
   } = params;
 
-  const cacheKey = generateCacheKey('marriage:ai:deep:v4', { male: maleBazi, female: femaleBazi });
+  const cacheKey = generateCacheKey(MARRIAGE_DEEP_CACHE_PREFIX, { male: maleBazi, female: femaleBazi });
   const cached = await getCache(cacheKey);
   if (cached && typeof cached.deepReport === 'string' && cached.deepReport.length > 0) {
     return { deepReport: cached.deepReport, aiSource: 'cache' };
@@ -665,7 +673,7 @@ async function runDeepReport(params: {
       const raw = drData.choices?.[0]?.message?.content || '';
       const deepReport = raw.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
       if (deepReport) {
-        await setCache(cacheKey, { deepReport });
+        await setCache(cacheKey, { deepReport }, MARRIAGE_CACHE_TTL);
       }
       return { deepReport, aiSource: 'deepseek' };
     } else {
@@ -697,9 +705,10 @@ export async function POST(req: NextRequest) {
 
   // 仅在硬数据请求时消耗配额，AI 请求复用同一配额（视作同一次合婚的子操作）
   if (!isAiRequest) {
-    // 统一配额策略 v1：合婚使用独立额度（免费 1 次/天），不再共享八字解读名额
+    // 统一配额策略 v1：合婚使用独立额度（免费 1 次/天），不再共享八字解读名额。
+    // 会员态取自 JWT（isSubscribed），省一次跨区 DB 往返；「刚付费未刷新」由 quota 内部兜底复核
     const { checkMarriageQuota } = await import('@/lib/quota');
-    const marriageQuota = await checkMarriageQuota(session.user.id);
+    const marriageQuota = await checkMarriageQuota(session.user.id, session.user.isSubscribed);
     if (!marriageQuota.hasQuota) {
       return NextResponse.json(
         { error: 'QUOTA_EXCEEDED', message: '今日免费合婚次数已用完，请升级 VIP' },
@@ -803,7 +812,7 @@ export async function POST(req: NextRequest) {
     const maleDateLine = maleSide.isLunar ? `${effectiveMaleDate}（农历）` : effectiveMaleDate;
     const femaleDateLine = femaleSide.isLunar ? `${effectiveFemaleDate}（农历）` : effectiveFemaleDate;
 
-    const cacheKey = generateCacheKey('marriage:ai:deep:v4', { male: maleBazi, female: femaleBazi });
+    const cacheKey = generateCacheKey(MARRIAGE_DEEP_CACHE_PREFIX, { male: maleBazi, female: femaleBazi });
     const encoder = new TextEncoder();
 
     // 缓存命中：以 SSE 格式一次性推送，前端逻辑统一
@@ -950,7 +959,7 @@ export async function POST(req: NextRequest) {
           }
           if (fullText.length > 100) {
             const cleanText = fullText.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
-            await setCache(cacheKey, { deepReport: cleanText }).catch(() => {});
+            await setCache(cacheKey, { deepReport: cleanText }, MARRIAGE_CACHE_TTL).catch(() => {});
           }
         } finally {
           controller.close();

@@ -2,7 +2,9 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, Calendar, ChevronDown } from 'lucide-react'
-import * as LunarJs from 'lunar-javascript'
+// 农历月天数走预生成查表（scripts/gen-lunar-table.mjs），避免 value-import lunar-javascript
+// 整库(299KB raw/97KB gz)拖进五个核心页的客户端首屏。
+import { lunarMonthDayCount } from './lunarMonthTable'
 import { cn } from '@/lib/utils/cn'
 
 interface DatePickerProps {
@@ -23,20 +25,6 @@ const LUNAR_DAYS = [
   '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十',
   '廿一', '廿二', '廿三', '廿四', '廿五', '廿六', '廿七', '廿八', '廿九', '三十',
 ]
-
-/** 某农历月的天数（29 或 30）。取不到时回退 30。 */
-function lunarMonthDayCount(year: number, month: number): number {
-  try {
-    const LunarMonth = (LunarJs as unknown as {
-      LunarMonth?: { fromYm?: (y: number, mo: number) => { getDayCount?: () => number } | null }
-    }).LunarMonth
-    const m = LunarMonth?.fromYm?.(year, month)
-    const c = m?.getDayCount?.()
-    return c === 29 || c === 30 ? c : 30
-  } catch {
-    return 30
-  }
-}
 
 export function DatePicker({
   value,

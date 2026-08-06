@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { calculateHuangli } from '@/lib/huangli/calculator';
 import { sanitizeUserInput } from '@/lib/utils/sanitize';
@@ -10,6 +11,12 @@ import { attachClientAbort, proxyLLMDeltaStream } from '@/lib/ai/streamProxy';
 import { SSE_HEADERS } from '@/lib/ai/sse';
 
 const SERVICE = 'api/huangli/ask';
+
+// 不给 question 设上限：sanitizeUserInput 已截断到 200 字，加 max 会把「超长即截断」变成「超长即 400」
+const AskSchema = z.object({
+  question: z.string().min(1),
+  date: z.string().min(1).max(32),
+});
 
 export async function POST(req: NextRequest) {
   const chaosRes = await applyChaos(req);
@@ -23,25 +30,27 @@ export async function POST(req: NextRequest) {
   const rl = await checkRateLimit('ai_huangli', session.user.id, 10, 60);
   if (!rl.allowed) return NextResponse.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
 
-  // 统一配额策略 v1：黄历 AI 问答免费 1 次/天，VIP 不限
+  // 先解析 + 校验请求体，再扣配额：原顺序在 body 非法时已扣且不退，用户白丢一次免费额度
+  const raw = await req.json().catch(() => null);
+  const parsed = AskSchema.safeParse(raw);
+  if (!parsed.success) {
+    return NextResponse.json({ error: '缺少参数' }, { status: 400 });
+  }
+  const { date } = parsed.data;
+  const sanitizedQuestion = sanitizeUserInput(parsed.data.question, 200).trim();
+  if (!sanitizedQuestion) {
+    return NextResponse.json({ error: '问题内容无效' }, { status: 400 });
+  }
+
+  // 统一配额策略 v1：黄历 AI 问答免费 1 次/天，VIP 不限。
+  // 会员态取自 JWT（isSubscribed），省一次跨区 DB 往返；「刚付费未刷新」由 quota 内部兜底复核
   const { checkHuangliQuota } = await import('@/lib/quota');
-  const hlQuota = await checkHuangliQuota(session.user.id);
+  const hlQuota = await checkHuangliQuota(session.user.id, session.user.isSubscribed);
   if (!hlQuota.hasQuota) {
     return NextResponse.json({ error: 'QUOTA_EXCEEDED', message: '今日免费次数已用完，升级 VIP 不限量' }, { status: 429 });
   }
 
   try {
-    const { question, date } = await req.json();
-
-    if (!question || !date) {
-      return NextResponse.json({ error: '缺少参数' }, { status: 400 });
-    }
-
-    const sanitizedQuestion = sanitizeUserInput(String(question), 200).trim();
-    if (!sanitizedQuestion) {
-      return NextResponse.json({ error: '问题内容无效' }, { status: 400 });
-    }
-
     const huangli = calculateHuangli(date);
 
     const prompt = `你是"赛博命理师"的 AI老黄历助手，擅长结合传统黄历数据给出现代生活建议。

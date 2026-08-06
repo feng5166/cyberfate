@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Share2, RefreshCw, ChevronRight, Music } from 'lucide-react';
 import Link from 'next/link';
-import { toPng } from 'html-to-image';
 import { wuxingColor } from '@/data/wuxing';
 
 /** 五行封面：图标为装饰 emoji，底色统一取自 @/data/wuxing 单一真源 */
@@ -75,6 +74,8 @@ export default function DailyMusicCard() {
     if (!cardRef.current || sharing) return;
     setSharing(true);
     try {
+      // 截图库按需加载：只在点击分享时才进 bundle，不拖累引用本卡片的页面首屏
+      const { toPng } = await import('html-to-image');
       const dataUrl = await toPng(cardRef.current, {
         quality: 0.95,
         backgroundColor: '#FFFFFF',

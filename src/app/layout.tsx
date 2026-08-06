@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Cormorant_Garamond, Noto_Serif_SC } from "next/font/google";
+import { Noto_Serif_SC } from "next/font/google";
 import "./globals.css";
 import { SessionProvider } from "@/components/providers/SessionProvider";
 import { AuthProvider } from "@/stores/authStore";
@@ -22,13 +22,10 @@ const notoSerifSC = Noto_Serif_SC({
   // 不指定 subsets，让 next/font 自动加载所需字符（包括中文）
 });
 
-const cormorantGaramond = Cormorant_Garamond({
-  weight: ["400", "600", "700"],
-  subsets: ["latin"],
-  variable: "--font-display-secondary",
-  display: "swap",
-});
-
+// 已移除 Cormorant Garamond：它在 .font-display 栈里排在 var(--font-heading) 之后，
+// 而后者展开后以通用族 serif 结尾（serif 必然匹配），Cormorant 永远轮不到渲染——
+// 却仍以 subsets:["latin"] 触发每页一个 40KB 的高优先级 preload。移除是零视觉变化的净收益。
+// 若日后确需拉丁标题用 Cormorant，须把它排在 CJK 字体「之前」（font-family 逐字形回退）。
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.cyberfate.me"),
   title: {
@@ -39,6 +36,8 @@ export const metadata: Metadata = {
   keywords: ["八字分析", "命理分析", "AI算命", "每日运势", "紫微斗数", "塔罗牌", "生辰八字", "五行分析"],
   authors: [{ name: "CyberFate" }],
   creator: "CyberFate",
+  // og:image / twitter:image 由 src/app/opengraph-image.png 文件约定自动注入（含尺寸与 alt），
+  // 不再手写 images 条目，避免双份声明漂移。
   openGraph: {
     type: "website",
     locale: "zh_CN",
@@ -46,20 +45,11 @@ export const metadata: Metadata = {
     siteName: "赛博命理师 CyberFate",
     title: "赛博命理师 CyberFate - AI 驱动的东方智慧",
     description: "融合传统命理与现代 AI 技术，为你提供科学、理性的命理分析参考。",
-    images: [
-      {
-        url: "/opengraph-image",
-        width: 1200,
-        height: 630,
-        alt: "赛博命理师 CyberFate",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "赛博命理师 CyberFate - AI 驱动的东方智慧",
     description: "融合传统命理与现代 AI 技术，为你提供科学、理性的命理分析参考。",
-    images: ["/opengraph-image"],
   },
   icons: {
     icon: [
@@ -116,7 +106,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN" className={`${notoSerifSC.variable} ${cormorantGaramond.variable}`}>
+    <html lang="zh-CN" className={notoSerifSC.variable}>
       <body className="min-h-dvh flex flex-col">
         <a
           href="#main-content"

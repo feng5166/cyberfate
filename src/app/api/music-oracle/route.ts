@@ -16,7 +16,6 @@ import { prisma } from '@/lib/db';
 import { PRIMARY_MODEL } from '@/lib/ai/models';
 import { getPrimaryProvider } from '@/lib/ai/provider';
 import { getAuthSession } from '@/lib/auth-session';
-import { isVip as checkIsVip } from '@/lib/subscription';
 import { getTodayBeijing, getSecondsUntilBeijingMidnight } from '@/lib/timezone';
 import { SSE_HEADERS, typewriterStream } from '@/lib/ai/sse';
 
@@ -88,41 +87,44 @@ export async function POST(request: NextRequest) {
     // 统一配额策略 v1：游客按 IP 1次/天；免费登录用户按账号 1次/天；VIP 不限
     let isVip = false;
     let userId: string | null = null;
+    // JWT 里的 isSubscribed 只作提示传给配额层，不在这里做 gate：
+    // 早期实现是 if (!isVip) 包住整个配额块，一旦 token 里的 isSubscribed 陈旧为 true，
+    // checkMusicQuota 根本不被调用，注释里承诺的「内部复核兜底」永远执行不到
+    let vipHint: boolean | undefined;
     try {
       const session = await getAuthSession(request);
       if (session?.user?.id) {
         userId = session.user.id;
-        isVip = await checkIsVip(userId);
+        vipHint = session.user.isSubscribed;
       }
     } catch (err) {
-      console.warn('[music-oracle] VIP 检查失败:', err);
+      console.warn('[music-oracle] 登录态解析失败:', err);
     }
 
-    if (!isVip) {
-      if (userId) {
-        // 免费登录用户：账号配额 1 次/天（原子扣减）
-        const { checkMusicQuota } = await import('@/lib/quota');
-        const mq = await checkMusicQuota(userId, false);
-        if (!mq.hasQuota) {
+    if (userId) {
+      // 登录用户：无条件走配额层，VIP 与否由 checkMusicQuota 内部查 DB 认定（VIP 直接放行不计数）
+      const { checkMusicQuota } = await import('@/lib/quota');
+      const mq = await checkMusicQuota(userId, vipHint);
+      isVip = mq.isVip;
+      if (!mq.hasQuota) {
+        return NextResponse.json(
+          { success: false, error: '今日求签次数已用完（1次/天），VIP 不限次数', code: 'RATE_LIMIT' },
+          { status: 429 }
+        );
+      }
+    } else if (redis) {
+      // 游客：按 IP 1 次/天
+      try {
+        const count = await redis.get(rateLimitKey);
+        const used = typeof count === 'number' ? count : (typeof count === 'string' ? parseInt(count, 10) : 0);
+        if (used >= 1) {
           return NextResponse.json(
-            { success: false, error: '今日求签次数已用完（1次/天），VIP 不限次数', code: 'RATE_LIMIT' },
+            { success: false, error: '今日求签次数已用完，登录后每日可用，VIP 不限次数', code: 'RATE_LIMIT' },
             { status: 429 }
           );
         }
-      } else if (redis) {
-        // 游客：按 IP 1 次/天
-        try {
-          const count = await redis.get(rateLimitKey);
-          const used = typeof count === 'number' ? count : (typeof count === 'string' ? parseInt(count, 10) : 0);
-          if (used >= 1) {
-            return NextResponse.json(
-              { success: false, error: '今日求签次数已用完，登录后每日可用，VIP 不限次数', code: 'RATE_LIMIT' },
-              { status: 429 }
-            );
-          }
-        } catch (err) {
-          console.warn('[music-oracle] 限流检查失败:', err);
-        }
+      } catch (err) {
+        console.warn('[music-oracle] 限流检查失败:', err);
       }
     }
 

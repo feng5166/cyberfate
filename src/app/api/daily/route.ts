@@ -72,8 +72,10 @@ export async function POST(req: NextRequest) {
   const rl = await checkRateLimit('ai_daily', session.user.id, 20, 60);
   if (!rl.allowed) return NextResponse.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
 
-  // 配额：免费 1 次/天（FREE_DAILY_LIMIT），VIP 不限
-  const quota = await checkDailyQuota(session.user.id);
+  // 配额：免费 1 次/天（FREE_DAILY_LIMIT），VIP 不限。
+  // 会员态直接用 JWT 里的 isSubscribed（5 分钟 DB TTL），省一次跨区 DB 往返；
+  // 「刚付费未刷新」的边缘由 quota 内部在额度耗尽时复核 isVip 兜底
+  const quota = await checkDailyQuota(session.user.id, session.user.isSubscribed);
   if (!quota.hasQuota) {
     return NextResponse.json({
       error: 'QUOTA_EXCEEDED',

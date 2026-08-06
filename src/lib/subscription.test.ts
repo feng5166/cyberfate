@@ -77,6 +77,22 @@ describe('subscription — isVip', () => {
     expect(await isVip('user-ttl')).toBe(true)
     expect(findFirst).toHaveBeenCalledTimes(2)
   })
+
+  it('cache is capped: exceeding max entries clears it (no unbounded growth)', async () => {
+    findFirst.mockResolvedValue(null)
+
+    await isVip('cap-first')
+    const callsAfterFirst = findFirst.mock.calls.length
+
+    // 灌入 5000 个不同用户，触发容量上限清空（cap-first 一定在清空前入缓存）
+    for (let i = 0; i < 5000; i++) {
+      await isVip(`cap-${i}`)
+    }
+
+    // 清空后 cap-first 不再命中缓存 → 必须重新查一次 DB
+    await isVip('cap-first')
+    expect(findFirst).toHaveBeenCalledTimes(callsAfterFirst + 5001)
+  })
 })
 
 describe('subscription — getSubscription', () => {

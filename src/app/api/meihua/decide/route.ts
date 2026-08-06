@@ -76,29 +76,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '请先登录' }, { status: 401 });
   }
   const userId = isDebugMode ? 'debug' : session!.user.id;
+  // 限流必须在缓存查询之前：缓存命中虽然零 AI 成本，但仍要跑 typewriterStream（约 2.9s 占住函数），
+  // 放到缓存之后等于同一份 body 可无限重放，单账号就能打满并发额度。
+  // 它只是同区 Redis 一次往返，不是本轮想省掉的跨区 DB 往返
   const rl = await checkRateLimit('ai_meihua', userId, 10, 60);
   if (!rl.allowed) return NextResponse.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
 
-  // 配额：免费 1 次/天（FREE_DAILY_LIMIT），VIP 不限
   let quotaConsumed = false;
-  if (!isDebugMode) {
-    const quota = await checkMeihuaDecideQuota(session!.user.id);
-    if (!quota.hasQuota) {
-      return NextResponse.json({
-        error: 'QUOTA_EXCEEDED',
-        message: `今日梅花决策已达上限（${quota.limit} 次），请升级 VIP 解锁不限次数。`,
-      }, { status: 403 });
-    }
-    quotaConsumed = !quota.isVip;
-  }
-
   try {
     const body = await req.json().catch(() => ({}));
     const question = safeText(body?.question).slice(0, 200);
     const draw = (body?.draw ?? {}) as DrawPayload;
 
     if (!question) {
-      if (quotaConsumed) await refundQuota(session!.user.id, 'meihuaDecideCount');
       return NextResponse.json({ error: '问题不能为空' }, { status: 400 });
     }
 
@@ -110,16 +100,36 @@ export async function POST(req: NextRequest) {
       movingLine: input.movingLine,
     });
 
+    // 缓存优先：命中即零 AI 成本，故不扣配额（原顺序是先扣再退，白白多两次跨区 DB 往返）
     const cached = await getCache(cacheKey);
     if (cached?.overallAdvice) {
-      if (quotaConsumed) await refundQuota(session!.user.id, 'meihuaDecideCount');
       const cachedDecision = { ...(cached as MeihuaDecisionResult), _source: 'cache' as const };
       const { meta, narrative } = splitMeta(cachedDecision);
       return new Response(typewriterStream(meta, narrative), { headers: SSE_HEADERS });
     }
 
+    // 缓存未命中 → 真要花 AI 钱，此时才扣配额
+    // 配额：免费 1 次/天（FREE_DAILY_LIMIT），VIP 不限。
+    // JWT 里的 isSubscribed 只作提示传入，真实会员态由 quota 内部查 DB 认定
+    if (!isDebugMode) {
+      const quota = await checkMeihuaDecideQuota(session!.user.id, session!.user.isSubscribed);
+      if (!quota.hasQuota) {
+        return NextResponse.json({
+          error: 'QUOTA_EXCEEDED',
+          message: `今日梅花决策已达上限（${quota.limit} 次），请升级 VIP 解锁不限次数。`,
+        }, { status: 403 });
+      }
+      quotaConsumed = !quota.isVip;
+    }
+
     // 熔断已下沉到 client.ts 的 callDeepSeek（generateMeihuaDecision 内部吞异常，路由再包熔断形同虚设）
-    const decision = await withAiTimeout(() => generateMeihuaDecision(input), 50_000);
+    // 超时预算必须大于内层：client.ts 给 meihua 的 deadline 预算是 55s，到点 abort 后
+    // generateMeihuaDecision 会吞掉异常返回本地降级结果（仍是一份可用解读）。
+    // 外层若比内层短（原 50s），race 永远由外层先赢 → 抛 AiTimeoutError → 500 JSON，
+    // 而前端按 SSE 解析，用户等满 50s 只看到报错，内层已生成/兜底好的内容被丢弃。
+    // 取 57s：留 2s 给内层落地 + 3s 给 SSE 输出（vercel.json 该路由 maxDuration 60s），
+    // 外层只作「内层彻底卡死」的最后兜底
+    const decision = await withAiTimeout(() => generateMeihuaDecision(input), 57_000);
 
     if (quotaConsumed && (decision as { _source?: string })._source === 'fallback') {
       await refundQuota(session!.user.id, 'meihuaDecideCount');

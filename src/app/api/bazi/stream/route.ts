@@ -22,6 +22,21 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 const SERVICE = 'api/bazi/stream';
 
+// 上游首字节(TTFB)超时：网关挂起时 15s 没等到响应头就换 provider，
+// 不能用 AbortSignal.timeout 直传——那会在首字节之后继续计时，把健康的长流一起杀掉
+const UPSTREAM_TTFB_MS = 15_000;
+// 读流阶段空闲 watchdog：连上后 20s「上游一个字节都没来」视为卡死，abort 走 fallback。
+// 否则用户盯着「推算中」直到 Vercel 60s 击杀函数——配额已扣、退款+飞书告警分支永远走不到。
+// 续命信号是「任何字节到达」而非「非空正文 delta」：上游排队时会持续发 SSE 心跳(: ping)/空 delta/
+// reasoning 帧，只认正文会把排队中的健康请求当卡死杀掉，用户白拿一份模板兜底
+const UPSTREAM_IDLE_MS = 20_000;
+// 首个产出帧（正文 delta 或 reasoning 帧）之前的绝对上限：这一段心跳不能无限续命，
+// 否则「只发心跳的僵尸流」照样把函数拖到 Vercel 60s 击杀。
+// 15s TTFB + 30s 首帧 = 45s，仍给退配额 + 飞书告警留出十几秒余量
+const UPSTREAM_FIRST_TOKEN_MS = 30_000;
+// 中途断流时，已流出正文达到此长度就保留原文（只追加中断说明），不再整体替换为模板兜底
+const PARTIAL_KEEP_MIN_CHARS = 200;
+
 const requestSchema = z.object({
   cacheKey: z.string().min(1),
   baziResult: z.any(),
@@ -159,37 +174,66 @@ export async function POST(req: NextRequest) {
   const prompt = buildBaziStreamPrompt(baziResult as BaziResult, name, gender, dayunExtra, facts);
   const proxy = attachClientAbort(req);
 
-  const openUpstream = (p: ResolvedProvider) =>
-    fetch(`${p.baseUrl}/chat/completions`, {
-      method: 'POST',
-      signal: proxy.signal,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${p.apiKey}`,
-      },
-      body: JSON.stringify({
-        model: PRIMARY_MODEL,
-        max_tokens: 4000,
-        temperature: 0.3,
-        stream: true,
-        enable_thinking: false,
-        messages: [
-          { role: 'system', content: BAZI_STREAM_SYSTEM_PROMPT },
-          { role: 'user', content: prompt },
-        ],
-      }),
-    });
+  // 每个 provider 一个独立 AbortController：既转发客户端断连(proxy.signal)，
+  // 又能被 TTFB 超时 / 空闲 watchdog 单独 abort（proxy.signal 是整个请求共用的，不能拿它当计时器）
+  const openUpstream = async (p: ResolvedProvider) => {
+    const ac = new AbortController();
+    const onClientAbort = () => ac.abort();
+    if (proxy.signal.aborted) ac.abort();
+    else proxy.signal.addEventListener('abort', onClientAbort, { once: true });
+
+    // 拿到响应头即 clearTimeout：读流阶段交给空闲 watchdog 看护，健康长流不会被误杀
+    const ttfbTimer = setTimeout(() => ac.abort(), UPSTREAM_TTFB_MS);
+    const detach = () => {
+      clearTimeout(ttfbTimer);
+      proxy.signal.removeEventListener('abort', onClientAbort);
+    };
+
+    try {
+      const res = await fetch(`${p.baseUrl}/chat/completions`, {
+        method: 'POST',
+        signal: ac.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${p.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: PRIMARY_MODEL,
+          max_tokens: 4000,
+          temperature: 0.3,
+          stream: true,
+          enable_thinking: false,
+          messages: [
+            { role: 'system', content: BAZI_STREAM_SYSTEM_PROMPT },
+            { role: 'user', content: prompt },
+          ],
+        }),
+      });
+      clearTimeout(ttfbTimer);
+      return { res, abort: () => ac.abort(), detach };
+    } catch (err) {
+      detach();
+      throw err;
+    }
+  };
 
   let upstream: Response | null = null;
+  let abortUpstream: (() => void) | null = null; // 空闲 watchdog 用：主动掐断当前上游
+  let detachUpstream: (() => void) | null = null;
   for (const p of providers) {
     if (proxy.signal.aborted) break;
     try {
-      const res = await openUpstream(p);
-      if (res.ok && res.body) {
-        upstream = res;
+      const opened = await openUpstream(p);
+      if (opened.res.ok && opened.res.body) {
+        upstream = opened.res;
+        abortUpstream = opened.abort;
+        detachUpstream = opened.detach; // 读完/出错后再移除客户端断连监听（读流期间必须留着）
         break;
       }
-      logger.error(SERVICE, `upstream non-ok ${res.status} (provider=${p.id})`);
+      // 非 2xx：释放连接与监听后再试下一个 provider（TTFB 超时会以 AbortError 走下面的 catch）
+      opened.abort();
+      opened.detach();
+      logger.error(SERVICE, `upstream non-ok ${opened.res.status} (provider=${p.id})`);
     } catch (err) {
       logger.error(SERVICE, `upstream fetch failed (provider=${p.id})`, err instanceof Error ? err : undefined);
     }
@@ -221,11 +265,38 @@ export async function POST(req: NextRequest) {
       let fullText = '';
       let outputStarted = false; // 第一个「【」出现前丢弃思考过程
 
+      // 空闲 watchdog：超时则 abort 上游 → read() 抛 AbortError → 下面的 catch 收网，不新造分支。
+      // 两段窗口：
+      //   首帧前 —— 用「读流起点 + 首帧上限」的绝对剩余时间，心跳帧不能把它续下去（防僵尸流）；
+      //   首帧后 —— 转为 20s 滚动空闲窗口，任何字节（含心跳）都续命，健康长流不会被误杀
+      const readStartedAt = Date.now();
+      let producing = false; // 上游是否已开始产出（正文 delta 或 reasoning 帧）
+      let idleTimer: ReturnType<typeof setTimeout> | null = null;
+      const armIdleWatchdog = () => {
+        if (idleTimer) clearTimeout(idleTimer);
+        const waitingFirstToken = !producing;
+        const ms = waitingFirstToken
+          ? Math.max(0, readStartedAt + UPSTREAM_FIRST_TOKEN_MS - Date.now())
+          : UPSTREAM_IDLE_MS;
+        idleTimer = setTimeout(() => {
+          logger.error(
+            SERVICE,
+            waitingFirstToken
+              ? `upstream produced no token within ${UPSTREAM_FIRST_TOKEN_MS}ms, aborting`
+              : `upstream idle > ${UPSTREAM_IDLE_MS}ms, aborting`,
+          );
+          abortUpstream?.();
+        }, ms);
+      };
+      armIdleWatchdog();
+
       try {
         while (true) {
           const { done, value } = await upstreamReader.read();
           if (done) break;
           buffer += decoder.decode(value, { stream: true });
+          // 有字节到达就续命：心跳/空 delta/reasoning 帧都证明上游连接活着（首帧前仍受绝对上限约束）
+          armIdleWatchdog();
 
           let nl: number;
           while ((nl = buffer.indexOf('\n')) >= 0) {
@@ -238,8 +309,14 @@ export async function POST(req: NextRequest) {
 
             try {
               const obj = JSON.parse(payload);
-              const delta: string =
-                obj?.choices?.[0]?.delta?.content ?? '';
+              const deltaObj = obj?.choices?.[0]?.delta;
+              const delta: string = deltaObj?.content ?? '';
+              // 正文与思考(reasoning_content)都算「上游已开始产出」：思考阶段可能长于首帧上限，
+              // 一旦开始产出就切到滚动空闲窗口，不再受首帧绝对上限约束
+              if (!producing && (delta || deltaObj?.reasoning_content)) {
+                producing = true;
+                armIdleWatchdog();
+              }
               if (delta) {
                 if (!outputStarted) {
                   // 检测第一个「【」章节标志符
@@ -288,9 +365,19 @@ export async function POST(req: NextRequest) {
       } catch (err) {
         logger.error(SERVICE, 'stream read failed', err instanceof Error ? err : undefined);
         try {
-          await handleFallback(controller, encoder, baziResult, session, name, birthDate);
+          // 已流出足量正文时不走模板兜底：前端收到 {fallback:true,text} 会用模板整体覆盖，
+          // 把用户已经读到的真解读换成通用套话，比「半截真解读」更糟。
+          // 此时保留原文 + 追加中断说明，用 done 帧收尾（前端按正常解读渲染/存档）；
+          // 但不写 Redis 缓存——30 天 TTL 会把半截解读固化给这个命盘
+          if (outputStarted && fullText.trim().length >= PARTIAL_KEEP_MIN_CHARS) {
+            await handlePartialInterrupt(controller, encoder, fullText, session, name, birthDate);
+          } else {
+            await handleFallback(controller, encoder, baziResult, session, name, birthDate);
+          }
         } catch {}
       } finally {
+        if (idleTimer) clearTimeout(idleTimer);
+        detachUpstream?.();
         controller.close();
         proxy.release();
       }
@@ -342,6 +429,43 @@ async function handleFallback(
   );
 }
 
+/**
+ * 中途断流但已流出足量正文：保留已生成内容，只追加一句中断说明，并以 done 帧收尾。
+ * 前端 done 分支走正常解读渲染/存档（fallback 帧才会整体替换文本），用户不会丢掉已读到的真解读。
+ * 配额照旧退还（解读不完整不该计费），飞书仍告警——中断对运维依然是需要感知的失败。
+ */
+async function handlePartialInterrupt(
+  controller: ReadableStreamDefaultController,
+  encoder: TextEncoder,
+  partialText: string,
+  session: Session | null,
+  name: string | undefined,
+  birthDate: string
+) {
+  const notice = '\n\n（本次解读在生成中途中断，以上为已完成部分。可点击「重新分析」获取完整解读。）';
+  const text = partialText + notice;
+
+  // 先退配额再推帧：客户端已断开时 enqueue 会抛错，放在后面会把退款一起吞掉（与 handleFallback 同序）
+  if (session?.user?.id) {
+    try {
+      await refundQuota(session.user.id, 'baziAiCount');
+    } catch {}
+  }
+
+  void sendFeishuAlert({
+    name: name || '缘主',
+    birthDate,
+    userId: session?.user?.id,
+    userEmail: (session?.user as { email?: string } | undefined)?.email,
+    reason: '流式解读中途中断（已保留部分正文，未写缓存）',
+  });
+
+  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ delta: notice })}\n\n`));
+  controller.enqueue(
+    encoder.encode(`data: ${JSON.stringify({ done: true, source: 'deepseek', aiAnalysis: text })}\n\n`)
+  );
+}
+
 function streamFallback(opts: {
   reason: string;
   baziResult: unknown;
@@ -372,7 +496,8 @@ async function sendFeishuAlert(info: {
   birthDate: string;
   userId?: string;
   userEmail?: string;
+  reason?: string; // 区分「整单降级」与「中途中断保留部分正文」，便于运维判断严重度
 }) {
-  const text = `⚠️ CyberFate 八字 AI 解读失败\n姓名：${info.name}\n生日：${info.birthDate}\n用户：${info.userEmail || info.userId || '游客'}\n时间：${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}`;
+  const text = `⚠️ CyberFate 八字 AI 解读失败\n姓名：${info.name}\n生日：${info.birthDate}\n用户：${info.userEmail || info.userId || '游客'}${info.reason ? `\n原因：${info.reason}` : ''}\n时间：${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}`;
   await sendFeishuText(text);
 }

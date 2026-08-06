@@ -1,10 +1,20 @@
 'use client';
 
 import type { HuangliData } from '@/lib/huangli/calculator';
-import { WUXING_COLORS, getZhiXingColor } from '@/lib/huangli/calculator';
+import { wuxingColor } from '@/data/wuxing';
 
 interface DayDetailCardProps {
   data: HuangliData;
+}
+
+// 建除十二神配色。从 lib/huangli/calculator 内联至此：那边顶层 require('lunar-javascript')，
+// 客户端 value-import 会拖整库进首屏；类名保持字面量供 Tailwind 静态扫描。
+function getZhiXingColor(zhiXing: string): { bg: string; text: string } {
+  const good = ['建', '除', '满', '成', '开'];
+  const bad = ['破', '危', '收', '闭'];
+  if (good.includes(zhiXing)) return { bg: 'bg-green-50', text: 'text-green-700' };
+  if (bad.includes(zhiXing)) return { bg: 'bg-red-50', text: 'text-red-700' };
+  return { bg: 'bg-gray-50', text: 'text-gray-700' };
 }
 
 function Tag({ children, className = '' }: { children: React.ReactNode; className?: string }) {
@@ -17,8 +27,10 @@ function Tag({ children, className = '' }: { children: React.ReactNode; classNam
 
 export function DayDetailCard({ data }: DayDetailCardProps) {
   const zhiXingColor = getZhiXingColor(data.zhiXing);
-  const dayWuxingColor = WUXING_COLORS[data.dayWuxing];
-  const yearWuxingColor = WUXING_COLORS[data.yearWuxing];
+  // 五行配色改从全站唯一真源 src/data/wuxing.ts 取 hex（与原 calculator 内 class 同值），
+  // 内联 style 替代任意值 class，效果一致且不再依赖 calculator 的 value-export
+  const dayWuxingColor = wuxingColor(data.dayWuxing);
+  const yearWuxingColor = wuxingColor(data.yearWuxing);
 
   return (
     <div className="relative overflow-hidden bg-white rounded-2xl border border-[#1C1A16]/8 p-5 md:p-7">
@@ -58,14 +70,14 @@ export function DayDetailCard({ data }: DayDetailCardProps) {
 
       {/* 区块B: 五行与冲煞 */}
       <div className="grid grid-cols-3 gap-3 md:gap-4 mb-6">
-        <div className={`rounded-xl p-3 md:p-4 text-center ${dayWuxingColor.bg}`}>
-          <span className={`text-2xl md:text-3xl font-bold block ${dayWuxingColor.text}`}>
+        <div className="rounded-xl p-3 md:p-4 text-center" style={{ background: dayWuxingColor.bg }}>
+          <span className="text-2xl md:text-3xl font-bold block" style={{ color: dayWuxingColor.text }}>
             {data.dayWuxing}
           </span>
           <span className="text-xs md:text-sm text-[#1C1A16]/50 mt-1 block">日主五行</span>
         </div>
-        <div className={`rounded-xl p-3 md:p-4 text-center ${yearWuxingColor.bg}`}>
-          <span className={`text-2xl md:text-3xl font-bold block ${yearWuxingColor.text}`}>
+        <div className="rounded-xl p-3 md:p-4 text-center" style={{ background: yearWuxingColor.bg }}>
+          <span className="text-2xl md:text-3xl font-bold block" style={{ color: yearWuxingColor.text }}>
             {data.yearWuxing}
           </span>
           <span className="text-xs md:text-sm text-[#1C1A16]/50 mt-1 block">年五行</span>

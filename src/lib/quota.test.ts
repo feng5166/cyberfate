@@ -62,16 +62,64 @@ describe('quota — atomic check & consume (baziAiCount)', () => {
       baziAiCount: { lt: 1 },
     })
     expect(arg.data).toMatchObject({ baziAiCount: { increment: 1 } })
-    // upsert runs inside the same transaction before the guarded increment.
-    expect(upsert).toHaveBeenCalledTimes(1)
+    // 热路径（当日行已存在）：单次条件自增即完成，不再 upsert、不开事务
+    expect(upsert).not.toHaveBeenCalled()
+    expect($transaction).not.toHaveBeenCalled()
   })
 
-  it('denies when at/over limit (updateMany returns count 0)', async () => {
+  it('当日首笔：行不存在时 upsert 建行（空更新）后重试一次扣减', async () => {
+    updateMany
+      .mockResolvedValueOnce({ count: 0 }) // 行不存在 → 首次条件自增落空
+      .mockResolvedValueOnce({ count: 1 }) // 建行后重试成功
+
+    const res = await checkBaziQuota('user-new')
+
+    expect(res).toEqual({ hasQuota: true, limit: 1, isVip: false })
+    expect(upsert).toHaveBeenCalledTimes(1)
+    expect(updateMany).toHaveBeenCalledTimes(2)
+    // upsert 只建行不改计数：update 为空对象，扣减仍由条件 updateMany 原子完成
+    expect(upsert.mock.calls[0][0].update).toEqual({})
+  })
+
+  it('denies when at/over limit (updateMany returns count 0 twice)', async () => {
     updateMany.mockResolvedValue({ count: 0 })
 
     const res = await checkBaziQuota('user-1')
 
     expect(res).toEqual({ hasQuota: false, limit: 1, isVip: false })
+    // 额度耗尽路径：首扣落空 → upsert 幂等建行 → 重扣仍落空
+    expect(updateMany).toHaveBeenCalledTimes(2)
+    // vipStatus 未传：入口已真查过 isVip，额度耗尽时不再复核
+    expect(isVipMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('vipStatus=false 且额度耗尽：复核 isVip，确为 VIP（JWT 未刷）则放行', async () => {
+    updateMany.mockResolvedValue({ count: 0 })
+    isVipMock.mockResolvedValue(true) // DB 里已是 VIP，但 JWT 还没刷新
+
+    const res = await checkLiuyaoQuota('user-just-paid', false)
+
+    expect(res).toEqual({ hasQuota: true, limit: -1, isVip: true })
+    expect(isVipMock).toHaveBeenCalledWith('user-just-paid')
+  })
+
+  it('vipStatus=false 且额度耗尽：复核仍非 VIP → 拒绝', async () => {
+    updateMany.mockResolvedValue({ count: 0 })
+    isVipMock.mockResolvedValue(false)
+
+    const res = await checkLiuyaoQuota('user-free', false)
+
+    expect(res).toEqual({ hasQuota: false, limit: 1, isVip: false })
+    expect(isVipMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('vipStatus=false 但额度未尽：直接放行，不复核 isVip', async () => {
+    updateMany.mockResolvedValue({ count: 1 })
+
+    const res = await checkLiuyaoQuota('user-2', false)
+
+    expect(res.hasQuota).toBe(true)
+    expect(isVipMock).not.toHaveBeenCalled()
   })
 
   // T11 · 竞态回归:updateMany 的条件自增(where {field: {lt: limit}} + increment)
@@ -98,7 +146,8 @@ describe('quota — atomic check & consume (baziAiCount)', () => {
 
     expect(granted).toBe(1) // 八字 limit=1:并发 12 次只有 1 次拿到额度
     expect(counter).toBe(1) // 计数严格不超发
-    expect(updateMany).toHaveBeenCalledTimes(N) // 每次并发都走了原子判定
+    // 放行的 1 次走热路径(1 次 updateMany);被拒的 N-1 次各 2 次(首扣落空 → upsert → 重扣仍落空)
+    expect(updateMany).toHaveBeenCalledTimes(1 + (N - 1) * 2)
   })
 
   it('并发同样保护高额度(模拟 limit=3 恰好放行 3 次)', async () => {
@@ -123,7 +172,8 @@ describe('quota — atomic check & consume (baziAiCount)', () => {
     updateMany.mockResolvedValueOnce({ count: 1 })
     expect(await useBaziQuota('user-1')).toBe(true)
 
-    updateMany.mockResolvedValueOnce({ count: 0 })
+    // 拒绝路径会「首扣 → 建行 → 重扣」调用两次 updateMany
+    updateMany.mockResolvedValue({ count: 0 })
     expect(await useBaziQuota('user-1')).toBe(false)
   })
 
@@ -137,7 +187,7 @@ describe('quota — atomic check & consume (baziAiCount)', () => {
     expect(updateMany).not.toHaveBeenCalled()
   })
 
-  it('liuyao uses limit 1 and respects passed-in vipStatus (no isVip call)', async () => {
+  it('liuyao uses limit 1 and respects passed-in vipStatus=false (no isVip call)', async () => {
     updateMany.mockResolvedValue({ count: 1 })
 
     const res = await checkLiuyaoQuota('user-2', false)
@@ -146,14 +196,45 @@ describe('quota — atomic check & consume (baziAiCount)', () => {
     expect(updateMany.mock.calls[0][0].where).toMatchObject({
       liuyaoCount: { lt: 1 },
     })
-    // vipStatus supplied → isVip must not be queried.
+    // vipStatus=false 是保守方向，可信任 → 不查 isVip
     expect(isVipMock).not.toHaveBeenCalled()
   })
 
-  it('liuyao with vipStatus=true short-circuits', async () => {
+  it('vipStatus=true 仍复核 DB：确为 VIP 才不限量', async () => {
+    isVipMock.mockResolvedValue(true)
+
     const res = await checkLiuyaoQuota('user-2', true)
+
     expect(res).toEqual({ hasQuota: true, limit: -1, isVip: true })
-    expect(isVipMock).not.toHaveBeenCalled()
+    // 放行前必须真查过 DB（vipStatus 不是放行凭证）
+    expect(isVipMock).toHaveBeenCalledWith('user-2')
+    expect(updateMany).not.toHaveBeenCalled()
+  })
+
+  // 回归：移动端 JWT MAX_AGE 30 天且只 decode 不查库，订阅到期后 isSubscribed:true 会被固化，
+  // 若拿它直接放行，用户可无限量白嫖 AI 且 UsageQuota 计数为 0（平台完全无感）
+  it('stale isSubscribed=true 但 DB 无有效订阅：不得放行，照常扣配额', async () => {
+    isVipMock.mockResolvedValue(false) // DB 里订阅已过期
+    updateMany.mockResolvedValue({ count: 1 })
+
+    const res = await checkLiuyaoQuota('user-stale-token', true)
+
+    expect(res).toEqual({ hasQuota: true, limit: 1, isVip: false })
+    expect(isVipMock).toHaveBeenCalledWith('user-stale-token')
+    // 关键：走了真实扣减，而不是 VIP 零 DB 短路
+    expect(updateMany).toHaveBeenCalledTimes(1)
+    expect(updateMany.mock.calls[0][0].data).toMatchObject({ liuyaoCount: { increment: 1 } })
+  })
+
+  it('stale isSubscribed=true + 额度已尽：直接拒绝（不再二次复核）', async () => {
+    isVipMock.mockResolvedValue(false)
+    updateMany.mockResolvedValue({ count: 0 })
+
+    const res = await checkLiuyaoQuota('user-stale-exhausted', true)
+
+    expect(res).toEqual({ hasQuota: false, limit: 1, isVip: false })
+    // 入口已复核过一次，耗尽分支只对 vipStatus===false 生效 → 总共 1 次
+    expect(isVipMock).toHaveBeenCalledTimes(1)
   })
 })
 
@@ -177,10 +258,22 @@ describe('quota — peekBaziQuota (read-only)', () => {
     expect(res.hasQuota).toBe(true)
   })
 
-  it('VIP short-circuits without reading the DB', async () => {
+  it('vipStatus=true 经 DB 复核确认后才报不限量', async () => {
+    isVipMock.mockResolvedValue(true)
     const res = await peekBaziQuota('vip', true)
     expect(res).toEqual({ hasQuota: true, isVip: true })
+    expect(isVipMock).toHaveBeenCalledWith('vip')
     expect(findUnique).not.toHaveBeenCalled()
+  })
+
+  it('stale vipStatus=true 但 DB 非 VIP：按免费用户读真实用量', async () => {
+    isVipMock.mockResolvedValue(false)
+    findUnique.mockResolvedValue({ baziAiCount: 1 })
+
+    const res = await peekBaziQuota('stale-vip', true)
+
+    expect(res).toEqual({ hasQuota: false, isVip: false })
+    expect(findUnique).toHaveBeenCalledTimes(1)
   })
 
   it('queries isVip when vipStatus omitted', async () => {
@@ -228,7 +321,10 @@ describe('quota — deductBaziQuota / refundQuota', () => {
 
 describe('quota — date key is computed in Beijing time (UTC+8)', () => {
   it('uses the Beijing calendar day, which can differ from the UTC day', async () => {
-    updateMany.mockResolvedValue({ count: 1 })
+    // 首扣落空 → 走 upsert 建行分支，顺便验证 upsert 也用同一北京日期键
+    updateMany
+      .mockResolvedValueOnce({ count: 0 })
+      .mockResolvedValueOnce({ count: 1 })
 
     // 2026-06-16T20:00:00Z is still 2026-06-16 in UTC,
     // but 2026-06-17 04:00 in Beijing (UTC+8) → date key must be 2026-06-17.
@@ -240,7 +336,7 @@ describe('quota — date key is computed in Beijing time (UTC+8)', () => {
     const where = updateMany.mock.calls[0][0].where
     expect(where.date).toBe('2026-06-17')
 
-    // And the upsert in the same transaction keys off the same Beijing date.
+    // upsert 建行同样以北京日期为键
     expect(upsert.mock.calls[0][0].where.userId_date.date).toBe('2026-06-17')
   })
 

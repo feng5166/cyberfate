@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getAuthSession } from '@/lib/auth-session';
-import { isUserVip, checkDailyQaQuota } from '@/lib/quota';
+import { checkDailyQaQuota } from '@/lib/quota';
 import { logger } from '@/lib/logger';
 import { prisma } from '@/lib/db';
 import { withCircuitBreaker } from '@/lib/ai/circuitBreaker';
@@ -22,17 +22,16 @@ export async function POST(req: NextRequest) {
     }
 
     const userId = session.user.id;
-    const isVip = await isUserVip(userId);
 
-    // 统一配额策略 v1：每日运势问答免费 1 次/天，VIP 不限
-    if (!isVip) {
-      const qaQuota = await checkDailyQaQuota(userId, isVip);
-      if (!qaQuota.hasQuota) {
-        return Response.json(
-          { error: 'DAILY_LIMIT_REACHED', message: '今日问答次数已用完，升级 Pro 无限提问' },
-          { status: 429 }
-        );
-      }
+    // 统一配额策略 v1：每日运势问答免费 1 次/天，VIP 不限。
+    // JWT 里的 isSubscribed 只作提示传入，VIP 判定由 checkDailyQaQuota 内部查 DB 完成 ——
+    // 早期用 if (!isVip) 在外层 gate，陈旧的 isSubscribed:true 会让配额检查整个被跳过
+    const qaQuota = await checkDailyQaQuota(userId, session.user.isSubscribed);
+    if (!qaQuota.hasQuota) {
+      return Response.json(
+        { error: 'DAILY_LIMIT_REACHED', message: '今日问答次数已用完，升级 Pro 无限提问' },
+        { status: 429 }
+      );
     }
 
     const { question, date } = await req.json();

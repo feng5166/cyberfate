@@ -63,7 +63,10 @@ export function drawRandomCards(count: number): CardWithOrientation[] {
 export function getCardImageUrl(card: TarotCard): string {
   const suitFolder = card.suit === 'major' ? 'major' : card.suit;
   const filename = card.filename || `${card.id}.jpg`;
-  return `/images/tarot/cards/${suitFolder}/${filename}`;
+  // 统一走 WebP：同名 .webp 已随 jpg 一并入库，体积约省 35%，移动端凯尔特十字一次少下 ~350KB。
+  // 旧 .jpg 仍保留在仓库中，历史 TarotReading 记录与 SW 旧缓存里的 .jpg URL 不会 404。
+  const webpName = filename.replace(/\.jpe?g$/i, '.webp');
+  return `/images/tarot/cards/${suitFolder}/${webpName}`;
 }
 
 // 按 id 从可信牌库反查（服务端用它校正客户端传来的牌义/关键词，杜绝伪造与 prompt 注入）

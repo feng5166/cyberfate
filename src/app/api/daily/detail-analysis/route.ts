@@ -27,17 +27,20 @@ export async function POST(req: NextRequest) {
   try { body = await req.json(); } catch {}
   const targetDate = body.date || getTodayBeijing();
 
-  const vip = await isVip(userId);
-  if (!vip) {
-    const existing = await prisma.dailyDetailHistory.findUnique({
+  // 首字节前的三次 DB 查询原为串行（isVip → 当日记录 → 用户资料），hkg1↔DB 跨区下白等两个 RTT。
+  // 三者互不依赖，并行取回；多查的那一次（VIP 也查当日记录）不增加墙钟时间
+  const [vip, existing, user] = await Promise.all([
+    isVip(userId),
+    prisma.dailyDetailHistory.findUnique({
       where: { userId_date: { userId, date: targetDate } },
-    });
-    if (existing) {
-      return new Response(JSON.stringify({ error: '今日免费次数已用完', code: 'DAILY_LIMIT_REACHED' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
-    }
+    }),
+    prisma.user.findUnique({ where: { id: userId }, select: { birthDate: true, birthHour: true, gender: true } }),
+  ]);
+
+  if (!vip && existing) {
+    return new Response(JSON.stringify({ error: '今日免费次数已用完', code: 'DAILY_LIMIT_REACHED' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
   }
 
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { birthDate: true, birthHour: true, gender: true } });
   if (!user?.birthDate || user.birthHour === null || user.birthHour === undefined) {
     return new Response(JSON.stringify({ error: '请先在个人中心填写出生信息', code: 'NO_BIRTH_INFO' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
   }

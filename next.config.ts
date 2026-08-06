@@ -7,7 +7,8 @@ let withBundleAnalyzer: (config: NextConfig) => NextConfig = (c) => c;
 try {
   const mod = require("@next/bundle-analyzer");
   if (mod?.default) {
-    withBundleAnalyzer = mod.default({ enabled: true, openAnalyzer: false });
+    // 仅在显式 ANALYZE=true 时启用，避免日常构建产出分析报告拖慢速度
+    withBundleAnalyzer = mod.default({ enabled: process.env.ANALYZE === "true", openAnalyzer: false });
   }
 } catch {
   // @next/bundle-analyzer not installed, skip
@@ -17,13 +18,20 @@ const withPWA = withPWAInit({
   dest: "public",
   cacheOnFrontEndNav: true,
   aggressiveFrontEndNavCaching: true,
-  reloadOnOnline: true,
+  // 禁用联网恢复自动刷新：整页 reload 会杀掉正在等待 60-110s 的 AI 占卜请求
+  reloadOnOnline: false,
   disable: process.env.NODE_ENV === "development",
   fallbacks: {
     document: "/offline.html",
   },
+  // 大体积静态资源不进 precache（塔罗牌图 4.4MB + 截图/启动图），改由 runtimeCaching 按需缓存
+  publicExcludes: ["!images/**", "!screenshots/**", "!splash/**"],
   workboxOptions: {
     disableDevLogs: true,
+    // CJK woff2 分片 5.9MB（106 个），浏览器按 unicode-range 只取用得到的几片，无需全量预缓存；
+    // 用不带前缀的正则——workbox 匹配的是构建产物内的相对路径（static/media/xxx.woff2），
+    // 带 /_next/ 前缀的写法匹配不到。仍由 static-assets 的 runtimeCaching 按需缓存。
+    exclude: [/\.woff2$/],
     runtimeCaching: [
       {
         urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/i,
@@ -34,11 +42,37 @@ const withPWA = withPWAInit({
         },
       },
       {
+        // 塔罗牌图单独建缓存：93 张牌面文件量大且不可变，用 CacheFirst 长期缓存，
+        // 避免挤占 static-assets 的 LRU 名额导致持续互相逐出
+        urlPattern: /\/images\/tarot\/.*\.(?:jpg|webp|png)$/i,
+        handler: "CacheFirst",
+        options: {
+          cacheName: "tarot-cards",
+          expiration: { maxEntries: 120, maxAgeSeconds: 30 * 24 * 60 * 60 },
+        },
+      },
+      {
         urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico|woff2?)$/i,
         handler: "StaleWhileRevalidate",
         options: {
           cacheName: "static-assets",
-          expiration: { maxEntries: 64, maxAgeSeconds: 7 * 24 * 60 * 60 },
+          expiration: { maxEntries: 128, maxAgeSeconds: 7 * 24 * 60 * 60 },
+        },
+      },
+      {
+        // 日历整月农历标注 /api/huangli?month=YYYY-MM：纯确定性历法计算，服务端已声明
+        // `public, s-maxage=31536000, immutable`。此前 runtimeCaching 无任何 /api 规则，
+        // 客户端日历每次切月都真打网络（离线更是直接缺农历小字），故按同一语义补 CacheFirst。
+        // 放在 pages 之前只为可读性：workbox 首个命中的路由生效，而上面三条（google-fonts /
+        // tarot-cards / static-assets 正则均以 $ 收尾）与 pages（只匹配 8 个白名单页面路径，
+        // 带 query 的 /api/* 匹配不到）都不会命中本 URL，故实际无冲突，仅新增不改动既有条目。
+        // 若日后 days 响应结构变更，改 cacheName 强制换缓存桶（等同 CDN immutable 的换 URL 手法）。
+        urlPattern: /\/api\/huangli\?month=\d{4}-\d{2}/i,
+        handler: "CacheFirst",
+        options: {
+          cacheName: "huangli-month",
+          // 24 个月足够覆盖来回翻月的浏览窗口；TTL 与服务端 s-maxage(1 年) 对齐
+          expiration: { maxEntries: 24, maxAgeSeconds: 365 * 24 * 60 * 60 },
         },
       },
       {
@@ -46,8 +80,10 @@ const withPWA = withPWAInit({
         handler: "NetworkFirst",
         options: {
           cacheName: "pages",
-          expiration: { maxEntries: 16, maxAgeSeconds: 24 * 60 * 60 },
-          networkTimeoutSeconds: 10,
+          // 4h：旧 HTML 里烤着构建期数据，缓存越久水合失败越严重
+          expiration: { maxEntries: 16, maxAgeSeconds: 4 * 60 * 60 },
+          // 3s：弱网导航尽快回退缓存，不让用户干等 10s
+          networkTimeoutSeconds: 3,
         },
       },
     ],
