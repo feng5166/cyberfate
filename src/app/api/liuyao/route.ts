@@ -230,7 +230,16 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     const errMsg = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
     console.error('[liuyao] AI reading failed, using fallback. error:', errMsg);
-    reading = await generateLiuYaoReading(promptInput);
+    try {
+      reading = await generateLiuYaoReading(promptInput);
+    } catch (retryErr) {
+      // 二次也抛（generateLiuYaoReading 内部已吞异常，走到这里说明是非预期错误）：
+      // 此时配额已扣、用户什么都拿不到，必须先退还再把错误交给上层，否则白丢一次免费额度
+      if (quotaConsumed) {
+        await refundQuota(session!.user!.id, 'liuyaoCount').catch(() => {});
+      }
+      throw retryErr;
+    }
   }
 
   // fallback 不消耗配额
@@ -243,14 +252,19 @@ export async function POST(req: NextRequest) {
     interpretation: reading.lineInterpretations[i] || '',
   }));
 
-  await setCache(cacheKey, {
-    lineInterpretations: reading.lineInterpretations,
-    overallNarrative: reading.overallNarrative,
-    summary: reading.summary,
-    positives: reading.positives,
-    cautions: reading.cautions,
-    actions: reading.actions,
-  }, 12 * 60 * 60);
+  // 只缓存真·AI 结果：降级文案是本地模板（buildFallbackLiuYaoReading，纯本地零成本可随时重算），
+  // 一旦被写进 12h 缓存，上游抖动那几分钟产生的一条模板会在之后 12 小时内反复回给所有同 key 用户，
+  // 他们付了配额却只能拿到模板、且刷新无效。不写缓存 = 上游恢复后下一个人立刻拿到真解读。
+  if (reading._source !== 'fallback') {
+    await setCache(cacheKey, {
+      lineInterpretations: reading.lineInterpretations,
+      overallNarrative: reading.overallNarrative,
+      summary: reading.summary,
+      positives: reading.positives,
+      cautions: reading.cautions,
+      actions: reading.actions,
+    }, 12 * 60 * 60);
+  }
 
   const meta: LiuYaoMeta = {
     hexagramName,

@@ -74,16 +74,30 @@ export async function withCircuitBreaker<T>(
       // pipeline 单次往返完成 incr+expire：原「仅 failures===1 时补 TTL」的写法一旦 INCR 成功而
       // EXPIRE 失败，就会留下永不过期的计数键，计数只增不减，最终熔断永远开着（与 rate-limit 同一修法）。
       // expire 带 NX（仅在键无 TTL 时设置）：既保持「窗口从首次失败起算」的语义，也自愈历史泄漏的无 TTL 键
-      const [incrResult] = await redis
-        .pipeline()
-        .incr(failKey(name))
-        .expire(failKey(name), FAILURE_TTL_S, 'nx')
-        .exec<[number, 0 | 1]>();
-      const failures = Number(incrResult) || 0;
-      if (isProbe || failures >= FAILURE_THRESHOLD) {
-        // 探针失败或失败数到阈值：重新开闸，openedAt 取当前时刻
-        await redis.set(openKey(name), String(Date.now()), { ex: OPEN_TTL_S });
-        if (isProbe) await redis.del(probeKey(name)); // 释放探针锁，下个恢复窗口可再探
+      if (isProbe) {
+        // half-open 探针失败：结论与失败计数无关（必定重新开闸 + 释放探针锁），
+        // 不需要等 INCR 的返回值 → 四条命令并进同一次 pipeline，跨区往返 3 次压到 1 次。
+        // 命令按入队顺序在服务端执行，与原来的 incr → expire → set(open) → del(probe) 完全一致
+        await redis
+          .pipeline()
+          .incr(failKey(name))
+          .expire(failKey(name), FAILURE_TTL_S, 'nx')
+          .set(openKey(name), String(Date.now()), { ex: OPEN_TTL_S })
+          .del(probeKey(name))
+          .exec();
+      } else {
+        // 非探针失败：开不开闸取决于 INCR 的返回值，而 pipeline 内读不到前序结果，
+        // 只能拆成两次；好在「刚好踩到阈值」是罕见事件，绝大多数失败只花这一次往返
+        const [incrResult] = await redis
+          .pipeline()
+          .incr(failKey(name))
+          .expire(failKey(name), FAILURE_TTL_S, 'nx')
+          .exec<[number, 0 | 1]>();
+        const failures = Number(incrResult) || 0;
+        if (failures >= FAILURE_THRESHOLD) {
+          // 失败数到阈值：开闸，openedAt 取当前时刻
+          await redis.set(openKey(name), String(Date.now()), { ex: OPEN_TTL_S });
+        }
       }
     } catch {
       /* 熔断记账失败不掩盖业务错误 */

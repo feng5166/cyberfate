@@ -46,16 +46,14 @@ import {
   TIANGAN_WUXING,
   WUXING_KEYS,
 } from '@/lib/bazi/constants';
-import {
-  getCurrentDayun,
-  getDayunStart,
-  getDayunTimeline,
-  getLunarDate,
-  getYearGanzhi,
-} from '@/lib/bazi/calculator';
+// 注意：这里刻意不 import '@/lib/bazi/calculator' 与 '@/lib/bazi/liunian'——静态、动态都不 import。
+// 它们（liunian 经 calculator 间接）顶层 import lunar-javascript，那是 436KB 的 CJS 单文件
+// （打包后 299KB raw / 97KB gz、无法 tree-shake），静态引用等于把整库压进 bazi 首屏。
+// 排盘接口现已随响应返回全部 lunar 派生字段；存量数据（本地历史记录 / 上线前写入的档案缓存 /
+// 跨年过期的流年快照）缺字段时改为「重发一次 /api/bazi 取权威结果」补齐（见 ensureFullResult），
+// 而不是在客户端再养一套计算实现。因此本页在任何路径下都不会加载 lunar-javascript。
 import { describeDayun } from '@/lib/bazi/dayunDetail';
 import type { DayunDetail } from '@/lib/bazi/dayunDetail';
-import { analyzeLiunian, analyzeLiuyueRange } from '@/lib/bazi/liunian';
 import { analyzeShensha, shenshaNature } from '@/lib/bazi/shensha';
 import type {
   BaziApiResult,
@@ -63,7 +61,6 @@ import type {
   BaziResult,
   BaziTrait,
   DayunTimelineItem,
-  Gender,
   MingGeInfo,
   WuxingCount,
   WuXing,
@@ -121,6 +118,16 @@ type BaziPageResult = BaziApiResult & {
   cacheKey?: string;
   baziResult?: BaziResult;
   dayunExtra?: DayunExtra;
+  /** 当前流年干支（服务端按北京当日算，含立春换年）。旧缓存结果无此字段 */
+  currentYearGanzhi?: string;
+  /**
+   * currentYearGanzhi 的失效时刻（epoch ms，＝下一个立春换年日的北京 00:00）。
+   * 该值按立春换年，用 flowYear（公历年）判新鲜度会在每年 1/1~立春 的一个多月里误判为「未过期」，
+   * 从而显示早一年的流年干支，故单独下发有效期。旧缓存结果无此字段 → 一律按过期处理。
+   */
+  ganzhiValidUntil?: number;
+  /** liunian / liuyue 所属公历年（二者按公历年采样）；与今年不符即为跨年过期，需重取 */
+  flowYear?: number;
 };
 
 interface BaziProfileData {
@@ -134,6 +141,13 @@ interface BaziProfileData {
   isLunar?: boolean;
   isPrimary?: boolean;
   baziResult?: BaziPageResult | null;
+  // 精确出生时刻（可选）：游客「档案」实为本地历史记录的映射，记录里存了这几项就必须带过来——
+  // 否则补齐请求按粗时辰重算，会与记录里的精确值判为不同源（起运可差数月），甚至因 isLunar 丢失排出另一副四柱。
+  // 登录用户的 DB 档案没有这几列，缺失时回落粗时辰，与既有行为一致。
+  knowTime?: boolean;
+  birthHourNum?: number;
+  birthMinute?: number;
+  lateZiShi?: boolean;
 }
 
 const MAX_LOGGED_IN_PROFILES = 5;
@@ -292,11 +306,28 @@ function chartFromResult(result: BaziPageResult): BaziResult['chart'] | null {
 }
 
 /**
- * 恢复/切换命盘时，确保神煞/流年/流月在位且为当前年：
- * - 神煞为静态，从四柱重算（本地历史记录从未持久化神煞，否则会空）
- * - 流年/流月永远按当前年现算，避免显示去年快照
- * - 大运当前高亮按当前年刷新
+ * currentYearGanzhi 是否已过期。
+ * 该值按立春换年，只能拿服务端下发的 ganzhiValidUntil 判；没有这个字段的存量结果一律按过期处理
+ * （用 flowYear 的公历年口径判会在每年 1/1~立春 之间误判为「还新鲜」，显示早一年的干支）。
+ */
+function isGanzhiStale(result: BaziPageResult): boolean {
+  if (!result.currentYearGanzhi) return true;
+  if (typeof result.ganzhiValidUntil !== 'number') return true;
+  return Date.now() >= result.ganzhiValidUntil;
+}
+
+/**
+ * 恢复/切换命盘时同步刷新「不依赖 lunar-javascript 的模块」，并剥离已过期的快照：
+ * - 神煞为静态且纯查表，从四柱重算（本地历史记录从未持久化神煞，否则会空）
+ * - 大运当前高亮按当前年刷新（缓存命盘可能是去年算的）
+ * - 跨年过期的流年/流月、过了立春的流年干支一律置空
  * 取不到四柱（极旧无 pillars 记录）则原样返回。
+ *
+ * 为什么剥离而不是留着等补齐：这几项的干支要经 calculator 走 lunar-javascript，客户端算不了，
+ * 只能靠 /api/bazi 补齐（见 ensureFullResult），而补齐可能失败、也可能因为用户没滚到那儿就没触发。
+ * 留着旧快照＝在没有任何提示的情况下把去年的流年当今年展示；剥离后卡片自带
+ * `result.liunian || result.liuyue?.length` / `currentLiunian &&` 渲染守卫会自动隐藏。
+ * 宁可不显示，也不显示去年的数据。
  */
 function withFreshModules(result: BaziPageResult): BaziPageResult {
   const chart = chartFromResult(result);
@@ -309,16 +340,239 @@ function withFreshModules(result: BaziPageResult): BaziPageResult {
       branch: s.branch,
       nature: shenshaNature(s.name),
     }));
-    const liunian = analyzeLiunian(chart, year);
-    const liuyue = analyzeLiuyueRange(chart, year, 1, 12);
     const dayunTimeline = result.dayunTimeline?.map((d) => ({
       ...d,
       isCurrent: year >= d.yearStart && year <= d.yearEnd,
     }));
-    return { ...result, shensha, liunian, liuyue, ...(dayunTimeline ? { dayunTimeline } : {}) };
+    const flowStale = result.flowYear !== year;
+    return {
+      ...result,
+      shensha,
+      ...(dayunTimeline ? { dayunTimeline } : {}),
+      ...(flowStale ? { liunian: undefined, liuyue: undefined } : {}),
+      ...(isGanzhiStale(result) ? { currentYearGanzhi: undefined, ganzhiValidUntil: undefined } : {}),
+    };
   } catch {
     return result;
   }
+}
+
+// ── 存量命盘的「重发排盘接口」补齐 ────────────────────────────────
+// 存量数据（本地历史记录 / 上线前写入的档案缓存）里没有 lunar 派生字段：农历串、起运描述、
+// 终身大运表、流年流月、当前流年干支；缓存里的流年快照还会跨年过期。
+// 这些一律靠重发 /api/bazi 补齐——该接口是纯确定性排盘、无 AI 成本、自带限流，
+// 一次请求补齐全部字段并顺带拿到 cacheKey/baziResult，客户端因此无需第二套计算实现。
+//
+// 时序（详见组件内 armRefill / ensureFullResult）：
+//   恢复命盘 → armRefill 登记（不发请求）
+//     ├─ 缺首屏可见字段（农历/起运）→ 立即 ensureFullResult
+//     └─ 只缺折叠线以下模块 → 等哨兵（挂在大运时间轴/排盘细节组正上方）进入视口再 ensureFullResult
+//   ensureFullResult → 按输入指纹查 Promise 表（fetch 前占位，故并发同输入只打一次接口）
+//     → 代次校验（换盘则丢弃）→ 四柱校验（对不上则整份丢弃并提示重排）→ mergeServerRefill
+//   失败一律上可见提示条：网络/限流给「重试」，参数缺失给「重新填写出生信息」。
+
+/**
+ * 补齐请求的 HTTP 失败。用异常而不是返回值传递，是为了让「共享同一个 Promise 的多个调用方」
+ * 都能拿到同一份失败结论（429 与其它错误的提示文案不同，故带上 status）。
+ */
+class RefillHttpError extends Error {
+  readonly status: number;
+  constructor(status: number) {
+    super(`refill failed: ${status}`);
+    this.name = 'RefillHttpError';
+    this.status = status;
+  }
+}
+
+/** 重发排盘所需的原始输入。历史记录与档案都存了这几项（见 BaziHistoryRecord / BaziProfileData） */
+type RefillInput = {
+  name?: string;
+  gender?: string;
+  birthDate: string;
+  /** 时辰码字符串，'-1' 表示不知时辰 */
+  birthHour?: string;
+  birthPlace?: string | null;
+  isLunar?: boolean;
+  // —— 精确出生时刻（可选）——
+  // 有就透传给 /api/bazi，服务端据此走精确分支，算出与存量记录同精度的起运/大运表；
+  // 没有（新增这几项之前保存的记录）才回落到上面的粗时辰码。为什么必须透传见 BaziHistoryRecord 的注释：
+  // 子时尤其明显，精确 00:30 与按子时起始 23:00 折算的大运边界能差 4 个月，而四柱一模一样。
+  knowTime?: boolean;
+  birthHourNum?: number;
+  birthMinute?: number;
+  lateZiShi?: boolean;
+};
+
+/** 入参是否带精确出生时刻（与 /api/bazi 的 hasPrecise 判据同构：knowTime + 小时数俱全才算） */
+function hasPreciseTime(input: RefillInput): boolean {
+  return input.knowTime === true && typeof input.birthHourNum === 'number';
+}
+
+/**
+ * 时辰码归一：存量记录里理论上只会是 '-1'~'11'，但历史数据来源杂（早期版本、手工导入），
+ * 解析不出合法值时按「不知时辰」处理，避免把 NaN 序列化成 null 送进接口被 zod 打回 400。
+ */
+function normalizeBirthHour(value?: string): number {
+  const n = Number.parseInt(value ?? '', 10);
+  return Number.isInteger(n) && n >= -1 && n <= 11 ? n : -1;
+}
+
+/**
+ * 会话内去重键：同一份输入只打一次排盘接口，来回切档案不重复请求。
+ * 精确时刻必须进键——同一天同一时辰、精确到分不同的两条记录，服务端给出的起运/大运表可以不同
+ * （子时最明显），共用一份缓存响应等于把 A 的大运贴到 B 上。
+ */
+function refillKey(input: RefillInput): string {
+  const precision = hasPreciseTime(input)
+    ? `P${input.birthHourNum}:${input.birthMinute ?? 0}${input.lateZiShi ? 'Z' : ''}`
+    : 'C';
+  return `${input.birthDate}|${normalizeBirthHour(input.birthHour)}|${input.gender || 'unknown'}|${input.isLunar ? 'L' : 'S'}|${precision}`;
+}
+
+/** 年/月/日三柱指纹 */
+function ymdSignature(pillars?: BaziApiResult['pillars'] | null): string {
+  if (!pillars?.year || !pillars?.month || !pillars?.day) return '';
+  return `${pillars.year.gan}${pillars.year.zhi}|${pillars.month.gan}${pillars.month.zhi}|${pillars.day.gan}${pillars.day.zhi}`;
+}
+
+/**
+ * 命盘身份（含时柱）。仅用于判断「是不是换了一副盘」，补齐字段/AI 文本落地不会改变它。
+ */
+function chartSignature(result: BaziPageResult): string {
+  const ymd = ymdSignature(result.pillars);
+  if (!ymd) return '';
+  const hour = result.hasHour !== false && result.pillars?.hour
+    ? `${result.pillars.hour.gan}${result.pillars.hour.zhi}`
+    : '';
+  return `${ymd}|${hour}`;
+}
+
+/**
+ * 重算结果是否与存量命盘是同一副盘。
+ *
+ * 这一步是整条补齐链路的安全阀：历史记录没保存 isLunar / 晚子时 / 精确分钟，
+ * 按公历重发会得到另一副命盘（农历生日尤其明显）。四柱对不上就整份丢弃，
+ * 宁可少显示几个模块，也不能把「别人的大运/流年」贴到用户命盘上。
+ * 年月日三柱必须逐字相同；双方都声明有时柱时时柱也要相同（一方没时柱属信息缺失，不算冲突）。
+ */
+function isSameChart(stored: BaziPageResult, fresh: BaziPageResult): boolean {
+  const storedYmd = ymdSignature(stored.pillars);
+  if (!storedYmd || storedYmd !== ymdSignature(fresh.pillars)) return false;
+  if (stored.hasHour !== false && fresh.hasHour !== false) {
+    const a = stored.pillars?.hour;
+    const b = fresh.pillars?.hour;
+    if (a && b && (a.gan !== b.gan || a.zhi !== b.zhi)) return false;
+  }
+  return true;
+}
+
+/**
+ * 这份结果是否缺少「只有服务端算得出」的字段（全部由 lunar-javascript 派生）：
+ * - flowYear ≠ 今年：流年/流月缺失（存量数据无此字段）或已跨年过期。仅对这两项有效——
+ *   它们按公历年采样，而 currentYearGanzhi 按立春换年，两者口径不同不能共用一个判据
+ * - isGanzhiStale：当前流年干支缺失或已过立春（用 ganzhiValidUntil 判，见该函数注释）
+ * - dayunTimeline === undefined：终身大运表缺失。必须用 undefined 判而非 length——
+ *   服务端在「性别未知」时会刻意返回空数组，那是权威的「无大运」，重算也补不出东西
+ * - lunarDate / dayunStartDescription 为空：农历串、起运描述缺失
+ */
+function needsServerRefill(result: BaziPageResult, year: number): boolean {
+  return (
+    result.flowYear !== year ||
+    isGanzhiStale(result) ||
+    result.dayunTimeline === undefined ||
+    !result.lunarDate ||
+    !result.dayunStartDescription
+  );
+}
+
+/** 首屏信息条（农历串 / 起运）当前就缺内容——这两项在页面顶部可见，不能等滚动到详情区再补 */
+function needsAboveFoldRefill(result: BaziPageResult): boolean {
+  return !result.lunarDate || !result.dayunStartDescription || !result.dayunStartAt;
+}
+
+/**
+ * 存量命盘里的「起运」与本次重算结果是否同源（出自同一个出生时刻）。
+ *
+ * 判据就是起运本身：它是出生时刻的直接函数（`getDayunStart` 只依赖生辰与节气，与「现在」无关），
+ * 两边都有值却不相等，只可能是入参精度不同——存量记录保存于「精确出生时刻未持久化」之前，
+ * 这次只能按当日 0 点重算（实测同一天：精确 21:30 得 1997年9月、按 0 点折算得 1998年1月），
+ * 也可能是更早版本的起运算法。
+ *
+ * 注意这**不再决定合并取舍**（大运整组一律取 fresh，见 mergeServerRefill），只用来决定
+ * 要不要给用户一条「这条记录的大运边界按时辰折算、可能有几个月误差」的信息提示。
+ *
+ * 一边缺值则无从比较，按对齐处理——缺的那边正要靠本次补齐填上，不存在「两套值打架」。
+ */
+function isDayunSourceAligned(prev: BaziPageResult, fresh: BaziPageResult): boolean {
+  if (prev.dayunStartAt && fresh.dayunStartAt && prev.dayunStartAt !== fresh.dayunStartAt) return false;
+  if (
+    prev.dayunStartDescription &&
+    fresh.dayunStartDescription &&
+    prev.dayunStartDescription !== fresh.dayunStartDescription
+  ) return false;
+  return true;
+}
+
+/**
+ * 把重算结果里的 lunar 派生字段与结构化模块并进存量命盘。
+ *
+ * 刻意用白名单而不是 `{ ...prev, ...fresh }`：/api/bazi 返回的是纯排盘结果，
+ * 里面 aiAnalysis 恒为 ''、traits 恒为 []，整体展开会把历史记录里最值钱的 AI 长文直接清空。
+ * 每项都做空值兜底，接口没给的字段不覆盖已有值。
+ *
+ * 「谁优先」按三类处理：
+ * - 农历串 prev 优先：已展示给用户的值不因一次后台补齐而变动（它只由生日决定，两边本就相同）。
+ * - 大运整组（起运 description/at + 终身大运表 + dayunExtra）**整体取自同一侧**：
+ *   fresh 给得出起运就整组换成 fresh，给不出（八字直输等）才整组保持 prev。绝不混搭——
+ *   任何一项跨侧都会让屏幕上的起运、大运时间轴、送进 /api/bazi/stream 的「当前/下一步大运」
+ *   出自不同的盘。
+ *   为什么是「取 fresh」而不是「保持 prev」：存量记录压根没持久化过 dayunTimeline，
+ *   保持 prev 等于把大运时间轴、选中大运详情、四维简评整块隐藏掉，比补齐前还少。
+ *   fresh 是一份自洽的完整大运（服务端四柱与大运同锚），整组换上去全屏口径统一；
+ *   代价只是「按时辰折算、可能与记录当初的精确起运差几个月」，这一点由 isDayunSourceAligned
+ *   判出后以信息提示告知，并给出「重新填写出生信息」入口。
+ * - 流年流月 / 流年干支 / 神煞 / 格局 fresh 优先：它们只由四柱与年份决定（四柱已由 isSameChart 校验逐字相同），
+ *   与出生时刻精度无关，且存量值要么没有、要么已跨年过期。
+ */
+function mergeServerRefill(prev: BaziPageResult, fresh: BaziPageResult): BaziPageResult {
+  // 大运整组的取舍：只看 fresh 拿不拿得出起运（date 模式恒有；八字直输/异常才没有）。
+  // 一个布尔量决定四个字段，从结构上杜绝混搭。
+  const useFreshDayun = !!(fresh.dayunStartAt || fresh.dayunStartDescription);
+  const dayunGroup = useFreshDayun
+    ? {
+        dayunStartDescription: fresh.dayunStartDescription,
+        dayunStartAt: fresh.dayunStartAt,
+        dayunTimeline: fresh.dayunTimeline,
+        dayunExtra: fresh.dayunExtra,
+      }
+    : {
+        dayunStartDescription: prev.dayunStartDescription,
+        dayunStartAt: prev.dayunStartAt,
+        dayunTimeline: prev.dayunTimeline,
+        dayunExtra: prev.dayunExtra,
+      };
+  return {
+    ...prev,
+    lunarDate: prev.lunarDate || fresh.lunarDate,
+    // 干支与其有效期必须成对取，混搭会得到「新干支配旧有效期」（立刻又判过期）
+    // 或「旧干支配新有效期」（过期值被当成新鲜的锁住一整年）。
+    ...(fresh.currentYearGanzhi
+      ? { currentYearGanzhi: fresh.currentYearGanzhi, ganzhiValidUntil: fresh.ganzhiValidUntil }
+      : { currentYearGanzhi: prev.currentYearGanzhi, ganzhiValidUntil: prev.ganzhiValidUntil }),
+    flowYear: fresh.flowYear ?? prev.flowYear,
+    liunian: fresh.liunian ?? prev.liunian,
+    liuyue: fresh.liuyue ?? prev.liuyue,
+    ...dayunGroup,
+    shensha: fresh.shensha ?? prev.shensha,
+    mingGe: fresh.mingGe ?? prev.mingGe,
+    zodiac: prev.zodiac || fresh.zodiac,
+    // cacheKey / baziResult：存量记录（历史记录）本就没有，补上后「开始AI解读 / 重新分析」
+    // 不必再各自兜底重算一次（那两处原本都要先打一遍 /api/bazi）。已有值一律不覆盖。
+    // 唯一带 prev.baziResult 的是档案缓存，而它就是同一组入参打同一个 /api/bazi 得来的，
+    // 与 fresh 逐字相同，不存在「prev 的 baziResult 配 fresh 的大运」这种跨侧问题。
+    cacheKey: prev.cacheKey ?? fresh.cacheKey,
+    baziResult: prev.baziResult ?? fresh.baziResult,
+  };
 }
 
 function firstSentence(text: string): string {
@@ -362,13 +616,6 @@ function getAge(birthDate: string): number {
   return Math.max(0, age);
 }
 
-function getDateString(date: Date): string {
-  const year = date.getFullYear();
-  const month = `${date.getMonth() + 1}`.padStart(2, '0');
-  const day = `${date.getDate()}`.padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
 function toGenderLabel(gender: string): string {
   if (gender === 'male') return '男';
   if (gender === 'female') return '女';
@@ -401,17 +648,11 @@ function getScoreStyle(score: number): { barClass: string; textClass: string } {
   return { barClass: 'bg-rose-500', textClass: 'text-rose-600' };
 }
 
-function buildDayunTimeline(
-  birthDate: string,
-  genderValue: string,
-  birthHourNum?: number,
-  birthMinute?: number,
-): Array<DayunTimelineItem & { key: string }> {
-  if (!birthDate) return [];
-
-  const gender: Gender = genderValue === 'female' ? 'female' : 'male';
-  const timeline = getDayunTimeline(birthDate, gender, birthHourNum, birthMinute);
-
+/**
+ * 给终身大运表补 React key。大运本体已由 /api/bazi 随排盘返回（同一 getDayunTimeline 实现、
+ * 同一批参数），客户端不再自己跑一遍——那会把 lunar-javascript 拖进首屏。
+ */
+function withDayunKeys(timeline: DayunTimelineItem[]): Array<DayunTimelineItem & { key: string }> {
   return timeline.map(item => ({
     ...item,
     key: `${item.gan}${item.zhi}_${item.ageStart}`,
@@ -458,14 +699,15 @@ function extractDayunAiText(item: DayunTimelineItem | null, aiSections: Record<A
 function buildDayunDetail(
   item: DayunTimelineItem | null,
   aiSections: Record<AiSectionKey, string>,
-  birthDate: string
+  birthDate: string,
+  /** 当前流年干支，来自接口字段；极旧缓存拿不到时省略该行而非渲染半截文案 */
+  currentYearGanzhi: string,
 ): string {
   if (!item) return '暂无大运信息';
-  const yearGanzhi = getYearGanzhi(getDateString(new Date()));
   const parts = [
     `${item.gan}${item.zhi}大运（${item.ageStart}-${item.ageEnd}岁）。${getDayunPhaseText(item, birthDate)}`,
-    `当前流年：${yearGanzhi}。`,
   ];
+  if (currentYearGanzhi) parts.push(`当前流年：${currentYearGanzhi}。`);
   const aiText = extractDayunAiText(item, aiSections);
   if (aiText) parts.push(aiText);
   return parts.join('\n');
@@ -922,6 +1164,8 @@ function BaziPageContent() {
     lateZiShi: false,
   });
   const [loading, setLoading] = useState(false);
+  /** 用户主动提交排盘的次数。只用于「同一副盘重排也要滚动到结果区」，见下方滚动 effect */
+  const [submitSeq, setSubmitSeq] = useState(0);
   const [loadingLong, setLoadingLong] = useState(false);
   const [reanalyzing, setReanalyzing] = useState(false);
   const [showQuotaModal, setShowQuotaModal] = useState(false);
@@ -978,6 +1222,256 @@ function BaziPageContent() {
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState('');
 
+  // —— 存量命盘的服务端补齐（见文件上方 needsServerRefill / mergeServerRefill 的说明）——
+  /**
+   * 补齐相关的可见提示。
+   * - tone='warn'：有东西没显示出来（请求失败 / 四柱对不上整份丢弃），用户需要行动。
+   * - tone='info'：内容都在、只是精度打了折（大运按时辰折算）。不是错误，别用告警配色吓人。
+   * - retryable=false 表示重试也没用（参数缺失或精度不可恢复），只能重新排盘。
+   */
+  const [refillNotice, setRefillNotice] = useState<
+    { text: string; retryable: boolean; tone: 'warn' | 'info' } | null
+  >(null);
+  const [refilling, setRefilling] = useState(false);
+  /** 已登记但尚未发出的补齐任务（等哨兵进入视口再发），见 armRefill */
+  const [refillArmed, setRefillArmed] = useState(false);
+  /** 补齐请求代次：切换命盘/重新排盘后自增，旧响应的提示不再上屏 */
+  const refillSeqRef = useRef(0);
+  /**
+   * 会话内的补齐请求表（键=原始输入指纹）。存的是「进行中的 Promise」而不是结算后的结果：
+   * 结果值要等响应回来才写得进去，那期间并发的同 key 调用会各发一次请求。
+   * 存 Promise 才能在 fetch 之前就完成占位，做到同一份输入全程只打一次接口。
+   */
+  const refillCacheRef = useRef(new Map<string, Promise<BaziPageResult>>());
+  /** 最近一次补齐的入参，供「等视口触发」与失败后的「重试」按钮复用 */
+  const refillPendingRef = useRef<{ stored: BaziPageResult; input: RefillInput } | null>(null);
+  /**
+   * 补齐触发哨兵：挂在「真正依赖补齐数据的块」正上方，进入视口才发请求。
+   *
+   * 上一版把 ref 挂在结果详情列容器上，实测无效：恢复命盘后有个 100ms 的
+   * `resultRef.scrollIntoView({ block: 'start' })` 把结果区顶到视口顶部，详情列容器紧跟在概览三卡
+   * 之后，首帧就落进 IO 的 200px 预取窗口——「等滚动再补」形同虚设，仍是挂载即发、只晚几百毫秒。
+   * 现在下沉到两处真正的消费点：
+   *  ① 大运时间轴之前（在 AI 长文「当前运势重点」小节内）
+   *  ② 排盘细节组（十神/神煞/流年流月）之前
+   * 为什么是两个而不是一个：① 只在 AI 长文渲染出该小节时存在，而大运时间轴恰好嵌在同一小节里、
+   * 与之共存亡；② 恒在。任一进入视口即触发，覆盖「有/无 AI 长文」两种形态。
+   */
+  const refillSentinelDayunRef = useRef<HTMLDivElement>(null);
+  const refillSentinelDetailRef = useRef<HTMLDivElement>(null);
+  /**
+   * result 的最新镜像。ensureFullResult 是异步的：它闭包里的 stored 是登记那一刻的快照，
+   * 用快照判「现在还缺不缺」永远只会重现登记时的结论——期间用户点了「重新分析」、
+   * 完整结果早已落地，仍会白打一次接口。改判这份镜像才是真的复查。
+   */
+  const latestResultRef = useRef<BaziPageResult | null>(null);
+  useEffect(() => {
+    latestResultRef.current = result;
+  }, [result]);
+
+  /** 放弃在途补齐的结果并清掉提示。新排盘/清空结果时调用，避免旧提示挂在新命盘上 */
+  const dropPendingRefill = useCallback(() => {
+    refillSeqRef.current += 1;
+    refillPendingRef.current = null;
+    setRefillNotice(null);
+    setRefilling(false);
+    setRefillArmed(false);
+  }, []);
+
+  /**
+   * 恢复存量命盘后补齐缺失字段：重发一次 /api/bazi 取权威结果。
+   * - 不缺字段（本次改动后写入的档案缓存）直接返回，不发请求
+   * - 八字直输（无出生日期）服务端也算不出这些字段，不发请求
+   * - 四柱对不上（存量记录丢了 isLunar / 晚子时等参数）整份丢弃并提示重新排盘
+   * - 网络/限流失败给可见提示 + 重试入口，不静默吞
+   *
+   * 只由 armRefill（视口触发）与「重试」按钮调用，不在挂载时直接调。
+   */
+  const ensureFullResult = useCallback(async (stored: BaziPageResult, input: RefillInput) => {
+    // 代次先自增：哪怕这次不需要补齐，也要让在途的上一份补齐作废，
+    // 否则「切到一份字段齐全的档案」时，旧命盘的响应仍会把提示落到新命盘上。
+    const seq = ++refillSeqRef.current;
+    refillPendingRef.current = null;
+    setRefillNotice(null);
+
+    // 判「还缺不缺」用最新的 result，不用登记时冻结的 stored（见 latestResultRef 的注释）。
+    // 但只在「最新的仍是同一副盘」时才认它：armRefill 是在 setResult 的同一批次里同步调用的，
+    // 那一刻镜像还停在上一副盘（effect 尚未提交），直接拿来判会张冠李戴。
+    const latest = latestResultRef.current;
+    const current = latest && isSameChart(stored, latest) ? latest : stored;
+
+    // 只判 current（最新镜像）即可：armRefill 在登记时已把镜像同步推进到刚恢复的那一份，
+    // 所以「先正常排盘 → 再选中同一个人的旧档案」不会再被上一份齐全结果误判为「不需补齐」。
+    // 反过来，若等待期间结果已被别的路径（如「开始AI解读」重打 /api/bazi）补齐，这里就能正确早退，
+    // 不白花一次限流名额——这正是不能拿冻结的 stored 兜底的原因。
+    const year = beijingYear();
+    if (!input.birthDate || !needsServerRefill(current, year)) {
+      setRefilling(false); // 在途请求已作废，别把「重试中」按钮卡在禁用态
+      return;
+    }
+    refillPendingRef.current = { stored, input };
+
+    const key = refillKey(input);
+    let pending = refillCacheRef.current.get(key);
+    if (!pending) {
+      // 占位先于 fetch 写入：并发的同 key 调用会直接复用这个 Promise，只打一次接口。
+      // 这里刻意不 setState，纯 IO；上屏与否由下面的代次校验决定。
+      const precise = hasPreciseTime(input);
+      pending = (async () => {
+        const res = await fetch('/api/bazi', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: input.name || '缘主',
+            gender: input.gender || 'unknown',
+            birthDate: input.birthDate,
+            birthHour: normalizeBirthHour(input.birthHour),
+            birthPlace: input.birthPlace || undefined,
+            isLunar: input.isLunar,
+            // 精确出生时刻：记录里存了就原样透传，服务端据此走精确分支，算出的起运/大运表
+            // 与这条记录当初显示的完全一致（不再有「粗时辰折算 vs 精确时分」的两套边界）。
+            // 存量记录没有这几项 → 全部 undefined → JSON.stringify 整键省略 → 服务端
+            // hasPrecise=false 自动回落到粗时辰码，行为与本次改动前完全一致。
+            knowTime: precise ? true : undefined,
+            birthHourNum: precise ? input.birthHourNum : undefined,
+            birthMinute: precise ? (input.birthMinute ?? 0) : undefined,
+            lateZiShi: precise ? input.lateZiShi === true : undefined,
+          }),
+        });
+        if (!res.ok) {
+          await res.json().catch(() => undefined); // 读掉错误体，别让连接悬着
+          throw new RefillHttpError(res.status);
+        }
+        // 200 但 JSON 解析失败属于真异常：让它 reject，走「网络异常 + 重试」而不是
+        // 被当成一份空结果去比四柱、误报成「记录参数缺失」。
+        return (await res.json()) as BaziPageResult;
+      })();
+      refillCacheRef.current.set(key, pending);
+      // 失败的请求不能留在表里，否则「重试」永远拿到同一个已拒绝的 Promise、再也发不出请求。
+      // 成功的结果留着：它只取决于入参，来回切档案可直接复用。
+      // 四柱不匹配也算成功结果照留——不匹配是这份输入的固有结论，重发也不会变。
+      pending.catch(() => {
+        if (refillCacheRef.current.get(key) === pending) refillCacheRef.current.delete(key);
+      });
+    }
+
+    setRefilling(true);
+    try {
+      const fresh = await pending;
+      // 会话跨过了元旦/立春，缓存里这份也过期了：逐出，让下一次补齐重新取（本次仍先用它，有总比没有强）
+      if (needsServerRefill(fresh, beijingYear())) {
+        if (refillCacheRef.current.get(key) === pending) refillCacheRef.current.delete(key);
+      }
+      // 已切到别的命盘：丢弃过期响应（既不落数据也不上提示）
+      if (seq !== refillSeqRef.current) return;
+
+      if (!isSameChart(current, fresh)) {
+        setRefillNotice({
+          text: '这条记录没有保存完整的排盘参数（如农历生日、晚子时），终身大运与流年流月无法自动恢复。重新填写出生信息即可得到完整命盘。',
+          retryable: false,
+          tone: 'warn',
+        });
+        return;
+      }
+      // 四柱相同、起运却对不上：这条记录保存于「精确出生时刻未持久化」之前（或出自更早版本的起运算法）。
+      // mergeServerRefill 会把大运整组换成本次重算的这一套（起运/大运表/dayunExtra 同侧），
+      // 全屏口径统一、大运表照常显示，代价只是边界按时辰折算、可能有几个月误差。
+      // 所以这是信息级提示而非告警：没有任何内容因此消失，用户想要更高精度重排一次即可。
+      // stored 与 current 都比一遍：前者是屏幕上这条记录，后者是同一副盘的最新镜像。
+      if (!isDayunSourceAligned(stored, fresh) || !isDayunSourceAligned(current, fresh)) {
+        setRefillNotice({
+          text: '本条记录未保存精确出生时刻，大运边界按时辰折算，可能有几个月误差；重新排盘可获得更高精度。',
+          retryable: false,
+          tone: 'info',
+        });
+      }
+      // 落库前再比一次：即便代次校验放行，也只把结果合并到同一副盘上
+      setResult(prev => (prev && isSameChart(prev, fresh) ? mergeServerRefill(prev, fresh) : prev));
+    } catch (refillError) {
+      if (seq !== refillSeqRef.current) return;
+      setRefillNotice({
+        text: refillError instanceof RefillHttpError
+          ? (refillError.status === 429
+              ? '排盘请求过于频繁，终身大运与流年流月暂未补全，请稍后重试。'
+              : '终身大运与流年流月加载失败，请重试。')
+          : '网络异常，终身大运与流年流月未能加载，请重试。',
+        retryable: true,
+        tone: 'warn',
+      });
+    } finally {
+      if (seq === refillSeqRef.current) setRefilling(false);
+    }
+  }, []);
+
+  /**
+   * 登记一次补齐，但**不在此刻发请求**。
+   *
+   * 补齐打的是 /api/bazi，与用户主动排盘共用同一个限流桶（登录 30 次/60s、游客 20 次/3600s）。
+   * 原来在恢复命盘时立即发，等于「打开页面就先替用户花掉一次额度」，多副盘来回切还会叠加，
+   * 极端情况下把用户自己的排盘打成 429。
+   *
+   * 改为分级触发：
+   * - 首屏信息条上的农历串/起运缺失 → 立即发。这两项就在页面顶部，用户此刻正看着它们的「—」，
+   *   等滚动再补等于让首屏一直缺内容。这种缺失只发生在「本次改动上线前写入的档案缓存」上
+   *   （历史记录/游客档案都持久化了这两项），是个会随时间归零的存量集合。
+   * - 只缺折叠线以下的模块（终身大运表/流年流月/流年干支）→ 只登记，等哨兵进入视口再发。
+   *   哨兵挂在这些模块正上方（大运时间轴之前、排盘细节组之前），不是挂在结果区顶部——
+   *   恢复命盘后有个 scrollIntoView 会把结果区顶到视口顶部，挂太靠上等于首帧就触发（见下面的 IntersectionObserver）。
+   * 任一时刻最多只有一个已登记任务（换盘即覆盖），加上按输入指纹去重的 Promise 表，
+   * 请求数不会随档案数量放大。
+   */
+  const armRefill = useCallback((stored: BaziPageResult, input: RefillInput) => {
+    // 与 ensureFullResult 同理：先作废上一份，避免旧命盘的在途响应/提示落到新命盘上
+    refillSeqRef.current += 1;
+    refillPendingRef.current = null;
+    setRefillNotice(null);
+    setRefilling(false);
+
+    // 登记的同时把镜像推进到「刚恢复出来的这一份」：armRefill 与 setResult 在同一批次里同步执行，
+    // 镜像此刻还停在上一副盘上（effect 尚未提交）。同步推进后，ensureFullResult 就能只信 current，
+    // 不必再拿冻结的 stored 兜底——那个快照永远停在「缺字段」，会让「等待期间已被别的路径补齐」的
+    // 情形照发一次多余请求（游客桶只有 20 次/3600s）。
+    latestResultRef.current = stored;
+
+    if (!input.birthDate || !needsServerRefill(stored, beijingYear())) {
+      setRefillArmed(false);
+      return;
+    }
+    if (needsAboveFoldRefill(stored)) {
+      setRefillArmed(false);
+      void ensureFullResult(stored, input);
+      return;
+    }
+    refillPendingRef.current = { stored, input };
+    setRefillArmed(true);
+  }, [ensureFullResult]);
+
+  // 已登记的补齐：等哨兵进入视口再发。哨兵就挂在依赖补齐数据的块正上方（见两个 sentinel ref 的注释），
+  // 因此触发时这些块仍在视口下方，数据落地只会向下插入内容，不会把用户正在读的段落顶走。
+  useEffect(() => {
+    if (!refillArmed) return;
+    const fire = () => {
+      const pending = refillPendingRef.current;
+      setRefillArmed(false);
+      if (pending) void ensureFullResult(pending.stored, pending.input);
+    };
+    const targets = [refillSentinelDayunRef.current, refillSentinelDetailRef.current]
+      .filter((node): node is HTMLDivElement => node !== null);
+    // 一个哨兵都拿不到，或环境不支持 IO（老浏览器/jsdom）：直接补。
+    // 宁可多发一次请求，也不能出现「永远补不上」。
+    if (!targets.length || typeof IntersectionObserver === 'undefined') {
+      fire();
+      return;
+    }
+    const io = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return;
+      io.disconnect();
+      fire();
+    }, { rootMargin: '200px 0px' });
+    targets.forEach((node) => io.observe(node));
+    return () => io.disconnect();
+  }, [refillArmed, ensureFullResult]);
+
   useEffect(() => {
     if (status !== 'authenticated') {
       setIsMember(false);
@@ -1011,10 +1505,19 @@ function BaziPageContent() {
             birthDate: latest.birthDate,
             birthHour: latest.birthHour,
             birthPlace: latest.birthPlace || '',
+            // 精确出生时刻按记录**覆盖**（而不是沿用 prev）：表单必须如实描述当前这副盘。
+            // 沿用会把上一次排盘残留的时分带到这条记录上——AI 问答的代表时刻、
+            // 解读完成后的自动存档都读这几项，带错就会把别人的出生时间写进这条记录。
+            // 记录里没有（新增这几项之前保存的）就回落到「只知粗时辰」，与旧行为一致。
+            isLunar: !!latest.isLunar,
+            knowTime: !!latest.knowTime,
+            birthHourNum: latest.birthHourNum ?? 12,
+            birthMinute: latest.birthMinute ?? 0,
+            lateZiShi: !!latest.lateZiShi,
           }));
 
-          // 本地历史记录未存神煞/流年/流月，按四柱与当前年重算补齐
-          setResult(withFreshModules({
+          // 本地历史记录未存神煞，按四柱重算补齐（纯查表，不依赖 lunar）
+          const restored = withFreshModules({
             pillars: latest.pillars,
             hasHour: latest.birthHour !== '-1',
             wuxing: latest.wuxing,
@@ -1029,10 +1532,27 @@ function BaziPageContent() {
             dayunStartDescription: latest.dayunStartDescription,
             dayunStartAt: latest.dayunStartAt,
             _source: 'history',
-          }));
+          });
+          setResult(restored);
 
           setError('');
           setActionMessage('已为您显示上次的命盘解读');
+
+          // 历史记录从未持久化终身大运表/流年流月，也没有 flowYear —— 登记一次补齐，
+          // 等用户真正滚到详情区再发请求（armRefill 说明了为什么不在这里直接发）。
+          // 精确出生时刻原样透传：有它服务端才算得出与本条记录同精度的起运/大运表。
+          armRefill(restored, {
+            name: latest.name,
+            gender: latest.gender,
+            birthDate: latest.birthDate,
+            birthHour: latest.birthHour,
+            birthPlace: latest.birthPlace,
+            isLunar: latest.isLunar,
+            knowTime: latest.knowTime,
+            birthHourNum: latest.birthHourNum,
+            birthMinute: latest.birthMinute,
+            lateZiShi: latest.lateZiShi,
+          });
         }
       } catch (quotaError) {
         console.error('Failed to load user quota:', quotaError);
@@ -1044,6 +1564,25 @@ function BaziPageContent() {
   }, [status]);
 
   useEffect(() => {
+    /**
+     * 账号 birth-info / localStorage 都只存「生日 + 粗时辰 + 性别 + 出生地」这一组，
+     * 没有农历标记，也没有精确时刻。所以覆盖 birthDate/birthHour 时必须把这 5 项精度字段
+     * 一并复位，否则会拼出「日期来自 A、精度来自 B」的表单。
+     *
+     * 具体路径：会员挂载时另有一个 effect 先按历史记录恢复表单（带 isLunar/knowTime/birthHourNum），
+     * 本 effect 随后用账号资料覆盖 birthDate/birthHour；不复位就会残留上一条记录的时分，
+     * 而 chatBirthHourNum、/api/bazi/stream 的工具链、以及解读完成后的自动存档全都读这几项——
+     * 用户点「开始解读」会排出第三副盘，落盘时还把错配的时刻写进新记录。
+     * 两处 setFormData 都要复位（哪一条分支生效取决于账号有没有存生日）。
+     */
+    const RESET_PRECISION = {
+      isLunar: false,
+      knowTime: false,
+      birthHourNum: 12,
+      birthMinute: 0,
+      lateZiShi: false,
+    } as const;
+
     async function loadUserBirthInfo() {
       if (status === 'authenticated') {
         try {
@@ -1059,6 +1598,7 @@ function BaziPageContent() {
                 birthHour: data.birthHour || '-1',
                 gender: data.gender || '',
                 birthPlace: localSaved?.birthPlace || prev.birthPlace || '',
+                ...RESET_PRECISION,
               }));
               return;
             }
@@ -1076,6 +1616,7 @@ function BaziPageContent() {
           birthHour: saved.birthHour || '-1',
           gender: saved.gender || '',
           birthPlace: saved.birthPlace || '',
+          ...RESET_PRECISION,
         }));
       }
     }
@@ -1101,10 +1642,16 @@ function BaziPageContent() {
       birthDate: record.birthDate,
       birthHour: record.birthHour,
       birthPlace: record.birthPlace || '',
+      // 同上：精确出生时刻按记录覆盖，不沿用上一副盘的残留值
+      isLunar: !!record.isLunar,
+      knowTime: !!record.knowTime,
+      birthHourNum: record.birthHourNum ?? 12,
+      birthMinute: record.birthMinute ?? 0,
+      lateZiShi: !!record.lateZiShi,
     }));
 
-    // 本地历史记录未存神煞/流年/流月，按四柱与当前年重算补齐
-    setResult(withFreshModules({
+    // 本地历史记录未存神煞，按四柱重算补齐（纯查表，不依赖 lunar）
+    const restored = withFreshModules({
       pillars: record.pillars,
       hasHour: record.birthHour !== '-1',
       wuxing: record.wuxing,
@@ -1119,11 +1666,27 @@ function BaziPageContent() {
       dayunStartDescription: record.dayunStartDescription,
       dayunStartAt: record.dayunStartAt,
       _source: 'history',
-    }));
+    });
+    setResult(restored);
 
     setError('');
     setActionMessage('已加载历史命盘记录');
-  }, [recordId]);
+
+    // 历史记录从未持久化终身大运表/流年流月，也没有 flowYear —— 登记一次补齐（见 armRefill）。
+    // 精确出生时刻原样透传，缺失时服务端自动回落到粗时辰码。
+    armRefill(restored, {
+      name: record.name,
+      gender: record.gender,
+      birthDate: record.birthDate,
+      birthHour: record.birthHour,
+      birthPlace: record.birthPlace,
+      isLunar: record.isLunar,
+      knowTime: record.knowTime,
+      birthHourNum: record.birthHourNum,
+      birthMinute: record.birthMinute,
+      lateZiShi: record.lateZiShi,
+    });
+  }, [recordId, armRefill]);
 
   // 加载已登录用户的档案；未登录用户走 localStorage 兼容
   const refreshProfiles = useCallback(async (autoSelectId?: string) => {
@@ -1158,7 +1721,13 @@ function BaziPageContent() {
           birthDate: r.birthDate,
           birthHour: r.birthHour,
           birthPlace: r.birthPlace || '',
-          isLunar: false,
+          // 按记录原样映射，不再抹平：写死 isLunar:false 会让农历记录的补齐请求按公历重算，
+          // 排出另一副四柱 → 被判「参数缺失」丢弃，大运表与流年流月整块消失（且告警与事实相反）。
+          isLunar: !!r.isLunar,
+          knowTime: r.knowTime,
+          birthHourNum: r.birthHourNum,
+          birthMinute: r.birthMinute,
+          lateZiShi: r.lateZiShi,
           isPrimary: false,
           baziResult: {
             pillars: r.pillars,
@@ -1238,14 +1807,10 @@ function BaziPageContent() {
     };
   }, [result, personalityText]);
 
+  // 终身大运表直接取接口结果（服务端同实现同参数算好）。存量结果缺该字段时由 ensureFullResult 重发接口回填。
   const dayunTimeline = useMemo(
-    () => buildDayunTimeline(
-      formData.birthDate,
-      formData.gender,
-      formData.knowTime ? formData.birthHourNum : undefined,
-      formData.knowTime ? formData.birthMinute : undefined,
-    ),
-    [formData.birthDate, formData.gender, formData.knowTime, formData.birthHourNum, formData.birthMinute]
+    () => withDayunKeys(result?.dayunTimeline ?? []),
+    [result?.dayunTimeline]
   );
 
   useEffect(() => {
@@ -1259,13 +1824,22 @@ function BaziPageContent() {
 
   const selectedDayun = dayunTimeline[selectedDayunIndex] ?? null;
 
+  // 命盘身份：四柱变了才算「换了一副盘」。存量命盘的服务端补齐、AI 长文落地都只改字段、不改四柱。
+  const chartId = useMemo(() => (result ? chartSignature(result) : ''), [result]);
+
+  // 换盘时滚到结果区。原来依赖 [result]，任何一次 setResult 都会重滚——
+  // 补齐结果落地会让页面二次 smooth scroll，AI 流式结束写回 aiAnalysis 也会把用户从正文拽回顶部。
+  //
+  // 但只看 chartId 不够：用户对同一生辰再点一次「开始解读」时四柱逐字相同、chartId 不变，
+  // effect 不重跑，用户点了按钮却没有任何滚动反馈。故再加一个「本次是用户主动提交」的信号，
+  // 主动提交必滚，被动写回（补齐/AI 长文）仍不滚。
   useEffect(() => {
-    if (result && resultRef.current) {
-      setTimeout(() => {
-        resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 100);
-    }
-  }, [result]);
+    if (!chartId || !resultRef.current) return;
+    const timer = setTimeout(() => {
+      resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [chartId, submitSeq]);
 
   // 流式跟随滚动已下沉进 StreamingReport（随 flush 节流跟随，用户上滚即解除）
   const aiReadingRef = useRef<HTMLDivElement>(null);
@@ -1281,9 +1855,14 @@ function BaziPageContent() {
     return () => clearTimeout(timer);
   }, [loading]);
 
+  // 「当前流年」干支改读接口字段（服务端按北京当日算，含立春换年）。口径也因此统一到北京日——
+  // 旧客户端用 getYearGanzhi(浏览器本地日) 现算，跨时区/跨年边界会与服务端给出不同干支。
+  // 存量结果缺该字段时由 ensureFullResult 重发接口回填；仍拿不到就不展示这一行，避免「当前流年：」空值。
+  const currentLiunian = result?.currentYearGanzhi ?? '';
+
   const dayunDetail = useMemo(() => {
-    return buildDayunDetail(selectedDayun, aiSections, formData.birthDate);
-  }, [selectedDayun, aiSections, formData.birthDate]);
+    return buildDayunDetail(selectedDayun, aiSections, formData.birthDate, currentLiunian);
+  }, [selectedDayun, aiSections, formData.birthDate, currentLiunian]);
 
   // 选中大运的确定性结构化详情（十神 / 藏干 / 纳音 / 吉凶 / 四维），不依赖 AI
   const dayunDetailRich = useMemo<DayunDetail | null>(() => {
@@ -1306,8 +1885,6 @@ function BaziPageContent() {
     [selectedDayun, aiSections]
   );
 
-  const currentLiunian = useMemo(() => getYearGanzhi(getDateString(new Date())), []);
-
   // 是否存在真实时柱：优先用 API 的 hasHour；历史记录无该字段时按时辰是否为「不知道」推断
   const hasHourPillar = result?.hasHour ?? (formData.birthHour !== '-1' && formData.birthHour !== '');
 
@@ -1323,18 +1900,11 @@ function BaziPageContent() {
     if (!result) return null;
 
     const hasBirthDate = !!formData.birthDate;
-    // 八字直输无出生日期：起运/农历/出生时间均不可得，置空（卡片显示「—」）
-    // 精确到月：走库的节气数日法（含性别顺逆 + 已知时辰更准），不再用粗略估算。
-    const dayunFallback = hasBirthDate
-      ? getDayunStart(
-          formData.birthDate,
-          formData.gender === 'female' ? 'female' : 'male',
-          chatBirthHourNum,
-          formData.knowTime ? formData.birthMinute : undefined,
-        )
-      : { description: '', at: '' };
-
-    const lunarDate = hasBirthDate ? getLunarDate(formData.birthDate) : '未提供';
+    // 农历串 / 起运（节气数日法，精确到月）原本在这里现算，会把 lunar-javascript 拖进首屏；
+    // 现改读 /api/bazi 返回的同名字段（服务端用同一实现、同一代表时刻算出）。
+    // 八字直输无出生日期：二者本就不可得，显示「未提供」/「—」。
+    // 存量结果缺字段时先留空（卡片显示「—」），由 ensureFullResult 重发接口异步回填。
+    const lunarDate = hasBirthDate ? (result.lunarDate || '') : '未提供';
 
     return {
       baziText: buildBaziText(result, hasHourPillar),
@@ -1343,10 +1913,10 @@ function BaziPageContent() {
       birthTime: hasBirthDate ? `${formData.birthDate} ${toHourLabel(formData.birthHour)}` : '未提供（八字直输）',
       lunarDate,
       zodiac: result.zodiac || (hasBirthDate ? getZodiacByBirthDate(formData.birthDate) : '未知'),
-      dayunStartDescription: result.dayunStartDescription || dayunFallback.description,
-      dayunStartAt: result.dayunStartAt || dayunFallback.at,
+      dayunStartDescription: hasBirthDate ? (result.dayunStartDescription || '') : '',
+      dayunStartAt: hasBirthDate ? (result.dayunStartAt || '') : '',
     };
-  }, [formData.birthDate, formData.birthHour, formData.gender, formData.name, formData.knowTime, formData.birthMinute, chatBirthHourNum, result, hasHourPillar]);
+  }, [formData.birthDate, formData.birthHour, formData.gender, formData.name, result, hasHourPillar]);
 
   const tabContent = useMemo<Record<ResultTab, TabContent>>(() => {
     const dimensions = result?.fiveDimensions;
@@ -1439,6 +2009,30 @@ function BaziPageContent() {
     return sections.filter(s => s.content.trim());
   }, [aiSections]);
 
+  /**
+   * 写进历史记录的「原始出生输入」。恢复这条记录时要靠它重发 /api/bazi 得到**同精度**的
+   * 起运与终身大运表（为什么必须存见 BaziHistoryRecord 上的注释）。
+   *
+   * 只有用户确实填了精确出生时刻才写这一组；没填就整组不写（而不是写 knowTime:false + 默认 12:00），
+   * 恢复时回落到 birthHour 粗时辰码，与本次改动前的行为完全一致。
+   * formData 在恢复命盘时已按记录整组覆盖，故这里读到的一定是当前这副盘的输入。
+   */
+  const birthPrecisionToPersist = (): Pick<
+    BaziHistoryRecord,
+    'isLunar' | 'knowTime' | 'birthHourNum' | 'birthMinute' | 'lateZiShi'
+  > => ({
+    // 农历生日不存下来，重算会按公历解释同一串日期，排出的是另一副盘（isSameChart 会整份丢弃）
+    isLunar: formData.isLunar || undefined,
+    ...(formData.knowTime
+      ? {
+          knowTime: true,
+          birthHourNum: formData.birthHourNum,
+          birthMinute: formData.birthMinute,
+          lateZiShi: formData.lateZiShi,
+        }
+      : {}),
+  });
+
   const autoSaveRecord = (data: BaziPageResult, source: string) => {
     if (source === 'fallback') return;
     try {
@@ -1448,6 +2042,7 @@ function BaziPageContent() {
         birthDate: formData.birthDate,
         birthHour: formData.birthHour,
         birthPlace: formData.birthPlace,
+        ...birthPrecisionToPersist(),
         dayMaster: data.pillars?.day?.gan || '',
         aiSummary: (data.aiAnalysis || '').split(/[。！？]/)[0] || '已保存命盘记录。',
         aiAnalysis: data.aiAnalysis || '',
@@ -1679,17 +2274,39 @@ function BaziPageContent() {
       birthHour: profile.birthHour || '-1',
       birthPlace: profile.birthPlace || '',
       isLunar: Boolean(profile.isLunar),
-      knowTime: false,
+      // 精度字段与 birthDate 同批原子写入：游客档案（本地记录映射）可能带精确时刻，
+      // 沿用 prev 会让「日期来自本档案、时刻来自上一副盘」，进而污染 AI 问答与落盘记录。
+      knowTime: Boolean(profile.knowTime),
+      birthHourNum: profile.knowTime && typeof profile.birthHourNum === 'number' ? profile.birthHourNum : 12,
+      birthMinute: profile.knowTime && typeof profile.birthMinute === 'number' ? profile.birthMinute : 0,
+      lateZiShi: Boolean(profile.knowTime && profile.lateZiShi),
     }));
     if (profile.baziResult) {
-      // 静态命盘走缓存秒出；神煞/流年/流月/大运高亮按当前年现算，避免旧快照或缺模块
-      setResult(withFreshModules({ ...profile.baziResult, _source: 'history' }));
+      // 静态命盘走缓存秒出；神煞/大运高亮先按当前年本地刷新，避免缺模块
+      const restored = withFreshModules({ ...profile.baziResult, _source: 'history' });
+      setResult(restored);
       setError('');
       // 缓存的 AI 解读不完整（如上次中断/游客早退）时，放出「开始AI解读」按钮以便重新生成
       setShowAiButton(!isAiAnalysisComplete(profile.baziResult.aiAnalysis));
+      // 上线前写入的档案缓存缺 lunar 派生字段；跨年后流年/流月快照也过期 —— 登记一次补齐（见 armRefill）。
+      // 档案存了 isLunar，重算参数比历史记录完整，四柱几乎必然对得上。
+      armRefill(restored, {
+        name: profile.name,
+        gender: profile.gender,
+        birthDate: profile.birthDate,
+        birthHour: profile.birthHour,
+        birthPlace: profile.birthPlace,
+        isLunar: profile.isLunar,
+        // 游客档案由本地记录映射而来，可能带精确时刻：透传后重算才与记录同源（登录档案无这几项，回落粗时辰）
+        knowTime: profile.knowTime,
+        birthHourNum: profile.birthHourNum,
+        birthMinute: profile.birthMinute,
+        lateZiShi: profile.lateZiShi,
+      });
     } else {
       setResult(null);
       setShowAiButton(false);
+      dropPendingRefill();
     }
     setActionMessage('');
   };
@@ -1801,6 +2418,7 @@ function BaziPageContent() {
       } else {
         setSelectedProfileId('');
         setResult(null);
+        dropPendingRefill();
       }
       setActionMessage('档案已删除');
     } catch (e) {
@@ -1935,6 +2553,9 @@ function BaziPageContent() {
             birthDate: input.birthDate,
             birthHour: effectiveHour,
             birthPlace: effectivePlace,
+            // 档案是按农历填的话，birthDate 存的就是农历年月日：不记下来，恢复时按公历重算会得到另一副盘。
+            // 档案表单没有「精确到分」的入口（computeBaziForProfile 也只发粗时辰码），故这里没有 knowTime 一组。
+            isLunar: input.isLunar || undefined,
             dayMaster: computed.pillars?.day?.gan || '',
             aiSummary: (computed.aiAnalysis || '').split(/[。！？]/)[0] || '已保存命盘记录。',
             aiAnalysis: computed.aiAnalysis || '',
@@ -1991,6 +2612,8 @@ function BaziPageContent() {
     setShowAiButton(false);
     setAiStreaming(false);
     resetAiStream();
+    // 新排盘的结果自带全部字段，在途的存量补齐及其提示一律作废
+    dropPendingRefill();
 
     if (!formData.gender) {
       setError('请选择性别');
@@ -2066,6 +2689,8 @@ function BaziPageContent() {
       }
 
       setResult(data);
+      // 主动提交信号：同一副盘重排时 chartId 不变，靠它让滚动 effect 重跑
+      setSubmitSeq(n => n + 1);
       setShowAiButton(true);
       track('tool_result_view', { tool: 'bazi' });
       setFullReadExpanded(false);
@@ -2079,12 +2704,19 @@ function BaziPageContent() {
   const handleSaveCurrentRecord = () => {
     if (!result || !dayMasterInsight || !basicInfoData) return;
 
+    // 农历串/起运可能还没补齐（存量命盘的补齐在途、失败、或用户还没滚到触发点）。
+    // basicInfoData 里它们以 '' 兜底，直接写进历史记录会把空串固化下来——下次读这条记录时
+    // needsServerRefill 仍判为缺失，但记录本身已被「写过一次」的假象污染。
+    // 空值一律不写：BaziHistoryRecord 的这几项本就是可选字段，缺失比空串诚实。
+    const nonEmpty = (value: string) => (value.trim() ? value : undefined);
     const toSave: Omit<BaziHistoryRecord, 'id' | 'createdAt'> = {
       name: formData.name || '缘主',
       gender: formData.gender || 'unknown',
       birthDate: formData.birthDate,
       birthHour: formData.birthHour,
       birthPlace: formData.birthPlace,
+      // 原始出生输入（精确时刻/农历），恢复这条记录时靠它重算出同精度的大运，见 birthPrecisionToPersist
+      ...birthPrecisionToPersist(),
       dayMaster: dayMasterInsight.title,
       aiSummary: firstSentence(personalityText) || '已保存命盘记录。',
       aiAnalysis: result.aiAnalysis,
@@ -2093,15 +2725,26 @@ function BaziPageContent() {
       fiveDimensions: result.fiveDimensions,
       traits: result.traits,
       dayMasterElement: result.pillars.day.ganWuxing,
-      lunarDate: basicInfoData.lunarDate,
+      lunarDate: nonEmpty(basicInfoData.lunarDate),
       zodiac: basicInfoData.zodiac,
       trueSolarOffsetMinutes: result.trueSolarOffsetMinutes ?? null,
-      dayunStartDescription: basicInfoData.dayunStartDescription,
-      dayunStartAt: basicInfoData.dayunStartAt,
+      dayunStartDescription: nonEmpty(basicInfoData.dayunStartDescription),
+      dayunStartAt: nonEmpty(basicInfoData.dayunStartAt),
     };
 
     const saved = saveRecord(toSave);
-    setActionMessage(saved ? '命盘已保存到历史记录（最多保留3条）' : '保存失败，请重试');
+    if (!saved) {
+      setActionMessage('保存失败，请重试');
+      return;
+    }
+    // 有字段没落地就如实说明，别让用户以为存下来的是完整命盘
+    // （八字直输无出生日期时这两项本就不可得，不算「没补齐」）
+    const incomplete = !!formData.birthDate && (!toSave.lunarDate || !toSave.dayunStartDescription);
+    setActionMessage(
+      incomplete
+        ? '命盘已保存到历史记录（最多保留3条）。农历/起运尚未补齐，未写入本条记录。'
+        : '命盘已保存到历史记录（最多保留3条）'
+    );
   };
 
   const handleSharePlaceholder = () => {
@@ -2113,6 +2756,7 @@ function BaziPageContent() {
     setError('');
     setActionMessage(message);
     setFullReadExpanded(false);
+    dropPendingRefill();
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
       url.searchParams.delete('record');
@@ -2542,6 +3186,50 @@ function BaziPageContent() {
                     <p className="text-sm text-blue-700">AI 解读耗时较长，已为您准备基础解读（简化版解读，完整版需会员）</p>
                   </div>
                 )}
+                {/* 存量命盘补齐的可见出口：不静默吞。网络类失败给「重试」；
+                    参数缺失/精度打折类重试也没用，只能重排——注意此时出生信息表单是卸载状态
+                    （{(!result || loading) && …form…}），光写「请在上方表单重新排盘」用户找不到入口，
+                    必须给按钮走 handleEditBasicInfo 把表单重新挂回来。
+                    配色分级：tone='warn' 用琥珀（确实有东西没显示出来），tone='info' 用中性灰
+                    （内容都在、只是大运边界按时辰折算，用告警色会把「精度提示」误传成「出错了」）。 */}
+                {refillNotice && (
+                  <div
+                    className={`flex items-start justify-between gap-3 rounded-xl px-4 py-3 border ${
+                      refillNotice.tone === 'info'
+                        ? 'bg-[#F6F4F1] border-[#1C1A16]/10'
+                        : 'bg-amber-50 border-amber-200/70'
+                    }`}
+                  >
+                    <p className={`text-sm ${refillNotice.tone === 'info' ? 'text-[#1C1A16]/70' : 'text-amber-800'}`}>
+                      {refillNotice.text}
+                    </p>
+                    {refillNotice.retryable ? (
+                      <button
+                        type="button"
+                        disabled={refilling}
+                        onClick={() => {
+                          const pending = refillPendingRef.current;
+                          if (pending) void ensureFullResult(pending.stored, pending.input);
+                        }}
+                        className="shrink-0 text-xs font-medium text-amber-900 border border-amber-300 rounded-lg px-3 py-1.5 hover:bg-amber-100 disabled:opacity-50 transition-colors"
+                      >
+                        {refilling ? '重试中…' : '重试'}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleEditBasicInfo}
+                        className={`shrink-0 text-xs font-medium border rounded-lg px-3 py-1.5 transition-colors ${
+                          refillNotice.tone === 'info'
+                            ? 'text-[#1C1A16] border-stone-400 hover:bg-stone-200'
+                            : 'text-amber-900 border-amber-300 hover:bg-amber-100'
+                        }`}
+                      >
+                        重新填写出生信息
+                      </button>
+                    )}
+                  </div>
+                )}
                 {/* 桌面也走单栏：概览(四柱/五行/日主)在上、AI 解读长文在下,收窄到 page(840) 舒适阅读宽,避免两栏「左短右长」留白/停靠。 */}
                 <SplitLayout
                   asidePosition="left"
@@ -2736,6 +3424,17 @@ function BaziPageContent() {
                             {section.title}
                           </h4>
                           {renderSectionContent(section.content)}
+                          {/* 补齐哨兵①：紧贴大运时间轴上沿（存量命盘缺 dayunTimeline 时那一整块不渲染，
+                              所以哨兵必须独立于它存在，否则「该补的时候没人触发」）。
+                              零高度 + 外边距清零：只做锚点，不占版面、不影响任何间距。 */}
+                          {isDayunSection && (
+                            <div
+                              ref={refillSentinelDayunRef}
+                              aria-hidden
+                              className="h-0"
+                              style={{ marginTop: 0, marginBottom: 0 }}
+                            />
+                          )}
                           {isDayunSection && dayunTimeline.length > 0 && (
                             <div className="mt-4 rounded-2xl border border-[#1C1A16]/10 bg-[#FAF9F6] p-4 sm:p-5">
                               <p className="text-sm font-medium text-[#1C1A16] mb-3">大运时间轴</p>
@@ -2820,7 +3519,9 @@ function BaziPageContent() {
                                     {dayunDetailRich.fortuneReason}
                                     {dayunDetailRich.theme !== '—' && ` 本阶段主题：${dayunDetailRich.theme}。`}
                                   </p>
-                                  <p className="mt-1 text-xs text-[#1C1A16]/50">当前流年：{currentLiunian}</p>
+                                  {currentLiunian && (
+                                    <p className="mt-1 text-xs text-[#1C1A16]/50">当前流年：{currentLiunian}</p>
+                                  )}
 
                                   {/* 四维简评 */}
                                   {dayunDetailRich.aspects.length > 0 && (
@@ -2875,6 +3576,17 @@ function BaziPageContent() {
                   }}
                   isLoggedIn={status === 'authenticated'}
                   isVip={isMember}
+                />
+
+                {/* 补齐哨兵②：排盘细节组（十神/神煞/流年流月）之前。流年流月是这组里依赖补齐数据的那块；
+                    AI 长文缺失时哨兵①不存在（大运时间轴同样不渲染），此处就是唯一触发点。
+                    父容器是 space-y-6：外边距清零后本元素不改变任何相邻间距（无论 space-y 实现为
+                    「后一个加 margin-top」还是「前一个加 margin-bottom」，被清零的都只是它自己那一份）。 */}
+                <div
+                  ref={refillSentinelDetailRef}
+                  aria-hidden
+                  className="h-0"
+                  style={{ marginTop: 0, marginBottom: 0 }}
                 />
 
                 {/* 排盘细节模块（确定性命盘数据，置于 AI 问答之后）：十神 / 神煞 / 流年流月 */}

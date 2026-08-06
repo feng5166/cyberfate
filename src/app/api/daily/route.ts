@@ -132,7 +132,9 @@ export async function POST(req: NextRequest) {
       );
     } catch (aiError) {
       logger.error(SERVICE, 'AI fortune generation failed', aiError instanceof Error ? aiError : undefined);
-      fortune = generateFallbackFortune(baziResult.dayMaster, dayGanzhi, targetDate);
+      // 必须补 _source: 'fallback'：下面的退配额判断只认这个标记，
+      // 原来这里返回的对象不带 _source（响应里报成 'unknown'），用户拿到本地模板却照扣一次免费额度
+      fortune = { ...generateFallbackFortune(baziResult.dayMaster, dayGanzhi, targetDate), _source: 'fallback' as const };
     }
 
     // fallback 不消耗配额

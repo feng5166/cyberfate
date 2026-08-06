@@ -48,6 +48,22 @@ function getTodayDateStr(): string {
 }
 
 export async function POST(request: NextRequest) {
+  // 记住「这次真扣了额度的登录用户」：checkMusicQuota 是原子扣减，扣完之后任何一条
+  // 「用户拿不到签文」的失败分支（AI 报错/超时/JSON 解析失败）都必须退还，
+  // 否则免费用户白丢当天唯一一次求签。VIP 与游客不入 DB 配额，保持 null。
+  let quotaConsumedUserId: string | null = null;
+  const refundMusicQuota = async () => {
+    const id = quotaConsumedUserId;
+    if (!id) return;
+    quotaConsumedUserId = null; // 幂等：外层 catch 与内层分支都可能调用，只退一次
+    try {
+      const { refundQuota } = await import('@/lib/quota');
+      await refundQuota(id, 'musicCount');
+    } catch (err) {
+      console.warn('[music-oracle] 配额退还失败:', err);
+    }
+  };
+
   try {
     const body = await request.json();
     const { question, birthYear, refresh } = body;
@@ -112,6 +128,7 @@ export async function POST(request: NextRequest) {
           { status: 429 }
         );
       }
+      if (!mq.isVip) quotaConsumedUserId = userId;
     } else if (redis) {
       // 游客：按 IP 1 次/天
       try {
@@ -161,6 +178,7 @@ export async function POST(request: NextRequest) {
     // 调用 AI
     const provider = await getPrimaryProvider();
     if (!provider) {
+      await refundMusicQuota();
       return NextResponse.json(
         { success: false, error: '服务配置异常', code: 'INTERNAL_ERROR' },
         { status: 500 }
@@ -194,6 +212,7 @@ export async function POST(request: NextRequest) {
     if (!aiRes.ok) {
       const errText = await aiRes.text();
       console.error(`[music-oracle] AI API error ${aiRes.status}: ${errText}`);
+      await refundMusicQuota();
       return NextResponse.json(
         { success: false, error: '求签失败，请稍后重试', code: 'AI_ERROR' },
         { status: 500 }
@@ -204,6 +223,7 @@ export async function POST(request: NextRequest) {
     const rawContent = aiData?.choices?.[0]?.message?.content;
 
     if (!rawContent) {
+      await refundMusicQuota();
       return NextResponse.json(
         { success: false, error: '求签失败，请稍后重试', code: 'AI_ERROR' },
         { status: 500 }
@@ -224,6 +244,7 @@ export async function POST(request: NextRequest) {
       if (Array.isArray(parsed)) parsed = parsed[0];
     } catch {
       console.error('[music-oracle] JSON 解析失败:', rawContent.substring(0, 200));
+      await refundMusicQuota();
       return NextResponse.json(
         { success: false, error: '解析结果失败，请重试', code: 'AI_ERROR' },
         { status: 500 }
@@ -290,6 +311,8 @@ export async function POST(request: NextRequest) {
 
     return new Response(typewriterStream(meta, oracleText), { headers: SSE_HEADERS });
   } catch (err: any) {
+    // 走到这里说明用户一定没拿到签文（成功路径直接 return 了流），配额一律退还
+    await refundMusicQuota();
     if (err.name === 'AbortError') {
       return NextResponse.json(
         { success: false, error: '求签超时，请稍后重试', code: 'AI_ERROR' },

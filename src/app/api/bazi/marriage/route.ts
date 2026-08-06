@@ -20,6 +20,26 @@ const MARRIAGE_DEEP_CACHE_PREFIX = 'marriage:ai:deep:v4';
 // 合婚结果按双方八字定型、终身不变，但仍给 90 天 TTL：
 // 原来 set 不带 TTL 会让 Redis 里的长文报告只增不减，最终撑爆内存配额
 const MARRIAGE_CACHE_TTL = 90 * 24 * 60 * 60;
+// 半降级结果（模型有输出但结构没解析出来）的短 TTL：只用来挡住同一瞬间的重复调用，
+// 不让一份退化文案在缓存里躺 90 天。见 runAIAnalysis 末尾的分级写入
+const MARRIAGE_DEGRADED_CACHE_TTL = 120;
+// 深度报告的两级长度门槛，必须与「读缓存」侧同源，否则会出现死区：
+// - DEEP_REPORT_MIN_READ_LEN：读缓存时认为「这份缓存还能用」的下限。短于它的直接当没缓存。
+// - DEEP_REPORT_FULL_CACHE_LEN：prompt 要求 1200-1800 字，短于它多半是上游断流/被 max_tokens
+//   截断的残报告，不配占住 90 天缓存位。
+// 两者之间（200~600 字）既不能不存也不该长存：曾经写入阈值 600、读取阈值 200，这段区间
+// 「读得进、写不出」——每个请求都判定未命中并重新调一次 AI，缓存永远建不起来。
+// 现在这段落 120s 短 TTL：足够挡住同一瞬间的重复调用防雪崩，到期后自然重算去拿完整报告。
+const DEEP_REPORT_MIN_READ_LEN = 200;
+const DEEP_REPORT_FULL_CACHE_LEN = 600;
+const DEEP_REPORT_SHORT_CACHE_TTL = 120;
+
+/** 按报告长度决定缓存 TTL；返回 0 表示短到不值得缓存 */
+function deepReportCacheTtl(text: string): number {
+  if (text.length > DEEP_REPORT_FULL_CACHE_LEN) return MARRIAGE_CACHE_TTL;
+  if (text.length > DEEP_REPORT_MIN_READ_LEN) return DEEP_REPORT_SHORT_CACHE_TTL;
+  return 0;
+}
 
 // ── 八字计算 ───────────────────────────────────────
 
@@ -540,13 +560,20 @@ ${details.join('\n')}
     };
   }
 
-  if (aiSource !== 'fallback') {
+  // 缓存分级：
+  // - 'deepseek'：解析成功的真结果，按 90 天存（合婚结论按双方八字定型，不会变）。
+  // - 'deepseek-fallback'：模型返回了内容但 JSON 解析失败，靠 buildFallbackFromText 从散文里抠段落，
+  //   抠不到的维度会退化成写死的模板句。这种半降级结果绝不能占住 90 天缓存位——
+  //   同一对八字之后每次来都拿到模板且刷新无效。只给 120s 防同一用户连点造成的并发重复调用（防雪崩），
+  //   到期后下一次请求会重新走 AI 拿真结果。
+  // - 'fallback'：AI 完全没调通，纯本地模板，零成本可随时重算，不写缓存。
+  if (aiSource === 'deepseek' || aiSource === 'deepseek-fallback') {
     await setCache(cacheKey, {
       dimensions: structured.dimensions,
       advices: structured.advices,
       highlight: structured.highlight,
       analysis: rawText,
-    }, MARRIAGE_CACHE_TTL);
+    }, aiSource === 'deepseek' ? MARRIAGE_CACHE_TTL : MARRIAGE_DEGRADED_CACHE_TTL);
   }
 
   return { structured, rawText, aiSource };
@@ -572,7 +599,8 @@ async function runDeepReport(params: {
 
   const cacheKey = generateCacheKey(MARRIAGE_DEEP_CACHE_PREFIX, { male: maleBazi, female: femaleBazi });
   const cached = await getCache(cacheKey);
-  if (cached && typeof cached.deepReport === 'string' && cached.deepReport.length > 0) {
+  // 与 SSE 分支同源阈值：两条路径共用同一个 cacheKey，读取门槛不一致会互相看到对方存不进/读不出的条目
+  if (cached && typeof cached.deepReport === 'string' && cached.deepReport.length > DEEP_REPORT_MIN_READ_LEN) {
     return { deepReport: cached.deepReport, aiSource: 'cache' };
   }
 
@@ -672,8 +700,13 @@ async function runDeepReport(params: {
       const drData = await deepReportRes.json();
       const raw = drData.choices?.[0]?.message?.content || '';
       const deepReport = raw.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
-      if (deepReport) {
-        await setCache(cacheKey, { deepReport }, MARRIAGE_CACHE_TTL);
+      // 与下方 SSE 版同一套阈值：完整报告进 90 天长缓存，被 max_tokens 截断的中等长度报告
+      // 只进 120s 短缓存（防雪崩又不会霸占 90 天），过短的不缓存。
+      // 短报告仍照常返回给本次请求的用户，这里只决定「要不要留给下一个人」。
+      // 注：本函数当前无调用方（深度报告走下方 SSE 分支），保留同样的守卫是为了日后接回时不再引入同一个坑。
+      const deepTtl = deepReportCacheTtl(deepReport);
+      if (deepTtl > 0) {
+        await setCache(cacheKey, { deepReport }, deepTtl);
       }
       return { deepReport, aiSource: 'deepseek' };
     } else {
@@ -703,21 +736,10 @@ export async function POST(req: NextRequest) {
   const aiDeep = aiParam === 'deep';
   const isAiRequest = aiOnly || aiDeep;
 
-  // 仅在硬数据请求时消耗配额，AI 请求复用同一配额（视作同一次合婚的子操作）
-  if (!isAiRequest) {
-    // 统一配额策略 v1：合婚使用独立额度（免费 1 次/天），不再共享八字解读名额。
-    // 会员态取自 JWT（isSubscribed），省一次跨区 DB 往返；「刚付费未刷新」由 quota 内部兜底复核
-    const { checkMarriageQuota } = await import('@/lib/quota');
-    const marriageQuota = await checkMarriageQuota(session.user.id, session.user.isSubscribed);
-    if (!marriageQuota.hasQuota) {
-      return NextResponse.json(
-        { error: 'QUOTA_EXCEEDED', message: '今日免费合婚次数已用完，请升级 VIP' },
-        { status: 403 }
-      );
-    }
-  }
-
-  const body = await req.json();
+  // 先解析 + 校验请求体，再扣配额（下面 isValidBirthDate 之后）：
+  // 原顺序在日期非法/body 不是合法 JSON 时已经扣掉了当天唯一一次免费合婚且不退。
+  // `?? {}` 兜住 body 是字面 null 的情况（JSON.parse('null') 不进 catch，直接解构会抛 → 500）
+  const body = (await req.json().catch(() => ({}))) ?? {};
   const {
     maleName,
     maleBirthDate,
@@ -757,6 +779,20 @@ export async function POST(req: NextRequest) {
   }
   if (!isValidBirthDate(effectiveFemaleDate)) {
     return NextResponse.json({ error: '女方出生日期无效，请使用 YYYY-MM-DD 格式，年份范围 1900-2030' }, { status: 400 });
+  }
+
+  // 仅在硬数据请求时消耗配额，AI 请求复用同一配额（视作同一次合婚的子操作）
+  if (!isAiRequest) {
+    // 统一配额策略 v1：合婚使用独立额度（免费 1 次/天），不再共享八字解读名额。
+    // 会员态取自 JWT（isSubscribed），省一次跨区 DB 往返；「刚付费未刷新」由 quota 内部兜底复核
+    const { checkMarriageQuota } = await import('@/lib/quota');
+    const marriageQuota = await checkMarriageQuota(session.user.id, session.user.isSubscribed);
+    if (!marriageQuota.hasQuota) {
+      return NextResponse.json(
+        { error: 'QUOTA_EXCEEDED', message: '今日免费合婚次数已用完，请升级 VIP' },
+        { status: 403 }
+      );
+    }
   }
 
   const safeMaleName = sanitizeUserInput(String(maleSide.name || maleName || ''), 50) || '男方';
@@ -817,7 +853,8 @@ export async function POST(req: NextRequest) {
 
     // 缓存命中：以 SSE 格式一次性推送，前端逻辑统一
     const cached = await getCache(cacheKey);
-    if (cached && typeof cached.deepReport === 'string' && cached.deepReport.length > 200) {
+    // 与写入侧同源阈值（DEEP_REPORT_MIN_READ_LEN），避免再次出现「读得进、写不出」的长度死区
+    if (cached && typeof cached.deepReport === 'string' && cached.deepReport.length > DEEP_REPORT_MIN_READ_LEN) {
       const cachedText = cached.deepReport;
       const cacheStream = new ReadableStream({
         start(controller) {
@@ -957,9 +994,16 @@ export async function POST(req: NextRequest) {
               } catch { /* ignore parse errors */ }
             }
           }
-          if (fullText.length > 100) {
-            const cleanText = fullText.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
-            await setCache(cacheKey, { deepReport: cleanText }, MARRIAGE_CACHE_TTL).catch(() => {});
+          // 按长度分级落缓存，中途断流的残报告不该和完整报告享受同样的 90 天：
+          // 1) 阈值改判 cleanText —— 原来判 fullText，模型先吐一大段 <think> 再被截断时
+          //    fullText 轻松过百、cleanText 却可能只剩几十字，照样被存 90 天。
+          // 2) 长度分级见 deepReportCacheTtl：>600 存 90 天，200~600 存 120s（与读缓存阈值对齐，
+          //    不留「读得进、写不出」的死区），≤200 读缓存那侧本就不认，不存。
+          // 用户已经通过 SSE 收到全部内容，这里只决定「要不要留给下一个人」，不影响本次返回。
+          const cleanText = fullText.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+          const cleanTtl = deepReportCacheTtl(cleanText);
+          if (cleanTtl > 0) {
+            await setCache(cacheKey, { deepReport: cleanText }, cleanTtl).catch(() => {});
           }
         } finally {
           controller.close();

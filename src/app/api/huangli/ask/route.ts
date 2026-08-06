@@ -44,11 +44,24 @@ export async function POST(req: NextRequest) {
 
   // 统一配额策略 v1：黄历 AI 问答免费 1 次/天，VIP 不限。
   // 会员态取自 JWT（isSubscribed），省一次跨区 DB 往返；「刚付费未刷新」由 quota 内部兜底复核
-  const { checkHuangliQuota } = await import('@/lib/quota');
-  const hlQuota = await checkHuangliQuota(session.user.id, session.user.isSubscribed);
+  const userId = session.user.id;
+  const { checkHuangliQuota, refundQuota } = await import('@/lib/quota');
+  const hlQuota = await checkHuangliQuota(userId, session.user.isSubscribed);
   if (!hlQuota.hasQuota) {
     return NextResponse.json({ error: 'QUOTA_EXCEEDED', message: '今日免费次数已用完，升级 VIP 不限量' }, { status: 429 });
   }
+  // VIP 不计数（checkHuangliQuota 直接放行），只有免费用户这一次是真扣了额度
+  const quotaConsumed = !hlQuota.isVip;
+  // 「一个字都没吐出来就失败」的分支必须退还，否则用户白丢当天唯一一次免费问答。
+  // 注意：只覆盖 SSE 开流之前的失败；流开始后中途断开无法再改状态码，也就不退（视作已交付部分内容）
+  const refundIfConsumed = async () => {
+    if (!quotaConsumed) return;
+    try {
+      await refundQuota(userId, 'huangliCount');
+    } catch (err) {
+      logger.error(SERVICE, 'refund huangli quota failed', err instanceof Error ? err : undefined);
+    }
+  };
 
   try {
     const huangli = calculateHuangli(date);
@@ -80,6 +93,7 @@ export async function POST(req: NextRequest) {
     const provider = await getPrimaryProvider();
     if (!provider) {
       logger.error(SERVICE, 'DEEPSEEK_API_KEY not configured');
+      await refundIfConsumed();
       return NextResponse.json({ error: '服务配置异常' }, { status: 500 });
     }
 
@@ -105,12 +119,14 @@ export async function POST(req: NextRequest) {
     if (!apiResponse.ok || !apiResponse.body) {
       abortHandle.release();
       logger.error(SERVICE, `AI API responded with ${apiResponse.status}`);
+      await refundIfConsumed();
       return NextResponse.json({ error: '服务暂时不可用' }, { status: 502 });
     }
 
     return new Response(proxyLLMDeltaStream(apiResponse, abortHandle), { headers: SSE_HEADERS });
   } catch (err) {
     logger.error(SERVICE, 'Huangli ask error', err instanceof Error ? err : undefined);
+    await refundIfConsumed();
     return NextResponse.json(
       { error: '抱歉，AI 暂时无法回答。请检查网络连接后重试。' },
       { status: 500 }

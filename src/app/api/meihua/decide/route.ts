@@ -130,12 +130,18 @@ export async function POST(req: NextRequest) {
     // 取 57s：留 2s 给内层落地 + 3s 给 SSE 输出（vercel.json 该路由 maxDuration 60s），
     // 外层只作「内层彻底卡死」的最后兜底
     const decision = await withAiTimeout(() => generateMeihuaDecision(input), 57_000);
+    const isFallback = (decision as { _source?: string })._source === 'fallback';
 
-    if (quotaConsumed && (decision as { _source?: string })._source === 'fallback') {
+    if (quotaConsumed && isFallback) {
       await refundQuota(session!.user.id, 'meihuaDecideCount');
     }
 
-    await setCache(cacheKey, decision, 12 * 60 * 60);
+    // 只缓存真·AI 结果：降级文案是 buildFallbackMeihuaDecision 的本地模板（纯本地零成本可随时重算），
+    // 一旦被写进 12h 缓存，上游抖动那几分钟产生的一条模板会在之后 12 小时内反复回给所有同 key 用户
+    // （读缓存时还会被打上 _source: 'cache'，前端连「这是兜底」都看不出来），刷新也没用。
+    if (!isFallback) {
+      await setCache(cacheKey, decision, 12 * 60 * 60);
+    }
 
     const { meta, narrative } = splitMeta(decision);
     return new Response(typewriterStream(meta, narrative), { headers: SSE_HEADERS });
