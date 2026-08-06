@@ -15,7 +15,7 @@
 | 样式 | Tailwind CSS v4 |
 | 命理计算 | `lunar-javascript` + 自研 `src/lib/*` |
 | AI | **DeepSeek v4-pro**(主,经 ModelVerse 网关)+ DeepSeek-V3.2 兜底 |
-| 数据库 | PostgreSQL(生产 = Vercel Postgres,底层 Neon)+ Prisma |
+| 数据库 | PostgreSQL(生产 = **Prisma Postgres**,连接串 `db.prisma.io`)+ Prisma |
 | 缓存/限流 | Upstash Redis |
 | 认证 | NextAuth(JWT):邮箱密码 / Google / 微信 |
 | 支付 | Stripe(WeChat/Alipay 枚举占位,未启用) |
