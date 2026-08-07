@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse, after } from 'next/server';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { generateCacheKey, getCache, setCache } from '@/lib/ai/cache';
 import { generateLiuYaoReading } from '@/lib/ai/client';
@@ -256,14 +256,36 @@ export async function POST(req: NextRequest) {
   // 一旦被写进 12h 缓存，上游抖动那几分钟产生的一条模板会在之后 12 小时内反复回给所有同 key 用户，
   // 他们付了配额却只能拿到模板、且刷新无效。不写缓存 = 上游恢复后下一个人立刻拿到真解读。
   if (reading._source !== 'fallback') {
-    await setCache(cacheKey, {
+    // 载荷在这里就固化（不要留到回调里现取 reading 的字段）：延后执行意味着
+    // 中间任何一次对 reading 的改动都会被写进缓存，快照掉这条隐患
+    const cachePayload = {
       lineInterpretations: reading.lineInterpretations,
       overallNarrative: reading.overallNarrative,
       summary: reading.summary,
       positives: reading.positives,
       cautions: reading.cautions,
       actions: reading.actions,
-    }, 12 * 60 * 60);
+    };
+    const writeCache = () => setCache(cacheKey, cachePayload, 12 * 60 * 60);
+
+    // 写缓存搬出用户等待路径：这一步紧接在 20~60s 的 AI 等待之后，而 undici 默认
+    // keepAliveTimeout 只有 4s —— 等 AI 期间那条 Redis 连接必然已被回收，这次 setex
+    // 要重付一次 TCP+TLS 握手（生产实测 hkg1→Upstash 约 268ms），过去整整计入用户
+    // 拿到首字节的时间。after() 在 Vercel 上映射到 waitUntil：响应关闭后仍保证执行，
+    // 缓存照写，只是用户不再为它等待。
+    try {
+      after(writeCache);
+    } catch (err) {
+      // 拿不到 waitUntil 的运行时（单测宿主 / 非 Next 环境）after() 会同步抛错：
+      // 退回原来的内联 await，行为不比改造前差（与 tarot/draw 的降级写法一致）
+      log({
+        service: 'liuyao',
+        level: 'warn',
+        message: 'after() unavailable, write cache inline',
+        meta: { reason: err instanceof Error ? err.message : String(err) },
+      });
+      await writeCache();
+    }
   }
 
   const meta: LiuYaoMeta = {

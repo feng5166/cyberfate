@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse, after } from 'next/server';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { generateCacheKey, getCache, setCache } from '@/lib/ai/cache';
 import { generateMeihuaDecision, type MeihuaDecisionResult } from '@/lib/ai/client';
@@ -140,7 +140,23 @@ export async function POST(req: NextRequest) {
     // 一旦被写进 12h 缓存，上游抖动那几分钟产生的一条模板会在之后 12 小时内反复回给所有同 key 用户
     // （读缓存时还会被打上 _source: 'cache'，前端连「这是兜底」都看不出来），刷新也没用。
     if (!isFallback) {
-      await setCache(cacheKey, decision, 12 * 60 * 60);
+      // 快照一份再延后写：延后执行期间 decision 若被改动会连带污染缓存内容
+      const cachePayload = { ...decision };
+      const writeCache = () => setCache(cacheKey, cachePayload, 12 * 60 * 60);
+      // 写缓存搬出用户等待路径：这一步紧接在最长 57s 的 AI 等待之后，而 undici 默认
+      // keepAliveTimeout 只有 4s —— 等 AI 期间那条 Redis 连接必然已被回收，这次 setex
+      // 要重付一次 TCP+TLS 握手（生产实测 hkg1→Upstash 约 268ms），过去整整计入用户
+      // 拿到首字节的时间。after() 在 Vercel 上映射到 waitUntil：响应关闭后仍保证执行。
+      // 附带修掉一个隐患：原来的 await 一旦抛错会被外层 catch 接住 → 退配额 + 500，
+      // 用户明明已有一份可用解读却拿到报错；交给 after() 后写缓存失败再也影响不到本次响应。
+      try {
+        after(writeCache);
+      } catch (err) {
+        // 拿不到 waitUntil 的运行时（单测宿主 / 非 Next 环境）after() 会同步抛错：
+        // 退回原来的内联 await，行为不比改造前差（与 tarot/draw 的降级写法一致）
+        console.warn('[Meihua Decide] after() unavailable, write cache inline:', err);
+        await writeCache();
+      }
     }
 
     const { meta, narrative } = splitMeta(decision);

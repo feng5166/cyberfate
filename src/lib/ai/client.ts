@@ -12,6 +12,7 @@ import {
   type TarotReadingPromptInput,
   type TarotSpread,
 } from './prompts';
+import { after } from 'next/server';
 import type { BaziResult, BaziAnalysis } from '../bazi/types';
 import { callExternalAPI } from '../utils/api-wrapper';
 import { redis } from '../cache/redis';
@@ -321,11 +322,26 @@ export async function generateDailyFortune(
   // 3. 写入 Redis 缓存（仅非降级结果，24小时过期）
   if (apiResult.success) {
     if (!apiResult.fromFallback) {
+      const data = apiResult.data; // 快照：延后执行期间不再受 apiResult 变动影响
+      const writeCache = async () => {
+        try {
+          await redis.setex(cacheKey, 86400, data);
+          if (process.env.NODE_ENV !== 'production') console.log(`[Cache Set] ${cacheKey} (TTL: 24h)`);
+        } catch (err) {
+          console.warn('[Cache Write Error]', err);
+        }
+      };
+      // 写缓存搬出用户等待路径：这一步紧接在 20~55s 的 AI 等待之后，而 undici 默认
+      // keepAliveTimeout 只有 4s —— 等 AI 期间那条 Redis 连接必然已被回收，这次 setex
+      // 要重付一次 TCP+TLS 握手（生产实测 hkg1→Upstash 约 268ms），过去整整计入
+      // /api/daily 的响应时间。after() 在 Vercel 上映射到 waitUntil，响应关闭后仍保证执行。
+      // 回调自身已吞异常，绝不会 reject 到 after 的错误上报里。
       try {
-        await redis.setex(cacheKey, 86400, apiResult.data);
-        if (process.env.NODE_ENV !== 'production') console.log(`[Cache Set] ${cacheKey} (TTL: 24h)`);
-      } catch (err) {
-        console.warn('[Cache Write Error]', err);
+        after(writeCache);
+      } catch {
+        // 拿不到 waitUntil 的运行时（单测宿主 / 非 Next 环境 / withAiTimeout 超时后
+        // 仍在跑的孤儿调用）after() 会同步抛错：退回原来的内联 await，行为不比改造前差
+        await writeCache();
       }
     }
     return observed('daily', { ...apiResult.data, _source: apiResult.fromFallback ? 'fallback' : 'deepseek' });

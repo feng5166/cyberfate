@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
+import { NextRequest, NextResponse, after } from 'next/server';
 import { getAuthSession } from '@/lib/auth-session';
-import { generateCacheKey, getCache, setCache } from '@/lib/ai/cache';
+import { getCache, setCache } from '@/lib/ai/cache';
 import { sanitizeUserInput } from '@/lib/utils/sanitize';
 
 import { calculateBazi as realCalculateBazi } from '@/lib/bazi';
@@ -15,8 +16,10 @@ import {
 
 // ── AI 缓存参数 ─────────────────────────────────────
 // 键版本集中在此：prompt/输出结构一变就改版本号，旧缓存自然失效，不必手动清库。
-const MARRIAGE_STRUCT_CACHE_PREFIX = 'marriage:ai:struct:v1';
-const MARRIAGE_DEEP_CACHE_PREFIX = 'marriage:ai:deep:v4';
+// v1→v2 / v4→v5：键材料从「只有双方八字」换成「整包 prompt 输入的摘要」，修跨用户串档（见 structCacheKey 注释）。
+// 旧键与新键形状不同，天然读不到，剩余条目按各自 TTL（≤90 天）自然过期，无需手动清库。
+const MARRIAGE_STRUCT_CACHE_PREFIX = 'marriage:ai:struct:v2';
+const MARRIAGE_DEEP_CACHE_PREFIX = 'marriage:ai:deep:v5';
 // 合婚结果按双方八字定型、终身不变，但仍给 90 天 TTL：
 // 原来 set 不带 TTL 会让 Redis 里的长文报告只增不减，最终撑爆内存配额
 const MARRIAGE_CACHE_TTL = 90 * 24 * 60 * 60;
@@ -39,6 +42,93 @@ function deepReportCacheTtl(text: string): number {
   if (text.length > DEEP_REPORT_FULL_CACHE_LEN) return MARRIAGE_CACHE_TTL;
   if (text.length > DEEP_REPORT_MIN_READ_LEN) return DEEP_REPORT_SHORT_CACHE_TTL;
   return 0;
+}
+
+// ── 缓存键 ─────────────────────────────────────────
+/**
+ * 合婚缓存键 = 前缀 + 「所有会进 prompt 的输入」的 sha256 摘要。
+ *
+ * 为什么必须这么改（这是隐私问题，不只是命中率问题）：
+ * 旧键只有 { male: 八字, female: 八字 }，可姓名、出生地、公历/农历标记全都进了 prompt，
+ * 也就原样进了缓存正文——深度报告开头就是「男方：张三，生于…」，struct 的 analysis/highlight
+ * 同样可能带名。于是两对生辰完全相同（同年月日时）但姓名不同的情侣命中同一份缓存，
+ * 后来者读到的报告里写着前一对的真实姓名。八字是六十甲子循环，相隔 60 年的两个人四柱可以完全一致，
+ * 「同八字不同人」在生产里并不罕见，这就是一条跨用户的个人信息泄露路径。
+ *
+ * 为什么摘要而不是把姓名明文拼进键：姓名/出生地是 PII，而 Redis 键空间在控制台、SCAN、
+ * 慢日志里都是明文可见的。做法对齐 src/app/api/bazi/route.ts 的 `v6:bazi:<sha256>`。
+ *
+ * 为什么收成两个构造函数而不是各处直接拼：深度报告有两个调用点（SSE 分支与 runDeepReport），
+ * 键材料一旦写岔就是「谁也读不到谁写的」的静默失效，比串档更难发现。
+ */
+function digestCacheKey(prefix: string, material: Record<string, unknown>): string {
+  const digest = crypto.createHash('sha256')
+    .update(JSON.stringify(material))
+    .digest('hex')
+    .slice(0, 24);
+  return `${prefix}:${digest}`;
+}
+
+function structCacheKey(p: {
+  maleBazi: string; femaleBazi: string;
+  maleName: string; femaleName: string;
+  maleDateLine: string; femaleDateLine: string;
+  malePlaceLine: string; femalePlaceLine: string;
+  score: number; level: string; details: string[];
+}): string {
+  return digestCacheKey(MARRIAGE_STRUCT_CACHE_PREFIX, {
+    m: p.maleBazi, f: p.femaleBazi,
+    // 姓名进 prompt、也进正文 → 必须进键，否则同八字不同姓名的两对会互相读到对方的名字
+    mn: p.maleName, fn: p.femaleName,
+    // 出生地同理；出生日期也必须进：同一副八字对应的公历日期每 60 年重复一次，
+    // 而 prompt 里写着「生于 X 年 X 月 X 日」，旧键会让 1965 年生的人读到 2025 年生的人的报告
+    md: p.maleDateLine, fd: p.femaleDateLine,
+    mp: p.malePlaceLine, fp: p.femalePlaceLine,
+    // score/level/details 理论上可由双方八字推出（冗余），仍纳入：算分逻辑一改键就自然翻新，
+    // 不会留下「新算法的分数配旧文案」的错配
+    s: p.score, lv: p.level, d: p.details.join('|'),
+  });
+}
+
+function deepCacheKey(p: {
+  maleBazi: string; femaleBazi: string;
+  maleName: string; femaleName: string;
+  maleDateLine: string; femaleDateLine: string;
+  score: number; level: string;
+}): string {
+  return digestCacheKey(MARRIAGE_DEEP_CACHE_PREFIX, {
+    m: p.maleBazi, f: p.femaleBazi,
+    mn: p.maleName, fn: p.femaleName,
+    md: p.maleDateLine, fd: p.femaleDateLine,
+    s: p.score, lv: p.level,
+    // 深度报告 prompt 里写死了「今年及未来 2-3 年」的流年节点。TTL 长达 90 天，
+    // 年份不进键的话，12 月生成的报告能被次年 3 月的用户读到，流年结论整体错一年。
+    // 代价是每年元旦这批缓存集体翻新一次——本来 90 天也留不住，可接受。
+    y: new Date().getFullYear(),
+  });
+}
+
+/**
+ * 写缓存挪到响应之后再执行。
+ *
+ * 为什么：AI 调用要等 10~60s，而 Node 内建 undici 连接池的 keepAliveTimeout 默认只有 4s——
+ * 等模型吐完时，到 Upstash 的那条连接必然已经凉了，紧接着这一次 Redis 写要重新做 TCP+TLS 握手，
+ * 生产实测约 268ms，全额计入用户等待。而写缓存的收益是给下一个人的，没道理让这一个人替他等。
+ * after() 在 Vercel 上映射到 waitUntil：响应关闭后仍保证执行，不像游离 Promise 会被冻结的实例丢掉
+ * （缓存写不进去 ⇒ 90 天缓存事实上不可达、每次都重打模型）。
+ * 拿不到 waitUntil 的运行时里 after() 会同步抛错：退回内联 await，至少不比改造前差。
+ */
+async function writeCacheAfterResponse(key: string, value: unknown, ttl: number): Promise<void> {
+  // setCache 内部已吞异常，这里再兜一层：after() 里的未处理拒绝会污染整个调用
+  const write = () => setCache(key, value, ttl).catch((err) => {
+    console.warn('[marriage] cache write failed:', err instanceof Error ? err.message : err);
+  });
+  try {
+    after(write);
+  } catch (err) {
+    console.warn('[marriage] after() unavailable, write cache inline:', err instanceof Error ? err.message : err);
+    await write();
+  }
 }
 
 // ── 八字计算 ───────────────────────────────────────
@@ -445,7 +535,19 @@ async function runAIAnalysis(params: {
     maleSide, femaleSide, maleBazi, femaleBazi, score, level, details, provider,
   } = params;
 
-  const cacheKey = generateCacheKey(MARRIAGE_STRUCT_CACHE_PREFIX, { male: maleBazi, female: femaleBazi });
+  // prompt 材料先备齐，键才能算：姓名/出生地/农历标记都会进 prompt 与缓存正文，必须一起进键
+  const malePlaceLine = maleSide.birthPlace ? `\n- 出生地：${sanitizeUserInput(String(maleSide.birthPlace), 50)}` : '';
+  const femalePlaceLine = femaleSide.birthPlace ? `\n- 出生地：${sanitizeUserInput(String(femaleSide.birthPlace), 50)}` : '';
+  const maleDateLine = maleSide.isLunar ? `${effectiveMaleDate}（农历）` : effectiveMaleDate;
+  const femaleDateLine = femaleSide.isLunar ? `${effectiveFemaleDate}（农历）` : effectiveFemaleDate;
+
+  const cacheKey = structCacheKey({
+    maleBazi, femaleBazi,
+    maleName: safeMaleName, femaleName: safeFemaleName,
+    maleDateLine, femaleDateLine,
+    malePlaceLine, femalePlaceLine,
+    score, level, details,
+  });
   const cached = await getCache(cacheKey);
   if (cached && cached.dimensions && Array.isArray(cached.dimensions)) {
     return {
@@ -458,11 +560,6 @@ async function runAIAnalysis(params: {
       aiSource: 'cache',
     };
   }
-
-  const malePlaceLine = maleSide.birthPlace ? `\n- 出生地：${sanitizeUserInput(String(maleSide.birthPlace), 50)}` : '';
-  const femalePlaceLine = femaleSide.birthPlace ? `\n- 出生地：${sanitizeUserInput(String(femaleSide.birthPlace), 50)}` : '';
-  const maleDateLine = maleSide.isLunar ? `${effectiveMaleDate}（农历）` : effectiveMaleDate;
-  const femaleDateLine = femaleSide.isLunar ? `${effectiveFemaleDate}（农历）` : effectiveFemaleDate;
 
   const prompt = `你是"赛博命理师"的八字合婚分析功能。下面给出双方八字信息，请输出**严格 JSON**（不要任何前后注释/Markdown 代码块/前言）。
 
@@ -567,8 +664,9 @@ ${details.join('\n')}
   //   同一对八字之后每次来都拿到模板且刷新无效。只给 120s 防同一用户连点造成的并发重复调用（防雪崩），
   //   到期后下一次请求会重新走 AI 拿真结果。
   // - 'fallback'：AI 完全没调通，纯本地模板，零成本可随时重算，不写缓存。
+  // 写入交给 after()：此刻刚等完 10~60s 的 AI，Redis 连接必已冷，同步写要多付一次 ~268ms 握手（见 writeCacheAfterResponse）
   if (aiSource === 'deepseek' || aiSource === 'deepseek-fallback') {
-    await setCache(cacheKey, {
+    await writeCacheAfterResponse(cacheKey, {
       dimensions: structured.dimensions,
       advices: structured.advices,
       highlight: structured.highlight,
@@ -597,15 +695,21 @@ async function runDeepReport(params: {
     effectiveMaleDate, effectiveFemaleDate, maleBazi, femaleBazi, score, level, provider,
   } = params;
 
-  const cacheKey = generateCacheKey(MARRIAGE_DEEP_CACHE_PREFIX, { male: maleBazi, female: femaleBazi });
+  const maleDateLine = maleSide.isLunar ? `${effectiveMaleDate}（农历）` : effectiveMaleDate;
+  const femaleDateLine = femaleSide.isLunar ? `${effectiveFemaleDate}（农历）` : effectiveFemaleDate;
+
+  // 与 SSE 分支共用 deepCacheKey：两条路径共享同一批缓存条目，键材料必须逐字一致
+  const cacheKey = deepCacheKey({
+    maleBazi, femaleBazi,
+    maleName: safeMaleName, femaleName: safeFemaleName,
+    maleDateLine, femaleDateLine,
+    score, level,
+  });
   const cached = await getCache(cacheKey);
   // 与 SSE 分支同源阈值：两条路径共用同一个 cacheKey，读取门槛不一致会互相看到对方存不进/读不出的条目
   if (cached && typeof cached.deepReport === 'string' && cached.deepReport.length > DEEP_REPORT_MIN_READ_LEN) {
     return { deepReport: cached.deepReport, aiSource: 'cache' };
   }
-
-  const maleDateLine = maleSide.isLunar ? `${effectiveMaleDate}（农历）` : effectiveMaleDate;
-  const femaleDateLine = femaleSide.isLunar ? `${effectiveFemaleDate}（农历）` : effectiveFemaleDate;
 
   const deepReportPrompt = `你是一位精通子平命理的专业命理师，请为以下这对男女出具一份专业、深度的八字合婚分析报告。
 
@@ -706,7 +810,8 @@ async function runDeepReport(params: {
       // 注：本函数当前无调用方（深度报告走下方 SSE 分支），保留同样的守卫是为了日后接回时不再引入同一个坑。
       const deepTtl = deepReportCacheTtl(deepReport);
       if (deepTtl > 0) {
-        await setCache(cacheKey, { deepReport }, deepTtl);
+        // 同 struct 分支：AI 等完之后连接已冷，这次写挪到响应之后再做
+        await writeCacheAfterResponse(cacheKey, { deepReport }, deepTtl);
       }
       return { deepReport, aiSource: 'deepseek' };
     } else {
@@ -848,7 +953,13 @@ export async function POST(req: NextRequest) {
     const maleDateLine = maleSide.isLunar ? `${effectiveMaleDate}（农历）` : effectiveMaleDate;
     const femaleDateLine = femaleSide.isLunar ? `${effectiveFemaleDate}（农历）` : effectiveFemaleDate;
 
-    const cacheKey = generateCacheKey(MARRIAGE_DEEP_CACHE_PREFIX, { male: maleBazi, female: femaleBazi });
+    // 与 runDeepReport 共用 deepCacheKey：姓名/出生日期都进 prompt 与正文，必须进键（见 deepCacheKey 注释）
+    const cacheKey = deepCacheKey({
+      maleBazi, femaleBazi,
+      maleName: safeMaleName, femaleName: safeFemaleName,
+      maleDateLine: maleDateLine as string, femaleDateLine: femaleDateLine as string,
+      score, level,
+    });
     const encoder = new TextEncoder();
 
     // 缓存命中：以 SSE 格式一次性推送，前端逻辑统一
@@ -946,6 +1057,10 @@ export async function POST(req: NextRequest) {
 
     const aiRes = await fetch(`${provider.baseUrl}/chat/completions`, {
       method: 'POST',
+      // 跟随客户端断连掐掉上游：否则用户关页面后，上游流仍会读到底，
+      // start() 迟迟不 unwind → markStreamDone 不触发 → flushCacheWrite 在 waitUntil 里
+      // 空等到 15s 兜底才退出，白占函数活跃时长（Fluid Compute 按活跃时间计费）。
+      signal: req.signal,
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${provider.apiKey}`,
@@ -968,6 +1083,34 @@ export async function POST(req: NextRequest) {
     }
 
     let fullText = '';
+
+    // —— 收尾（写缓存）挪到关流之后 ——
+    // 深度报告要流 20~60s，等模型吐完时 undici 的 keep-alive（默认 4s）早已过期，
+    // 这一次 Redis 写必然要重新 TCP+TLS 握手（生产实测 ~268ms）。原来它阻在 controller.close() 之前，
+    // 用户正文早已看全，却还要多等一次握手才收到流结束、loading 才消失。
+    // after() 在 Vercel 上映射到 waitUntil，响应关闭后仍保证执行（游离 Promise 会被冻结的实例丢掉）。
+    let pendingCacheWrite: { text: string; ttl: number } | null = null;
+    let markStreamDone: () => void = () => {};
+    const streamDone = new Promise<void>((resolve) => { markStreamDone = resolve; });
+    const flushCacheWrite = async () => {
+      // 客户端断连时响应会先于 start() 结束而关闭，after() 回调可能被提前唤醒——
+      // 那一刻还不知道该不该写，必须等 start() 收完尾（再兜一层超时，绝不把 waitUntil 挂死）
+      await new Promise<void>((resolve) => {
+        const t = setTimeout(resolve, 15_000);
+        void streamDone.then(() => { clearTimeout(t); resolve(); });
+      });
+      if (!pendingCacheWrite) return;
+      await setCache(cacheKey, { deepReport: pendingCacheWrite.text }, pendingCacheWrite.ttl).catch(() => {});
+    };
+    // 拿不到 waitUntil 的运行时里 after() 会同步抛错：退回「关流后内联执行」，至少不比改造前差
+    let flushInline = false;
+    try {
+      after(flushCacheWrite);
+    } catch (e) {
+      flushInline = true;
+      console.warn('[marriage deep] after() unavailable, flush cache inline:', e instanceof Error ? e.message : e);
+    }
+
     const stream = new ReadableStream({
       async start(controller) {
         const reader = aiRes.body!.getReader();
@@ -1000,14 +1143,23 @@ export async function POST(req: NextRequest) {
           // 2) 长度分级见 deepReportCacheTtl：>600 存 90 天，200~600 存 120s（与读缓存阈值对齐，
           //    不留「读得进、写不出」的死区），≤200 读缓存那侧本就不认，不存。
           // 用户已经通过 SSE 收到全部内容，这里只决定「要不要留给下一个人」，不影响本次返回。
+          // 只在读完整条流的正常路径上登记：中途抛错（多为客户端断连）保持 pendingCacheWrite = null，
+          // 残报告不该被当成完整报告缓存起来。真正的写入由 after() 在关流之后执行。
           const cleanText = fullText.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
           const cleanTtl = deepReportCacheTtl(cleanText);
           if (cleanTtl > 0) {
-            await setCache(cacheKey, { deepReport: cleanText }, cleanTtl).catch(() => {});
+            pendingCacheWrite = { text: cleanText, ttl: cleanTtl };
           }
         } finally {
-          controller.close();
-          reader.releaseLock();
+          // 先放行 after() 回调：写什么、写不写此刻已经定了（正常收尾在 try 里赋过值，异常路径就是不写）
+          markStreamDone();
+          try {
+            controller.close();
+            reader.releaseLock();
+          } finally {
+            // 仅 after() 不可用的运行时会走到：关流后内联补写，保证不比改造前差
+            if (flushInline) await flushCacheWrite();
+          }
         }
       },
     });

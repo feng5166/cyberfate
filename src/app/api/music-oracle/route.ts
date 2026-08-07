@@ -257,8 +257,13 @@ export async function POST(request: NextRequest) {
         // TTL 对齐北京午夜(限流键按北京日滚动)。旧写法 setHours(24,..) 走 UTC 午夜=北京 08:00,
         // 会让 00:00–08:00 首抽的游客在 08:00 后拿到二次免费抽。
         const ttl = getSecondsUntilBeijingMidnight();
-        await redis.incr(rateLimitKey);
-        await redis.expire(rateLimitKey, ttl);
+        // incr + expire 合并成一次 pipeline。这两条紧跟在最长 30s 的 AI 调用之后，
+        // 而 undici 默认 keepAliveTimeout 只有 4s：连接已被回收，第一条要重付 TCP+TLS 握手
+        // （生产实测 hkg1→Upstash 约 268ms），第二条还要再付一次港-东京 RTT（约 50ms）。
+        // 合并后握手只付一次、RTT 只付一次，直接省掉后一次往返。
+        // 注意：这里不挪去 after() —— 它是游客防刷计数（配额语义），不赌响应关闭后的后台任务；
+        // 挪走会把「check 与 incr 之间的窗口」从毫秒级拉长到整段打字机流（约 3s），凭空放大刷量口子。
+        await redis.pipeline().incr(rateLimitKey).expire(rateLimitKey, ttl).exec();
       } catch (err) {
         console.warn('[music-oracle] 限流计数更新失败:', err);
       }
