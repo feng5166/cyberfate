@@ -145,12 +145,21 @@ export async function POST(req: NextRequest) {
   const session = await getAuthSession(req);
 
   // 轻量防刷（与 stream 的计费限流用不同 key，避免互相占用名额）
+  //
+  // failOpen: true —— 为什么这个端点零成本、Redis 挂了也该放行：
+  // 1. 本端点从头到尾只跑纯函数：calculateBazi / calculateBaziFromPillars / analyzeMingGe /
+  //    analyzeShensha / analyzeLiunian / analyzeLiuyueRange / getDayun*，全部是 lunar-javascript
+  //    的本地确定性计算，无一次网络调用、无一次 DB 写。
+  // 2. 唯一会烧钱的 AI 解读在 /api/bazi/stream，那里有 ai_bazi / ai_bazi_guest（游客 1 次/天）
+  //    双重 fail-closed 闸门 + checkBaziQuota，本端点放行一万次也换不来一个 AI token。
+  // 3. 被刷的最坏后果只是 CPU。而 fail-closed 的代价是：Redis 一抖，整站排盘（八字模块首屏）
+  //    全部 503 —— 用最贵的故障换最便宜的防护，方向是反的。
   const ip = getClientIp(req);
   if (session?.user?.id) {
-    const rl = await checkRateLimit('bazi_chart', session.user.id, 30, 60);
+    const rl = await checkRateLimit('bazi_chart', session.user.id, 30, 60, { failOpen: true });
     if (!rl.allowed) return Response.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
   } else {
-    const rl = await checkRateLimit('bazi_chart_guest', ip, 20, 3600);
+    const rl = await checkRateLimit('bazi_chart_guest', ip, 20, 3600, { failOpen: true });
     if (!rl.allowed) return Response.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
   }
 

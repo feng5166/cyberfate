@@ -24,10 +24,23 @@ export async function POST(req: NextRequest) {
   const ip = getClientIp(req);
 
   // 轻量防刷：独立 key，不消耗 AI 解读 / 游客每日额度（那些在 /draw 里扣）
+  //
+  // failOpen: true —— 为什么这个端点零成本、Redis 挂了也该放行：
+  // 1. 本端点只做本地洗牌（drawRandomCards → fisherYatesShuffle，src/data/tarot.ts 纯函数）
+  //    + 只读 DB（isVip / peekTarotQuota 都是 findFirst/findUnique），不写库、不碰 AI。
+  // 2. 计费真源是 /api/tarot/draw：ai_tarot、ai_tarot_guest（游客 1 次/天）与 chargeTarotQuota
+  //    都在那边，且一律保持 fail-closed。本端点放行再多次也生成不出一个字的解读。
+  // 3. 被刷的最坏后果是 78 张牌的洗牌 CPU + 两次只读查询；而 fail-closed 会让抽牌动画
+  //    在 Redis 抖动时直接 429，用户连牌面都看不到。
+  let rlDegraded = false;
   if (!isDebugMode) {
     const id = session?.user?.id || ip;
-    const rl = await checkRateLimit('tarot_cards', id, 30, 60);
+    const rl = await checkRateLimit('tarot_cards', id, 30, 60, { failOpen: true });
     if (!rl.allowed) return NextResponse.json({ error: 'RATE_LIMITED', message: '操作过于频繁，请稍后再试' }, { status: 429 });
+    // 降级放行时跳过下面的只读预检：那两次 Postgres 查询是纯 UX 前置提示，
+    // 真正的扣费闸门在 /api/tarot/draw（chargeTarotQuota 原子扣减，且仍 fail-closed）。
+    // Redis 挂掉期间限流强度已降为每实例内存计数，不该再让每次抽牌顺带压 DB。
+    rlDegraded = rl.degraded === true;
   }
 
   // 凯尔特十字：VIP 专属（抽牌阶段就拦，避免非会员抽了牌又被 /draw 拒）
@@ -42,7 +55,7 @@ export async function POST(req: NextRequest) {
   }
 
   // 登录非 VIP：只读预检，额度已满就提前拦（不扣减，真正扣减在 /draw）
-  if (!isDebugMode && session?.user?.id && spread !== 'celtic') {
+  if (!isDebugMode && !rlDegraded && session?.user?.id && spread !== 'celtic') {
     const vip = await isVip(session.user.id);
     if (!vip) {
       const hasQuota = await peekTarotQuota(session.user.id, spread);

@@ -169,10 +169,18 @@ export const REDIS_USER_PATH_TIMEOUT_MS = (() => {
 export type RedisTier = 'best-effort' | 'critical';
 
 const DOWN_TRIP_TIMEOUTS = 3; // 连续 3 次超时才判定不可达：单次慢不算数，避免误伤
-const DOWN_COOLDOWN_MS = 5000; // 短路窗口：够躲过一波抖动，又不会在 Redis 恢复后拖太久
+/**
+ * 短路窗口：够躲过一波抖动，又不会在 Redis 恢复后拖太久。
+ *
+ * ⚠️ 对外耦合：rate-limit.ts 用它推导「降级 503 的 Retry-After 下限」。
+ *    理由是客户端在冷却窗内重试拿不到任何新信息 —— best-effort 直接硬短路，
+ *    critical 也只是走 750ms 的 verify 槽，多半照样降级。所以「建议重试时间」
+ *    不该短于这个窗。改这里的值时顺带看一眼 rate-limit.ts 的 DEGRADED_RETRY_AFTER_S。
+ */
+export const REDIS_DOWN_COOLDOWN_MS = 5000;
 // 「连续」必须带时间约束：相隔几十分钟的 3 次零星超时不是「当下不可达」的证据。
 // 超过 2 倍冷却窗没有新的超时 → 计数重新起算（否则低频抖动会慢慢攒够 3 次误开闸门）。
-const TIMEOUT_STREAK_TTL_MS = DOWN_COOLDOWN_MS * 2;
+const TIMEOUT_STREAK_TTL_MS = REDIS_DOWN_COOLDOWN_MS * 2;
 // 探针用更宽的期限（常规的 2 倍）。原因是一个必须堵死的坏状态：
 // 若探针和常规调用共用 1.5s 期限，那么「Redis 活着但稳定慢于 1.5s」时探针会永远超时，
 // 闸门每 5s 续一次、**永久锁死在降级态**，明明够得着的 Redis 被我们自己判了死刑。
@@ -275,11 +283,11 @@ function tripGate(tier: RedisTier, label: string, timeoutMs: number): void {
   g.consecutiveTimeouts += 1;
   if (g.consecutiveTimeouts >= DOWN_TRIP_TIMEOUTS) {
     const wasDown = g.downUntil > now;
-    g.downUntil = now + DOWN_COOLDOWN_MS;
+    g.downUntil = now + REDIS_DOWN_COOLDOWN_MS;
     if (!wasDown) {
       console.error(
         `[Redis][ALERT] [${tier}] 连续 ${g.consecutiveTimeouts} 次超过 ${timeoutMs}ms 期限（最近一次: ${label}），` +
-          `本实例该级进入降级 ${DOWN_COOLDOWN_MS}ms。`,
+          `本实例该级进入降级 ${REDIS_DOWN_COOLDOWN_MS}ms。`,
       );
     }
   }
