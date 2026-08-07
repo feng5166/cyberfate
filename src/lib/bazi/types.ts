@@ -174,6 +174,15 @@ export interface BaziApiResult {
   liuyue?: LiuyueItem[];
   /** 终身大运表（约 8 步） */
   dayunTimeline?: DayunTimelineItem[];
+  // —— V2 新增（PRD-BAZI-V2）——
+  /** 刑冲会合害（命局四柱地支两两关系） */
+  interactions?: import('./interactions').BranchInteraction[];
+  /** 关键应期（未来 10 年扫描；非 VIP 服务端只返回最近 1 条） */
+  yingqi?: {
+    vip: boolean;
+    total: number;
+    items: import('./yingqi').YingqiItem[];
+  };
 }
 
 export interface BaziHistoryRecord {

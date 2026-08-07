@@ -112,7 +112,7 @@ ${typeof score === 'number' ? `综合匹配度：${score}分（${level || ''}）
       },
       body: JSON.stringify({
         model: PRIMARY_MODEL,
-        max_tokens: 1200,
+        max_tokens: 2500,
         temperature: 0.6,
         enable_thinking: false,
         messages,

@@ -1,8 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { Bookmark, BookmarkCheck, ChevronDown, ChevronUp, Clock, Send, Wrench, X } from 'lucide-react';
 import Link from 'next/link';
+import { useAiGate, AiGateModals } from '@/components/ai/useAiGate';
+import { track } from '@/lib/analytics';
 import { Card } from '@/components/ui/Card';
 import { OracleLoading } from '@/components/ui/OracleLoading';
 import { MiniMarkdown } from '@/components/ui/MiniMarkdown';
@@ -64,6 +67,8 @@ interface BaziChatSectionProps {
   title?: string;
   subtitle?: string;
   presetQuestions?: string[];
+  /** 外部注入问题（场景化入口：nonce 变化时填充输入框） */
+  injectQuestion?: { text: string; nonce: number };
 }
 
 const cardClass =
@@ -141,7 +146,10 @@ export function BaziChatSection({
   title = 'AI 八字问答',
   subtitle = '基于您的命盘智能问答 · 仅供参考',
   presetQuestions = PRESET_QUESTIONS,
+  injectQuestion,
 }: BaziChatSectionProps) {
+  const pathname = usePathname();
+  const gate = useAiGate(isLoggedIn);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [favorites, setFavorites] = useState<FavoriteRecord[]>([]);
@@ -155,6 +163,12 @@ export function BaziChatSection({
     setFavorites(loadFavorites());
   }, []);
 
+  // 场景化入口注入问题（如K线某年的「问 AI」）
+  useEffect(() => {
+    if (injectQuestion && injectQuestion.text) setInput(injectQuestion.text);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [injectQuestion?.nonce]);
+
   useEffect(() => {
     if (!toast) return;
     const timer = setTimeout(() => setToast(''), 2500);
@@ -162,8 +176,12 @@ export function BaziChatSection({
   }, [toast]);
 
   useEffect(() => {
-    if (listRef.current) {
-      listRef.current.scrollTop = listRef.current.scrollHeight;
+    const el = listRef.current;
+    if (!el) return;
+    // 仅当用户停在列表底部附近时才自动置底；用户上滚回看时不抢滚动条
+    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+    if (nearBottom) {
+      el.scrollTop = el.scrollHeight;
     }
   }, [messages]);
 
@@ -196,13 +214,15 @@ export function BaziChatSection({
     if (submitting) return;
 
     if (!isLoggedIn) {
-      setToast('请登录后使用');
+      // 统一门禁：游客提问直接弹登录框（而非 toast）
+      gate.openAuth({
+        title: '登录后即可使用 AI 问答',
+        desc: '登录或注册账号即可向 AI 命理师提问；开通会员不限次并解锁更多权益。',
+      });
       return;
     }
-    if (!isVip) {
-      setShowSubModal(true);
-      return;
-    }
+    // PRD-BAZI-V2 P1-A：非 VIP 不再客户端预拦截——放行请求（免费 1 次/日），
+    // 由服务端三层门禁判定，超限 403 时再弹升级。
     if (trimmed.length > 200) {
       setToast('问题不得超过200字');
       return;
@@ -223,6 +243,7 @@ export function BaziChatSection({
     setMessages(prev => [...prev, newMsg]);
     setInput('');
     setSubmitting(true);
+    track('bazi_chat_try', { is_vip: isVip });
 
     try {
       const res = await fetch('/api/bazi/chat', {
@@ -232,11 +253,15 @@ export function BaziChatSection({
       });
 
       if (res.status === 401) {
-        setToast('请登录后使用');
+        gate.openAuth({
+          title: '登录后即可使用 AI 问答',
+          desc: '登录或注册账号即可向 AI 命理师提问；开通会员不限次并解锁更多权益。',
+        });
         setMessages(prev => prev.filter(m => m.id !== id));
         return;
       }
       if (res.status === 403) {
+        track('bazi_chat_paywall_show');
         setShowSubModal(true);
         setMessages(prev => prev.filter(m => m.id !== id));
         return;
@@ -585,6 +610,9 @@ export function BaziChatSection({
           </div>
         </div>
       )}
+
+      {/* 游客提问 → 登录引导（全站 AI 问答统一行为） */}
+      <AiGateModals gate={gate} callbackUrl={pathname ?? '/bazi'} />
     </Card>
   );
 }

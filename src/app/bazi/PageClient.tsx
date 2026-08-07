@@ -11,6 +11,7 @@ import {
   BarChart3,
   ChevronDown,
   ChevronUp,
+  Heart,
   History,
   Pencil,
   Plus,
@@ -19,6 +20,7 @@ import {
   Share2,
   Sparkles,
   Trash2,
+  TrendingUp,
   Wrench,
 } from 'lucide-react';
 import { saveBirthInfo, loadBirthInfo } from '@/lib/utils/storage';
@@ -38,7 +40,10 @@ import { Tag } from '@/components/ui/Tag';
 import { Footer } from '@/components/layout/Footer';
 import { AiDisclaimer } from '@/components/ui/AiDisclaimer';
 import { PageShell, SplitLayout } from '@/components/ui';
-// 直引具体子模块而非 '@/lib/bazi' barrel：barrel 会把 tools/lifeKline 等无关模块连带进客户端包
+// 直引具体子模块，不走 '@/lib/bazi' barrel：barrel 会 re-export calculator / liunian /
+// yingqi / tools / lifeKline，它们（后几个经 calculator 间接）顶层 import lunar-javascript ——
+// 一个 436KB 的 CJS 单文件（打包后 299KB raw / 97KB gz、无法 tree-shake），
+// 只要有一处 value-import 就会把整库压进 bazi 首屏。
 import {
   DAYMASTER_TRAITS,
   DIZHI_LIST,
@@ -46,15 +51,23 @@ import {
   TIANGAN_WUXING,
   WUXING_KEYS,
 } from '@/lib/bazi/constants';
-// 注意：这里刻意不 import '@/lib/bazi/calculator' 与 '@/lib/bazi/liunian'——静态、动态都不 import。
-// 它们（liunian 经 calculator 间接）顶层 import lunar-javascript，那是 436KB 的 CJS 单文件
-// （打包后 299KB raw / 97KB gz、无法 tree-shake），静态引用等于把整库压进 bazi 首屏。
-// 排盘接口现已随响应返回全部 lunar 派生字段；存量数据（本地历史记录 / 上线前写入的档案缓存 /
-// 跨年过期的流年快照）缺字段时改为「重发一次 /api/bazi 取权威结果」补齐（见 ensureFullResult），
-// 而不是在客户端再养一套计算实现。因此本页在任何路径下都不会加载 lunar-javascript。
+// 以下子模块的 import 链里都没有 lunar-javascript（纯查表 / 纯计算），可安全直引：
+//   dayunDetail → constants + helpers + geju；shensha / interactions / geju / persona → constants + helpers；
+//   quickRead → dayunDetail + constants（对 liunian 只有 import type，编译期擦除）。
 import { describeDayun } from '@/lib/bazi/dayunDetail';
 import type { DayunDetail } from '@/lib/bazi/dayunDetail';
 import { analyzeShensha, shenshaNature } from '@/lib/bazi/shensha';
+import { analyzeInteractions } from '@/lib/bazi/interactions';
+import { analyzeMingGe } from '@/lib/bazi/geju';
+import type { GejuName } from '@/lib/bazi/geju';
+import { buildQuickRead } from '@/lib/bazi/quickRead';
+import { personaFor } from '@/lib/bazi/persona';
+// 注意：这里刻意不 import '@/lib/bazi/calculator' / '@/lib/bazi/liunian' / '@/lib/bazi/yingqi'
+// —— 静态、动态都不 import。原先本页现算的那些量（农历串、起运、终身大运表、流年、流月、
+// 当前流年干支、关键应期）全部改读 /api/bazi 响应字段（服务端用同一套实现算出，口径一致）。
+// 存量数据（本地历史记录 / 上线前写入的档案缓存 / 跨年过期的流年快照）缺字段时改为
+// 「重发一次 /api/bazi 取权威结果」补齐（见 ensureFullResult），而不是在客户端再养一套计算实现。
+// 因此本页在任何路径下都不会加载 lunar-javascript。
 import type {
   BaziApiResult,
   BaziHistoryRecord,
@@ -62,6 +75,7 @@ import type {
   BaziTrait,
   DayunTimelineItem,
   MingGeInfo,
+  TianGan,
   WuxingCount,
   WuXing,
 } from '@/lib/bazi/types';
@@ -81,17 +95,14 @@ const WuxingChart = dynamic(() => import('@/components/bazi/WuxingChart').then(m
 const ShenshaCard = dynamic(() => import('@/components/bazi/ShenshaCard').then(m => m.ShenshaCard), { ssr: false, loading: _loadingSpinner });
 const LiunianLiuyueCard = dynamic(() => import('@/components/bazi/LiunianLiuyueCard').then(m => m.LiunianLiuyueCard), { ssr: false, loading: _loadingSpinner });
 const BaziChatSection = dynamic(() => import('@/components/bazi/BaziChatSection').then(m => m.BaziChatSection), { ssr: false, loading: _loadingSpinner });
+const QuickReadCard = dynamic(() => import('@/components/bazi/QuickReadCard').then(m => m.QuickReadCard), { ssr: false, loading: _loadingSpinner });
+const TopicReadSection = dynamic(() => import('@/components/bazi/TopicReadSection').then(m => m.TopicReadSection), { ssr: false, loading: _loadingSpinner });
+const InteractionsCard = dynamic(() => import('@/components/bazi/InteractionsCard').then(m => m.InteractionsCard), { ssr: false, loading: _loadingSpinner });
+const YingqiCard = dynamic(() => import('@/components/bazi/YingqiCard').then(m => m.YingqiCard), { ssr: false, loading: _loadingSpinner });
 
-type ResultTab = '性格特质' | '事业财运' | '婚姻健康' | '十神详解' | '大运流年';
 type AiSectionKey = 'dayMaster' | 'personality' | 'career' | 'wealth' | 'relationship' | 'health' | 'dayun';
 
 type TagVariant = 'metal' | 'wood' | 'water' | 'fire' | 'earth';
-
-interface TabContent {
-  scores: Array<{ label: string; value: number }>;
-  points: string[];
-  detail: string;
-}
 
 interface FaqItem {
   question: string;
@@ -160,6 +171,7 @@ interface BaziProfileData {
 }
 
 const MAX_LOGGED_IN_PROFILES = 5;
+const MAX_VIP_PROFILES = 20; // PRD-BAZI-V2 P1-B：与服务端 profiles/route.ts 保持一致
 const MAX_GUEST_PROFILES = 2;
 
 const shichenOptions = [
@@ -328,11 +340,12 @@ function isGanzhiStale(result: BaziPageResult): boolean {
 /**
  * 恢复/切换命盘时同步刷新「不依赖 lunar-javascript 的模块」，并剥离已过期的快照：
  * - 神煞为静态且纯查表，从四柱重算（本地历史记录从未持久化神煞，否则会空）
+ * - 格局（mingGe）纯查表，旧历史/档案记录未存时补算，速读卡/人设分享卡才有数据（V2）
  * - 大运当前高亮按当前年刷新（缓存命盘可能是去年算的）
  * - 跨年过期的流年/流月、过了立春的流年干支一律置空
  * 取不到四柱（极旧无 pillars 记录）则原样返回。
  *
- * 为什么剥离而不是留着等补齐：这几项的干支要经 calculator 走 lunar-javascript，客户端算不了，
+ * 为什么剥离而不是留着等补齐：流年/流月的干支要经 calculator 走 lunar-javascript，客户端算不了，
  * 只能靠 /api/bazi 补齐（见 ensureFullResult），而补齐可能失败、也可能因为用户没滚到那儿就没触发。
  * 留着旧快照＝在没有任何提示的情况下把去年的流年当今年展示；剥离后卡片自带
  * `result.liunian || result.liuyue?.length` / `currentLiunian &&` 渲染守卫会自动隐藏。
@@ -353,10 +366,12 @@ function withFreshModules(result: BaziPageResult): BaziPageResult {
       ...d,
       isCurrent: year >= d.yearStart && year <= d.yearEnd,
     }));
+    const mingGe = result.mingGe ?? analyzeMingGe(chart);
     const flowStale = result.flowYear !== year;
     return {
       ...result,
       shensha,
+      mingGe,
       ...(dayunTimeline ? { dayunTimeline } : {}),
       ...(flowStale ? { liunian: undefined, liuyue: undefined } : {}),
       ...(isGanzhiStale(result) ? { currentYearGanzhi: undefined, ganzhiValidUntil: undefined } : {}),
@@ -368,7 +383,7 @@ function withFreshModules(result: BaziPageResult): BaziPageResult {
 
 // ── 存量命盘的「重发排盘接口」补齐 ────────────────────────────────
 // 存量数据（本地历史记录 / 上线前写入的档案缓存）里没有 lunar 派生字段：农历串、起运描述、
-// 终身大运表、流年流月、当前流年干支；缓存里的流年快照还会跨年过期。
+// 终身大运表、流年流月、当前流年干支、关键应期；缓存里的流年快照还会跨年过期。
 // 这些一律靠重发 /api/bazi 补齐——该接口是纯确定性排盘、无 AI 成本、自带限流，
 // 一次请求补齐全部字段并顺带拿到 cacheKey/baziResult，客户端因此无需第二套计算实现。
 //
@@ -494,20 +509,42 @@ function needsServerRefill(result: BaziPageResult, year: number): boolean {
   );
 }
 
+/**
+ * VIP 却只拿到截断的关键应期表：这份缓存写于开通会员之前（/api/bazi 按请求时的会话分层，
+ * 非 VIP 只下发最近 1 条）。重发一次接口带上当前会话即可拿到全表。
+ *
+ * 刻意与 needsServerRefill 分开：它只在「登记补齐 / 决定要不要发请求」时参与判断，
+ * 不参与「拿回来的 fresh 是否仍然过期」的缓存逐出判断——服务端若确实判定非 VIP，
+ * 重发多少次都还是截断表，混进逐出判据会让每次切档案都白打一次接口。
+ */
+function needsYingqiUnlock(result: BaziPageResult, isVip: boolean): boolean {
+  const y = result.yingqi;
+  return !!(isVip && y && y.items.length < y.total);
+}
+
 /** 首屏信息条（农历串 / 起运）当前就缺内容——这两项在页面顶部可见，不能等滚动到详情区再补 */
 function needsAboveFoldRefill(result: BaziPageResult): boolean {
-  return !result.lunarDate || !result.dayunStartDescription || !result.dayunStartAt;
+  // 判据必须覆盖「首屏就要用到」的每一项，否则那块会一直空着等哨兵——而哨兵在折叠线以下，
+  // 用户不滚动就永远不触发。liunian 是速读卡（QuickReadCard，V2 的首屏模块）的输入，
+  // 且 withFreshModules 会在 flowYear 过期时主动置空它；客户端已无 lunar-javascript 补不了，
+  // 只能靠服务端补齐，所以缺它同样要立即发请求。
+  return (
+    !result.lunarDate ||
+    !result.dayunStartDescription ||
+    !result.dayunStartAt ||
+    !result.liunian
+  );
 }
 
 /**
  * 存量命盘里的「起运」与本次重算结果是否同源（出自同一个出生时刻）。
  *
- * 判据就是起运本身：它是出生时刻的直接函数（`getDayunStart` 只依赖生辰与节气，与「现在」无关），
+ * 判据就是起运本身：它是出生时刻的直接函数（服务端的 getDayunStart 只依赖生辰与节气，与「现在」无关），
  * 两边都有值却不相等，只可能是入参精度不同——存量记录保存于「精确出生时刻未持久化」之前，
  * 这次只能按当日 0 点重算（实测同一天：精确 21:30 得 1997年9月、按 0 点折算得 1998年1月），
  * 也可能是更早版本的起运算法。
  *
- * 注意这**不再决定合并取舍**（大运整组一律取 fresh，见 mergeServerRefill），只用来决定
+ * 注意这**不决定合并取舍**（大运整组一律取 fresh，见 mergeServerRefill），只用来决定
  * 要不要给用户一条「这条记录的大运边界按时辰折算、可能有几个月误差」的信息提示。
  *
  * 一边缺值则无从比较，按对齐处理——缺的那边正要靠本次补齐填上，不存在「两套值打架」。
@@ -530,24 +567,22 @@ function isDayunSourceAligned(prev: BaziPageResult, fresh: BaziPageResult): bool
  * 每项都做空值兜底，接口没给的字段不覆盖已有值。
  *
  * 「谁优先」按三类处理：
- * - 农历串 fresh 优先：原先按「两边本就相同」用 prev 优先，但 /api/bazi 已改成
- *   getLunarDate(折算后的公历日)，对农历用户 prev 是旧的错值（把农历串当公历解释算出来的），
- *   继续 prev 优先等于把错值锁死。fresh 现在是权威口径。
- * - 大运整组（起运 description/at + 终身大运表 + dayunExtra）**整体取自同一侧**：
+ * - 农历串 fresh 优先：/api/bazi 的 lunarDate 取自「折算后的公历日」，对农历用户 prev 可能是旧的错值
+ *   （把农历串当公历解释算出来的），继续 prev 优先等于把错值锁死。fresh 是权威口径。
+ * - 大运整组（起运 description/at + 终身大运表 + dayunExtra + solarBirthDate）**整体取自同一侧**：
  *   fresh 给得出起运就整组换成 fresh，给不出（八字直输等）才整组保持 prev。绝不混搭——
  *   任何一项跨侧都会让屏幕上的起运、大运时间轴、送进 /api/bazi/stream 的「当前/下一步大运」
  *   出自不同的盘。
  *   为什么是「取 fresh」而不是「保持 prev」：存量记录压根没持久化过 dayunTimeline，
  *   保持 prev 等于把大运时间轴、选中大运详情、四维简评整块隐藏掉，比补齐前还少。
- *   fresh 是一份自洽的完整大运（服务端四柱与大运同锚），整组换上去全屏口径统一；
  *   代价只是「按时辰折算、可能与记录当初的精确起运差几个月」，这一点由 isDayunSourceAligned
  *   判出后以信息提示告知，并给出「重新填写出生信息」入口。
- * - 流年流月 / 流年干支 / 神煞 / 格局 fresh 优先：它们只由四柱与年份决定（四柱已由 isSameChart 校验逐字相同），
- *   与出生时刻精度无关，且存量值要么没有、要么已跨年过期。
+ * - 流年流月 / 流年干支 / 神煞 / 格局 / 刑冲会合害 / 关键应期 fresh 优先：它们只由四柱与年份决定
+ *   （四柱已由 isSameChart 校验逐字相同），与出生时刻精度无关，且存量值要么没有、要么已跨年过期。
  */
 function mergeServerRefill(prev: BaziPageResult, fresh: BaziPageResult): BaziPageResult {
   // 大运整组的取舍：只看 fresh 拿不拿得出起运（date 模式恒有；八字直输/异常才没有）。
-  // 一个布尔量决定四个字段，从结构上杜绝混搭。
+  // 一个布尔量决定五个字段，从结构上杜绝混搭。
   // solarBirthDate 归入本组而非单独取值：它就是这组大运的计算锚点，跨侧取会得到
   //「A 的锚点配 B 的大运表」——AI 解读的工具链拿它重算，又会排出第三副盘。
   const useFreshDayun = !!(fresh.dayunStartAt || fresh.dayunStartDescription);
@@ -580,13 +615,23 @@ function mergeServerRefill(prev: BaziPageResult, fresh: BaziPageResult): BaziPag
     ...dayunGroup,
     shensha: fresh.shensha ?? prev.shensha,
     mingGe: fresh.mingGe ?? prev.mingGe,
+    // V2 模块：刑冲会合害为四柱静态量；关键应期含服务端 VIP 分层，一律以服务端为准
+    interactions: fresh.interactions ?? prev.interactions,
+    yingqi: fresh.yingqi ?? prev.yingqi,
     zodiac: prev.zodiac || fresh.zodiac,
-    // cacheKey / baziResult：存量记录（历史记录）本就没有，补上后「开始AI解读 / 重新分析」
-    // 不必再各自兜底重算一次（那两处原本都要先打一遍 /api/bazi）。已有值一律不覆盖。
+    // cacheKey / baziResult：存量记录（历史记录）本就没有，补上后「开始AI解读 / 重新分析 / 议题解读」
+    // 不必再各自兜底重算一次（那几处原本都要先打一遍 /api/bazi）。已有值一律不覆盖。
     // 唯一带 prev.baziResult 的是档案缓存，而它就是同一组入参打同一个 /api/bazi 得来的，
     // 与 fresh 逐字相同，不存在「prev 的 baziResult 配 fresh 的大运」这种跨侧问题。
-    cacheKey: prev.cacheKey ?? fresh.cacheKey,
-    baziResult: prev.baziResult ?? fresh.baziResult,
+    // 大运换过侧且与存量不同源时，缓存身份必须一起跟着换 —— 否则「作废旧解读」这件事会落空：
+    // /api/bazi 在 keyMaterial 里加 solarDate，正是为了让农历用户那份「按错误大运生成的 AI 解读」
+    // 失效（农历串当公历算出的大运，年份可差数年、方向甚至相反）。若这里仍保留 prev.cacheKey，
+    // 用户点「重新分析」会命中旧键、把那份错解读原样取回来，等于白修。
+    // 同时清掉 prev.aiAnalysis：它的正文就是按错误大运写的，留着是在展示错内容；
+    // 清空后 showAiButton 会亮出「开始AI解读」，用户一键拿到与新大运一致的版本。
+    ...(useFreshDayun && !isDayunSourceAligned(prev, fresh)
+      ? { cacheKey: fresh.cacheKey ?? prev.cacheKey, baziResult: fresh.baziResult ?? prev.baziResult, aiAnalysis: '' }
+      : { cacheKey: prev.cacheKey ?? fresh.cacheKey, baziResult: prev.baziResult ?? fresh.baziResult }),
   };
 }
 
@@ -599,22 +644,6 @@ function firstSentence(text: string): string {
     .filter(Boolean);
   if (!sentences.length) return trimmed;
   return `${sentences[0]}。`;
-}
-
-function buildPoints(sourceText: string, fallback: string): string[] {
-  const pieces = sourceText
-    .replace(/[\t\r]/g, ' ')
-    .split(/[。！？\n]/)
-    .map(line => line.replace(/^[-•*\s]+/, '').trim())
-    .filter(Boolean);
-
-  const selected = (pieces.length ? pieces : [fallback]).slice(0, 5);
-  while (selected.length < 3) {
-    selected.push(fallback);
-  }
-
-  const prefixes = ['✓', '⚠', '💡', '✓', '💡'];
-  return selected.map((item, index) => `${prefixes[index]} ${item}`);
 }
 
 /**
@@ -670,12 +699,6 @@ function getZodiacByBirthDate(birthDate: string): string {
   return zodiac[(year - 4 + 1200) % 12] || '未提供';
 }
 
-function getScoreStyle(score: number): { barClass: string; textClass: string } {
-  if (score >= 80) return { barClass: 'bg-emerald-500', textClass: 'text-emerald-600' };
-  if (score >= 60) return { barClass: 'bg-[#1C1A16]', textClass: 'text-stone-600' };
-  return { barClass: 'bg-rose-500', textClass: 'text-rose-600' };
-}
-
 /**
  * 给终身大运表补 React key。大运本体已由 /api/bazi 随排盘返回（同一 getDayunTimeline 实现、
  * 同一批参数），客户端不再自己跑一遍——那会把 lunar-javascript 拖进首屏。
@@ -721,29 +744,6 @@ function extractDayunAiText(item: DayunTimelineItem | null, aiSections: Record<A
     }
   }
   return captured.join('\n').trim();
-}
-
-/** 组合纯文本版大运详情（供通用 Tab 模板 / buildPoints 使用） */
-function buildDayunDetail(
-  item: DayunTimelineItem | null,
-  aiSections: Record<AiSectionKey, string>,
-  birthDate: string,
-  /** 当前流年干支，来自接口字段；极旧缓存拿不到时省略该行而非渲染半截文案 */
-  currentYearGanzhi: string,
-): string {
-  if (!item) return '暂无大运信息';
-  const parts = [
-    `${item.gan}${item.zhi}大运（${item.ageStart}-${item.ageEnd}岁）。${getDayunPhaseText(item, birthDate)}`,
-  ];
-  if (currentYearGanzhi) parts.push(`当前流年：${currentYearGanzhi}。`);
-  const aiText = extractDayunAiText(item, aiSections);
-  if (aiText) parts.push(aiText);
-  return parts.join('\n');
-}
-
-function scoreValue(score?: number): number {
-  if (typeof score !== 'number' || Number.isNaN(score)) return 0;
-  return Math.max(0, Math.min(100, Math.round(score)));
 }
 
 const BAZI_TERMS_LIST = [
@@ -976,12 +976,24 @@ function ProfileFormModal({
           <div className="space-y-3">
             <p className="text-sm font-semibold text-[#1C1A16]/50 tracking-wide">时间信息</p>
             <DatePicker
-              label="出生日期（阳历）"
+              label={values.isLunar ? '出生日期（农历）' : '出生日期（阳历）'}
               value={values.birthDate}
               onChange={(value) => setValues((v) => ({ ...v, birthDate: value }))}
               className="space-y-1.5"
               triggerClassName="min-h-[44px] rounded-lg"
             />
+            <label className="flex items-start gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={values.isLunar}
+                onChange={(e) => setValues((v) => ({ ...v, isLunar: e.target.checked }))}
+                className="mt-1 w-4 h-4 accent-[#1C1A16]"
+              />
+              <div>
+                <p className="text-sm font-medium text-[#1C1A16]">这是农历生日</p>
+                <p className="text-xs text-[#1C1A16]/55 mt-0.5">只记得农历生日就勾选，系统会自动换算（闰月自动处理）。</p>
+              </div>
+            </label>
           </div>
 
           <hr className="border-[#1C1A16]/8" />
@@ -1060,15 +1072,14 @@ interface StreamingReportProps {
  * 而不是整棵 ~3000 行的 BaziPageContent 树（低端安卓上曾把主线程打满）。
  * 数据流：父级把全文累积在 ref、150ms 节流后调用 flushRef.current(text)，
  * 本组件用自己的 state 接住；7 处 parseSection 全文正则也随之只按 flush 频率重算。
+ *
+ * 本组件只在 aiStreaming 期间挂载，因此内部所有 effect 都不必再判 aiStreaming。
  */
 function StreamingReport({ flushRef, bufRef }: StreamingReportProps) {
   // 初值置空、由挂载 effect 从 bufRef 同步（render 期间不许读 ref）
   const [text, setText] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
   const streamEndRef = useRef<HTMLDivElement>(null);
-  // stick-to-bottom：默认跟随到底；用户主动上滚离底 >80px 解除，回到底部附近自动恢复
-  const followRef = useRef(true);
-  const lastFollowAtRef = useRef(0);
 
   useEffect(() => {
     flushRef.current = setText;
@@ -1078,50 +1089,33 @@ function StreamingReport({ flushRef, bufRef }: StreamingReportProps) {
     };
   }, [flushRef, bufRef]);
 
+  // 页面级跟随到底部（解读在页面正常流内，非独立滚动容器）。
+  // 按「滚动方向」判定用户意图：向上滚（只可能来自用户）→ 立即停跟随；
+  // 滚回底部附近 → 恢复。距离阈值判定与高频更新存在竞态（刚上滚就被拽回），弃用。
+  const followRef = useRef(true);
+  const prevScrollYRef = useRef(0);
   useEffect(() => {
-    // 只监听用户输入（wheel/touchmove）判定跟随意图，避免把程序滚动误判为用户离开
-    const updateFollow = () => {
-      // rAF 后再量：等本次滚动落位，拿到的距底距离才准确
-      requestAnimationFrame(() => {
-        const distToBottom =
-          document.documentElement.scrollHeight - window.innerHeight - window.scrollY;
-        followRef.current = distToBottom <= 80;
-      });
-    };
-    const onWheel = (e: WheelEvent) => {
-      // 上滚立即解除跟随：不等落位，防止下一次 flush 又把用户拽回底部
-      if (e.deltaY < 0) {
+    prevScrollYRef.current = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (y < prevScrollYRef.current - 2) {
         followRef.current = false;
-        return;
+      } else if (!followRef.current) {
+        const el = containerRef.current;
+        if (el && el.getBoundingClientRect().bottom < window.innerHeight + 80) {
+          followRef.current = true;
+        }
       }
-      updateFollow();
+      prevScrollYRef.current = y;
     };
-    const onTouchMove = () => updateFollow();
-    window.addEventListener('wheel', onWheel, { passive: true });
-    window.addEventListener('touchmove', onTouchMove, { passive: true });
-    return () => {
-      window.removeEventListener('wheel', onWheel);
-      window.removeEventListener('touchmove', onTouchMove);
-    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   useEffect(() => {
     if (!text || !followRef.current) return;
-    // 跟随节流 250ms + behavior:'auto'：smooth 连发会互相打断且更耗主线程
-    const follow = () => {
-      lastFollowAtRef.current = Date.now();
-      containerRef.current?.scrollIntoView({ block: 'end', behavior: 'auto' });
-    };
-    const wait = 250 - (Date.now() - lastFollowAtRef.current);
-    if (wait <= 0) {
-      follow();
-      return;
-    }
-    // 被节流掉的这次补一个尾随定时器：否则末尾一段文字可能永远滚不进视野
-    const timer = setTimeout(() => {
-      if (followRef.current) follow();
-    }, wait);
-    return () => clearTimeout(timer);
+    // 跟随频率已被父级的 150ms flush 节流限住，这里无需再节流
+    containerRef.current?.scrollIntoView({ block: 'end', behavior: 'auto' });
   }, [text]);
 
   // parseSection 是全文正则扫描：memo 后只随 flush（150ms 一次）重算，不再每 delta × 7 次
@@ -1200,6 +1194,8 @@ function BaziPageContent() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authReason, setAuthReason] = useState<{ title: string; desc: string } | undefined>(undefined);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showHepanPicker, setShowHepanPicker] = useState(false);
   const [fullReadExpanded, setFullReadExpanded] = useState(false);
   const [expandedFaqIndex, setExpandedFaqIndex] = useState<number | null>(0);
   const [selectedDayunIndex, setSelectedDayunIndex] = useState(2);
@@ -1276,12 +1272,12 @@ function BaziPageContent() {
   /**
    * 补齐触发哨兵：挂在「真正依赖补齐数据的块」正上方，进入视口才发请求。
    *
-   * 上一版把 ref 挂在结果详情列容器上，实测无效：恢复命盘后有个 100ms 的
-   * `resultRef.scrollIntoView({ block: 'start' })` 把结果区顶到视口顶部，详情列容器紧跟在概览三卡
-   * 之后，首帧就落进 IO 的 200px 预取窗口——「等滚动再补」形同虚设，仍是挂载即发、只晚几百毫秒。
+   * 为什么不挂在结果区顶部：恢复命盘后有个 100ms 的
+   * `resultRef.scrollIntoView({ block: 'start' })` 把结果区顶到视口顶部，挂太靠上首帧就会落进
+   * IO 的 200px 预取窗口——「等滚动再补」形同虚设，仍是挂载即发、只晚几百毫秒。
    * 现在下沉到两处真正的消费点：
    *  ① 大运时间轴之前（在 AI 长文「当前运势重点」小节内）
-   *  ② 排盘细节组（十神/神煞/流年流月）之前
+   *  ② 排盘细节组（十神/神煞/流年流月/关键应期）之前
    * 为什么是两个而不是一个：① 只在 AI 长文渲染出该小节时存在，而大运时间轴恰好嵌在同一小节里、
    * 与之共存亡；② 恒在。任一进入视口即触发，覆盖「有/无 AI 长文」两种形态。
    */
@@ -1296,6 +1292,14 @@ function BaziPageContent() {
   useEffect(() => {
     latestResultRef.current = result;
   }, [result]);
+  /**
+   * isMember 的镜像。补齐回调刻意保持 `[]`/稳定依赖（它被 effect 依赖，重建会让 IO 反复重挂），
+   * 而「VIP 却拿到截断的应期表」这一条判据需要读最新会员态，故走 ref 而非依赖项。
+   */
+  const isMemberRef = useRef(false);
+  useEffect(() => {
+    isMemberRef.current = isMember;
+  }, [isMember]);
 
   /** 放弃在途补齐的结果并清掉提示。新排盘/清空结果时调用，避免旧提示挂在新命盘上 */
   const dropPendingRefill = useCallback(() => {
@@ -1333,7 +1337,10 @@ function BaziPageContent() {
     // 反过来，若等待期间结果已被别的路径（如「开始AI解读」重打 /api/bazi）补齐，这里就能正确早退，
     // 不白花一次限流名额——这正是不能拿冻结的 stored 兜底的原因。
     const year = beijingYear();
-    if (!input.birthDate || !needsServerRefill(current, year)) {
+    if (
+      !input.birthDate ||
+      (!needsServerRefill(current, year) && !needsYingqiUnlock(current, isMemberRef.current))
+    ) {
       setRefilling(false); // 在途请求已作废，别把「重试中」按钮卡在禁用态
       return;
     }
@@ -1386,7 +1393,8 @@ function BaziPageContent() {
     setRefilling(true);
     try {
       const fresh = await pending;
-      // 会话跨过了元旦/立春，缓存里这份也过期了：逐出，让下一次补齐重新取（本次仍先用它，有总比没有强）
+      // 会话跨过了元旦/立春，缓存里这份也过期了：逐出，让下一次补齐重新取（本次仍先用它，有总比没有强）。
+      // 刻意不把 needsYingqiUnlock 混进来，理由见该函数注释。
       if (needsServerRefill(fresh, beijingYear())) {
         if (refillCacheRef.current.get(key) === pending) refillCacheRef.current.delete(key);
       }
@@ -1435,16 +1443,14 @@ function BaziPageContent() {
    * 登记一次补齐，但**不在此刻发请求**。
    *
    * 补齐打的是 /api/bazi，与用户主动排盘共用同一个限流桶（登录 30 次/60s、游客 20 次/3600s）。
-   * 原来在恢复命盘时立即发，等于「打开页面就先替用户花掉一次额度」，多副盘来回切还会叠加，
+   * 若在恢复命盘时立即发，等于「打开页面就先替用户花掉一次额度」，多副盘来回切还会叠加，
    * 极端情况下把用户自己的排盘打成 429。
    *
    * 改为分级触发：
    * - 首屏信息条上的农历串/起运缺失 → 立即发。这两项就在页面顶部，用户此刻正看着它们的「—」，
    *   等滚动再补等于让首屏一直缺内容。这种缺失只发生在「本次改动上线前写入的档案缓存」上
    *   （历史记录/游客档案都持久化了这两项），是个会随时间归零的存量集合。
-   * - 只缺折叠线以下的模块（终身大运表/流年流月/流年干支）→ 只登记，等哨兵进入视口再发。
-   *   哨兵挂在这些模块正上方（大运时间轴之前、排盘细节组之前），不是挂在结果区顶部——
-   *   恢复命盘后有个 scrollIntoView 会把结果区顶到视口顶部，挂太靠上等于首帧就触发（见下面的 IntersectionObserver）。
+   * - 只缺折叠线以下的模块（终身大运表/流年流月/流年干支/关键应期）→ 只登记，等哨兵进入视口再发。
    * 任一时刻最多只有一个已登记任务（换盘即覆盖），加上按输入指纹去重的 Promise 表，
    * 请求数不会随档案数量放大。
    */
@@ -1461,7 +1467,10 @@ function BaziPageContent() {
     // 情形照发一次多余请求（游客桶只有 20 次/3600s）。
     latestResultRef.current = stored;
 
-    if (!input.birthDate || !needsServerRefill(stored, beijingYear())) {
+    if (
+      !input.birthDate ||
+      (!needsServerRefill(stored, beijingYear()) && !needsYingqiUnlock(stored, isMemberRef.current))
+    ) {
       setRefillArmed(false);
       return;
     }
@@ -1544,7 +1553,7 @@ function BaziPageContent() {
             lateZiShi: !!latest.lateZiShi,
           }));
 
-          // 本地历史记录未存神煞，按四柱重算补齐（纯查表，不依赖 lunar）
+          // 本地历史记录未存神煞/格局，按四柱重算补齐（纯查表，不依赖 lunar）
           const restored = withFreshModules({
             pillars: latest.pillars,
             hasHour: latest.birthHour !== '-1',
@@ -1678,7 +1687,7 @@ function BaziPageContent() {
       lateZiShi: !!record.lateZiShi,
     }));
 
-    // 本地历史记录未存神煞，按四柱重算补齐（纯查表，不依赖 lunar）
+    // 本地历史记录未存神煞/格局，按四柱重算补齐（纯查表，不依赖 lunar）
     const restored = withFreshModules({
       pillars: record.pillars,
       hasHour: record.birthHour !== '-1',
@@ -1869,7 +1878,7 @@ function BaziPageContent() {
     return () => clearTimeout(timer);
   }, [chartId, submitSeq]);
 
-  // 流式跟随滚动已下沉进 StreamingReport（随 flush 节流跟随，用户上滚即解除）
+  // 流式跟随滚动已随渲染一起下沉进 StreamingReport（判据仍是 V2 的「滚动方向」口径）
   const aiReadingRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -1883,21 +1892,6 @@ function BaziPageContent() {
     return () => clearTimeout(timer);
   }, [loading]);
 
-  // 「当前流年」干支改读接口字段（服务端按北京当日算，含立春换年）。口径也因此统一到北京日——
-  // 旧客户端用 getYearGanzhi(浏览器本地日) 现算，跨时区/跨年边界会与服务端给出不同干支。
-  // 存量结果缺该字段时由 ensureFullResult 重发接口回填；仍拿不到就不展示这一行，避免「当前流年：」空值。
-  const currentLiunian = result?.currentYearGanzhi ?? '';
-
-  /**
-   * 本副盘的公历出生日。农历用户的表单值是农历串，拿它算周岁会偏一个多月（跨年的农历腊月生日
-   * 甚至差一整岁），进而把「已走过/当前/未来」的大运阶段判错。见 solarAnchorOf。
-   */
-  const solarBirthDate = solarAnchorOf(result, formData.birthDate, formData.isLunar);
-
-  const dayunDetail = useMemo(() => {
-    return buildDayunDetail(selectedDayun, aiSections, solarBirthDate, currentLiunian);
-  }, [selectedDayun, aiSections, solarBirthDate, currentLiunian]);
-
   // 选中大运的确定性结构化详情（十神 / 藏干 / 纳音 / 吉凶 / 四维），不依赖 AI
   const dayunDetailRich = useMemo<DayunDetail | null>(() => {
     if (!selectedDayun || !result) return null;
@@ -1909,6 +1903,12 @@ function BaziPageContent() {
     );
   }, [selectedDayun, result]);
 
+  /**
+   * 本副盘的公历出生日。农历用户的表单值是农历串，拿它算周岁会偏一个多月（跨年的农历腊月生日
+   * 甚至差一整岁），进而把「已走过/当前/未来」的大运阶段判错。见 solarAnchorOf。
+   */
+  const solarBirthDate = solarAnchorOf(result, formData.birthDate, formData.isLunar);
+
   const dayunPhaseText = useMemo(
     () => getDayunPhaseText(selectedDayun, solarBirthDate),
     [selectedDayun, solarBirthDate]
@@ -1918,6 +1918,11 @@ function BaziPageContent() {
     () => extractDayunAiText(selectedDayun, aiSections),
     [selectedDayun, aiSections]
   );
+
+  // 「当前流年」干支改读接口字段（服务端按北京当日算，含立春换年）。口径也因此统一到北京日——
+  // 旧客户端用 getYearGanzhi(浏览器本地日) 现算，跨时区/跨年边界会与服务端给出不同干支。
+  // 存量结果缺该字段时由 ensureFullResult 重发接口回填；仍拿不到就不展示这一行，避免「当前流年：」空值。
+  const currentLiunian = result?.currentYearGanzhi ?? '';
 
   // 是否存在真实时柱：优先用 API 的 hasHour；历史记录无该字段时按时辰是否为「不知道」推断
   const hasHourPillar = result?.hasHour ?? (formData.birthHour !== '-1' && formData.birthHour !== '');
@@ -1952,61 +1957,62 @@ function BaziPageContent() {
     };
   }, [formData.birthDate, formData.birthHour, formData.gender, formData.name, result, hasHourPillar]);
 
-  const tabContent = useMemo<Record<ResultTab, TabContent>>(() => {
-    const dimensions = result?.fiveDimensions;
-    const careerScore = dimensions ? scoreValue((dimensions.career + dimensions.wealth) / 2) : 0;
-    const relationScore = dimensions ? scoreValue((dimensions.relationship + dimensions.health) / 2) : 0;
-    const personalityScore = dimensions ? scoreValue((dimensions.studies + dimensions.health) / 2) : 0;
+  // —— V2 派生数据（PRD-BAZI-V2）：全部本地确定性计算，零 AI 成本 ——
 
-    return {
-      性格特质: {
-        scores: dimensions
-          ? [
-              { label: '性格稳定度', value: personalityScore },
-              { label: '学习成长', value: scoreValue(dimensions.studies) },
-            ]
-          : [],
-        points: buildPoints(aiSections.personality || aiSections.dayMaster, '保持稳定节奏，持续优化自我表达'),
-        detail: aiSections.personality || aiSections.dayMaster || result?.aiAnalysis || '暂无详细解读。',
-      },
-      事业财运: {
-        scores: dimensions
-          ? [
-              { label: '事业', value: scoreValue(dimensions.career) },
-              { label: '财运', value: scoreValue(dimensions.wealth) },
-              { label: '综合', value: careerScore },
-            ]
-          : [],
-        points: buildPoints(`${aiSections.career}\n${aiSections.wealth}`, '稳健行动，先做确定性更高的选择'),
-        detail: `${aiSections.career || '暂无事业解读。'}\n\n${aiSections.wealth || '暂无财运解读。'}`,
-      },
-      婚姻健康: {
-        scores: dimensions
-          ? [
-              { label: '关系', value: scoreValue(dimensions.relationship) },
-              { label: '健康', value: scoreValue(dimensions.health) },
-              { label: '综合', value: relationScore },
-            ]
-          : [],
-        points: buildPoints(`${aiSections.relationship}\n${aiSections.health}`, '关注沟通质量与作息管理，减少内耗'),
-        detail: `${aiSections.relationship || '暂无婚姻关系解读。'}\n\n${aiSections.health || '暂无健康解读。'}`,
-      },
-      十神详解: {
-        scores: [],
-        points: [],
-        detail: '十神详解通过独立组件渲染，不使用通用模板。',
-      },
-      大运流年: {
-        scores: dimensions
-          ? [
-              { label: '阶段节奏', value: scoreValue((dimensions.career + dimensions.relationship) / 2) },
-            ]
-          : [],
-        points: buildPoints(`${aiSections.dayun}\n${dayunDetail}`, '以十年为周期制定目标，按年度滚动调整'),
-        detail: `${aiSections.dayun || '暂无大运流年专项解读。'}\n\n${dayunDetail}`,
-      },
-    };
-  }, [aiSections, dayunDetail, result]);
+  /** 命盘速读三句话（P0-A）：盘面定性 / 当下处境 / 今年流年 */
+  const quickReadLines = useMemo<string[]>(() => {
+    if (!result?.mingGe) return [];
+    try {
+      return buildQuickRead({
+        dayGan: result.pillars.day.gan as TianGan,
+        mingGe: {
+          geju: result.mingGe.geju as GejuName,
+          rizhuStrength: result.mingGe.rizhuStrength,
+          yongShen: result.mingGe.yongShen,
+          jiShen: result.mingGe.jiShen,
+        },
+        dayunTimeline: result.dayunTimeline ?? [],
+        liunian: result.liunian ?? null,
+        currentYear: beijingYear(),
+      });
+    } catch {
+      return [];
+    }
+  }, [result]);
+
+  /** 命格人设（P0-B）：分享卡主文案 */
+  const persona = useMemo(() => {
+    if (!result?.mingGe) return undefined;
+    try {
+      return personaFor(result.mingGe.geju as GejuName, result.pillars.day.gan as TianGan);
+    } catch {
+      return undefined;
+    }
+  }, [result]);
+
+  /** 刑冲会合害（P1-C）：API 已带则直用；历史/档案记录按四柱现算 */
+  const interactionsData = useMemo(() => {
+    if (result?.interactions) return result.interactions;
+    const chart = result ? chartFromResult(result) : null;
+    if (!chart) return [];
+    try {
+      return analyzeInteractions(chart);
+    } catch {
+      return [];
+    }
+  }, [result]);
+
+  /**
+   * 关键应期（P1-D）：一律以 /api/bazi 下发的为准（服务端已按会话做 VIP 分层）。
+   *
+   * V2 原本在这里用 scanYingqi 本地补算「缓存记录缺 yingqi」和「VIP 却拿到截断表」两种情况，
+   * 但 yingqi → liunian → calculator → lunar-javascript，为它单独把 97KB(gz) 拉进首屏不划算。
+   * 两种情况改由服务端补齐覆盖，能力不缺：
+   * - 缺 yingqi 的存量命盘必然也缺 flowYear/dayunTimeline → armRefill 会重发 /api/bazi，
+   *   mergeServerRefill 把 yingqi 一并并回来；
+   * - 「VIP 却拿到截断表」由 needsYingqiUnlock 单独触发补齐，重发时带上当前会话即得全表。
+   */
+  const yingqiData = result?.yingqi ?? null;
 
   const summaryPoints = useMemo(() => {
     const sections = [
@@ -2167,6 +2173,13 @@ function BaziPageContent() {
           setShowAiButton(true);
           return false;
         }
+        // 全盘详批为 VIP 专属（V2）：会员态过期/未同步时兜底弹升级
+        if (response.status === 403 && errCode === 'SUBSCRIPTION_REQUIRED') {
+          track('bazi_full_paywall_show', { from: 'stream_403' });
+          setShowUpgradeModal(true);
+          setShowAiButton(true);
+          return false;
+        }
         // 游客每日次数用尽 → 登录引导；其它 429 为请求过频
         if (response.status === 429) {
           if (errCode === 'GUEST_LIMIT_REACHED') {
@@ -2182,7 +2195,11 @@ function BaziPageContent() {
           return false;
         }
         if (response.status === 401) {
-          setError('请登录后使用');
+          setAuthReason({
+            title: '登录后即可使用',
+            desc: '登录或注册账号即可免费体验 AI 解读；开通会员不限次并解锁更多权益。',
+          });
+          setShowAuthModal(true);
           setShowAiButton(true);
           return false;
         }
@@ -2211,6 +2228,7 @@ function BaziPageContent() {
       let fullText = '';
       let finalSource: string | null = null;
       let finalAiAnalysis: string | null = null;
+      let isPartial = false;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -2239,6 +2257,9 @@ function BaziPageContent() {
               if (obj.done) {
                 finalSource = obj.source || 'deepseek';
                 if (typeof obj.aiAnalysis === 'string') finalAiAnalysis = obj.aiAnalysis;
+                // 服务端因上游中途断流而收尾：正文保留给用户看，但它是半截的，
+                // 服务端已刻意不写 Redis —— 客户端必须同样不落盘，否则本地又把它固化一遍。
+                if (obj.partial === true) isPartial = true;
               }
               if (obj.fallback) {
                 finalSource = 'fallback';
@@ -2255,9 +2276,11 @@ function BaziPageContent() {
       const resolvedAnalysis = finalAiAnalysis || fullText;
       setResult(prev => {
         const next = prev ? { ...prev, aiAnalysis: resolvedAnalysis, _source: resolvedSource } : prev;
-        if (next) autoSaveRecord(next, resolvedSource);
+        // 半截解读不落盘（与服务端不写 Redis 成对），并留着「重新生成」入口让用户拿完整版
+        if (next && !isPartial) autoSaveRecord(next, resolvedSource);
         return next;
       });
+      if (isPartial) setShowAiButton(true);
       return true;
     } catch (streamErr) {
       setError(streamErr instanceof Error ? streamErr.message : 'AI 解读失败，请重试');
@@ -2314,6 +2337,83 @@ function BaziPageContent() {
     void runAiStream(false);
   };
 
+  /** 组装 /api/bazi/stream 请求体（不含 topic）。与 runAiStream 保持同一字段口径 */
+  const buildStreamBody = (r: BaziPageResult): Record<string, unknown> => ({
+    cacheKey: r.cacheKey,
+    baziResult: r.baziResult,
+    name: formData.name || '缘主',
+    gender: formData.gender || 'unknown',
+    birthDate: formData.birthDate,
+    // 与 runAiStream 同口径：公历锚点 + 农历标记，两条线索保证工具链不会排出第二副盘（见那里的长注释）
+    solarBirthDate: r.solarBirthDate,
+    isLunar: formData.isLunar || undefined,
+    birthHour: parseInt(formData.birthHour, 10),
+    knowTime: formData.knowTime,
+    birthHourNum: formData.knowTime ? formData.birthHourNum : undefined,
+    birthMinute: formData.knowTime ? formData.birthMinute : undefined,
+    dayunExtra: formData.isLunar && !r.solarBirthDate ? undefined : r.dayunExtra,
+  });
+
+  /** 议题式 AI（P0-A）：历史/档案记录缺 cacheKey 时先静默重算排盘补齐 */
+  const ensureTopicPayload = async (): Promise<Record<string, unknown> | null> => {
+    if (result?.cacheKey && result?.baziResult) return buildStreamBody(result);
+    try {
+      const baseResp = await fetch('/api/bazi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name || '缘主',
+          gender: formData.gender || 'unknown',
+          birthDate: formData.birthDate,
+          birthHour: parseInt(formData.birthHour, 10),
+          birthPlace: formData.birthPlace,
+          isLunar: formData.isLunar,
+          knowTime: formData.knowTime,
+          birthHourNum: formData.knowTime ? formData.birthHourNum : undefined,
+          birthMinute: formData.knowTime ? formData.birthMinute : undefined,
+          lateZiShi: formData.knowTime ? formData.lateZiShi : undefined,
+        }),
+      });
+      const baseData = (await baseResp.json()) as BaziPageResult & { error?: string };
+      if (!baseResp.ok) return null;
+      // 合并而非覆盖：保留历史记录里已有的完整 AI 长文
+      setResult(prev =>
+        prev
+          ? { ...baseData, aiAnalysis: prev.aiAnalysis || baseData.aiAnalysis, _source: prev._source }
+          : baseData,
+      );
+      return buildStreamBody(baseData);
+    } catch {
+      return null;
+    }
+  };
+
+  /** 命格人设分享（P0-B）：接通 ShareCard 弹层 */
+  const handleShare = () => {
+    track('bazi_share_open', { persona: Boolean(persona) });
+    setShowShareModal(true);
+  };
+
+  /** 档案一键合盘（P1-B）：双方出生信息经 sessionStorage 传给合婚页 */
+  const handleHepanPick = (other: BaziProfileData) => {
+    const self = profiles.find((p) => p.id === selectedProfileId);
+    if (!self) return;
+    try {
+      const pack = (p: BaziProfileData) => JSON.stringify({
+        name: p.name,
+        gender: p.gender,
+        birthDate: p.birthDate,
+        birthHour: p.birthHour,
+        birthPlace: p.birthPlace || '',
+        isLunar: Boolean(p.isLunar),
+      });
+      sessionStorage.setItem('selfBaziData', pack(self));
+      sessionStorage.setItem('otherBaziData', pack(other));
+    } catch {}
+    track('bazi_profile_hepan_click');
+    window.location.href = '/bazi/marriage';
+  };
+
   const applyProfileToForm = (profile: BaziProfileData) => {
     setFormData((prev) => ({
       ...prev,
@@ -2331,7 +2431,7 @@ function BaziPageContent() {
       lateZiShi: Boolean(profile.knowTime && profile.lateZiShi),
     }));
     if (profile.baziResult) {
-      // 静态命盘走缓存秒出；神煞/大运高亮先按当前年本地刷新，避免缺模块
+      // 静态命盘走缓存秒出；神煞/格局/大运高亮先按当前年本地刷新，避免缺模块
       const restored = withFreshModules({ ...profile.baziResult, _source: 'history' });
       setResult(restored);
       setError('');
@@ -2361,6 +2461,7 @@ function BaziPageContent() {
   };
 
   const handleSelectProfile = (profileId: string) => {
+    track('bazi_profile_switch');
     setSelectedProfileId(profileId);
     const profile = profiles.find((p) => p.id === profileId);
     if (profile) applyProfileToForm(profile);
@@ -2499,10 +2600,15 @@ function BaziPageContent() {
       const isAuth = status === 'authenticated';
       const isEditing = Boolean(editingProfile);
 
-      // 上限校验（仅新建）
+      // 上限校验（仅新建）；服务端为最终裁决
       if (!isEditing) {
-        if (isAuth && profiles.length >= MAX_LOGGED_IN_PROFILES) {
-          setProfileError(`免费版最多保存${MAX_LOGGED_IN_PROFILES}个命盘，升级 VIP 无限制`);
+        const authCap = isMember ? MAX_VIP_PROFILES : MAX_LOGGED_IN_PROFILES;
+        if (isAuth && profiles.length >= authCap) {
+          setProfileError(
+            isMember
+              ? `最多可保存${MAX_VIP_PROFILES}个命盘`
+              : `免费版最多保存${MAX_LOGGED_IN_PROFILES}个命盘，升级 VIP 可存 ${MAX_VIP_PROFILES} 个`,
+          );
           setProfileLoading(false);
           return;
         }
@@ -2742,6 +2848,7 @@ function BaziPageContent() {
       setSubmitSeq(n => n + 1);
       setShowAiButton(true);
       track('tool_result_view', { tool: 'bazi' });
+      track('bazi_paipan_complete'); // V2 漏斗起点（P0-C）
       setFullReadExpanded(false);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : '未知错误');
@@ -2794,10 +2901,6 @@ function BaziPageContent() {
         ? '命盘已保存到历史记录（最多保留3条）。农历/起运尚未补齐，未写入本条记录。'
         : '命盘已保存到历史记录（最多保留3条）'
     );
-  };
-
-  const handleSharePlaceholder = () => {
-    setActionMessage('分享功能开发中，敬请期待。');
   };
 
   const clearResultState = (message: string) => {
@@ -2949,11 +3052,13 @@ function BaziPageContent() {
             />
             {(() => {
               const isAuth = status === 'authenticated';
-              const cap = isAuth ? MAX_LOGGED_IN_PROFILES : MAX_GUEST_PROFILES;
+              const cap = isAuth ? (isMember ? MAX_VIP_PROFILES : MAX_LOGGED_IN_PROFILES) : MAX_GUEST_PROFILES;
               const disabled = profiles.length >= cap;
               const tip = disabled
                 ? isAuth
-                  ? `免费版最多保存${cap}个命盘，升级 VIP 无限制`
+                  ? isMember
+                    ? `最多可保存${MAX_VIP_PROFILES}个命盘`
+                    : `免费版最多保存${cap}个命盘，升级 VIP 可存 ${MAX_VIP_PROFILES} 个`
                   : `未登录最多保存${cap}个命盘，请登录后使用`
                 : '新增八字';
               return (
@@ -2978,6 +3083,18 @@ function BaziPageContent() {
               if (!current) return null;
               return (
                 <div className="flex items-center gap-1">
+                  {profiles.length >= 2 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowHepanPicker(true)}
+                      title="与其他档案合盘"
+                      className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg border border-[#1C1A16]/15 text-[#1C1A16]/70 hover:bg-[#FCE7F3]/60 hover:text-[#BE185D] hover:border-[#BE185D]/30 transition-colors text-xs font-medium"
+                      aria-label="与其他档案合盘"
+                    >
+                      <Heart className="w-3.5 h-3.5" />
+                      合盘
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={handleOpenEditProfile}
@@ -3069,12 +3186,28 @@ function BaziPageContent() {
           <p className="text-sm font-semibold text-[#1C1A16]/50 tracking-wide">时间信息</p>
 
               <DatePicker
-                label="出生日期（阳历）"
+                label={formData.isLunar ? '出生日期（农历）' : '出生日期（阳历）'}
                 value={formData.birthDate}
                 onChange={(value) => setFormData({ ...formData, birthDate: value })}
                 className="space-y-1.5"
                 triggerClassName="min-h-[44px] rounded-lg"
               />
+
+              {/* 农历输入（P2-B）：isLunar 全链路已通，此处只是开关 */}
+              <label className="flex items-start gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.isLunar}
+                  onChange={(e) => setFormData({ ...formData, isLunar: e.target.checked })}
+                  className="mt-1 w-4 h-4 accent-[#1C1A16]"
+                />
+                <div>
+                  <p className="text-sm font-medium text-[#1C1A16]">这是农历生日</p>
+                  <p className="text-xs text-[#1C1A16]/55 mt-0.5">
+                    只记得农历生日就勾选，系统会自动换算（闰月自动处理）。
+                  </p>
+                </div>
+              </label>
               <hr className="border-[#1C1A16]/8" />
           {/* 时辰组 */}
               <fieldset className="space-y-4">
@@ -3182,7 +3315,7 @@ function BaziPageContent() {
               <Button
                 type="submit"
                 loading={loading}
-                className="w-full min-h-[52px] text-[14px] font-medium rounded-xl bg-brand-accent text-white hover:bg-brand-accent-hover transition-colors"
+                className="mx-auto flex w-full sm:w-auto sm:min-w-[260px] sm:px-12 min-h-[48px] items-center justify-center text-[14px] font-medium rounded-xl bg-brand-accent text-white hover:bg-brand-accent-hover transition-colors"
               >
                 {loading ? '正在计算...' : '开始解读'}
               </Button>
@@ -3279,6 +3412,9 @@ function BaziPageContent() {
                     )}
                   </div>
                 )}
+                {/* 命盘速读（P0-A）：置顶三句话，3 秒读懂盘面/大运/流年，零 AI 成本 */}
+                {quickReadLines.length > 0 && <QuickReadCard lines={quickReadLines} />}
+
                 {/* 桌面也走单栏：概览(四柱/五行/日主)在上、AI 解读长文在下,收窄到 page(840) 舒适阅读宽,避免两栏「左短右长」留白/停靠。 */}
                 <SplitLayout
                   asidePosition="left"
@@ -3417,15 +3553,23 @@ function BaziPageContent() {
                     </div>
                   )}
 
-                  {showAiButton && (
-                    <button
-                      type="button"
-                      onClick={handleStartAiReading}
-                      className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-brand-accent hover:bg-brand-accent-hover text-white font-medium text-sm transition-colors"
-                    >
-                      <Sparkles className="w-4 h-4" />
-                      开始 AI 解读
-                    </button>
+                  {/* 议题式 AI（P0-A）：六议题入口替代单一「开始AI解读」按钮；全盘详批改 VIP 专属 */}
+                  {!aiStreaming && (
+                    <div className={showAiButton ? '' : 'mb-5'}>
+                      <TopicReadSection
+                        cacheKey={result.cacheKey ?? null}
+                        ensurePayload={ensureTopicPayload}
+                        isVip={isMember}
+                        hasFullAnalysis={!showAiButton && Boolean(result.aiAnalysis)}
+                        onStartFullRead={handleStartAiReading}
+                        onQuotaExceeded={() => setShowQuotaModal(true)}
+                        onNeedAuth={(reason) => {
+                          setAuthReason(reason);
+                          setShowAuthModal(true);
+                        }}
+                        onNeedVip={() => setShowUpgradeModal(true)}
+                      />
+                    </div>
                   )}
 
                   {aiStreaming && (
@@ -3631,8 +3775,8 @@ function BaziPageContent() {
                   isVip={isMember}
                 />
 
-                {/* 补齐哨兵②：排盘细节组（十神/神煞/流年流月）之前。流年流月是这组里依赖补齐数据的那块；
-                    AI 长文缺失时哨兵①不存在（大运时间轴同样不渲染），此处就是唯一触发点。
+                {/* 补齐哨兵②：排盘细节组（十神/神煞/流年流月/关键应期）之前。流年流月与关键应期是这组里
+                    依赖补齐数据的那两块；AI 长文缺失时哨兵①不存在（大运时间轴同样不渲染），此处就是唯一触发点。
                     父容器是 space-y-6：外边距清零后本元素不改变任何相邻间距（无论 space-y 实现为
                     「后一个加 margin-top」还是「前一个加 margin-bottom」，被清零的都只是它自己那一份）。 */}
                 <div
@@ -3649,6 +3793,20 @@ function BaziPageContent() {
                   <ShishenDetailTab pillars={result.pillars} dayGan={result.pillars.day.gan} />
                 </Card>
 
+                {/* 刑冲会合害可视化（P1-C）：全站独有的专业感视觉，置于神煞卡之前 */}
+                <Card className={cardClass}>
+                  <InteractionsCard
+                    interactions={interactionsData}
+                    branches={{
+                      year: result.pillars.year.zhi,
+                      month: result.pillars.month.zhi,
+                      day: result.pillars.day.zhi,
+                      hour: hasHourPillar ? result.pillars.hour.zhi : null,
+                    }}
+                    hasHour={hasHourPillar}
+                  />
+                </Card>
+
                 <Card className={cardClass}>
                   <ShenshaCard shensha={result.shensha} />
                 </Card>
@@ -3656,6 +3814,18 @@ function BaziPageContent() {
                 {(result.liunian || (result.liuyue && result.liuyue.length > 0)) && (
                   <Card className={cardClass}>
                     <LiunianLiuyueCard liunian={result.liunian} liuyue={result.liuyue} />
+                  </Card>
+                )}
+
+                {/* 关键应期（P1-D）：免费最近 1 条 + 模糊占位；VIP 全表 */}
+                {yingqiData && (
+                  <Card className={cardClass}>
+                    <YingqiCard
+                      items={yingqiData.items}
+                      total={yingqiData.total}
+                      isVip={isMember}
+                      onUnlockClick={() => setShowUpgradeModal(true)}
+                    />
                   </Card>
                 )}
 
@@ -3697,9 +3867,10 @@ function BaziPageContent() {
                       }
                       window.location.href = '/bazi/marriage';
                     }}
-                    className="mt-6 w-full sm:w-auto px-8 py-3 rounded-xl bg-brand-accent hover:bg-brand-accent-hover text-white font-medium text-sm transition-colors"
+                    className="mt-6 w-full sm:w-auto inline-flex items-center justify-center gap-1 hover:gap-2 px-8 py-3 rounded-xl bg-white border border-[#1C1A16]/25 text-[#1C1A16] font-medium text-sm hover:border-[#1C1A16] hover:bg-[#FDFBF7] transition-all"
                   >
-                    输入对方生辰，立即测算 →
+                    输入对方生辰，立即测算
+                    <ArrowRight className="w-4 h-4" style={{ color: '#BE185D' }} />
                   </button>
                 </div>
 
@@ -3736,9 +3907,51 @@ function BaziPageContent() {
                     <button
                       type="button"
                       onClick={() => { window.location.href = '/daily'; }}
-                      className="w-full sm:w-auto px-8 py-3 rounded-xl bg-brand-accent hover:bg-brand-accent-hover text-white font-medium text-sm transition-colors whitespace-nowrap"
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-1 hover:gap-2 px-8 py-3 rounded-xl bg-white border border-[#1C1A16]/25 text-[#1C1A16] font-medium text-sm hover:border-[#1C1A16] hover:bg-[#FDFBF7] transition-all whitespace-nowrap"
                     >
-                      查看今日 AI 运势 →
+                      查看今日 AI 运势
+                      <ArrowRight className="w-4 h-4" style={{ color: '#B0870F' }} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* 人生K线引流（P2-A）：出生信息已在本地 storage，K线页自动出图 */}
+                <div className="group relative overflow-hidden rounded-2xl border border-[#1C1A16]/8 bg-white p-6 md:p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover">
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute inset-x-0 top-0 h-[3px] origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300"
+                    style={{ background: '#059669' }}
+                  />
+                  <span
+                    className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium tracking-[0.08em]"
+                    style={{ background: '#D1FAE5', color: '#059669' }}
+                  >
+                    人生K线
+                  </span>
+                  <h3 className="mt-3 text-lg font-semibold text-[#1C1A16]">把这个命盘画成百年运势曲线</h3>
+                  <p className="text-sm text-[#1C1A16]/60 mt-1">大运流年逐年打分，一眼看到人生的高点与蓄力期</p>
+                  <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <ul className="space-y-2">
+                      <li className="text-sm text-[#1C1A16]/75 flex items-start gap-2">
+                        <span className="text-[#1C1A16] mt-0.5">•</span>
+                        0-100 岁运势曲线，K线式呈现
+                      </li>
+                      <li className="text-sm text-[#1C1A16]/75 flex items-start gap-2">
+                        <span className="text-[#1C1A16] mt-0.5">•</span>
+                        出生信息自动带入，无需重填
+                      </li>
+                    </ul>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        track('bazi_to_kline_click');
+                        window.location.href = '/life-kline';
+                      }}
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-1 hover:gap-2 px-8 py-3 rounded-xl bg-white border border-[#1C1A16]/25 text-[#1C1A16] font-medium text-sm hover:border-[#1C1A16] hover:bg-[#FDFBF7] transition-all whitespace-nowrap"
+                    >
+                      <TrendingUp className="w-4 h-4 mr-1" style={{ color: '#059669' }} />
+                      生成我的人生K线
+                      <ArrowRight className="w-4 h-4" style={{ color: '#059669' }} />
                     </button>
                   </div>
                 </div>
@@ -3773,11 +3986,11 @@ function BaziPageContent() {
                     <Button
                       type="button"
                       variant="ghost"
-                      onClick={handleSharePlaceholder}
+                      onClick={handleShare}
                       className="justify-center border border-[#1C1A16]/25 bg-white text-[#1C1A16] hover:border-[#1C1A16] hover:bg-[#FDFBF7]"
                     >
                       <Share2 className="w-4 h-4 mr-2" />
-                      分享
+                      分享命格人设卡
                     </Button>
                     <Button
                       type="button"
@@ -3803,17 +4016,6 @@ function BaziPageContent() {
                   {actionMessage && <p className="mt-3 text-sm text-[#6B7280]">{actionMessage}</p>}
                 </Card>
 
-                <Card className={cardClass}>
-                  <h2 className="font-display text-xl text-[#1C1A16] tracking-[0.08em] mb-5">分享卡片</h2>
-                  <ShareCard
-                    pillars={result.pillars}
-                    dayMaster={dayMasterInsight.title}
-                    zodiac={result.zodiac || '未知'}
-                    summary={dayMasterInsight.personality.split('。')[0] + '。'}
-                    hasHour={hasHourPillar}
-                  />
-                </Card>
-
                 <AiDisclaimer />
                 <div className="text-center text-xs text-[#6B7280] p-3 bg-white rounded-2xl border border-[#1C1A16]/10">
                   ⚠️ 免责声明：本站所有命理分析仅供娱乐参考，不构成任何决策建议。命运掌握在自己手中，请理性对待。
@@ -3834,6 +4036,79 @@ function BaziPageContent() {
         reason={authReason}
       />
       <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />
+
+      {/* 命格人设分享弹层（P0-B） */}
+      {showShareModal && result && dayMasterInsight && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowShareModal(false)} />
+          <div className="relative bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-xl border border-[#1C1A16]/10">
+            <div className="sticky top-0 z-10 bg-white border-b border-[#1C1A16]/8 px-5 py-4 flex items-center justify-between">
+              <h3 className="text-base font-semibold text-[#1C1A16]">分享命格人设卡</h3>
+              <button
+                type="button"
+                onClick={() => setShowShareModal(false)}
+                className="text-[#1C1A16]/50 hover:text-[#1C1A16] transition-colors"
+                aria-label="关闭"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-5">
+              <ShareCard
+                pillars={result.pillars}
+                dayMaster={dayMasterInsight.title}
+                zodiac={result.zodiac || '未知'}
+                summary={dayMasterInsight.personality.split('。')[0] + '。'}
+                hasHour={hasHourPillar}
+                persona={persona}
+                wuxing={result.wuxing}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 档案合盘选择弹层（P1-B） */}
+      {showHepanPicker && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowHepanPicker(false)} />
+          <div className="relative bg-white rounded-2xl w-full max-w-sm shadow-xl border border-[#1C1A16]/10">
+            <div className="border-b border-[#1C1A16]/8 px-5 py-4 flex items-center justify-between">
+              <h3 className="text-base font-semibold text-[#1C1A16]">选择与谁合盘</h3>
+              <button
+                type="button"
+                onClick={() => setShowHepanPicker(false)}
+                className="text-[#1C1A16]/50 hover:text-[#1C1A16] transition-colors"
+                aria-label="关闭"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-3 max-h-[50vh] overflow-y-auto space-y-1">
+              {profiles.filter((p) => p.id !== selectedProfileId).map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => {
+                    setShowHepanPicker(false);
+                    handleHepanPick(p);
+                  }}
+                  className="w-full text-left rounded-xl px-4 py-3 hover:bg-[#FAF9F6] border border-transparent hover:border-[#1C1A16]/10 transition-colors"
+                >
+                  <p className="text-sm font-medium text-[#1C1A16]">
+                    {p.label || p.name}
+                    <span className="ml-2 text-xs text-[#1C1A16]/50">{p.gender === 'female' ? '女' : p.gender === 'male' ? '男' : ''}</span>
+                  </p>
+                  <p className="text-xs text-[#1C1A16]/55 mt-0.5">{p.birthDate || '未填生日'}</p>
+                </button>
+              ))}
+            </div>
+            <p className="px-5 pb-4 text-[11px] text-[#1C1A16]/45">
+              将带上双方出生信息跳转合婚页自动测算（合婚配额另计）。
+            </p>
+          </div>
+        </div>
+      )}
 
       <ConfirmDialog
         isOpen={pendingDeleteProfile !== null}

@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         model: PRIMARY_MODEL,
-        max_tokens: 500,
+        max_tokens: 1500,
         temperature: 0.6,
         enable_thinking: false,
         stream: true,
@@ -123,7 +123,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '服务暂时不可用' }, { status: 502 });
     }
 
-    return new Response(proxyLLMDeltaStream(apiResponse, abortHandle), { headers: SSE_HEADERS });
+    return new Response(proxyLLMDeltaStream(apiResponse, abortHandle, { label: 'huangli/ask' }), { headers: SSE_HEADERS });
   } catch (err) {
     logger.error(SERVICE, 'Huangli ask error', err instanceof Error ? err : undefined);
     await refundIfConsumed();

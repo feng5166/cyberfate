@@ -1,411 +1,219 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
-import { SegmentControl } from '@/components/ui/SegmentControl';
-import { getAge, getBirthYear, getGanZhi, getCurrentDayunIndex, STARTING_AGE, DAYUN_SPAN } from '@/lib/utils/dayun';
+import type { PalaceData } from './types';
+import type { TianGan } from '@/lib/ziwei/types';
+import {
+  calcZiweiDayun,
+  calcZiweiLiunian,
+  juNumberFromName,
+  type ZiweiDayunItem,
+} from '@/lib/ziwei/dayun';
+import { PALACE_DOMAIN, describeLiunianBrief } from '@/lib/ziwei/quickRead';
+import { track } from '@/lib/analytics';
+
+/**
+ * 大限 / 流年切换器（PRD-ZIWEI-V2 P0-A）：
+ * 真实大限（五行局起限 + 阳男阴女顺行/阴男阳女逆行）+ 真实流年（流年命宫 + 流年四化）。
+ * 替换 V1 的假线性大运（固定 3 岁起运 + 硬编码宫位描述模板）。
+ */
 
 interface DayunSwitcherProps {
-  birthDate?: string; // 'YYYY-MM-DD'
+  palaces: PalaceData[];
+  birthDate: string;          // 'YYYY-MM-DD'
+  /** 生年干支（排盘 API debug 口径，立春为界），如 '庚午' */
+  yearGanZhi?: string;
+  gender: 'male' | 'female';
+  /** 五行局名，如 '水二局' */
+  wuxingJu?: string;
   className?: string;
 }
 
-interface DayunPeriod {
-  label: string;
-  ageRange: string;
-  startAge: number;
-  endAge: number;
-  yearRange: string;
-  palace: string;
-  description: string;
+const NUM_LABELS = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'];
+
+function dayunTheme(item: ZiweiDayunItem): string {
+  const domain = PALACE_DOMAIN[item.palaceName] ?? item.palaceName;
+  const starText = item.majorStars.length ? item.majorStars.join('') : '借对宫之力';
+  return `这十年行${item.palaceName}宫（${starText}），人生主场景是${domain}。`;
 }
 
-interface LiunianItem {
-  year: number;
-  stem: string;
-  branch: string;
-  summary: string;
-}
-
-const DAYUN_PALACES = ['命宫', '兄弟', '夫妻', '子女', '财帛', '疾厄', '迁移', '交友', '官禄', '田宅'];
-const DAYUN_DESCRIPTIONS = [
-  '紫微天府坐守，幼年聪慧，得长辈疼爱',
-  '太阳旺度，学业顺利，交友广泛',
-  '武曲天相同度，事业起步，感情稳定',
-  '七杀旺地，事业冲刺，把握机遇',
-  '贪狼化禄，财运亨通，收获丰厚',
-  '廉贞平度，安定为宜，注意健康',
-  '天同巨门同度，生活平稳，宜守不宜攻',
-  '太阴旺度，人际融洽，利合作发展',
-  '天梁坐守，事业有成，名望提升',
-  '破军独坐，变动期至，需审慎决策',
-];
-
-const LIUNIAN_SUMMARIES = [
-  '新起点，适合规划与布局',
-  '贵人运旺，利合作发展',
-  '感情运提升，注意财务管理',
-  '学习进修好时机，充实自我',
-  '财运回升，稳步前进',
-  '事业有变动机会，需审时度势',
-  '人际拓展期，广结善缘',
-  '沉淀积累，厚积薄发',
-  '突破期至，把握良机',
-  '收获之年，安享成果',
-];
-
-const NUM_LABELS = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
-
-function generateDayunPeriods(birthYear: number, count: number): DayunPeriod[] {
-  return Array.from({ length: count }, (_, i) => {
-    const startAge = STARTING_AGE + i * DAYUN_SPAN;
-    const endAge = startAge + DAYUN_SPAN - 1;
-    const startYear = birthYear + startAge;
-    const endYear = birthYear + endAge;
-    return {
-      label: `第${NUM_LABELS[i] ?? i + 1}大运`,
-      ageRange: `${startAge}-${endAge}岁`,
-      startAge,
-      endAge,
-      yearRange: `${startYear}-${endYear}`,
-      palace: DAYUN_PALACES[i % DAYUN_PALACES.length],
-      description: DAYUN_DESCRIPTIONS[i % DAYUN_DESCRIPTIONS.length],
-    };
-  });
-}
-
-function generateLiunian(birthYear: number): LiunianItem[] {
+export function DayunSwitcher({ palaces, birthDate, yearGanZhi, gender, wuxingJu, className }: DayunSwitcherProps) {
   const currentYear = new Date().getFullYear();
-  const startYear = currentYear - 2;
-  const endYear = currentYear + 2;
-  const items: LiunianItem[] = [];
-  for (let year = startYear; year <= endYear; year++) {
-    const { stem, branch } = getGanZhi(year);
-    const age = year - birthYear + 1;
-    const summaryIdx = (year - startYear) % LIUNIAN_SUMMARIES.length;
-    items.push({
-      year,
-      stem,
-      branch,
-      summary: `${age}岁 · ${LIUNIAN_SUMMARIES[summaryIdx]}`,
-    });
+  const birthYear = Number(birthDate?.slice(0, 4)) || 0;
+
+  const dayunList = useMemo<ZiweiDayunItem[]>(() => {
+    if (!palaces.length || !birthYear || !yearGanZhi || !wuxingJu) return [];
+    const ju = juNumberFromName(wuxingJu);
+    if (!ju) return [];
+    try {
+      return calcZiweiDayun(palaces, {
+        yearGan: yearGanZhi[0] as TianGan,
+        gender,
+        birthYear,
+        juNumber: ju,
+        currentYear,
+      });
+    } catch {
+      return [];
+    }
+  }, [palaces, birthYear, yearGanZhi, gender, wuxingJu, currentYear]);
+
+  const currentIndex = useMemo(() => {
+    const idx = dayunList.findIndex((d) => d.isCurrent);
+    return idx >= 0 ? idx : 0;
+  }, [dayunList]);
+
+  // 换盘时重置选中态（render 期派生，避免 effect 级联渲染）
+  const [selectedIndexRaw, setSelectedIndexRaw] = useState<number | null>(null);
+  const [selectedYear, setSelectedYear] = useState<number | null>(null);
+  const [lastList, setLastList] = useState(dayunList);
+  if (lastList !== dayunList) {
+    setLastList(dayunList);
+    setSelectedIndexRaw(null);
+    setSelectedYear(null);
   }
-  return items;
-}
+  const selectedIndex = selectedIndexRaw ?? currentIndex;
+  const setSelectedIndex = setSelectedIndexRaw;
 
-export function DayunSwitcher({ birthDate, className }: DayunSwitcherProps) {
-  const [view, setView] = useState<'dayun' | 'liunian'>('dayun');
+  const selected = dayunList[selectedIndex] ?? null;
 
-  const birthYear = useMemo(() => getBirthYear(birthDate ?? ''), [birthDate]);
+  // 该大限内的 10 个流年（真实流年命宫 + 四化）
+  const liunianYears = useMemo(() => {
+    if (!selected) return [];
+    const years: Array<{ year: number; ganZhi: string; palaceName: string; brief: string }> = [];
+    for (let y = selected.yearStart; y <= selected.yearEnd; y++) {
+      const ln = calcZiweiLiunian(palaces, y);
+      if (ln) {
+        years.push({
+          year: y,
+          ganZhi: ln.ganZhi,
+          palaceName: ln.palaceName,
+          brief: describeLiunianBrief(ln.palaceName, ln.majorStars, ln.sihua),
+        });
+      }
+    }
+    return years;
+  }, [selected, palaces]);
 
-  const currentAge = useMemo(() => {
-    if (!birthDate) return 30;
-    return getAge(birthDate);
-  }, [birthDate]);
+  const selectedLiunian = useMemo(
+    () => liunianYears.find((l) => l.year === selectedYear) ?? null,
+    [liunianYears, selectedYear],
+  );
 
-  const currentYear = new Date().getFullYear();
+  if (!dayunList.length || !selected) return null;
 
-  const dayunPeriods = useMemo(() => {
-    const minCount = 6;
-    const neededCount = Math.max(minCount, Math.ceil((currentAge - STARTING_AGE + DAYUN_SPAN) / DAYUN_SPAN));
-    return generateDayunPeriods(birthYear, neededCount);
-  }, [currentAge, birthYear]);
-
-  const liunianItems = useMemo(() => generateLiunian(birthYear), [birthYear]);
-
-  const currentDayunIndex = useMemo(() => {
-    return dayunPeriods.findIndex(
-      (d) => currentAge >= d.startAge && currentAge <= d.endAge,
-    );
-  }, [dayunPeriods, currentAge]);
-
-  const [activeIndex, setActiveIndex] = useState(0);
-
-  useEffect(() => {
-    setActiveIndex(currentDayunIndex >= 0 ? currentDayunIndex : 0);
-  }, [currentDayunIndex]);
+  const handleSelect = (idx: number) => {
+    setSelectedIndex(idx);
+    setSelectedYear(null);
+    track('ziwei_dayun_switch', { index: idx });
+  };
 
   return (
-    <div className={cn('bg-white rounded-2xl border border-[#1C1A16]/8 p-5 sm:p-6', className)}>
-      {/* 标题 + 切换 */}
-      <div className="flex items-center justify-between gap-3 mb-4">
-        <h3 className="font-display text-lg font-semibold text-[#1C1A16]">大运流年</h3>
-        {/* 统一段控（激活态走强调色，触控目标 ≥44px） */}
-        <SegmentControl
-          className="w-auto shrink-0"
-          options={[
-            { value: 'dayun', label: '大运' },
-            { value: 'liunian', label: '流年' },
-          ]}
-          value={view}
-          onChange={(v) => setView(v as 'dayun' | 'liunian')}
-        />
+    <div
+      className={cn('bg-white rounded-2xl border border-[#1C1A16]/8 p-5 sm:p-6', className)}
+      role="region"
+      aria-label="大限流年"
+    >
+      <div className="flex items-center justify-between mb-1">
+        <h3 className="text-base font-semibold text-[#1C1A16]">大限流年</h3>
+        <span className="text-[11px] text-[#1C1A16]/45">
+          {wuxingJu}{yearGanZhi ? ` · ${yearGanZhi}年生` : ''} · {gender === 'female' ? '女' : '男'}命
+        </span>
+      </div>
+      <p className="text-xs text-[#1C1A16]/45 mb-4">十年一宫；起限岁数与行进方向按五行局、阴阳男女真实推得</p>
+
+      {/* 大限横条 */}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => handleSelect(Math.max(0, selectedIndex - 1))}
+          disabled={selectedIndex === 0}
+          className="shrink-0 p-1.5 rounded-lg border border-[#1C1A16]/10 text-[#1C1A16]/50 hover:bg-[#FAF9F6] disabled:opacity-30 transition-colors"
+          aria-label="上一大限"
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+        <div className="flex-1 overflow-x-auto">
+          <div className="flex gap-2 pb-1">
+            {dayunList.map((d, idx) => (
+              <button
+                key={d.index}
+                type="button"
+                onClick={() => handleSelect(idx)}
+                className={cn(
+                  'shrink-0 rounded-xl border px-3 py-2 text-left transition-colors min-w-[92px]',
+                  idx === selectedIndex
+                    ? 'border-[#7E22CE]/50 bg-[#F3E8FF]/50'
+                    : d.isCurrent
+                      ? 'border-[#7E22CE]/25 bg-white'
+                      : 'border-[#1C1A16]/10 bg-white hover:border-[#1C1A16]/25',
+                )}
+              >
+                <p className="text-sm font-semibold text-[#1C1A16]">
+                  {d.palaceName}
+                  {d.isCurrent && <span className="ml-1 text-[10px] font-medium" style={{ color: '#7E22CE' }}>当前</span>}
+                </p>
+                <p className="text-[11px] text-[#1C1A16]/50 mt-0.5">{d.ageStart}-{d.ageEnd}岁</p>
+              </button>
+            ))}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => handleSelect(Math.min(dayunList.length - 1, selectedIndex + 1))}
+          disabled={selectedIndex === dayunList.length - 1}
+          className="shrink-0 p-1.5 rounded-lg border border-[#1C1A16]/10 text-[#1C1A16]/50 hover:bg-[#FAF9F6] disabled:opacity-30 transition-colors"
+          aria-label="下一大限"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
       </div>
 
-      {view === 'dayun' ? (
-        <>
-          {/* ── 桌面端横向时间轴 ── */}
-          <div className="hidden sm:block relative mb-5">
-            <div className="flex items-center gap-2 mb-3">
-              <button
-                onClick={() => setActiveIndex(Math.max(0, activeIndex - 1))}
-                className="p-1.5 rounded-lg hover:bg-[#FAF9F6] text-[#1C1A16]/40 shrink-0 transition-colors"
-                aria-label="上一大运"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <span className="text-xs text-[#1C1A16]/40 flex-1 text-center">
-                {dayunPeriods[activeIndex].label} · {dayunPeriods[activeIndex].palace}
-              </span>
-              <button
-                onClick={() => setActiveIndex(Math.min(dayunPeriods.length - 1, activeIndex + 1))}
-                className="p-1.5 rounded-lg hover:bg-[#FAF9F6] text-[#1C1A16]/40 shrink-0 transition-colors"
-                aria-label="下一大运"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="overflow-x-auto pb-2 -mx-1 px-1">
-              <div className="relative flex items-start min-w-max md:min-w-0 pt-2">
-                <div
-                  className="absolute top-[18px] left-4 right-4 h-[2px] bg-[#E8E4DD]"
-                  aria-hidden="true"
-                />
-                {currentDayunIndex >= 0 && (
-                  <div
-                    className="absolute top-[18px] left-4 h-[2px] bg-gradient-to-r from-stone-500 to-stone-400 transition-all duration-500"
-                    style={{
-                      width: `${((currentDayunIndex + 1) / dayunPeriods.length) * 100}%`,
-                      maxWidth: 'calc(100% - 32px)',
-                    }}
-                    aria-hidden="true"
-                  />
-                )}
-
-                {dayunPeriods.map((period, idx) => {
-                  const isCurrent = idx === currentDayunIndex;
-                  const isActive = idx === activeIndex;
-                  const isPast = currentDayunIndex >= 0 && idx < currentDayunIndex;
-                  const isFuture = currentDayunIndex >= 0 && idx > currentDayunIndex;
-
-                  return (
-                    <button
-                      key={idx}
-                      onClick={() => setActiveIndex(idx)}
-                      className="flex flex-col items-center flex-1 min-w-[60px] group cursor-pointer"
-                      aria-label={`${period.label} ${period.ageRange} ${period.palace}`}
-                      aria-pressed={isActive}
-                    >
-                      <div
-                        className={cn(
-                          'relative w-4 h-4 rounded-full border-2 transition-all duration-300 z-10',
-                          isActive
-                            ? 'w-6 h-6 border-[#1C1A16] bg-[#1C1A16] shadow-[0_0_0_4px_rgba(28,26,22,0.2)]'
-                            : isCurrent
-                              ? 'w-5 h-5 border-stone-500 bg-stone-500 shadow-[0_0_0_3px_rgba(28,26,22,0.25)]'
-                              : isPast
-                                ? 'border-stone-400 bg-stone-300'
-                                : isFuture
-                                  ? 'border-[#D4D0C8] bg-[#FAF9F6] opacity-60 group-hover:opacity-100'
-                                  : 'border-[#D4D0C8] bg-white group-hover:border-[#1C1A16]/30',
-                        )}
-                      >
-                        {isCurrent && !isActive && (
-                          <span className="absolute inset-0 rounded-full animate-ping bg-stone-500/30" />
-                        )}
-                      </div>
-
-                      <span
-                        className={cn(
-                          'mt-2 text-[10px] leading-tight whitespace-nowrap transition-colors',
-                          isActive
-                            ? 'text-[#1C1A16] font-bold'
-                            : isCurrent
-                              ? 'text-stone-600 font-medium'
-                              : isPast
-                                ? 'text-[#1C1A16]/40'
-                                : 'text-[#1C1A16]/25 group-hover:text-[#1C1A16]/50',
-                        )}
-                      >
-                        {period.ageRange}
-                      </span>
-                      <span
-                        className={cn(
-                          'text-[10px] leading-tight mt-0.5 whitespace-nowrap transition-colors',
-                          isActive
-                            ? 'text-stone-600/80 font-medium'
-                            : isCurrent
-                              ? 'text-[#1C1A16]/60'
-                              : isPast
-                                ? 'text-[#1C1A16]/25'
-                                : 'text-[#1C1A16]/15',
-                        )}
-                      >
-                        {period.palace}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* ── 移动端纵向时间轴 ── */}
-          <div className="sm:hidden relative mb-5">
-            <div className="relative pl-8">
-              <div
-                className="absolute left-[11px] top-0 bottom-0 w-[2px] bg-[#E8E4DD]"
-                aria-hidden="true"
-              />
-              {currentDayunIndex >= 0 && (
-                <div
-                  className="absolute left-[11px] top-0 w-[2px] bg-gradient-to-b from-stone-500 to-stone-400 transition-all duration-500"
-                  style={{
-                    height: `${((currentDayunIndex + 1) / dayunPeriods.length) * 100}%`,
-                  }}
-                  aria-hidden="true"
-                />
-              )}
-
-              {dayunPeriods.map((period, idx) => {
-                const isCurrent = idx === currentDayunIndex;
-                const isActive = idx === activeIndex;
-                const isPast = currentDayunIndex >= 0 && idx < currentDayunIndex;
-                const isFuture = currentDayunIndex >= 0 && idx > currentDayunIndex;
-
-                return (
-                  <button
-                    key={idx}
-                    onClick={() => setActiveIndex(idx)}
-                    className={cn(
-                      'relative flex items-center gap-3 w-full text-left py-2.5 transition-all',
-                      isFuture && !isActive ? 'opacity-50' : '',
-                    )}
-                    aria-label={`${period.label} ${period.ageRange} ${period.palace}`}
-                    aria-pressed={isActive}
-                  >
-                    <div
-                      className={cn(
-                        'absolute left-[-21px] w-4 h-4 rounded-full border-2 transition-all duration-300 z-10',
-                        isActive
-                          ? 'w-5 h-5 -ml-0.5 border-[#1C1A16] bg-[#1C1A16] shadow-[0_0_0_3px_rgba(28,26,22,0.2)]'
-                          : isCurrent
-                            ? 'border-stone-500 bg-stone-500 shadow-[0_0_0_2px_rgba(28,26,22,0.2)]'
-                            : isPast
-                              ? 'border-stone-400 bg-stone-300'
-                              : 'border-[#D4D0C8] bg-[#FAF9F6]',
-                      )}
-                    >
-                      {isCurrent && !isActive && (
-                        <span className="absolute inset-0 rounded-full animate-ping bg-stone-500/30" />
-                      )}
-                    </div>
-
-                    <div
-                      className={cn(
-                        'flex-1 rounded-xl px-3 py-2 transition-all border',
-                        isActive
-                          ? 'bg-stone-100 border-stone-300'
-                          : isCurrent
-                            ? 'bg-stone-100/50 border-stone-200'
-                            : 'bg-transparent border-transparent',
-                      )}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className={cn(
-                          'text-xs font-semibold',
-                          isActive ? 'text-[#1C1A16]' : isCurrent ? 'text-stone-600' : isPast ? 'text-[#1C1A16]/50' : 'text-[#1C1A16]/30',
-                        )}>
-                          {period.ageRange}
-                        </span>
-                        <span className={cn(
-                          'text-[10px] px-1.5 py-0.5 rounded-md',
-                          isActive ? 'bg-stone-200 text-[#1C1A16]' : 'bg-[#FAF9F6] text-[#1C1A16]/35',
-                        )}>
-                          {period.palace}
-                        </span>
-                        {isCurrent && (
-                          <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-stone-300 text-[#1C1A16] font-bold">
-                            当前
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* 大运详情 */}
-          <div
-            className="rounded-xl border p-4 transition-all duration-300"
-            style={{
-              backgroundColor: activeIndex === currentDayunIndex ? '#FFFBEB' : '#FAF9F6',
-              borderColor: activeIndex === currentDayunIndex ? '#FDE68A' : '#E8E4DD',
-            }}
-          >
-            <div className="flex items-center gap-2 mb-2 flex-wrap">
-              <span className="text-sm font-semibold text-[#1C1A16]">
-                {dayunPeriods[activeIndex].label}
-              </span>
-              <span className="text-xs text-[#1C1A16]/40">
-                {dayunPeriods[activeIndex].ageRange}（{dayunPeriods[activeIndex].yearRange}年）
-              </span>
-              {activeIndex === currentDayunIndex && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-stone-200 text-[#1C1A16] font-medium animate-pulse">
-                  当前（{currentAge}岁）
-                </span>
-              )}
-              {currentDayunIndex >= 0 && activeIndex < currentDayunIndex && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F6F4F1] text-[#1C1A16]/45 font-medium">
-                  已过
-                </span>
-              )}
-              {currentDayunIndex >= 0 && activeIndex > currentDayunIndex && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full border border-[#E8E4DD] text-[#1C1A16]/40 font-medium">
-                  未至
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-[#1C1A16]/40 mb-1">
-              走{dayunPeriods[activeIndex].palace}
-            </p>
-            <p className="text-sm text-[#1C1A16]/60 leading-relaxed">
-              {dayunPeriods[activeIndex].description}
-            </p>
-          </div>
-        </>
-      ) : (
-        /* 流年列表 */
-        <div className="space-y-2">
-          {liunianItems.map((ly) => (
-            <div
-              key={ly.year}
-              className={cn(
-                'flex items-center gap-4 px-4 py-3 rounded-xl border transition-all',
-                ly.year === currentYear
-                  ? 'border-2 border-stone-500 bg-stone-100/50 shadow-sm'
-                  : 'border-[#E8E4DD]',
-              )}
-            >
-              <span className={cn(
-                'text-sm font-semibold min-w-[48px]',
-                ly.year === currentYear ? 'text-[#1C1A16]' : 'text-[#1C1A16]',
-              )}>{ly.year}</span>
-              <span className="text-xs text-[#1C1A16]/40 min-w-[36px]">{ly.stem}{ly.branch}年</span>
-              <span className="text-sm text-[#1C1A16]/60 flex-1">{ly.summary}</span>
-              {ly.year === currentYear && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-stone-200 text-[#1C1A16] font-medium shrink-0">
-                  今年
-                </span>
-              )}
-            </div>
-          ))}
+      {/* 选中大限详情 */}
+      <div className="mt-4 rounded-xl bg-[#FAF9F6] border border-[#1C1A16]/6 p-4">
+        <div className="flex flex-wrap items-baseline gap-2">
+          <span className="text-sm font-semibold text-[#1C1A16]">
+            第{NUM_LABELS[selected.index] ?? selected.index + 1}大限 · {selected.palaceName}宫
+            {selected.stem ? `（${selected.stem}${selected.branch}）` : `（${selected.branch}）`}
+          </span>
+          <span className="text-xs text-[#1C1A16]/50">
+            {selected.ageStart}-{selected.ageEnd} 虚岁 · {selected.yearStart}-{selected.yearEnd} 年
+          </span>
         </div>
-      )}
+        <p className="mt-2 text-sm leading-relaxed text-[#1C1A16]/75">{dayunTheme(selected)}</p>
+
+        {/* 流年条 */}
+        <div className="mt-3 overflow-x-auto">
+          <div className="flex gap-1.5 pb-1">
+            {liunianYears.map((l) => (
+              <button
+                key={l.year}
+                type="button"
+                onClick={() => setSelectedYear((prev) => (prev === l.year ? null : l.year))}
+                className={cn(
+                  'shrink-0 rounded-lg border px-2 py-1.5 text-center transition-colors',
+                  selectedYear === l.year
+                    ? 'border-[#7E22CE]/50 bg-white'
+                    : l.year === currentYear
+                      ? 'border-[#7E22CE]/25 bg-white'
+                      : 'border-[#1C1A16]/8 bg-white/60 hover:border-[#1C1A16]/20',
+                )}
+              >
+                <p className="text-xs font-medium text-[#1C1A16]">{l.year}</p>
+                <p className="text-[10px] text-[#1C1A16]/45">{l.ganZhi}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+        {selectedLiunian && (
+          <p className="mt-2 text-xs leading-relaxed text-[#1C1A16]/65">
+            <span className="font-medium text-[#1C1A16]">{selectedLiunian.year} 年（{selectedLiunian.ganZhi}）：</span>
+            {selectedLiunian.brief}
+          </p>
+        )}
+      </div>
     </div>
   );
 }

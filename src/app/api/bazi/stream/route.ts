@@ -3,7 +3,7 @@ import { Lunar } from 'lunar-javascript';
 import { z } from 'zod';
 import { getServerSession, type Session } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { refundQuota, checkBaziQuota } from '@/lib/quota';
+import { refundQuota, atomicCheckAndConsume, isUserVip } from '@/lib/quota';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { redis } from '@/lib/cache/redis';
 import { PRIMARY_MODEL } from '@/lib/ai/models';
@@ -40,6 +40,22 @@ const PARTIAL_KEEP_MIN_CHARS = 200;
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
+/** 议题式 AI（PRD-BAZI-V2 P0-A）：六大人生议题，单议题 300-400 字按需生成 */
+const TOPICS = {
+  career: { label: '事业攻守', focus: '事业方向与行业属性（结合用神五行）、当前大运下宜攻宜守、未来两三年的职场节奏' },
+  wealth: { label: '财从何来', focus: '正财偏财结构、适合的求财方式、需要留意的破财风险点、近年财运节奏' },
+  love: { label: '正缘何时', focus: '配偶星与婚姻宫状态、正缘的大致特征、感情节奏与相对有利的时段' },
+  health: { label: '身体软肋', focus: '五行失衡对应需要养护的身体部位与作息建议（不做医疗诊断，只谈养生方向）' },
+  personality: { label: '性格底色', focus: '性格优势与短板、人际风格、适合的成长方式' },
+  dayun: { label: '十年大势', focus: '当前大运的主题与吉凶取向、与下一步大运的衔接转折、十年维度的节奏建议' },
+} as const;
+type TopicKey = keyof typeof TOPICS;
+
+const TOPIC_SYSTEM_PROMPT =
+  '你是资深八字命理师。你必须基于用户提供的「命理推算事实」作答，不得自行编造排盘结果。' +
+  '语言通俗温暖、先结论后依据。输出格式：以【议题名】开头（与用户指定议题一致），正文 300-400 字，分 2-3 段，结尾给一条可执行建议。' +
+  '不预测灾祸疾病，低谷话题一律用「提醒-蓄力-给建议」的框架表述。';
+
 const requestSchema = z.object({
   cacheKey: z.string().min(1),
   baziResult: z.any(),
@@ -51,7 +67,10 @@ const requestSchema = z.object({
   birthDate: z.string().optional(),
   // /api/bazi 随排盘响应下发的公历锚点（农历输入时 ≠ birthDate）。新客户端原样回传，
   // 老客户端不传 → 走 isLunar 兜底或按阳历处理，行为与本次改动前一致。
-  solarBirthDate: z.string().regex(DATE_RE).optional(),
+  // 故意不在 schema 里用 .regex() 严校验、也允许 null：它只是一个「让大运更准」的可选提示，
+  // 客户端把它传成空串/null（如八字直输模式、存量记录）不该让整份解读 400 掉。
+  // 形状校验挪到 resolveSolarBirthDate 里做，不合格就静默降级到 isLunar 兜底。
+  solarBirthDate: z.string().nullish(),
   // birthDate 是否按农历填写。仅在 solarBirthDate 缺失时用于服务端自行折算（存量记录/老客户端路径）。
   isLunar: z.boolean().optional(),
   birthHour: z.number().int().min(-1).max(11).optional(),
@@ -61,6 +80,8 @@ const requestSchema = z.object({
   knowTime: z.boolean().optional(),
   forceRefresh: z.boolean().optional(),
   dayunExtra: z.any().optional(),
+  /** 议题式生成：带 topic → 单议题（免费 3 议题/日）；不带 → 全盘详批（VIP 专属） */
+  topic: z.enum(['career', 'wealth', 'love', 'health', 'personality', 'dayun']).optional(),
 });
 
 /** 北京时间当天 YYYY-MM-DD */
@@ -71,8 +92,8 @@ function beijingToday(): string {
 /**
  * 农历 YYYY-MM-DD → 公历 YYYY-MM-DD。
  *
- * 与 /api/bazi/route.ts 的同名函数、以及 calculateBazi 内部的折算逐字同构
- *（三处都是 Lunar.fromYmd(y,m,d).getSolar()）。任何一处改口径都必须同步另两处，
+ * 与 calculateBazi 内部的折算、以及 /api/bazi 下发 solarBirthDate 时用的折算逐字同构
+ *（都是 Lunar.fromYmd(y,m,d).getSolar()）。任何一处改口径都必须同步其余各处，
  * 否则「四柱与大运同源」的保证立刻失效。
  * 闰月（负月号）表达不了，与 calculateBazi 的限制一致。
  */
@@ -88,7 +109,7 @@ function lunarToSolarYmd(date: string): string {
  * 解析本次解读的「公历锚点」——工具链里 getCurrentDayun / getDayunTimeline 只认公历串
  *（内部一律 Solar.fromYmd），拿农历原串喂进去等于用另一个日期排大运。
  *
- * 为什么非修不可：/api/bazi 已把农历折算成公历再排四柱与大运，四柱因此是对的；
+ * 为什么非修不可：/api/bazi 已把农历折算成公历再排四柱，四柱因此是对的；
  * 而本路由的工具链事实（大运/起运/流年）若仍按农历原串算，喂给模型的就是另一副盘——
  * 屏幕上的大运表与 AI 正文互相矛盾，对农历用户 100% 命中。
  *
@@ -102,10 +123,14 @@ function lunarToSolarYmd(date: string): string {
  */
 function resolveSolarBirthDate(
   birthDate: string,
-  solarBirthDate: string | undefined,
+  solarBirthDate: string | null | undefined,
   isLunar: boolean | undefined,
 ): string {
-  if (solarBirthDate) return solarBirthDate; // 形状已由 zod 的 DATE_RE 校验
+  if (solarBirthDate) {
+    if (DATE_RE.test(solarBirthDate)) return solarBirthDate;
+    // 形状不对说明客户端契约破了：记一条 warn 便于定位，然后按「没传」继续走下面的兜底
+    logger.warn(SERVICE, `ignored malformed solarBirthDate (${solarBirthDate})`);
+  }
   if (isLunar === true && DATE_RE.test(birthDate)) {
     try {
       return lunarToSolarYmd(birthDate);
@@ -159,16 +184,18 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: '请求参数错误' }, { status: 400 });
   }
 
-  const { cacheKey, baziResult, name, gender, birthHour, birthHourNum, birthMinute, knowTime, forceRefresh, dayunExtra } = parsed;
+  const { cacheKey, baziResult, name, gender, birthHour, birthHourNum, birthMinute, knowTime, forceRefresh, dayunExtra, topic } = parsed;
   // 八字直输无出生日期：统一兜底为空串，大运步骤会优雅降级
   // birthDate 保持「用户填的那一串」，只用于飞书告警文案（运维要看到用户实际输入的是什么）；
   // 命理计算一律改用下面第 2 步解析出的公历锚点。
   const birthDate = parsed.birthDate ?? '';
+  // 议题模式独立缓存键，与全盘详批互不污染
+  const effectiveCacheKey = topic ? `${cacheKey}:topic:${topic}` : cacheKey;
 
   // 1. 查缓存（forceRefresh 时跳过）
   if (!forceRefresh) {
     try {
-      const cached = await redis.get(cacheKey);
+      const cached = await redis.get(effectiveCacheKey);
       if (cached) {
         // 兼容旧缓存：字符串直接返回，对象走 formatAnalysis
         const text =
@@ -189,24 +216,43 @@ export async function POST(req: NextRequest) {
   // 走到这里说明要真正生成 AI（forceRefresh 或缓存未命中）。
   // 统一在「实际生成」处计费/限流——这是唯一会调用 DeepSeek 的位置，
   // 防止「重新分析」或直接打 /api/bazi/stream（自带任意 cacheKey 制造缓存未命中）绕过配额。
+  // 门槛（PRD-BAZI-V2 §4）：议题式 = 免费 3 议题/日（游客 1/日）；全盘详批 = VIP 专属。
   const ip = getClientIp(req);
+  let quotaConsumed = false; // fallback 时仅退还真正扣过的配额
   if (session?.user?.id) {
     const rl = await checkRateLimit('ai_bazi', session.user.id, 10, 60);
     if (!rl.allowed) {
       return Response.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
     }
-    const quota = await checkBaziQuota(session.user.id);
-    if (!quota.hasQuota) {
+    if (topic) {
+      const quota = await atomicCheckAndConsume(session.user.id, 'baziAiCount', 3);
+      if (!quota.hasQuota) {
+        return Response.json(
+          { error: 'QUOTA_EXCEEDED', message: '今日 3 次免费议题解读已用完，会员不限次' },
+          { status: 403 },
+        );
+      }
+      quotaConsumed = !quota.isVip;
+    } else {
+      const vip = await isUserVip(session.user.id);
+      if (!vip) {
+        return Response.json(
+          { error: 'SUBSCRIPTION_REQUIRED', message: '全盘详批为会员专属，免费用户可使用六大议题解读' },
+          { status: 403 },
+        );
+      }
+    }
+  } else {
+    if (!topic) {
       return Response.json(
-        { error: 'QUOTA_EXCEEDED', message: '今日免费解读次数已用完，请升级 VIP' },
+        { error: 'SUBSCRIPTION_REQUIRED', message: '全盘详批为会员专属，登录后可免费使用议题解读' },
         { status: 403 },
       );
     }
-  } else {
     const rl = await checkRateLimit('ai_bazi_guest', ip, 1, 86400);
     if (!rl.allowed) {
       return Response.json(
-        { error: 'GUEST_LIMIT_REACHED', message: '游客每日免费解读次数已用完，登录后可继续使用' },
+        { error: 'GUEST_LIMIT_REACHED', message: '游客每日免费议题次数已用完，登录后每天可用 3 次' },
         { status: 429 },
       );
     }
@@ -221,6 +267,7 @@ export async function POST(req: NextRequest) {
       session,
       name,
       birthDate,
+      refund: quotaConsumed,
     });
   }
 
@@ -239,8 +286,28 @@ export async function POST(req: NextRequest) {
   const facts = toolchainToPromptFacts(toolSteps);
 
   // 3. 调 LLM stream —— 主 provider 失败(网络错误/非2xx)先切兜底 provider，都不行才落本地降级
-  const prompt = buildBaziStreamPrompt(baziResult as BaziResult, name, gender, dayunExtra, facts);
   const proxy = attachClientAbort(req);
+
+  let systemPrompt: string;
+  let userPrompt: string;
+  if (topic) {
+    const t = TOPICS[topic as TopicKey];
+    const chart = (baziResult as BaziResult | undefined)?.chart as BaziChart | undefined;
+    const pillarsText = chart
+      ? [chart.year, chart.month, chart.day, chart.hour]
+          .filter((p): p is NonNullable<typeof p> => Boolean(p))
+          .map((p) => `${p.gan}${p.zhi}`)
+          .join(' ')
+      : '';
+    systemPrompt = TOPIC_SYSTEM_PROMPT;
+    userPrompt =
+      `命主：${name || '缘主'}，性别：${gender === 'female' ? '女' : '男'}，四柱：${pillarsText}\n\n` +
+      `命理推算事实（本地确定性计算，请据实作答）：\n${facts || '（无）'}\n\n` +
+      `请仅围绕议题【${t.label}】作答：${t.focus}`;
+  } else {
+    systemPrompt = BAZI_STREAM_SYSTEM_PROMPT;
+    userPrompt = buildBaziStreamPrompt(baziResult as BaziResult, name, gender, dayunExtra, facts);
+  }
 
   // 每个 provider 一个独立 AbortController：既转发客户端断连(proxy.signal)，
   // 又能被 TTFB 超时 / 空闲 watchdog 单独 abort（proxy.signal 是整个请求共用的，不能拿它当计时器）
@@ -267,13 +334,13 @@ export async function POST(req: NextRequest) {
         },
         body: JSON.stringify({
           model: PRIMARY_MODEL,
-          max_tokens: 4000,
+          max_tokens: topic ? 1500 : 6000,
           temperature: 0.3,
           stream: true,
           enable_thinking: false,
           messages: [
-            { role: 'system', content: BAZI_STREAM_SYSTEM_PROMPT },
-            { role: 'user', content: prompt },
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
           ],
         }),
       });
@@ -309,7 +376,7 @@ export async function POST(req: NextRequest) {
 
   if (!upstream) {
     proxy.release();
-    return streamFallback({ reason: 'upstream_error', baziResult, session, name, birthDate });
+    return streamFallback({ reason: 'upstream_error', baziResult, session, name, birthDate, refund: quotaConsumed });
   }
   const upstreamRes = upstream; // 收窄为非空，供下方闭包引用
 
@@ -416,13 +483,13 @@ export async function POST(req: NextRequest) {
         // 流结束 — 未进入正文(从未出现「【」，fullText 仍是思考过程)或内容过短，都判失败走 fallback，
         // 避免把思考过程当正文推给前端并污染永久缓存
         if (!outputStarted || fullText.trim().length < 100) {
-          await handleFallback(controller, encoder, baziResult, session, name, birthDate);
+          await handleFallback(controller, encoder, baziResult, session, name, birthDate, quotaConsumed);
           return;
         }
 
         // 写 Redis 缓存（存纯文本，30 天 TTL：即便偶发脏内容也会自然过期，不会永久污染该命盘）
         try {
-          await redis.set(cacheKey, fullText, { ex: 60 * 60 * 24 * 30 });
+          await redis.set(effectiveCacheKey, fullText, { ex: 60 * 60 * 24 * 30 });
         } catch (err) {
           console.warn('[bazi stream] cache write error', err);
         }
@@ -438,9 +505,9 @@ export async function POST(req: NextRequest) {
           // 此时保留原文 + 追加中断说明，用 done 帧收尾（前端按正常解读渲染/存档）；
           // 但不写 Redis 缓存——30 天 TTL 会把半截解读固化给这个命盘
           if (outputStarted && fullText.trim().length >= PARTIAL_KEEP_MIN_CHARS) {
-            await handlePartialInterrupt(controller, encoder, fullText, session, name, birthDate);
+            await handlePartialInterrupt(controller, encoder, fullText, session, name, birthDate, quotaConsumed);
           } else {
-            await handleFallback(controller, encoder, baziResult, session, name, birthDate);
+            await handleFallback(controller, encoder, baziResult, session, name, birthDate, quotaConsumed);
           }
         } catch {}
       } finally {
@@ -472,13 +539,14 @@ async function handleFallback(
   baziResult: unknown,
   session: Session | null,
   name: string | undefined,
-  birthDate: string
+  birthDate: string,
+  refund: boolean,
 ) {
   const fallback = generateFallbackBaziAnalysis(baziResult as BaziResult);
   const text = formatAnalysis(fallback);
 
-  // 退还配额（fallback 时）
-  if (session?.user?.id) {
+  // 退还配额（仅当本次真正扣过；VIP 全盘/缓存命中不扣也不退）
+  if (refund && session?.user?.id) {
     try {
       await refundQuota(session.user.id, 'baziAiCount');
     } catch {}
@@ -499,8 +567,10 @@ async function handleFallback(
 
 /**
  * 中途断流但已流出足量正文：保留已生成内容，只追加一句中断说明，并以 done 帧收尾。
- * 前端 done 分支走正常解读渲染/存档（fallback 帧才会整体替换文本），用户不会丢掉已读到的真解读。
- * 配额照旧退还（解读不完整不该计费），飞书仍告警——中断对运维依然是需要感知的失败。
+ * 前端 done 分支走正常解读渲染/存档（fallback 帧才会整体替换文本），用户不会丢掉已读到的真解读；
+ * 议题面板只累加 delta、不认 done，追加的说明同样会落到面板文本里。
+ * 配额照旧退还（解读不完整不该计费，退还条件与 handleFallback 一致：仅当本次真扣过），
+ * 飞书仍告警——中断对运维依然是需要感知的失败。
  */
 async function handlePartialInterrupt(
   controller: ReadableStreamDefaultController,
@@ -508,13 +578,14 @@ async function handlePartialInterrupt(
   partialText: string,
   session: Session | null,
   name: string | undefined,
-  birthDate: string
+  birthDate: string,
+  refund: boolean,
 ) {
   const notice = '\n\n（本次解读在生成中途中断，以上为已完成部分。可点击「重新分析」获取完整解读。）';
   const text = partialText + notice;
 
   // 先退配额再推帧：客户端已断开时 enqueue 会抛错，放在后面会把退款一起吞掉（与 handleFallback 同序）
-  if (session?.user?.id) {
+  if (refund && session?.user?.id) {
     try {
       await refundQuota(session.user.id, 'baziAiCount');
     } catch {}
@@ -530,7 +601,10 @@ async function handlePartialInterrupt(
 
   controller.enqueue(encoder.encode(`data: ${JSON.stringify({ delta: notice })}\n\n`));
   controller.enqueue(
-    encoder.encode(`data: ${JSON.stringify({ done: true, source: 'deepseek', aiAnalysis: text })}\n\n`)
+    // partial:true —— 服务端刻意不写 Redis（半截解读不该被 30 天 TTL 固化），
+    // 客户端必须据此同样不落盘、不 PATCH 档案，并保留「重新生成」入口。
+    // 服务端不缓存与客户端不存档要成对，否则本地又把半截内容固化了一遍。
+    encoder.encode(`data: ${JSON.stringify({ done: true, source: 'deepseek', partial: true, aiAnalysis: text })}\n\n`)
   );
 }
 
@@ -540,11 +614,12 @@ function streamFallback(opts: {
   session: Session | null;
   name: string | undefined;
   birthDate: string;
+  refund: boolean;
 }): Response {
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
-      await handleFallback(controller, encoder, opts.baziResult, opts.session, opts.name, opts.birthDate);
+      await handleFallback(controller, encoder, opts.baziResult, opts.session, opts.name, opts.birthDate, opts.refund);
       controller.close();
     },
   });

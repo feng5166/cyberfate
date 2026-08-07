@@ -22,13 +22,17 @@ type QuotaField =
   | 'marriageQaCount'
   | 'tarotSingleCount'
   | 'tarotThreeCount'
+  // —— 八字 V2（PRD-BAZI-V2）——
+  | 'baziChatCount'
+  // —— 紫微 V2（PRD-ZIWEI-V2）：逐宫 AI 解读，免费 3 宫/日 ——
+  | 'ziweiAiCount'
 
 /**
  * 统一配额策略 v1：免费用户「主命理 AI 解读」与「AI 问答」统一 1 次/天，VIP 不限。
  */
 export const FREE_DAILY_LIMIT = 1
 
-async function atomicCheckAndConsume(
+export async function atomicCheckAndConsume(
   userId: string,
   field: QuotaField,
   limit: number,

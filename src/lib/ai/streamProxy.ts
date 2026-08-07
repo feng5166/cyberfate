@@ -45,12 +45,16 @@ export function attachClientAbort(req: Request | { signal: AbortSignal }): Strea
  * 客户端断连时 cancel 上游。原先各 QA 路由（meihua/qa、liuyao/qa …）各存一份，这里统一。
  */
 export interface ProxyLLMOptions {
-  /** 流正常读完后回调，收到拼接好的完整答案 + 是否被客户端中断（用于写历史/缓存等）。抛错会被吞，不影响出流。 */
-  onComplete?: (fullText: string, aborted: boolean) => void | Promise<void>;
+  /** 流正常读完后回调，收到拼接好的完整答案 + 是否被客户端中断 + 是否被 max_tokens 截断（用于写历史/缓存等，截断的答案不应长期缓存）。抛错会被吞，不影响出流。 */
+  onComplete?: (fullText: string, aborted: boolean, truncated?: boolean) => void | Promise<void>;
+  /** 日志标识（如路由名），用于截断告警定位来源。 */
+  label?: string;
   /** 自定义每个 content 帧的对象形状（默认 `{ content }`；如需 `{ type:'content', content }` 在此覆盖）。 */
   contentFrame?: (content: string) => object;
   /** delta 流开始前先发的帧序列（可带 delayMs 节奏，用于工具链「推算中」动画等）。 */
   prefixFrames?: Array<{ frame: object; delayMs?: number }>;
+  /** delta 流正常读完后、[DONE] 前追加的帧（如免费用户回答尾部的升级提示行）。客户端中断时不发。 */
+  suffixFrames?: object[];
 }
 
 export function proxyLLMDeltaStream(
@@ -76,6 +80,7 @@ export function proxyLLMDeltaStream(
 
       let buffer = '';
       let fullText = '';
+      let truncated = false;
       try {
         while (true) {
           const { done, value } = await reader.read();
@@ -95,11 +100,20 @@ export function proxyLLMDeltaStream(
                 fullText += delta;
                 controller.enqueue(encodeSse(makeContentFrame(delta)));
               }
+              if (json.choices?.[0]?.finish_reason === 'length') truncated = true;
             } catch { /* 单行 JSON 不完整则跳过 */ }
           }
         }
+        if (truncated) {
+          console.warn(`[proxyLLMDeltaStream${opts.label ? `:${opts.label}` : ''}] 回复被 max_tokens 截断（已输出 ${fullText.length} 字），需上调该路由的 max_tokens`);
+        }
+        if (!handle.signal.aborted) {
+          for (const frame of opts.suffixFrames ?? []) {
+            controller.enqueue(encodeSse(frame));
+          }
+        }
         if (opts.onComplete) {
-          try { await opts.onComplete(fullText, handle.signal.aborted); } catch (e) { console.error('[proxyLLMDeltaStream] onComplete failed:', e); }
+          try { await opts.onComplete(fullText, handle.signal.aborted, truncated); } catch (e) { console.error('[proxyLLMDeltaStream] onComplete failed:', e); }
         }
       } catch (err) {
         controller.enqueue(encodeSse({ error: err instanceof Error ? err.message : String(err) }));

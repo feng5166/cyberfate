@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
     },
     body: JSON.stringify({
       model: PRIMARY_MODEL,
-      max_tokens: 600,
+      max_tokens: 2000,
       temperature: 0.5,
       stream: true,
       enable_thinking: false,
@@ -140,5 +140,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: errMsg }, { status: 502 });
   }
 
-  return new Response(proxyLLMDeltaStream(upstream, abortHandle), { headers: SSE_HEADERS });
+  return new Response(proxyLLMDeltaStream(upstream, abortHandle, { label: 'liuyao/qa' }), { headers: SSE_HEADERS });
 }

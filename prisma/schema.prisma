@@ -213,6 +213,8 @@ model UsageQuota {
   liuyaoQaCount     Int    @default(0) // 六爻问答
   meihuaQaCount     Int    @default(0) // 梅花问答
   marriageQaCount   Int    @default(0) // 合婚问答
+  baziChatCount     Int    @default(0) // 八字 AI 追问（PRD-BAZI-V2：免费 1 次/日）
+  ziweiAiCount      Int    @default(0) // 紫微逐宫 AI 解读（PRD-ZIWEI-V2：免费 3 宫/日）
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -303,4 +305,37 @@ model DailyFortuneQaHistory {
 
   @@index([userId])
   @@map("daily_fortune_qa_history")
+}
+
+// 人生K线回测投票（PRD-LIFE-KLINE-V2 P0-A：「准」占比是传播推广的护栏指标）
+model KlineBacktestVote {
+  id        String   @id @default(cuid())
+  userId    String
+  birthHash String   // sha256(出生信息) 截断，同一用户同一命盘同一年份唯一
+  year      Int      // 被投票的公历年
+  age       Int      // 当年虚岁
+  score     Int      // 当年收盘运势分
+  level     String   // 等级：极盛/上佳/平稳/承压/低谷
+  kind      String   // peak（高分年）| trough（低分年）
+  vote      String   // yes（准）| no（不准）
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, birthHash, year])
+  @@index([createdAt])
+  @@map("kline_backtest_votes")
+}
+
+// 换大运提醒意向（PRD-LIFE-KLINE-V2 P2-B：V2 仅落库意向，通道 V2.1 选型后触达）
+model KlineRemindIntent {
+  id          String   @id @default(cuid())
+  userId      String
+  birthHash   String   // 与回测投票同规则的命盘哈希
+  targetYear  Int      // 换运公历年
+  dayunGanZhi String   // 下一步大运干支，如 "甲午"
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, birthHash, targetYear])
+  @@index([targetYear])
+  @@map("kline_remind_intents")
 }

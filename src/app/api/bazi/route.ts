@@ -4,7 +4,8 @@ import { Lunar } from 'lunar-javascript';
 import { z } from 'zod';
 import { sanitizeUserInput } from '@/lib/utils/sanitize';
 import { getAuthSession } from '@/lib/auth-session';
-import { calculateBazi, calculateBaziFromPillars, WUXING_KEYS, analyzeMingGe, getCurrentDayun, getDayunStart, getDayunTimeline, getLunarDate, getYearGanzhi, analyzeShensha, shenshaNature, analyzeLiunian, analyzeLiuyueRange } from '@/lib/bazi';
+import { calculateBazi, calculateBaziFromPillars, WUXING_KEYS, analyzeMingGe, getCurrentDayun, getDayunStart, getDayunTimeline, getLunarDate, getYearGanzhi, analyzeShensha, shenshaNature, analyzeLiunian, analyzeLiuyueRange, analyzeInteractions, scanYingqi } from '@/lib/bazi';
+import { isUserVip } from '@/lib/quota';
 import type { ShenshaDisplay } from '@/lib/bazi/types';
 import { checkRateLimit } from '@/lib/rate-limit';
 import type { FiveDimensions, MingGeInfo, PillarRecord, WuxingCount } from '@/lib/bazi/types';
@@ -148,8 +149,9 @@ export async function POST(req: NextRequest) {
   //
   // failOpen: true —— 为什么这个端点零成本、Redis 挂了也该放行：
   // 1. 本端点从头到尾只跑纯函数：calculateBazi / calculateBaziFromPillars / analyzeMingGe /
-  //    analyzeShensha / analyzeLiunian / analyzeLiuyueRange / getDayun*，全部是 lunar-javascript
-  //    的本地确定性计算，无一次网络调用、无一次 DB 写。
+  //    analyzeShensha / analyzeLiunian / analyzeLiuyueRange / analyzeInteractions / scanYingqi /
+  //    getDayun*，全部是 lunar-javascript 的本地确定性计算，无一次 AI 调用。
+  //    （V2 的 yingqi 会查一次 isUserVip，但它自带 try/catch 兜底，查不到按非 VIP 处理。）
   // 2. 唯一会烧钱的 AI 解读在 /api/bazi/stream，那里有 ai_bazi / ai_bazi_guest（游客 1 次/天）
   //    双重 fail-closed 闸门 + checkBaziQuota，本端点放行一万次也换不来一个 AI token。
   // 3. 被刷的最坏后果只是 CPU。而 fail-closed 的代价是：Redis 一抖，整站排盘（八字模块首屏）
@@ -382,6 +384,22 @@ export async function POST(req: NextRequest) {
     const liunian = analyzeLiunian(baziResult.chart, curYear);
     const liuyue = analyzeLiuyueRange(baziResult.chart, curYear, 1, 12);
 
+    // —— V2 新增（PRD-BAZI-V2）——
+    // 刑冲会合害（P1-C 可视化）：命局四柱地支两两关系，免费展示
+    const interactions = analyzeInteractions(baziResult.chart);
+    // 关键应期（P1-D）：未来 10 年扫描；VIP 全表，非 VIP 服务端只放最近 1 条（权益服务端校验）
+    const yingqiAll = scanYingqi(baziResult.chart, gender, curYear, 10);
+    let yingqiVip = false;
+    try {
+      const session = await getAuthSession(req);
+      if (session?.user?.id) yingqiVip = await isUserVip(session.user.id);
+    } catch { /* 会话/VIP 查询失败按非 VIP 处理，不阻断排盘 */ }
+    const yingqi = {
+      vip: yingqiVip,
+      total: yingqiAll.length,
+      items: yingqiVip ? yingqiAll : yingqiAll.slice(0, 1),
+    };
+
     // 生成 cacheKey（与 /api/bazi/stream 共用）。keyMaterial 已在上方按
     // 日期/八字两种模式分别构造，涵盖全部影响排盘的字段，避免串档共享 AI 解读。
     const hash = crypto.createHash('sha256')
@@ -409,6 +427,9 @@ export async function POST(req: NextRequest) {
       liunian,
       liuyue,
       dayunTimeline,
+      // V2：刑冲会合害 + 关键应期（PRD-BAZI-V2）
+      interactions,
+      yingqi,
       // —— 以下为「客户端脱 lunar-javascript」新增字段（纯新增，旧客户端忽略即可）——
       lunarDate,
       // 本响应整副盘（四柱/大运/农历串）实际锚定的公历出生日；农历输入时 ≠ 用户填的 birthDate。

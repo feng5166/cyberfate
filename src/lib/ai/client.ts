@@ -35,8 +35,9 @@ const TIMEOUT_CONFIG: Record<string, number> = {
 
 // 各 feature 的函数级总预算（ms）= vercel.json 对应路由 maxDuration − 5s 安全余量。
 // deadline 从进入 callDeepSeek 起算（≈ 请求开始），贯穿所有重试与 provider 切换：
-// 旧版每次重试重新计满超时，最坏情形被 Vercel 击杀函数——此时配额已扣、退款/降级分支永远走不到。
-// 留 5s 余量保证超时后上层还有时间落降级兜底 + 退配额。
+// 旧版每次重试重新计满 TIMEOUT_CONFIG，最坏情形（首轮打满 + 重试再打满）被 Vercel 直接击杀函数——
+// 此时配额已扣、退款/降级分支永远走不到，用户白付一次配额还拿不到结果。
+// 留 5s 余量保证抛错后上层还有时间落降级兜底 + 退配额。
 const FEATURE_DEADLINE_BUDGET_MS: Record<string, number> = {
   bazi: 55_000, // vercel.json: api/bazi/** maxDuration 60s
   daily: 55_000, // api/daily/** 60s
@@ -49,12 +50,18 @@ const FEATURE_DEADLINE_BUDGET_MS: Record<string, number> = {
   default: 25_000,
 };
 
-// 重试/切 provider 要求的最低剩余预算：低于此值再打一轮也大概率打不完，直接抛错让上层走降级
+// 重试/切 provider 要求的最低剩余预算：低于此值再打一轮也大概率打不完，
+// 不如直接抛错，把剩下的时间留给上层落降级兜底 + 退配额。
 const RETRY_MIN_BUDGET_MS = 15_000;
 
 function getDeadlineBudget(feature?: string): number {
   if (!feature) return FEATURE_DEADLINE_BUDGET_MS.default;
   return FEATURE_DEADLINE_BUDGET_MS[feature] ?? FEATURE_DEADLINE_BUDGET_MS.default;
+}
+
+/** 剩余预算是否够再打一轮（未设 deadline 时恒为 true，行为与改造前一致） */
+function hasRetryBudget(deadlineAt?: number): boolean {
+  return deadlineAt == null || deadlineAt - Date.now() > RETRY_MIN_BUDGET_MS;
 }
 
 /** 预算耗尽错误：message 含 "timed out"，isTimeoutError 会命中 → 上层不再切 provider，直接落降级 */
@@ -83,6 +90,9 @@ function getTemperature(feature?: string): number {
   return TEMPERATURE_CONFIG[feature] ?? TEMPERATURE_CONFIG.default;
 }
 
+// DeepSeek chat 系列输出上限 8k；截断重试的提升上限不超过它，避免网关 400
+const MAX_OUTPUT_TOKENS_CAP = 8000;
+
 interface CallDeepSeekOptions {
   /** 走 response_format: json_object，让网关强制返回合法 JSON（system prompt 必须含 "json" 字样） */
   jsonMode?: boolean;
@@ -109,6 +119,9 @@ async function callModelOnce(
 ): Promise<string> {
   const maxRetries = 3;
   let lastError: unknown;
+  // 回复完整性优先：finish_reason=length 说明被 max_tokens 截断，提升上限重试一次
+  let effectiveMaxTokens = maxTokens;
+  let lengthRetried = false;
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     // 每次尝试的超时取 min(feature 配置, 剩余 deadline)：重试不重置总预算
@@ -126,7 +139,7 @@ async function callModelOnce(
         },
         body: JSON.stringify({
           model,
-          max_tokens: maxTokens,
+          max_tokens: effectiveMaxTokens,
           temperature: getTemperature(feature),
           enable_thinking: false,
           ...(opts.jsonMode ? { response_format: { type: 'json_object' } } : {}),
@@ -144,7 +157,7 @@ async function callModelOnce(
         // 瞬时 5xx(网关抖动)值得再试；4xx 是请求本身有问题，直接抛
         if (response.status >= 500 && attempt < maxRetries - 1) {
           // 重试前查剩余预算：不足 15s 时再试也打不完一轮，直接抛给上层落降级/退款
-          if (deadlineAt != null && deadlineAt - Date.now() <= RETRY_MIN_BUDGET_MS) throw apiError;
+          if (!hasRetryBudget(deadlineAt)) throw apiError;
           lastError = apiError;
           console.warn(`[callDeepSeek:${model}] ${response.status}, retrying...`);
           await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
@@ -154,6 +167,22 @@ async function callModelOnce(
       }
 
       const data = await response.json();
+      const finishReason = data.choices?.[0]?.finish_reason;
+      if (finishReason === 'length') {
+        const canRetryLength = !lengthRetried && attempt < maxRetries - 1;
+        // 截断重试同样受总预算约束：重试一轮意味着重新生成整篇长文，
+        // 预算不够时与其硬打到被 Vercel 击杀，不如把这份「被截断但可用」的内容返回
+        // ——上层解析成功就是正常结果，解析失败也还有降级模板，都好过函数被杀。
+        if (canRetryLength && hasRetryBudget(deadlineAt)) {
+          lengthRetried = true;
+          effectiveMaxTokens = Math.min(effectiveMaxTokens * 2, MAX_OUTPUT_TOKENS_CAP);
+          console.warn(`[callDeepSeek:${model}] ${feature ?? 'default'} 回复被 max_tokens 截断，提升至 ${effectiveMaxTokens} 重试`);
+          continue;
+        }
+        console.warn(
+          `[callDeepSeek:${model}] ${feature ?? 'default'} 回复仍被 max_tokens(${effectiveMaxTokens}) 截断${canRetryLength ? '，但剩余预算不足以重试，直接返回截断内容' : ''}`,
+        );
+      }
       const content = data.choices?.[0]?.message?.content || data.choices?.[0]?.message?.reasoning_content || '';
       if (content.length < 10) {
         const reasoningContent = data.choices?.[0]?.message?.reasoning_content || '';
@@ -171,7 +200,7 @@ async function callModelOnce(
       const isApiError = msg.includes('API error');
       if (attempt < maxRetries - 1 && !isAbort && !isApiError) {
         // 重试前查剩余预算（同上：预算不足不再重试）
-        if (deadlineAt != null && deadlineAt - Date.now() <= RETRY_MIN_BUDGET_MS) throw err;
+        if (!hasRetryBudget(deadlineAt)) throw err;
         console.warn(`[callDeepSeek:${model}] attempt ${attempt + 1} failed (${msg}), retrying...`);
         await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
         continue;
@@ -190,7 +219,7 @@ async function callModelOnce(
 async function callDeepSeek(
   systemPrompt: string,
   userPrompt: string,
-  maxTokens = 800,
+  maxTokens = 2000,
   feature?: string,
   opts: CallDeepSeekOptions = {},
 ): Promise<string> {
@@ -213,7 +242,7 @@ async function callDeepSeek(
         if (isTimeoutError(err)) throw err; // 超时不再切 provider
         if (i < providers.length - 1) {
           // 切 provider 前查剩余预算：不足一轮的量就别再开新连接，直接抛给上层落降级/退款
-          if (deadlineAt - Date.now() <= RETRY_MIN_BUDGET_MS) throw err;
+          if (!hasRetryBudget(deadlineAt)) throw err;
           const msg = err instanceof Error ? err.message : String(err);
           console.warn(`[callDeepSeek] provider ${p.id} 失败 (${msg})，切下一个 provider ${providers[i + 1].id}`);
           continue;
@@ -226,7 +255,8 @@ async function callDeepSeek(
 }
 
 // 注：原 generateBaziAnalysis（非流式八字解读 + v4:bazi 缓存键）已删除——
-// 八字主链路早已全量走 /api/bazi/stream（自带 v6 缓存键与流式兜底），全仓零调用；
+// 八字主链路早已全量走 /api/bazi/stream（自带自己的缓存键与流式兜底），全仓零调用
+// （唯一残留提及是 api/bazi/route.test.ts 里对 '@/lib/ai' 的 mock 工厂，不依赖真实导出）；
 // 保留它只会多维护一套写 v4 键的死代码。下面的降级模板仍被 stream route 依赖，必须保留导出。
 export function generateFallbackBaziAnalysis(result: BaziResult): BaziAnalysis {
   const { wuxing, dayMaster } = result;
@@ -293,7 +323,7 @@ export async function generateDailyFortune(
 
   const apiResult = await callExternalAPI(
     async () => {
-      const text = await callDeepSeek(DAILY_SYSTEM_PROMPT, prompt, 800, 'daily', { jsonMode: true });
+      const text = await callDeepSeek(DAILY_SYSTEM_PROMPT, prompt, 1500, 'daily', { jsonMode: true });
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error('No JSON found in response');
@@ -368,6 +398,10 @@ export interface TarotReadingResult {
   cardMeanings: string[];
   reading: string;
   caution: string;
+  /** 一句话答案（PRD-TAROT-V2 P0-B）：直接回答用户的问题，置顶展示。可缺失（旧缓存/兜底） */
+  oneLineAnswer?: string;
+  /** 行动清单：1-3 条可执行建议。可缺失 */
+  actions?: string[];
 }
 
 function buildFallbackTarotReading(input: TarotReadingPromptInput): TarotReadingResult {
@@ -410,10 +444,24 @@ function normalizeTarotReading(
   const normalizedCardMeanings =
     cardMeanings.length === cardCount ? cardMeanings : fallback.cardMeanings.slice(0, cardCount);
 
+  // 一句话答案 / 行动清单（V2 新增，可缺失——前端按缺失降级不渲染）
+  const oneLineAnswer =
+    typeof data.oneLineAnswer === 'string' && data.oneLineAnswer.trim()
+      ? data.oneLineAnswer.replace(/\s+/g, ' ').trim().slice(0, 60)
+      : undefined;
+  const actions = Array.isArray(data.actions)
+    ? data.actions
+        .map((a) => (typeof a === 'string' ? a.replace(/\s+/g, ' ').trim().slice(0, 60) : ''))
+        .filter(Boolean)
+        .slice(0, 3)
+    : undefined;
+
   return {
     cardMeanings: normalizedCardMeanings,
     reading: safeText(data.reading, fallback.reading, limits.reading),
     caution: safeText(data.caution, fallback.caution, limits.caution),
+    ...(oneLineAnswer ? { oneLineAnswer } : {}),
+    ...(actions && actions.length ? { actions } : {}),
   };
 }
 
@@ -460,14 +508,10 @@ function getTarotTextLimits(spread: TarotSpread): ReadingLimits {
 }
 
 function getTarotMaxTokens(spread: TarotSpread): number {
-  // max_tokens 是「上限」不是「目标」：模型按 prompt 写完遇 EOS 就停，调低不会缩短生成时长，
-  // 只会在真的写满时把 JSON 从中间截断 → jsonMatch 解析失败 → 整单落降级模板。
-  // 凯尔特十字要出 10 张牌义(80-120 字/张) + 1200-1500 字正文，压到 3000 明显不够，故维持 5000。
-  // 真正降低用户等待的手段是流式输出，已由 /api/tarot/draw 的 SSE 链路实现（它自管 max_tokens）
-  if (spread === 'celtic') return 5000;
-  if (spread === 'mirror') return 4000;
-  if (spread === 'relationship') return 4500;
-  return 3500;
+  if (spread === 'celtic') return 8000;
+  if (spread === 'mirror') return 6000;
+  if (spread === 'relationship') return 6000;
+  return 5000;
 }
 
 export async function generateTarotReading(
@@ -653,7 +697,7 @@ export async function generateMeihuaDecision(
 
   try {
     const prompt = buildMeihuaDecisionPrompt(input);
-    const text = await callDeepSeek(MEIHUA_DECISION_SYSTEM_PROMPT, prompt, 2000, 'meihua', { jsonMode: true });
+    const text = await callDeepSeek(MEIHUA_DECISION_SYSTEM_PROMPT, prompt, 3000, 'meihua', { jsonMode: true });
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       return observed('meihua', { ...fallback, _source: 'fallback' });
@@ -723,7 +767,7 @@ export async function generateLiuYaoReading(
 
   try {
     const prompt = buildLiuYaoPrompt(input);
-    const text = await callDeepSeek(LIUYAO_SYSTEM_PROMPT, prompt, 2400, 'liuyao', { jsonMode: true });
+    const text = await callDeepSeek(LIUYAO_SYSTEM_PROMPT, prompt, 4000, 'liuyao', { jsonMode: true });
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       return observed('liuyao', { ...fallback, _source: 'fallback' });

@@ -9,3 +9,7 @@ export * from './shensha';
 export * from './liunian';
 export * from './tools';
 export * from './lifeKline';
+export * from './adviceTemplates';
+export * from './quickRead';
+export * from './persona';
+export * from './yingqi';

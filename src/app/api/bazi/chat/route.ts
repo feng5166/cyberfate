@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { getAuthSession } from '@/lib/auth-session';
-import { isUserVip } from '@/lib/quota';
+import { isUserVip, atomicCheckAndConsume, refundQuota } from '@/lib/quota';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 import { PRIMARY_MODEL } from '@/lib/ai/models';
@@ -184,6 +184,10 @@ const baziDataSchema = z.object({
     rizhuStrength: z.string().max(100).optional(),
     yongShen: z.union([z.string().max(100), z.array(z.string().max(50))]).optional(),
     jiShen: z.union([z.string().max(100), z.array(z.string().max(50))]).optional(),
+    // analyzeMingGe 完整输出（V2 起客户端会补算 mingGe，携带以下合法字段）
+    strengthScore: z.number().optional(),
+    yongShenAll: z.array(z.string().max(50)).max(10).optional(),
+    jiShenAll: z.array(z.string().max(50)).max(10).optional(),
   }).strict().partial().optional(),
   zodiac: z.string().max(20).optional(),
   dayMaster: z.string().max(20).optional(),
@@ -224,8 +228,15 @@ export async function POST(req: NextRequest) {
       console.error('[bazi/chat] isUserVip error:', msg);
       return Response.json({ error: '服务暂时不可用，请稍后重试' }, { status: 503 });
     }
+    // 三层门禁（PRD-BAZI-V2 P1-A）：VIP 不限；免费登录 1 次/日；超限引导订阅
     if (!isVip) {
-      return Response.json({ error: 'SUBSCRIPTION_REQUIRED', message: '此功能需要订阅会员' }, { status: 403 });
+      const quota = await atomicCheckAndConsume(session.user.id, 'baziChatCount', 1, false);
+      if (!quota.hasQuota) {
+        return Response.json(
+          { error: 'SUBSCRIPTION_REQUIRED', message: '今日 1 次免费追问已用完，会员不限次' },
+          { status: 403 },
+        );
+      }
     }
 
     try {
@@ -328,6 +339,10 @@ export async function POST(req: NextRequest) {
       const cached = await redis.get(cacheKey);
       const cachedText = typeof cached === 'string' ? cached : (cached == null ? '' : String(cached));
       if (cachedText && cachedText.trim().length > 30) {
+        // 缓存命中不应消耗免费追问次数（与 stream 路由「缓存命中不扣配额」策略一致）
+        if (!isVip) {
+          try { await refundQuota(session.user.id, 'baziChatCount'); } catch {}
+        }
         const enc = new TextEncoder();
         const replay = new ReadableStream({
           async start(controller) {
@@ -385,12 +400,13 @@ ${answerRule}
 - 涉及投资/疾病/死亡等敏感话题时，给出温和提醒
 - 本产品为文化娱乐，分析仅供参考`;
 
+    // 上限只作安全兜底，实际长度由 prompt 控制；宁可给足余量，不让回复因 max_tokens 截断
     const maxTokens =
       intent === 'trend'
-        ? (liuyueMonths >= 10 ? 4000 : liuyueMonths >= 6 ? 3500 : liuyueMonths >= 3 ? 2800 : 1800)
+        ? (liuyueMonths >= 10 ? 6000 : liuyueMonths >= 6 ? 5000 : liuyueMonths >= 3 ? 4000 : 3000)
         : intent === 'analysis'
-        ? 3500
-        : 800;
+        ? 6000
+        : 2000;
 
     // 客户端断连立即关掉上游，避免烧 token
     const abortHandle = attachClientAbort(req);
@@ -429,9 +445,14 @@ ${answerRule}
           delayMs: 150,
         })),
         contentFrame: (content) => ({ type: 'content', content }),
-        // 流读完且未被中断的完整答案 → 写结果缓存（TTL 7 天）
-        onComplete: async (fullAnswer, aborted) => {
-          if (cacheKey && !aborted && fullAnswer.trim().length > 30) {
+        // 免费追问（1 次/日）回答尾部追加升级引导（PRD-BAZI-V2 P1-A，仅非 VIP）
+        suffixFrames: isVip
+          ? undefined
+          : [{ type: 'content', content: '\n\n---\n今日免费追问已用完，[会员不限次继续问 →](/pricing)' }],
+        label: 'bazi/chat',
+        // 流读完且未被中断、未被截断的完整答案 → 写结果缓存（TTL 7 天）
+        onComplete: async (fullAnswer, aborted, truncated) => {
+          if (cacheKey && !aborted && !truncated && fullAnswer.trim().length > 30) {
             try { await redis.set(cacheKey, fullAnswer, { ex: 604800 }); } catch {}
           }
         },

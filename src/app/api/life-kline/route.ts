@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { getAuthSession } from '@/lib/auth-session';
 import { computeLifeKline } from '@/lib/bazi';
+import { isUserVip } from '@/lib/quota';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { applyChaos } from '@/lib/chaos-middleware';
 import { logger } from '@/lib/logger';
@@ -29,6 +30,8 @@ const requestSchema = z.object({
   birthHourNum: z.number().int().min(0).max(23).optional(),
   birthMinute: z.number().int().min(0).max(59).optional(),
   lateZiShi: z.boolean().optional(),
+  /** 请求分维度曲线（VIP 能力；非 VIP 请求也不报错，只是剥除 dims） */
+  withDims: z.boolean().optional(),
 });
 
 /**
@@ -73,7 +76,14 @@ export async function POST(req: NextRequest) {
       { currentYear },
     );
 
-    return Response.json({ success: true, data: result });
+    // 分维度曲线是 VIP 权益：金额/权益一律服务端校验，不信任前端
+    const wantDims = input.withDims === true && Boolean(session?.user?.id);
+    const isVip = wantDims ? await isUserVip(session!.user!.id!) : false;
+    if (!isVip) {
+      for (const p of result.points) delete p.dims;
+    }
+
+    return Response.json({ success: true, data: result, vipDims: isVip });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return Response.json(
