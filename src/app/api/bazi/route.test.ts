@@ -216,6 +216,17 @@ describe('POST /api/bazi', () => {
     expect(await keyOf(validBody)).toBe(await keyOf({ ...validBody, name: '另一个名字' }));
   });
 
+  // AI 解读在 Redis 里存 30 天，key 由本路由下发。keyMaterial 的任何改动都会整片作废缓存，
+  // 代价是真金白银的重算，故用 golden 值把「阳历用户的 key」钉死：
+  // 农历同源修复往 keyMaterial 里加了 solarDate，但阳历分支该键为 undefined、被
+  // JSON.stringify 丢弃，哈希必须逐字不变。本用例失败只有两种可能：
+  //   1) 有人无意间改了 keyMaterial 的字段/顺序 → 正在悄悄作废全量缓存，应改回；
+  //   2) 确实要作废（口径变更） → 连同 v6 前缀一起升版，再更新这里的 golden 值。
+  it('阳历输入的 cacheKey 是 golden 值：农历修复不得牵连阳历用户的 AI 缓存', async () => {
+    const json = await (await POST(makeReq(validBody))).json();
+    expect(json.cacheKey).toBe('v6:bazi:a414c32e5091e94c');
+  });
+
   // bazi 页客户端已脱 lunar-javascript：农历串/起运/当前流年干支改由本路由返回。
   // 这些字段必须与「迁走前客户端的计算口径」逐字一致，否则用户看到的展示值会在上线后跳变。
   describe('lunar 派生字段（客户端脱 lunar-javascript 后由服务端下发）', () => {
@@ -363,6 +374,84 @@ describe('POST /api/bazi', () => {
           name: '测试', gender: 'female', birthDate: '1990-02-04', birthHour: 11,
         }))).json();
         expectDayunAnchoredToPillars(json, 'female');
+      });
+    });
+
+    // —— 回归：农历生日的大运锚点必须与四柱同源 ——
+    // calculateBazi 对 isLunar=true 会先 Lunar→Solar 折算再排四柱，而 getDayunStart /
+    // getCurrentDayun / getDayunTimeline / getLunarDate 只认公历串。曾经这里把农历原串
+    // 直接喂给后四者，于是农历用户的四柱与大运长期出自两副盘（HEAD 亦然）。
+    // 与粗时辰那组反例不同，这一组不是「跨节气才犯」——农历日与公历日恒不相等，
+    // 每一个农历用户都中招，错位幅度可达一步干支 + 数年。
+    describe('农历生日必须先折算成公历（isLunar=true 时四柱与大运同源）', () => {
+      it('农历 1990-06-15 男：大运排自公历 1990-08-05 的月柱癸未，首格甲申(1991)，不是癸未(1998)', async () => {
+        // 修复前：大运排自「1990-06-15 当公历」那副盘（月柱壬午）→ 首格癸未(1998 起)、
+        // 起运 7 岁 7 个月；正解是甲申(1991 起)、起运 1 岁 0 个月。
+        const json = await (await POST(makeReq({ ...validBody, isLunar: true }))).json();
+        expect(`${json.pillars.year.gan}${json.pillars.year.zhi}`).toBe('庚午');
+        expect(`${json.pillars.month.gan}${json.pillars.month.zhi}`).toBe('癸未');
+        expect(`${json.pillars.day.gan}${json.pillars.day.zhi}`).toBe('壬寅');
+        expect(`${json.dayunTimeline[0].gan}${json.dayunTimeline[0].zhi}`).toBe('甲申');
+        expect(json.dayunTimeline[0].yearStart).toBe(1991);
+        expect(json.dayunStartDescription).toBe('1岁起运');
+        expect(json.dayunStartAt).toBe('1991年8月起运');
+        // 唯一能把四柱与大运两条链路绑死的判据
+        expectDayunAnchoredToPillars(json, 'male');
+        // 与「用折算后的公历日直接排」逐字一致
+        expect(json.dayunStartAt).toBe(getDayunStart('1990-08-05', 'male', undefined, undefined).at);
+        expect(json.solarBirthDate).toBe('1990-08-05');
+        // 农历串必须回显用户填的那一天；修复前显示的是「庚午年五月廿三」（另一天）
+        expect(json.lunarDate).toBe('庚午年六月十五');
+        expect(json.lunarDate).toBe(getLunarDate('1990-08-05'));
+      });
+
+      it('跨立春的农历日 1990-01-15 男：年柱庚午(阳)→阳男顺行，修复前按己巳(阴)整个反向', async () => {
+        // 农历 1990-01-15 → 公历 1990-02-10（立春后，庚午年）。
+        // 原串「1990-01-15」当公历落在立春前 → 己巳年(阴) → 阴男逆行，
+        // 于是大运给出丙子/乙亥/甲戌（逆行），与四柱推出的顺行方向直接相反。
+        // 这是最恶性的一档：不只是错位几年，整条大运走向是反的。
+        const json = await (await POST(makeReq({
+          name: '测试', gender: 'male', birthDate: '1990-01-15', birthHour: -1, isLunar: true,
+        }))).json();
+        expect(`${json.pillars.year.gan}${json.pillars.year.zhi}`).toBe('庚午');
+        expect(`${json.pillars.month.gan}${json.pillars.month.zhi}`).toBe('戊寅');
+        expect(json.dayunTimeline.slice(0, 3).map((d: { gan: string; zhi: string }) => `${d.gan}${d.zhi}`))
+          .toEqual(['己卯', '庚辰', '辛巳']);
+        expect(json.solarBirthDate).toBe('1990-02-10');
+        expectDayunAnchoredToPillars(json, 'male');
+      });
+
+      it('农历 + 精确时分 + 女命：折算后的公历日与时分一起送进大运，锚点仍自洽', async () => {
+        // 农历 1988-11-03 13:25 女 → 公历 1988-12-11 13:25，四柱 戊辰/甲子/庚子/癸未。
+        // 戊(阳)年女命逆行 → 首格癸亥(1990 起)、起运 1 岁 5 个月。
+        // 修复前按原串算得辛酉(1997 起)、起运 8 岁 8 个月。
+        const json = await (await POST(makeReq({
+          name: '测试', gender: 'female', birthDate: '1988-11-03', birthHour: 7,
+          isLunar: true, knowTime: true, birthHourNum: 13, birthMinute: 25,
+        }))).json();
+        expect(`${json.pillars.month.gan}${json.pillars.month.zhi}`).toBe('甲子');
+        expect(`${json.pillars.hour.gan}${json.pillars.hour.zhi}`).toBe('癸未');
+        expect(`${json.dayunTimeline[0].gan}${json.dayunTimeline[0].zhi}`).toBe('癸亥');
+        expect(json.dayunStartAt).toBe('1990年5月起运');
+        expect(json.dayunStartDescription).toBe('1岁5个月起运');
+        // 精确分支下折算后的公历日 + 时分必须一起传给大运
+        expect(json.dayunStartAt).toBe(getDayunStart('1988-12-11', 'female', 13, 25).at);
+        expectDayunAnchoredToPillars(json, 'female');
+        expect(json.solarBirthDate).toBe('1988-12-11');
+      });
+
+      it('阳历输入不受影响：solarBirthDate 即原始 birthDate，大运逐字不变', async () => {
+        const json = await (await POST(makeReq(validBody))).json();
+        expect(json.solarBirthDate).toBe('1990-06-15');
+        expect(json.dayunStartAt).toBe(getDayunStart('1990-06-15', 'male', undefined, undefined).at);
+        expect(json.lunarDate).toBe(getLunarDate('1990-06-15'));
+        expectDayunAnchoredToPillars(json, 'male');
+      });
+
+      it('农历用户的 cacheKey 必须与修复前不同（旧 AI 解读按错误大运生成，不可复用）', async () => {
+        const json = await (await POST(makeReq({ ...validBody, isLunar: true }))).json();
+        // 修复前 keyMaterial 无 solarDate，同一输入的 key 是这个值。命中即说明缓存未作废。
+        expect(json.cacheKey).not.toBe('v6:bazi:df455d23dbb89a65');
       });
     });
 

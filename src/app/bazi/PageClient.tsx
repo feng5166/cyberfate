@@ -109,6 +109,15 @@ interface DayunExtra {
 type BaziPageResult = BaziApiResult & {
   dayMasterElement?: WuXing;
   lunarDate?: string;
+  /**
+   * 本命盘实际锚定的**公历**出生日（由 /api/bazi 算出并下发）。农历输入时它 ≠ 表单里的 birthDate：
+   * 农历 1990-06-15 → 公历 1990-08-05，四柱与大运全部排自后者。
+   * 凡是「再拿出生日期算命理」的下游（AI 解读工具链的大运/起运/流年、AI 问答的服务端重排、周岁）
+   * 都必须用它，否则会算出与屏幕上不同的第二副盘。
+   * 存量结果（本地历史记录、上线前写入的档案缓存）没有这一项：那些路径回落到表单原值，
+   * 农历用户的兜底放在服务端（请求里同时带 isLunar，由服务端按同一口径自行折算）。
+   */
+  solarBirthDate?: string;
   zodiac?: string;
   trueSolarOffsetMinutes?: number | null;
   trueSolarCorrection?: string;
@@ -521,7 +530,9 @@ function isDayunSourceAligned(prev: BaziPageResult, fresh: BaziPageResult): bool
  * 每项都做空值兜底，接口没给的字段不覆盖已有值。
  *
  * 「谁优先」按三类处理：
- * - 农历串 prev 优先：已展示给用户的值不因一次后台补齐而变动（它只由生日决定，两边本就相同）。
+ * - 农历串 fresh 优先：原先按「两边本就相同」用 prev 优先，但 /api/bazi 已改成
+ *   getLunarDate(折算后的公历日)，对农历用户 prev 是旧的错值（把农历串当公历解释算出来的），
+ *   继续 prev 优先等于把错值锁死。fresh 现在是权威口径。
  * - 大运整组（起运 description/at + 终身大运表 + dayunExtra）**整体取自同一侧**：
  *   fresh 给得出起运就整组换成 fresh，给不出（八字直输等）才整组保持 prev。绝不混搭——
  *   任何一项跨侧都会让屏幕上的起运、大运时间轴、送进 /api/bazi/stream 的「当前/下一步大运」
@@ -537,6 +548,8 @@ function isDayunSourceAligned(prev: BaziPageResult, fresh: BaziPageResult): bool
 function mergeServerRefill(prev: BaziPageResult, fresh: BaziPageResult): BaziPageResult {
   // 大运整组的取舍：只看 fresh 拿不拿得出起运（date 模式恒有；八字直输/异常才没有）。
   // 一个布尔量决定四个字段，从结构上杜绝混搭。
+  // solarBirthDate 归入本组而非单独取值：它就是这组大运的计算锚点，跨侧取会得到
+  //「A 的锚点配 B 的大运表」——AI 解读的工具链拿它重算，又会排出第三副盘。
   const useFreshDayun = !!(fresh.dayunStartAt || fresh.dayunStartDescription);
   const dayunGroup = useFreshDayun
     ? {
@@ -544,16 +557,18 @@ function mergeServerRefill(prev: BaziPageResult, fresh: BaziPageResult): BaziPag
         dayunStartAt: fresh.dayunStartAt,
         dayunTimeline: fresh.dayunTimeline,
         dayunExtra: fresh.dayunExtra,
+        solarBirthDate: fresh.solarBirthDate,
       }
     : {
         dayunStartDescription: prev.dayunStartDescription,
         dayunStartAt: prev.dayunStartAt,
         dayunTimeline: prev.dayunTimeline,
         dayunExtra: prev.dayunExtra,
+        solarBirthDate: prev.solarBirthDate,
       };
   return {
     ...prev,
-    lunarDate: prev.lunarDate || fresh.lunarDate,
+    lunarDate: fresh.lunarDate || prev.lunarDate,
     // 干支与其有效期必须成对取，混搭会得到「新干支配旧有效期」（立刻又判过期）
     // 或「旧干支配新有效期」（过期值被当成新鲜的锁住一整年）。
     ...(fresh.currentYearGanzhi
@@ -600,6 +615,19 @@ function buildPoints(sourceText: string, fallback: string): string[] {
 
   const prefixes = ['✓', '⚠', '💡', '✓', '💡'];
   return selected.map((item, index) => `${prefixes[index]} ${item}`);
+}
+
+/**
+ * 「命理计算锚点」：拿出生日期再算任何命理（大运/起运/周岁）都必须用公历日。
+ *
+ * 阳历输入（绝大多数用户）直接返回表单原值——一个字符都不变，不受本函数影响。
+ * 农历输入才去取服务端算好的 solarBirthDate；存量结果（老历史记录/老档案缓存）没有这一项时
+ * 只能退回农历原串（客户端刻意不打包 lunar-javascript，本地折算不了），
+ * 与改动前一致，且这一支在服务端还有 isLunar 兜底（见 runAiStream 里送出的字段）。
+ */
+function solarAnchorOf(result: BaziPageResult | null | undefined, birthDate: string, isLunar: boolean): string {
+  if (!isLunar) return birthDate;
+  return result?.solarBirthDate || birthDate;
 }
 
 function getAge(birthDate: string): number {
@@ -1860,9 +1888,15 @@ function BaziPageContent() {
   // 存量结果缺该字段时由 ensureFullResult 重发接口回填；仍拿不到就不展示这一行，避免「当前流年：」空值。
   const currentLiunian = result?.currentYearGanzhi ?? '';
 
+  /**
+   * 本副盘的公历出生日。农历用户的表单值是农历串，拿它算周岁会偏一个多月（跨年的农历腊月生日
+   * 甚至差一整岁），进而把「已走过/当前/未来」的大运阶段判错。见 solarAnchorOf。
+   */
+  const solarBirthDate = solarAnchorOf(result, formData.birthDate, formData.isLunar);
+
   const dayunDetail = useMemo(() => {
-    return buildDayunDetail(selectedDayun, aiSections, formData.birthDate, currentLiunian);
-  }, [selectedDayun, aiSections, formData.birthDate, currentLiunian]);
+    return buildDayunDetail(selectedDayun, aiSections, solarBirthDate, currentLiunian);
+  }, [selectedDayun, aiSections, solarBirthDate, currentLiunian]);
 
   // 选中大运的确定性结构化详情（十神 / 藏干 / 纳音 / 吉凶 / 四维），不依赖 AI
   const dayunDetailRich = useMemo<DayunDetail | null>(() => {
@@ -1876,8 +1910,8 @@ function BaziPageContent() {
   }, [selectedDayun, result]);
 
   const dayunPhaseText = useMemo(
-    () => getDayunPhaseText(selectedDayun, formData.birthDate),
-    [selectedDayun, formData.birthDate]
+    () => getDayunPhaseText(selectedDayun, solarBirthDate),
+    [selectedDayun, solarBirthDate]
   );
 
   const dayunAiText = useMemo(
@@ -2094,13 +2128,28 @@ function BaziPageContent() {
           name: formData.name || '缘主',
           gender: formData.gender || 'unknown',
           birthDate: formData.birthDate,
+          // 工具链（大运/起运/流年）只能锚在公历日：农历用户的 birthDate 是农历串，
+          // 直接拿去算等于给 AI 喂另一副盘的事实（屏幕上的大运表与解读正文互相矛盾）。
+          // 这里给服务端两条线索，谁都可能缺，缺一条还有另一条：
+          //   solarBirthDate —— 本次排盘算出的公历锚点（与同请求送出的 baziResult 同源，优先级最高）；
+          //                     存量命盘（老历史记录/老档案缓存）没有这一项 → 保持 undefined 不发。
+          //                     这里刻意不用 solarAnchorOf 兜底：它拿不到锚点时会退回农历原串，
+          //                     而服务端把本字段当作权威公历日，一发就会屏蔽掉下面 isLunar 那条兜底路。
+          //   isLunar        —— 表单标记，服务端据此自行折算（口径与 /api/bazi 相同）。
+          // 阳历用户两条线索都指向同一个日期，行为逐字不变。
+          solarBirthDate: activeResult.solarBirthDate,
+          isLunar: formData.isLunar || undefined,
           birthHour: parseInt(formData.birthHour, 10),
           // 精确时分 + 是否知时：供服务端跑工具链（大运起运更准）
           knowTime: formData.knowTime,
           birthHourNum: formData.knowTime ? formData.birthHourNum : undefined,
           birthMinute: formData.knowTime ? formData.birthMinute : undefined,
           forceRefresh,
-          dayunExtra: activeResult.dayunExtra,
+          // 存量农历命盘（没有 solarBirthDate 锚点）的 dayunExtra 是按「农历串当公历」算出来的错值 ——
+          // 而服务端工具链此刻已改用 isLunar 折算后的正确日期，两者同送等于给 AI 喂两个互相矛盾的大运。
+          // 这种情况下不发，让工具链成为唯一大运来源；有锚点或阳历用户则与此前逐字一致。
+          dayunExtra:
+            formData.isLunar && !activeResult.solarBirthDate ? undefined : activeResult.dayunExtra,
         }),
       });
 
@@ -3568,7 +3617,11 @@ function BaziPageContent() {
                     traits: result.traits,
                   }}
                   birthInput={{
-                    birthDate: formData.birthDate,
+                    // 必须送公历日：/api/bazi/chat 用它重排命盘 + 跑工具链，且**不认 isLunar**
+                    //（birthInputSchema 是 .strict()，多送字段会让整个 safeParse 失败、确定性事实全丢）。
+                    // 送农历原串的后果比大运错更严重：那边连四柱都会排成另一副盘。
+                    // 存量命盘取不到锚点时回落原值，与改动前一致。
+                    birthDate: solarBirthDate,
                     gender: formData.gender === 'female' ? 'female' : 'male',
                     knowTime: chatBirthHourNum !== undefined,
                     birthHourNum: chatBirthHourNum,

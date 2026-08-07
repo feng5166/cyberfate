@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import { NextRequest } from 'next/server';
+import { Lunar } from 'lunar-javascript';
 import { z } from 'zod';
 import { sanitizeUserInput } from '@/lib/utils/sanitize';
 import { getAuthSession } from '@/lib/auth-session';
@@ -29,6 +30,28 @@ const HOUR_TO_SHICHEN: Record<number, string> = {
   10: '戌时',
   11: '亥时',
 };
+
+/**
+ * 农历 YYYY-MM-DD → 公历 YYYY-MM-DD。
+ *
+ * 为什么必须有这一步：isLunar=true 时用户填的是农历日，calculateBazi 内部会先把它
+ * Lunar→Solar 折算再排四柱；而 getLunarDate / getDayunStart / getCurrentDayun /
+ * getDayunTimeline 只认公历串（内部一律 Solar.fromYmd）。把农历原串直接喂给后者，
+ * 等于用「另一个日期」排大运，四柱与大运出自两副盘。
+ *
+ * 转换刻意与 calculateBazi 内部逐字相同（同为 Lunar.fromYmd(y,m,d).getSolar()），
+ * 任何一边改口径都必须同步另一边，否则同源保证立刻失效。
+ * 请求 schema 的 MM 只能是 01-12，表达不了闰月（负月号），此限制与 calculateBazi 一致。
+ * 农历日不存在时（如 1990 年六月只有 29 天却填了 30）库会抛错，交给 POST 的 catch 统一处理，
+ * 与改动前 calculateBazi 先抛错的行为一致。
+ */
+function lunarToSolarYmd(date: string): string {
+  const [y, m, d] = date.split('-').map(Number);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const solar: any = (Lunar as any).fromYmd(y, m, d).getSolar();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${solar.getYear()}-${pad(solar.getMonth())}-${pad(solar.getDay())}`;
+}
 
 // 「年干支换年日」缓存（键=公历年）。立春位置只与年份有关，同一进程内算一次即可。
 const ganzhiBoundaryCache = new Map<number, string>();
@@ -155,6 +178,8 @@ export async function POST(req: NextRequest) {
     let lunarDate: string | undefined;
     let dayunStartDescription: string | undefined;
     let dayunStartAt: string | undefined;
+    // 本次排盘真正使用的公历出生日（农历输入已折算）。随响应下发，见末尾字段注释。
+    let resolvedSolarDate: string | undefined;
 
     if (isBaziMode) {
       // —— 八字直输模式：直接由四柱排盘，无出生日期 ——
@@ -198,7 +223,23 @@ export async function POST(req: NextRequest) {
 
       baziResult = calculateBazi(calcInput);
 
-      lunarDate = getLunarDate(input.birthDate);
+      // —— 全部「按出生日期派生」的计算统一改用这一个公历日 ——
+      // 四柱由 calculateBazi 排出，它对 isLunar=true 会先折算成公历；下面这些函数只认公历串。
+      // 从前这里传的是 input.birthDate（农历用户即农历原串），于是农历用户的四柱与大运各出一副盘：
+      //   农历 1990-06-15（→公历 1990-08-05）男：四柱月柱癸未，大运却排自「06-15 当公历」那副盘
+      //   （月柱壬午），大运表首格返回癸未(1998 起)、起运 7 岁 7 个月，
+      //   而正确值应是甲申(1991 起)、起运 1 岁 0 个月——整表错位一步干支 + 近 7 年。
+      //   更糟的是跨立春的农历日：农历 1990-01-15 男，正解年柱庚午(阳)应顺行，
+      //   原串当公历落在立春前算己巳(阴)、变成逆行，连大运方向都是反的。
+      // calculateBazi 不回传折算结果，故这里按同一套调用再算一次（纯函数，无副作用）。
+      const solarBirthDate = input.isLunar === true
+        ? lunarToSolarYmd(input.birthDate)
+        : input.birthDate;
+      resolvedSolarDate = solarBirthDate;
+
+      // 农历串同理：原先对农历用户回显的是「农历原串当公历」再转出来的另一天
+      //（农历 1990-06-15 → 显示"庚午年五月廿三"），修正后回显用户填的那天"庚午年六月十五"。
+      lunarDate = getLunarDate(solarBirthDate);
 
       // 大运的「代表出生时刻」：必须与上面 calculateBazi 排四柱用的时刻是同一个，否则
       // 四柱与大运会出自两副不同的盘。
@@ -219,15 +260,15 @@ export async function POST(req: NextRequest) {
       // 性别未知时沿用 gender 的 male 兜底（起运顺逆本依赖性别，此处不顺手改判定）。
       const dayunHour = hasPrecise ? input.birthHourNum : undefined;
       const dayunMinute = hasPrecise ? input.birthMinute : undefined;
-      const dayunStart = getDayunStart(input.birthDate, gender, dayunHour, dayunMinute);
+      const dayunStart = getDayunStart(solarBirthDate, gender, dayunHour, dayunMinute);
       dayunStartDescription = dayunStart.description;
       dayunStartAt = dayunStart.at;
 
       // 大运顺逆依赖阴阳性别：性别未知时不计算（留空数组，前端据此隐藏「终身大运表」），
       // 不出错误方向的大运。已知性别才走精确节气数日法。
       if (genderKnown) {
-        const currentDayun = getCurrentDayun(input.birthDate, gender, dayunHour, dayunMinute);
-        dayunTimeline = getDayunTimeline(input.birthDate, gender, dayunHour, dayunMinute);
+        const currentDayun = getCurrentDayun(solarBirthDate, gender, dayunHour, dayunMinute);
+        dayunTimeline = getDayunTimeline(solarBirthDate, gender, dayunHour, dayunMinute);
         const currentDayunItem = dayunTimeline.find(item => item.isCurrent);
         const nextDayunItem = currentDayunItem ? dayunTimeline.find(item => item.index === currentDayunItem.index + 1) : undefined;
 
@@ -251,6 +292,12 @@ export async function POST(req: NextRequest) {
         birthDate: input.birthDate,
         gender,
         isLunar: input.isLunar === true,
+        // 纯为「作废农历用户的旧 AI 解读」而存在：birthDate + isLunar 已能唯一标识输入，
+        // 这一项不增加区分度。旧解读是按错误日期的大运（可差一步干支 + 近 7 年）生成的，
+        // 修复后若继续命中缓存，屏幕上的大运表与 AI 正文会互相矛盾，故必须换 key 重生成。
+        // 阳历输入这里是 undefined，JSON.stringify 直接丢弃该键 → 哈希逐字不变，
+        // 阳历用户（绝大多数）的 30 天 AI 缓存不受牵连。见 route.test.ts 的 golden key 用例。
+        solarDate: input.isLunar === true ? solarBirthDate : undefined,
         timeMode: noTime ? 'none' : (hasPrecise ? 'precise' : 'coarse'),
         hourNum: hasPrecise ? input.birthHourNum : undefined,
         minute: hasPrecise ? (typeof input.birthMinute === 'number' ? input.birthMinute : 0) : undefined,
@@ -355,6 +402,11 @@ export async function POST(req: NextRequest) {
       dayunTimeline,
       // —— 以下为「客户端脱 lunar-javascript」新增字段（纯新增，旧客户端忽略即可）——
       lunarDate,
+      // 本响应整副盘（四柱/大运/农历串）实际锚定的公历出生日；农历输入时 ≠ 用户填的 birthDate。
+      // 凡是要拿出生日期再算命理的下游（如 /api/bazi/stream 的工具链、客户端算周岁），
+      // 都必须传这个值而不是表单里的原始 birthDate，否则又会排出第二副盘。
+      // 八字直输模式无出生日期，保持 undefined。
+      solarBirthDate: resolvedSolarDate,
       dayunStartDescription,
       dayunStartAt,
       currentYearGanzhi,

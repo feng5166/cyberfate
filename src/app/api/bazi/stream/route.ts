@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { Lunar } from 'lunar-javascript';
 import { z } from 'zod';
 import { getServerSession, type Session } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -37,13 +38,22 @@ const UPSTREAM_FIRST_TOKEN_MS = 30_000;
 // 中途断流时，已流出正文达到此长度就保留原文（只追加中断说明），不再整体替换为模板兜底
 const PARTIAL_KEEP_MIN_CHARS = 200;
 
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
 const requestSchema = z.object({
   cacheKey: z.string().min(1),
   baziResult: z.any(),
   name: z.string().optional(),
   gender: z.string().optional(),
   // 八字直输模式无出生日期：birthDate/birthHour 可缺省（大运步骤将降级，不影响其余事实）
+  // 注意 birthDate 是「用户填的那一串」：isLunar=true 时它是农历日，不能直接拿去算大运，
+  // 必须先经 resolveSolarBirthDate 折算，见该函数注释。
   birthDate: z.string().optional(),
+  // /api/bazi 随排盘响应下发的公历锚点（农历输入时 ≠ birthDate）。新客户端原样回传，
+  // 老客户端不传 → 走 isLunar 兜底或按阳历处理，行为与本次改动前一致。
+  solarBirthDate: z.string().regex(DATE_RE).optional(),
+  // birthDate 是否按农历填写。仅在 solarBirthDate 缺失时用于服务端自行折算（存量记录/老客户端路径）。
+  isLunar: z.boolean().optional(),
   birthHour: z.number().int().min(-1).max(11).optional(),
   // 精确时分（可选）：提供后工具链的大运起运计算更准
   birthHourNum: z.number().int().min(0).max(23).optional(),
@@ -59,13 +69,67 @@ function beijingToday(): string {
 }
 
 /**
+ * 农历 YYYY-MM-DD → 公历 YYYY-MM-DD。
+ *
+ * 与 /api/bazi/route.ts 的同名函数、以及 calculateBazi 内部的折算逐字同构
+ *（三处都是 Lunar.fromYmd(y,m,d).getSolar()）。任何一处改口径都必须同步另两处，
+ * 否则「四柱与大运同源」的保证立刻失效。
+ * 闰月（负月号）表达不了，与 calculateBazi 的限制一致。
+ */
+function lunarToSolarYmd(date: string): string {
+  const [y, m, d] = date.split('-').map(Number);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const solar: any = (Lunar as any).fromYmd(y, m, d).getSolar();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${solar.getYear()}-${pad(solar.getMonth())}-${pad(solar.getDay())}`;
+}
+
+/**
+ * 解析本次解读的「公历锚点」——工具链里 getCurrentDayun / getDayunTimeline 只认公历串
+ *（内部一律 Solar.fromYmd），拿农历原串喂进去等于用另一个日期排大运。
+ *
+ * 为什么非修不可：/api/bazi 已把农历折算成公历再排四柱与大运，四柱因此是对的；
+ * 而本路由的工具链事实（大运/起运/流年）若仍按农历原串算，喂给模型的就是另一副盘——
+ * 屏幕上的大运表与 AI 正文互相矛盾，对农历用户 100% 命中。
+ *
+ * 取值优先级（两条来源，都缺就退回原串）：
+ *  ① solarBirthDate：/api/bazi 本次排盘算出并随响应下发、由客户端原样回传。
+ *     优先它是因为它与同一请求里送来的 baziResult（四柱）出自同一次排盘，天然同源。
+ *  ② isLunar=true：客户端只带得出农历标记时（存量历史记录没存 solarBirthDate，
+ *     补齐链路也只透传 isLunar），在这里按与 /api/bazi 相同的口径自行折算。
+ *  ③ 两者都没有：原样返回 birthDate。阳历用户走的就是这一支（或 ① 的恒等映射），
+ *     结果与本次改动前逐字相同；老客户端同理，不会崩、也不会把阳历日误当农历折算。
+ */
+function resolveSolarBirthDate(
+  birthDate: string,
+  solarBirthDate: string | undefined,
+  isLunar: boolean | undefined,
+): string {
+  if (solarBirthDate) return solarBirthDate; // 形状已由 zod 的 DATE_RE 校验
+  if (isLunar === true && DATE_RE.test(birthDate)) {
+    try {
+      return lunarToSolarYmd(birthDate);
+    } catch (err) {
+      // 农历日不存在（如某年六月只有 29 天却填了 30）等异常：退回原串。
+      // 这与改动前的行为完全一致（大运仍不准），但绝不因为一次折算失败就让整份解读失败。
+      logger.error(SERVICE, `lunar→solar failed (${birthDate})`, err instanceof Error ? err : undefined);
+      return birthDate;
+    }
+  }
+  return birthDate;
+}
+
+/**
  * 用客户端命盘跑本地确定性工具链，返回每步真实计算结果（格局/用神/神煞/刑冲/大运/流年…）。
  * 这些步骤既注入 prompt 让模型据实作答，也逐条推送给首屏作「推算中」动画。
  * 任意一步失败都不阻断主流程，退回空数组（仅丢失增益、不影响出报告）。
+ *
+ * solarBirthDate 必须是**公历**日（见 resolveSolarBirthDate）：八字直输模式无出生日期时为空串，
+ * 大运步骤会在 runBaziToolchain 内单步降级，其余事实不受影响。
  */
 function computeToolchainSteps(
   baziResult: unknown,
-  birthDate: string,
+  solarBirthDate: string,
   gender: Gender,
   birthHourNum?: number,
   birthMinute?: number,
@@ -75,7 +139,7 @@ function computeToolchainSteps(
     if (!chart?.year || !chart?.month || !chart?.day) return [];
     return runBaziToolchain({
       chart,
-      birth: { birthDate, gender, birthHourNum, birthMinute },
+      birth: { birthDate: solarBirthDate, gender, birthHourNum, birthMinute },
       today: beijingToday(),
     });
   } catch (err) {
@@ -97,6 +161,8 @@ export async function POST(req: NextRequest) {
 
   const { cacheKey, baziResult, name, gender, birthHour, birthHourNum, birthMinute, knowTime, forceRefresh, dayunExtra } = parsed;
   // 八字直输无出生日期：统一兜底为空串，大运步骤会优雅降级
+  // birthDate 保持「用户填的那一串」，只用于飞书告警文案（运维要看到用户实际输入的是什么）；
+  // 命理计算一律改用下面第 2 步解析出的公历锚点。
   const birthDate = parsed.birthDate ?? '';
 
   // 1. 查缓存（forceRefresh 时跳过）
@@ -161,9 +227,11 @@ export async function POST(req: NextRequest) {
   // 2. 跑本地确定性工具链 → 既注入 prompt 让模型据实作答（而非脑补），也推送首屏作推算动画
   const factsGender: Gender = gender === 'female' ? 'female' : 'male';
   const hasPreciseTime = knowTime !== false && typeof birthHourNum === 'number';
+  // 公历锚点在这里才解析：缓存命中/配额拒绝的请求根本走不到工具链，不必白做一次农历折算。
+  const solarBirthDate = resolveSolarBirthDate(birthDate, parsed.solarBirthDate, parsed.isLunar);
   const toolSteps = computeToolchainSteps(
     baziResult,
-    birthDate,
+    solarBirthDate,
     factsGender,
     hasPreciseTime ? birthHourNum : undefined,
     hasPreciseTime ? birthMinute : undefined,
