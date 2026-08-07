@@ -1,3 +1,7 @@
+// 流式请求走 expo/fetch（SDK 52+ 的 WinterCG fetch）：RN 全局 fetch 不支持
+// ReadableStream，只有它能做到 SSE 逐帧解析；普通 JSON 请求仍用全局 fetch。
+import { fetch as fetchStream } from 'expo/fetch';
+
 import { API_BASE } from './config';
 import { useAuth, type AuthUser } from './auth-store';
 import type { BirthProfile } from './profile-store';
@@ -13,16 +17,39 @@ export class ApiError extends Error {
   }
 }
 
+// 默认超时：普通请求 60s；塔罗解读链路更长（抽牌 + 长文生成），放宽到 120s。
+const DEFAULT_TIMEOUT_MS = 60_000;
+export const TAROT_TIMEOUT_MS = 120_000;
+
+/** 所有请求通用的可选项：超时可覆盖，abort 句柄经回调暴露给调用方（用于手动取消）。 */
+export interface RequestOpts {
+  timeoutMs?: number;
+  onController?: (controller: AbortController) => void;
+}
+
+/** SSE 请求可选项：传 onDelta 时逐段上抛增量；不传则保持旧行为（聚合后一次性返回）。 */
+export interface SSEOpts<M = unknown> extends RequestOpts {
+  onMeta?: (meta: M) => void;
+  onDelta?: (chunk: string) => void;
+}
+
 function authHeaders(): Record<string, string> {
   const token = useAuth.getState().token;
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-async function parseError(res: Response): Promise<never> {
-  const text = await res.text();
-  let data: any = null;
+// 结构化最小依赖：同时兼容全局 Response 与 expo/fetch 的 FetchResponse。
+async function parseError(res: { status: number; text(): Promise<string> }): Promise<never> {
+  let text = '';
   try {
-    data = text ? JSON.parse(text) : null;
+    text = await res.text();
+  } catch {
+    /* 读 body 失败时仅用状态码报错 */
+  }
+  // 服务端错误体约定为 { message?, error? }，解析失败时降级为状态码文案。
+  let data: { message?: string; error?: string } | null = null;
+  try {
+    data = text ? (JSON.parse(text) as { message?: string; error?: string }) : null;
   } catch {
     /* non-JSON body */
   }
@@ -30,58 +57,156 @@ async function parseError(res: Response): Promise<never> {
   throw new ApiError(msg, res.status, data?.error);
 }
 
-async function postJson<T>(path: string, body: unknown): Promise<T> {
-  let res: Response;
+/**
+ * 带超时的请求上下文：定时器触发 abort 后据 timedOut 区分「超时」与「用户取消」，
+ * 两者对 UI 的文案与重试建议不同。
+ */
+function createRequestContext(opts: RequestOpts) {
+  const controller = new AbortController();
+  opts.onController?.(controller);
+  const limitMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  let timedOut = false;
+  let timer = setTimeout(onTimeout, limitMs);
+  function onTimeout() {
+    timedOut = true;
+    controller.abort();
+  }
+  // 流式场景用「静默超时」：每收到一帧就重置计时，避免正常但耗时较久的长文
+  // 解读（塔罗/八字动辄上百秒）被固定总时限误杀；只有真正卡住不出帧才判超时。
+  const resetTimer = () => {
+    if (timedOut || controller.signal.aborted) return;
+    clearTimeout(timer);
+    timer = setTimeout(onTimeout, limitMs);
+  };
+  const toError = (err: unknown): ApiError => {
+    if (err instanceof ApiError) return err;
+    if (controller.signal.aborted) {
+      return timedOut
+        ? new ApiError('请求超时，请稍后重试', 0, 'TIMEOUT')
+        : new ApiError('请求已取消', 0, 'ABORTED');
+    }
+    return new ApiError('网络连接失败，请检查网络后重试', 0, 'NETWORK');
+  };
+  return { controller, toError, resetTimer, cleanup: () => clearTimeout(timer) };
+}
+
+async function postJson<T>(path: string, body: unknown, opts: RequestOpts = {}): Promise<T> {
+  const ctx = createRequestContext(opts);
   try {
-    res = await fetch(`${API_BASE}${path}`, {
+    const res = await fetch(`${API_BASE}${path}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify(body),
+      signal: ctx.controller.signal,
     });
-  } catch {
-    throw new ApiError('网络连接失败，请检查网络后重试', 0);
+    if (!res.ok) return await parseError(res);
+    return (await res.json()) as T;
+  } catch (err) {
+    throw ctx.toError(err);
+  } finally {
+    ctx.cleanup();
   }
-  if (!res.ok) return parseError(res);
-  return (await res.json()) as T;
 }
 
 /**
  * 调用返回 SSE 流的 route（命理 AI 解读普遍用 buildStream）。
- * M0/M1 不做增量渲染：整段读完后切帧解析，返回 { meta, content }。
  * 帧格式：data: {"meta": {...}} → 多个 data: {"content": "片段"} → data: [DONE]
+ * - 传 opts.onDelta 时逐帧上抛增量（expo/fetch ReadableStream 逐段读取）；
+ * - 不传则聚合后一次性返回 { meta, content }，与旧调用方完全兼容。
+ * - meta 帧后到者覆盖先到者：服务端塔罗新协议的终帧携带完整结构化结果，
+ *   聚合模式下取最后一个 meta 即为完整数据。
  */
 async function postSSE<M = unknown>(
   path: string,
   body: unknown,
+  opts: SSEOpts<M> = {},
 ): Promise<{ meta: M | null; content: string }> {
-  let res: Response;
-  try {
-    res = await fetch(`${API_BASE}${path}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...authHeaders() },
-      body: JSON.stringify(body),
-    });
-  } catch {
-    throw new ApiError('网络连接失败，请检查网络后重试', 0);
-  }
-  if (!res.ok) return parseError(res);
-
-  const raw = await res.text();
+  const ctx = createRequestContext(opts);
   let meta: M | null = null;
   let content = '';
 
-  for (const block of raw.split('\n\n')) {
-    const line = block.trim();
-    if (!line.startsWith('data:')) continue;
-    const payload = line.slice(5).trim();
-    if (payload === '[DONE]') break;
-    try {
-      const obj = JSON.parse(payload);
-      if (obj.meta) meta = obj.meta as M;
-      if (typeof obj.content === 'string') content += obj.content;
-    } catch {
-      /* 跳过无法解析的帧 */
+  // 处理一个 SSE 帧块；返回 true 表示遇到 [DONE] 终止信号。
+  // 按 SSE 规范逐行取 data: 字段，兼容 \r\n 换行与帧内夹带的注释/event 行。
+  const handleFrame = (block: string): boolean => {
+    for (const rawLine of block.split('\n')) {
+      const line = rawLine.trim();
+      if (!line.startsWith('data:')) continue;
+      const payload = line.slice(5).trim();
+      if (payload === '[DONE]') return true;
+      try {
+        // 兼容两套服务端帧命名：老协议 {meta}/{content}，塔罗新协议的
+        // 终帧 {result} 与增量 {delta}——后到的结构化帧覆盖先到者。
+        const obj = JSON.parse(payload) as {
+          meta?: M;
+          result?: M;
+          content?: string;
+          delta?: string;
+        };
+        const structured = obj.meta ?? obj.result;
+        if (structured) {
+          meta = structured;
+          opts.onMeta?.(structured);
+        }
+        const piece = typeof obj.content === 'string' ? obj.content : obj.delta;
+        if (typeof piece === 'string' && piece) {
+          content += piece;
+          opts.onDelta?.(piece);
+        }
+      } catch {
+        /* 跳过无法解析的帧 */
+      }
     }
+    return false;
+  };
+
+  try {
+    const res = await fetchStream(`${API_BASE}${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify(body),
+      signal: ctx.controller.signal,
+    });
+    if (!res.ok) return await parseError(res);
+
+    if (res.body) {
+      // 增量路径：按 \n\n 切帧，末段留在 buffer 等待补全。
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let finished = false;
+      while (!finished) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        ctx.resetTimer(); // 有数据进来即视为链路健康
+        buffer += decoder.decode(value, { stream: true });
+        const blocks = buffer.split('\n\n');
+        buffer = blocks.pop() ?? '';
+        for (const b of blocks) {
+          if (handleFrame(b)) {
+            finished = true;
+            break;
+          }
+        }
+      }
+      if (!finished) {
+        buffer += decoder.decode(); // flush 多字节字符的尾部残留（中文正文必需）
+        if (buffer) handleFrame(buffer);
+      }
+      if (finished) {
+        // 已收到 [DONE]，主动取消剩余流，尽早释放连接。
+        reader.cancel().catch(() => {});
+      }
+    } else {
+      // 兜底：无流式 body 时退回整段缓冲解析（行为等同旧实现）。
+      const raw = await res.text();
+      for (const block of raw.split('\n\n')) {
+        if (handleFrame(block)) break;
+      }
+    }
+  } catch (err) {
+    throw ctx.toError(err);
+  } finally {
+    ctx.cleanup();
   }
 
   return { meta, content: content.trim() };
@@ -162,7 +287,7 @@ export function getDaily(p: BirthProfile) {
   });
 }
 
-// ───────────────────────── 塔罗（SSE → 缓冲解析）─────────────────────────
+// ───────────────────────── 塔罗（SSE）─────────────────────────
 
 export interface TarotCard {
   name_zh?: string;
@@ -184,27 +309,38 @@ export interface TarotResult {
  *   data: {"meta": {...cards...}}   → 牌面信息
  *   data: {"content": "片段"}        → 解读正文（多帧拼接）
  *   data: [DONE]
- * M0 不做增量渲染：整段读完后切帧解析。
+ * 新协议的终帧 meta 携带完整结构化结果，postSSE 取最后一个 meta 即可。
+ * 传 opts.onDelta 可增量渲染解读正文。
  */
-export async function drawTarot(question: string, spread = 'single'): Promise<TarotResult> {
+export async function drawTarot(
+  question: string,
+  spread = 'single',
+  opts: SSEOpts<{ cards?: TarotCard[]; caution?: string }> = {},
+): Promise<TarotResult> {
   const { meta, content } = await postSSE<{ cards?: TarotCard[]; caution?: string }>(
     '/tarot/draw',
     { spread, question },
+    { timeoutMs: TAROT_TIMEOUT_MS, ...opts },
   );
   return { reading: content, cards: meta?.cards ?? [], caution: meta?.caution };
 }
 
 // ───────────────────────── GET helper ─────────────────────────
 
-async function getJson<T>(path: string): Promise<T> {
-  let res: Response;
+async function getJson<T>(path: string, opts: RequestOpts = {}): Promise<T> {
+  const ctx = createRequestContext(opts);
   try {
-    res = await fetch(`${API_BASE}${path}`, { headers: { ...authHeaders() } });
-  } catch {
-    throw new ApiError('网络连接失败，请检查网络后重试', 0);
+    const res = await fetch(`${API_BASE}${path}`, {
+      headers: { ...authHeaders() },
+      signal: ctx.controller.signal,
+    });
+    if (!res.ok) return await parseError(res);
+    return (await res.json()) as T;
+  } catch (err) {
+    throw ctx.toError(err);
+  } finally {
+    ctx.cleanup();
   }
-  if (!res.ok) return parseError(res);
-  return (await res.json()) as T;
 }
 
 // ───────────────────────── 紫微斗数 ─────────────────────────
@@ -268,13 +404,16 @@ export function castLines(): { lines: number[]; movingLines: number[] } {
   return { lines, movingLines };
 }
 
-export async function castLiuyao(question: string): Promise<LiuyaoResult> {
+export async function castLiuyao(
+  question: string,
+  opts: SSEOpts<LiuyaoMeta> = {},
+): Promise<LiuyaoResult> {
   const { lines, movingLines } = castLines();
-  const { meta, content } = await postSSE<LiuyaoMeta>('/liuyao', {
-    method: 'coin',
-    question,
-    hexagrams: { lines, movingLines },
-  });
+  const { meta, content } = await postSSE<LiuyaoMeta>(
+    '/liuyao',
+    { method: 'coin', question, hexagrams: { lines, movingLines } },
+    opts,
+  );
   return { meta, reading: content };
 }
 
@@ -300,8 +439,8 @@ export interface MeihuaResult {
   reading: string;
 }
 
-export async function drawMeihua(): Promise<MeihuaResult> {
-  const { meta, content } = await postSSE<MeihuaMeta>('/meihua/draw', { method: 'time' });
+export async function drawMeihua(opts: SSEOpts<MeihuaMeta> = {}): Promise<MeihuaResult> {
+  const { meta, content } = await postSSE<MeihuaMeta>('/meihua/draw', { method: 'time' }, opts);
   return { meta, reading: content };
 }
 
@@ -328,22 +467,29 @@ export interface MarriageResult {
   disclaimer?: string;
 }
 
-export function matchMarriage(input: {
-  maleName: string;
-  maleBirthDate: string;
-  maleBirthHour: number;
-  femaleName: string;
-  femaleBirthDate: string;
-  femaleBirthHour: number;
-}) {
-  return postJson<MarriageResult>('/bazi/marriage', {
-    maleName: input.maleName || undefined,
-    maleBirthDate: input.maleBirthDate,
-    maleBirthHour: String(input.maleBirthHour),
-    femaleName: input.femaleName || undefined,
-    femaleBirthDate: input.femaleBirthDate,
-    femaleBirthHour: String(input.femaleBirthHour),
-  });
+export function matchMarriage(
+  input: {
+    maleName: string;
+    maleBirthDate: string;
+    maleBirthHour: number;
+    femaleName: string;
+    femaleBirthDate: string;
+    femaleBirthHour: number;
+  },
+  opts: RequestOpts = {},
+) {
+  return postJson<MarriageResult>(
+    '/bazi/marriage',
+    {
+      maleName: input.maleName || undefined,
+      maleBirthDate: input.maleBirthDate,
+      maleBirthHour: String(input.maleBirthHour),
+      femaleName: input.femaleName || undefined,
+      femaleBirthDate: input.femaleBirthDate,
+      femaleBirthHour: String(input.femaleBirthHour),
+    },
+    opts,
+  );
 }
 
 // ───────────────────────── 音乐运势签（游客可用 → SSE）─────────────────────────
@@ -363,10 +509,15 @@ export interface MusicOracleResult {
   oracleText: string;
 }
 
-export async function musicOracle(question: string, birthYear?: number): Promise<MusicOracleResult> {
+export async function musicOracle(
+  question: string,
+  birthYear?: number,
+  opts: SSEOpts<{ success: boolean; data: MusicOracleData }> = {},
+): Promise<MusicOracleResult> {
   const { meta, content } = await postSSE<{ success: boolean; data: MusicOracleData }>(
     '/music-oracle',
     { question, birthYear },
+    opts,
   );
   return { data: meta?.data ?? null, oracleText: content };
 }
@@ -430,30 +581,38 @@ export async function saveBirthInfo(p: BirthProfile): Promise<void> {
 }
 
 /** 八字追问：携带出生信息重算命盘后回答。SSE。 */
-export async function askBazi(p: BirthProfile, question: string): Promise<string> {
+export async function askBazi(
+  p: BirthProfile,
+  question: string,
+  opts: SSEOpts = {},
+): Promise<string> {
   const knowTime = p.birthHour >= 0;
-  const { content } = await postSSE('/bazi/chat', {
-    question,
-    birthInput: {
-      birthDate: p.birthDate,
-      gender: p.gender,
-      knowTime,
-      birthHourNum: knowTime ? shichenToClockHour(p.birthHour) : undefined,
-      birthMinute: 0,
+  const { content } = await postSSE(
+    '/bazi/chat',
+    {
+      question,
+      birthInput: {
+        birthDate: p.birthDate,
+        gender: p.gender,
+        knowTime,
+        birthHourNum: knowTime ? shichenToClockHour(p.birthHour) : undefined,
+        birthMinute: 0,
+      },
     },
-  });
+    opts,
+  );
   return content;
 }
 
 /** 每日运势追问：服务端用账号已存的出生信息作答。SSE。需先同步档案。 */
-export async function askDaily(question: string): Promise<string> {
-  const { content } = await postSSE('/daily/fortune-qa', { question, date: todayStr() });
+export async function askDaily(question: string, opts: SSEOpts = {}): Promise<string> {
+  const { content } = await postSSE('/daily/fortune-qa', { question, date: todayStr() }, opts);
   return content;
 }
 
 /** 黄历追问：按当日黄历作答，无需出生信息。SSE。 */
-export async function askHuangli(question: string): Promise<string> {
-  const { content } = await postSSE('/huangli/ask', { question, date: todayStr() });
+export async function askHuangli(question: string, opts: SSEOpts = {}): Promise<string> {
+  const { content } = await postSSE('/huangli/ask', { question, date: todayStr() }, opts);
   return content;
 }
 
@@ -467,8 +626,12 @@ export interface LiuyaoQaContext {
   overallNarrative: string;
   summary: string;
 }
-export async function askLiuyao(ctx: LiuyaoQaContext, question: string): Promise<string> {
-  const { content } = await postSSE('/liuyao/qa', { question, hexagramContext: ctx });
+export async function askLiuyao(
+  ctx: LiuyaoQaContext,
+  question: string,
+  opts: SSEOpts = {},
+): Promise<string> {
+  const { content } = await postSSE('/liuyao/qa', { question, hexagramContext: ctx }, opts);
   return content;
 }
 
@@ -480,8 +643,12 @@ export interface MeihuaQaContext {
   originalQuestion?: string;
   overallAdvice?: string;
 }
-export async function askMeihua(ctx: MeihuaQaContext, question: string): Promise<string> {
-  const { content } = await postSSE('/meihua/qa', { question, hexagramContext: ctx });
+export async function askMeihua(
+  ctx: MeihuaQaContext,
+  question: string,
+  opts: SSEOpts = {},
+): Promise<string> {
+  const { content } = await postSSE('/meihua/qa', { question, hexagramContext: ctx }, opts);
   return content;
 }
 
@@ -494,7 +661,11 @@ export interface MarriageQaContext {
   score?: number;
   level?: string;
 }
-export async function askMarriage(ctx: MarriageQaContext, question: string): Promise<string> {
-  const res = await postJson<{ answer?: string }>('/bazi/marriage/qa', { ...ctx, question });
+export async function askMarriage(
+  ctx: MarriageQaContext,
+  question: string,
+  opts: RequestOpts = {},
+): Promise<string> {
+  const res = await postJson<{ answer?: string }>('/bazi/marriage/qa', { ...ctx, question }, opts);
   return res.answer ?? '';
 }

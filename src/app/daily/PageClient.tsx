@@ -6,19 +6,16 @@ import { AuthModal } from '@/components/auth/AuthModal';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Select } from '@/components/ui/Select';
-import { PageHeader } from '@/components/ui/PageHeader';
 import { Container } from '@/components/ui/Container';
 import { AiDisclaimer } from '@/components/ui/AiDisclaimer';
-import { Footer } from '@/components/layout/Footer';
 import { saveBirthInfo, loadBirthInfo, clearBirthInfo } from '@/lib/utils/storage';
 import { DatePicker } from '@/components/ui/DatePicker';
-import { Sun, Cloud, Droplets, Heart, Briefcase, Activity, Sparkles, ArrowRight, ChevronRight, X } from 'lucide-react';
+import { Sun, Sparkles, ChevronRight, X } from 'lucide-react';
 import Link from 'next/link';
 import DailyMusicCard from '@/components/music-oracle/DailyMusicCard';
 import TimelineSection from '@/components/daily/TimelineSection';
 import DailyDetailAnalysis from '@/components/daily/DailyDetailAnalysis';
 import DailyFortuneQA from '@/components/daily/DailyFortuneQA';
-import html2canvas from 'html2canvas';
 import { track } from '@/lib/analytics';
 import { WUXING } from '@/data/wuxing';
 
@@ -79,53 +76,6 @@ interface DailyResult {
 }
 
 
-// 命理化评分模板库（6维度×5等级=30条）
-const RATING_TEMPLATES: Record<string, Record<string, string>> = {
-  career: {
-    旺: "官星得力，日主乘势而上",
-    强: "官印相生，事业稳步向前",
-    平: "日主中和，新事缓推为宜",
-    弱: "日主受克，推进多阻",
-    衰: "官星受冲，宜守不宜攻"
-  },
-  wealth: {
-    旺: "财星当令，正财偏财皆旺",
-    强: "财源稳固，可适度进取",
-    平: "财星临平，无横财保稳",
-    弱: "财气消耗，不宜投机",
-    衰: "比劫夺财，谨防破财"
-  },
-  love: {
-    旺: "桃花得地，姻缘可期",
-    强: "夫妻宫顺，旧爱新缘皆宜",
-    平: "桃花一般，旧情可续",
-    弱: "桃花浮动，多沟通少决断",
-    衰: "桃花受克，慎防口舌"
-  },
-  health: {
-    旺: "日元充沛，精力旺盛",
-    强: "五行调和，身心皆顺",
-    平: "气血平稳，注意作息",
-    弱: "日元偏弱，宜静养",
-    衰: "五行失衡，注意脾胃心血管"
-  },
-  studies: {
-    旺: "印星临身，文思如泉",
-    强: "印星得力，宜读宜写",
-    平: "学习平稳，需主动用功",
-    弱: "印星受克，专注力下降",
-    衰: "心神浮动，宜整理思路"
-  },
-  social: {
-    旺: "食伤当令，贵人相助",
-    强: "人缘和顺，多得助力",
-    平: "食伤平和，社交克制",
-    弱: "言多有失，少争为佳",
-    衰: "食伤受冲，慎防口舌是非"
-  }
-};
-
-
 // 等级配色（收敛为品牌序阶：强势=古铜橙强调，中性偏弱=墨灰；不用彩虹随机色）
 // 色值取自设计系统 token：accent-soft/accent/accent-hover 与 border-light/gray。
 const LEVEL_COLORS: Record<string, { bg: string; text: string }> = {
@@ -135,39 +85,6 @@ const LEVEL_COLORS: Record<string, { bg: string; text: string }> = {
   '弱': { bg: '#F3F4F6', text: '#6B7280' },
   '衰': { bg: '#F3F4F6', text: '#6B7280' },
 };
-
-// 分数→等级映射
-function scoreToLevel(score: number): string {
-  if (score >= 90) return '旺';
-  if (score >= 70) return '强';
-  if (score >= 50) return '平';
-  if (score >= 30) return '弱';
-  return '衰';
-}
-
-// 命理术语关键词
-const MINGLI_KEYWORDS = ['日主', '官星', '印星', '财星', '比劫', '食伤', '桃花', '夫妻宫', '文昌', '日元', '五行', '贵人', '得令', '失令', '当令', '受克', '相生', '受冲', '临平', '得力', '得地', '临身'];
-
-// 判断文本是否包含命理术语
-function hasMingliTerm(text: string): boolean {
-  return MINGLI_KEYWORDS.some(kw => text.includes(kw));
-}
-
-// 五维进度条
-function ProgressBar({ label, value, max = 100, color = 'bg-brand-black' }: { label: string; value: number; max?: number; color?: string }) {
-  const pct = Math.min(Math.round((value / max) * 100), 100);
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-1.5">
-        <span className="text-sm text-brand-gray">{label}</span>
-        <span className="text-sm font-medium text-brand-black">{pct}%</span>
-      </div>
-      <div className="w-full h-2 rounded-full bg-brand-border-light overflow-hidden">
-        <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
-      </div>
-    </div>
-  );
-}
 
 // 五行小卡片
 const wuxingItems = [
@@ -206,19 +123,30 @@ const dayOffsetTexts: Record<string, { short: string; loading: string }> = {
 };
 const getDayOffsetText = (offset: string) => dayOffsetTexts[offset] ?? { short: '该日', loading: '正在推算运势...' };
 
+// YYYY-MM-DD 格式化（本地时区），全文件统一走这一处
+const formatDateStr = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+// dataURL → Blob：不能用 fetch(dataUrl)，站点 CSP 的 connect-src 未放行 data:（见 next.config.ts），
+// 浏览器会直接拦截导致分享失败；这里手动 base64 解码，纯本地无网络请求
+const dataUrlToBlob = (dataUrl: string): Blob => {
+  const [head, b64] = dataUrl.split(',');
+  const mime = /:(.*?);/.exec(head)?.[1] || 'image/png';
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new Blob([bytes], { type: mime });
+};
+
 // 内联月历组件
-function InlineCalendar({ selectedDate, onSelect }: { selectedDate: string; onSelect: (date: string) => void }) {
+// today 由父级传入（客户端挂载后才有值）：组件内不再 new Date()，
+// 避免构建期日期被烤进静态 HTML 导致水合失败
+function InlineCalendar({ selectedDate, today, onSelect }: { selectedDate: string; today: string | null; onSelect: (date: string) => void }) {
   const { year: selY, month: selM } = (() => {
     const [y, m] = selectedDate.split('-').map(Number);
     return { year: y, month: m };
   })();
   const [viewYear, setViewYear] = useState(selY);
   const [viewMonth, setViewMonth] = useState(selM);
-
-  const todayStr = (() => {
-    const t = new Date();
-    return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
-  })();
 
   const prevMonth = () => {
     if (viewMonth === 1) { setViewYear(viewYear - 1); setViewMonth(12); }
@@ -263,7 +191,7 @@ function InlineCalendar({ selectedDate, onSelect }: { selectedDate: string; onSe
           if (day === null) return <div key={idx} />;
           const dateStr = `${viewYear}-${String(viewMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
           const isSelected = dateStr === selectedDate;
-          const isToday = dateStr === todayStr;
+          const isToday = today !== null && dateStr === today;
           return (
             <button
               key={idx}
@@ -287,14 +215,39 @@ function InlineCalendar({ selectedDate, onSelect }: { selectedDate: string; onSe
 }
 
 // 周视图日历组件
+// selectedDate/today 为 null = 客户端尚未确定日期（首帧）：渲染中性骨架，
+// 保证预渲染 HTML 与任意日期的客户端首帧一致，彻底消除 hydration mismatch
 function WeekCalendar({
   selectedDate,
+  today,
   onSelect,
 }: {
-  selectedDate: string;
+  selectedDate: string | null;
+  today: string | null;
   onSelect: (date: string) => void;
 }) {
   const [showMonthPicker, setShowMonthPicker] = useState(false);
+  const weekLabels = ['一', '二', '三', '四', '五', '六', '日'];
+
+  if (!selectedDate) {
+    return (
+      <div className="flex items-stretch bg-white rounded-2xl border border-[#1C1A16]/8 overflow-hidden">
+        <div className="flex flex-1 justify-around">
+          {weekLabels.map((w) => (
+            <div key={w} className="flex-1 min-h-[44px] flex flex-col items-center justify-center py-2.5 gap-0.5">
+              <span className="text-xs font-medium text-brand-gray">周{w}</span>
+              <span className="w-7 h-7 rounded-full bg-brand-border-light animate-pulse" />
+            </div>
+          ))}
+        </div>
+        <div className="w-px bg-brand-border-light flex-shrink-0 self-stretch" />
+        <div className="flex flex-col items-center justify-center px-4 gap-1 min-h-[44px]">
+          <span className="text-xs text-brand-gray">月历</span>
+          <span className="text-base">📅</span>
+        </div>
+      </div>
+    );
+  }
 
   const getWeekDays = (base: string) => {
     const d = new Date(base + 'T00:00:00');
@@ -304,20 +257,11 @@ function WeekCalendar({
     return Array.from({ length: 7 }, (_, i) => {
       const date = new Date(monday);
       date.setDate(monday.getDate() + i);
-      const yyyy = date.getFullYear();
-      const mm = String(date.getMonth() + 1).padStart(2, '0');
-      const dd = String(date.getDate()).padStart(2, '0');
-      return `${yyyy}-${mm}-${dd}`;
+      return formatDateStr(date);
     });
   };
 
   const weekDays = getWeekDays(selectedDate);
-  const weekLabels = ['一', '二', '三', '四', '五', '六', '日'];
-
-  const todayStr = (() => {
-    const t = new Date();
-    return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
-  })();
 
   return (
     <>
@@ -326,7 +270,7 @@ function WeekCalendar({
         <div className="flex flex-1 justify-around">
           {weekDays.map((date, i) => {
             const isSelected = date === selectedDate;
-            const isToday = date === todayStr;
+            const isToday = today !== null && date === today;
             const dayNum = date.split('-')[2].replace(/^0/, '');
             return (
               <button
@@ -391,6 +335,7 @@ function WeekCalendar({
             </div>
             <InlineCalendar
               selectedDate={selectedDate}
+              today={today}
               onSelect={(date) => {
                 onSelect(date);
                 setShowMonthPicker(false);
@@ -406,26 +351,16 @@ function WeekCalendar({
 export default function DailyPage() {
   const { data: session } = useSession();
   const [authOpen, setAuthOpen] = useState(false);
-  const [isVip, setIsVip] = useState(false);
-  useEffect(() => {
-    if (!session) { setIsVip(false); return; }
-    (async () => {
-      try {
-        const res = await fetch('/api/user/quota');
-        if (!res.ok) return;
-        const data = await res.json();
-        setIsVip(Boolean(data?.isMember));
-      } catch {}
-    })();
-  }, [session]);
+  // 会员态直接读 session：jwt 回调已带出 isSubscribed（5 分钟 DB TTL），
+  // 无需挂载时再打一次 /api/user/quota 只为拿 isMember
+  const isVip = Boolean(session?.user?.isSubscribed);
   const [formData, setFormData] = useState({ birthDate: '', birthHour: '', gender: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<DailyResult | null>(null);
-  const [today, setToday] = useState(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-  });
+  // today 初始为 null：日期只在挂载后（useEffect）确定。若在初始 state 里 new Date()，
+  // 构建期日期会被烤进静态 HTML，任意非构建日客户端首帧必然与之不一致 → 整页水合失败重渲染
+  const [today, setToday] = useState<string | null>(null);
   const [hasSavedData, setHasSavedData] = useState(false);
   const autoSubmittedRef = useRef(false);
   const shareCardRef = useRef<HTMLDivElement>(null);
@@ -433,8 +368,24 @@ export default function DailyPage() {
   const handleShare = async () => {
     if (!shareCardRef.current || !result) return;
     try {
-      const canvas = await html2canvas(shareCardRef.current, { scale: 2, backgroundColor: '#FAF9F6' });
-      const blob = await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b!), 'image/png'));
+      // 截图库按需加载：只在点击分享时才进 bundle，避免 44KB gz 拖累首屏（做法同 life-kline 导出）
+      // pixelRatio: 2 等效原 html2canvas 的 scale: 2
+      const { toPng } = await import('html-to-image');
+      const dataUrl = await toPng(shareCardRef.current, {
+        pixelRatio: 2,
+        backgroundColor: '#FAF9F6',
+        // 分享卡是离屏节点（position:absolute; left:-9999px，见下方 shareCardRef 容器）。
+        // html-to-image 会把计算样式原样克隆进 <foreignObject>，left:-9999px 在 SVG 视口里
+        // 依然生效 → 内容被推出画布，导出纯背景色空图，且全程不抛错（静默失败）。
+        // style 由 applyStyle 在 cloneCSSStyle 之后执行，正好用来把定位复位到视口内。
+        style: { position: 'static', left: '0', top: '0' },
+        // 卡内全是 inline style，字体继承 body 的系统字体栈（SF Pro / PingFang SC），
+        // 与 next/font 生成的 __Noto_Serif_SC_* family 无交集：即便走默认流程也不会内联任何
+        // woff2。显式跳过可省掉全量样式表扫描，并杜绝日后误加 font-display 类时
+        // 触发 106 片 CJK 分片（5.9MB）base64 内联。若将来卡片要用衬线体，需移除此项。
+        skipFonts: true,
+      });
+      const blob = dataUrlToBlob(dataUrl);
       const file = new File([blob], 'cyberfate-daily.png', { type: 'image/png' });
       if (navigator.share && navigator.canShare?.({ files: [file] })) {
         await navigator.share({ files: [file], title: '今日运势 - CyberFate' });
@@ -476,8 +427,7 @@ export default function DailyPage() {
   };
 
   useEffect(() => {
-    const now = new Date();
-    const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const dateStr = formatDateStr(new Date());
     setToday(dateStr);
     const saved = loadBirthInfo();
     if (saved?.birthDate && saved?.birthHour) {
@@ -501,6 +451,8 @@ export default function DailyPage() {
     e.preventDefault();
     setError('');
     setResult(null);
+    // today 只在挂载后确定；表单可交互时必已就绪，这里只为类型收窄兜底
+    if (!today) return;
     // 未登录拦截
     if (!session) {
       setAuthOpen(true);
@@ -531,20 +483,17 @@ export default function DailyPage() {
   };
 
   const [dayOffset, setDayOffset] = useState('0');
-  const [expandedRating, setExpandedRating] = useState<string | null>(null);
   const [showTimeline, setShowTimeline] = useState(true);
   const currentDayText = getDayOffsetText(dayOffset);
 
-  const handleDateChange = (offset: string) => {
-    setDayOffset(offset);
-    const d = new Date();
-    d.setDate(d.getDate() + parseInt(offset));
-    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    if (formData.birthDate && formData.birthHour) {
-      setResult(null);
-      fetchFortune(formData.birthDate, formData.birthHour, dateStr, formData.gender || undefined);
-    }
-  };
+  // 当前查看的目标日期 = today + dayOffset。today 未确定（首帧）时为 null，
+  // 所有依赖日期的 UI 以此为准，不再各自 new Date() 计算
+  const targetDate = (() => {
+    if (!today) return null;
+    const d = new Date(today + 'T00:00:00');
+    d.setDate(d.getDate() + Number(dayOffset));
+    return { obj: d, str: formatDateStr(d) };
+  })();
 
   return (
     <div className="min-h-dvh bg-brand-bg">
@@ -584,11 +533,8 @@ export default function DailyPage() {
       {/* 周视图日期选择器 */}
       <div className="px-4 max-w-page mx-auto mb-6">
         <WeekCalendar
-            selectedDate={(() => {
-              const d = new Date(today + 'T00:00:00');
-              d.setDate(d.getDate() + Number(dayOffset));
-              return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-            })()}
+            selectedDate={targetDate?.str ?? null}
+            today={today}
             onSelect={(date) => {
               if (!today) return;
               const base = new Date(today + 'T00:00:00');
@@ -638,7 +584,7 @@ export default function DailyPage() {
             <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">{error}</div>
             <div className="flex items-center justify-center gap-4">
               <button
-                onClick={() => fetchFortune(formData.birthDate, formData.birthHour, today, formData.gender || undefined)}
+                onClick={() => today && fetchFortune(formData.birthDate, formData.birthHour, today, formData.gender || undefined)}
                 className="text-sm text-brand-ink hover:text-brand-accent underline min-h-[44px] px-2"
               >
                 重试
@@ -659,7 +605,8 @@ export default function DailyPage() {
         )}
 
         {/* ===== 结果展示 ===== */}
-        {result && !loading && (
+        {/* result 只可能在挂载后产生，届时 targetDate 必非空；加入条件仅为类型收窄 */}
+        {result && !loading && targetDate && (
           <div className="max-w-page mx-auto px-4 space-y-5 pb-20 md:pb-26 animate-fadeIn">
 
             {/* 今日核心速览 - 极简风（Card + token） */}
@@ -667,20 +614,20 @@ export default function DailyPage() {
               {/* 月份年份行 */}
               <div className="flex items-center justify-between pb-4 mb-6 border-b border-brand-border-light">
                 <span className="text-body-sm text-brand-gray tracking-[2px]">
-                  {(() => { const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC']; const d = new Date(today + 'T00:00:00'); d.setDate(d.getDate() + Number(dayOffset)); return months[d.getMonth()]; })()}
+                  {['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][targetDate.obj.getMonth()]}
                 </span>
                 <span className="text-body-sm text-brand-gray tracking-[2px]">
-                  {(() => { const d = new Date(today + 'T00:00:00'); d.setDate(d.getDate() + Number(dayOffset)); return d.getFullYear(); })()}
+                  {targetDate.obj.getFullYear()}
                 </span>
               </div>
 
               {/* 大日期 */}
               <div className="mb-5">
                 <div className="font-heading font-light text-brand-ink leading-none text-[72px] sm:text-[80px]">
-                  {(() => { const d = new Date(today + 'T00:00:00'); d.setDate(d.getDate() + Number(dayOffset)); return d.getDate(); })()}
+                  {targetDate.obj.getDate()}
                 </div>
                 <div className="text-[13px] text-brand-gray mt-2">
-                  {(() => { const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']; const d = new Date(today + 'T00:00:00'); d.setDate(d.getDate() + Number(dayOffset)); return days[d.getDay()]; })()} · {result.dayGanzhi}日 · {result.lunarDate}
+                  {['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][targetDate.obj.getDay()]} · {result.dayGanzhi}日 · {result.lunarDate}
                 </div>
               </div>
 
@@ -864,11 +811,7 @@ export default function DailyPage() {
                     birthDate={formData.birthDate}
                     birthHour={formData.birthHour}
                     gender={formData.gender}
-                    targetDate={(() => {
-                      const d = new Date(today + 'T00:00:00');
-                      d.setDate(d.getDate() + Number(dayOffset));
-                      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-                    })()}
+                    targetDate={targetDate.str}
                   />
                 )}
               </div>
@@ -879,11 +822,7 @@ export default function DailyPage() {
               isLoggedIn={!!session}
               isVip={isVip}
               onLoginRequired={() => setAuthOpen(true)}
-              targetDate={(() => {
-                const d = new Date(today + 'T00:00:00');
-                d.setDate(d.getDate() + Number(dayOffset));
-                return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-              })()}
+              targetDate={targetDate.str}
               hasBirthInfo={!!formData.birthDate}
             />
 

@@ -1,16 +1,17 @@
 import crypto from 'crypto';
 import { NextRequest } from 'next/server';
+import { Lunar } from 'lunar-javascript';
 import { z } from 'zod';
 import { sanitizeUserInput } from '@/lib/utils/sanitize';
 import { getAuthSession } from '@/lib/auth-session';
-import { calculateBazi, calculateBaziFromPillars, WUXING_KEYS, analyzeMingGe, getCurrentDayun, getDayunTimeline, analyzeShensha, shenshaNature, analyzeLiunian, analyzeLiuyueRange } from '@/lib/bazi';
+import { calculateBazi, calculateBaziFromPillars, WUXING_KEYS, analyzeMingGe, getCurrentDayun, getDayunStart, getDayunTimeline, getLunarDate, getYearGanzhi, analyzeShensha, shenshaNature, analyzeLiunian, analyzeLiuyueRange } from '@/lib/bazi';
 import type { ShenshaDisplay } from '@/lib/bazi/types';
 import { checkRateLimit } from '@/lib/rate-limit';
 import type { FiveDimensions, MingGeInfo, PillarRecord, WuxingCount } from '@/lib/bazi/types';
 import { applyChaos } from '@/lib/chaos-middleware';
 import { logger } from '@/lib/logger';
 import { getClientIp } from '@/lib/ip';
-import { getBeijingDate } from '@/lib/timezone';
+import { getBeijingDate, getTodayBeijing } from '@/lib/timezone';
 
 const SERVICE = 'api/bazi';
 
@@ -29,6 +30,71 @@ const HOUR_TO_SHICHEN: Record<number, string> = {
   10: '戌时',
   11: '亥时',
 };
+
+/**
+ * 农历 YYYY-MM-DD → 公历 YYYY-MM-DD。
+ *
+ * 为什么必须有这一步：isLunar=true 时用户填的是农历日，calculateBazi 内部会先把它
+ * Lunar→Solar 折算再排四柱；而 getLunarDate / getDayunStart / getCurrentDayun /
+ * getDayunTimeline 只认公历串（内部一律 Solar.fromYmd）。把农历原串直接喂给后者，
+ * 等于用「另一个日期」排大运，四柱与大运出自两副盘。
+ *
+ * 转换刻意与 calculateBazi 内部逐字相同（同为 Lunar.fromYmd(y,m,d).getSolar()），
+ * 任何一边改口径都必须同步另一边，否则同源保证立刻失效。
+ * 请求 schema 的 MM 只能是 01-12，表达不了闰月（负月号），此限制与 calculateBazi 一致。
+ * 农历日不存在时（如 1990 年六月只有 29 天却填了 30）库会抛错，交给 POST 的 catch 统一处理，
+ * 与改动前 calculateBazi 先抛错的行为一致。
+ */
+function lunarToSolarYmd(date: string): string {
+  const [y, m, d] = date.split('-').map(Number);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const solar: any = (Lunar as any).fromYmd(y, m, d).getSolar();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${solar.getYear()}-${pad(solar.getMonth())}-${pad(solar.getDay())}`;
+}
+
+// 「年干支换年日」缓存（键=公历年）。立春位置只与年份有关，同一进程内算一次即可。
+const ganzhiBoundaryCache = new Map<number, string>();
+
+/**
+ * 某公历年里「年干支换年」的第一天（北京日期 YYYY-MM-DD）。
+ *
+ * 为什么不去读节气表：currentYearGanzhi 是 getYearGanzhi(北京当日) 的产物，按「日」取值
+ * （内部拿当日 00:00 与立春时刻比较，故立春当天通常仍算旧年，次日才换）。
+ * 直接拿同一个 getYearGanzhi 逐日比对，判据与被判断的值同源，不可能出现「表说换了、值还没换」。
+ * 立春恒落在 2/3~2/5，2/1~2/9 的窗口足够覆盖；扫不到时按 2/5 兜底（宁可早失效，不可晚失效）。
+ */
+function ganzhiYearBoundary(year: number): string {
+  const cached = ganzhiBoundaryCache.get(year);
+  if (cached) return cached;
+  const base = getYearGanzhi(`${year}-02-01`);
+  let boundary = `${year}-02-05`;
+  for (let d = 2; d <= 9; d++) {
+    const day = `${year}-02-${String(d).padStart(2, '0')}`;
+    if (getYearGanzhi(day) !== base) {
+      boundary = day;
+      break;
+    }
+  }
+  ganzhiBoundaryCache.set(year, boundary);
+  return boundary;
+}
+
+/**
+ * currentYearGanzhi 的失效时刻（epoch ms）＝下一个「换年日」的北京 00:00。
+ *
+ * 前端会长期缓存命盘（档案/历史记录），必须能判断这项是否过期。flowYear（公历年）表达不了
+ * 立春口径：每年 1/1~立春 之间 flowYear 已是新公历年、而年干支还是上一轮，用它判新鲜度会
+ * 让页面在这 30 多天里显示早一年的流年干支。故单独下发这一项的有效期。
+ */
+function ganzhiValidUntilMs(todayBeijing: string, curYear: number): number {
+  const thisYear = ganzhiYearBoundary(curYear);
+  // 今天就是换年日或更晚 → 本轮干支要用到明年的换年日为止
+  const boundary = todayBeijing < thisYear ? thisYear : ganzhiYearBoundary(curYear + 1);
+  const [y, m, d] = boundary.split('-').map(Number);
+  // 北京 00:00 = 同日 UTC 00:00 - 8h
+  return Date.UTC(y, m - 1, d) - 8 * 60 * 60 * 1000;
+}
 
 const GAN = z.enum(['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸']);
 const ZHI = z.enum(['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥']);
@@ -79,12 +145,21 @@ export async function POST(req: NextRequest) {
   const session = await getAuthSession(req);
 
   // 轻量防刷（与 stream 的计费限流用不同 key，避免互相占用名额）
+  //
+  // failOpen: true —— 为什么这个端点零成本、Redis 挂了也该放行：
+  // 1. 本端点从头到尾只跑纯函数：calculateBazi / calculateBaziFromPillars / analyzeMingGe /
+  //    analyzeShensha / analyzeLiunian / analyzeLiuyueRange / getDayun*，全部是 lunar-javascript
+  //    的本地确定性计算，无一次网络调用、无一次 DB 写。
+  // 2. 唯一会烧钱的 AI 解读在 /api/bazi/stream，那里有 ai_bazi / ai_bazi_guest（游客 1 次/天）
+  //    双重 fail-closed 闸门 + checkBaziQuota，本端点放行一万次也换不来一个 AI token。
+  // 3. 被刷的最坏后果只是 CPU。而 fail-closed 的代价是：Redis 一抖，整站排盘（八字模块首屏）
+  //    全部 503 —— 用最贵的故障换最便宜的防护，方向是反的。
   const ip = getClientIp(req);
   if (session?.user?.id) {
-    const rl = await checkRateLimit('bazi_chart', session.user.id, 30, 60);
+    const rl = await checkRateLimit('bazi_chart', session.user.id, 30, 60, { failOpen: true });
     if (!rl.allowed) return Response.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
   } else {
-    const rl = await checkRateLimit('bazi_chart_guest', ip, 20, 3600);
+    const rl = await checkRateLimit('bazi_chart_guest', ip, 20, 3600, { failOpen: true });
     if (!rl.allowed) return Response.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
   }
 
@@ -105,6 +180,15 @@ export async function POST(req: NextRequest) {
     let dayunTimeline: ReturnType<typeof getDayunTimeline> = [];
     let dayunExtra: Record<string, unknown> = {};
     let keyMaterial: Record<string, unknown>;
+    // 农历串 / 起运描述：原先由 bazi 页在客户端用 lib/bazi/calculator 现算，
+    // 而该模块顶层 import lunar-javascript(299KB raw / 97KB gz 的 CJS 单文件，无法 tree-shake)，
+    // 等于把整库压进首屏。改由服务端随排盘一并算好返回，客户端直接读字段。
+    // 八字直输模式无出生日期，二者均不可得，保持 undefined（前端显示「—」）。
+    let lunarDate: string | undefined;
+    let dayunStartDescription: string | undefined;
+    let dayunStartAt: string | undefined;
+    // 本次排盘真正使用的公历出生日（农历输入已折算）。随响应下发，见末尾字段注释。
+    let resolvedSolarDate: string | undefined;
 
     if (isBaziMode) {
       // —— 八字直输模式：直接由四柱排盘，无出生日期 ——
@@ -148,13 +232,52 @@ export async function POST(req: NextRequest) {
 
       baziResult = calculateBazi(calcInput);
 
+      // —— 全部「按出生日期派生」的计算统一改用这一个公历日 ——
+      // 四柱由 calculateBazi 排出，它对 isLunar=true 会先折算成公历；下面这些函数只认公历串。
+      // 从前这里传的是 input.birthDate（农历用户即农历原串），于是农历用户的四柱与大运各出一副盘：
+      //   农历 1990-06-15（→公历 1990-08-05）男：四柱月柱癸未，大运却排自「06-15 当公历」那副盘
+      //   （月柱壬午），大运表首格返回癸未(1998 起)、起运 7 岁 7 个月，
+      //   而正确值应是甲申(1991 起)、起运 1 岁 0 个月——整表错位一步干支 + 近 7 年。
+      //   更糟的是跨立春的农历日：农历 1990-01-15 男，正解年柱庚午(阳)应顺行，
+      //   原串当公历落在立春前算己巳(阴)、变成逆行，连大运方向都是反的。
+      // calculateBazi 不回传折算结果，故这里按同一套调用再算一次（纯函数，无副作用）。
+      const solarBirthDate = input.isLunar === true
+        ? lunarToSolarYmd(input.birthDate)
+        : input.birthDate;
+      resolvedSolarDate = solarBirthDate;
+
+      // 农历串同理：原先对农历用户回显的是「农历原串当公历」再转出来的另一天
+      //（农历 1990-06-15 → 显示"庚午年五月廿三"），修正后回显用户填的那天"庚午年六月十五"。
+      lunarDate = getLunarDate(solarBirthDate);
+
+      // 大运的「代表出生时刻」：必须与上面 calculateBazi 排四柱用的时刻是同一个，否则
+      // 四柱与大运会出自两副不同的盘。
+      //
+      // 精确分支：calculateBazi 走 Solar.fromYmdHms(birthHourNum, birthMinute)，这里照传同一组值。
+      // 粗时辰分支：calculateBazi 走 Solar.fromYmd(y,m,d)（当日 0 点）+ 查表得时柱，年/月/日三柱
+      // 全部锚在 0 点，所以这里也必须传 undefined（buildEightChar 同样退回当日 0 点）。
+      //
+      // 曾经这里给粗时辰传过 SHICHEN_START_HOUR[birthHour]（想让起运更贴近真实出生时刻），
+      // 结果是同一份响应里 pillars 与 dayunTimeline 出自两副盘：
+      //   1990-06-06 亥时男 → 0 点排出的月柱是辛巳，21 点那副盘的月柱是壬午，
+      //   于是大运表首格返回 23 点盘的癸未(2000)，从辛巳顺行整整跳掉壬午一步（10 年）；
+      //   1990-02-04 亥时男 → 0 点排出己巳年(阴)应逆行，21 点已过立春算庚午年(阳)顺行，
+      //   四柱与大运方向直接互相矛盾。
+      // 每年约 12 个「节」日 + 立春日出生且只填粗时辰的用户都会命中。故一律与四柱同锚。
+      // 想让粗时辰的起运更精确，只能让用户填精确时刻走精确分支——不能只挪大运这一头。
+      //
+      // 性别未知时沿用 gender 的 male 兜底（起运顺逆本依赖性别，此处不顺手改判定）。
+      const dayunHour = hasPrecise ? input.birthHourNum : undefined;
+      const dayunMinute = hasPrecise ? input.birthMinute : undefined;
+      const dayunStart = getDayunStart(solarBirthDate, gender, dayunHour, dayunMinute);
+      dayunStartDescription = dayunStart.description;
+      dayunStartAt = dayunStart.at;
+
       // 大运顺逆依赖阴阳性别：性别未知时不计算（留空数组，前端据此隐藏「终身大运表」），
       // 不出错误方向的大运。已知性别才走精确节气数日法。
       if (genderKnown) {
-        const dayunHour = hasPrecise ? input.birthHourNum : undefined;
-        const dayunMinute = hasPrecise ? input.birthMinute : undefined;
-        const currentDayun = getCurrentDayun(input.birthDate, gender, dayunHour, dayunMinute);
-        dayunTimeline = getDayunTimeline(input.birthDate, gender, dayunHour, dayunMinute);
+        const currentDayun = getCurrentDayun(solarBirthDate, gender, dayunHour, dayunMinute);
+        dayunTimeline = getDayunTimeline(solarBirthDate, gender, dayunHour, dayunMinute);
         const currentDayunItem = dayunTimeline.find(item => item.isCurrent);
         const nextDayunItem = currentDayunItem ? dayunTimeline.find(item => item.index === currentDayunItem.index + 1) : undefined;
 
@@ -178,6 +301,12 @@ export async function POST(req: NextRequest) {
         birthDate: input.birthDate,
         gender,
         isLunar: input.isLunar === true,
+        // 纯为「作废农历用户的旧 AI 解读」而存在：birthDate + isLunar 已能唯一标识输入，
+        // 这一项不增加区分度。旧解读是按错误日期的大运（可差一步干支 + 近 7 年）生成的，
+        // 修复后若继续命中缓存，屏幕上的大运表与 AI 正文会互相矛盾，故必须换 key 重生成。
+        // 阳历输入这里是 undefined，JSON.stringify 直接丢弃该键 → 哈希逐字不变，
+        // 阳历用户（绝大多数）的 30 天 AI 缓存不受牵连。见 route.test.ts 的 golden key 用例。
+        solarDate: input.isLunar === true ? solarBirthDate : undefined,
         timeMode: noTime ? 'none' : (hasPrecise ? 'precise' : 'coarse'),
         hourNum: hasPrecise ? input.birthHourNum : undefined,
         minute: hasPrecise ? (typeof input.birthMinute === 'number' ? input.birthMinute : 0) : undefined,
@@ -239,6 +368,11 @@ export async function POST(req: NextRequest) {
     // —— 首屏结构化命盘模块（确定性，一次性算出）：神煞 / 流年 / 流月 / 终身大运表 ——
     // 流年/流月按北京时间当前公历年计算，确保始终是当年（命盘永久缓存时此两项需按年刷新，见 PRD 评审）
     const curYear = getBeijingDate().getUTCFullYear();
+    // 「当前流年」干支：按北京当日算（含立春换年，与旧客户端 getYearGanzhi(今天) 同口径），
+    // 注意它与下面 liunian 的 ganzhi 不等价——liunian 取该公历年 7/1 采样，立春前的一月份两者会差一轮。
+    const todayBeijing = getTodayBeijing();
+    const currentYearGanzhi = getYearGanzhi(todayBeijing);
+    const ganzhiValidUntil = ganzhiValidUntilMs(todayBeijing, curYear);
     const shensha: ShenshaDisplay[] = analyzeShensha(baziResult.chart).map((s) => ({
       name: s.name,
       pillars: s.pillars,
@@ -275,6 +409,22 @@ export async function POST(req: NextRequest) {
       liunian,
       liuyue,
       dayunTimeline,
+      // —— 以下为「客户端脱 lunar-javascript」新增字段（纯新增，旧客户端忽略即可）——
+      lunarDate,
+      // 本响应整副盘（四柱/大运/农历串）实际锚定的公历出生日；农历输入时 ≠ 用户填的 birthDate。
+      // 凡是要拿出生日期再算命理的下游（如 /api/bazi/stream 的工具链、客户端算周岁），
+      // 都必须传这个值而不是表单里的原始 birthDate，否则又会排出第二副盘。
+      // 八字直输模式无出生日期，保持 undefined。
+      solarBirthDate: resolvedSolarDate,
+      dayunStartDescription,
+      dayunStartAt,
+      currentYearGanzhi,
+      // currentYearGanzhi 的失效时刻（epoch ms，＝下一个立春换年日的北京 00:00）。
+      // 它按立春换年，与 flowYear 的公历年口径不同，必须单独判过期，见 ganzhiValidUntilMs。
+      ganzhiValidUntil,
+      // liunian / liuyue 所属的公历年（二者按公历年采样）。命盘可被前端长期缓存（档案/历史记录），
+      // 前端据此判断这两项是否已跨年过期，过期即隐藏并重新补齐，避免展示去年的流年快照。
+      flowYear: curYear,
     });
   } catch (error) {
     logger.error(SERVICE, 'Bazi API error', error instanceof Error ? error : undefined);

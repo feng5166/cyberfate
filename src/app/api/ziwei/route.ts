@@ -112,6 +112,9 @@ export async function POST(req: NextRequest) {
       shenzhu: result.shenzhu,
       mingGong: result.mingGong,
       shenGong: result.shenGong,
+      // 顶层直出农历显示串（服务端本来就在算）：让客户端免于为「显示农历生日」
+      // value-import lib/bazi/calculator（会拖 lunar-javascript 整库进首屏）
+      lunarDate: result.debug.lunarDate,
       lunar: {
         year: result.debug.yearGanZhi,
         month: result.debug.lunarMonth,

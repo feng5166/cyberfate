@@ -118,6 +118,48 @@ describe('POST /api/liuyao', () => {
     expect(res.status).toBe(429);
   });
 
+  it('缓存命中：直接出流，不扣配额，但限流照常生效', async () => {
+    getCache.mockResolvedValue({
+      lineInterpretations: ['a', 'b', 'c', 'd', 'e', 'f'],
+      overallNarrative: '缓存叙事。',
+      summary: '小结', positives: [], cautions: [], actions: [],
+    });
+
+    const res = await POST(makeReq(validBody));
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toBe('text/event-stream');
+    expect(generateLiuYaoReading).not.toHaveBeenCalled();
+    // 缓存命中不扣配额（原实现是先扣后退，白跑两次跨区 DB）
+    expect(checkLiuyaoQuota).not.toHaveBeenCalled();
+    expect(refundQuota).not.toHaveBeenCalled();
+    // 但限流必须先于缓存执行：命中仍要跑 typewriterStream（约 2.9s 占函数），
+    // 否则同一 body 可无限重放打满并发
+    expect(checkRateLimit).toHaveBeenCalledTimes(1);
+  });
+
+  it('缓存命中时限流仍能拦截（429，不出流）', async () => {
+    checkRateLimit.mockResolvedValue({ allowed: false, remaining: 0 });
+    getCache.mockResolvedValue({
+      lineInterpretations: ['a', 'b', 'c', 'd', 'e', 'f'],
+      overallNarrative: '缓存叙事。',
+      summary: '小结', positives: [], cautions: [], actions: [],
+    });
+
+    const res = await POST(makeReq(validBody));
+
+    expect(res.status).toBe(429);
+    expect(getCache).not.toHaveBeenCalled();
+  });
+
+  it('缓存未命中时才扣配额，且透传 session 的 isSubscribed 作 vipStatus', async () => {
+    getServerSession.mockResolvedValue({ user: { id: 'u1', isSubscribed: true } });
+
+    await POST(makeReq(validBody));
+
+    expect(checkLiuyaoQuota).toHaveBeenCalledWith('u1', true);
+  });
+
   it('valid payload streams 200 SSE (AI mocked, fallback-safe)', async () => {
     const res = await POST(makeReq(validBody));
     expect(res.status).toBe(200);

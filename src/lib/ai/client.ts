@@ -1,12 +1,9 @@
-import crypto from 'crypto';
 import {
-  buildBaziPrompt,
   buildDailyPrompt,
   buildLiuYaoPrompt,
   buildMeihuaDecisionPrompt,
   buildTarotReadingPrompt,
   buildTarotReadingSystemPrompt,
-  BAZI_SYSTEM_PROMPT,
   DAILY_SYSTEM_PROMPT,
   LIUYAO_SYSTEM_PROMPT,
   MEIHUA_DECISION_SYSTEM_PROMPT,
@@ -15,6 +12,7 @@ import {
   type TarotReadingPromptInput,
   type TarotSpread,
 } from './prompts';
+import { after } from 'next/server';
 import type { BaziResult, BaziAnalysis } from '../bazi/types';
 import { callExternalAPI } from '../utils/api-wrapper';
 import { redis } from '../cache/redis';
@@ -34,6 +32,35 @@ const TIMEOUT_CONFIG: Record<string, number> = {
   meihua: 55000,
   default: 15000,
 };
+
+// 各 feature 的函数级总预算（ms）= vercel.json 对应路由 maxDuration − 5s 安全余量。
+// deadline 从进入 callDeepSeek 起算（≈ 请求开始），贯穿所有重试与 provider 切换：
+// 旧版每次重试重新计满超时，最坏情形被 Vercel 击杀函数——此时配额已扣、退款/降级分支永远走不到。
+// 留 5s 余量保证超时后上层还有时间落降级兜底 + 退配额。
+const FEATURE_DEADLINE_BUDGET_MS: Record<string, number> = {
+  bazi: 55_000, // vercel.json: api/bazi/** maxDuration 60s
+  daily: 55_000, // api/daily/** 60s
+  tarot: 115_000, // api/tarot/** 120s
+  meihua: 55_000, // api/meihua/** 60s
+  liuyao: 55_000, // api/liuyao/** 60s
+  huangli: 55_000, // api/huangli/** 60s
+  huangli_ask: 55_000,
+  marriage: 25_000, // 无独立 vercel 配置，按 30s 档保守取 25s
+  default: 25_000,
+};
+
+// 重试/切 provider 要求的最低剩余预算：低于此值再打一轮也大概率打不完，直接抛错让上层走降级
+const RETRY_MIN_BUDGET_MS = 15_000;
+
+function getDeadlineBudget(feature?: string): number {
+  if (!feature) return FEATURE_DEADLINE_BUDGET_MS.default;
+  return FEATURE_DEADLINE_BUDGET_MS[feature] ?? FEATURE_DEADLINE_BUDGET_MS.default;
+}
+
+/** 预算耗尽错误：message 含 "timed out"，isTimeoutError 会命中 → 上层不再切 provider，直接落降级 */
+function budgetExhaustedError(feature?: string): Error {
+  return new Error(`AI deadline budget exhausted (timed out), feature=${feature ?? 'default'}`);
+}
 
 // 按模块差异化温度：叙事类(塔罗/六爻/梅花)略高求文采与画面感，命理推演类(八字/每日)低温求稳定可复现
 const TEMPERATURE_CONFIG: Record<string, number> = {
@@ -59,6 +86,8 @@ function getTemperature(feature?: string): number {
 interface CallDeepSeekOptions {
   /** 走 response_format: json_object，让网关强制返回合法 JSON（system prompt 必须含 "json" 字样） */
   jsonMode?: boolean;
+  /** 函数级绝对 deadline（毫秒时间戳）。缺省时按 feature 预算表从进入 callDeepSeek 起算；route 层可传更精确的「请求开始 + 预算」 */
+  deadlineAt?: number;
 }
 
 function isTimeoutError(err: unknown): boolean {
@@ -76,13 +105,17 @@ async function callModelOnce(
   maxTokens: number,
   feature: string | undefined,
   opts: CallDeepSeekOptions,
+  deadlineAt?: number,
 ): Promise<string> {
   const maxRetries = 3;
   let lastError: unknown;
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
+    // 每次尝试的超时取 min(feature 配置, 剩余 deadline)：重试不重置总预算
+    const remainingMs = deadlineAt != null ? deadlineAt - Date.now() : Number.POSITIVE_INFINITY;
+    if (remainingMs <= 0) throw budgetExhaustedError(feature);
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), getTimeout(feature));
+    const timeoutId = setTimeout(() => controller.abort(), Math.min(getTimeout(feature), remainingMs));
     try {
       const response = await fetch(`${baseUrl}/chat/completions`, {
         method: 'POST',
@@ -110,6 +143,8 @@ async function callModelOnce(
         const apiError = new Error(`DeepSeek API error ${response.status}: ${err}`);
         // 瞬时 5xx(网关抖动)值得再试；4xx 是请求本身有问题，直接抛
         if (response.status >= 500 && attempt < maxRetries - 1) {
+          // 重试前查剩余预算：不足 15s 时再试也打不完一轮，直接抛给上层落降级/退款
+          if (deadlineAt != null && deadlineAt - Date.now() <= RETRY_MIN_BUDGET_MS) throw apiError;
           lastError = apiError;
           console.warn(`[callDeepSeek:${model}] ${response.status}, retrying...`);
           await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
@@ -135,6 +170,8 @@ async function callModelOnce(
       const isAbort = msg.includes('AbortError') || msg.includes('aborted');
       const isApiError = msg.includes('API error');
       if (attempt < maxRetries - 1 && !isAbort && !isApiError) {
+        // 重试前查剩余预算（同上：预算不足不再重试）
+        if (deadlineAt != null && deadlineAt - Date.now() <= RETRY_MIN_BUDGET_MS) throw err;
         console.warn(`[callDeepSeek:${model}] attempt ${attempt + 1} failed (${msg}), retrying...`);
         await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
         continue;
@@ -160,16 +197,23 @@ async function callDeepSeek(
   const providers = await resolveProviders();
   if (!providers.length) throw new Error('无可用 LLM provider（未配置 API key）');
 
+  // route 未显式传时，按 feature 预算表从此刻（≈ 请求开始）起算：
+  // 该 deadline 贯穿所有重试与 provider 切换，保证在 Vercel 击杀函数之前抛错，
+  // 上层才来得及落降级兜底 + 退配额（旧版每次重试重新计满超时，退款分支永远走不到）
+  const deadlineAt = opts.deadlineAt ?? Date.now() + getDeadlineBudget(feature);
+
   return withCircuitBreaker(`ai:${feature ?? 'default'}`, async () => {
     let lastError: unknown;
     for (let i = 0; i < providers.length; i++) {
       const p = providers[i];
       try {
-        return await callModelOnce(p.baseUrl, p.apiKey, PRIMARY_MODEL, systemPrompt, userPrompt, maxTokens, feature, opts);
+        return await callModelOnce(p.baseUrl, p.apiKey, PRIMARY_MODEL, systemPrompt, userPrompt, maxTokens, feature, opts, deadlineAt);
       } catch (err) {
         lastError = err;
         if (isTimeoutError(err)) throw err; // 超时不再切 provider
         if (i < providers.length - 1) {
+          // 切 provider 前查剩余预算：不足一轮的量就别再开新连接，直接抛给上层落降级/退款
+          if (deadlineAt - Date.now() <= RETRY_MIN_BUDGET_MS) throw err;
           const msg = err instanceof Error ? err.message : String(err);
           console.warn(`[callDeepSeek] provider ${p.id} 失败 (${msg})，切下一个 provider ${providers[i + 1].id}`);
           continue;
@@ -181,83 +225,9 @@ async function callDeepSeek(
   });
 }
 
-/**
- * 生成八字分析（带 Redis 缓存）
- * 返回值包含 _source 字段：'deepseek' | 'fallback' | 'cache'
- */
-export async function generateBaziAnalysis(
-  result: BaziResult,
-  name?: string,
-  birthInfo?: { birthDate: string; birthHour: number; gender?: string; forceRefresh?: boolean },
-  dayunExtra?: {
-    ageStart?: number;
-    ageEnd?: number;
-    endYear?: number;
-    nextGanZhi?: string;
-    nextStartYear?: number;
-  }
-): Promise<BaziAnalysis & { _source: 'deepseek' | 'fallback' | 'cache' }> {
-
-  // 1. 构建缓存 key（hash摘要，避免明文PII写入Redis）
-  // gender 纳入 key：阳男阴女/阴男阳女大运方向不同，AI 解读角度有别
-  let cacheKey = 'v4:bazi:default';
-  if (birthInfo) {
-    const { birthDate, birthHour, gender } = birthInfo;
-    const hash = crypto.createHash('sha256').update(JSON.stringify({ birthDate, birthHour, gender: gender ?? 'unknown' })).digest('hex').slice(0, 16);
-    cacheKey = `v4:bazi:${hash}`;
-  }
-  
-  // 2. 尝试从 Redis 读取（forceRefresh 时跳过）
-  if (!birthInfo?.forceRefresh) {
-    try {
-      const cached = await redis.get(cacheKey);
-      if (cached) {
-        if (process.env.NODE_ENV !== 'production') console.log(`[Cache Hit] ${cacheKey}`);
-        return observed('bazi', { ...(cached as BaziAnalysis), _source: 'cache' });
-      }
-    } catch (err) {
-      console.warn('[Cache Read Error]', err);
-    }
-  }
-
-  if (!hasAnyProviderKey()) {
-    console.warn('[AI] 未配置任何 LLM provider 的 API key，使用降级分析');
-    return observed('bazi', { ...generateFallbackBaziAnalysis(result), _source: 'fallback' });
-  }
-
-  const prompt = buildBaziPrompt(result, name, birthInfo?.gender, dayunExtra);
-
-  const apiResult = await callExternalAPI(
-    async () => {
-      const text = await callDeepSeek(BAZI_SYSTEM_PROMPT, prompt, 4000, 'bazi', { jsonMode: true });
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        throw new Error('No JSON found in response');
-      }
-      return JSON.parse(jsonMatch[0]) as BaziAnalysis;
-    },
-    {
-      serviceName: 'AI 八字分析',
-      fallback: generateFallbackBaziAnalysis(result),
-    }
-  );
-
-  // 3. 写入 Redis 缓存（仅非降级结果）
-  if (apiResult.success) {
-    if (!apiResult.fromFallback) {
-      try {
-        await redis.set(cacheKey, apiResult.data);
-        if (process.env.NODE_ENV !== 'production') console.log(`[Cache Set] ${cacheKey}`);
-      } catch (err) {
-        console.warn('[Cache Write Error]', err);
-      }
-    }
-    return observed('bazi', { ...apiResult.data, _source: apiResult.fromFallback ? 'fallback' : 'deepseek' });
-  }
-  
-  return observed('bazi', { ...generateFallbackBaziAnalysis(result), _source: 'fallback' });
-}
-
+// 注：原 generateBaziAnalysis（非流式八字解读 + v4:bazi 缓存键）已删除——
+// 八字主链路早已全量走 /api/bazi/stream（自带 v6 缓存键与流式兜底），全仓零调用；
+// 保留它只会多维护一套写 v4 键的死代码。下面的降级模板仍被 stream route 依赖，必须保留导出。
 export function generateFallbackBaziAnalysis(result: BaziResult): BaziAnalysis {
   const { wuxing, dayMaster } = result;
   const wuxingNames: Record<string, string> = {
@@ -352,11 +322,26 @@ export async function generateDailyFortune(
   // 3. 写入 Redis 缓存（仅非降级结果，24小时过期）
   if (apiResult.success) {
     if (!apiResult.fromFallback) {
+      const data = apiResult.data; // 快照：延后执行期间不再受 apiResult 变动影响
+      const writeCache = async () => {
+        try {
+          await redis.setex(cacheKey, 86400, data);
+          if (process.env.NODE_ENV !== 'production') console.log(`[Cache Set] ${cacheKey} (TTL: 24h)`);
+        } catch (err) {
+          console.warn('[Cache Write Error]', err);
+        }
+      };
+      // 写缓存搬出用户等待路径：这一步紧接在 20~55s 的 AI 等待之后，而 undici 默认
+      // keepAliveTimeout 只有 4s —— 等 AI 期间那条 Redis 连接必然已被回收，这次 setex
+      // 要重付一次 TCP+TLS 握手（生产实测 hkg1→Upstash 约 268ms），过去整整计入
+      // /api/daily 的响应时间。after() 在 Vercel 上映射到 waitUntil，响应关闭后仍保证执行。
+      // 回调自身已吞异常，绝不会 reject 到 after 的错误上报里。
       try {
-        await redis.setex(cacheKey, 86400, apiResult.data);
-        if (process.env.NODE_ENV !== 'production') console.log(`[Cache Set] ${cacheKey} (TTL: 24h)`);
-      } catch (err) {
-        console.warn('[Cache Write Error]', err);
+        after(writeCache);
+      } catch {
+        // 拿不到 waitUntil 的运行时（单测宿主 / 非 Next 环境 / withAiTimeout 超时后
+        // 仍在跑的孤儿调用）after() 会同步抛错：退回原来的内联 await，行为不比改造前差
+        await writeCache();
       }
     }
     return observed('daily', { ...apiResult.data, _source: apiResult.fromFallback ? 'fallback' : 'deepseek' });
@@ -475,6 +460,10 @@ function getTarotTextLimits(spread: TarotSpread): ReadingLimits {
 }
 
 function getTarotMaxTokens(spread: TarotSpread): number {
+  // max_tokens 是「上限」不是「目标」：模型按 prompt 写完遇 EOS 就停，调低不会缩短生成时长，
+  // 只会在真的写满时把 JSON 从中间截断 → jsonMatch 解析失败 → 整单落降级模板。
+  // 凯尔特十字要出 10 张牌义(80-120 字/张) + 1200-1500 字正文，压到 3000 明显不够，故维持 5000。
+  // 真正降低用户等待的手段是流式输出，已由 /api/tarot/draw 的 SSE 链路实现（它自管 max_tokens）
   if (spread === 'celtic') return 5000;
   if (spread === 'mirror') return 4000;
   if (spread === 'relationship') return 4500;

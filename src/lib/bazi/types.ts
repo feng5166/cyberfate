@@ -196,6 +196,23 @@ export interface BaziHistoryRecord {
   trueSolarOffsetMinutes?: number | null;
   dayunStartDescription?: string;
   dayunStartAt?: string;
+  // —— 重发排盘所需的原始出生输入（全部可选，存量记录没有）——
+  // 为什么要存：bazi 页恢复这条记录时会重发 /api/bazi 补齐「只有服务端算得出」的字段
+  // （终身大运表 / 流年流月 / 农历串 / 起运）。若只有 birthHour 这个粗时辰码，服务端只能按
+  // 「时辰起始小时」折算——实测 1990-06-15 子时：精确 00:30 起运「1998年1月」，按子时起始
+  // 23:00 折算却是「1997年9月」，四柱完全相同、大运边界差 4 个月，于是同一屏出现两套大运。
+  // 存下当初的精确输入，重算才能得到与本条记录同精度的结果。
+  // 缺失（存量记录 / 用户本就不知时辰）时一律回落到 birthHour 粗时辰码，行为与新增这几项前一致。
+  /** 是否填写了精确出生时刻；true 时下面的 birthHourNum/birthMinute 才有意义 */
+  knowTime?: boolean;
+  /** 精确出生小时 0-23 */
+  birthHourNum?: number;
+  /** 精确出生分钟 0-59 */
+  birthMinute?: number;
+  /** 晚子时（23:00-23:59 归次日日柱） */
+  lateZiShi?: boolean;
+  /** birthDate 是否按农历填写（true 时重算必须同样按农历解释，否则会排出另一副盘） */
+  isLunar?: boolean;
   source?: 'bazi';
   createdAt: string;
 }

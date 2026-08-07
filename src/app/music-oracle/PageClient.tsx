@@ -8,7 +8,6 @@ import { SplitLayout } from '@/components/ui/SplitLayout';
 import { Footer } from '@/components/layout/Footer';
 import { OracleLoading } from '@/components/ui/OracleLoading';
 import { Share2, RefreshCw, ChevronDown, ChevronUp, Sparkles, ExternalLink, Compass, PenLine } from 'lucide-react';
-import { toPng } from 'html-to-image';
 import { wuxingColor } from '@/data/wuxing';
 
 /* ─── 五行封面：图标为装饰 emoji，底色统一取自 @/data/wuxing 单一真源 ─── */
@@ -81,7 +80,6 @@ export default function MusicOraclePageClient() {
   const [loading, setLoading] = useState(false);
   const [streaming, setStreaming] = useState(false);
   const [result, setResult] = useState<OracleResult | null>(null);
-  const [streamingText, setStreamingText] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
@@ -113,10 +111,9 @@ export default function MusicOraclePageClient() {
     setLoading(true);
     setError(null);
     setResult(null);
-    setStreamingText('');
 
     try {
-      const body: Record<string, any> = { question: question.trim() };
+      const body: { question: string; birthYear?: number } = { question: question.trim() };
       if (birthYear) body.birthYear = parseInt(birthYear, 10);
 
       const res = await fetch('/api/music-oracle', {
@@ -171,7 +168,6 @@ export default function MusicOraclePageClient() {
               }, 100);
             } else if (json.content) {
               acc += json.content;
-              setStreamingText(acc);
               if (metaData) {
                 setResult({ ...metaData, oracleText: acc });
               }
@@ -200,6 +196,8 @@ export default function MusicOraclePageClient() {
     if (!resultRef.current || sharing) return;
     setSharing(true);
     try {
+      // 截图库按需加载：只在点击分享时才进 bundle，不拖累首屏
+      const { toPng } = await import('html-to-image');
       const dataUrl = await toPng(resultRef.current, {
         quality: 0.95,
         backgroundColor: '#FFFFFF',

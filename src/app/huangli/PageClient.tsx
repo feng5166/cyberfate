@@ -7,35 +7,38 @@ import { DayDetailCard } from '@/components/huangli/DayDetailCard';
 import { ShenShaPanel } from '@/components/huangli/ShenShaPanel';
 import { AiAskSection } from '@/components/huangli/AiAskSection';
 import { FeaturesSection } from '@/components/huangli/FeaturesSection';
-import { Footer } from '@/components/layout/Footer';
 import { PageShell, SplitLayout } from '@/components/ui';
 import type { HuangliData } from '@/lib/huangli/calculator';
+import { getTodayBeijing } from '@/lib/timezone';
 import { track } from '@/lib/analytics';
 
-function getTodayStr(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+interface PageClientProps {
+  /** 服务端（RSC）按北京时间注入的「今天」YYYY-MM-DD */
+  initialDate: string;
+  /** RSC 直出的当日黄历数据；null = 服务端计算失败，降级回客户端 fetch */
+  initialData: HuangliData | null;
 }
 
-export default function HuangliPage() {
-  const [selectedDate, setSelectedDate] = useState<string>(getTodayStr);
-  const [data, setData] = useState<HuangliData | null>(null);
-  const [loading, setLoading] = useState(true);
+export default function HuangliPage({ initialDate, initialData }: PageClientProps) {
+  const [selectedDate, setSelectedDate] = useState<string>(initialDate);
+  const [data, setData] = useState<HuangliData | null>(initialData);
+  const [loading, setLoading] = useState(!initialData);
   const [error, setError] = useState('');
   const touchStartX = useRef(0);
+  // 仅首次 effect 允许「跳过 fetch 直用 RSC 直出数据」，之后一律走网络
+  const firstRunRef = useRef(true);
 
+  // 日期加减一律走 UTC 分量：new Date('YYYY-MM-DD') 按 UTC 零点解析，再用本地分量格式化，
+  // 在负时区（美西）会整体错一天 —— 左右滑动会出现「前进原地不动、后退跳两天」。
   function addDays(dateStr: string, delta: number): string {
-    const d = new Date(dateStr);
-    d.setDate(d.getDate() + delta);
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const t = new Date(Date.UTC(y, m - 1, d + delta));
+    return `${t.getUTCFullYear()}-${String(t.getUTCMonth() + 1).padStart(2, '0')}-${String(t.getUTCDate()).padStart(2, '0')}`;
   }
 
   const handleSwipe = (deltaX: number) => {
     if (Math.abs(deltaX) < 50) return;
-    setSelectedDate(prev => addDays(prev || getTodayStr(), deltaX < 0 ? 1 : -1));
+    setSelectedDate(prev => addDays(prev, deltaX < 0 ? 1 : -1));
   };
 
   const loadDate = useCallback(async (date: string) => {
@@ -61,12 +64,26 @@ export default function HuangliPage() {
     }
   }, []);
 
-  // 挂载即拉取今天的数据；后续 selectedDate 改变也会重新拉取
+  // 首帧直出：RSC 已注入当日数据则不再 fetch（SEO/首屏都吃现成 HTML）。
+  // 仅当用户切换日期、或客户端北京日期 ≠ 服务端注入日期（ISR 缓存跨北京午夜陈旧）时才走 /api/huangli。
   useEffect(() => {
-    const date = selectedDate || getTodayStr();
-    if (!selectedDate) setSelectedDate(date);
-    loadDate(date);
-  }, [selectedDate, loadDate]);
+    if (firstRunRef.current) {
+      firstRunRef.current = false;
+      if (selectedDate === initialDate) {
+        const clientToday = getTodayBeijing();
+        if (clientToday !== initialDate) {
+          // 缓存页已跨天：切到客户端的北京「今天」，由下一轮 effect 拉取
+          setSelectedDate(clientToday);
+          return;
+        }
+        if (initialData) {
+          track('huangli_view', { tool: 'huangli' });
+          return;
+        }
+      }
+    }
+    loadDate(selectedDate);
+  }, [selectedDate, loadDate, initialDate, initialData]);
 
   const handleDateSelect = (date: string) => {
     setSelectedDate(date);

@@ -15,6 +15,12 @@ function generateId(): string {
   return `bazi_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
+/**
+ * 只校验「渲染历史列表与恢复命盘所必需」的字段。
+ * BaziHistoryRecord 上的可选项（农历串 / 起运 / knowTime 等精确出生时刻）一律不参与判定：
+ * 存量记录本就没有它们，一旦纳入必填校验，用户已有的记录会在升级后被整批判为非法而消失。
+ * 新增字段务必保持可选，并在读取侧做缺省兜底。
+ */
 function isValidRecord(record: unknown): record is BaziHistoryRecord {
   if (!record || typeof record !== 'object') return false;
   const candidate = record as Partial<BaziHistoryRecord>;

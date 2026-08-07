@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, CalendarDays } from 'lucide-react';
-import { getMonthLunarDays } from '@/lib/huangli/calculator';
+import { getTodayBeijing } from '@/lib/timezone';
 
 interface CalendarPickerProps {
   selectedDate: string;
@@ -13,6 +13,28 @@ interface LunarDayInfo {
   day: number;
   lunarDay: string;
   jieqi: string;
+}
+
+// 整月农历数据改经 /api/huangli?month=…（CDN immutable 长缓存）获取：
+// 客户端不再 value-import lib/huangli/calculator——其顶层 require('lunar-javascript')
+// 会把整库 299KB raw/97KB gz 拖进首屏。切月后小字标注异步补上，不阻塞日历主体。
+// 缓存的是 Promise 而非结果：本组件同时挂了两份（桌面侧栏 + 移动端弹窗），
+// 同一个月只发一次请求，并让后挂载的实例直接复用已解析的结果。
+const monthRequests = new Map<string, Promise<LunarDayInfo[]>>();
+
+function fetchMonth(key: string): Promise<LunarDayInfo[]> {
+  let req = monthRequests.get(key);
+  if (!req) {
+    req = fetch(`/api/huangli?month=${key}`)
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`))))
+      .then((json: { days?: LunarDayInfo[] }) => (Array.isArray(json.days) ? json.days : []))
+      .catch((err) => {
+        monthRequests.delete(key); // 失败不留坏缓存，下次切回该月可重试
+        throw err;
+      });
+    monthRequests.set(key, req);
+  }
+  return req;
 }
 
 function formatDate(y: number, m: number, d: number): string {
@@ -27,25 +49,38 @@ function parseDate(dateStr: string): { year: number; month: number; day: number 
 const WEEKDAY_HEADERS = ['日', '一', '二', '三', '四', '五', '六'];
 
 export function CalendarPicker({ selectedDate, onDateSelect }: CalendarPickerProps) {
-  const today = new Date();
-  const todayStr = formatDate(today.getFullYear(), today.getMonth() + 1, today.getDate());
+  // 「今天」按北京时间判定（黄历是中国历法），与服务端 RSC 注入的初始日期口径一致；
+  // 原本用本地时间，海外用户会与页面正文显示的日期差一天。
+  const todayStr = getTodayBeijing();
+  const { year: todayYear, month: todayMonth } = parseDate(todayStr);
   const { year: selY, month: selM } = parseDate(selectedDate);
 
   const [viewYear, setViewYear] = useState(selY);
   const [viewMonth, setViewMonth] = useState(selM);
-  const [lunarDays, setLunarDays] = useState<LunarDayInfo[]>([]);
+  // 按月存，切月时天然不会把上个月的农历名错位到新月格子上
+  const [lunarByMonth, setLunarByMonth] = useState<Record<string, LunarDayInfo[]>>({});
+
+  const monthKey = `${viewYear}-${String(viewMonth).padStart(2, '0')}`;
+  const lunarDays = lunarByMonth[monthKey] ?? [];
 
   useEffect(() => {
-    const days = getMonthLunarDays(viewYear, viewMonth);
-    setLunarDays(days);
-  }, [viewYear, viewMonth]);
+    if (lunarByMonth[monthKey]) return;
+    let cancelled = false;
+    fetchMonth(monthKey)
+      .then((days) => {
+        if (!cancelled) setLunarByMonth((prev) => ({ ...prev, [monthKey]: days }));
+      })
+      .catch(() => {
+        // 失败只缺农历小字标注，日历选日主功能不受影响，静默降级
+      });
+    return () => { cancelled = true; };
+  }, [monthKey, lunarByMonth]);
 
   const goToToday = useCallback(() => {
-    const now = new Date();
-    setViewYear(now.getFullYear());
-    setViewMonth(now.getMonth() + 1);
+    setViewYear(todayYear);
+    setViewMonth(todayMonth);
     onDateSelect(todayStr);
-  }, [onDateSelect, todayStr]);
+  }, [onDateSelect, todayStr, todayYear, todayMonth]);
 
   const changeMonth = (delta: number) => {
     let m = viewMonth + delta;
@@ -135,7 +170,7 @@ export function CalendarPicker({ selectedDate, onDateSelect }: CalendarPickerPro
         </button>
         <div className="flex items-center gap-2">
           <span className="text-base font-semibold text-[#1C1A16]">{viewMonth}月</span>
-          {(viewYear !== today.getFullYear() || viewMonth !== today.getMonth() + 1) && (
+          {(viewYear !== todayYear || viewMonth !== todayMonth) && (
             <button
               onClick={goToToday}
               className="text-xs text-[#DC2626]/80 hover:text-[#DC2626] transition-colors flex items-center gap-0.5"

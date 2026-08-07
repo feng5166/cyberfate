@@ -56,21 +56,42 @@ function defaultProviderId(): ProviderId {
   return isProviderId(env) ? env : 'deepseek-official';
 }
 
-/** 当前后台开关选中的 provider（Redis 未配置/未设置时回落到 env 默认） */
-export async function getActiveProviderId(): Promise<ProviderId> {
+// 进程内缓存后台开关（60s TTL）：resolveProviders/getPrimaryProvider 处于每次 AI 调用的热路径，
+// 省掉一次 Redis 往返。权衡：管理后台切 provider 后，本实例经 setActiveProviderId 失效缓存后立即重读，
+// 其他 Vercel 实例最多延迟 60s 生效——切换是罕见运维操作，可接受。
+// 管理页读状态走 getProviderStatus（默认 fresh 直读 Redis），不受本缓存影响
+const ACTIVE_PROVIDER_CACHE_TTL_MS = 60_000;
+let activeProviderCache: { id: ProviderId; at: number } | null = null;
+
+/**
+ * 当前后台开关选中的 provider（Redis 未配置/未设置时回落到 env 默认；进程内缓存 60s）。
+ * fresh=true 绕过缓存直读 Redis —— 管理后台读「当前生效 provider」必须走这条通道，
+ * 否则切换后 60s 内看到的是陈旧值（热路径调用一律走缓存，不受影响）
+ */
+export async function getActiveProviderId(opts?: { fresh?: boolean }): Promise<ProviderId> {
+  const now = Date.now();
+  if (!opts?.fresh && activeProviderCache && now - activeProviderCache.at < ACTIVE_PROVIDER_CACHE_TTL_MS) {
+    return activeProviderCache.id;
+  }
+  let id = defaultProviderId();
   try {
     const v = await redis.get(REDIS_KEY);
-    if (isProviderId(v)) return v;
+    if (isProviderId(v)) id = v;
   } catch {
     /* Redis 不可用时静默回落 */
   }
-  return defaultProviderId();
+  activeProviderCache = { id, at: now };
+  return id;
 }
 
 /** 后台切换 provider */
 export async function setActiveProviderId(id: ProviderId): Promise<void> {
   if (!isProviderId(id)) throw new Error(`未知 provider: ${id}`);
   await redis.set(REDIS_KEY, id);
+  // 主动失效本实例缓存（而非直接写入 id）：redis 代理会吞掉写失败并返回 null，
+  // 若此时把缓存置成「以为写成功」的值，本实例就会与 Redis 真值不一致。
+  // 置空让下次调用回 Redis 读权威值；其他实例等各自 60s 缓存过期
+  activeProviderCache = null;
 }
 
 /**
@@ -96,13 +117,17 @@ export async function getPrimaryProvider(): Promise<ResolvedProvider | null> {
   return list[0] ?? null;
 }
 
-/** 后台展示用：每个 provider 的当前状态（是否激活 / 是否已配 key） */
-export async function getProviderStatus(): Promise<{
+/**
+ * 后台展示用：每个 provider 的当前状态（是否激活 / 是否已配 key）。
+ * 默认直读 Redis（fresh）——这是管理页读当前 provider 的唯一入口，必须显示权威值而非本实例 60s 缓存；
+ * 调用量极低（仅 admin 页面），多一次 Redis 往返不影响任何热路径
+ */
+export async function getProviderStatus(opts?: { fresh?: boolean }): Promise<{
   active: ProviderId;
   providers: Array<{ id: ProviderId; label: string; baseUrl: string; hasKey: boolean; active: boolean }>;
 }> {
   const cfg = providerConfigs();
-  const active = await getActiveProviderId();
+  const active = await getActiveProviderId({ fresh: opts?.fresh ?? true });
   return {
     active,
     providers: PROVIDER_IDS.map((id) => ({

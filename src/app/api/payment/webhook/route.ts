@@ -18,6 +18,8 @@ interface StripeCheckoutSession {
     action?: string;
   };
   payment_intent?: string;
+  // 直购流程（create-checkout 首购）由 checkout 的 customer_creation=always 生成
+  customer?: string | null;
 }
 
 interface StripeCharge {
@@ -277,6 +279,25 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ message: 'Already processed' });
         }
         throw err;
+      }
+
+      // create-checkout 首购已不预建 Stripe customer（省 2 次跨洋 API），
+      // 此处从 session.customer 回填 stripeCustomerId，供 portal / 复购复用。
+      // best-effort：仅在字段为空时写入，唯一约束冲突等异常只告警，不影响已落库的订阅
+      const stripeCustomerId = typeof checkoutSession.customer === 'string' ? checkoutSession.customer : null;
+      if (stripeCustomerId) {
+        try {
+          await prisma.user.updateMany({
+            where: { id: userId, stripeCustomerId: null },
+            data: { stripeCustomerId },
+          });
+        } catch (backfillErr: unknown) {
+          logger.warn(SERVICE, 'stripeCustomerId backfill failed', {
+            userId,
+            stripeCustomerId,
+            error: backfillErr instanceof Error ? backfillErr.message : String(backfillErr),
+          });
+        }
       }
     } else {
       logger.error(SERVICE, 'checkout.session.completed missing orderId and userId in metadata');

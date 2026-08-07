@@ -1,12 +1,32 @@
 'use client';
 
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { Menu, X, ChevronDown, Sparkles, BookOpen, ArrowRight } from 'lucide-react';
-import { AuthModal } from '@/components/auth/AuthModal';
 import { MODULES, MODULE_GROUPS } from '@/data/modules';
+
+// chunk 拉取期占位：弱网下 dynamic 默认渲染 null，点「登录」会像完全没反应。
+// 先铺一层与 AuthModal 同款的遮罩 + 墨色 spinner，让点击立刻有反馈（设计系统「墨色纸面」）。
+function ModalChunkLoading() {
+  return (
+    <div
+      className="fixed inset-0 z-[10000] flex items-center justify-center bg-brand-ink/50 backdrop-blur-sm"
+      role="status"
+      aria-label="加载中"
+    >
+      <div className="animate-spin motion-reduce:animate-none w-7 h-7 rounded-full border-2 border-[#FAF9F6]/30 border-t-[#FAF9F6]" />
+    </div>
+  );
+}
+
+// 登录弹窗点击才需要，懒加载避免其（含表单/协议等依赖）进全站共享首屏 chunk
+const AuthModal = dynamic(
+  () => import('@/components/auth/AuthModal').then((m) => m.AuthModal),
+  { ssr: false, loading: ModalChunkLoading },
+);
 
 // 顶部主导航 + mega-menu 全部从 MODULES 唯一真源派生（与 Sidebar / 手机抽屉 / TabBar 一致）
 const pick = (id: string) => MODULES.find((m) => m.id === id)!;
@@ -321,7 +341,8 @@ export function Header() {
           </div>
         </div>
       )}
-      <AuthModal isOpen={authOpen} onClose={() => setAuthOpen(false)} />
+      {/* 仅 open 时挂载：配合 dynamic 实现点击才拉取 chunk；关闭动画由 AuthModal 内部 setTimeout(onClose) 保证先播完再卸载 */}
+      {authOpen && <AuthModal isOpen={authOpen} onClose={() => setAuthOpen(false)} />}
     </header>
   );
 }

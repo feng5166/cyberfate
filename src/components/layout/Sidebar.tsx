@@ -2,15 +2,38 @@
 
 import { useMemo, useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { usePathname, useRouter } from 'next/navigation';
 import clsx from 'clsx';
 import { LogOut, Lock, User } from 'lucide-react';
 import { useSession, signOut } from 'next-auth/react';
 import { SidebarMenuItem } from './SidebarMenuItem';
 import { SidebarGroup } from './SidebarGroup';
-import { AuthModal } from '@/components/auth/AuthModal';
-import { UpgradeModal } from '@/components/pricing/UpgradeModal';
 import { MODULE_GROUPS, EXTRA_LINKS } from '@/data/modules';
+
+// chunk 拉取期占位：弱网下 dynamic 默认渲染 null，点「登录」/「升级」会像完全没反应。
+// 先铺一层与弹窗同款的遮罩 + 墨色 spinner，让点击立刻有反馈（设计系统「墨色纸面」）。
+function ModalChunkLoading() {
+  return (
+    <div
+      className="fixed inset-0 z-[10000] flex items-center justify-center bg-brand-ink/50 backdrop-blur-sm"
+      role="status"
+      aria-label="加载中"
+    >
+      <div className="animate-spin motion-reduce:animate-none w-7 h-7 rounded-full border-2 border-[#FAF9F6]/30 border-t-[#FAF9F6]" />
+    </div>
+  );
+}
+
+// 两个弹窗都是点击才需要，懒加载避免（含定价卡/登录表单依赖）进全站共享首屏 chunk
+const AuthModal = dynamic(
+  () => import('@/components/auth/AuthModal').then((m) => m.AuthModal),
+  { ssr: false, loading: ModalChunkLoading },
+);
+const UpgradeModal = dynamic(
+  () => import('@/components/pricing/UpgradeModal').then((m) => m.UpgradeModal),
+  { ssr: false, loading: ModalChunkLoading },
+);
 
 interface SidebarProps {
   collapsed?: boolean;
@@ -332,8 +355,9 @@ export function Sidebar({
   return (
     <>
       <aside className={desktopAsideClasses}>{SidebarContent(collapsed)}</aside>
-      <AuthModal isOpen={authOpen} onClose={() => setAuthOpen(false)} />
-      <UpgradeModal isOpen={upgradeModalOpen} onClose={() => setUpgradeModalOpen(false)} />
+      {/* 仅 open 时挂载：配合 dynamic 实现点击才拉取 chunk；关闭动画由弹窗内部 setTimeout(onClose) 保证先播完再卸载 */}
+      {authOpen && <AuthModal isOpen={authOpen} onClose={() => setAuthOpen(false)} />}
+      {upgradeModalOpen && <UpgradeModal isOpen={upgradeModalOpen} onClose={() => setUpgradeModalOpen(false)} />}
     </>
   );
 }

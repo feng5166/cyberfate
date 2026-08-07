@@ -18,14 +18,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '请先登录' }, { status: 401 });
   }
 
-  // 统一配额策略 v1：合婚问答免费 1 次/天，VIP 不限
-  const { checkMarriageQaQuota } = await import('@/lib/quota');
-  const qaQuota = await checkMarriageQaQuota(session.user.id);
-  if (!qaQuota.hasQuota) {
-    return NextResponse.json({ error: 'QUOTA_EXCEEDED', message: '今日免费问答次数已用完，升级 VIP 不限量' }, { status: 429 });
-  }
-
-  const body = await req.json().catch(() => ({}));
+  // 先解析 + 校验请求体，再扣配额（下面 safeQuestion / 八字上下文校验之后）：
+  // checkMarriageQaQuota 是 atomicCheckAndConsume——查即扣。原顺序下，body 不是合法 JSON、
+  // 问题为空、或缺双方八字上下文这三条 400 路径都已经把当天唯一一次免费问答扣掉了且不退。
+  // 与父路由 /api/bazi/marriage 之前的同款修复保持一致。
+  // `?? {}` 兜住 body 是字面 null 的情况（JSON.parse('null') 不进 catch，直接解构会抛 → 500）
+  const body = (await req.json().catch(() => ({}))) ?? {};
   const {
     question,
     maleBazi,
@@ -52,6 +50,14 @@ export async function POST(req: NextRequest) {
   }
   if (!maleBazi || !femaleBazi) {
     return NextResponse.json({ error: '缺少双方八字上下文' }, { status: 400 });
+  }
+
+  // 统一配额策略 v1：合婚问答免费 1 次/天，VIP 不限。
+  // 会员态取自 JWT（isSubscribed），省一次跨区 DB 往返；「刚付费未刷新」由 quota 内部兜底复核
+  const { checkMarriageQaQuota } = await import('@/lib/quota');
+  const qaQuota = await checkMarriageQaQuota(session.user.id, session.user.isSubscribed);
+  if (!qaQuota.hasQuota) {
+    return NextResponse.json({ error: 'QUOTA_EXCEEDED', message: '今日免费问答次数已用完，升级 VIP 不限量' }, { status: 429 });
   }
 
   const safeMaleName = sanitizeUserInput(String(maleName || ''), 50) || '男方';

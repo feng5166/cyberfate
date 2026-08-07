@@ -74,7 +74,9 @@ body {
 
 /* ===== 衬线体 - 用于 Display 标题 ===== */
 .font-display {
-  font-family: var(--font-heading), var(--font-display-secondary), "Cormorant Garamond", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+  /* var(--font-heading) 展开即 "Noto Serif SC",…,Songti SC,STSong,serif —— 已自带完整回退且以
+     通用族 serif 收尾，其后的任何字体都不可能被匹配到。原栈里的 Cormorant 等项因此全是死项，一并删除。 */
+  font-family: var(--font-heading), serif;
   letter-spacing: 0.06em;
   font-weight: 400;
 }

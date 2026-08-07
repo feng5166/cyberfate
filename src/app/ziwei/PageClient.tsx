@@ -3,10 +3,9 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import dynamic from 'next/dynamic';
-import Link from 'next/link';
-import { ChevronRight, AlertTriangle, RefreshCw } from 'lucide-react';
-import { getLunarDate } from '@/lib/bazi/calculator';
-import { Footer } from '@/components/layout/Footer';
+// 顺手清掉三个未使用的死导入（Link/ChevronRight/Footer）：它们已不在 JSX 中出现，
+// 却仍会把 Footer 组件树打进紫微页的客户端 chunk。
+import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { PageShell } from '@/components/ui/PageShell';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { SegmentControl } from '@/components/ui/SegmentControl';
@@ -57,6 +56,8 @@ interface ZiweiApiResponse {
   shenzhu: string;
   mingGong: string;
   shenGong: string;
+  /** 服务端直出的农历显示串（如「一九九〇年五月廿三」）；旧接口无此字段时优雅降级不显示 */
+  lunarDate?: string;
   lunar: {
     year: string;
     month: number;
@@ -102,12 +103,21 @@ const SHICHEN_TIME_MAP: Record<string, string> = {
 };
 
 const CACHE_KEY = 'cyberfate_ziwei_cache';
-const CACHE_VERSION = '2.0'; // 版本号，修改后自动清除旧缓存
+// 版本号，修改后自动清除旧缓存。
+// 2.1：农历生日改读 API 的 lunarDate（客户端不再引 lunar-javascript 现算）。
+const CACHE_VERSION = '2.1';
+// 可平滑迁移的历史版本：2.0 与 2.1 结构完全兼容，只是 meta 里没有 lunarDate 字段。
+// 不按「版本不等就清缓存」处理——本页的出生信息与命盘仅靠这份缓存持久化，清掉会让老用户
+// 回到 1990-06-15 示例盘并需重填，代价远大于少显示一行农历。故放行旧版本先秒开，
+// 再在挂载后按缓存里的出生参数静默补齐 meta 并回写为新版本（见下方迁移分支）。
+const MIGRATABLE_VERSIONS = new Set<string>([CACHE_VERSION, '2.0']);
 
 interface ChartMeta {
   wuxingju: string;
   mingzhu: string;
   shenzhu: string;
+  /** 农历生日显示串，来自 API；旧缓存/旧接口可能缺失 → 不显示农历行 */
+  lunarDate?: string;
 }
 
 interface CachedResult {
@@ -127,8 +137,8 @@ function loadCachedResult(): CachedResult | null {
     if (!raw) return null;
     const data = JSON.parse(raw) as CachedResult;
 
-    // 版本不匹配，清除旧缓存
-    if (data.version !== CACHE_VERSION) {
+    // 版本不在可迁移集合内（结构不兼容或无版本号），清除旧缓存
+    if (!data.version || !MIGRATABLE_VERSIONS.has(data.version)) {
       localStorage.removeItem(CACHE_KEY);
       return null;
     }
@@ -192,12 +202,8 @@ export default function ZiweiPage() {
   const centerUserInfo = useMemo<CenterUserInfo | undefined>(() => {
     if (!showChart || palaces.length === 0) return undefined;
 
-    let lunarBirthday: string | undefined;
-    try {
-      lunarBirthday = `农历${getLunarDate(birthDate)}`;
-    } catch {
-      // 日期无效时不显示农历
-    }
+    // 农历显示串改用服务端响应字段（免拖 lunar-javascript 进客户端）；缺失时不显示农历行
+    const lunarBirthday = chartMeta?.lunarDate ? `农历${chartMeta.lunarDate}` : undefined;
 
     return {
       gender: gender as 'male' | 'female',
@@ -212,6 +218,7 @@ export default function ZiweiPage() {
 
   // P1-4: 首次进入 — 恢复缓存或用默认参数调用 API 展示示例命盘
   useEffect(() => {
+    let cancelled = false;
     const cached = loadCachedResult();
     if (cached) {
       setPalaces(cached.palaces);
@@ -222,10 +229,42 @@ export default function ZiweiPage() {
       setShowChart(true);
       setSelectedPalaceIndex(0);
       setTimeout(() => setGridAnimated(true), 100);
-      return;
+
+      // 旧版本缓存（meta 里没有 lunarDate）：先用缓存秒开，再按缓存里的出生参数静默补一次 meta，
+      // 补齐后按新版本回写，避免中宫的农历生日一直空着又不丢用户已有命盘。
+      // 排盘是服务端纯本地计算（不烧 AI 配额，仅受 10 次/分钟限流），这次补偿请求代价可忽略；
+      // 失败就维持既有的优雅降级——不显示农历行，下次进页面再试。
+      if (cached.version !== CACHE_VERSION) {
+        (async () => {
+          try {
+            const res = await fetch('/api/ziwei', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                birthDate: cached.birthDate,
+                hour: Number(cached.birthHour),
+                gender: cached.gender,
+              }),
+            });
+            if (!res.ok) return;
+            const data: ZiweiApiResponse = await res.json();
+            if (data.error) return;
+            const meta: ChartMeta = {
+              wuxingju: data.wuxingju,
+              mingzhu: data.mingzhu,
+              shenzhu: data.shenzhu,
+              lunarDate: data.lunarDate ?? data.lunar?.lunarDate,
+            };
+            saveCachedResult({ ...cached, meta, version: CACHE_VERSION });
+            if (!cancelled) setChartMeta(meta);
+          } catch {
+            // 静默：农历行缺失不影响命盘主体
+          }
+        })();
+      }
+      return () => { cancelled = true; };
     }
 
-    let cancelled = false;
     (async () => {
       try {
         const res = await fetch('/api/ziwei', {
@@ -238,7 +277,7 @@ export default function ZiweiPage() {
         if (cancelled) return;
         const result = convertApiPalaces(data.palaces);
         setPalaces(result);
-        setChartMeta({ wuxingju: data.wuxingju, mingzhu: data.mingzhu, shenzhu: data.shenzhu });
+        setChartMeta({ wuxingju: data.wuxingju, mingzhu: data.mingzhu, shenzhu: data.shenzhu, lunarDate: data.lunarDate ?? data.lunar?.lunarDate });
         setShowChart(true);
         setSelectedPalaceIndex(0);
         setTimeout(() => setGridAnimated(true), 100);
@@ -297,6 +336,7 @@ export default function ZiweiPage() {
         wuxingju: data.wuxingju,
         mingzhu: data.mingzhu,
         shenzhu: data.shenzhu,
+        lunarDate: data.lunarDate ?? data.lunar?.lunarDate,
       };
 
       setPalaces(result);

@@ -34,7 +34,15 @@ async function atomicCheckAndConsume(
   limit: number,
   vipStatus?: boolean
 ): Promise<{ hasQuota: boolean; limit: number; isVip: boolean }> {
-  const vip = vipStatus !== undefined ? vipStatus : await isUserVip(userId)
+  // vipStatus 只是调用方给的「快速否定信号」，绝不能当放行凭证：
+  // 它来自 JWT —— Web 侧 5 分钟 DB TTL，移动端 Bearer token MAX_AGE 30 天且 getAuthSession
+  // 只 decode 不查库，订阅到期后 isSubscribed:true 会一直固化到 token 过期。
+  // 拿它直接放行 = 白送几十天无限 AI 且 UsageQuota 计数为 0 完全无感。
+  // 故「声明是 VIP」或「没声明」时一律真查 DB 确认；isVip 内部有 30s 进程缓存，
+  // 热路径基本命中缓存，不会退回「每请求一次跨区订阅查询」。
+  // 只有明确的 vipStatus === false 才可信任（它是保守方向），此时走快速免费用户路径，
+  // 「刚付费但 JWT 未刷」的反向误判由下方额度耗尽时的复核兜底。
+  const vip = vipStatus === false ? false : await isUserVip(userId)
 
   if (vip) {
     return { hasQuota: true, limit: -1, isVip: true }
@@ -42,18 +50,33 @@ async function atomicCheckAndConsume(
 
   const today = getTodayBeijing()
 
-  const updated = await prisma.$transaction(async (tx) => {
-    await tx.usageQuota.upsert({
+  const consume = () =>
+    prisma.usageQuota.updateMany({
+      where: { userId, date: today, [field]: { lt: limit } } as any,
+      data: { [field]: { increment: 1 } } as any,
+    })
+
+  // 热路径：当日行已存在时，一次条件自增（本身原子）就完成「检查+扣减」，
+  // 不再包交互式 $transaction —— hkg1↔DB 跨区场景下事务会把 1 次往返膨胀成 4 次
+  let updated = await consume()
+
+  if (updated.count === 0) {
+    // 行不存在（当日首次请求）或额度已尽，无法区分：upsert 建行（已存在则空更新，天然幂等）后重试一次
+    await prisma.usageQuota.upsert({
       where: { userId_date: { userId, date: today } },
       update: {},
       create: { userId, date: today },
     })
+    updated = await consume()
+  }
 
-    return tx.usageQuota.updateMany({
-      where: { userId, date: today, [field]: { lt: limit } } as any,
-      data: { [field]: { increment: 1 } } as any,
-    })
-  })
+  if (updated.count === 0 && vipStatus === false) {
+    // 边缘兜底：调用方传的 vipStatus 来自 JWT（5 分钟 DB TTL），「刚付费但 JWT 未刷」会被误判为免费用户。
+    // 仅在声明非 VIP 且额度耗尽时真查一次 DB 复核 —— 常规路径零额外查询，边缘路径多一次
+    if (await isUserVip(userId)) {
+      return { hasQuota: true, limit: -1, isVip: true }
+    }
+  }
 
   return { hasQuota: updated.count > 0, limit, isVip: false }
 }
@@ -67,7 +90,9 @@ export async function checkBaziQuota(userId: string): Promise<{
   limit: number
   isVip: boolean
 }> {
-  return atomicCheckAndConsume(userId, 'baziAiCount', 1)
+  // 限额统一走 FREE_DAILY_LIMIT：此处原本写死字面量 1，与 /api/quota/bazi 上报的常量分家，
+  // 改额度时容易只改一处 → 「查询显示 3 次、实际扣到 1 次就没了」
+  return atomicCheckAndConsume(userId, 'baziAiCount', FREE_DAILY_LIMIT)
 }
 
 /**
@@ -82,14 +107,16 @@ export async function useBaziQuota(userId: string): Promise<boolean> {
  * 仅检查八字配额（不扣减），用于 fallback 场景的预检
  */
 export async function peekBaziQuota(userId: string, vipStatus?: boolean): Promise<{ hasQuota: boolean; isVip: boolean }> {
-  const vip = vipStatus !== undefined ? vipStatus : await isUserVip(userId)
+  // 同 atomicCheckAndConsume：vipStatus 只信 false（快速否定），声明 VIP 一律 DB 复核，
+  // 否则陈旧 token 会让接口对外报「不限量」，前端据此放开入口
+  const vip = vipStatus === false ? false : await isUserVip(userId)
 
   if (vip) {
     return { hasQuota: true, isVip: true }
   }
 
   const today = getTodayBeijing()
-  const limit = 1
+  const limit = FREE_DAILY_LIMIT
   const quota = await prisma.usageQuota.findUnique({
     where: { userId_date: { userId, date: today } }
   })

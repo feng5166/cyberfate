@@ -112,6 +112,19 @@ interface TarotDrawResult {
   _error?: string;
 }
 
+/**
+ * /api/tarot/draw 的 meta 帧。
+ * 首帧在 0 等待时到达（牌面 + 牌库基础牌义），终帧在生成完成后到达（AI 牌义 + 风险提示 + 来源），
+ * 后到者覆盖先到者；中间是若干 `{ content }` 正文增量帧。
+ */
+interface TarotMetaFrame {
+  spread?: string;
+  cards?: TarotCard[];
+  caution?: string;
+  _source?: string;
+  _error?: string;
+}
+
 export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode }) {
   const { data: session, status: authStatus } = useSession();
   const toast = useToast();
@@ -123,6 +136,12 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
   const drawnRef = useRef<HTMLDivElement>(null);
   const drawingRef = useRef<HTMLDivElement>(null);
   const streamEndRef = useRef<HTMLDivElement>(null);
+  // 流式正文先攒在 ref 里，按节流批量落到 state：每个 delta 都 setState 会把低端机主线程打满
+  const readingBufRef = useRef('');
+  const flushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 「粘底」跟随状态：默认跟随最新内容，用户主动上滑离底 >80px 即解除，滑回底部附近恢复
+  const followBottomRef = useRef(true);
+  const lastAutoScrollRef = useRef(0);
 
   useEffect(() => {
     if (step === 'drawing' && drawingRef.current) {
@@ -155,11 +174,34 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
 
   const [celticModalIdx, setCelticModalIdx] = useState<number | null>(null);
 
-  // 流式输出时随内容增加自动向下滚动
+  // 卸载时清掉未触发的批量刷新定时器
+  useEffect(() => () => {
+    if (flushTimerRef.current) clearTimeout(flushTimerRef.current);
+  }, []);
+
+  // 流式期间按「离底距离」判定是否继续跟随：离底 >80px 视为「用户想自己往回看」，滑回底部附近再恢复。
+  // 监听 scroll 而不是 wheel/touchmove——后者漏掉键盘 PageUp/↑/空格、拖动滚动条、触控板惯性滚动，
+  // 这些方式滚上去后跟随不会解除，用户会被一路拽回底部。
   useEffect(() => {
-    if (streaming && streamEndRef.current) {
-      streamEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
-    }
+    if (!streaming) return;
+    const onScroll = () => {
+      // 忽略自动跟随自己触发的那一次 scroll（它必然停在底部，不该被当成用户意图）
+      if (Date.now() - lastAutoScrollRef.current < 150) return;
+      const gap = document.documentElement.scrollHeight - window.scrollY - window.innerHeight;
+      followBottomRef.current = gap <= 80;
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [streaming]);
+
+  // 自动跟随最新内容：250ms 节流 + behavior:'auto'。
+  // 旧实现每个 chunk 都 smooth scrollIntoView —— 平滑动画被反复打断成抖动，还会把想往回看的用户强行拽回底部
+  useEffect(() => {
+    if (!streaming || !followBottomRef.current) return;
+    const now = Date.now();
+    if (now - lastAutoScrollRef.current < 250) return;
+    lastAutoScrollRef.current = now;
+    streamEndRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
   }, [streaming, result?.reading]);
 
   const currentSpread = MODE_TO_SPREAD[mode];
@@ -264,6 +306,9 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
     setLoading(true);
     setError('');
     setStep('loading');
+    readingBufRef.current = '';
+    followBottomRef.current = true;
+    lastAutoScrollRef.current = 0;
     track('tool_result_view', { tool: 'tarot', spread: currentSpread });
     if (scrollToLoading) {
       setTimeout(() => {
@@ -314,7 +359,51 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
       const decoder = new TextDecoder();
       let buffer = '';
       let metaSet = false;
-      let acc = '';
+
+      // 正文批量落 state：120ms 汇一批，视觉上仍是连续吐字，但 setState 频率降一个数量级
+      const flushReading = () => {
+        if (flushTimerRef.current) {
+          clearTimeout(flushTimerRef.current);
+          flushTimerRef.current = null;
+        }
+        const text = readingBufRef.current;
+        setResult((prev) => (prev && prev.reading !== text ? { ...prev, reading: text } : prev));
+      };
+      const scheduleFlush = () => {
+        if (flushTimerRef.current) return;
+        flushTimerRef.current = setTimeout(flushReading, 120);
+      };
+
+      const applyMeta = (meta: TarotMetaFrame, first: boolean) => {
+        const metaCards = Array.isArray(meta.cards) && meta.cards.length > 0 ? meta.cards : cards;
+        if (first) {
+          // 首帧 0 等待就到（牌面 + 牌库基础牌义）→ 立刻退出 loading，先给用户内容看
+          setLoading(false);
+          setResult({
+            spread: meta.spread || currentSpread,
+            cards: metaCards,
+            reading: '',
+            caution: meta.caution || '',
+            _source: meta._source,
+            _error: meta._error,
+          });
+          setStep('result');
+          return;
+        }
+        // 终帧：AI 结构化结果就位，替换牌义/风险提示/来源；正文由 content 帧累积，这里不动
+        setResult((prev) =>
+          prev
+            ? {
+                ...prev,
+                spread: meta.spread || prev.spread,
+                cards: metaCards,
+                caution: meta.caution || prev.caution,
+                _source: meta._source,
+                _error: meta._error,
+              }
+            : prev
+        );
+      };
 
       setStreaming(true);
 
@@ -331,28 +420,26 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
           const d = t.slice(5).trim();
           if (d === '[DONE]') continue;
           try {
-            const json = JSON.parse(d);
-            if (json.meta && !metaSet) {
+            const json = JSON.parse(d) as { meta?: TarotMetaFrame; content?: string; replace?: boolean };
+            if (json.meta) {
+              applyMeta(json.meta, !metaSet);
               metaSet = true;
-              setLoading(false);
-              const initial: TarotDrawResult = {
-                spread: json.meta.spread,
-                cards: cards,
-                reading: '',
-                caution: json.meta.caution,
-                _source: json.meta._source,
-                _error: json.meta._error,
-              };
-              setResult(initial);
-              setStep('result');
-            } else if (json.content) {
-              acc += json.content;
-              setResult((prev) => (prev ? { ...prev, reading: acc } : prev));
+            } else if (typeof json.content === 'string' && (json.content || json.replace)) {
+              if (json.replace) {
+                // replace 语义帧（兜底文案 / 模型违规直出 JSON 的修正稿）：整体覆盖已收到的正文，
+                // 否则残缺正文会和这段拼在一起展示。立刻落地，不进节流队列
+                readingBufRef.current = json.content;
+                flushReading();
+              } else {
+                readingBufRef.current += json.content;
+                scheduleFlush();
+              }
             }
           } catch {}
         }
       }
 
+      flushReading(); // 流结束：把最后一批正文立刻落到界面，不等节流窗口
       setStreaming(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : '未知错误');
@@ -769,10 +856,29 @@ export default function TarotPage({ seoContent }: { seoContent?: React.ReactNode
                 <div className="text-[#3D3A35] text-[15px] leading-[1.9]">
                   {streaming ? (
                     <>
-                      <p className="whitespace-pre-wrap">
-                        {result.reading}
-                        <span className="inline-block w-0.5 h-4 bg-[#1C1A16] ml-0.5 animate-pulse" />
-                      </p>
+                      {result.reading ? (
+                        <p className="whitespace-pre-wrap">
+                          {result.reading}
+                          <span className="inline-block w-0.5 h-4 bg-[#1C1A16] ml-0.5 animate-pulse" />
+                        </p>
+                      ) : (
+                        // AI 正文还在路上（TTFT 数秒）：先摆出首帧带来的基础牌义，用户不用空等
+                        <div className="space-y-3">
+                          <p className="text-sm text-[#1C1A16]/50">
+                            正在结合你的问题深度解读，先看看牌面的传统含义
+                            <span className="inline-block w-0.5 h-4 bg-[#1C1A16] ml-1 align-middle animate-pulse" />
+                          </p>
+                          {result.cards.map((card, i) => (
+                            <p key={`base-${card.id}-${i}`} className="text-sm leading-relaxed text-[#1C1A16]/70">
+                              <span className="font-medium text-[#1C1A16]">
+                                {card.position || getPositions((result.spread as TarotSpread) || currentSpread)[i]}·
+                                {card.name_zh}（{card.orientation === 'upright' ? '正位' : '逆位'}）：
+                              </span>
+                              {card.meaning}
+                            </p>
+                          ))}
+                        </div>
+                      )}
                       <div ref={streamEndRef} />
                     </>
                   ) : (

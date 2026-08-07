@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { CalendarDays, X } from 'lucide-react';
 import { CalendarPicker } from './CalendarPicker';
+import { getTodayBeijing } from '@/lib/timezone';
 
 interface MobileDateBarProps {
   selectedDate: string;
@@ -13,10 +14,12 @@ function formatDate(y: number, m: number, d: number): string {
   return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 }
 
+// 日期加减走 UTC 分量：原实现「本地分量 + UTC 解析」在负时区（美西）整体错一天，
+// 会让「今天」按钮实际选到昨天、且高亮态永远对不上。
 function addDays(dateStr: string, delta: number): string {
-  const d = new Date(dateStr);
-  d.setDate(d.getDate() + delta);
-  return formatDate(d.getFullYear(), d.getMonth() + 1, d.getDate());
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const t = new Date(Date.UTC(y, m - 1, d + delta));
+  return formatDate(t.getUTCFullYear(), t.getUTCMonth() + 1, t.getUTCDate());
 }
 
 const QUICK_DATES = [
@@ -28,8 +31,8 @@ const QUICK_DATES = [
 
 export function MobileDateBar({ selectedDate, onDateSelect }: MobileDateBarProps) {
   const [showModal, setShowModal] = useState(false);
-  const today = new Date();
-  const todayStr = formatDate(today.getFullYear(), today.getMonth() + 1, today.getDate());
+  // 「今天」按北京时间判定：黄历是中国历法，与服务端 RSC 注入的初始日期口径一致
+  const todayStr = getTodayBeijing();
 
   return (
     <>

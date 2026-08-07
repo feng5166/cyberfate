@@ -4,7 +4,8 @@ import { Footer } from '@/components/layout/Footer';
 import { FaqJsonLd } from '@/components/seo/FaqJsonLd';
 import { calculateHuangli } from '@/lib/huangli/calculator';
 
-export const revalidate = 86400;
+// 黄历为本地纯函数计算，重生成零成本；1 小时重验证把跨午夜后仍展示昨日黄历的陈旧窗口从 24h 缩到 1h
+export const revalidate = 3600;
 
 function getTodayInShanghai(): { dateStr: string; year: number; month: number; day: number } {
   const fmt = new Intl.DateTimeFormat('en-CA', {
@@ -22,9 +23,9 @@ function getTodayInShanghai(): { dateStr: string; year: number; month: number; d
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { year, month, day } = getTodayInShanghai();
+  const { dateStr: isoDate, year, month, day } = getTodayInShanghai();
   const dateStr = `${year}年${month}月${day}日`;
-  const data = calculateHuangli(getTodayInShanghai().dateStr);
+  const data = calculateHuangli(isoDate);
   const yiPreview = data.yi.slice(0, 4).join('、') || '诸事和顺';
   const jiPreview = data.ji.slice(0, 4).join('、') || '少冲撞';
   return {
@@ -219,10 +220,10 @@ export default function TodayPage() {
             ，整体能量决定了今日的宜忌结构。
           </p>
           <p className="mb-4">
-            阅读黄历时，先看"宜"和"忌"两栏的具体事项，对照你今天准备做的事即可快速判断；再看冲煞——
+            阅读黄历时，先看&quot;宜&quot;和&quot;忌&quot;两栏的具体事项，对照你今天准备做的事即可快速判断；再看冲煞——
             如果你属
             <span className="font-medium text-brand-ink"> {data.chongShengxiao} </span>
-            ，今天就属于"被冲"的生肖，重大决定建议延后或借助吉时化解。
+            ，今天就属于&quot;被冲&quot;的生肖，重大决定建议延后或借助吉时化解。
           </p>
 
           <h2 className="font-display text-2xl font-semibold text-brand-ink mt-10 mb-4">
@@ -239,7 +240,7 @@ export default function TodayPage() {
             <Link href="/bazi" className="text-brand-accent underline-offset-4 hover:underline">
               生辰八字
             </Link>
-            一起判断。同样的"宜嫁娶"日子，对不同八字的人吉凶力度并不相同。
+            一起判断。同样的&quot;宜嫁娶&quot;日子，对不同八字的人吉凶力度并不相同。
           </p>
 
           <h2 className="font-display text-2xl font-semibold text-brand-ink mt-10 mb-4">
@@ -253,7 +254,7 @@ export default function TodayPage() {
           <p className="mb-4">
             对于属
             <span className="font-medium text-brand-ink"> {data.chongShengxiao} </span>
-            的朋友，今日为冲日，重要场合建议低调处理；其他人则可以正常行事，但仍以"宜""忌"两栏为主要参考。
+            的朋友，今日为冲日，重要场合建议低调处理；其他人则可以正常行事，但仍以&quot;宜&quot;&quot;忌&quot;两栏为主要参考。
           </p>
         </section>
 

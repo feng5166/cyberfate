@@ -50,7 +50,8 @@ const config: Config = {
       fontFamily: {
         serif: ['"Source Han Serif SC"', '"Noto Serif SC"', '"Songti SC"', 'serif'],
         sans: ['system-ui', '-apple-system', 'sans-serif'],
-        heading: ['var(--font-heading)', 'var(--font-display-secondary)', '"Cormorant Garamond"', '"Noto Serif SC"', 'serif'],
+        // var(--font-heading) 已含完整回退并以通用族 serif 收尾，其后各项永不可达（同 globals.css .font-display）
+        heading: ['var(--font-heading)', 'serif'],
       },
       fontSize: {
         display: ['56px', { lineHeight: '1.2', fontWeight: '400' }],

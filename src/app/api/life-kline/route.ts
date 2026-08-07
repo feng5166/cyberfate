@@ -41,11 +41,17 @@ export async function POST(req: NextRequest) {
 
   const session = await getAuthSession(req);
   const ip = getClientIp(req);
+  // failOpen: true —— 为什么这个端点零成本、Redis 挂了也该放行：
+  // 1. 本端点的全部工作就是调 computeLifeKline（src/lib/bazi/lifeKline.ts，同步纯函数：
+  //    calculateBazi + analyzeMingGe + 大运/流年打分），无 AI、无网络、无 DB 写。
+  // 2. 本模块的 AI 问答走 /api/bazi/chat（VIP 门禁 + bazi_chat 限流仍 fail-closed），
+  //    本端点不经手任何按量计费资源。
+  // 3. 被刷的最坏后果只是 CPU；而 fail-closed 会让「人生K线」整个模块在 Redis 抖动时 503。
   if (session?.user?.id) {
-    const rl = await checkRateLimit('life_kline', session.user.id, 30, 60);
+    const rl = await checkRateLimit('life_kline', session.user.id, 30, 60, { failOpen: true });
     if (!rl.allowed) return Response.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
   } else {
-    const rl = await checkRateLimit('life_kline_guest', ip, 20, 3600);
+    const rl = await checkRateLimit('life_kline_guest', ip, 20, 3600, { failOpen: true });
     if (!rl.allowed) return Response.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
   }
 

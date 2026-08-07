@@ -3,6 +3,12 @@ import { ChevronDown } from 'lucide-react'
 import PageClient from './PageClient'
 import { FaqJsonLd } from '@/components/seo/FaqJsonLd'
 import { Footer } from '@/components/layout/Footer'
+import { calculateHuangli, type HuangliData } from '@/lib/huangli/calculator'
+import { getTodayBeijing } from '@/lib/timezone'
+
+// RSC 直出今日黄历：正文首帧进 HTML（SEO 可索引），客户端不再「挂载后 fetch」。
+// ISR 每小时再生；跨北京午夜的缓存陈旧由 PageClient 对比客户端北京日期后自行修正。
+export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: 'AI老黄历 | 赛博命理师 CyberFate — 每日宜忌吉时查询',
@@ -46,6 +52,15 @@ const FAQ_ITEMS = [
 ]
 
 export default function HuangliPage() {
+  // 按北京时间取「今天」并在服务端直接算好黄历（本地纯函数，无 IO）
+  const initialDate = getTodayBeijing()
+  let initialData: HuangliData | null = null
+  try {
+    initialData = calculateHuangli(initialDate)
+  } catch {
+    // 极端情况下服务端计算失败：降级回客户端挂载后 fetch 的旧路径
+  }
+
   return (
     <>
       <script
@@ -53,7 +68,7 @@ export default function HuangliPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(webAppSchema) }}
       />
       <FaqJsonLd items={FAQ_ITEMS} />
-      <PageClient />
+      <PageClient initialDate={initialDate} initialData={initialData} />
       <Footer>
       <section aria-label="关于老黄历" className="mx-auto max-w-3xl px-4 py-12 text-[#1C1A16]/60 text-sm leading-relaxed border-t border-[#1C1A16]/8 mt-8">
         <h2 className="text-base font-semibold text-[#1C1A16] mb-4">关于老黄历</h2>
