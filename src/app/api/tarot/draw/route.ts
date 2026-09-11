@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { generateCacheKey, getCache, setCache } from '@/lib/ai/cache';
 import { buildTarotStreamSystemPrompt, buildTarotStreamPrompt, type TarotReadingPromptInput } from '@/lib/ai/prompts';
-import { PRIMARY_MODEL } from '@/lib/ai/models';
 import { resolveProviders, type ResolvedProvider } from '@/lib/ai/provider';
 import { attachClientAbort } from '@/lib/ai/streamProxy';
 
@@ -267,7 +266,7 @@ export async function POST(req: NextRequest) {
         Authorization: `Bearer ${p.apiKey}`,
       },
       body: JSON.stringify({
-        model: PRIMARY_MODEL,
+        model: p.model,
         max_tokens: maxTokens,
         temperature: 0.7,
         stream: true,

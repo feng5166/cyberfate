@@ -38,7 +38,8 @@ const GRID_SLOTS: SlotValue[] = [
 ];
 
 export function PalaceGrid({ palaces, selectedIndex, onSelect, userInfo }: PalaceGridProps) {
-  let centerRendered = false;
+  // Render the spanning center card exactly once for the first center slot.
+  const firstCenterSlot = GRID_SLOTS.indexOf('center');
 
   return (
     <div
@@ -48,8 +49,7 @@ export function PalaceGrid({ palaces, selectedIndex, onSelect, userInfo }: Palac
     >
       {GRID_SLOTS.map((slot, slotIndex) => {
         if (slot === 'center') {
-          if (!centerRendered) {
-            centerRendered = true;
+          if (slotIndex === firstCenterSlot) {
             return (
               <CenterInfoCard
                 key="center"

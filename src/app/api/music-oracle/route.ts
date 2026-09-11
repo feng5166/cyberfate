@@ -13,13 +13,10 @@ import { getRedis } from '@/lib/cache/redis';
 import { getTodayTiangan, getWuxingMusicProfile } from '@/lib/music-oracle/wuxing-music-map';
 import { MUSIC_ORACLE_SYSTEM_PROMPT } from '@/lib/music-oracle/prompts';
 import { prisma } from '@/lib/db';
-import { PRIMARY_MODEL } from '@/lib/ai/models';
 import { getPrimaryProvider } from '@/lib/ai/provider';
 import { getAuthSession } from '@/lib/auth-session';
 import { getTodayBeijing, getSecondsUntilBeijingMidnight } from '@/lib/timezone';
 import { SSE_HEADERS, typewriterStream } from '@/lib/ai/sse';
-
-const DEEPSEEK_MODEL = PRIMARY_MODEL;
 
 /* ─── 天干按年份(简化) ─── */
 const TIANGAN_LIST = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
@@ -196,7 +193,7 @@ export async function POST(request: NextRequest) {
         'Authorization': `Bearer ${provider.apiKey}`,
       },
       body: JSON.stringify({
-        model: DEEPSEEK_MODEL,
+        model: provider.model,
         max_tokens: 2000,
         temperature: 0.85,
         enable_thinking: false,

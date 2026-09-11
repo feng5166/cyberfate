@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkRateLimit } from '@/lib/rate-limit';
-import { PRIMARY_MODEL } from '@/lib/ai/models';
 import { getPrimaryProvider } from '@/lib/ai/provider';
 import { applyChaos } from '@/lib/chaos-middleware';
 import { attachClientAbort, proxyLLMDeltaStream } from '@/lib/ai/streamProxy';
@@ -114,7 +113,7 @@ export async function POST(req: NextRequest) {
       Authorization: `Bearer ${provider.apiKey}`,
     },
     body: JSON.stringify({
-      model: PRIMARY_MODEL,
+      model: provider.model,
       max_tokens: 2000,
       temperature: 0.5,
       stream: true,

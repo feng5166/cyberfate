@@ -11,7 +11,6 @@ import { refundQuota, atomicCheckAndConsume, isUserVip } from '@/lib/quota';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { redis } from '@/lib/cache/redis';
 import crypto from 'crypto';
-import { PRIMARY_MODEL } from '@/lib/ai/models';
 import { resolveProviders, type ResolvedProvider } from '@/lib/ai/provider';
 import { attachClientAbort } from '@/lib/ai/streamProxy';
 import { logger } from '@/lib/logger';
@@ -211,7 +210,7 @@ export async function POST(req: NextRequest) {
         Authorization: `Bearer ${p.apiKey}`,
       },
       body: JSON.stringify({
-        model: PRIMARY_MODEL,
+        model: p.model,
         max_tokens: palace ? 1500 : 5000,
         temperature: 0.3,
         stream: true,

@@ -21,6 +21,7 @@ interface StripeDirectResponse<T = unknown> {
 async function stripeRequest<T = unknown>(
   endpoint: string,
   options?: RequestInit,
+  idempotencyKey?: string,
 ): Promise<StripeDirectResponse<T>> {
   const key = getStripeKey();
   if (!key) {
@@ -28,9 +29,12 @@ async function stripeRequest<T = unknown>(
   }
 
   const isWrite = options?.method && options.method !== 'GET';
-  const idempotencyHeaders: Record<string, string> = isWrite
-    ? { 'Idempotency-Key': crypto.randomUUID() }
-    : {};
+  // Preserve a key supplied through RequestInit.headers for backwards
+  // compatibility, while making the explicit argument take precedence.
+  const configuredKey = new Headers(options?.headers).get('Idempotency-Key');
+  const effectiveIdempotencyKey = isWrite
+    ? (idempotencyKey ?? configuredKey ?? crypto.randomUUID())
+    : undefined;
 
   const url = `${STRIPE_API_BASE}${endpoint}`;
   const res = await fetch(url, {
@@ -38,8 +42,8 @@ async function stripeRequest<T = unknown>(
     headers: {
       Authorization: `Bearer ${key}`,
       'Content-Type': 'application/x-www-form-urlencoded',
-      ...idempotencyHeaders,
       ...options?.headers,
+      ...(effectiveIdempotencyKey ? { 'Idempotency-Key': effectiveIdempotencyKey } : {}),
     },
   });
 
@@ -123,6 +127,12 @@ export interface CheckoutSessionParams {
   cancelUrl: string;
   mode?: 'payment' | 'subscription';
   metadata?: Record<string, string>;
+  /**
+   * Stripe idempotency key. Reuse this value when retrying the same checkout
+   * operation to avoid creating duplicate sessions. A key is generated per
+   * invocation when omitted.
+   */
+  idempotencyKey?: string;
 }
 
 export interface StripeCheckoutSession {
@@ -176,10 +186,12 @@ export async function createCheckoutSession(
     }
   }
 
+  // Generate once per logical operation so future retries can safely reuse it.
+  const idempotencyKey = params.idempotencyKey ?? crypto.randomUUID();
   return stripeRequest<StripeCheckoutSession>('/checkout/sessions', {
     method: 'POST',
     body: body.toString(),
-  });
+  }, idempotencyKey);
 }
 
 // ── Customer ──
@@ -197,6 +209,7 @@ export async function createCustomer(
   email: string,
   name?: string,
   metadata?: Record<string, string>,
+  idempotencyKey?: string,
 ): Promise<StripeDirectResponse<StripeCustomer>> {
   const body = new URLSearchParams();
   body.set('email', email);
@@ -212,7 +225,7 @@ export async function createCustomer(
   return stripeRequest<StripeCustomer>('/customers', {
     method: 'POST',
     body: body.toString(),
-  });
+  }, idempotencyKey ?? crypto.randomUUID());
 }
 
 export async function listCustomers(
@@ -238,12 +251,17 @@ export interface StripePortalSession {
 export async function createPortalSession(
   customerId: string,
   returnUrl: string,
+  /** Reuse when retrying the same operation; generated once when omitted. */
+  idempotencyKey?: string,
 ): Promise<StripeDirectResponse<StripePortalSession>> {
   const body = new URLSearchParams();
   body.set('customer', customerId);
   body.set('return_url', returnUrl);
 
   const MAX_RETRIES = 3;
+  // All attempts for one logical operation must share the same key. Stripe
+  // then returns the original result instead of creating duplicate sessions.
+  const requestIdempotencyKey = idempotencyKey ?? crypto.randomUUID();
   let lastResult: StripeDirectResponse<StripePortalSession> = { ok: false, status: 0, error: '未执行' };
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
@@ -254,7 +272,7 @@ export async function createPortalSession(
     lastResult = await stripeRequest<StripePortalSession>('/billing_portal/sessions', {
       method: 'POST',
       body: body.toString(),
-    });
+    }, requestIdempotencyKey);
 
     if (lastResult.ok) return lastResult;
 

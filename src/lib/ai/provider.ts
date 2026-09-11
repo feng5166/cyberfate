@@ -1,7 +1,7 @@
 // LLM Provider 运行时切换
 //
-// 两个 provider 的模型名一致（deepseek-v4-pro / deepseek-v4-flash 官方与 ModelVerse 都认），
-// 所以「切换 provider」= 换 baseUrl + apiKey，模型名不变（见 models.ts）。
+// 各 provider 的模型名由自身配置决定。官方端使用 PRIMARY_MODEL，ModelVerse
+// 默认使用其当前可用的 deepseek-v4-pro-sg，可通过 AI_MODELVERSE_MODEL 覆盖。
 //
 // 激活哪个 provider 由后台开关控制（存 Redis，key = llm:active-provider）；
 // 未设置时回落到 env LLM_DEFAULT_PROVIDER，再回落到 deepseek-official。
@@ -10,7 +10,7 @@
 
 import { redis } from '../cache/redis';
 import { getEnvVar } from '../utils/api-wrapper';
-import { AI_BASE_URL } from './models';
+import { AI_BASE_URL, PRIMARY_MODEL, FALLBACK_MODEL, MODELVERSE_MODEL, MODELVERSE_FALLBACK_MODEL } from './models';
 
 export type ProviderId = 'deepseek-official' | 'modelverse';
 
@@ -19,6 +19,8 @@ export interface ResolvedProvider {
   label: string;
   baseUrl: string;
   apiKey: string;
+  model: string;
+  fallbackModel: string;
 }
 
 export const PROVIDER_IDS: ProviderId[] = ['deepseek-official', 'modelverse'];
@@ -30,17 +32,21 @@ function isProviderId(v: unknown): v is ProviderId {
 }
 
 /** 各 provider 的静态配置（baseUrl + key 从 env 读取，key 缺失记为 null） */
-function providerConfigs(): Record<ProviderId, { label: string; baseUrl: string; apiKey: string | null }> {
+function providerConfigs(): Record<ProviderId, { label: string; baseUrl: string; apiKey: string | null; model: string; fallbackModel: string }> {
   return {
     'deepseek-official': {
       label: 'DeepSeek 官方',
       baseUrl: (process.env.DEEPSEEK_OFFICIAL_BASE_URL || 'https://api.deepseek.com').replace(/\/$/, ''),
       apiKey: getEnvVar('DEEPSEEK_OFFICIAL_API_KEY'),
+      model: PRIMARY_MODEL,
+      fallbackModel: FALLBACK_MODEL,
     },
     'modelverse': {
       label: 'ModelVerse 网关',
       baseUrl: AI_BASE_URL.replace(/\/$/, ''),
       apiKey: getEnvVar('DEEPSEEK_API_KEY'),
+      model: MODELVERSE_MODEL,
+      fallbackModel: MODELVERSE_FALLBACK_MODEL,
     },
   };
 }
@@ -107,7 +113,7 @@ export async function resolveProviders(): Promise<ResolvedProvider[]> {
     : ['modelverse', 'deepseek-official'];
 
   return order
-    .map((id) => ({ id, label: cfg[id].label, baseUrl: cfg[id].baseUrl, apiKey: cfg[id].apiKey }))
+    .map((id) => ({ id, ...cfg[id] }))
     .filter((p): p is ResolvedProvider => Boolean(p.apiKey));
 }
 

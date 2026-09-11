@@ -5,7 +5,6 @@ import { calculateHuangli } from '@/lib/huangli/calculator';
 import { sanitizeUserInput } from '@/lib/utils/sanitize';
 import { applyChaos } from '@/lib/chaos-middleware';
 import { logger } from '@/lib/logger';
-import { PRIMARY_MODEL } from '@/lib/ai/models';
 import { getPrimaryProvider } from '@/lib/ai/provider';
 import { attachClientAbort, proxyLLMDeltaStream } from '@/lib/ai/streamProxy';
 import { SSE_HEADERS } from '@/lib/ai/sse';
@@ -107,7 +106,7 @@ export async function POST(req: NextRequest) {
         Authorization: `Bearer ${provider.apiKey}`,
       },
       body: JSON.stringify({
-        model: PRIMARY_MODEL,
+        model: provider.model,
         max_tokens: 1500,
         temperature: 0.6,
         enable_thinking: false,

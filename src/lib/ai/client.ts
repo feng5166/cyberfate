@@ -16,7 +16,6 @@ import { after } from 'next/server';
 import type { BaziResult, BaziAnalysis } from '../bazi/types';
 import { callExternalAPI } from '../utils/api-wrapper';
 import { redis } from '../cache/redis';
-import { PRIMARY_MODEL } from './models';
 import { withCircuitBreaker } from './circuitBreaker';
 import { resolveProviders, hasAnyProviderKey } from './provider';
 import { observed } from './observe';
@@ -213,10 +212,10 @@ async function callModelOnce(
 
 /**
  * 调 LLM：按后台开关解析出 [主 provider, 兜底 provider]，主失败(非超时)时切下一个 provider 重试；
- * 全程走熔断保护。两个 provider 模型名一致，切 provider 只换 baseUrl+apiKey。
+ * 全程走熔断保护。切 provider 时同时使用对应的 baseUrl、apiKey 与模型名。
  * 超时说明本次预算已耗尽，不再切 provider，直接抛给上层落本地降级。
  */
-async function callDeepSeek(
+export async function callDeepSeek(
   systemPrompt: string,
   userPrompt: string,
   maxTokens = 2000,
@@ -236,7 +235,7 @@ async function callDeepSeek(
     for (let i = 0; i < providers.length; i++) {
       const p = providers[i];
       try {
-        return await callModelOnce(p.baseUrl, p.apiKey, PRIMARY_MODEL, systemPrompt, userPrompt, maxTokens, feature, opts, deadlineAt);
+        return await callModelOnce(p.baseUrl, p.apiKey, p.model, systemPrompt, userPrompt, maxTokens, feature, opts, deadlineAt);
       } catch (err) {
         lastError = err;
         if (isTimeoutError(err)) throw err; // 超时不再切 provider

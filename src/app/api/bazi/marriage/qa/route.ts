@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthSession } from '@/lib/auth-session';
 import { sanitizeUserInput } from '@/lib/utils/sanitize';
-import { PRIMARY_MODEL } from '@/lib/ai/models';
 import { getPrimaryProvider } from '@/lib/ai/provider';
 
 interface QAMessage {
@@ -111,7 +110,7 @@ ${typeof score === 'number' ? `综合匹配度：${score}分（${level || ''}）
         Authorization: `Bearer ${provider.apiKey}`,
       },
       body: JSON.stringify({
-        model: PRIMARY_MODEL,
+        model: provider.model,
         max_tokens: 2500,
         temperature: 0.6,
         enable_thinking: false,

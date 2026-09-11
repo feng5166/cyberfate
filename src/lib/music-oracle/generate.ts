@@ -5,7 +5,6 @@
 
 import { MUSIC_ORACLE_SYSTEM_PROMPT, buildDailyMusicPrompt } from './prompts';
 import { getTodayTiangan, getWuxingMusicProfile } from './wuxing-music-map';
-import { PRIMARY_MODEL } from '../ai/models';
 import { getPrimaryProvider } from '../ai/provider';
 
 export interface DailyMusicItem {
@@ -78,8 +77,6 @@ export async function generateDailyMusic(): Promise<DailyMusicResult | null> {
 /**
  * 调用 DeepSeek API（与项目其他模块一致，使用 ModelVerse 中转）
  */
-const DEEPSEEK_MODEL = PRIMARY_MODEL;
-
 async function callDeepSeekAPI(systemPrompt: string, userPrompt: string): Promise<string | null> {
   const provider = await getPrimaryProvider();
 
@@ -100,7 +97,7 @@ async function callDeepSeekAPI(systemPrompt: string, userPrompt: string): Promis
         'Authorization': `Bearer ${provider.apiKey}`,
       },
       body: JSON.stringify({
-        model: DEEPSEEK_MODEL,
+        model: provider.model,
         max_tokens: 3000,
         temperature: 0.85,
         enable_thinking: false,

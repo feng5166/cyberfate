@@ -4,14 +4,12 @@ import { checkDailyQaQuota } from '@/lib/quota';
 import { logger } from '@/lib/logger';
 import { prisma } from '@/lib/db';
 import { withCircuitBreaker } from '@/lib/ai/circuitBreaker';
-import { PRIMARY_MODEL } from '@/lib/ai/models';
 import { getPrimaryProvider } from '@/lib/ai/provider';
 import { attachClientAbort, proxyLLMDeltaStream } from '@/lib/ai/streamProxy';
 import { SSE_HEADERS } from '@/lib/ai/sse';
 import { getTodayBeijing } from '@/lib/timezone';
 
 const SERVICE = 'api/daily/fortune-qa';
-const DEEPSEEK_MODEL = PRIMARY_MODEL;
 
 export async function POST(req: NextRequest) {
   try {
@@ -92,7 +90,7 @@ export async function POST(req: NextRequest) {
           Authorization: `Bearer ${provider.apiKey}`,
         },
         body: JSON.stringify({
-          model: DEEPSEEK_MODEL,
+          model: provider.model,
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: question.trim() },
@@ -122,7 +120,7 @@ export async function POST(req: NextRequest) {
                 userId,
                 question: question.trim(),
                 answer: fullAnswer || null,
-                llmModel: DEEPSEEK_MODEL,
+                llmModel: provider.model,
               },
             });
           } catch (dbErr) {

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateCacheKey, getCache, setCache } from '@/lib/ai/cache';
-import { PRIMARY_MODEL } from '@/lib/ai/models';
 import { getPrimaryProvider } from '@/lib/ai/provider';
 import { type DrawMethod, buildPair, resolveDraw, getChangedPair } from '@/lib/meihua/draw';
 import { isDebugRequest } from '@/lib/ai/debug';
@@ -130,7 +129,7 @@ export async function POST(req: NextRequest) {
         Authorization: `Bearer ${provider.apiKey}`,
       },
       body: JSON.stringify({
-        model: PRIMARY_MODEL,
+        model: provider.model,
         max_tokens: 1200,
         temperature: 0.3,
         enable_thinking: false,

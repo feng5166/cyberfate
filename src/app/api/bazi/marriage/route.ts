@@ -5,7 +5,6 @@ import { getCache, setCache } from '@/lib/ai/cache';
 import { sanitizeUserInput } from '@/lib/utils/sanitize';
 
 import { calculateBazi as realCalculateBazi } from '@/lib/bazi';
-import { PRIMARY_MODEL, FALLBACK_MODEL } from '@/lib/ai/models';
 import { getPrimaryProvider, type ResolvedProvider } from '@/lib/ai/provider';
 import {
   calcSideShishen,
@@ -611,7 +610,7 @@ ${details.join('\n')}
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${provider.apiKey}` },
       body: JSON.stringify({
-        model: PRIMARY_MODEL,
+        model: provider.model,
         max_tokens: 6000,
         temperature: 0.4,
         enable_thinking: false,
@@ -789,7 +788,7 @@ async function runDeepReport(params: {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${provider.apiKey}` },
       body: JSON.stringify({
-        model: PRIMARY_MODEL,
+        model: provider.model,
         max_tokens: 6000,
         temperature: 0.5,
         enable_thinking: false,
@@ -1066,7 +1065,7 @@ export async function POST(req: NextRequest) {
         'Authorization': `Bearer ${provider.apiKey}`,
       },
       body: JSON.stringify({
-        model: PRIMARY_MODEL,
+        model: provider.model,
         max_tokens: 6000,
         temperature: 0.5,
         enable_thinking: false,

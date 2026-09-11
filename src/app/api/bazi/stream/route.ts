@@ -6,7 +6,6 @@ import { authOptions } from '@/lib/auth';
 import { refundQuota, atomicCheckAndConsume, isUserVip } from '@/lib/quota';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { redis } from '@/lib/cache/redis';
-import { PRIMARY_MODEL } from '@/lib/ai/models';
 import { resolveProviders, type ResolvedProvider } from '@/lib/ai/provider';
 import { BAZI_STREAM_SYSTEM_PROMPT, buildBaziStreamPrompt } from '@/lib/ai/prompts';
 import { generateFallbackBaziAnalysis } from '@/lib/ai/client';
@@ -333,7 +332,7 @@ export async function POST(req: NextRequest) {
           'Authorization': `Bearer ${p.apiKey}`,
         },
         body: JSON.stringify({
-          model: PRIMARY_MODEL,
+          model: p.model,
           max_tokens: topic ? 1500 : 6000,
           temperature: 0.3,
           stream: true,

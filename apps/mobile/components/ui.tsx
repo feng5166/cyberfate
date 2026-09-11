@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, type ReactNode } from 'react';
+import { useContext, useEffect, useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   Animated,
@@ -164,7 +164,11 @@ export function Skeleton({
   rounded?: number;
   style?: StyleProp<ViewStyle>;
 }) {
-  const pulse = useRef(new Animated.Value(0.5)).current;
+  // Lazily create the animated value once per mounted component. Using state
+  // avoids reading `ref.current` during render, which React 19's
+  // `react-hooks/refs` rule disallows while preserving a stable identity for
+  // the animation lifecycle.
+  const [pulse] = useState(() => new Animated.Value(0.5));
   useEffect(() => {
     const anim = Animated.loop(
       Animated.sequence([
@@ -221,7 +225,7 @@ export function FadeInView({
   delay?: number;
   style?: StyleProp<ViewStyle>;
 }) {
-  const v = useRef(new Animated.Value(0)).current;
+  const [v] = useState(() => new Animated.Value(0));
   useEffect(() => {
     const anim = Animated.timing(v, { toValue: 1, duration: 380, delay, useNativeDriver: true });
     anim.start();
@@ -233,7 +237,7 @@ export function FadeInView({
 
 /** 进度条：挂载时从 0 动画到目标比例（width 动画走 JS driver） */
 export function AnimatedBar({ ratio, color = colors.accent }: { ratio: number; color?: string }) {
-  const w = useRef(new Animated.Value(0)).current;
+  const [w] = useState(() => new Animated.Value(0));
   const target = Math.max(0, Math.min(1, Number.isFinite(ratio) ? ratio : 0));
   useEffect(() => {
     const anim = Animated.timing(w, { toValue: target, duration: 600, useNativeDriver: false });

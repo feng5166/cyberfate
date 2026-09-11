@@ -5,7 +5,6 @@ import { getAuthSession } from '@/lib/auth-session';
 import { isUserVip, atomicCheckAndConsume, refundQuota } from '@/lib/quota';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
-import { PRIMARY_MODEL } from '@/lib/ai/models';
 import { getPrimaryProvider } from '@/lib/ai/provider';
 import { attachClientAbort, proxyLLMDeltaStream } from '@/lib/ai/streamProxy';
 import { SSE_HEADERS } from '@/lib/ai/sse';
@@ -203,7 +202,6 @@ const baziDataSchema = z.object({
 }).strict().partial();
 
 const SERVICE = 'api/bazi/chat';
-const DEEPSEEK_MODEL = PRIMARY_MODEL;
 
 export async function POST(req: NextRequest) {
   try {
@@ -419,7 +417,7 @@ ${answerRule}
         Authorization: `Bearer ${provider.apiKey}`,
       },
       body: JSON.stringify({
-        model: DEEPSEEK_MODEL,
+        model: provider.model,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: question.trim() },

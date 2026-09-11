@@ -12,6 +12,15 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Generated and temporary artifacts are not application source.
+    "coverage/**",
+    "public/sw.js",
+    "public/sw.js.map",
+    "public/workbox-*.js",
+    "public/workbox-*.js.map",
+    "public/fallback-*.js",
+    "public/swe-worker-*.js",
+    ".verify-tmp.*",
   ]),
   // 防回归：重库禁止在客户端组件里静态 import（会进首屏 chunk）。
   // warn 级仅提示不阻塞 CI；服务端代码（src/lib、API route）不受限。
