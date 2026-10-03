@@ -69,22 +69,46 @@ export function proxyLLMDeltaStream(
     encoder.encode(`data: ${typeof data === 'string' ? data : JSON.stringify(data)}\n\n`);
   const makeContentFrame = opts.contentFrame ?? ((content: string) => ({ content }));
 
+  let cancelled = false;
+  let resumeDelay: (() => void) | undefined;
+  let delayTimer: ReturnType<typeof setTimeout> | undefined;
+  const interrupted = () => cancelled || handle.signal.aborted;
+  const stopDelay = () => {
+    clearTimeout(delayTimer);
+    resumeDelay?.();
+  };
+
+  const onAbort = () => {
+    stopDelay();
+    // 即使上游未响应 fetch 的 abort，也唤醒挂起的 read，确保执行 finally。
+    void reader.cancel().catch(() => {});
+  };
+
   return new ReadableStream({
     async start(controller) {
-      // 前置帧（如工具链步骤动画）
-      for (const p of opts.prefixFrames ?? []) {
-        if (handle.signal.aborted) break;
-        controller.enqueue(encodeSse(p.frame));
-        if (p.delayMs) await new Promise((r) => setTimeout(r, p.delayMs));
-      }
-
+      handle.signal.addEventListener('abort', onAbort, { once: true });
+      if (handle.signal.aborted) onAbort();
       let buffer = '';
       let fullText = '';
       let truncated = false;
       try {
-        while (true) {
+        // 前置帧（如工具链步骤动画）
+        for (const p of opts.prefixFrames ?? []) {
+          if (interrupted()) break;
+          controller.enqueue(encodeSse(p.frame));
+          if (p.delayMs) {
+            await new Promise<void>((resolve) => {
+              resumeDelay = resolve;
+              delayTimer = setTimeout(resolve, p.delayMs);
+            });
+            resumeDelay = undefined;
+            delayTimer = undefined;
+          }
+        }
+
+        while (!interrupted()) {
           const { done, value } = await reader.read();
-          if (done) break;
+          if (done || interrupted()) break;
           buffer += decoder.decode(value, { stream: true });
           const lines = buffer.split('\n');
           buffer = lines.pop() || '';
@@ -107,23 +131,32 @@ export function proxyLLMDeltaStream(
         if (truncated) {
           console.warn(`[proxyLLMDeltaStream${opts.label ? `:${opts.label}` : ''}] 回复被 max_tokens 截断（已输出 ${fullText.length} 字），需上调该路由的 max_tokens`);
         }
-        if (!handle.signal.aborted) {
+        if (!interrupted()) {
           for (const frame of opts.suffixFrames ?? []) {
             controller.enqueue(encodeSse(frame));
           }
         }
         if (opts.onComplete) {
-          try { await opts.onComplete(fullText, handle.signal.aborted, truncated); } catch (e) { console.error('[proxyLLMDeltaStream] onComplete failed:', e); }
+          try { await opts.onComplete(fullText, interrupted(), truncated); } catch (e) { console.error('[proxyLLMDeltaStream] onComplete failed:', e); }
         }
       } catch (err) {
-        controller.enqueue(encodeSse({ error: err instanceof Error ? err.message : String(err) }));
+        if (!interrupted()) {
+          controller.enqueue(encodeSse({ error: err instanceof Error ? err.message : String(err) }));
+        }
       } finally {
-        controller.enqueue(encodeSse('[DONE]'));
+        stopDelay();
+        handle.signal.removeEventListener('abort', onAbort);
         handle.release();
-        controller.close();
+        reader.releaseLock();
+        if (!cancelled) {
+          if (!handle.signal.aborted) controller.enqueue(encodeSse('[DONE]'));
+          controller.close();
+        }
       }
     },
     async cancel() {
+      cancelled = true;
+      stopDelay();
       await handle.cancel(reader);
     },
   });

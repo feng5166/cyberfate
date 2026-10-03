@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { proxyLLMDeltaStream, type StreamProxyHandle } from './streamProxy';
+import { attachClientAbort, proxyLLMDeltaStream, type StreamProxyHandle } from './streamProxy';
 
 function upstreamFrom(chunks: string[]): Response {
   const encoder = new TextEncoder();
@@ -105,4 +105,61 @@ describe('proxyLLMDeltaStream', () => {
     const out = await collect(proxyLLMDeltaStream(upstream, fakeHandle()));
     expect(out).toContain('data: {"content":"ab"}\n\n');
   });
+});
+
+describe('proxyLLMDeltaStream 中断清理', () => {
+  it('等待读取上游时取消，终止上游并把不完整答案标记为中断', async () => {
+    const cancelUpstream = vi.fn();
+    const upstream = new Response(new ReadableStream({ cancel: cancelUpstream }));
+    const handle = attachClientAbort(new Request('https://example.com'));
+    const release = vi.spyOn(handle, 'release');
+    const onComplete = vi.fn();
+    const reader = proxyLLMDeltaStream(upstream, handle, { onComplete }).getReader();
+    await reader.cancel();
+    expect(cancelUpstream).toHaveBeenCalledOnce();
+    expect(handle.signal.aborted).toBe(true);
+    expect(onComplete).toHaveBeenCalledWith('', true, false);
+    expect(release).toHaveBeenCalled();
+    expect(upstream.body!.locked).toBe(false);
+  });
+
+  it('前置动画期间取消，清除计时器并释放上游', async () => {
+    vi.useFakeTimers();
+    try {
+      const cancelUpstream = vi.fn();
+      const upstream = new Response(new ReadableStream({ cancel: cancelUpstream }));
+      const handle = attachClientAbort(new Request('https://example.com'));
+      const onComplete = vi.fn();
+      const reader = proxyLLMDeltaStream(upstream, handle, {
+        prefixFrames: [
+          { frame: { step: 1 }, delayMs: 1000 },
+          { frame: { step: 2 }, delayMs: 1000 },
+        ],
+        onComplete,
+      }).getReader();
+      await reader.read();
+      await reader.cancel();
+      await vi.runAllTimersAsync();
+      expect(vi.getTimerCount()).toBe(0);
+      expect(cancelUpstream).toHaveBeenCalledOnce();
+      expect(onComplete).toHaveBeenCalledWith('', true, false);
+      expect(upstream.body!.locked).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+it('请求 signal 中断可唤醒挂起的上游读取，且不会输出成功结束帧', async () => {
+  const ac = new AbortController();
+  const cancelUpstream = vi.fn();
+  const upstream = new Response(new ReadableStream({ cancel: cancelUpstream }));
+  const handle = attachClientAbort({ signal: ac.signal });
+  const onComplete = vi.fn();
+  const output = collect(proxyLLMDeltaStream(upstream, handle, { onComplete }));
+  ac.abort();
+  expect(await output).toBe('');
+  expect(cancelUpstream).toHaveBeenCalledOnce();
+  expect(onComplete).toHaveBeenCalledWith('', true, false);
+  expect(upstream.body!.locked).toBe(false);
 });

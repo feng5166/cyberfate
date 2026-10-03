@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { typewriterStream } from './sse';
 
 /** 把流完整读出并按 SSE 帧解析，返回 { metaFrame, contentPieces, doneSeen } */
@@ -67,5 +67,22 @@ describe('typewriterStream 帧协议', () => {
     }
     expect(contentPieces.length).toBeLessThanOrEqual(6);
     expect(contentPieces.join('')).toBe(narrative);
+  });
+});
+
+describe('typewriterStream 中断清理', () => {
+  it('读取首帧后取消，立即清掉动画定时器且不再向关闭的流写入', async () => {
+    vi.useFakeTimers();
+    try {
+      const reader = typewriterStream(null, '命'.repeat(1000)).getReader();
+      await reader.read();
+      expect(vi.getTimerCount()).toBe(1);
+      await reader.cancel();
+      expect(vi.getTimerCount()).toBe(0);
+      await vi.runAllTimersAsync();
+      expect(await reader.read()).toEqual({ done: true, value: undefined });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

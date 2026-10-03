@@ -33,16 +33,32 @@ export function typewriterStream(
   const minChunk = Math.max(4, Math.round((delayMs * 4) / 18));
   const chunkSize = Math.max(minChunk, Math.ceil(narrative.length / maxChunks));
 
+  let cancelled = false;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let resume: (() => void) | undefined;
+
   return new ReadableStream({
     async start(controller) {
       controller.enqueue(encoder.encode(`data: ${JSON.stringify({ meta })}\n\n`));
       for (let i = 0; i < narrative.length; i += chunkSize) {
         const piece = narrative.slice(i, i + chunkSize);
+        if (cancelled) return;
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: piece })}\n\n`));
-        await new Promise((r) => setTimeout(r, delayMs));
+        await new Promise<void>((resolve) => {
+          resume = resolve;
+          timer = setTimeout(resolve, delayMs);
+        });
+        timer = undefined;
+        resume = undefined;
       }
+      if (cancelled) return;
       controller.enqueue(encoder.encode('data: [DONE]\n\n'));
       controller.close();
+    },
+    cancel() {
+      cancelled = true;
+      clearTimeout(timer);
+      resume?.();
     },
   });
 }
