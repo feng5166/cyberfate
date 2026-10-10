@@ -122,12 +122,12 @@ describe('subscription — checkQuota', () => {
 
     const res = await checkQuota('cq-free-under')
     expect(res.hasQuota).toBe(true)
-    expect(res.limit).toBe(1)
+    expect(res.limit).toBe(3)
   })
 
   it('free user at limit → hasQuota false', async () => {
     findFirst.mockResolvedValue(null)
-    findUnique.mockResolvedValue({ baziAiCount: 1 })
+    findUnique.mockResolvedValue({ baziAiCount: 3 })
 
     const res = await checkQuota('cq-free-at')
     expect(res.hasQuota).toBe(false)

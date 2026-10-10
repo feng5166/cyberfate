@@ -2,6 +2,9 @@ import crypto from 'crypto';
 import { NextRequest, NextResponse, after } from 'next/server';
 import { getAuthSession } from '@/lib/auth-session';
 import { getCache, setCache } from '@/lib/ai/cache';
+import { redisUserPath } from '@/lib/cache/redis';
+import { checkRateLimit } from '@/lib/rate-limit';
+import { isUserVip } from '@/lib/quota';
 import { sanitizeUserInput } from '@/lib/utils/sanitize';
 
 import { calculateBazi as realCalculateBazi } from '@/lib/bazi';
@@ -828,6 +831,38 @@ async function runDeepReport(params: {
 // API Handler
 // ═══════════════════════════════════════════════════
 
+// 免费用户的合婚 AI 子请求（?ai=1 结构化分析、?ai=deep 深度报告）不单独计额度，
+// 而是挂在「同一对八字的那次硬数据请求」上：硬数据请求扣 marriageCount 时签发一张按配对绑定的
+// 凭证，AI 子请求消耗凭证次数。原实现 AI 子请求完全不查额度，免费用户直接调 ?ai=deep 即可无限生成。
+// 次数给到 4：两类子请求各一次 + 网络失败重试余量；24 小时内有效（页面刷新会从本地缓存恢复上次配对再拉 AI）。
+const MARRIAGE_AI_GRANT_USES = 4;
+const MARRIAGE_AI_GRANT_TTL_S = 24 * 60 * 60;
+const CONSUME_GRANT_LUA =
+  "local v = redis.call('GET', KEYS[1]) if (not v) or tonumber(v) <= 0 then return -1 end return redis.call('DECR', KEYS[1])";
+
+function marriageGrantKey(userId: string, maleBazi: string, femaleBazi: string): string {
+  const pair = crypto.createHash('sha256').update(`${maleBazi}|${femaleBazi}`).digest('hex').slice(0, 16);
+  return `marriage_ai_grant:${userId}:${pair}`;
+}
+
+async function issueMarriageAiGrant(key: string): Promise<void> {
+  await redisUserPath(
+    'marriage_ai_grant_issue',
+    (c) => c.set(key, MARRIAGE_AI_GRANT_USES, { ex: MARRIAGE_AI_GRANT_TTL_S }),
+    { tier: 'critical' },
+  );
+}
+
+/** true = 凭证有效且已扣一次；Redis 不可用时 fail-closed（返回 false） */
+async function consumeMarriageAiGrant(key: string): Promise<boolean> {
+  const r = await redisUserPath(
+    'marriage_ai_grant_consume',
+    (c) => c.eval(CONSUME_GRANT_LUA, [key], []) as Promise<number>,
+    { tier: 'critical' },
+  );
+  return r.ok && Number(r.value) >= 0;
+}
+
 export async function POST(req: NextRequest) {
   const session = await getAuthSession(req);
   if (!session?.user?.id) {
@@ -885,7 +920,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '女方出生日期无效，请使用 YYYY-MM-DD 格式，年份范围 1900-2030' }, { status: 400 });
   }
 
-  // 仅在硬数据请求时消耗配额，AI 请求复用同一配额（视作同一次合婚的子操作）
+  // 仅在硬数据请求时消耗配额，AI 请求复用同一配额（视作同一次合婚的子操作，凭证见 issueMarriageAiGrant）
+  let grantForFreeUser = false;
   if (!isAiRequest) {
     // 统一配额策略 v1：合婚使用独立额度（免费 1 次/天），不再共享八字解读名额。
     // 会员态取自 JWT（isSubscribed），省一次跨区 DB 往返；「刚付费未刷新」由 quota 内部兜底复核
@@ -897,6 +933,7 @@ export async function POST(req: NextRequest) {
         { status: 403 }
       );
     }
+    grantForFreeUser = !marriageQuota.isVip;
   }
 
   const safeMaleName = sanitizeUserInput(String(maleSide.name || maleName || ''), 50) || '男方';
@@ -917,6 +954,28 @@ export async function POST(req: NextRequest) {
   const femaleBazi = formatBazi(femaleInfo);
 
   const { score, hearts, level, details } = calculateScore(maleInfo, femaleInfo);
+
+  const grantKey = marriageGrantKey(session.user.id, maleBazi, femaleBazi);
+  if (grantForFreeUser) {
+    await issueMarriageAiGrant(grantKey);
+  }
+  if (isAiRequest) {
+    const rl = await checkRateLimit('ai_marriage', session.user.id, 10, 60);
+    if (!rl.allowed) {
+      return NextResponse.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
+    }
+    // JWT 的 isSubscribed 只信 false（快速否定）；凭证用尽时再真查一次 DB，兜「刚付费 JWT 未刷」
+    const hintedFree = session.user.isSubscribed === false;
+    const vip = hintedFree ? false : await isUserVip(session.user.id);
+    if (!vip && !(await consumeMarriageAiGrant(grantKey))) {
+      if (!hintedFree || !(await isUserVip(session.user.id))) {
+        return NextResponse.json(
+          { error: 'QUOTA_EXCEEDED', message: '今日免费合婚次数已用完，请升级 VIP' },
+          { status: 403 }
+        );
+      }
+    }
+  }
 
   // ── ?ai=1：仅返回 AI 结构化分析（约 10s） ────────────────────
   if (aiOnly) {

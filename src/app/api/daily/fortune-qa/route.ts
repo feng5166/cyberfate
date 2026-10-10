@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getAuthSession } from '@/lib/auth-session';
-import { checkDailyQaQuota } from '@/lib/quota';
+import { checkDailyQaQuota, refundQuota } from '@/lib/quota';
 import { logger } from '@/lib/logger';
 import { prisma } from '@/lib/db';
 import { withCircuitBreaker } from '@/lib/ai/circuitBreaker';
@@ -12,6 +12,8 @@ import { getTodayBeijing } from '@/lib/timezone';
 const SERVICE = 'api/daily/fortune-qa';
 
 export async function POST(req: NextRequest) {
+  // 供外层 catch 退还额度（fetch 抛错 / 熔断打开等）；扣额度前为空操作
+  let refundOnError: () => Promise<void> = async () => {};
   try {
     const session = await getAuthSession(req);
 
@@ -21,16 +23,13 @@ export async function POST(req: NextRequest) {
 
     const userId = session.user.id;
 
-    // 统一配额策略 v1：每日运势问答免费 1 次/天，VIP 不限。
-    // JWT 里的 isSubscribed 只作提示传入，VIP 判定由 checkDailyQaQuota 内部查 DB 完成 ——
-    // 早期用 if (!isVip) 在外层 gate，陈旧的 isSubscribed:true 会让配额检查整个被跳过
-    const qaQuota = await checkDailyQaQuota(userId, session.user.isSubscribed);
-    if (!qaQuota.hasQuota) {
-      return Response.json(
-        { error: 'DAILY_LIMIT_REACHED', message: '今日问答次数已用完，升级 Pro 无限提问' },
-        { status: 429 }
-      );
-    }
+    let quotaConsumed = false;
+    const refundIfConsumed = async () => {
+      if (!quotaConsumed) return;
+      quotaConsumed = false;
+      try { await refundQuota(userId, 'dailyQaCount'); } catch {}
+    };
+    refundOnError = refundIfConsumed;
 
     const { question, date } = await req.json();
     if (!question || typeof question !== 'string' || question.trim().length === 0) {
@@ -58,6 +57,18 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    // 统一配额策略 v1：每日运势问答免费 1 次/天，VIP 不限。放在参数/出生信息校验之后，400 不白扣额度。
+    // JWT 里的 isSubscribed 只作提示传入，VIP 判定由 checkDailyQaQuota 内部查 DB 完成 ——
+    // 早期用 if (!isVip) 在外层 gate，陈旧的 isSubscribed:true 会让配额检查整个被跳过
+    const qaQuota = await checkDailyQaQuota(userId, session.user.isSubscribed);
+    if (!qaQuota.hasQuota) {
+      return Response.json(
+        { error: 'DAILY_LIMIT_REACHED', message: '今日问答次数已用完，升级 Pro 无限提问' },
+        { status: 429 }
+      );
+    }
+    quotaConsumed = !qaQuota.isVip;
 
     const targetDate = date || getTodayBeijing();
 
@@ -105,6 +116,7 @@ export async function POST(req: NextRequest) {
 
     if (!response.ok || !response.body) {
       abortHandle.release();
+      await refundIfConsumed();
       logger.error(SERVICE, `DeepSeek API error: ${response.status}`);
       return Response.json({ error: '服务暂时不可用' }, { status: 502 });
     }
@@ -113,7 +125,11 @@ export async function POST(req: NextRequest) {
       proxyLLMDeltaStream(response, abortHandle, {
         label: 'daily/fortune-qa',
         // 流读完后落库历史（onComplete 内部错误被 helper 吞，不影响出流）
-        onComplete: async (fullAnswer) => {
+        onComplete: async (fullAnswer, aborted) => {
+          if (!fullAnswer && !aborted) {
+            await refundIfConsumed();
+            return;
+          }
           try {
             await prisma.dailyFortuneQaHistory.create({
               data: {
@@ -132,6 +148,7 @@ export async function POST(req: NextRequest) {
     );
   } catch (error) {
     logger.error(SERVICE, 'Fortune QA error', error instanceof Error ? error : undefined);
+    await refundOnError();
     return Response.json({ error: '服务器错误' }, { status: 500 });
   }
 }

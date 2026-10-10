@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { isVip } from '@/lib/subscription';
+import { atomicCheckAndConsume, refundQuota, FREE_DAILY_LIMIT } from '@/lib/quota';
 import { calculateBazi, getCurrentDayun, getDayGanzhi, getLunarDate, getYearGanzhi } from '@/lib/bazi';
 import { DAILY_DETAIL_SYSTEM_PROMPT, buildDailyDetailUserPrompt } from '@/lib/ai/prompts-daily-detail';
 import { getPrimaryProvider } from '@/lib/ai/provider';
@@ -24,7 +25,11 @@ export async function POST(req: NextRequest) {
 
   let body: { date?: string } = {};
   try { body = await req.json(); } catch {}
+  // 日历可选任意日期，但必须是合法 YYYY-MM-DD：targetDate 会进 DB 唯一键和 prompt
   const targetDate = body.date || getTodayBeijing();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(targetDate) || Number.isNaN(Date.parse(targetDate))) {
+    return new Response(JSON.stringify({ error: '日期格式错误' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+  }
 
   // 首字节前的三次 DB 查询原为串行（isVip → 当日记录 → 用户资料），hkg1↔DB 跨区下白等两个 RTT。
   // 三者互不依赖，并行取回；多查的那一次（VIP 也查当日记录）不增加墙钟时间
@@ -43,6 +48,23 @@ export async function POST(req: NextRequest) {
   if (!user?.birthDate || user.birthHour === null || user.birthHour === undefined) {
     return new Response(JSON.stringify({ error: '请先在个人中心填写出生信息', code: 'NO_BIRTH_INFO' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
   }
+
+  // 免费额度按「北京时间生成日」原子计数（dailyDetailCount），不再只按目标日期判重：
+  // 原实现只查 targetDate 当天有没有记录，免费用户每次换一个日期就能无限生成；
+  // 且「先查后写」非原子，并发请求可同时通过。放在出生信息校验之后，避免 400 白扣额度。
+  let quotaConsumed = false;
+  if (!vip) {
+    const quota = await atomicCheckAndConsume(userId, 'dailyDetailCount', FREE_DAILY_LIMIT, false);
+    if (!quota.hasQuota) {
+      return new Response(JSON.stringify({ error: '今日免费次数已用完', code: 'DAILY_LIMIT_REACHED' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+    }
+    quotaConsumed = !quota.isVip;
+  }
+  const refundIfConsumed = async () => {
+    if (!quotaConsumed) return;
+    quotaConsumed = false;
+    try { await refundQuota(userId, 'dailyDetailCount'); } catch {}
+  };
 
   const birthHour = parseInt(user.birthHour || '6', 10);
   const baziResult = calculateBazi({
@@ -156,6 +178,7 @@ export async function POST(req: NextRequest) {
         // M7: fallback 前重置 fullContent，避免主路径残段被拼到 fallback 输出里
         // 同时若主路径已有输出就跳过 fallback，避免向客户端二次喷流
         if (fullContent) {
+          await refundIfConsumed();
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: '分析生成失败，请稍后重试' })}\n\n`));
           abortHandle.release();
           controller.close();
@@ -233,6 +256,7 @@ export async function POST(req: NextRequest) {
           console.error('[daily-detail-analysis] Fallback error:', fallbackError);
         }
 
+        await refundIfConsumed();
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: '分析生成失败，请稍后重试' })}\n\n`));
         abortHandle.release();
         controller.close();

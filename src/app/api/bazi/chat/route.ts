@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { getAuthSession } from '@/lib/auth-session';
-import { isUserVip, atomicCheckAndConsume, refundQuota } from '@/lib/quota';
+import { isUserVip, atomicCheckAndConsume, refundQuota, FREE_DAILY_LIMIT } from '@/lib/quota';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 import { getPrimaryProvider } from '@/lib/ai/provider';
@@ -228,7 +228,7 @@ export async function POST(req: NextRequest) {
     }
     // 三层门禁（PRD-BAZI-V2 P1-A）：VIP 不限；免费登录 1 次/日；超限引导订阅
     if (!isVip) {
-      const quota = await atomicCheckAndConsume(session.user.id, 'baziChatCount', 1, false);
+      const quota = await atomicCheckAndConsume(session.user.id, 'baziChatCount', FREE_DAILY_LIMIT, false);
       if (!quota.hasQuota) {
         return Response.json(
           { error: 'SUBSCRIPTION_REQUIRED', message: '今日 1 次免费追问已用完，会员不限次' },

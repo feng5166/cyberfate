@@ -10,6 +10,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getRedis } from '@/lib/cache/redis';
+import { checkRateLimit } from '@/lib/rate-limit';
+import { getClientIp } from '@/lib/ip';
 import { getTodayTiangan, getWuxingMusicProfile } from '@/lib/music-oracle/wuxing-music-map';
 import { MUSIC_ORACLE_SYSTEM_PROMPT } from '@/lib/music-oracle/prompts';
 import { prisma } from '@/lib/db';
@@ -49,7 +51,14 @@ export async function POST(request: NextRequest) {
   // 「用户拿不到签文」的失败分支（AI 报错/超时/JSON 解析失败）都必须退还，
   // 否则免费用户白丢当天唯一一次求签。VIP 与游客不入 DB 配额，保持 null。
   let quotaConsumedUserId: string | null = null;
+  // 游客：限流键已在生成前原子 +1，失败分支同样要退（DECR），对齐原「只在成功后计数」的体验
+  let guestRateKey: string | null = null;
   const refundMusicQuota = async () => {
+    const guestKey = guestRateKey;
+    guestRateKey = null;
+    if (guestKey) {
+      try { await getRedis()?.decr(guestKey); } catch (err) { console.warn('[music-oracle] 游客计数退还失败:', err); }
+    }
     const id = quotaConsumedUserId;
     if (!id) return;
     quotaConsumedUserId = null; // 幂等：外层 catch 与内层分支都可能调用，只退一次
@@ -89,16 +98,11 @@ export async function POST(request: NextRequest) {
     }
 
     // 限流检查（游客/登录用户 1次/日，VIP 不限）
-    const redis = getRedis();
     const dateStr = getTodayDateStr();
-    // 简单用 IP 做游客标识
-    const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-      || request.headers.get('x-real-ip')
-      || 'unknown';
-    const rateLimitKey = `music-oracle:rate:${clientIp}:${dateStr}`;
+    // 游客标识与其他 AI 端点统一走 getClientIp（优先 Vercel 注入的 x-vercel-forwarded-for）
+    const clientIp = getClientIp(request);
 
     // 统一配额策略 v1：游客按 IP 1次/天；免费登录用户按账号 1次/天；VIP 不限
-    let isVip = false;
     let userId: string | null = null;
     // JWT 里的 isSubscribed 只作提示传给配额层，不在这里做 gate：
     // 早期实现是 if (!isVip) 包住整个配额块，一旦 token 里的 isSubscribed 陈旧为 true，
@@ -118,7 +122,6 @@ export async function POST(request: NextRequest) {
       // 登录用户：无条件走配额层，VIP 与否由 checkMusicQuota 内部查 DB 认定（VIP 直接放行不计数）
       const { checkMusicQuota } = await import('@/lib/quota');
       const mq = await checkMusicQuota(userId, vipHint);
-      isVip = mq.isVip;
       if (!mq.hasQuota) {
         return NextResponse.json(
           { success: false, error: '今日求签次数已用完（1次/天），VIP 不限次数', code: 'RATE_LIMIT' },
@@ -126,20 +129,19 @@ export async function POST(request: NextRequest) {
         );
       }
       if (!mq.isVip) quotaConsumedUserId = userId;
-    } else if (redis) {
-      // 游客：按 IP 1 次/天
-      try {
-        const count = await redis.get(rateLimitKey);
-        const used = typeof count === 'number' ? count : (typeof count === 'string' ? parseInt(count, 10) : 0);
-        if (used >= 1) {
-          return NextResponse.json(
-            { success: false, error: '今日求签次数已用完，登录后每日可用，VIP 不限次数', code: 'RATE_LIMIT' },
-            { status: 429 }
-          );
-        }
-      } catch (err) {
-        console.warn('[music-oracle] 限流检查失败:', err);
+    } else {
+      // 游客：按 IP 1 次/北京自然日（键里带日期，跨午夜自动换新键）。
+      // 原实现「先 GET 判断、AI 成功后才 INCR」：检查与计数之间隔着整段 AI 调用，并发请求全部放行；
+      // Redis 未配置/报错时还直接跳过检查 = 游客无限次。现改为生成前原子 INCR，且 fail-closed。
+      const guestPrefix = `music_guest:${dateStr}`;
+      const rl = await checkRateLimit(guestPrefix, clientIp, 1, getSecondsUntilBeijingMidnight() || 60);
+      if (!rl.allowed) {
+        return NextResponse.json(
+          { success: false, error: '今日求签次数已用完，登录后每日可用，VIP 不限次数', code: 'RATE_LIMIT' },
+          { status: 429 }
+        );
       }
+      if (!rl.degraded) guestRateKey = `rl:${guestPrefix}:${clientIp}`;
     }
 
     // 获取命理信息
@@ -246,24 +248,6 @@ export async function POST(request: NextRequest) {
         { success: false, error: '解析结果失败，请重试', code: 'AI_ERROR' },
         { status: 500 }
       );
-    }
-
-    // 更新限流计数（仅游客走 IP 计数；登录用户已在上方按账号扣减 DB 配额）
-    if (redis && !isVip && !userId) {
-      try {
-        // TTL 对齐北京午夜(限流键按北京日滚动)。旧写法 setHours(24,..) 走 UTC 午夜=北京 08:00,
-        // 会让 00:00–08:00 首抽的游客在 08:00 后拿到二次免费抽。
-        const ttl = getSecondsUntilBeijingMidnight();
-        // incr + expire 合并成一次 pipeline。这两条紧跟在最长 30s 的 AI 调用之后，
-        // 而 undici 默认 keepAliveTimeout 只有 4s：连接已被回收，第一条要重付 TCP+TLS 握手
-        // （生产实测 hkg1→Upstash 约 268ms），第二条还要再付一次港-东京 RTT（约 50ms）。
-        // 合并后握手只付一次、RTT 只付一次，直接省掉后一次往返。
-        // 注意：这里不挪去 after() —— 它是游客防刷计数（配额语义），不赌响应关闭后的后台任务；
-        // 挪走会把「check 与 incr 之间的窗口」从毫秒级拉长到整段打字机流（约 3s），凭空放大刷量口子。
-        await redis.pipeline().incr(rateLimitKey).expire(rateLimitKey, ttl).exec();
-      } catch (err) {
-        console.warn('[music-oracle] 限流计数更新失败:', err);
-      }
     }
 
     // 保存到数据库

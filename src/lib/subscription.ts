@@ -1,10 +1,10 @@
 import { prisma } from '@/lib/db'
 import { getTodayBeijing } from '@/lib/timezone'
 
-// 免费八字 AI 额度：与 quota.ts 的 FREE_DAILY_LIMIT 是同一份策略（统一配额策略 v1，1 次/天）。
-// 不直接 import quota.FREE_DAILY_LIMIT 是因为 quota.ts 已 import 本模块的 isVip，
+// 免费八字 AI（议题解读，baziAiCount）额度：与 quota.ts 的 BAZI_TOPIC_DAILY_LIMIT 是同一份策略（3 次/天）。
+// 不直接 import 是因为 quota.ts 已 import 本模块的 isVip，
 // 反向再引会形成循环依赖（本模块被先加载时会撞 TDZ）。改额度时两处必须一起改。
-export const FREE_BAZI_AI_LIMIT = 1
+export const FREE_BAZI_AI_LIMIT = 3
 
 const vipCache = new Map<string, { value: boolean; expires: number }>()
 // 进程内缓存容量上限：长驻实例（本地 dev / 自托管）下条目只增不减会缓慢吃内存；

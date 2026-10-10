@@ -81,14 +81,6 @@ export async function POST(req: NextRequest) {
   const rl = await checkRateLimit('ai_liuyao_qa', session.user.id, 5, 60);
   if (!rl.allowed) return NextResponse.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
 
-  // 统一配额策略 v1：AI 问答免费 1 次/天，VIP 不限。
-  // 会员态取自 JWT（isSubscribed），省一次跨区 DB 往返；「刚付费未刷新」由 quota 内部兜底复核
-  const { checkLiuyaoQaQuota } = await import('@/lib/quota');
-  const qaQuota = await checkLiuyaoQaQuota(session.user.id, session.user.isSubscribed);
-  if (!qaQuota.hasQuota) {
-    return NextResponse.json({ error: 'QUOTA_EXCEEDED', message: '今日免费问答次数已用完，升级 VIP 不限量' }, { status: 429 });
-  }
-
   const body = await req.json().catch(() => ({}));
   const validation = validate(body);
   if (!validation.valid) {
@@ -96,10 +88,24 @@ export async function POST(req: NextRequest) {
   }
 
   const { question, hexagramContext } = validation.data;
+
+  // 统一配额策略 v1：AI 问答免费 1 次/天，VIP 不限。放在参数校验之后，400 不白扣额度。
+  // 会员态取自 JWT（isSubscribed），省一次跨区 DB 往返；「刚付费未刷新」由 quota 内部兜底复核
+  const { checkLiuyaoQaQuota, refundQuota } = await import('@/lib/quota');
+  const qaQuota = await checkLiuyaoQaQuota(session.user.id, session.user.isSubscribed);
+  if (!qaQuota.hasQuota) {
+    return NextResponse.json({ error: 'QUOTA_EXCEEDED', message: '今日免费问答次数已用完，升级 VIP 不限量' }, { status: 429 });
+  }
+  // AI 不可用 / 上游报错 / 一个字都没回时退还额度
+  const refundIfConsumed = async () => {
+    if (qaQuota.isVip) return;
+    try { await refundQuota(session.user.id, 'liuyaoQaCount'); } catch {}
+  };
   const systemPrompt = buildSystemPrompt(hexagramContext);
 
   const provider = await getPrimaryProvider();
   if (!provider) {
+    await refundIfConsumed();
     return NextResponse.json({ error: 'AI 服务未配置' }, { status: 503 });
   }
 
@@ -136,8 +142,14 @@ export async function POST(req: NextRequest) {
       const errText = await upstream.text();
       errMsg = errText.slice(0, 200) || errMsg;
     } catch {}
+    await refundIfConsumed();
     return NextResponse.json({ error: errMsg }, { status: 502 });
   }
 
-  return new Response(proxyLLMDeltaStream(upstream, abortHandle, { label: 'liuyao/qa' }), { headers: SSE_HEADERS });
+  return new Response(proxyLLMDeltaStream(upstream, abortHandle, {
+    label: 'liuyao/qa',
+    onComplete: async (fullText, aborted) => {
+      if (!fullText && !aborted) await refundIfConsumed();
+    },
+  }), { headers: SSE_HEADERS });
 }

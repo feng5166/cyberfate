@@ -19,6 +19,7 @@ import { applyChaos } from '@/lib/chaos-middleware';
 import { logger } from '@/lib/logger';
 import { SSE_HEADERS, typewriterStream } from '@/lib/ai/sse';
 import { isDebugRequest } from '@/lib/ai/debug';
+import { getTodayBeijing, getSecondsUntilBeijingMidnight } from '@/lib/timezone';
 
 export const maxDuration = 120;
 
@@ -127,7 +128,8 @@ export async function POST(req: NextRequest) {
       const rl = await checkRateLimit('ai_tarot', userId, 10, 60);
       if (!rl.allowed) return NextResponse.json({ error: 'RATE_LIMITED', message: '操作过于频繁，请稍后再试' }, { status: 429 });
     } else {
-      const rl = await checkRateLimit('ai_tarot_guest', ip, 1, 86400);
+      // 游客额度按北京自然日（键带日期），与登录用户日切口径一致
+      const rl = await checkRateLimit(`ai_tarot_guest:${getTodayBeijing()}`, ip, 1, getSecondsUntilBeijingMidnight() || 60);
       if (!rl.allowed) return NextResponse.json({ error: 'GUEST_LIMIT_REACHED', message: '游客每天可免费占卜 1 次，登录后解锁更多次数' }, { status: 429 });
     }
   }

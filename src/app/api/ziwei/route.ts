@@ -4,6 +4,7 @@ import { calculateZiwei } from '@/lib/ziwei';
 import type { ZiweiInput } from '@/lib/ziwei';
 import { withCircuitBreaker } from '@/lib/ai/circuitBreaker';
 import { applyChaos } from '@/lib/chaos-middleware';
+import { getTodayBeijing, getSecondsUntilBeijingMidnight } from '@/lib/timezone';
 
 const SHICHEN_MAP: Record<string, number> = {
   '子时': 0, '丑时': 1, '寅时': 2, '卯时': 3,
@@ -60,7 +61,8 @@ export async function POST(req: NextRequest) {
     if (!rl.allowed) return NextResponse.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
   } else {
     const { getClientIp } = await import('@/lib/ip');
-    const rl = await checkRateLimit('ziwei_guest_paipan', getClientIp(req), 10, 86400);
+    // 按北京自然日计（键带日期），与登录用户日切口径一致
+    const rl = await checkRateLimit(`ziwei_guest_paipan:${getTodayBeijing()}`, getClientIp(req), 10, getSecondsUntilBeijingMidnight() || 60);
     if (!rl.allowed) {
       return NextResponse.json(
         { error: 'GUEST_LIMIT_REACHED', message: '游客每日排盘次数已用完，登录后可继续使用' },

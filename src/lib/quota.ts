@@ -26,11 +26,20 @@ type QuotaField =
   | 'baziChatCount'
   // —— 紫微 V2（PRD-ZIWEI-V2）：逐宫 AI 解读，免费 3 宫/日 ——
   | 'ziweiAiCount'
+  // —— 每日深度分析：免费 1 次/日（按北京时间生成日计数，目标日期可任选）——
+  | 'dailyDetailCount'
 
 /**
  * 统一配额策略 v1：免费用户「主命理 AI 解读」与「AI 问答」统一 1 次/天，VIP 不限。
  */
 export const FREE_DAILY_LIMIT = 1
+
+/**
+ * 例外：八字议题解读、紫微逐宫解读是「拆小份」的主解读，免费 3 次/天（PRD-BAZI-V2 §4 / PRD-ZIWEI-V2）。
+ * subscription.ts 的 FREE_BAZI_AI_LIMIT 因循环依赖不能 import 本常量，改额度时两处必须一起改。
+ */
+export const BAZI_TOPIC_DAILY_LIMIT = 3
+export const ZIWEI_PALACE_DAILY_LIMIT = 3
 
 export async function atomicCheckAndConsume(
   userId: string,
@@ -94,9 +103,9 @@ export async function checkBaziQuota(userId: string): Promise<{
   limit: number
   isVip: boolean
 }> {
-  // 限额统一走 FREE_DAILY_LIMIT：此处原本写死字面量 1，与 /api/quota/bazi 上报的常量分家，
-  // 改额度时容易只改一处 → 「查询显示 3 次、实际扣到 1 次就没了」
-  return atomicCheckAndConsume(userId, 'baziAiCount', FREE_DAILY_LIMIT)
+  // baziAiCount 实际由议题解读消耗（/api/bazi/stream，3 次/天），查询/展示/扣减统一走同一常量，
+  // 否则「接口报 1 次、实际能用 3 次」或反之
+  return atomicCheckAndConsume(userId, 'baziAiCount', BAZI_TOPIC_DAILY_LIMIT)
 }
 
 /**
@@ -120,7 +129,7 @@ export async function peekBaziQuota(userId: string, vipStatus?: boolean): Promis
   }
 
   const today = getTodayBeijing()
-  const limit = FREE_DAILY_LIMIT
+  const limit = BAZI_TOPIC_DAILY_LIMIT
   const quota = await prisma.usageQuota.findUnique({
     where: { userId_date: { userId, date: today } }
   })

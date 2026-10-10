@@ -3,7 +3,7 @@ import { Lunar } from 'lunar-javascript';
 import { z } from 'zod';
 import { getServerSession, type Session } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { refundQuota, atomicCheckAndConsume, isUserVip } from '@/lib/quota';
+import { refundQuota, atomicCheckAndConsume, isUserVip, BAZI_TOPIC_DAILY_LIMIT } from '@/lib/quota';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { redis } from '@/lib/cache/redis';
 import { resolveProviders, type ResolvedProvider } from '@/lib/ai/provider';
@@ -15,7 +15,7 @@ import { logger } from '@/lib/logger';
 import { runBaziToolchain, toolchainToPromptFacts, type ToolStepResult } from '@/lib/bazi/tools';
 import type { BaziAnalysis, BaziChart, BaziResult, Gender } from '@/lib/bazi/types';
 import { getClientIp } from '@/lib/ip';
-import { getBeijingDate } from '@/lib/timezone';
+import { getBeijingDate, getTodayBeijing, getSecondsUntilBeijingMidnight } from '@/lib/timezone';
 import { sendFeishuText } from '@/lib/feishu';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -56,7 +56,9 @@ const TOPIC_SYSTEM_PROMPT =
   '不预测灾祸疾病，低谷话题一律用「提醒-蓄力-给建议」的框架表述。';
 
 const requestSchema = z.object({
-  cacheKey: z.string().min(1),
+  // 只接受 /api/bazi 签发的格式（v<版本>:bazi:<sha256 前缀>）：本字段直接拼成 Redis key 读写，
+  // 放任意字符串 = 任何人可读出 Redis 里的任意键（其他接口的 AI 缓存、运行时配置等）
+  cacheKey: z.string().regex(/^v\d{1,2}:bazi:[0-9a-f]{8,64}$/),
   baziResult: z.any(),
   name: z.string().optional(),
   gender: z.string().optional(),
@@ -191,6 +193,24 @@ export async function POST(req: NextRequest) {
   // 议题模式独立缓存键，与全盘详批互不污染
   const effectiveCacheKey = topic ? `${cacheKey}:topic:${topic}` : cacheKey;
 
+  // 0. 全盘详批是会员专属：必须在读缓存之前判定。原先缓存命中直接返回、到下方才判会员，
+  //    cacheKey 又是按出生信息确定性生成的 —— 过期会员/买过天卡的用户、乃至同命盘的游客，
+  //    都能在缓存 30 天有效期内免费读到全盘详批。议题解读的缓存读仍对所有人放行（不扣额度）。
+  if (!topic) {
+    if (!session?.user?.id) {
+      return Response.json(
+        { error: 'SUBSCRIPTION_REQUIRED', message: '全盘详批为会员专属，登录后可免费使用议题解读' },
+        { status: 403 },
+      );
+    }
+    if (!(await isUserVip(session.user.id))) {
+      return Response.json(
+        { error: 'SUBSCRIPTION_REQUIRED', message: '全盘详批为会员专属，免费用户可使用六大议题解读' },
+        { status: 403 },
+      );
+    }
+  }
+
   // 1. 查缓存（forceRefresh 时跳过）
   if (!forceRefresh) {
     try {
@@ -224,7 +244,7 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 });
     }
     if (topic) {
-      const quota = await atomicCheckAndConsume(session.user.id, 'baziAiCount', 3);
+      const quota = await atomicCheckAndConsume(session.user.id, 'baziAiCount', BAZI_TOPIC_DAILY_LIMIT);
       if (!quota.hasQuota) {
         return Response.json(
           { error: 'QUOTA_EXCEEDED', message: '今日 3 次免费议题解读已用完，会员不限次' },
@@ -232,23 +252,12 @@ export async function POST(req: NextRequest) {
         );
       }
       quotaConsumed = !quota.isVip;
-    } else {
-      const vip = await isUserVip(session.user.id);
-      if (!vip) {
-        return Response.json(
-          { error: 'SUBSCRIPTION_REQUIRED', message: '全盘详批为会员专属，免费用户可使用六大议题解读' },
-          { status: 403 },
-        );
-      }
     }
+    // 全盘详批（!topic）的会员判定已在读缓存前完成
   } else {
-    if (!topic) {
-      return Response.json(
-        { error: 'SUBSCRIPTION_REQUIRED', message: '全盘详批为会员专属，登录后可免费使用议题解读' },
-        { status: 403 },
-      );
-    }
-    const rl = await checkRateLimit('ai_bazi_guest', ip, 1, 86400);
+    // 游客额度按北京自然日（键带日期），与登录用户 UsageQuota 的日切口径一致；原 86400s 滚动窗口
+    // 会出现「昨晚 23 点用过，今早还不能用」
+    const rl = await checkRateLimit(`ai_bazi_guest:${getTodayBeijing()}`, ip, 1, getSecondsUntilBeijingMidnight() || 60);
     if (!rl.allowed) {
       return Response.json(
         { error: 'GUEST_LIMIT_REACHED', message: '游客每日免费议题次数已用完，登录后每天可用 3 次' },

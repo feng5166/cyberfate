@@ -23,15 +23,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '请先登录' }, { status: 401 });
   }
 
-  // 统一配额策略 v1：梅花起卦 AI 解读免费 1 次/天，VIP 不限
-  if (!isDebugMode) {
-    const { checkMeihuaDrawQuota } = await import('@/lib/quota');
-    const drawQuota = await checkMeihuaDrawQuota(session!.user!.id);
-    if (!drawQuota.hasQuota) {
-      return NextResponse.json({ error: 'QUOTA_EXCEEDED', message: '今日免费梅花次数已用完，升级 VIP 不限量' }, { status: 429 });
-    }
-  }
-
   const body = await req.json().catch(() => ({}));
   const method = (body?.method as DrawMethod) || 'time';
   const numbers = body?.numbers as { num1?: unknown; num2?: unknown } | undefined;
@@ -43,6 +34,27 @@ export async function POST(req: NextRequest) {
   if (method === 'manual') {
     return NextResponse.json({ error: '手动起卦即将上线，请先选择时间起卦或数字起卦。' }, { status: 400 });
   }
+
+  // 统一配额策略 v1：梅花起卦 AI 解读免费 1 次/天，VIP 不限。
+  // 放在参数校验之后：原先先扣额度再校验，选「手动起卦」等 400 请求会白吃掉当天唯一一次
+  let quotaConsumed = false;
+  if (!isDebugMode) {
+    const { checkMeihuaDrawQuota } = await import('@/lib/quota');
+    const drawQuota = await checkMeihuaDrawQuota(session!.user!.id, session!.user!.isSubscribed);
+    if (!drawQuota.hasQuota) {
+      return NextResponse.json({ error: 'QUOTA_EXCEEDED', message: '今日免费梅花次数已用完，升级 VIP 不限量' }, { status: 429 });
+    }
+    quotaConsumed = !drawQuota.isVip;
+  }
+  // AI 不可用走兜底文案 / 流中断没出正文时退还额度（只退一次）
+  const refundIfConsumed = async () => {
+    if (!quotaConsumed) return;
+    quotaConsumed = false;
+    try {
+      const { refundQuota } = await import('@/lib/quota');
+      await refundQuota(session!.user!.id, 'meihuaDrawCount');
+    } catch {}
+  };
 
   const { upperIndex, lowerIndex, movingLine } = resolveDraw(method, numbers, new Date());
   const primary = buildPair(upperIndex, lowerIndex);
@@ -142,6 +154,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (!upstream || !upstream.ok || !upstream.body) {
+    await refundIfConsumed();
     const guaCi = firstSentence(FALLBACK_ANALYSIS);
     const readable = new ReadableStream({
       start(controller) {
@@ -213,10 +226,13 @@ export async function POST(req: NextRequest) {
           } catch (err) {
             console.warn('[Meihua Draw] cache write failed:', err);
           }
+        } else {
+          await refundIfConsumed();
         }
         controller.enqueue(encoder.encode('data: [DONE]\n\n'));
       } catch (err) {
         console.error('[Meihua Draw] stream error:', err);
+        await refundIfConsumed();
       } finally {
         controller.close();
       }

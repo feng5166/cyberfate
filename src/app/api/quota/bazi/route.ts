@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { FREE_DAILY_LIMIT, isUserVip, peekBaziQuota } from '@/lib/quota'
+import { BAZI_TOPIC_DAILY_LIMIT, isUserVip, peekBaziQuota } from '@/lib/quota'
 
 /**
  * GET /api/quota/bazi —— 只读查询今日八字 AI 配额。
@@ -22,7 +22,7 @@ export async function GET() {
 
   return NextResponse.json({
     hasQuota: peek.hasQuota || isVip,
-    limit: isVip ? -1 : FREE_DAILY_LIMIT,
+    limit: isVip ? -1 : BAZI_TOPIC_DAILY_LIMIT,
     isVip,
   })
 }

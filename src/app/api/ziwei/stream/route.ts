@@ -7,7 +7,7 @@
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { getAuthSession } from '@/lib/auth-session';
-import { refundQuota, atomicCheckAndConsume, isUserVip } from '@/lib/quota';
+import { refundQuota, atomicCheckAndConsume, isUserVip, ZIWEI_PALACE_DAILY_LIMIT } from '@/lib/quota';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { redis } from '@/lib/cache/redis';
 import crypto from 'crypto';
@@ -104,6 +104,14 @@ export async function POST(req: NextRequest) {
     ? `v1:ziwei:stream:${chartHash}:palace:${palace}`
     : `v1:ziwei:stream:${chartHash}:full`;
 
+  // 0. 全盘详批会员专属：先于缓存判定，否则过期会员/同命盘用户可在缓存 30 天内免费读全盘
+  if (!palace && !(await isUserVip(session.user.id))) {
+    return Response.json(
+      { error: 'SUBSCRIPTION_REQUIRED', message: '全盘详批为会员专属，免费用户可使用逐宫解读' },
+      { status: 403 },
+    );
+  }
+
   // 1. 查缓存（不扣配额）
   if (!forceRefresh) {
     try {
@@ -122,7 +130,7 @@ export async function POST(req: NextRequest) {
   // 2. 门槛（缓存未命中才计费）：单宫 3 宫/日；全盘 VIP 专属
   let quotaConsumed = false;
   if (palace) {
-    const quota = await atomicCheckAndConsume(session.user.id, 'ziweiAiCount', 3);
+    const quota = await atomicCheckAndConsume(session.user.id, 'ziweiAiCount', ZIWEI_PALACE_DAILY_LIMIT);
     if (!quota.hasQuota) {
       return Response.json(
         { error: 'QUOTA_EXCEEDED', message: '今日 3 次免费宫位解读已用完，会员不限次' },
@@ -130,15 +138,8 @@ export async function POST(req: NextRequest) {
       );
     }
     quotaConsumed = !quota.isVip;
-  } else {
-    const vip = await isUserVip(session.user.id);
-    if (!vip) {
-      return Response.json(
-        { error: 'SUBSCRIPTION_REQUIRED', message: '全盘详批为会员专属，免费用户可使用逐宫解读' },
-        { status: 403 },
-      );
-    }
   }
+  // 全盘（!palace）的会员判定已在读缓存前完成
 
   const refundIfNeeded = async () => {
     if (!quotaConsumed) return;

@@ -215,6 +215,7 @@ model UsageQuota {
   marriageQaCount   Int    @default(0) // 合婚问答
   baziChatCount     Int    @default(0) // 八字 AI 追问（PRD-BAZI-V2：免费 1 次/日）
   ziweiAiCount      Int    @default(0) // 紫微逐宫 AI 解读（PRD-ZIWEI-V2：免费 3 宫/日）
+  dailyDetailCount  Int    @default(0) // 每日深度分析（免费 1 次/日，按生成日计，不按目标日期）
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -52,14 +52,14 @@ describe('quota — atomic check & consume (baziAiCount)', () => {
 
     const res = await checkBaziQuota('user-1')
 
-    expect(res).toEqual({ hasQuota: true, limit: 1, isVip: false })
+    expect(res).toEqual({ hasQuota: true, limit: 3, isVip: false })
     expect(updateMany).toHaveBeenCalledTimes(1)
 
     const arg = updateMany.mock.calls[0][0]
     // The atomic guard: only increments rows still below the limit.
     expect(arg.where).toMatchObject({
       userId: 'user-1',
-      baziAiCount: { lt: 1 },
+      baziAiCount: { lt: 3 },
     })
     expect(arg.data).toMatchObject({ baziAiCount: { increment: 1 } })
     // 热路径（当日行已存在）：单次条件自增即完成，不再 upsert、不开事务
@@ -74,7 +74,7 @@ describe('quota — atomic check & consume (baziAiCount)', () => {
 
     const res = await checkBaziQuota('user-new')
 
-    expect(res).toEqual({ hasQuota: true, limit: 1, isVip: false })
+    expect(res).toEqual({ hasQuota: true, limit: 3, isVip: false })
     expect(upsert).toHaveBeenCalledTimes(1)
     expect(updateMany).toHaveBeenCalledTimes(2)
     // upsert 只建行不改计数：update 为空对象，扣减仍由条件 updateMany 原子完成
@@ -86,7 +86,7 @@ describe('quota — atomic check & consume (baziAiCount)', () => {
 
     const res = await checkBaziQuota('user-1')
 
-    expect(res).toEqual({ hasQuota: false, limit: 1, isVip: false })
+    expect(res).toEqual({ hasQuota: false, limit: 3, isVip: false })
     // 额度耗尽路径：首扣落空 → upsert 幂等建行 → 重扣仍落空
     expect(updateMany).toHaveBeenCalledTimes(2)
     // vipStatus 未传：入口已真查过 isVip，额度耗尽时不再复核
@@ -144,10 +144,10 @@ describe('quota — atomic check & consume (baziAiCount)', () => {
     )
     const granted = results.filter((r) => r.hasQuota).length
 
-    expect(granted).toBe(1) // 八字 limit=1:并发 12 次只有 1 次拿到额度
-    expect(counter).toBe(1) // 计数严格不超发
-    // 放行的 1 次走热路径(1 次 updateMany);被拒的 N-1 次各 2 次(首扣落空 → upsert → 重扣仍落空)
-    expect(updateMany).toHaveBeenCalledTimes(1 + (N - 1) * 2)
+    expect(granted).toBe(3) // 八字议题 limit=3:并发 12 次只有 3 次拿到额度
+    expect(counter).toBe(3) // 计数严格不超发
+    // 放行的 3 次走热路径(1 次 updateMany);被拒的 N-3 次各 2 次(首扣落空 → upsert → 重扣仍落空)
+    expect(updateMany).toHaveBeenCalledTimes(3 + (N - 3) * 2)
   })
 
   it('并发同样保护高额度(模拟 limit=3 恰好放行 3 次)', async () => {
@@ -247,7 +247,7 @@ describe('quota — peekBaziQuota (read-only)', () => {
   })
 
   it('hasQuota=false when already at limit', async () => {
-    findUnique.mockResolvedValue({ baziAiCount: 1 })
+    findUnique.mockResolvedValue({ baziAiCount: 3 })
     const res = await peekBaziQuota('user-1', false)
     expect(res.hasQuota).toBe(false)
   })
@@ -268,7 +268,7 @@ describe('quota — peekBaziQuota (read-only)', () => {
 
   it('stale vipStatus=true 但 DB 非 VIP：按免费用户读真实用量', async () => {
     isVipMock.mockResolvedValue(false)
-    findUnique.mockResolvedValue({ baziAiCount: 1 })
+    findUnique.mockResolvedValue({ baziAiCount: 3 })
 
     const res = await peekBaziQuota('stale-vip', true)
 

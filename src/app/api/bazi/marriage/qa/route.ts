@@ -53,11 +53,16 @@ export async function POST(req: NextRequest) {
 
   // 统一配额策略 v1：合婚问答免费 1 次/天，VIP 不限。
   // 会员态取自 JWT（isSubscribed），省一次跨区 DB 往返；「刚付费未刷新」由 quota 内部兜底复核
-  const { checkMarriageQaQuota } = await import('@/lib/quota');
+  const { checkMarriageQaQuota, refundQuota } = await import('@/lib/quota');
   const qaQuota = await checkMarriageQaQuota(session.user.id, session.user.isSubscribed);
   if (!qaQuota.hasQuota) {
     return NextResponse.json({ error: 'QUOTA_EXCEEDED', message: '今日免费问答次数已用完，升级 VIP 不限量' }, { status: 429 });
   }
+  // 只回了兜底话术（AI 未配置/调用失败/空回复）时退还额度，免费用户不该为我们的故障丢掉当天唯一一次
+  const refundIfConsumed = async () => {
+    if (qaQuota.isVip) return;
+    try { await refundQuota(session.user.id, 'marriageQaCount'); } catch {}
+  };
 
   const safeMaleName = sanitizeUserInput(String(maleName || ''), 50) || '男方';
   const safeFemaleName = sanitizeUserInput(String(femaleName || ''), 50) || '女方';
@@ -95,6 +100,7 @@ ${typeof score === 'number' ? `综合匹配度：${score}分（${level || ''}）
 
   const provider = await getPrimaryProvider();
   if (!provider) {
+    await refundIfConsumed();
     return NextResponse.json({ question: safeQuestion, answer: FALLBACK_ANSWER, _source: 'fallback' });
   }
 
@@ -131,6 +137,7 @@ ${typeof score === 'number' ? `综合匹配度：${score}分（${level || ''}）
 
   if (!answer) {
     answer = FALLBACK_ANSWER;
+    await refundIfConsumed();
   }
 
   return NextResponse.json({
